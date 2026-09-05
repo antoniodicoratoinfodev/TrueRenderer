@@ -1,0 +1,6 @@
+* text=auto eol=lf
+/corpus/*.png -text
+/reports/*.png -text
+/reports/dependency-notices/** -text
+/reports/dependency-inventory.csv -text
+/docs/TrueVision-Architettura.originale-v1.2.md -text
