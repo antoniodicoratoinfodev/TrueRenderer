@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "description": "Only these byte digests are admitted to the R0 decoder. Changing the manifest requires rebuilding the app.",
+  "images": [
+    {
+      "file": "01_Studio_cromatico.png",
+      "sha256": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+      "width": 1200,
+      "height": 800,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "02_Paesaggio_analitico.png",
+      "sha256": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+      "width": 1440,
+      "height": 960,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "03_Gradiente_16bit.png",
+      "sha256": "d3df38d0e808beb0d1e744aed0694a596321195f3681a9ab05a4dd334e941d0f",
+      "width": 1600,
+      "height": 900,
+      "bits": 16,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "04_Frequenze_radiali.png",
+      "sha256": "808ce6b559b9bd8beedb4aae44f08ef0815041780e7fab0fa6a2ac8bfc15c604",
+      "width": 1200,
+      "height": 800,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "05_Trasparenza.png",
+      "sha256": "eda5d0d51461f24f6f1efa05fbb65f89195441ed74fdfdbe2b0a4d91a9a00868",
+      "width": 1200,
+      "height": 800,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "06_Scala_neutra.png",
+      "sha256": "0029174a941fb546159a8ebbf5f16f0438328291ec8cd6f6eeef47cf1b28f477",
+      "width": 1200,
+      "height": 800,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "07_Confronto_A.png",
+      "sha256": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+      "width": 1440,
+      "height": 960,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "08_Confronto_B.png",
+      "sha256": "960d719d279be3792dc445474e99be25ee457c3d9ff130e83972586dba65cc70",
+      "width": 1440,
+      "height": 960,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "09_Campioni_primari.png",
+      "sha256": "ccf46cc96dcfec6cf27f278c2f38a86144f1465d41cf850d14101b4ecc7689a6",
+      "width": 1200,
+      "height": 800,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "10_Bordi_dispari.png",
+      "sha256": "881b5e5b7c343671824b3241a6ffcefd9a513bda1cc70ea91b9347bce20e351d",
+      "width": 1001,
+      "height": 667,
+      "bits": 8,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "11_Ombre_16bit.png",
+      "sha256": "a98dcd990660c74aa821bd6f4ecf9f5208a5241fd1a9748d94c59d86317d089e",
+      "width": 1200,
+      "height": 800,
+      "bits": 16,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    },
+    {
+      "file": "12_Luci_16bit.png",
+      "sha256": "e1fd0f4c945a36b41ed328367e401fda59743e3b4d19895642ae971b04613fc2",
+      "width": 1200,
+      "height": 800,
+      "bits": 16,
+      "source": "TrueRenderer deterministic numerical corpus v1",
+      "input_color": "sRGB"
+    }
+  ]
+}

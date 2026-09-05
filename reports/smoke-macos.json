@@ -1,0 +1,20 @@
+{
+  "adapter": "Apple M4 · Metal",
+  "application": "TrueRenderer",
+  "decode_errors": {},
+  "elapsed_seconds": 2.126685857772827,
+  "frames": 85,
+  "gpu": "GPU/CPU: 4096 campioni · errore max 9.54e-7 · entro soglia R0",
+  "images": 12,
+  "passed": true,
+  "scope": "native macOS R0 corpus smoke; not color/display/sandbox qualification",
+  "screenshots": [
+    "01-grid",
+    "02-preview",
+    "03-compare"
+  ],
+  "sqlite": "3.53.2",
+  "status": "Corpus pronto · 0 file non leggibili",
+  "surface": "Bgra8Unorm",
+  "version": "0.1.0"
+}

@@ -1,0 +1,207 @@
+name,version,license,checksum_sha256,repository
+accesskit,0.24.1,MIT OR Apache-2.0,d3b7f7f85a7e5f68090000ed7622545829afd484d210358702ae4cb97dd0c320,https://github.com/AccessKit/accesskit
+accesskit_consumer,0.38.0,MIT OR Apache-2.0,5d10a236f96f87d70732e44520046785431ef01d5bcd6b041317bfadd2f88245,https://github.com/AccessKit/accesskit
+accesskit_macos,0.26.3,MIT OR Apache-2.0,ce02dc63b43f0c9296af9ac946312a2dc8814427d7a64d2d600971dac55b6076,https://github.com/AccessKit/accesskit
+accesskit_winit,0.32.2,Apache-2.0,1fe9a94394896352cc4660ca2288bd4ef883d83238853c038b44070c8f134313,https://github.com/AccessKit/accesskit
+adler2,2.0.1,0BSD OR MIT OR Apache-2.0,320119579fcad9c21884f5c4861d16174d0e06250625266f50fe6898340abefa,https://github.com/oyvindln/adler2
+ahash,0.8.12,MIT OR Apache-2.0,5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75,https://github.com/tkaitchuck/ahash
+allocator-api2,0.2.21,MIT OR Apache-2.0,683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923,https://github.com/zakarumych/allocator-api2
+anyhow,1.0.104,MIT OR Apache-2.0,330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470,https://github.com/dtolnay/anyhow
+arboard,3.6.1,MIT OR Apache-2.0,0348a1c054491f4bfe6ab86a7b6ab1e44e45d899005de92f58b3df180b36ddaf,https://github.com/1Password/arboard
+arrayvec,0.7.8,MIT OR Apache-2.0,d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56,https://github.com/bluss/arrayvec
+ash,0.38.0+1.3.281,MIT OR Apache-2.0,0bb44936d800fea8f016d7f2311c6a4f97aebd5dc86f09906139ec848cf3a46f,https://github.com/ash-rs/ash
+autocfg,1.5.1,Apache-2.0 OR MIT,f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53,https://github.com/cuviper/autocfg
+bit-set,0.10.0,Apache-2.0 OR MIT,09ec2f926cc3060f09db9ebc5b52823d85268d24bb917e472c0c4bea35780a7d,https://github.com/contain-rs/bit-set
+bit-vec,0.9.1,Apache-2.0 OR MIT,b71798fca2c1fe1086445a7258a4bc81e6e49dcd24c8d0dd9a1e57395b603f51,https://github.com/contain-rs/bit-vec
+bitflags,1.3.2,MIT/Apache-2.0,bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a,https://github.com/bitflags/bitflags
+bitflags,2.13.1,MIT OR Apache-2.0,b588b76d00fde79687d7646a9b5bdf3cc0f655e0bbd080335a95d7e96f3587da,https://github.com/bitflags/bitflags
+block-buffer,0.10.4,MIT OR Apache-2.0,3078c7629b62d3f0439517fa394996acacc5cbc91c5a20d8c658e77abd503a71,https://github.com/RustCrypto/utils
+block2,0.5.1,MIT,2c132eebf10f5cad5289222520a4a058514204aed6d791f1cf4fe8088b82d15f,https://github.com/madsmtm/objc2
+block2,0.6.2,MIT,cdeb9d870516001442e364c5220d3574d2da8dc765554b4a617230d33fa58ef5,https://github.com/madsmtm/objc2
+bytemuck,1.25.2,Zlib OR Apache-2.0 OR MIT,95832e849adfb21180ccb6826a99da14e5d266ae5c2e668e1602cf234f153797,https://github.com/Lokathor/bytemuck
+bytemuck_derive,1.12.0,Zlib OR Apache-2.0 OR MIT,fc0e56a716f1e132ff6bf4bdac1c944a3fcdc1cae65f70a4a2a1ac3b401d2d1f,https://github.com/Lokathor/bytemuck
+byteorder-lite,0.1.0,Unlicense OR MIT,8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495,https://github.com/image-rs/byteorder-lite
+cc,1.4.5,MIT OR Apache-2.0,005ec2760ca554fae18df7a11195552ec576cd665632a881bc011d5bb2fd4d80,https://github.com/rust-lang/cc-rs
+cfg-if,1.0.4,MIT OR Apache-2.0,9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801,https://github.com/rust-lang/cfg-if
+cfg_aliases,0.2.2,MIT,f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527,https://github.com/katharostech/cfg_aliases
+cgl,0.3.2,MIT / Apache-2.0,0ced0551234e87afee12411d535648dd89d2e7f34c78b753395567aff3d447ff,https://github.com/servo/cgl-rs
+codespan-reporting,0.13.1,Apache-2.0,af491d569909a7e4dee0ad7db7f5341fef5c614d5b8ec8cf765732aba3cff681,https://github.com/brendanzab/codespan
+color,0.3.3,Apache-2.0 OR MIT,2ec7c5eb7a16992b1904d76c517d170ab353b0e0b3d5a0c81a8a0cd1037893cf,https://github.com/linebender/color
+core-foundation,0.9.4,MIT OR Apache-2.0,91e195e091a93c46f7102ec7818a2aa394e1e1771c3ab4825963fa03e45afb8f,https://github.com/servo/core-foundation-rs
+core-foundation-sys,0.8.7,MIT OR Apache-2.0,773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b,https://github.com/servo/core-foundation-rs
+core-graphics,0.23.2,MIT OR Apache-2.0,c07782be35f9e1140080c6b96f0d44b739e2278479f64e02fdab4e32dfd8b081,https://github.com/servo/core-foundation-rs
+core-graphics-types,0.1.3,MIT OR Apache-2.0,45390e6114f68f718cc7a830514a96f903cccd70d02a8f6d9f643ac4ba45afaf,https://github.com/servo/core-foundation-rs
+cpufeatures,0.2.17,MIT OR Apache-2.0,59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280,https://github.com/RustCrypto/utils
+crc32fast,1.5.1,MIT OR Apache-2.0,8498c871161e1742aaa9d52551b2d6ebdd4c3d45a3be423e3728f33b955be550,https://github.com/srijs/rust-crc32fast
+crypto-common,0.1.7,MIT OR Apache-2.0,78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a,https://github.com/RustCrypto/traits
+cursor-icon,1.2.0,MIT OR Apache-2.0 OR Zlib,f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f,https://github.com/rust-windowing/cursor-icon
+digest,0.10.7,MIT OR Apache-2.0,9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292,https://github.com/RustCrypto/traits
+dispatch,0.2.0,MIT,bd0c93bb4b0c6d9b77f4435b0ae98c24d17f1c45b2ff844c6151a07256ca923b,http://github.com/SSheldon/rust-dispatch
+dispatch2,0.3.1,Zlib OR Apache-2.0 OR MIT,1e0e367e4e7da84520dedcac1901e4da967309406d1e51017ae1abfb97adbd38,https://github.com/madsmtm/objc2
+dlib,0.5.3,MIT,ab8ecd87370524b461f8557c119c405552c396ed91fc0a8eec68679eab26f94a,https://github.com/elinorbgr/dlib
+document-features,0.2.12,MIT OR Apache-2.0,d4b8a88685455ed29a21542a33abd9cb6510b6b129abadabdcef0f4c55bc8f61,https://github.com/slint-ui/document-features
+dpi,0.1.2,Apache-2.0 AND MIT,d8b14ccef22fc6f5a8f4d7d768562a182c04ce9a3b3157b91390b52ddfdf1a76,https://github.com/rust-windowing/winit
+ecolor,0.36.1,MIT OR Apache-2.0,fc883f505d446814c0226bef4b64564b9adb9966fc00c88c57ce6d827dd152d6,https://github.com/emilk/egui
+eframe,0.36.1,MIT OR Apache-2.0,2afc0cbcdb6896b7bfb1dbbebaf7b9af9635ff38fd01e89bdd0174c1717b1857,https://github.com/emilk/egui/tree/main/crates/eframe
+egui,0.36.1,MIT OR Apache-2.0,c977ac91dfaa651633fd9722e4ce9ccb32cda4c748b89a5cb57e504036e37c13,https://github.com/emilk/egui
+egui-wgpu,0.36.1,MIT OR Apache-2.0,2fc362cc6bc8c1d7169c9cb0e7741ff1e03063681373d6e55cc3b25fd21213f3,https://github.com/emilk/egui/tree/main/crates/egui-wgpu
+egui-winit,0.36.1,MIT OR Apache-2.0,9327fc8edef2c57db9bcbcacc82c8a4b1e8cc64cd41a67db4419dcf643d88c83,https://github.com/emilk/egui/tree/main/crates/egui-winit
+egui_glow,0.36.1,MIT OR Apache-2.0,69b65e45f8d8d7c6d848b3ec41f642b54ad828033f1511d4b4c9adc09040166a,https://github.com/emilk/egui/tree/main/crates/egui_glow
+either,1.18.0,MIT OR Apache-2.0,252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34,https://github.com/rayon-rs/either
+emath,0.36.1,MIT OR Apache-2.0,dce03cf1604f74515830012c29991beb0b58f69e4e43f5afe22fa7afed65ccd5,https://github.com/emilk/egui/tree/main/crates/emath
+epaint,0.36.1,MIT OR Apache-2.0,11863a6b2b7823010c1090ddf4706947bdda46766742def0673195cbf7ff4a73,https://github.com/emilk/egui/tree/main/crates/epaint
+epaint_default_fonts,0.36.1,(MIT OR Apache-2.0) AND OFL-1.1 AND Ubuntu-font-1.0,18dee69613aac468922cf28a32025eb7d7ed6985b61f73245848e58f37876c98,https://github.com/emilk/egui/tree/main/crates/epaint_default_fonts
+equivalent,1.0.2,Apache-2.0 OR MIT,877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f,https://github.com/indexmap-rs/equivalent
+errno,0.3.14,MIT OR Apache-2.0,39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb,https://github.com/lambda-fairy/rust-errno
+euclid,0.22.14,MIT OR Apache-2.0,f1a05365e3b1c6d1650318537c7460c6923f1abdd272ad6842baa2b509957a06,https://github.com/servo/euclid
+fallible-iterator,0.3.0,MIT/Apache-2.0,2acce4a10f12dc2fb14a218589d4f1f62ef011b2d0cc4b3cb1bba8e94da14649,https://github.com/sfackler/rust-fallible-iterator
+fallible-streaming-iterator,0.1.9,MIT/Apache-2.0,7360491ce676a36bf9bb3c56c1aa791658183a54d2744120f27285738d90465a,https://github.com/sfackler/fallible-streaming-iterator
+fastrand,2.5.0,Apache-2.0 OR MIT,da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223,https://github.com/smol-rs/fastrand
+fax,0.2.7,MIT,caf1079563223d5d59d83c85886a56e586cfd5c1a26292e971a0fa266531ac5a,https://github.com/pdf-rs/fax
+fdeflate,0.3.7,MIT OR Apache-2.0,1e6853b52649d4ac5c0bd02320cddc5ba956bdb407c4b75a2c6b75bf51500f8c,https://github.com/image-rs/fdeflate
+fearless_simd,0.4.1,Apache-2.0 OR MIT,b97b65636e5b9ef369943878ac74335ba1c55c1cb6adbf1e2c293c624248d693,https://github.com/linebender/fearless_simd
+find-msvc-tools,0.1.12,MIT OR Apache-2.0,3e0f1c7c3a72c66fd80abe965175f7523475c0489a87d3ff9d6e8c87d87a9d2d,https://github.com/rust-lang/cc-rs
+flate2,1.1.10,MIT OR Apache-2.0,6e634e2e0ebac1ee034020da1ca582e17ffe4e0f5e985823721e168928136dcb,https://github.com/rust-lang/flate2-rs
+foldhash,0.2.0,Zlib,77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb,https://github.com/orlp/foldhash
+font-types,0.12.4,MIT OR Apache-2.0,e64eb721ca85a34323425f4041adc5d82704d3782d5f8f03793bc012419dce23,https://github.com/googlefonts/fontations
+foreign-types,0.5.0,MIT/Apache-2.0,d737d9aa519fb7b749cbc3b962edcf310a8dd1f4b67c91c4f83975dbdd17d965,https://github.com/sfackler/foreign-types
+foreign-types-macros,0.2.4,MIT/Apache-2.0,ea5190182e6915eb873ddbc16e23b711b6eb1f9c00a0d0a3a91b5f6228475225,https://github.com/sfackler/foreign-types
+foreign-types-shared,0.3.1,MIT/Apache-2.0,aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b,https://github.com/sfackler/foreign-types
+fs2,0.4.3,MIT/Apache-2.0,9564fc758e15025b46aa6643b1b77d047d1a56a1aea6e01002ac0c7026876213,https://github.com/danburkert/fs2-rs
+generic-array,0.14.7,MIT,85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a,https://github.com/fizyk20/generic-array.git
+getrandom,0.3.4,MIT OR Apache-2.0,899def5c37c4fd7b2664648c28120ecec138e4d395b459e5ca34f9cce2dd77fd,https://github.com/rust-random/getrandom
+getrandom,0.4.3,MIT OR Apache-2.0,300e883d756b2e4ec94e02791f39b04b522276138852cfc41d9fb7e904106099,https://github.com/rust-random/getrandom
+glifo,0.2.0,Apache-2.0 OR MIT,ed4a1bb24121291d27230c1b1b44e07d6a9b28cefdb32fe1581dfb84e14f940a,https://github.com/linebender/vello
+glow,0.17.0,MIT OR Apache-2.0 OR Zlib,29038e1c483364cc6bb3cf78feee1816002e127c331a1eec55a4d202b9e1adb5,https://github.com/grovesNL/glow
+glutin,0.32.3,Apache-2.0,12124de845cacfebedff80e877bb37b5b75c34c5a4c89e47e1cdd67fb6041325,https://github.com/rust-windowing/glutin
+glutin-winit,0.5.0,MIT,85edca7075f8fc728f28cb8fbb111a96c3b89e930574369e3e9c27eb75d3788f,https://github.com/rust-windowing/glutin
+gpu-allocator,0.28.0,MIT OR Apache-2.0,51255ea7cfaadb6c5f1528d43e92a82acb2b96c43365989a28b2d44ee38f8795,https://github.com/Traverse-Research/gpu-allocator
+guillotiere,0.7.0,MIT/Apache-2.0,6b17e70c989c36bad147b27a58d148c0741c51448aa5653436547323e524d0ab,https://github.com/nical/guillotiere
+half,2.7.1,MIT OR Apache-2.0,6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b,https://github.com/VoidStarKat/half-rs
+harfrust,0.12.0,MIT,c03d949a14aa089bbb282f7dd76a498a7f684428e4257202efc119ec010376f9,https://github.com/harfbuzz/harfrust
+hashbrown,0.16.1,MIT OR Apache-2.0,841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100,https://github.com/rust-lang/hashbrown
+hashbrown,0.17.1,MIT OR Apache-2.0,ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a,https://github.com/rust-lang/hashbrown
+hashlink,0.12.1,MIT OR Apache-2.0,32069d97bb81e38fa67eab65e3393bf804bb85969f2bc06bf13f64aef5aba248,https://github.com/djc/hashlink
+image,0.25.10,MIT OR Apache-2.0,85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104,https://github.com/image-rs/image
+indexmap,2.14.2,Apache-2.0 OR MIT,cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855,https://github.com/indexmap-rs/indexmap
+itertools,0.15.0,MIT OR Apache-2.0,8b4baf93f58d4425749ca49a51c50ebab072c5df6994d08fed93541c331481dc,https://github.com/rust-itertools/itertools
+itoa,1.0.18,MIT OR Apache-2.0,8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682,https://github.com/dtolnay/itoa
+jobserver,0.1.35,MIT OR Apache-2.0,1c00acbd29eabad4a2392fa0e921c874934dbbf4194312ad20f04a0ed67a3cb3,https://github.com/rust-lang/jobserver-rs
+khronos-egl,6.0.0,MIT/Apache-2.0,6aae1df220ece3c0ada96b8153459b67eebe9ae9212258bb0134ae60416fdf76,https://github.com/timothee-haudebourg/khronos-egl
+kurbo,0.13.1,Apache-2.0 OR MIT,4b60dfc32f652b926df6192e55525b16d186c69d47876c3ead4da5cc9f8450e2,https://github.com/linebender/kurbo
+libc,0.2.189,MIT OR Apache-2.0,3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2,https://github.com/rust-lang/libc
+libloading,0.8.9,ISC,d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55,https://github.com/nagisa/rust_libloading/
+libm,0.2.16,MIT,b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981,https://github.com/rust-lang/compiler-builtins
+libsqlite3-sys,0.38.2,MIT,f1d20bef17f513b9b3004532233187769cd072d790971f4e4da0e346eb6401e8,https://github.com/rusqlite/rusqlite
+linebender_resource_handle,0.1.1,Apache-2.0 OR MIT,d4a5ff6bcca6c4867b1c4fd4ef63e4db7436ef363e0ad7531d1558856bae64f4,https://github.com/linebender/raw_resource_handle
+litrs,1.0.0,MIT OR Apache-2.0,11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092,https://github.com/LukasKalbertodt/litrs
+lock_api,0.4.14,MIT OR Apache-2.0,224399e74b87b5f3557511d98dff8b14089b3dadafcab6bb93eab67d3aace965,https://github.com/Amanieu/parking_lot
+log,0.4.34,MIT OR Apache-2.0,f9f8bd3e56ce4dfc153cf470fffbfa98c7620958b312ca5c3a4b8d5181fd13c6,https://github.com/rust-lang/log
+memchr,2.8.3,Unlicense OR MIT,cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98,https://github.com/BurntSushi/memchr
+miniz_oxide,0.8.9,MIT OR Zlib OR Apache-2.0,1fa76a2c86f704bdb222d66965fb3d63269ce38518b83cb0575fca855ebb6316,https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide
+miniz_oxide,0.9.1,MIT OR Zlib OR Apache-2.0,b63fbc4a50860e98e7b2aa7804ded1db5cbc3aff9193adaff57a6931bf7c4b4c,https://github.com/Frommi/miniz_oxide/tree/master/miniz_oxide
+moxcms,0.8.1,BSD-3-Clause OR Apache-2.0,bb85c154ba489f01b25c0d36ae69a87e4a1c73a72631fc6c0eb6dde34a73e44b,https://github.com/awxkee/moxcms.git
+naga,30.0.1,MIT OR Apache-2.0,a616d2fb8c89516ac2723a581f69d6c18576046bed761bd6b305e5618e6ae130,https://github.com/gfx-rs/wgpu
+naga-types,30.0.1,MIT OR Apache-2.0,590afbf58a6f4f62873cd5cff4468061844bafa1cdf399cc954537c22d768d49,https://github.com/gfx-rs/wgpu
+nohash-hasher,0.2.0,Apache-2.0 OR MIT,2bf50223579dc7cdcfb3bfcacf7069ff68243f8c363f62ffa99cf000a6b9c451,https://github.com/paritytech/nohash-hasher
+num-traits,0.2.19,MIT OR Apache-2.0,071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841,https://github.com/rust-num/num-traits
+objc-sys,0.3.5,MIT,cdb91bdd390c7ce1a8607f35f3ca7151b65afc0ff5ff3b34fa350f7d7c7e4310,https://github.com/madsmtm/objc2
+objc2,0.5.2,MIT,46a785d4eeff09c14c487497c162e92766fbb3e4059a71840cecc03d9a50b804,https://github.com/madsmtm/objc2
+objc2,0.6.4,MIT,3a12a8ed07aefc768292f076dc3ac8c48f3781c8f2d5851dd3d98950e8c5a89f,https://github.com/madsmtm/objc2
+objc2-app-kit,0.2.2,MIT,e4e89ad9e3d7d297152b17d39ed92cd50ca8063a89a9fa569046d41568891eff,https://github.com/madsmtm/objc2
+objc2-app-kit,0.3.2,Zlib OR Apache-2.0 OR MIT,d49e936b501e5c5bf01fda3a9452ff86dc3ea98ad5f283e1455153142d97518c,https://github.com/madsmtm/objc2
+objc2-core-data,0.2.2,MIT,617fbf49e071c178c0b24c080767db52958f716d9eabdf0890523aeae54773ef,https://github.com/madsmtm/objc2
+objc2-core-foundation,0.3.2,Zlib OR Apache-2.0 OR MIT,2a180dd8642fa45cdb7dd721cd4c11b1cadd4929ce112ebd8b9f5803cc79d536,https://github.com/madsmtm/objc2
+objc2-core-graphics,0.3.2,Zlib OR Apache-2.0 OR MIT,e022c9d066895efa1345f8e33e584b9f958da2fd4cd116792e15e07e4720a807,https://github.com/madsmtm/objc2
+objc2-core-image,0.2.2,MIT,55260963a527c99f1819c4f8e3b47fe04f9650694ef348ffd2227e8196d34c80,https://github.com/madsmtm/objc2
+objc2-encode,4.1.0,MIT,ef25abbcd74fb2609453eb695bd2f860d389e457f67dc17cafc8b8cbc89d0c33,https://github.com/madsmtm/objc2
+objc2-foundation,0.2.2,MIT,0ee638a5da3799329310ad4cfa62fbf045d5f56e3ef5ba4149e7452dcf89d5a8,https://github.com/madsmtm/objc2
+objc2-foundation,0.3.2,MIT,e3e0adef53c21f888deb4fa59fc59f7eb17404926ee8a6f59f5df0fd7f9f3272,https://github.com/madsmtm/objc2
+objc2-io-surface,0.3.2,Zlib OR Apache-2.0 OR MIT,180788110936d59bab6bd83b6060ffdfffb3b922ba1396b312ae795e1de9d81d,https://github.com/madsmtm/objc2
+objc2-metal,0.2.2,MIT,dd0cba1276f6023976a406a14ffa85e1fdd19df6b0f737b063b95f6c8c7aadd6,https://github.com/madsmtm/objc2
+objc2-metal,0.3.2,Zlib OR Apache-2.0 OR MIT,a0125f776a10d00af4152d74616409f0d4a2053a6f57fa5b7d6aa2854ac04794,https://github.com/madsmtm/objc2
+objc2-quartz-core,0.2.2,MIT,e42bee7bff906b14b167da2bac5efe6b6a07e6f7c0a21a7308d40c960242dc7a,https://github.com/madsmtm/objc2
+objc2-quartz-core,0.3.2,Zlib OR Apache-2.0 OR MIT,96c1358452b371bf9f104e21ec536d37a650eb10f7ee379fff67d2e08d537f1f,https://github.com/madsmtm/objc2
+once_cell,1.21.4,MIT OR Apache-2.0,9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50,https://github.com/matklad/once_cell
+ordered-float,5.5.0,MIT,8c7c9e0d9b23589f26070720bac724174bfec1083e82f7854cdd0267518343c0,https://github.com/reem/rust-ordered-float
+parking_lot,0.12.5,MIT OR Apache-2.0,93857453250e3077bd71ff98b6a65ea6621a19bb0f559a85248955ac12c45a1a,https://github.com/Amanieu/parking_lot
+parking_lot_core,0.9.12,MIT OR Apache-2.0,2621685985a2ebf1c516881c026032ac7deafcda1a2c9b7850dc81e3dfcb64c1,https://github.com/Amanieu/parking_lot
+peniko,0.6.1,Apache-2.0 OR MIT,839c8299360d2e998bdb106dc0a6cd71dcc5f4df51df1b620361bf50e283cca6,https://github.com/linebender/peniko
+pin-project-lite,0.2.17,Apache-2.0 OR MIT,a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd,https://github.com/taiki-e/pin-project-lite
+pkg-config,0.3.34,MIT OR Apache-2.0,f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548,https://github.com/rust-lang/pkg-config-rs
+png,0.18.1,MIT OR Apache-2.0,60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61,https://github.com/image-rs/image-png
+pollster,1.0.1,Apache-2.0/MIT,bc6355899e1c9462875b6757c79f3caa011a1fdae12bbb1a2e72dd1f234f8336,https://github.com/zesterer/pollster
+polycool,0.4.0,MIT OR Apache-2.0,50596ddc09eb5ad5f75cacd40209568e66df71baf86e1499a0e99c4cff12a5a6,https://github.com/linebender/kurbo
+presser,0.3.1,MIT OR Apache-2.0,e8cf8e6a8aa66ce33f63993ffc4ea4271eb5b0530a9002db8455ea6050c77bfa,https://github.com/EmbarkStudios/presser
+proc-macro2,1.0.107,MIT OR Apache-2.0,985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9,https://github.com/dtolnay/proc-macro2
+profiling,1.0.18,MIT OR Apache-2.0,3d595e54a326bc53c1c197b32d295e14b169e3cfeaa8dc82b529f947fba6bcf5,https://github.com/aclysma/profiling
+pxfm,0.1.30,BSD-3-Clause OR Apache-2.0,d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea,https://github.com/awxkee/pxfm
+quick-error,2.0.1,MIT/Apache-2.0,a993555f31e5a609f617c12db6250dedcac1b0a85076912c436e6fc9b2c8e6a3,http://github.com/tailhook/quick-error
+quote,1.0.47,MIT OR Apache-2.0,1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001,https://github.com/dtolnay/quote
+raw-window-handle,0.6.2,MIT OR Apache-2.0 OR Zlib,20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539,https://github.com/rust-windowing/raw-window-handle
+raw-window-metal,1.1.0,MIT OR Apache-2.0,40d213455a5f1dc59214213c7330e074ddf8114c9a42411eb890c767357ce135,https://github.com/rust-windowing/raw-window-metal
+read-fonts,0.41.0,MIT OR Apache-2.0,046a7d674daf459825b32f5062056d6882db0d2f5a479fbd76ccfc870ac18709,https://github.com/googlefonts/fontations
+renderdoc-sys,1.1.0,MIT OR Apache-2.0,19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832,https://github.com/ebkalderon/renderdoc-rs
+rfd,0.17.2,MIT,20dafead71c16a34e1ff357ddefc8afc11e7d51d6d2b9fbd07eaa48e3e540220,https://github.com/PolyMeilex/rfd
+rusqlite,0.40.2,MIT,23f2a97da3e3873c73cb2a2e71b35c40ff95e0b1eefa8d72d8499a6928c3b5b3,https://github.com/rusqlite/rusqlite
+rustc-hash,1.1.0,Apache-2.0/MIT,08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2,https://github.com/rust-lang-nursery/rustc-hash
+rustc-hash,2.1.3,Apache-2.0 OR MIT,6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d,https://github.com/rust-lang/rustc-hash
+rustix,1.1.4,Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT,b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190,https://github.com/bytecodealliance/rustix
+scopeguard,1.2.0,MIT OR Apache-2.0,94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49,https://github.com/bluss/scopeguard
+self_cell,1.3.0,Apache-2.0 OR GPL-2.0-only,2ab42ca02749e120097e328d91d415325bdf43b1c72c4c8badf37375fe40a813,https://github.com/Voultapher/self_cell
+serde,1.0.229,MIT OR Apache-2.0,4148590afebada386688f18773da617792bf2ef03ffc1e4cbd2b1d45b023e0ba,https://github.com/serde-rs/serde
+serde_core,1.0.229,MIT OR Apache-2.0,67dca2c9c51e58a4791a4b1ed58308b39c64224d349a935ab5039aa360942a48,https://github.com/serde-rs/serde
+serde_derive,1.0.229,MIT OR Apache-2.0,e7a5d71263a5a7d47b41f6b3f06ba276f10cc18b0931f1799f710578e2309348,https://github.com/serde-rs/serde
+serde_json,1.0.151,MIT OR Apache-2.0,c841b55ecdae098c80dcae9cf767f6f8a0c2cdb3416bbef72181df4d0fe73f14,https://github.com/serde-rs/json
+sha2,0.10.9,MIT OR Apache-2.0,a7507d819769d01a365ab707794a4084392c824f54a7a6a7862f8c3d0892b283,https://github.com/RustCrypto/hashes
+shlex,2.0.1,MIT OR Apache-2.0,f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba,https://github.com/comex/rust-shlex
+simd-adler32,0.3.10,MIT,3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea,https://github.com/mcountryman/simd-adler32
+skrifa,0.44.0,MIT OR Apache-2.0,819ab7d62b1d3e72d9d9dea5650bac30424f9111364bb94928dbf5ecad1baa68,https://github.com/googlefonts/fontations
+smallvec,1.16.0,MIT OR Apache-2.0,b9be42f50aa861c555654aa3a37f52f4b1074bacf4e48fe0ef7fa584e80f1f0f,https://github.com/servo/rust-smallvec
+smol_str,0.2.2,MIT OR Apache-2.0,dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead,https://github.com/rust-analyzer/smol_str
+spirv,0.4.0+sdk-1.4.341.0,Apache-2.0,d9571ea910ebd84c86af4b3ed27f9dbdc6ad06f17c5f96146b2b671e2976744f,https://github.com/gfx-rs/rspirv
+static_assertions,1.1.0,MIT OR Apache-2.0,a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f,https://github.com/nvzqz/static-assertions-rs
+syn,2.0.119,MIT OR Apache-2.0,872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297,https://github.com/dtolnay/syn
+syn,3.0.5,MIT OR Apache-2.0,12df2e0110f65b775f769bb17ef989067a1d931b2eb822bd4346631eeada89f9,https://github.com/dtolnay/syn
+tempfile,3.27.0,MIT OR Apache-2.0,32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd,https://github.com/Stebalien/tempfile
+termcolor,1.4.1,Unlicense OR MIT,06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755,https://github.com/BurntSushi/termcolor
+thiserror,2.0.20,MIT OR Apache-2.0,ec86235f5fcc2a73650310756d2ac5b138a5780bbbdfae3eeccec992c435ba4f,https://github.com/dtolnay/thiserror
+thiserror-impl,2.0.20,MIT OR Apache-2.0,bc04cd3e1236dd4a98afca4569f2deb3f120e5422a4023be2cb683f8486292af,https://github.com/dtolnay/thiserror
+tiff,0.11.3,MIT,b63feaf3343d35b6ca4d50483f94843803b0f51634937cc2ec519fc32232bc52,https://github.com/image-rs/image-tiff
+tr-app,0.1.0,,,
+tr-core,0.1.0,,,
+tr-platform,0.1.0,,,
+tr-render,0.1.0,,,
+tr-store,0.1.0,,,
+tr-worker,0.1.0,,,
+tracing,0.1.44,MIT,63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100,https://github.com/tokio-rs/tracing
+tracing-attributes,0.1.31,MIT,7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da,https://github.com/tokio-rs/tracing
+tracing-core,0.1.36,MIT,db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a,https://github.com/tokio-rs/tracing
+truerenderer,0.1.0,,,
+type-map,0.5.1,MIT/Apache-2.0,cb30dbbd9036155e74adad6812e9898d03ec374946234fbcebd5dfc7b9187b90,https://github.com/kardeiz/type-map
+typenum,1.20.1,MIT OR Apache-2.0,b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20,https://github.com/paholg/typenum
+unicode-general-category,1.1.0,Apache-2.0,0b993bddc193ae5bd0d623b49ec06ac3e9312875fdae725a975c51db1cc1677f,https://github.com/yeslogic/unicode-general-category
+unicode-ident,1.0.24,(MIT OR Apache-2.0) AND Unicode-3.0,e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75,https://github.com/dtolnay/unicode-ident
+unicode-segmentation,1.13.3,MIT OR Apache-2.0,c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8,https://github.com/unicode-rs/unicode-segmentation
+unicode-width,0.2.2,MIT OR Apache-2.0,b4ac048d71ede7ee76d585517add45da530660ef4390e49b098733c6e897f254,https://github.com/unicode-rs/unicode-width
+uuid,1.26.0,Apache-2.0 OR MIT,b5772d71c9be8a8a6ac2117d949c5b224c1b72241bb611d9a3012edcf8af7812,https://github.com/uuid-rs/uuid
+vcpkg,0.2.15,MIT/Apache-2.0,accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426,https://github.com/mcgoo/vcpkg-rs
+vello_common,0.1.0,Apache-2.0 OR MIT,b2e9aed918117e8152c9eddfd8362d73c465c23f26c44786aa331707b8a64fa2,https://github.com/linebender/vello
+vello_cpu,0.1.0,Apache-2.0 OR MIT,ac7349e1f55f6b801c7c277958df4ea53e7f20f21e8014910ad888b2ecda93ea,https://github.com/linebender/vello
+version_check,0.9.5,MIT/Apache-2.0,0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a,https://github.com/SergioBenitez/version_check
+wayland-sys,0.31.11,MIT,d8eab23fefc9e41f8e841df4a9c707e8a8c4ed26e944ef69297184de2785e3be,https://github.com/smithay/wayland-rs
+web-time,1.1.0,MIT OR Apache-2.0,5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb,https://github.com/daxpedda/web-time
+weezl,0.1.12,MIT OR Apache-2.0,a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88,https://github.com/image-rs/weezl
+wgpu,30.0.1,MIT OR Apache-2.0,527ccdf43dd5b2e8676eed9984ce00e2bbb0a1b85b70c1969dcb6cd2eb55ab9e,https://github.com/gfx-rs/wgpu
+wgpu-core,30.0.1,MIT OR Apache-2.0,14c018fce9b6270aa203c2fdd56f3cce996713534bd757e4ea58c8560b121f14,https://github.com/gfx-rs/wgpu
+wgpu-core-deps-apple,30.0.1,MIT OR Apache-2.0,061f3d319a40d39d00b1ecc2c33b89fe21d4e6fe01859df3500a3a8ecccd6b68,https://github.com/gfx-rs/wgpu
+wgpu-hal,30.0.1,MIT OR Apache-2.0,b6b7fb58561a792bc237628ba0792e332de418fefe145f13b5ed8201e6d52f58,https://github.com/gfx-rs/wgpu
+wgpu-naga-bridge,30.0.1,MIT OR Apache-2.0,d2f62e73117bb7a62bfd9c5a5841438a823f6566c6442a808ee269d2d055c081,https://github.com/gfx-rs/wgpu
+wgpu-types,30.0.1,MIT OR Apache-2.0,99dad6f1fbdbbdb4c278a6508b059d44688f5cebddf78d005a46a31340269286,https://github.com/gfx-rs/wgpu
+winit,0.30.13,Apache-2.0,a6755fa58a9f8350bd1e472d4c3fcc25f824ec358933bba33306d0b63df5978d,https://github.com/rust-windowing/winit
+zerocopy,0.8.56,BSD-2-Clause OR Apache-2.0 OR MIT,556764e583adb45a9f8d413c2a147fa7e8d821e48e12b14fd560b607998b75eb,https://github.com/google/zerocopy
+zerocopy-derive,0.8.56,BSD-2-Clause OR Apache-2.0 OR MIT,f2ab42fc20575779bd240faa45f94a74256f755c0fa9e89f0ede20d91d0cdfc1,https://github.com/google/zerocopy
+zlib-rs,0.6.7,Zlib,34b31d188d9d685a4f9c7b46d6e36631b07058d2cfe190267adce54dc230bf12,https://github.com/trifectatechfoundation/zlib-rs
+zmij,1.0.23,MIT,29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b,https://github.com/dtolnay/zmij
+zune-core,0.5.3,MIT OR Apache-2.0 OR Zlib,d56377fd46368984a170bc5aac5567e52ca5da874caa60bea39fcbca78fb658b,https://github.com/etemesi254/zune-image
+zune-jpeg,0.5.15,MIT OR Apache-2.0 OR Zlib,27bc9d5b815bc103f142aa054f561d9187d191692ec7c2d1e2b4737f8dbd7296,https://github.com/etemesi254/zune-image/tree/dev/crates/zune-jpeg

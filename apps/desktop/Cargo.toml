@@ -1,0 +1,19 @@
+[package]
+name = "truerenderer"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+tr-core = { path = "../../crates/tr-core" }
+tr-app = { path = "../../crates/tr-app" }
+tr-render = { path = "../../crates/tr-render" }
+tr-store = { path = "../../crates/tr-store" }
+tr-platform = { path = "../../crates/tr-platform" }
+eframe.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+rfd = "=0.17.2"
+fs2 = "0.4"
+image.workspace = true
+[dev-dependencies]
+tempfile.workspace = true

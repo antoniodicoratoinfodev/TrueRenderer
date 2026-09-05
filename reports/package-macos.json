@@ -1,0 +1,17 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.0",
+  "format": "macOS arm64 app bundle",
+  "signature": "ad hoc; verified with codesign --deep --strict",
+  "finder_smoke": "waiting for user macOS Desktop permission",
+  "binaries": {
+    "TrueRenderer": {
+      "bytes": 17214912,
+      "sha256": "69d18e5ae9f931c1b6f1a4049dcc25f7e62f6c7ab8c8e42cc02e80963c001de7"
+    },
+    "tr-worker": {
+      "bytes": 880784,
+      "sha256": "d7b8990f84b5e847ce000ed122ab2ea8b1a7265842aaaa35909e10cac3465c89"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+[package]
+name = "tr-worker"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+[dependencies]
+tr-core = { path = "../tr-core" }
+image.workspace = true
+anyhow.workspace = true

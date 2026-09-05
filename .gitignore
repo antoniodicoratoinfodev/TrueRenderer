@@ -1,0 +1,6 @@
+/target/
+/.tools/
+/var/
+/dist/
+/.DS_Store
+*.sqlite*

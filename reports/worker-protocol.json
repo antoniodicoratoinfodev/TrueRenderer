@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case": "unknown_version",
+      "passed": true
+    },
+    {
+      "case": "oversized_control",
+      "passed": true
+    },
+    {
+      "case": "oversized_source",
+      "passed": true
+    },
+    {
+      "case": "unknown_control_field",
+      "passed": true
+    },
+    {
+      "case": "truncated_header",
+      "passed": true
+    },
+    {
+      "case": "decode_error_then_valid_job_same_process",
+      "passed": true
+    }
+  ]
+}
