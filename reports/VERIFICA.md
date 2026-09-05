@@ -18,10 +18,12 @@ Aggiornamento: 6 settembre 2026. Build interna 0.1.0.
 | Native UI da binario | Passato | Metal/Apple M4, 12 immagini, griglia/anteprima/confronto, tre screenshot |
 | Calcolo WGSL vs CPU | Passato per il solo stadio provato | 4.096 campioni, massimo errore assoluto 9,536743e-7; soglia 1e-4 |
 | Bundle `.app`, plist, arm64 e firma ad hoc | Passato | `codesign --verify --deep --strict`, plist valido, Mach-O arm64 |
-| Primo avvio del bundle via Finder/LaunchServices | In attesa del consenso macOS al Desktop | Il log TCC registra `AUTHREQ_PROMPTING` per `kTCCServiceSystemPolicyDesktopFolder` e `it.truerenderer.prototype` |
-| Trasferimento della cartella di progetto | Controllo predisposto, non ancora concluso | `var/relocation-check/`; richiede il medesimo consenso macOS |
+| Primo avvio del bundle via Finder/LaunchServices | Passato dopo il consenso macOS | `finder-macos.json`: 12 immagini, zero errori, Metal, 60 frame |
+| Copia indipendente del runtime | Passato | `relocation-check.json`, `relocation-macos.json`: bundle/corpus copiati, database nella nuova cartella |
+| Laboratorio XPC con App Sandbox | Controlli del laboratorio passati | `xpc-sandbox-macos.json`: file/rete negati, FD readonly, versione errata e crash contenuti |
+| Laboratorio XPC con limite processi | Controlli del laboratorio passati | `xpc-sandbox-limited-macos.json`: `RLIMIT_NPROC` 0 blocca figli e non può essere rialzato |
 
-La richiesta del Desktop è una protezione del sistema operativo: il progetto conserva corpus e libreria sul Desktop come richiesto. Il consenso non viene dato automaticamente e le impostazioni privacy non sono state modificate. Il messaggio dell'app è dichiarato in `NSDesktopFolderUsageDescription`.
+La richiesta iniziale del Desktop è stata osservata nei log TCC (`AUTHREQ_PROMPTING` per `it.truerenderer.prototype`); il successivo avvio è terminato con esito positivo. Il progetto conserva corpus e libreria sul Desktop come richiesto. Il consenso non è stato dato automaticamente e le impostazioni privacy non sono state modificate. Il messaggio dell'app è dichiarato in `NSDesktopFolderUsageDescription`.
 
 Fonti e spiegazione del comportamento: [documentazione Apple della chiave Desktop](https://developer.apple.com/documentation/bundleresources/information-property-list/nsdesktopfolderusagedescription), [controllo degli accessi ai file macOS](https://support.apple.com/guide/security/controlling-app-access-to-files-secddd1d86a6/web).
 
@@ -36,8 +38,12 @@ I tempi registrati nello smoke sono misure di una singola esecuzione e non sono 
 
 ## Cosa questi risultati non dimostrano
 
-Non sono prove della sandbox OS, dell'accessibilità con VoiceOver/NVDA, di Windows, del recupero da device loss, della gestione ICC o della fedeltà del display. Il test GPU non misura ΔE00, LUT, gamut o filtro Lanczos3. Non qualificano RAW, XMP, JPEG/TIFF nativi o gigapixel. I render rimangono Anteprima e R0 resta aperto.
+Il laboratorio prova restrizioni concrete di un servizio XPC separato; non qualifica ancora la sandbox del decoder dell’app, un tetto di memoria, la revoca degli handle o l’autenticazione di un firmatario di release. App Sandbox da sola consente il figlio `/usr/bin/true`; il limite aggiuntivo è stato provato soltanto sul Mac indicato. Due connessioni hanno condiviso lo stesso PID. Dettagli e limiti in `experiments/macos-xpc/README.md`.
+
+Non sono prove dell'accessibilità con VoiceOver/NVDA, di Windows, del recupero da device loss, della gestione ICC o della fedeltà del display. Il test GPU non misura ΔE00, LUT, gamut o filtro Lanczos3. Non qualificano RAW, XMP, JPEG/TIFF nativi o gigapixel. La rilocazione riguarda i file necessari al runtime; non prova una ricompilazione della toolchain dopo spostamento. I render rimangono Anteprima e R0 resta aperto.
 
 ## Riproduzione
 
 `scripts/verify.sh` esegue build/lint/test e protocollo. `scripts/verify.sh --gui` aggiunge lo smoke nativo. `scripts/build-macos.sh` crea e verifica la firma del bundle; il test LaunchServices è `open -W dist/TrueRenderer.app --args --smoke-test`. Il primo avvio del bundle può richiedere di consentire l'accesso al Desktop nella finestra di macOS.
+
+Il laboratorio XPC usa `python3 scripts/build-xpc-probe.py` e `python3 scripts/test-xpc-probe.py`; ripetere entrambi con `--limited` per la seconda variante. Le suite del laboratorio sono separate dai 23 test Rust e dalle 6 prove IPC del decoder.

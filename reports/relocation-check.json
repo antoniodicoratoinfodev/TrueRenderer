@@ -1,0 +1,11 @@
+{
+  "root": "/Users/antonio/Desktop/TrueRenderer/var/relocation-check",
+  "stage": "passed",
+  "previous_run_mtime": 1788648169.201575,
+  "passed": true,
+  "runtime_payload": "independent copies of bundle and corpus, no symlink",
+  "scope": "runtime root discovery, not relocation/recompilation of Rust toolchain",
+  "completed_at": "2026-09-06T00:45:31.749454+02:00",
+  "smoke_report": "relocation-macos.json",
+  "database_created_under_relocated_root": true
+}

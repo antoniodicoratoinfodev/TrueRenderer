@@ -1,0 +1,73 @@
+{
+  "application": "TrueRenderer",
+  "basic_files_network_fd_checks_passed": true,
+  "capabilities": {
+    "allocation_bytes": 16777216,
+    "app_sandbox_entitlement": true,
+    "child_spawn": {
+      "denied": false,
+      "errno": 0
+    },
+    "child_status": 0,
+    "external_create": {
+      "denied": true,
+      "errno": 1
+    },
+    "external_read": {
+      "denied": true,
+      "errno": 1
+    },
+    "external_write": {
+      "denied": true,
+      "errno": 1
+    },
+    "fd_read_matches": true,
+    "fd_write_denied": true,
+    "fd_write_errno": 9,
+    "hard_memory_cap_demonstrated": false,
+    "id": 3,
+    "network_connect": {
+      "denied": true,
+      "errno": 1
+    },
+    "network_listen": {
+      "denied": true,
+      "errno": 1
+    },
+    "pid": 23135,
+    "rss_before_bytes": 8077312,
+    "rss_touched_bytes": 24870912,
+    "version": 1
+  },
+  "connections_share_process": true,
+  "crash_contained": true,
+  "date": "2026-09-05T22:44:34.154287+00:00",
+  "elapsed_seconds": 10.091968059539795,
+  "experiment": "macOS XPC capability probe 1",
+  "experiment_checks_passed": true,
+  "experiment_completed": true,
+  "first_connection_pid": 23135,
+  "full_sandbox_gate_passed": false,
+  "host_exit_code": 0,
+  "host_file_read_write_control_passed": true,
+  "host_loopback_control_passed": true,
+  "host_sha256": "9b06f9c494dd464ff342f5e41d94f9d6fa9c4d261d9c325da381e8b437693c47",
+  "host_stderr": "",
+  "machine": "arm64",
+  "macos": "26.6.2",
+  "no_external_file_created": true,
+  "other_connection_survived_invalid_request": true,
+  "policy": "App Sandbox only",
+  "protocol_lifecycle_checks_passed": true,
+  "recovered_pid": 23163,
+  "restarted_after_crash": true,
+  "scope": "Synthetic probe only; no decoder integration, memory cap, Windows or production signing qualification",
+  "second_connection_pid": 23135,
+  "signature": "ad hoc, bundle verified deep/strict",
+  "source_unchanged": true,
+  "unknown_version_connection_closed": true,
+  "worker_entitlements": {
+    "com.apple.security.app-sandbox": true
+  },
+  "worker_sha256": "9069f519fcbc539ddb85f845ac24c99bddf0e9a7a59cd0580cb35e697de4e08a"
+}

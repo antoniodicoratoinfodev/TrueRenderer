@@ -1,0 +1,76 @@
+{
+  "application": "TrueRenderer",
+  "basic_files_network_fd_checks_passed": true,
+  "capabilities": {
+    "allocation_bytes": 16777216,
+    "app_sandbox_entitlement": true,
+    "child_spawn": {
+      "denied": false,
+      "errno": 35
+    },
+    "child_status": -1,
+    "external_create": {
+      "denied": true,
+      "errno": 1
+    },
+    "external_read": {
+      "denied": true,
+      "errno": 1
+    },
+    "external_write": {
+      "denied": true,
+      "errno": 1
+    },
+    "fd_read_matches": true,
+    "fd_write_denied": true,
+    "fd_write_errno": 9,
+    "hard_memory_cap_demonstrated": false,
+    "id": 3,
+    "network_connect": {
+      "denied": true,
+      "errno": 1
+    },
+    "network_listen": {
+      "denied": true,
+      "errno": 1
+    },
+    "nproc_hard_zero": true,
+    "nproc_policy_checks_passed": true,
+    "nproc_raise_errno": 1,
+    "pid": 23174,
+    "rss_before_bytes": 8192000,
+    "rss_touched_bytes": 24985600,
+    "version": 1
+  },
+  "connections_share_process": true,
+  "crash_contained": true,
+  "date": "2026-09-05T22:45:25.626151+00:00",
+  "elapsed_seconds": 10.206805944442749,
+  "experiment": "macOS XPC capability probe 1",
+  "experiment_checks_passed": true,
+  "experiment_completed": true,
+  "first_connection_pid": 23174,
+  "full_sandbox_gate_passed": false,
+  "host_exit_code": 0,
+  "host_file_read_write_control_passed": true,
+  "host_loopback_control_passed": true,
+  "host_sha256": "e367682947ea5a60a657800cba43836baf033342708e9fa645ce53e80bee7614",
+  "host_stderr": "",
+  "machine": "arm64",
+  "macos": "26.6.2",
+  "no_external_file_created": true,
+  "other_connection_survived_invalid_request": true,
+  "policy": "App Sandbox + RLIMIT_NPROC hard/soft 0",
+  "protocol_lifecycle_checks_passed": true,
+  "recovered_pid": 23205,
+  "restarted_after_crash": true,
+  "scope": "Synthetic probe only; no decoder integration, memory cap, Windows or production signing qualification",
+  "second_connection_pid": 23174,
+  "signature": "ad hoc, bundle verified deep/strict",
+  "source_unchanged": true,
+  "unknown_version_connection_closed": true,
+  "worker_entitlements": {
+    "com.apple.security.app-sandbox": true
+  },
+  "worker_sha256": "71774a05983d07844249a65dbc09fb78c49ea122721ffd9b01be830b57b0eed4"
+}

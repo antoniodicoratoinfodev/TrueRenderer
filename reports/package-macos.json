@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "format": "macOS arm64 app bundle",
   "signature": "ad hoc; verified with codesign --deep --strict",
-  "finder_smoke": "waiting for user macOS Desktop permission",
+  "finder_smoke": "passed via LaunchServices",
   "binaries": {
     "TrueRenderer": {
       "bytes": 17214912,
@@ -13,5 +13,8 @@
       "bytes": 880784,
       "sha256": "d7b8990f84b5e847ce000ed122ab2ea8b1a7265842aaaa35909e10cac3465c89"
     }
-  }
+  },
+  "finder_smoke_report": "smoke-macos.json",
+  "finder_smoke_time": "2026-09-06T00:34:01.819892+02:00",
+  "relocation_smoke": "passed with independent bundle and corpus copies"
 }

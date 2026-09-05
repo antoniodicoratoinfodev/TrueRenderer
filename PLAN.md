@@ -24,7 +24,25 @@ Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, 
 - [x] Eseguire test di dominio/colore/IPC/persistenza, build, lint e smoke test grafico; salvare i risultati reali.
 - [x] Aggiornare lo stato finale e specificare il prossimo incremento senza dichiarare conclusa la v1.
 
-**Verifica residua dell’incremento:** consenso macOS per il primo avvio del bundle dal Finder e prova di rilocazione; codice, build e firma sono pronti. Dettagli in `reports/VERIFICA.md`.
+**Verifica dell’incremento conclusa:** avvio del bundle dal Finder passato dopo il consenso macOS al Desktop; passata anche una copia con bundle e corpus indipendenti. Dettagli in `reports/VERIFICA.md`.
+
+## Incremento successivo — prova XPC macOS
+
+- [x] Creare un laboratorio separato con host e servizio XPC firmato ad hoc, con il solo entitlement App Sandbox.
+- [x] Misurare accesso negato a file sintetici non concessi, scrittura, connessioni loopback e creazione di processi.
+- [x] Provare il trasferimento di un descrittore in sola lettura e verificare che non permetta scrittura.
+- [x] Osservare PID su due connessioni, crash/recovery e memoria del servizio senza dedurre garanzie non misurate.
+- [x] Salvare risultati e decisione successiva. Non collegare il decoder esterno prima del gate completo.
+
+Passati i controlli delle due varianti: sandbox base e sandbox con `RLIMIT_NPROC` hard/soft 0. File/rete negati, descrittore in sola lettura verificato, crash contenuto. Il limite aggiuntivo blocca i figli; due connessioni condividono un PID. Il gate sandbox completo rimane aperto. Codice, risultati e decisione in `experiments/macos-xpc/README.md`.
+
+## Prossimo incremento — integrazione del confine XPC
+
+- [ ] Portare il decoder controllato in un servizio XPC con protocollo senza percorsi.
+- [ ] Autenticare codice/firmatario, predisporre due isolati reali e conservare la copia privata degli output.
+- [ ] Implementare e misurare revoca/terminazione su timeout, cambio dominio e quota memoria; quantificare overshoot.
+- [ ] Estendere i test negativi a input ostili, descrittori residui, output concorrente e quota di risorse.
+- [ ] Affiancare la verticale Windows reale e le prove di display/accessibilità prima di chiudere R0.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 
