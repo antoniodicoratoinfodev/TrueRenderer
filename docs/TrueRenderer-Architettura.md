@@ -5,7 +5,7 @@
 
 **Nome corrente: TrueRenderer.** TrueVision è il nome precedente del progetto. I riferimenti storici ai backup conservano il nome originale.
 
-**Ultimo aggiornamento: 7 settembre 2026. Stato: TrueRenderer 0.1.3 installato e verificato; formati, ricampionamento, XPC, Finder e copia autonoma passati. Pubblicazione del codice in completamento. R0 complessivo rimane aperto.**
+**Ultimo aggiornamento: 7 settembre 2026. Stato: TrueRenderer 0.1.3 installato e verificato; formati, ricampionamento, XPC, Finder e copia autonoma passati. Codice pubblicato nel repository GitHub pubblico con licenza proprietaria. R0 complessivo rimane aperto.**
 
 Progetto: `/Users/antonio/Desktop/TrueRenderer`. Piano completo: `PLAN.md` nella cartella del progetto. Backup immutato della proposta v1.2: `docs/TrueVision-Architettura.originale-v1.2.md`.
 
@@ -27,7 +27,7 @@ Progetto: `/Users/antonio/Desktop/TrueRenderer`. Piano completo: `PLAN.md` nella
 
 Una riduzione fedele attenua i dettagli troppo fini per i pixel disponibili: non promette identità visiva con 1:1 a ogni scala. I cerchi originari della zone plate devono restare; i motivi spuri da ricampionamento vanno soppressi. Questa correzione non qualifica ancora tutti i filtri/display della v1. Il confronto completo con i capitoli 1–24 e i budget mancanti è riportato sotto.
 
-**Incremento 0.1.3:** repository GitHub pubblico [antoniodicoratoinfodev/TrueRenderer](https://github.com/antoniodicoratoinfodev/TrueRenderer), README e **licenza proprietaria** intestata ad Antonio Dicorato; le dipendenze conservano le proprie licenze. Codice pronto, caricamento pubblico in completamento dopo le prove sul pacchetto. Aggiunti Apri file, trascinamento e `--open`, JPEG/PNG/TIFF/GIF/BMP/HEIC/WebP tramite ImageIO/ColorSync e RAW a risoluzione nativa tramite CIRAWFilter. Sviluppo RAW reale, senza ripiego su JPEG incorporato, ricetta `TR-linear-v1`. Conservati i campioni a 16 bit, applicato EXIF una volta, esposta provenienza e SHA-256 effettiva.
+**Incremento 0.1.3:** repository GitHub pubblico [antoniodicoratoinfodev/TrueRenderer](https://github.com/antoniodicoratoinfodev/TrueRenderer), README e **licenza proprietaria** intestata ad Antonio Dicorato; le dipendenze conservano le proprie licenze. Codice pubblicato su `main` dopo le prove sul pacchetto: incremento applicativo `301739f`. Aggiunti Apri file, trascinamento e `--open`, JPEG/PNG/TIFF/GIF/BMP/HEIC/WebP tramite ImageIO/ColorSync e RAW a risoluzione nativa tramite CIRAWFilter. Sviluppo RAW reale, senza ripiego su JPEG incorporato, ricetta `TR-linear-v1`. Conservati i campioni a 16 bit, applicato EXIF una volta, esposta provenienza e SHA-256 effettiva.
 
 **Prove formati:** 19 immagini generate localmente, incluse PNG/TIFF 16 bit, EXIF 1–8, JPEG 12 MP e DNG Bayer 1024×768 senza preview; sei controlli su file danneggiati, firma/estensione, quota e osservazione obsoleta. Tre nuovi screenshot nativi di griglia, RAW e JPEG 12 MP; 8 schermate corpus e 14 regioni con zero differenze di canale confermati sulla 0.1.3. RAW proprietari come NEF/CR3/ARW/RAF vengono riconosciuti per l'apertura, ma la compatibilità è quella del decoder Apple installato e non è stata qualificata su ogni fotocamera. Nessuna foto privata è stata usata o pubblicata.
 
@@ -35,7 +35,7 @@ Una riduzione fedele attenua i dettagli troppo fini per i pixel disponibili: non
 
 **Registro attività**
 
-- 07/09/2026, incremento 0.1.3: completati decoder nativi e prove sui formati esterni, rifiuto contenuto degli input errati con recupero sullo stesso PID, conservazione 16 bit/alpha e orientamenti. Creato il repository pubblico, aggiunti licenza proprietaria, istruzioni per contributi e segnalazioni, README e generatori delle fixture. Pacchetto installato: regressioni, XPC, Finder e copia autonoma passati; pubblicazione in corso.
+- 07/09/2026, incremento 0.1.3: completati decoder nativi e prove sui formati esterni, rifiuto contenuto degli input errati con recupero sullo stesso PID, conservazione 16 bit/alpha e orientamenti. Creato il repository pubblico, aggiunti licenza proprietaria, istruzioni per contributi e segnalazioni, README e generatori delle fixture. Pacchetto installato: regressioni, XPC, Finder e copia autonoma passati. Pubblicato il commit applicativo `301739f`, senza database, backup, toolchain o immagini personali. Aperto e verificato anche il DNG tramite `--open`, acquisita la sola finestra nativa e lasciata l’app pronta all’uso.
 
 - 06/09/2026, incremento 0.1.2: osservata e acquisita la finestra precedente, corretto il percorso condiviso di viewer/griglia/inspector/filmstrip/confronto. Aggiunti filtro/piramide CPU e presentazione asincrona texel-per-pixel, quote locali e controlli delle risposte obsolete. Otto schermate finali e confronto numerico di 14 regioni; 1:1 1200×800, Adatta 1625×1083, 37% 444×296 e tre dimensioni griglia verificate su questo Mac. Firma/hash e dati della copia autonoma controllati; build precedente in `var/package-history/`. Aggiornati piano, README, ADR e matrice completa dei requisiti nel documento del Desktop.
 

@@ -88,7 +88,7 @@ Richiesta del titolare: repository **pubblico**, **licenza proprietaria**, READM
 - [x] Superare 19 fixture di formati, 6 controlli aggiuntivi, 32 test Rust e 6 controlli IPC; generatori riproducibili senza fotografie esterne.
 - [x] Eseguire tre schermate native di griglia, DNG e JPEG 12 MP.
 - [x] Verificare pacchetto finale, regressioni di campionamento, XPC, Finder e copia autonoma; installare 0.1.3.
-- [ ] Aggiornare entrambe le architetture e pubblicare il commit completo, escludendo dati personali e artefatti locali.
+- [x] Aggiornare entrambe le architetture e pubblicare il commit completo, escludendo dati personali e artefatti locali. Incremento applicativo `301739f` su `main`.
 
 Restano: matrice reale fotocamere/sottotipi/ICC, RAW multipiattaforma con LibRaw, memoria globale e gate R0/R1/R3 completi. I test sul DNG sintetico non qualificano ogni RAW. HEIC/WebP sono un'anticipazione limitata della precedente lista post-v1.
 
