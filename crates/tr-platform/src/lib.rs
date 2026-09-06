@@ -1,49 +1,25 @@
-//! R0 process boundary: private pipe copies, limited messages, absolute timeout.
-//! No OS sandbox is claimed. Compiled corpus digest allowlist is mandatory.
+//! R0 private-pipe protocol, with native XPC leases in a macOS app bundle.
+//! The compiled corpus gate remains mandatory until complete OS qualification.
+#[cfg(target_os = "macos")]
+mod xpc;
 use anyhow::{Context, Result, bail, ensure};
-use serde::Deserialize;
+use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{
-    collections::HashSet,
     fs::File,
     io::{BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::mpsc,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
+pub use tr_core::corpus::CorpusPolicy;
 use tr_core::{
     color::LinearImage,
     protocol::{self, DecodeRequest, MAX_SOURCE, RasterInfo},
 };
 
-#[derive(Deserialize)]
-struct Manifest {
-    images: Vec<Entry>,
-}
-#[derive(Deserialize)]
-struct Entry {
-    sha256: String,
-}
-pub struct CorpusPolicy {
-    approved: HashSet<String>,
-}
-impl Default for CorpusPolicy {
-    fn default() -> Self {
-        let manifest: Manifest =
-            serde_json::from_str(include_str!("../../../corpus/manifest.json"))
-                .expect("Trusted built-in corpus manifest");
-        Self {
-            approved: manifest.images.into_iter().map(|i| i.sha256).collect(),
-        }
-    }
-}
-impl CorpusPolicy {
-    pub fn approves(&self, digest: &str) -> bool {
-        self.approved.contains(digest)
-    }
-}
 pub fn snapshot(path: &Path) -> Result<(Vec<u8>, String)> {
     let file = File::open(path).context("Apertura in sola lettura")?;
     ensure!(
@@ -77,6 +53,8 @@ pub struct Decoded {
     pub raster: LinearImage,
     pub info: RasterInfo,
     pub digest: String,
+    pub transport: &'static str,
+    pub worker_pid: Option<u32>,
 }
 struct Work {
     id: u64,
@@ -84,16 +62,36 @@ struct Work {
     edge: u32,
     result: mpsc::SyncSender<Result<(RasterInfo, LinearImage)>>,
 }
+enum Owner {
+    Pipe(Child),
+    #[cfg(target_os = "macos")]
+    Xpc(xpc::Session),
+}
 struct Process {
-    child: Child,
+    owner: Owner,
     work: mpsc::SyncSender<Work>,
     jobs: u32,
 }
 impl Drop for Process {
     fn drop(&mut self) {
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        match &mut self.owner {
+            Owner::Pipe(child) => {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+            #[cfg(target_os = "macos")]
+            Owner::Xpc(_) => {}
+        }
     }
+}
+#[derive(Debug, Default, Clone, Serialize)]
+pub struct BrokerStatistics {
+    pub worker_pid: Option<u32>,
+    pub peak_rss_bytes: u64,
+    pub peak_footprint_bytes: u64,
+    pub completed_jobs: u64,
+    pub starts: u64,
+    pub forced_stops: u64,
 }
 pub struct Broker {
     binary: PathBuf,
@@ -101,28 +99,135 @@ pub struct Broker {
     next_id: u64,
     policy: CorpusPolicy,
     timeout: Duration,
+    memory_limit: u64,
+    slot: u32,
+    bundled_xpc: bool,
+    statistics: BrokerStatistics,
 }
 impl Broker {
     pub fn new(binary: PathBuf) -> Self {
+        Self::with_slot(binary, 0)
+    }
+    pub fn with_slot(binary: PathBuf, slot: u32) -> Self {
+        let bundled_xpc = cfg!(target_os = "macos")
+            && binary.parent().is_some_and(|folder| {
+                folder.file_name().is_some_and(|name| name == "MacOS")
+                    && folder
+                        .parent()
+                        .and_then(Path::parent)
+                        .is_some_and(|bundle| bundle.extension().is_some_and(|ext| ext == "app"))
+            });
         Self {
             binary,
             process: None,
             next_id: 0,
             policy: CorpusPolicy::default(),
             timeout: Duration::from_secs(12),
+            memory_limit: 384 * 1024 * 1024,
+            slot,
+            bundled_xpc,
+            statistics: BrokerStatistics::default(),
         }
     }
-    fn spawn(&self) -> Result<Process> {
-        let mut child = Command::new(&self.binary)
-            .env_clear()
-            .current_dir(std::env::temp_dir())
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::null())
-            .spawn()
-            .context("Avvio tr-worker; compilare entrambi i binari")?;
-        let mut input = BufWriter::new(child.stdin.take().context("stdin worker")?);
-        let mut output = BufReader::new(child.stdout.take().context("stdout worker")?);
+    pub fn transport(&self) -> &'static str {
+        if self.bundled_xpc {
+            "XPC / App Sandbox · R0"
+        } else {
+            "Processo su pipe · corpus R0"
+        }
+    }
+    pub fn statistics(&self) -> &BrokerStatistics {
+        &self.statistics
+    }
+    /// Internal qualification only; may only lower production limits.
+    pub fn tighten_limits_for_probe(&mut self, timeout: Duration, memory_bytes: u64) {
+        self.timeout = timeout.min(Duration::from_secs(12));
+        self.memory_limit = memory_bytes.min(384 * 1024 * 1024);
+    }
+    pub fn suspend_for_probe(&mut self) -> Result<()> {
+        #[cfg(target_os = "macos")]
+        if let Some(Process {
+            owner: Owner::Xpc(lease),
+            ..
+        }) = self.process.as_mut()
+        {
+            return lease.suspend_for_test();
+        }
+        bail!("La sospensione di prova richiede un isolato XPC attivo")
+    }
+    pub fn inject_memory_growth_for_probe(&mut self) -> Result<()> {
+        #[cfg(target_os = "macos")]
+        if let Some(Process {
+            owner: Owner::Xpc(lease),
+            ..
+        }) = self.process.as_mut()
+        {
+            return lease.inject_growth_for_test();
+        }
+        bail!("La prova memoria richiede un servizio XPC di qualification")
+    }
+    pub fn recycle(&mut self) {
+        self.process.take();
+    }
+    pub fn supervise_idle(&mut self) -> Result<()> {
+        if let Err(error) = self.observe_memory() {
+            self.process.take();
+            self.statistics.forced_stops += 1;
+            return Err(error);
+        }
+        Ok(())
+    }
+    fn observe_memory(&mut self) -> Result<()> {
+        #[cfg(target_os = "macos")]
+        if let Some(Process {
+            owner: Owner::Xpc(lease),
+            ..
+        }) = self.process.as_ref()
+        {
+            let (rss, footprint, pid) = lease.usage()?;
+            self.statistics.worker_pid = Some(pid);
+            self.statistics.peak_rss_bytes = self.statistics.peak_rss_bytes.max(rss);
+            self.statistics.peak_footprint_bytes =
+                self.statistics.peak_footprint_bytes.max(footprint);
+            ensure!(
+                rss.max(footprint) <= self.memory_limit,
+                "Quota memoria XPC superata: servizio interrotto"
+            );
+        }
+        Ok(())
+    }
+    fn spawn(&self, remaining: Duration) -> Result<Process> {
+        ensure!(
+            self.slot < 2 && !remaining.is_zero(),
+            "Configurazione isolato fuori limite"
+        );
+        type Input = Box<dyn Write + Send>;
+        type Output = Box<dyn Read + Send>;
+        let (owner, input, output): (Owner, Input, Output) = if self.bundled_xpc {
+            #[cfg(target_os = "macos")]
+            {
+                let (lease, input, output) = xpc::Session::open(self.slot, remaining)?;
+                (Owner::Xpc(lease), Box::new(input), Box::new(output))
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                bail!("XPC non disponibile su questo target");
+            }
+        } else {
+            let mut child = Command::new(&self.binary)
+                .env_clear()
+                .current_dir(std::env::temp_dir())
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null())
+                .spawn()
+                .context("Avvio tr-worker; compilare entrambi i binari")?;
+            let input = Box::new(child.stdin.take().context("stdin worker")?);
+            let output = Box::new(child.stdout.take().context("stdout worker")?);
+            (Owner::Pipe(child), input, output)
+        };
+        let mut input = BufWriter::new(input);
+        let mut output = BufReader::new(output);
         let (tx, rx) = mpsc::sync_channel::<Work>(1);
         thread::spawn(move || {
             while let Ok(work) = rx.recv() {
@@ -168,12 +273,22 @@ impl Broker {
             }
         });
         Ok(Process {
-            child,
+            owner,
             work: tx,
             jobs: 0,
         })
     }
     pub fn decode(&mut self, path: &Path, expected_digest: &str, edge: u32) -> Result<Decoded> {
+        self.decode_cancellable(path, expected_digest, edge, || false)
+    }
+    pub fn decode_cancellable(
+        &mut self,
+        path: &Path,
+        expected_digest: &str,
+        edge: u32,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Decoded> {
+        ensure!(!cancelled(), "Decodifica annullata");
         let (bytes, digest) = snapshot(path)?;
         ensure!(
             digest == expected_digest,
@@ -184,11 +299,13 @@ impl Broker {
             "Anteprima non disponibile: questo file non appartiene al corpus R0. La sandbox OS deve essere qualificata prima degli archivi esterni."
         );
         ensure!(edge <= 2048, "Dimensione anteprima fuori quota");
+        let started = Instant::now();
         if self.process.as_ref().is_some_and(|p| p.jobs >= 32) {
             self.process.take();
         }
         if self.process.is_none() {
-            self.process = Some(self.spawn()?);
+            self.process = Some(self.spawn(self.timeout)?);
+            self.statistics.starts += 1;
         }
         self.next_id = self.next_id.checked_add(1).context("Request ID esauriti")?;
         let (tx, rx) = mpsc::sync_channel(1);
@@ -207,19 +324,48 @@ impl Broker {
             self.process.take();
             bail!("Worker terminato; riprovare la decodifica");
         }
-        match rx.recv_timeout(self.timeout) {
-            Ok(Ok((info, raster))) => Ok(Decoded {
-                info,
-                raster,
-                digest,
-            }),
-            Ok(Err(error)) => {
+        loop {
+            if cancelled() {
                 self.process.take();
-                Err(error)
+                self.statistics.forced_stops += 1;
+                bail!("Decodifica annullata");
             }
-            Err(_) => {
+            if let Err(error) = self.observe_memory() {
                 self.process.take();
-                bail!("Worker interrotto: timeout assoluto o arresto del processo")
+                self.statistics.forced_stops += 1;
+                return Err(error);
+            }
+            let remaining = self.timeout.saturating_sub(started.elapsed());
+            if remaining.is_zero() {
+                self.process.take();
+                self.statistics.forced_stops += 1;
+                bail!("Worker interrotto: timeout assoluto");
+            }
+            match rx.recv_timeout(remaining.min(Duration::from_millis(25))) {
+                Ok(Ok((info, raster))) => {
+                    if let Err(error) = self.observe_memory() {
+                        self.process.take();
+                        self.statistics.forced_stops += 1;
+                        return Err(error);
+                    }
+                    self.statistics.completed_jobs += 1;
+                    return Ok(Decoded {
+                        info,
+                        raster,
+                        digest,
+                        transport: self.transport(),
+                        worker_pid: self.statistics.worker_pid,
+                    });
+                }
+                Ok(Err(error)) => {
+                    self.process.take();
+                    return Err(error);
+                }
+                Err(mpsc::RecvTimeoutError::Timeout) => continue,
+                Err(mpsc::RecvTimeoutError::Disconnected) => {
+                    self.process.take();
+                    bail!("Worker interrotto: arresto del processo")
+                }
             }
         }
     }
@@ -261,8 +407,11 @@ mod tests {
             broker.decode(&path, &digest, 320).unwrap().raster.width,
             320
         );
-        broker.process.as_mut().unwrap().child.kill().unwrap();
-        broker.process.as_mut().unwrap().child.wait().unwrap();
+        let Owner::Pipe(child) = &mut broker.process.as_mut().unwrap().owner else {
+            panic!("expected pipe worker")
+        };
+        child.kill().unwrap();
+        child.wait().unwrap();
         assert!(broker.decode(&path, &digest, 320).is_err());
         assert!(broker.process.is_none());
         assert_eq!(

@@ -1,3 +1,4 @@
+use crate::decode_pool::{DecodePool, Job};
 use eframe::egui;
 use std::{
     collections::VecDeque,
@@ -11,7 +12,7 @@ use std::{
     time::Duration,
 };
 use tr_core::{Annotation, Item};
-use tr_platform::{Broker, CorpusPolicy, Decoded};
+use tr_platform::{CorpusPolicy, Decoded};
 use tr_render::PreparedImage;
 use tr_store::Catalog;
 
@@ -36,6 +37,11 @@ pub enum Request {
     Shutdown,
 }
 pub enum Event {
+    DecodeDeferred {
+        id: String,
+        edge: u32,
+        generation: u64,
+    },
     Scanned {
         items: Vec<Item>,
         folder: PathBuf,
@@ -88,7 +94,12 @@ impl Service {
                     return;
                 }
             };
-            let mut broker = Broker::new(worker);
+            let pool = DecodePool::start(
+                worker,
+                worker_generation.clone(),
+                events_tx.clone(),
+                ctx.clone(),
+            );
             let policy = CorpusPolicy::default();
             let corpus = root
                 .join("corpus")
@@ -214,19 +225,17 @@ impl Service {
                         if generation != worker_generation.load(Ordering::Relaxed) {
                             continue;
                         }
-                        let result = broker
-                            .decode(&item.path, &item.digest, edge)
-                            .map(|decoded| {
-                                let prepared = tr_render::prepare(&decoded.raster);
-                                (decoded, prepared)
-                            })
-                            .map_err(|e| format!("{e:#}"));
-                        send(Event::Image {
-                            id: item.id,
+                        if let Err(job) = pool.submit(Job {
+                            item,
                             edge,
                             generation,
-                            result: Box::new(result),
-                        });
+                        }) {
+                            send(Event::DecodeDeferred {
+                                id: job.item.id,
+                                edge,
+                                generation,
+                            });
+                        }
                     }
                     Request::Save {
                         id,
@@ -295,6 +304,7 @@ impl Service {
                         Err(e) => send(Event::Status(format!("Export non riuscito: {e:#}"))),
                     },
                     Request::Shutdown => {
+                        drop(pool);
                         send(Event::Stopped);
                         break;
                     }
@@ -313,6 +323,78 @@ impl Service {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    #[cfg(unix)]
+    fn annotation_save_remains_available_while_decoder_is_stalled() {
+        use std::{os::unix::fs::PermissionsExt, time::Instant};
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../..")
+            .canonicalize()
+            .unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let worker = data.path().join("stalled-worker");
+        let marker = data.path().join("decoder-started");
+        let quoted = marker.to_string_lossy().replace('\'', "'\\''");
+        std::fs::write(
+            &worker,
+            format!("#!/bin/sh\n: > '{quoted}'\nexec /bin/sleep 5\n"),
+        )
+        .unwrap();
+        std::fs::set_permissions(&worker, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let service = Service::start(
+            root.clone(),
+            data.path().join("db"),
+            worker,
+            egui::Context::default(),
+        );
+        service.generation.store(1, Ordering::Relaxed);
+        service
+            .high
+            .send(Request::Scan {
+                folder: root.join("corpus"),
+                generation: 1,
+            })
+            .unwrap();
+        let Event::Scanned { items, .. } =
+            service.events.recv_timeout(Duration::from_secs(5)).unwrap()
+        else {
+            panic!("scan failed")
+        };
+        let item = items[0].clone();
+        service
+            .low
+            .send(Request::Decode {
+                item: item.clone(),
+                edge: 320,
+                generation: 1,
+            })
+            .unwrap();
+        let deadline = Instant::now() + Duration::from_secs(2);
+        while !marker.exists() && Instant::now() < deadline {
+            thread::sleep(Duration::from_millis(5));
+        }
+        assert!(marker.exists(), "decoder did not start");
+        service
+            .high
+            .send(Request::Save {
+                id: item.id,
+                expected: 0,
+                annotation: Annotation {
+                    rating: 5,
+                    ..Default::default()
+                },
+            })
+            .unwrap();
+        assert!(matches!(
+            service.events.recv_timeout(Duration::from_secs(1)).unwrap(),
+            Event::Saved { revision: 1, .. }
+        ));
+        service.high.send(Request::Shutdown).unwrap();
+        assert!(matches!(
+            service.events.recv_timeout(Duration::from_secs(2)).unwrap(),
+            Event::Stopped
+        ));
+    }
     #[test]
     #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
     fn asynchronous_scan_save_undo_and_invalid_mutation() {

@@ -36,13 +36,24 @@ Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, 
 
 Passati i controlli delle due varianti: sandbox base e sandbox con `RLIMIT_NPROC` hard/soft 0. File/rete negati, descrittore in sola lettura verificato, crash contenuto. Il limite aggiuntivo blocca i figli; due connessioni condividono un PID. Il gate sandbox completo rimane aperto. Codice, risultati e decisione in `experiments/macos-xpc/README.md`.
 
-## Prossimo incremento — integrazione del confine XPC
+## Incremento 0.1.1 — integrazione del confine XPC
 
-- [ ] Portare il decoder controllato in un servizio XPC con protocollo senza percorsi.
-- [ ] Autenticare codice/firmatario, predisporre due isolati reali e conservare la copia privata degli output.
-- [ ] Implementare e misurare revoca/terminazione su timeout, cambio dominio e quota memoria; quantificare overshoot.
+Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 installata in `dist/TrueRenderer.app`; prove native del decoder, controllo grafico e copia autonoma passati. Restano aperti i gate elencati sotto.
+
+- [x] Portare il decoder controllato in due servizi XPC con protocollo senza percorsi e allowlist anche nel decoder.
+- [x] Vincolare il broker al CDHash del servizio installato, verificare due PID reali e conservare la copia privata degli output.
+- [x] Separare i due decoder dal writer SQLite; coda di 64 richieste, priorità, cancellazione e riciclo al cambio generazione.
+- [x] Misurare terminazione di un decoder sospeso, recupero indipendente e supervisione memoria con fault injection limitata a 512 MiB.
+- [x] Verificare che il servizio normale rifiuti il comando di fault injection.
+- [x] Completare smoke grafico, avvio Finder e rilocazione della build 0.1.1.
+- [x] Verificare il riciclo del decoder inattivo al cambio cartella, anche senza nuovi job; 26 test Rust e 6 prove IPC passati.
+- [ ] Qualificare il firmatario di release e il requisito reciproco dei peer; il controllo attuale del servizio verifica soltanto l’identificatore dell’host.
+- [ ] Qualificare l’API di terminazione per i minimi OS: attualmente libproc SPI con audit token, verificata su macOS 26.6.2.
+- [ ] Estendere misure di revoca al cambio dominio, handle duplicati e overshoot sotto pressione; il campionamento RSS non è un tetto rigido.
 - [ ] Estendere i test negativi a input ostili, descrittori residui, output concorrente e quota di risorse.
 - [ ] Affiancare la verticale Windows reale e le prove di display/accessibilità prima di chiudere R0.
+
+Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Il prossimo lavoro sul Mac è la suite avversaria del bootstrap e del ciclo di vita, seguita dal budget memoria end-to-end. I PNG esterni restano esclusi dal decoder; l’integrazione non chiude il gate completo della sandbox.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 

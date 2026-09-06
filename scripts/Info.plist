@@ -6,8 +6,8 @@
 <key>CFBundleIdentifier</key><string>it.truerenderer.prototype</string>
 <key>CFBundleExecutable</key><string>TrueRenderer</string>
 <key>CFBundlePackageType</key><string>APPL</string>
-<key>CFBundleShortVersionString</key><string>0.1.0</string>
-<key>CFBundleVersion</key><string>1</string>
+<key>CFBundleShortVersionString</key><string>0.1.1</string>
+<key>CFBundleVersion</key><string>2</string>
 <key>NSHighResolutionCapable</key><true/>
 <key>NSDesktopFolderUsageDescription</key><string>TrueRenderer usa la cartella TrueRenderer sul Desktop per leggere le immagini di prova e conservare annotazioni e backup locali.</string>
 <key>NSSupportsAutomaticGraphicsSwitching</key><true/>

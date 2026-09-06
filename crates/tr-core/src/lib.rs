@@ -1,4 +1,5 @@
 pub mod color;
+pub mod corpus;
 pub mod protocol;
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};

@@ -1,5 +1,7 @@
+mod decode_pool;
 mod service;
 mod ui;
+mod verify_xpc;
 use anyhow::{Context, Result};
 use eframe::egui;
 use std::{fs::OpenOptions, path::PathBuf};
@@ -25,6 +27,20 @@ fn run() -> Result<()> {
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))
         .canonicalize()?;
     let smoke = args.iter().any(|a| a == "--smoke-test");
+    let worker = executable
+        .parent()
+        .context("Cartella binario")?
+        .join(if cfg!(windows) {
+            "tr-worker.exe"
+        } else {
+            "tr-worker"
+        });
+    if args.iter().any(|a| a == "--verify-xpc") {
+        return verify_xpc::run(&root, &worker);
+    }
+    if args.iter().any(|a| a == "--verify-xpc-growth") {
+        return verify_xpc::run_growth(&root, &worker);
+    }
     let data =
         option("--data").unwrap_or_else(|| root.join(if smoke { "var/smoke" } else { "var" }));
     std::fs::create_dir_all(&data)?;
@@ -37,14 +53,6 @@ fn run() -> Result<()> {
         .open(data.join("instance.lock"))?;
     fs2::FileExt::try_lock_exclusive(&lock)
         .context("TrueRenderer è già aperto con questa libreria")?;
-    let worker = executable
-        .parent()
-        .context("Cartella binario")?
-        .join(if cfg!(windows) {
-            "tr-worker.exe"
-        } else {
-            "tr-worker"
-        });
     anyhow::ensure!(
         worker.is_file(),
         "Manca tr-worker accanto all'applicazione. Eseguire scripts/build-macos.sh."
@@ -73,6 +81,9 @@ fn run() -> Result<()> {
 fn main() {
     if let Err(error) = run() {
         eprintln!("TrueRenderer: {error:#}");
+        if std::env::args().any(|a| a.starts_with("--verify-xpc") || a == "--smoke-test") {
+            std::process::exit(1);
+        }
         rfd::MessageDialog::new()
             .set_title("TrueRenderer")
             .set_description(format!("{error:#}"))

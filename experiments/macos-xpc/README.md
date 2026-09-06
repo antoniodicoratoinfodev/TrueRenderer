@@ -61,14 +61,22 @@ o di startup a freddo. Due connessioni non equivalgono a due isolati indipendent
 La primitiva XPC/App Sandbox è concretamente utilizzabile per il confine macOS. La prova
 fornisce anche una restrizione candidata per i figli. Il gate completo rimane **aperto** e
 `full_sandbox_gate_passed` resta `false` in entrambi i report. Il decoder dell’app mantiene
-la propria allowlist e il processo su pipe del primo prototipo.
+la propria allowlist. L’incremento 0.1.1 ha ora integrato due servizi XPC distinti nel bundle;
+il trasporto su pipe rimane nei binari di sviluppo fuori bundle.
 
-Per il prossimo incremento: integrare un decoder privo di percorsi nel servizio, autenticare
-il firmatario e il bundle attesi, gestire due processi realmente distinti, trasferire buffer
-bounded con copia privata, definire terminazione/revoca dopo timeout o cambio di dominio,
-misurare memoria totale/overshoot e quote, poi provare corpus avversario e Windows reale.
+Il decoder senza percorsi, la copia privata, due PID distinti e le prove di timeout/memoria
+sono descritti in `docs/adr/0002-xpc-decoder-r0.md` e nei report `xpc-integration-macos.json`
+e `xpc-memory-growth-macos.json`. Restano da qualificare il firmatario, l’API di terminazione,
+le quote end-to-end, gli handle residui, il corpus avversario esteso e Windows reale.
 Il limite processi non limita heap/mmap/thread e la sandbox conserva l’autorità sul proprio
 container e sulle risorse di sistema consentite dal profilo.
+
+Il laboratorio aggiuntivo del riferimento kernel è in `control-host.m` e `control-worker.m`.
+Si costruisce con `python3 scripts/build-xpc-control-probe.py` e si esegue con
+`var/control-probe/ControlProbe.app/Contents/MacOS/ControlProbe`; stampa un JSON su stdout.
+`reports/xpc-control-macos.json` conserva la prova di misura, sospensione e segnale tramite
+audit token. Il risultato 5 di `task_terminate` è una limitazione osservata, non un metodo
+usato per terminare i decoder dell’app. Compatibilità della SPI ancora da qualificare.
 
 ## Riferimenti
 

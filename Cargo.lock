@@ -3014,23 +3014,24 @@ dependencies = [
 
 [[package]]
 name = "tr-app"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "tr-core",
 ]
 
 [[package]]
 name = "tr-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "serde",
  "serde_json",
+ "sha2",
 ]
 
 [[package]]
 name = "tr-platform"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "serde",
@@ -3042,7 +3043,7 @@ dependencies = [
 
 [[package]]
 name = "tr-render"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "eframe",
@@ -3051,7 +3052,7 @@ dependencies = [
 
 [[package]]
 name = "tr-store"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "rusqlite",
@@ -3063,7 +3064,7 @@ dependencies = [
 
 [[package]]
 name = "tr-worker"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "image",
@@ -3104,7 +3105,7 @@ dependencies = [
 
 [[package]]
 name = "truerenderer"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "eframe",

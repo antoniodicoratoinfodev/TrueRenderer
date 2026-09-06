@@ -5,7 +5,7 @@
 
 **Nome corrente: TrueRenderer.** TrueVision è il nome precedente del progetto. I riferimenti storici ai backup conservano il nome originale.
 
-**Ultimo aggiornamento: 6 settembre 2026. Stato: prototipo R0 funzionante, avvio Finder e copia del runtime verificati; completato anche il laboratorio XPC macOS. R0 complessivo rimane aperto.**
+**Ultimo aggiornamento: 6 settembre 2026. Stato: TrueRenderer 0.1.1 installato sul Desktop; integrazione XPC, prove native, avvio Finder e copia autonoma passati. R0 complessivo rimane aperto.**
 
 Progetto: `/Users/antonio/Desktop/TrueRenderer`. Piano completo: `PLAN.md` nella cartella del progetto. Backup immutato della proposta v1.2: `docs/TrueVision-Architettura.originale-v1.2.md`.
 
@@ -13,17 +13,23 @@ Progetto: `/Users/antonio/Desktop/TrueRenderer`. Piano completo: `PLAN.md` nella
 |---|---|---|
 | Piano | Preparata roadmap R0–R4 con dipendenze e gate | Aggiornare dopo ogni incremento |
 | Ambiente | Rust 1.98.1 locale, Cargo.lock e inventario di 206 package build/test macOS | Qualifica dipendenze e canali R0/R4 |
-| Codice | 6 crate + desktop compilabili; griglia, viewer, confronto, annotazioni, backup/undo e corpus PNG | Proseguire le prove e i confini mancanti di R0 |
-| Verifica | 23 test Rust e 6 prove IPC passati; fmt/clippy senza avvisi; smoke nativo Metal e 3 screenshot | Estendere ai prossimi incrementi e a Windows |
+| Codice | 6 crate + desktop; due decoder XPC separati dal writer delle annotazioni, coda finita e cancellazione | Proseguire le prove e i confini mancanti di R0 |
+| Verifica | 26 test Rust e 6 prove IPC passati; XPC, timeout, crescita memoria, Finder e copia autonoma verificati | Estendere suite avversaria e prove sui target mancanti |
 | GPU | Apple M4/Metal: 4.096 campioni, errore massimo 9,54e-7 contro soglia 1e-4 | ICC/LUT, display e recovery non qualificati |
-| Pacchetto | Bundle release arm64 firmato ad hoc; avvio Finder e copia indipendente di bundle/corpus passati | Firma di distribuzione e target Windows in R4 |
-| Sandbox macOS | Due varianti XPC provate: file/rete negati, FD readonly, crash/recovery; limite aggiuntivo blocca figli | Integrazione decoder, memoria/revoca e firma del peer da qualificare |
+| Pacchetto | 0.1.1 release arm64 con due servizi XPC; firma, hash, Finder e copia indipendente verificati | Firma di distribuzione e target Windows in R4 |
+| Sandbox macOS | Decoder integrato in due servizi, CDHash verificato dal broker, controllo Mach/audit token, soglia 384 MiB | Firma di release, compatibilità libproc SPI e gate avversari completi |
 | R0 | Aperto | Sandbox, display, Windows, accessibilità e corpus reale |
 | R1–R4 | Pianificate, non completate | Gate descritti nel piano e in §22 |
 
 **Limite di questa fase.** È un prototipo di sviluppo, non una v1 qualificata. Standard/Riferimento, RAW, gigapixel e scrittura XMP non possono essere dichiarati disponibili senza i rispettivi test. Fino al gate sandbox i decoder vengono usati solo su corpus controllato, come stabilito dal documento.
 
 **Registro attività**
+
+- 06/09/2026, incremento 0.1.1: integrato il decoder Rust in due servizi XPC incorporati, senza percorsi nel protocollo e con allowlist verificata anche nel servizio. Due thread servono le anteprime mentre SQLite salva in un writer separato. Test con decoder bloccato: salvataggio annotazioni e shutdown passati.
+
+- 06/09/2026, prove native 0.1.1: due PID distinti e pixel identici, un decoder sospeso terminato in 216 ms nel test da 200 ms sulla build finale, altro isolato operativo e riavvio passato. Crescita controllata: massimo osservato 408.731.648 byte, 6.078.464 byte oltre soglia (circa 5,8 MiB), recupero passato. È una traiettoria misurata, non un tetto rigido. Il comando di fault injection è rifiutato dal bundle normale.
+
+- 06/09/2026, revisione finale 0.1.1: corretto un caso di revoca tardiva, riciclando anche il decoder inattivo al cambio cartella senza attendere nuovi job. Il nuovo test con worker reale passa; totale 26 test Rust. Ripulite etichette con frecce non disponibili nel font. Il pacchetto aggiornato ha superato Finder e copia autonoma: 12 immagini, due servizi XPC, zero errori e tre schermate controllate. Verificati firma, hash dei binari e integrità dei database della copia. Pacchetti precedenti conservati in `var/package-history/`; backup originale dell’architettura e 319 notice invariati nei byte.
 
 - 05/09/2026: letti i requisiti principali, creata la cartella, conservato il documento originale, registrato il cambio nome e il piano operativo; installata la toolchain locale.
 
@@ -37,7 +43,9 @@ Progetto: `/Users/antonio/Desktop/TrueRenderer`. Piano completo: `PLAN.md` nella
 
 - 06/09/2026: completato `experiments/macos-xpc/` con due suite eseguite sul Mac. Il servizio con App Sandbox nega lettura/scrittura/creazione esterne e rete, accetta il FD readonly e nega la scrittura; versione sconosciuta e crash rimangono contenuti. Due connessioni condividono un PID. La sandbox base consente figli; la variante con `RLIMIT_NPROC` hard/soft 0 li blocca (`EAGAIN`) e non può rialzare il limite (`EPERM`). Misurata un’allocazione di 16 MiB, senza dichiarare un tetto memoria. Report e istruzioni conservati; il decoder del prototipo mantiene la allowlist.
 
-**Prossimo incremento tecnico:** integrare il decoder controllato in XPC con identità del codice verificata, due isolati reali, copia privata e terminazione/revoca misurata; qualificare memoria, Windows x86-64, contratto display e accessibilità. Solo dopo i gate pertinenti si possono ammettere archivi esterni e completare viewer SDR/ICC/JPEG/TIFF di R1. R2 aggiunge catalogo completo e XMP; R3 RAW/gigapixel; R4 hardening e rilascio.
+**Limiti nuovi espliciti:** la firma ad hoc non qualifica un distributore; il servizio verifica l’identificatore dell’host, mentre il broker vincola il CDHash del decoder. La terminazione usa libproc SPI e audit token ottenuto dal task del kernel: provata su questo Mac, da qualificare per il rilascio. Nessun ripiego su segnali al solo PID. Dettagli in `docs/adr/0002-xpc-decoder-r0.md`.
+
+**Prossimo incremento tecnico:** estendere i test avversari del bootstrap XPC, dell’output e degli handle residui; misurare memoria end-to-end e pressione, chiudere la scelta di firma/API e proseguire Windows x86-64, display e accessibilità. Solo dopo i gate pertinenti si possono ammettere archivi esterni e completare viewer SDR/ICC/JPEG/TIFF di R1. R2 aggiunge catalogo completo e XMP; R3 RAW/gigapixel; R4 hardening e rilascio.
 
 <!-- TR_PROGRESS_END -->
 

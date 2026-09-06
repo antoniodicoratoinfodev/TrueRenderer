@@ -1,0 +1,24 @@
+{
+  "application": "TrueRenderer",
+  "cooperative_cancellation_ignored": true,
+  "fault_code_in_distribution_bundle": false,
+  "full_sandbox_gate_passed": false,
+  "hard_memory_cap": false,
+  "maximum_observed_bytes": 408731648,
+  "observed_overshoot_bytes": 6078464,
+  "passed": true,
+  "recovered_pid": 26792,
+  "sampling_interval_ms": 25,
+  "scope": "bounded 512 MiB fault in a separately compiled qualification service; not a hard memory cap",
+  "statistics": {
+    "completed_jobs": 1,
+    "forced_stops": 1,
+    "peak_footprint_bytes": 402408120,
+    "peak_rss_bytes": 408731648,
+    "starts": 1,
+    "worker_pid": 26748
+  },
+  "termination_ms": 1099,
+  "threshold_bytes": 402653184,
+  "version": "0.1.1"
+}

@@ -20,6 +20,8 @@ struct CachedImage {
     histogram: [[u32; 256]; 3],
     raster: Option<Arc<LinearImage>>,
     touched: u64,
+    transport: &'static str,
+    worker_pid: Option<u32>,
 }
 pub struct TrueRenderer {
     state: State,
@@ -268,6 +270,16 @@ impl TrueRenderer {
         }
         while let Ok(event) = self.service.events.try_recv() {
             match event {
+                Event::DecodeDeferred {
+                    id,
+                    edge,
+                    generation,
+                } => {
+                    if generation == self.generation {
+                        self.pending_images.remove(&(id, edge));
+                        ctx.request_repaint_after(Duration::from_millis(25));
+                    }
+                }
                 Event::Scanned {
                     items,
                     folder,
@@ -315,6 +327,8 @@ impl TrueRenderer {
                                         None
                                     },
                                     touched: self.frame_number,
+                                    transport: decoded.transport,
+                                    worker_pid: decoded.worker_pid,
                                 },
                             );
                             for (full, limit) in [(false, 64), (true, 3)] {
@@ -621,7 +635,7 @@ impl TrueRenderer {
             if ui.button("Esporta annotazioni…").on_hover_text("JSON con annotazioni e percorsi locali").clicked() && let Some(path)=rfd::FileDialog::new().set_file_name("TrueRenderer-annotazioni.json").add_filter("JSON",&["json"]).save_file(){self.request(Request::Export(path));}
             ui.add_space(24.);section(ui,"MOTORE");
             ui.label(RichText::new("CPU · fp32").monospace());
-            ui.label(RichText::new("SDR / sRGB → sistema").small().color(MUTED));
+            ui.label(RichText::new("SDR / sRGB di sistema").small().color(MUTED));
             ui.label(RichText::new("Anteprima di sviluppo").small().color(AMBER));
             ui.add_space(8.);ui.label(RichText::new("Gli originali rimangono intatti. Le annotazioni sono nella libreria locale.").small().color(MUTED));
         });
@@ -778,6 +792,9 @@ impl TrueRenderer {
                     field(ui, "Alpha", "Premoltiplicata in luce lineare");
                     field(ui, "Uscita", "sRGB 8 bit · clamp dichiarato");
                     field(ui, "Display", "Contratto da qualificare");
+                    if let Some(cached) = self.cache.get(&key) {
+                        field(ui, "Isolamento", cached.transport);
+                    }
                     if let Some(info) = info {
                         field(ui, "Decoder", &info.decoder);
                         field(ui, "Riduzione", &info.filter);
@@ -1103,7 +1120,7 @@ impl TrueRenderer {
                     );
                     ui.separator();
                     ui.label(
-                        RichText::new("sRGB → lineare Rec.2020 → sRGB")
+                        RichText::new("sRGB > lineare Rec.2020 > sRGB")
                             .small()
                             .color(MUTED),
                     );
@@ -1129,14 +1146,14 @@ impl TrueRenderer {
     fn help(&mut self, ctx: &egui::Context) {
         egui::Window::new("TrueRenderer · guida e stato").open(&mut self.show_help).default_width(620.).show(ctx,|ui|{
             ui.heading("Un'immagine, una resa tracciabile.");
-            ui.label("Prototipo R0 · 0.1.0 · 5 settembre 2026");ui.separator();
+            ui.label(format!("Prototipo R0 · {} · 6 settembre 2026", env!("CARGO_PKG_VERSION")));ui.separator();
             ui.label("Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali.");
-            ui.add_space(8.);ui.label("Il decoder ammette solo i digest del corpus incluso. Un processo separato contiene i crash ma non è ancora una sandbox OS. Le cartelle esterne possono essere elencate senza decodificarle.");
+            ui.add_space(8.);ui.label("Le anteprime sono disponibili per il corpus incluso. Nel bundle macOS due servizi isolati gestiscono la decodifica, con controllo di timeout e memoria. Le cartelle esterne possono essere elencate; le loro anteprime attendono la qualifica completa della sicurezza.");
             ui.add_space(8.);ui.label("Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima.");
             ui.add_space(8.);ui.monospace(format!("GPU: {}\nSuperficie: {}\nSQLite: {}",self.adapter,self.surface,tr_store::sqlite_version()));
             ui.label(&self.gpu_status);
             ui.separator();
-            for (key,action) in [("0–5 / X","Valuta / scarta"),("6–9","Etichette rosso, giallo, verde, blu"),("G / E / C","Griglia / anteprima / confronto"),("Z / Cmd+1","Adatta ↔ 1:1 / pixel fisici 1:1"),("Frecce / trascina / rotella","Naviga / pan / zoom"),("Cmd+F / Cmd+Z","Ricerca / annulla modifica"),("I / T / F / Esc","Pannello / miniature / schermo intero / griglia")]{field(ui,key,action);}
+            for (key,action) in [("0–5 / X","Valuta / scarta"),("6–9","Etichette rosso, giallo, verde, blu"),("G / E / C","Griglia / anteprima / confronto"),("Z / Cmd+1","Adatta o pixel fisici 1:1"),("Frecce / trascina / rotella","Naviga / pan / zoom"),("Cmd+F / Cmd+Z","Ricerca / annulla modifica"),("I / T / F / Esc","Pannello / miniature / schermo intero / griglia")]{field(ui,key,action);}
             ui.label(RichText::new("Su Windows usare Ctrl al posto di Cmd. Le scorciatoie non agiscono mentre scrivi in un campo.").small().color(MUTED));
             ui.add_space(8.);ui.label(format!("Progetto e piano: {}",self.root.display()));
         });
@@ -1197,7 +1214,7 @@ impl TrueRenderer {
             || elapsed > 55.
             || self.fatal
         {
-            let report = serde_json::json!({"application":"TrueRenderer","version":"0.1.0","passed":self.smoke_stage==5&&self.screenshots.len()==3&&!self.fatal&&self.errors.is_empty()&&self.gpu_passed,"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"sqlite":tr_store::sqlite_version(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
+            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==5&&self.screenshots.len()==3&&!self.fatal&&self.errors.is_empty()&&self.gpu_passed,"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
             let _ = std::fs::write(
                 self.root.join("reports/smoke-macos.json"),
                 serde_json::to_vec_pretty(&report).unwrap(),

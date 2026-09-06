@@ -1,20 +1,52 @@
 {
   "application": "TrueRenderer",
-  "version": "0.1.0",
+  "version": "0.1.1",
+  "passed": true,
+  "checked_at": "2026-09-06T12:11:46.766776+00:00",
   "format": "macOS arm64 app bundle",
+  "bundle": "dist/TrueRenderer.app",
   "signature": "ad hoc; verified with codesign --deep --strict",
   "finder_smoke": "passed via LaunchServices",
-  "binaries": {
-    "TrueRenderer": {
-      "bytes": 17214912,
-      "sha256": "69d18e5ae9f931c1b6f1a4049dcc25f7e62f6c7ab8c8e42cc02e80963c001de7"
+  "finder_smoke_report": "finder-macos.json",
+  "relocation_smoke": "passed with independent bundle and corpus copies",
+  "relocation_smoke_report": "relocation-macos.json",
+  "embedded_services": [
+    {
+      "bundle": "Contents/XPCServices/Decoder0.xpc",
+      "identifier": "it.truerenderer.prototype.decoder.0",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true
+      }
     },
-    "tr-worker": {
-      "bytes": 880784,
-      "sha256": "d7b8990f84b5e847ce000ed122ab2ea8b1a7265842aaaa35909e10cac3465c89"
+    {
+      "bundle": "Contents/XPCServices/Decoder1.xpc",
+      "identifier": "it.truerenderer.prototype.decoder.1",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true
+      }
+    }
+  ],
+  "binaries": {
+    "Contents/MacOS/TrueRenderer": {
+      "bytes": 17419232,
+      "sha256": "85c5e56ca4446fe0c22fff57387281e25f5d0f7f919c4c02d48f26a7ccae5593",
+      "architecture": "arm64"
+    },
+    "Contents/MacOS/tr-worker": {
+      "bytes": 932224,
+      "sha256": "a33381fda6d3080c9e4ccd0b7e03e4c090f302c68a6276eb721b830c5b91380c",
+      "architecture": "arm64"
+    },
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+      "bytes": 6111584,
+      "sha256": "f08d02314c7d4aed85f907e65166b6cb87b7b977226b9748fbff45e8095aa692",
+      "architecture": "arm64"
+    },
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+      "bytes": 6111584,
+      "sha256": "5fbf4114785062b10d29a3fc1d34556a38f46c05bd4bb2752bcedb68a793d222",
+      "architecture": "arm64"
     }
   },
-  "finder_smoke_report": "smoke-macos.json",
-  "finder_smoke_time": "2026-09-06T00:34:01.819892+02:00",
-  "relocation_smoke": "passed with independent bundle and corpus copies"
+  "scope": "internal macOS R0 prototype; distribution signer, supported OS range and full sandbox gate remain open"
 }

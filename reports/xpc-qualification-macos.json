@@ -1,0 +1,18 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.1",
+  "passed": true,
+  "checked_at": "2026-09-06T12:07:36.175466+00:00",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "85c5e56ca4446fe0c22fff57387281e25f5d0f7f919c4c02d48f26a7ccae5593",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "f08d02314c7d4aed85f907e65166b6cb87b7b977226b9748fbff45e8095aa692",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5fbf4114785062b10d29a3fc1d34556a38f46c05bd4bb2752bcedb68a793d222"
+  },
+  "integration_report": "xpc-integration-macos.json",
+  "production_rejects_fault_injection": true,
+  "production_rejection_exit_code": 1,
+  "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+  "memory_growth_report": null,
+  "full_sandbox_gate_passed": false
+}

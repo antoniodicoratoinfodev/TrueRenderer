@@ -1,0 +1,14 @@
+{
+  "application" : "TrueRenderer",
+  "audit_signal_result" : 0,
+  "audit_token_result" : 0,
+  "control_matches_peer" : true,
+  "measurement_after_termination" : 268435459,
+  "measurement_result" : 0,
+  "passed" : true,
+  "peer_cdhash_checked" : true,
+  "pid" : 24834,
+  "port_export_result" : 0,
+  "suspend_result" : 0,
+  "terminate_result" : 5
+}

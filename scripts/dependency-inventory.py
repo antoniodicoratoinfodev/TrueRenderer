@@ -28,9 +28,10 @@ for package in sorted(metadata["packages"],key=lambda p:p["name"]):
             destination.write_bytes(data)
             record["notices"].append({"file":str(destination.relative_to(root)),"sha256":hashlib.sha256(data).hexdigest()})
     packages.append(record)
-report={"application":"TrueRenderer","version":"0.1.0","target":"aarch64-apple-darwin","scope":"Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval","rust":"1.98.1","cargo_lock_sha256":hashlib.sha256(lock.encode()).hexdigest(),"packages":packages}
+app_version=next(package["version"] for package in metadata["packages"] if package["name"] == "truerenderer")
+report={"application":"TrueRenderer","version":app_version,"target":"aarch64-apple-darwin","scope":"Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval","rust":"1.98.1","cargo_lock_sha256":hashlib.sha256(lock.encode()).hexdigest(),"packages":packages}
 (root/"reports/dependency-inventory.json").write_text(json.dumps(report,indent=2)+"\n")
 with (root/"reports/dependency-inventory.csv").open("w",newline="") as file:
-    writer=csv.writer(file);writer.writerow(["name","version","license","checksum_sha256","repository"])
+    writer=csv.writer(file,lineterminator="\n");writer.writerow(["name","version","license","checksum_sha256","repository"])
     for p in packages:writer.writerow([p.get(k) for k in ["name","version","license","checksum_sha256","repository"]])
 print(f"Inventario: {len(packages)} package; notices copiati in reports/dependency-notices")

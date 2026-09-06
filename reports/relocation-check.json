@@ -1,11 +1,16 @@
 {
-  "root": "/Users/antonio/Desktop/TrueRenderer/var/relocation-check",
-  "stage": "passed",
-  "previous_run_mtime": 1788648169.201575,
+  "application": "TrueRenderer",
+  "version": "0.1.1",
+  "root": "/Users/antonio/Desktop/TrueRenderer/var/relocation-0.1.1-final",
   "passed": true,
+  "stage": "passed",
+  "completed_at": "2026-09-06T12:11:46.307494+00:00",
   "runtime_payload": "independent copies of bundle and corpus, no symlink",
-  "scope": "runtime root discovery, not relocation/recompilation of Rust toolchain",
-  "completed_at": "2026-09-06T00:45:31.749454+02:00",
+  "scope": "runtime root discovery and embedded XPC; not relocation/recompilation of Rust toolchain",
   "smoke_report": "relocation-macos.json",
-  "database_created_under_relocated_root": true
+  "database_created_under_relocated_root": true,
+  "database_integrity": "ok",
+  "database_integrity_tool": "3.51.0",
+  "database_integrity_scope": "closed checkpointed database files, no WAL present; read as immutable",
+  "copied_binaries_match": true
 }
