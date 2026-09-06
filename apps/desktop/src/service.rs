@@ -12,7 +12,7 @@ use std::{
     time::Duration,
 };
 use tr_core::{Annotation, Item};
-use tr_platform::{CorpusPolicy, Decoded};
+use tr_platform::CorpusPolicy;
 use tr_render::PreparedImage;
 use tr_store::Catalog;
 
@@ -37,6 +37,13 @@ pub enum Request {
     Export(PathBuf),
     Shutdown,
 }
+pub struct PreparedDecoded {
+    pub digest: String,
+    pub info: tr_core::protocol::RasterInfo,
+    pub prepared: PreparedImage,
+    pub transport: &'static str,
+    pub worker_pid: Option<u32>,
+}
 pub enum Event {
     DecodeDeferred {
         id: String,
@@ -53,7 +60,7 @@ pub enum Event {
         id: String,
         edge: u32,
         generation: u64,
-        result: Box<Result<(Decoded, PreparedImage), String>>,
+        result: Box<Result<PreparedDecoded, String>>,
     },
     Saved {
         id: String,
@@ -95,6 +102,7 @@ impl Service {
                     return;
                 }
             };
+            let external = tr_platform::external_decoding_available(&worker);
             let pool = DecodePool::start(
                 worker,
                 worker_generation.clone(),
@@ -175,14 +183,12 @@ impl Service {
                                         }
                                     }
                                 } else {
-                                    // Metadata listing only; external files do not enter a decoder in R0.
+                                    // Listing stays cheap; decoder snapshots/hashes the exact private bytes on demand.
                                     (
-                                        format!(
-                                            "unverified:{}:{:?}",
-                                            metadata.len(),
-                                            metadata.modified().ok()
-                                        ),
-                                        false,
+                                        tr_platform::observation_token(&metadata),
+                                        external
+                                            && metadata.len()
+                                                <= tr_core::protocol::MAX_SOURCE as u64,
                                     )
                                 };
                                 let asset = catalog.observe(&path, &digest, metadata.len())?;
@@ -204,7 +210,11 @@ impl Service {
                             let note = if controlled_folder {
                                 format!("Corpus pronto · {errors} file non leggibili")
                             } else {
-                                "Cartella elencata. Le anteprime esterne richiedono la qualifica della sandbox R0.".into()
+                                if external {
+                                    "Cartella pronta · decoder di sistema macOS · Anteprima".into()
+                                } else {
+                                    "File esterni: aprire il bundle macOS con servizi XPC.".into()
+                                }
                             };
                             Ok((items, note))
                         })();

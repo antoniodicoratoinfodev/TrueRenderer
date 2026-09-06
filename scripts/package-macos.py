@@ -39,7 +39,8 @@ def main():
         *(["-DTR_XPC_FAULT_INJECTION=1"] if args.fault_injection else []),
         "-mmacosx-version-min=13.0", "-framework", "Foundation", "-framework", "Security",
         str(ROOT / "native/macos/xpc_worker.m"), str(build / "libtr_worker.a"),
-        "-liconv", "-o", str(executable))
+        "-framework", "CoreImage", "-framework", "CoreGraphics", "-framework", "ImageIO",
+        "-framework", "UniformTypeIdentifiers", "-liconv", "-o", str(executable))
     entitlements = staging / "decoder.entitlements.plist"
     entitlements.write_bytes(plistlib.dumps({"com.apple.security.app-sandbox": True}))
     for slot in range(2):

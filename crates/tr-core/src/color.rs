@@ -3,7 +3,8 @@
 use anyhow::{Result, ensure};
 
 pub type Pixel = [f32; 4];
-pub const MAX_PIXELS: usize = 8_388_608;
+pub const MAX_PIXELS: usize = 67_108_864;
+pub const MAX_PRESENTATION_PIXELS: usize = 8_388_608;
 pub const FILTER_VERSION: &str = "area-linear-premultiplied-v1";
 
 pub fn srgb_to_linear(v: f32) -> f32 {

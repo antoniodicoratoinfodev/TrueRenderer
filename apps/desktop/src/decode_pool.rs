@@ -96,8 +96,14 @@ impl DecodePool {
                     let result = broker
                         .decode_cancellable(&job.item.path, &job.item.digest, job.edge, cancelled)
                         .and_then(|decoded| {
-                            let prepared = tr_render::prepare(&decoded.raster)?;
-                            Ok((decoded, prepared))
+                            let prepared = tr_render::prepare(decoded.raster)?;
+                            Ok(crate::service::PreparedDecoded {
+                                digest: decoded.digest,
+                                info: decoded.info,
+                                prepared,
+                                transport: decoded.transport,
+                                worker_pid: decoded.worker_pid,
+                            })
                         })
                         .map_err(|error| format!("{error:#}"));
                     if !cancelled() {

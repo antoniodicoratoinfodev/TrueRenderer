@@ -15,12 +15,19 @@ const AMBER: Color32 = Color32::from_rgb(217, 164, 65);
 const SURFACE: Color32 = Color32::from_rgb(38, 38, 38);
 
 struct CachedImage {
+    digest: String,
     info: RasterInfo,
     histogram: [[u32; 256]; 3],
     pyramid: Arc<Pyramid>,
     touched: u64,
     transport: &'static str,
     worker_pid: Option<u32>,
+}
+pub struct Startup {
+    pub smoke: bool,
+    pub sampling_smoke: bool,
+    pub external_smoke: bool,
+    pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
     state: State,
@@ -48,6 +55,8 @@ pub struct TrueRenderer {
     sample: Option<tr_render::Sample>,
     smoke: bool,
     sampling_smoke: bool,
+    external_smoke: bool,
+    pending_selection: Option<PathBuf>,
     started: Instant,
     smoke_stage: u8,
     screenshots: HashSet<String>,
@@ -67,9 +76,14 @@ impl TrueRenderer {
         root: PathBuf,
         data: PathBuf,
         worker: PathBuf,
-        smoke: bool,
-        sampling_smoke: bool,
+        startup: Startup,
     ) -> Self {
+        let Startup {
+            smoke,
+            sampling_smoke,
+            external_smoke,
+            open,
+        } = startup;
         let ctx = &cc.egui_ctx;
         ctx.set_theme(egui::Theme::Dark);
         let mut visuals = egui::Visuals::dark();
@@ -161,6 +175,8 @@ impl TrueRenderer {
             sample: None,
             smoke,
             sampling_smoke,
+            external_smoke,
+            pending_selection: None,
             started: Instant::now(),
             smoke_stage: 0,
             screenshots: HashSet::new(),
@@ -174,8 +190,22 @@ impl TrueRenderer {
             grid_columns: 1,
             sample_source: String::new(),
         };
-        app.open_folder(folder);
+        if let Some(path) = open {
+            app.open_path(path);
+        } else {
+            app.open_folder(folder);
+        }
         app
+    }
+    fn open_path(&mut self, path: PathBuf) {
+        if path.is_dir() {
+            self.pending_selection = None;
+            self.open_folder(path);
+        } else if let Some(folder) = path.parent() {
+            let folder = folder.to_path_buf();
+            self.pending_selection = path.canonicalize().ok();
+            self.open_folder(folder);
+        }
     }
     fn request(&mut self, request: Request) -> bool {
         if self.service.high.try_send(request).is_err() {
@@ -297,6 +327,15 @@ impl TrueRenderer {
                     note,
                 } if generation == self.generation => {
                     self.state.replace_items(items);
+                    if let Some(path) = self.pending_selection.take()
+                        && let Some(item) = self.state.items.iter().find(|i| i.path == path)
+                    {
+                        self.command(Command::Select {
+                            id: item.id.clone(),
+                            extend: false,
+                        });
+                        self.state.view = ViewMode::Preview;
+                    }
                     self.folder = folder;
                     self.scanning = false;
                     self.status = note;
@@ -313,13 +352,14 @@ impl TrueRenderer {
                     }
                     self.pending_images.remove(&(id.clone(), edge));
                     match *result {
-                        Ok((decoded, prepared)) => {
+                        Ok(decoded) => {
                             self.cache.insert(
                                 (id, edge),
                                 CachedImage {
+                                    digest: decoded.digest,
                                     info: decoded.info,
-                                    histogram: prepared.histogram,
-                                    pyramid: prepared.pyramid,
+                                    histogram: decoded.prepared.histogram,
+                                    pyramid: decoded.prepared.pyramid,
                                     touched: self.frame_number,
                                     transport: decoded.transport,
                                     worker_pid: decoded.worker_pid,
@@ -331,7 +371,7 @@ impl TrueRenderer {
                                     .values()
                                     .map(|c| c.pyramid.byte_len())
                                     .sum::<usize>()
-                                    > 384 * 1024 * 1024
+                                    > 1536 * 1024 * 1024
                             {
                                 let key = self
                                     .cache
@@ -557,7 +597,7 @@ impl TrueRenderer {
                     if ui
                         .button("Apri cartella…")
                         .on_hover_text(
-                            "Elenca una cartella. In R0 sono decodificati solo i campioni inclusi.",
+                            "Apri immagini della cartella; su macOS il bundle usa decoder isolati.",
                         )
                         .clicked()
                         && let Some(path) = rfd::FileDialog::new()
@@ -565,6 +605,13 @@ impl TrueRenderer {
                             .pick_folder()
                     {
                         self.open_folder(path);
+                    }
+                    if ui.button("Apri file…").clicked()
+                        && let Some(path) = rfd::FileDialog::new()
+                            .set_directory(&self.folder)
+                            .pick_file()
+                    {
+                        self.open_path(path);
                     }
                     if ui.button("↻").on_hover_text("Rileggi cartella").clicked() {
                         self.open_folder(self.folder.clone());
@@ -706,7 +753,13 @@ impl TrueRenderer {
                         "Formato",
                         &info
                             .as_ref()
-                            .map(|i| format!("{} · {} bit/canale", i.format, i.native_bits))
+                            .map(|i| {
+                                if i.native_bits == 0 {
+                                    format!("{} · profondità non dichiarata", i.format)
+                                } else {
+                                    format!("{} · {} bit/canale", i.format, i.native_bits)
+                                }
+                            })
                             .unwrap_or_else(|| "—".into()),
                     );
                     field(ui, "Dimensione", &human_bytes(item.bytes));
@@ -792,9 +845,11 @@ impl TrueRenderer {
                     field(ui, "Display", "Contratto da qualificare");
                     if let Some(cached) = self.cache.get(&key) {
                         field(ui, "Isolamento", cached.transport);
+                        field(ui, "SHA-256", &cached.digest);
                     }
                     if let Some(info) = info {
                         field(ui, "Decoder", &info.decoder);
+                        field(ui, "Orientamento", &info.orientation);
                         field(ui, "Decodifica", &info.filter);
                         field(ui, "Presentazione", "Lineare · Lanczos3 / Mitchell");
                         field(ui, "Alpha", "Area / triangolare");
@@ -940,9 +995,9 @@ impl TrueRenderer {
                 item.name,
                 human_bytes(item.bytes),
                 if item.approved {
-                    "PNG del corpus R0"
+                    "Anteprima disponibile · dettagli del decoder in Ispezione"
                 } else {
-                    "Archivio esterno: solo elenco in R0"
+                    "Decoder non disponibile o file oltre quota"
                 }
             )
         }));
@@ -1091,7 +1146,7 @@ impl TrueRenderer {
         } else {
             egui::Frame::new().fill(Color32::from_gray(119)).show(ui,|ui|{
                 ui.set_min_size(ui.available_size());ui.centered_and_justified(|ui|{
-                    ui.label(self.errors.get(&item.id).map(String::as_str).unwrap_or(if item.approved{"Preparazione dell'immagine…"}else{"Anteprima non abilitata per file esterni in questa fase R0.\nApri il Corpus di prova per usare il viewer."}));
+                    ui.label(self.errors.get(&item.id).map(String::as_str).unwrap_or(if item.approved{"Preparazione dell'immagine…"}else{"Aprire il bundle macOS con decoder XPC.\nLimite: 256 MiB per file, 64 Mi pixel."}));
                 });
             });
         }
@@ -1144,7 +1199,7 @@ impl TrueRenderer {
             ui.heading("Un'immagine, una resa tracciabile.");
             ui.label(format!("Prototipo R0 · {} · 6 settembre 2026", env!("CARGO_PKG_VERSION")));ui.separator();
             ui.label("Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali.");
-            ui.add_space(8.);ui.label("Le anteprime sono disponibili per il corpus incluso. Nel bundle macOS due servizi isolati gestiscono la decodifica, con controllo di timeout e memoria. Le cartelle esterne possono essere elencate; le loro anteprime attendono la qualifica completa della sicurezza.");
+            ui.add_space(8.);ui.label("Il bundle macOS apre JPEG, PNG, TIFF, RAW supportati da Apple, GIF, BMP, HEIC/HEIF e WebP in servizi XPC isolati. I RAW sono sviluppati con la ricetta Apple TR-linear-v1; il supporto dipende dalla fotocamera e dal sistema. Massimo 256 MiB e 64 Mi pixel. Per TIFF/GIF multipagina si mostra la prima pagina o fotogramma. Il percorso su pipe resta limitato al corpus.");
             ui.add_space(8.);ui.label("Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima.");
             ui.add_space(8.);ui.monospace(format!("GPU: {}\nSuperficie: {}\nSQLite: {}",self.adapter,self.surface,tr_store::sqlite_version()));
             ui.label(&self.gpu_status);
@@ -1172,8 +1227,67 @@ impl TrueRenderer {
             name.to_string(),
         )));
     }
+    fn formats_smoke_tick(&mut self, ctx: &egui::Context) {
+        for item in self.state.items.clone() {
+            self.ensure_image(&item, 320);
+        }
+        let elapsed = self.started.elapsed().as_secs_f32();
+        if self.smoke_stage == 0
+            && !self.state.items.is_empty()
+            && self.cache.len() == self.state.items.len()
+            && self.presenter.is_idle()
+        {
+            self.capture_screenshot(ctx, "10-external-grid");
+            self.smoke_stage = 1;
+        } else if self.smoke_stage == 1 && self.screenshots.contains("10-external-grid") {
+            if let Some(item) = self.state.items.iter().find(|i| i.name.ends_with(".dng")) {
+                self.command(Command::Select {
+                    id: item.id.clone(),
+                    extend: false,
+                });
+                self.state.view = ViewMode::Preview;
+                self.state.transform.set_zoom(1.);
+                self.smoke_stage = 2;
+            }
+        } else if self.smoke_stage == 2 && self.presenter.is_idle() {
+            self.capture_screenshot(ctx, "11-raw-full");
+            self.smoke_stage = 3;
+        } else if self.smoke_stage == 3 && self.screenshots.contains("11-raw-full") {
+            if let Some(item) = self.state.items.iter().find(|i| i.name == "12mp-jpeg.jpg") {
+                self.command(Command::Select {
+                    id: item.id.clone(),
+                    extend: false,
+                });
+                self.state.transform.set_zoom(1.);
+                self.smoke_stage = 4;
+            }
+        } else if self.smoke_stage == 4 && self.presenter.is_idle() {
+            self.capture_screenshot(ctx, "12-jpeg12mp-1to1");
+            self.smoke_stage = 5;
+        } else if (self.smoke_stage == 5 && self.screenshots.len() == 3)
+            || elapsed > 100.
+            || self.fatal
+            || !self.errors.is_empty()
+        {
+            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==5&&self.screenshots.len()==3&&!self.fatal&&self.errors.is_empty()&&!self.presenter.has_errors()&&self.gpu_passed,"images":self.state.items.len(),"decoded":self.cache.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"presentation_errors":self.presenter.has_errors(),"seconds":elapsed,"adapter":self.adapter,"pixels_per_point":ctx.pixels_per_point(),"worker_transports":self.cache.values().map(|c|c.transport).collect::<std::collections::BTreeSet<_>>(),"scope":"generated external images, native grid, full DNG and 12 MP JPEG viewer; not camera-wide RAW qualification"});
+            let _ = std::fs::write(
+                self.root.join("reports/formats-smoke-macos.json"),
+                serde_json::to_vec_pretty(&report).unwrap(),
+            );
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+        ctx.request_repaint_after(Duration::from_millis(50));
+    }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
         if !self.smoke {
+            return;
+        }
+        if self.external_smoke {
+            if !self.presenter.is_idle() && self.started.elapsed().as_secs_f32() < 100. {
+                ctx.request_repaint_after(Duration::from_millis(25));
+                return;
+            }
+            self.formats_smoke_tick(ctx);
             return;
         }
         let elapsed = self.started.elapsed().as_secs_f32();
@@ -1372,12 +1486,7 @@ impl eframe::App for TrueRenderer {
                 .collect::<Vec<_>>()
         });
         if let Some(path) = dropped.first() {
-            let folder = if path.is_dir() {
-                path.clone()
-            } else {
-                path.parent().unwrap_or(path).to_path_buf()
-            };
-            self.open_folder(folder);
+            self.open_path(path.clone());
         }
     }
     fn on_exit(&mut self) {
@@ -1394,7 +1503,7 @@ fn field(ui: &mut egui::Ui, key: &str, value: &str) {
             [82., 16.],
             egui::Label::new(RichText::new(key).small().color(MUTED)),
         );
-        ui.label(RichText::new(value).small());
+        ui.add(egui::Label::new(RichText::new(value).small()).wrap());
     });
 }
 fn nav(ui: &mut egui::Ui, title: &str, count: &str, selected: bool) -> egui::Response {

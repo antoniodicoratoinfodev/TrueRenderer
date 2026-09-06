@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+mod native;
 use anyhow::{Context, Result, ensure};
 use image::{DynamicImage, ImageDecoder, Limits, codecs::png::PngDecoder};
 use std::io::{BufReader, BufWriter, Cursor, Read, Write};
@@ -19,7 +21,7 @@ fn decode(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, LinearImage)> {
     let (width, height) = decoder.dimensions();
     ensure!(
         (width as u64 * height as u64) <= MAX_PIXELS as u64,
-        "Limite R0: 8.388.608 pixel per immagine"
+        "Limite: 64 Mi pixel per immagine"
     );
     ensure!(
         decoder.icc_profile()?.is_none(),
@@ -67,6 +69,9 @@ fn decode(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, LinearImage)> {
 }
 
 pub fn serve<R: Read, W: Write>(input: R, output: W) -> Result<()> {
+    serve_with_policy(input, output, false)
+}
+fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> Result<()> {
     let mut input = BufReader::new(input);
     let mut output = BufWriter::new(output);
     let policy = tr_core::corpus::CorpusPolicy::default();
@@ -82,6 +87,17 @@ pub fn serve<R: Read, W: Write>(input: R, output: W) -> Result<()> {
         input.read_exact(&mut bytes)?;
         let decoded = if policy.approves_bytes(&bytes) {
             decode(&bytes, request.max_edge)
+        } else if external {
+            #[cfg(target_os = "macos")]
+            {
+                native::decode(&bytes, request.max_edge)
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                Err(anyhow::anyhow!(
+                    "Decoder esterno non disponibile su questa piattaforma"
+                ))
+            }
         } else {
             Err(anyhow::anyhow!(
                 "Sorgente rifiutata: non appartiene al corpus R0 compilato nel decoder"
@@ -114,7 +130,7 @@ pub unsafe extern "C" fn tr_worker_serve_fds(input: i32, output: i32) -> i32 {
     let input = unsafe { File::from_raw_fd(input) };
     // SAFETY: the second descriptor is distinct and exclusively transferred as above.
     let output = unsafe { File::from_raw_fd(output) };
-    match std::panic::catch_unwind(|| serve(input, output)) {
+    match std::panic::catch_unwind(|| serve_with_policy(input, output, true)) {
         Ok(Ok(())) => 0,
         _ => 1,
     }

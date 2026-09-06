@@ -1,80 +1,105 @@
 # TrueRenderer
 
-Prototipo desktop **R0 · 0.1.2**, sviluppato dalla proposta `TrueVision-Architettura.md`. Il nome dell'app è ora **TrueRenderer**.
+Visualizzatore desktop per sfogliare, selezionare e ispezionare immagini, con elaborazione in luce lineare e pixel fisici 1:1. Scritto in Rust, con interfaccia egui/wgpu e decoder separati su macOS.
 
-## Avvio sul Mac
+**Versione 0.1.3 · prototipo in sviluppo · licenza proprietaria.** Il nome precedente era TrueVision. Il repository è pubblico per consultazione; i diritti sul materiale originale sono riservati ad Antonio Dicorato. Uso, modifica e distribuzione richiedono l'autorizzazione prevista da [LICENSE](LICENSE), fatti salvi la legge, i termini GitHub e le licenze delle dipendenze. Non è un progetto open source.
 
-Fare doppio clic su **`Avvia TrueRenderer.command`**, oppure aprire `dist/TrueRenderer.app`.
-Al primo avvio macOS richiede l’accesso al Desktop: scegliere **Consenti** per usare corpus, annotazioni e backup nella cartella del progetto. Con queste build ad hoc la richiesta può ripetersi dopo una ricompilazione. È il consenso del sistema operativo, non un account dell’app.
+![Griglia TrueRenderer con immagini sintetiche di prova](reports/10-external-grid.png)
 
-Si apre il corpus di prova incluso. Il bundle deve rimanere dentro questa cartella di progetto, perché usa `corpus/` e `var/` della cartella superiore. Puoi spostare l'intera cartella `TrueRenderer`.
+## Funzioni disponibili
 
-Il pacchetto è una build interna con firma ad hoc, non una release notarizzata. Non richiede un account né una connessione per funzionare.
+- Apertura di file o cartelle, trascinamento, griglia con miniature regolabili, anteprima e filmstrip.
+- Zoom, pan, Adatta, 1:1 fisico anche su Retina e confronto sincronizzato di due immagini.
+- Ricampionamento in luce lineare alla dimensione fisica della vista, condiviso da griglia, viewer, inspector e confronto.
+- Istogramma, campionatore sorgente e informazioni su decoder, orientamento, colore e digest dei byte decodificati.
+- Rating, scarto, etichette, parole chiave, ricerca e filtri; annotazioni locali in SQLite.
+- Undo di sessione, backup SQLite verificato ed export JSON. Gli originali rimangono in sola lettura.
+- Due decoder XPC con App Sandbox nel bundle macOS; salvataggi indipendenti dalla decodifica.
 
-## Cosa puoi già provare
+## Formati nella 0.1.3
 
-- Griglia virtualizzata con miniature regolabili, selezione e ricerca per nome/parola chiave.
-- Anteprima, zoom da 1% a 3200%, pan, pixel fisici **1:1** anche su Retina.
-- Confronto di due immagini: centro normalizzato condiviso; zoom fisico comune quando impostato, adattamento indipendente in modalità Adatta.
-- Ricampionamento lineare alla risoluzione fisica, condiviso da griglia, viewer, confronto e anteprima laterale; corretto il moiré da nearest/doppio ridimensionamento.
-- Istogramma della sorgente composta in sRGB e campionatore sorgente LOD 0 nel viewport.
-- Rating 0–5, scarto, etichette e parole chiave; filtri e salvataggio in SQLite.
-- Undo di sessione come nuova revisione; backup SQLite verificato ed export JSON senza sovrascrivere file esistenti.
-- 12 immagini numeriche PNG proprie, comprese alpha, bordi dispari e gradienti a 16 bit.
-- Diagnostica GPU/CPU automatica e report in `reports/`.
-- Due decoder isolati nel bundle macOS, con controllo di timeout/memoria e salvataggio delle annotazioni indipendente dalla decodifica.
+L'apertura dei file esterni richiede il **bundle macOS**. La firma del contenuto determina il formato; l'estensione serve alla scansione.
 
-Le frecce cambiano foto; `G`, `E`, `C` scelgono la vista. `0`–`5` valutano, `X` scarta, `6`–`9` assegnano etichette. `Z` alterna Adatta/1:1, `Cmd+1` seleziona il pixel fisico 1:1, rotella e trascinamento controllano zoom/pan. `Cmd+Z` annulla, `Cmd+F` cerca. `I` mostra/nasconde l'ispezione, `T` la striscia, `F` lo schermo intero, `Esc` torna alla griglia. Su Windows i sorgenti usano Ctrl al posto di Cmd; il target non è ancora qualificato.
+| Formato | Percorso disponibile | Prove effettuate |
+|---|---|---|
+| JPEG / JPG / JPE | ImageIO e ColorSync | JPEG RGB, anche 4000×3000 pixel |
+| PNG | ImageIO e ColorSync | RGB/RGBA, alpha e precisione 16 bit |
+| TIFF / TIF | ImageIO e ColorSync | RGB 8/16 bit, orientamenti EXIF 1–8 |
+| RAW, incluso DNG | CIRAWFilter, sviluppo a risoluzione nativa | DNG Bayer RGGB 1024×768 senza JPEG incorporato |
+| HEIC / HEIF | Decoder del sistema | HEIC RGB |
+| WebP | Decoder del sistema | WebP lossless RGB |
+| GIF e BMP | ImageIO e ColorSync | Immagini RGB sintetiche |
 
-## Confini di questa versione
+Per RAW la compatibilità dipende da **fotocamera e versione del decoder Apple installato**. La scansione comprende DNG, NEF, NRW, CR2, CR3, CRW, ARW, SRF, SR2, RAF, ORF, RW2, RWL, PEF, SRW, 3FR, FFF, IIQ, MOS, MEF, MRW, ERF e RAW; questo elenco non garantisce tutte le varianti. Un file non decodificabile produce un errore visibile. Non viene sostituito lo sviluppo RAW con la sua anteprima JPEG. La ricetta corrente si chiama `TR-linear-v1`, descritta in [ADR 0004](docs/adr/0004-formati-esterni-e-pubblicazione.md).
 
-**Le anteprime funzionano solo sui PNG del corpus incluso**, controllati tramite digest compilati nel broker e nel decoder. “Apri cartella” elenca anche file JPEG/PNG/TIFF esterni ma non li decodifica. Questo applica il gate del documento: l'isolamento con XPC/App Sandbox e AppContainer deve essere qualificato completamente prima degli archivi esterni. Non esiste un interruttore per aggirarlo.
+Limiti: **256 MiB per file**, **67.108.864 pixel sorgente**, massimo **32.768 per lato**. Nei contenitori multipagina o animati si mostra solo la prima pagina/fotogramma, con massimo 256 pagine/fotogrammi ammessi. BigTIFF, varianti CMYK/YCCK, matrici ICC e fotocamere non coperte dalle prove restano da qualificare. AVIF, JPEG XL, EXR e PSD non sono abilitati.
 
-Tutti i render restano **Anteprima**. Il decoder R0 è `image/png`, riusato dai due servizi XPC del bundle macOS; i binari di sviluppo fuori dal bundle conservano il worker su pipe. È ancora da sostituire con i backend nativi v1. Il working space è Rec.2020 lineare fp32 con alpha premoltiplicata. La 0.1.2 usa una piramide CPU condivisa: riduzione opaca Lanczos3 con margine di banda versionato, ingrandimento Mitchell, alpha area/triangolo; 1:1 allineato legge direttamente LOD 0. Il raster è calcolato per i pixel fisici della vista, senza un secondo ridimensionamento nella UI. Composizione opaca su grigio sRGB `#777777`, clamp/quantizzazione solo in uscita sRGB8. Durante il calcolo asincrono può apparire brevemente lo sfondo. Non si certificano display, ICC, gamut o calibrazione fisica con il test numerico GPU. Decisioni e limiti in `docs/adr/0003-campionamento-fisico-r0.md`.
+I dodici PNG del corpus incluso conservano il decoder analitico originale. I binari fuori dal bundle usano pipe e accettano soltanto quel corpus; gli esterni non hanno un fallback nel processo dell'interfaccia.
 
-Adatta può essere una riduzione o un ingrandimento, in base a finestra e Retina. Per esempio, nello smoke di questo Mac la sorgente 1200×800 occupa 1625×1083 pixel fisici in Adatta, 1200×800 a 1:1 e 444×296 al 37%. Quando si riduce, le frequenze non rappresentabili devono perdere contrasto: conservare ogni dettaglio produrrebbe moiré. I cerchi originali della zone plate rimangono; non devono comparire nuovi motivi spuri.
+## Avvio sul Mac di sviluppo
 
-Il bundle richiede XPC senza ripiego automatico. App Sandbox, limiti del processo e supervisione a 384 MiB contengono i decoder nelle prove eseguite su macOS 26.6.2 arm64. Il campionamento ogni 25 ms può superare la soglia: non è un tetto rigido. Dopo un crash il riavvio del servizio può impiegare circa 10 s. Firma di distribuzione e compatibilità dell’API libproc SPI usata per la terminazione restano gate aperti. Decisione e prove in `docs/adr/0002-xpc-decoder-r0.md`.
-
-Sono ancora da implementare/qualificare: gate completi della sandbox OS, profili ICC/Little CMS e monitor, backend nativi JPEG/TIFF e CMYK, EXIF/XMP completi, RAW/LibRaw, tile/gigapixel, raccolte, watcher, journal degli effetti esterni, migrazioni successive, export/restore portabile v1, accessibilità completa, Windows reale, installer e notarizzazione. La UI anticipa parti del workflow come prototipo: R1/R2 non sono conclusi. Le modifiche multi-selezione sono transazioni per immagine e l'undo opera sull'ultima singola modifica; batch atomici sono R2.
-
-Identità R0: UUID per asset distinto da percorso e digest; copie uguali non vengono unite, sostituzioni di contenuto nello stesso percorso creano un nuovo asset. Riconciliazione di rinomine, volumi e file mancanti resta R2. I file esterni elencati hanno identità osservata best-effort da stat, esplicitamente non verificata.
-
-## Dove sono i dati
-
-| Percorso | Contenuto |
-|---|---|
-| `PLAN.md` | Piano completo R0–R4, dipendenze, gate e stato dell'incremento |
-| `docs/TrueRenderer-Architettura.md` | Architettura con registro dello sviluppo |
-| `../TrueVision-Architettura.md` | Documento richiesto sul Desktop, aggiornato nel blocco di avanzamento |
-| `docs/TrueVision-Architettura.originale-v1.2.md` | Copia intatta del documento iniziale |
-| `var/library.sqlite` | Annotazioni durevoli e revisioni: **non è una cache** |
-| `var/index.sqlite` | Indice ricostruibile |
-| `var/backups/` | Backup consistenti verificati; in R0 sono conservati tutti |
-| `var/smoke/` | Libreria separata dei test grafici |
-| `reports/` | Risultati verifiche, screenshot e inventario dipendenze |
-| `.tools/` | Toolchain Rust e cache Cargo locali |
-
-I backup sullo stesso disco non coprono la perdita del disco. Il percorso dati sotto il progetto è una scelta del prototipo richiesto sul Desktop; la release userà app-data locale qualificato, fuori dalle cartelle sincronizzate. Gli originali non vengono mai scritti.
-
-## Sviluppo e verifica
+Aprire **`Avvia TrueRenderer.command`** oppure `dist/TrueRenderer.app`. Per un'immagine personale usare **Apri file…**, **Apri cartella…** o trascinarla nella finestra. Si può anche avviare:
 
 ```sh
-./scripts/cargo-local.sh build --workspace --locked --offline
-./scripts/verify.sh
-./scripts/verify.sh --gui        # otto screenshot e confronto pixel, sessione macOS
-./scripts/build-macos.sh         # ricrea il bundle release interno
-python3 scripts/test-xpc-integration.py  # prova i servizi XPC della build release
-./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-resampling
-open -n -W dist/TrueRenderer.app --args --sampling-smoke
-./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-sampling-screenshots
-python3 scripts/sync-docs.py     # aggiorna entrambe le architetture
+open -n dist/TrueRenderer.app --args --open "/percorso/immagine.jpg"
 ```
 
-Rust è bloccato in `rust-toolchain.toml`; tutte le versioni transitive e i checksum sono in `Cargo.lock`. Su una macchina nuova serve Rust oppure una toolchain locale equivalente e il download iniziale delle dipendenze (togliere `--offline` al primo fetch). Nel sandbox di un terminale l'avvio Cocoa/Metal può essere bloccato: eseguire il test grafico nella normale sessione desktop.
+Il bundle usa `corpus/` e `var/` nella cartella del progetto: spostare l'intera cartella TrueRenderer, mantenendo `dist/TrueRenderer.app` al suo interno. I binari e i dati locali sono esclusi da Git. Se macOS richiede l'accesso alla cartella delle immagini, il consenso viene gestito dal sistema.
 
-Il codice è organizzato in sei crate di servizio e un'app: `tr-core` (tipi/colore/IPC), `tr-app` (reducer), `tr-store` (SQLite), `tr-platform` (broker/I/O), `tr-worker` (decoder), `tr-render` (presentazione/diagnostica) e `apps/desktop` (composizione/UX). Le fonti primarie consultate e le deviazioni R0 sono in `docs/adr/0001-prototipo-r0.md`.
+Build interna arm64 con firma ad hoc, verificata su macOS 26.6.2 e Apple M4; non è una release notarizzata. I minimi OS/GPU e Windows reale restano da qualificare. L'app funziona localmente senza account, caricamento delle immagini o connessione a Internet.
 
-Le prove dell’app e del pacchetto sono registrate in `reports/VERIFICA.md`. Il laboratorio XPC separato ha verificato filesystem/rete negati, trasferimento di descrittori in sola lettura, recupero dopo crash e un limite aggiuntivo per impedire processi figli; istruzioni in `experiments/macos-xpc/README.md`. L’incremento 0.1.1 ha integrato il decoder e aggiunto prove di due processi distinti, timeout, recupero e crescita di memoria. Il gate completo della sandbox resta aperto.
+## Fedeltà della visualizzazione
 
-Build 0.1.2 verificata: 30 test Rust, 6 prove IPC, 24 casi sinusoidali, 8 screenshot e 14 regioni con pixel identici al raster CPU; suite XPC, Finder e copia autonoma passati sul Mac di sviluppo. Il §0 dell’architettura contiene ora la matrice completa di ciò che esiste e manca rispetto ai capitoli 1–24. Il backup originale dell’architettura rimane intatto; le build precedenti sono conservate in `var/package-history/`.
+Il working space è Rec.2020 lineare fp32 con alpha premoltiplicata; l'uscita corrente è sRGB8 opaca su grigio `#777777`. A **1:1 allineato** ogni campione sorgente corrisponde a un pixel fisico, senza filtro. Adatta può ridurre o ingrandire a seconda della finestra e della scala Retina. Ridurre richiede attenuare i dettagli che i pixel disponibili non possono rappresentare: conservarli tutti produrrebbe moiré.
+
+La 0.1.2 ha corretto il doppio ridimensionamento e il nearest a scala arbitraria segnalati nelle frequenze radiali e nella griglia. Il filtro corrente usa Lanczos3 con margine di banda per la riduzione opaca, Mitchell per l'ingrandimento e pesi non negativi per alpha. La UI presenta il raster alla dimensione fisica senza ridimensionarlo di nuovo. [ADR 0003](docs/adr/0003-campionamento-fisico-r0.md) documenta criteri e limiti.
+
+Tutti i render sono **Anteprima**. Standard/Riferimento, gestione ICC/monitor completa e fedeltà di ogni display non sono ancora qualificati. Durante il ricalcolo può apparire brevemente lo sfondo. Le prove attuali non certificano assenza universale di aliasing o identità visiva tra scale diverse.
+
+## Comandi principali
+
+`G` griglia, `E` anteprima, `C` confronto; frecce per cambiare immagine. `Z` alterna Adatta/1:1, `Cmd+1` seleziona 1:1 fisico, rotella e trascinamento controllano zoom/pan. `0`–`5` rating, `X` scarto, `6`–`9` etichette. `Cmd+Z` annulla, `Cmd+F` cerca; `I` inspector, `T` filmstrip, `F` schermo intero, `Esc` griglia. Le modifiche multi-selezione e l'undo correnti operano per singola immagine, senza un batch atomico.
+
+## Compilazione e verifica
+
+Per il titolare e gli sviluppatori autorizzati: macOS arm64, Xcode Command Line Tools, Python 3 e Rust tramite rustup. `rust-toolchain.toml` blocca Rust 1.98.1, `Cargo.lock` blocca le dipendenze. La toolchain locale `.tools/`, se presente, ha precedenza.
+
+```sh
+./scripts/cargo-local.sh fetch --locked  # download iniziale su un nuovo checkout
+./scripts/verify.sh                     # Rust, lint, IPC, precisione, ricampionamento
+./scripts/build-macos.sh                # build release e bundle XPC firmato ad hoc
+python3 scripts/test-xpc-integration.py
+open -n -W dist/TrueRenderer.app --args --sampling-smoke
+./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-sampling-screenshots
+```
+
+I test nativi richiedono una normale sessione desktop macOS: Core Image/Cocoa/XPC possono essere bloccati dentro un sandbox aggiuntivo del terminale. I test marcati ignored vengono eseguiti esplicitamente da `verify.sh` dopo la build del worker.
+
+Per ricreare e verificare i formati esterni serve anche `cwebp`, usato solo dal generatore WebP:
+
+```sh
+python3 scripts/generate-format-fixtures.py
+./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-formats
+open -n -W dist/TrueRenderer.app --args --formats-smoke
+python3 scripts/test-installed-macos.py  # suite completa, Finder e copia autonoma
+```
+
+Le fixture sono create localmente in `var/format-fixtures/` da formule proprie; non vengono scaricate fotografie. Le prove comprendono 19 file, sei controlli di rifiuto/riconoscimento, precisione 16 bit e tre schermate sui formati esterni, oltre alle regressioni del corpus. Gli esiti effettivi e il loro perimetro sono in [reports/VERIFICA.md](reports/VERIFICA.md).
+
+## Piano, architettura e dati
+
+| Percorso | Scopo |
+|---|---|
+| [PLAN.md](PLAN.md) | Piano operativo R0–R4, attività completate e lavoro rimanente |
+| [docs/TrueRenderer-Architettura.md](docs/TrueRenderer-Architettura.md) | Specifica e registro: confronto completo con i requisiti iniziali |
+| [docs/avanzamento.md](docs/avanzamento.md) | Fonte del registro sincronizzato anche nel documento sul Desktop |
+| [Architettura originale v1.2](docs/TrueVision-Architettura.originale-v1.2.md) | Backup immutato della proposta; v1.2 è la revisione del documento |
+| `var/library.sqlite`, `var/backups/` | Annotazioni e backup durevoli: non sono cache |
+| `var/index.sqlite` | Indice ricostruibile |
+| [reports/](reports/) | Prove, screenshot sintetici e inventario dipendenze |
+
+`python3 scripts/sync-docs.py` aggiorna il solo blocco di avanzamento nella copia del repository e in `../TrueVision-Architettura.md`, il file storico sul Desktop. Conserva il resto del documento. Il nome del prodotto è **TrueRenderer** in entrambi.
+
+Restano da completare i gate R0, memoria globale, recupero XPC rapido, firma reciproca di release, Windows, ICC/display, accessibilità, catalogo e XMP completi, matrice RAW/LibRaw, tile/gigapixel, installer e notarizzazione. La cache sorgenti è limitata a 1.536 MiB e i worker esterni sono supervisionati a 2 GiB/45 s, ma il consumo totale dei job in corso non ha ancora un budget globale. Il recupero XPC può richiedere circa dieci secondi. [ADR 0002](docs/adr/0002-xpc-decoder-r0.md) e [ADR 0004](docs/adr/0004-formati-esterni-e-pubblicazione.md) registrano i confini effettivi.
+
+Il workspace contiene `tr-core`, `tr-app`, `tr-store`, `tr-platform`, `tr-worker`, `tr-render` e `apps/desktop`. Le dipendenze conservano le loro licenze: vedere [NOTICE.md](NOTICE.md) e [inventario](reports/dependency-inventory.json). Per segnalazioni e contributi consultare [CONTRIBUTING.md](CONTRIBUTING.md).

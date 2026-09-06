@@ -18,6 +18,9 @@ notices.mkdir(exist_ok=True)
 for package in sorted(metadata["packages"],key=lambda p:p["name"]):
     if package["id"] not in resolved: continue
     record={key:package.get(key) for key in ["name","version","license","source","repository"]}
+    if package.get("license_file"):
+        license_path=Path(package["license_file"]).resolve()
+        record["license_file"]=str(license_path.relative_to(root)) if license_path.is_relative_to(root) else license_path.name
     record["checksum_sha256"]=checksums.get((package["name"],package["version"]))
     record["notices"]=[]
     folder=Path(package["manifest_path"]).parent

@@ -4,3 +4,5 @@
 /dist/
 .DS_Store
 *.sqlite*
+__pycache__/
+*.py[cod]

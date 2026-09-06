@@ -330,5 +330,5 @@
     "stopband_rms_max": 0.02
   },
   "transport": "XPC / App Sandbox · R0",
-  "version": "0.1.2"
+  "version": "0.1.3"
 }

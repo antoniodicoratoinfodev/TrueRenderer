@@ -1,8 +1,8 @@
 {
   "application": "TrueRenderer",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "passed": true,
-  "checked_at": "2026-09-06T17:25:05.485961+00:00",
+  "checked_at": "2026-09-06T23:05:40.280189+00:00",
   "format": "macOS arm64 app bundle",
   "bundle": "dist/TrueRenderer.app",
   "signature": "ad hoc; verified with codesign --deep --strict",
@@ -28,23 +28,23 @@
   ],
   "binaries": {
     "Contents/MacOS/TrueRenderer": {
-      "bytes": 17909728,
-      "sha256": "b39652a87d1e06e2e6dce4190c4ab6ccb56e9e26b4eac83fad3e0ec89f0e8854",
+      "bytes": 17958816,
+      "sha256": "9c52ee704af58aea44b7eb82be0ece62f4897252755fcdaee24da80607dc1e7a",
       "architecture": "arm64"
     },
     "Contents/MacOS/tr-worker": {
-      "bytes": 931904,
-      "sha256": "667faa6ec343fcc45247efc1f8b1705064b049aadc233fa6923f50f8d2ed3553",
+      "bytes": 959952,
+      "sha256": "52f143b76bcc7ab52cafa16a3e9bc82a9512c0b5b110b53ab4f00ca2469c3ce4",
       "architecture": "arm64"
     },
     "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
-      "bytes": 6115600,
-      "sha256": "a6420cf4f3cfca82a28c3cc4c38f77e63d6686cffb7a4fea65492cb4d2d341a6",
+      "bytes": 6160352,
+      "sha256": "bc6ece875b413b776910bd2fc4a51e1fe449e6beb3914549d119b75298c7c2bd",
       "architecture": "arm64"
     },
     "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
-      "bytes": 6115600,
-      "sha256": "fd737ebf8e436e07d18d09c86e1a425120f7e80a8f08803fa1e541c033009e77",
+      "bytes": 6160352,
+      "sha256": "9adbf50e3ba901b4120140ef9803af1adb87824d17d7dd621c41fd53a45cf66d",
       "architecture": "arm64"
     }
   },

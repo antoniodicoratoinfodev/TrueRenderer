@@ -1,0 +1,92 @@
+Sampling: passed=true; 24 signal cases; exact 1:1=true
+01-jpeg.jpg: passed · 48x32 · error 0.01592201
+02-png.png: passed · 48x32 · error 0.000028207898
+03-tiff.tiff: passed · 48x32 · error 0.000028207898
+04-gif.gif: passed · 48x32 · error 0.000028207898
+05-bmp.bmp: passed · 48x32 · error 0.000028207898
+06-heic.heic: passed · 48x32 · error 0.0060018897
+16bit.png: passed · 48x32 · error 0.000028207898
+16bit.tiff: passed · 48x32 · error 0.000028207898
+orientation-1.tiff: passed · 48x32 · error 0.000028207898
+orientation-2.tiff: passed · 48x32 · error 0.000028207898
+orientation-3.tiff: passed · 48x32 · error 0.000028207898
+orientation-4.tiff: passed · 48x32 · error 0.000028207898
+orientation-5.tiff: passed · 32x48 · error 0.000028207898
+orientation-6.tiff: passed · 32x48 · error 0.000028207898
+orientation-7.tiff: passed · 32x48 · error 0.000028207898
+orientation-8.tiff: passed · 32x48 · error 0.000028207898
+12mp-jpeg.jpg: passed · 4000x3000 · error 0.01592201
+07-bayer.dng: passed · 1024x768 · error 0
+08-webp.webp: passed · 48x32 · error 0.000028207898
+{
+  "application": "TrueRenderer",
+  "version": "0.1.3",
+  "passed": true,
+  "checked_at": "2026-09-06T23:05:31.209288+00:00",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "9c52ee704af58aea44b7eb82be0ece62f4897252755fcdaee24da80607dc1e7a",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "bc6ece875b413b776910bd2fc4a51e1fe449e6beb3914549d119b75298c7c2bd",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9adbf50e3ba901b4120140ef9803af1adb87824d17d7dd621c41fd53a45cf66d"
+  },
+  "integration_report": "xpc-integration-macos.json",
+  "production_rejects_fault_injection": true,
+  "production_rejection_exit_code": 1,
+  "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+  "memory_growth_report": null,
+  "full_sandbox_gate_passed": false
+}
+Native surface sampling: passed=true
+{
+  "application": "TrueRenderer",
+  "version": "0.1.3",
+  "passed": true,
+  "checked_at": "2026-09-06T23:05:40.280189+00:00",
+  "format": "macOS arm64 app bundle",
+  "bundle": "dist/TrueRenderer.app",
+  "signature": "ad hoc; verified with codesign --deep --strict",
+  "finder_smoke": "passed via LaunchServices",
+  "finder_smoke_report": "finder-macos.json",
+  "relocation_smoke": "passed with independent bundle and corpus copies",
+  "relocation_smoke_report": "relocation-macos.json",
+  "embedded_services": [
+    {
+      "bundle": "Contents/XPCServices/Decoder0.xpc",
+      "identifier": "it.truerenderer.prototype.decoder.0",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true
+      }
+    },
+    {
+      "bundle": "Contents/XPCServices/Decoder1.xpc",
+      "identifier": "it.truerenderer.prototype.decoder.1",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true
+      }
+    }
+  ],
+  "binaries": {
+    "Contents/MacOS/TrueRenderer": {
+      "bytes": 17958816,
+      "sha256": "9c52ee704af58aea44b7eb82be0ece62f4897252755fcdaee24da80607dc1e7a",
+      "architecture": "arm64"
+    },
+    "Contents/MacOS/tr-worker": {
+      "bytes": 959952,
+      "sha256": "52f143b76bcc7ab52cafa16a3e9bc82a9512c0b5b110b53ab4f00ca2469c3ce4",
+      "architecture": "arm64"
+    },
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+      "bytes": 6160352,
+      "sha256": "bc6ece875b413b776910bd2fc4a51e1fe449e6beb3914549d119b75298c7c2bd",
+      "architecture": "arm64"
+    },
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+      "bytes": 6160352,
+      "sha256": "9adbf50e3ba901b4120140ef9803af1adb87824d17d7dd621c41fd53a45cf66d",
+      "architecture": "arm64"
+    }
+  },
+  "scope": "internal macOS R0 prototype; distribution signer, supported OS range and full sandbox gate remain open"
+}
+Installed TrueRenderer 0.1.3: all native checks passed

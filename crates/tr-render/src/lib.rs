@@ -14,10 +14,11 @@ pub struct PreparedImage {
     pub pyramid: Arc<Pyramid>,
     pub histogram: [[u32; 256]; 3],
 }
-pub fn prepare(image: &LinearImage) -> anyhow::Result<PreparedImage> {
+pub fn prepare(image: LinearImage) -> anyhow::Result<PreparedImage> {
+    let histogram = image.histogram();
     Ok(PreparedImage {
-        pyramid: Arc::new(Pyramid::new(image.clone())?),
-        histogram: image.histogram(),
+        pyramid: Arc::new(Pyramid::new(image)?),
+        histogram,
     })
 }
 pub struct Sample {

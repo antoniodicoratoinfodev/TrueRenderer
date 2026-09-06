@@ -1,6 +1,6 @@
 # TrueRenderer — piano di sviluppo
 
-Aggiornato: 6 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
+Aggiornato: 7 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
 Il nome corrente è **TrueRenderer**; TrueVision è il nome precedente.
 
 Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `../TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
@@ -40,7 +40,7 @@ Passati i controlli delle due varianti: sandbox base e sandbox con `RLIMIT_NPROC
 
 ## Incremento 0.1.1 — integrazione del confine XPC
 
-Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 verificata all’epoca con prove native del decoder, controllo grafico e copia autonoma passati; ora conservata nello storico e sostituita dalla 0.1.2. Restano aperti i gate elencati sotto.
+Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 verificata all’epoca con prove native del decoder, controllo grafico e copia autonoma passati; ora conservata nello storico; versione corrente 0.1.3. Restano aperti i gate elencati sotto.
 
 - [x] Portare il decoder controllato in due servizi XPC con protocollo senza percorsi e allowlist anche nel decoder.
 - [x] Vincolare il broker al CDHash del servizio installato, verificare due PID reali e conservare la copia privata degli output.
@@ -55,11 +55,11 @@ Completata la verticale interna: broker macOS, decoder riutilizzabile e due serv
 - [ ] Estendere i test negativi a input ostili, descrittori residui, output concorrente e quota di risorse.
 - [ ] Affiancare la verticale Windows reale e le prove di display/accessibilità prima di chiudere R0.
 
-Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Il prossimo lavoro sul Mac è la suite avversaria del bootstrap e del ciclo di vita, seguita dal budget memoria end-to-end. I PNG esterni restano esclusi dal decoder; l’integrazione non chiude il gate completo della sandbox.
+Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Il prossimo lavoro sul Mac è la suite avversaria del bootstrap e del ciclo di vita, seguita dal budget memoria end-to-end. Nella 0.1.1 i PNG esterni restavano esclusi; la modifica del perimetro nella 0.1.3 è registrata in ADR 0004. Il gate completo della sandbox rimane aperto.
 
 ## Incremento 0.1.2 — fedeltà del ricampionamento e documentazione
 
-Concluso il sottoinsieme correttivo richiesto. Build 0.1.2 installata e verificata; i gate generali R0/R1 restano aperti.
+Concluso il sottoinsieme correttivo richiesto. Build 0.1.2 verificata all’epoca e conservata nello storico; i gate generali R0/R1 restano aperti.
 
 - [x] Osservare la finestra precedente e riprodurre i problemi di Frequenze radiali in Adatta e griglia.
 - [x] Usare una sorgente/piramide condivisa in griglia, viewer, inspector, filmstrip e confronto.
@@ -73,6 +73,24 @@ Concluso il sottoinsieme correttivo richiesto. Build 0.1.2 installata e verifica
 - [x] Aggiornare entrambe le architetture senza cambiare il backup originale.
 
 **Rimangono da qualificare (§10/§19.3):** alias 2D/Siemens, overshoot, grafo CPU/GPU e filtro diretto, transizioni LOD, EXIF 1–8, f64 della geometria completa, tile/cuciture, altri display/DPI e prestazioni. Il filtro CPU può mostrare brevemente lo sfondo durante il ricalcolo: «mai viewport vuoto» e tutti i p95 non sono ancora garantiti. Le 24 sinusoidi includono 11 casi di banda di transizione osservati senza soglia di accettazione. Le soglie valide riguardano 8 casi di stopband e 5 di passband.
+
+## Incremento 0.1.3 — formati esterni e GitHub proprietario
+
+Richiesta del titolare: repository **pubblico**, **licenza proprietaria**, README e apertura effettiva dei formati. ADR 0004 registra l'anticipo dei decoder Apple rispetto ai gate della proposta; Standard/Riferimento restano indisponibili.
+
+- [x] Creare il repository pubblico `antoniodicoratoinfodev/TrueRenderer`.
+- [x] Preparare LICENSE proprietaria, README, NOTICE, regole per contributi e segnalazioni.
+- [x] Aggiungere Apri file, trascinamento file/cartella e `--open`.
+- [x] Decodificare JPEG/PNG/TIFF/GIF/BMP/HEIC/WebP nel servizio macOS isolato.
+- [x] Sviluppare RAW completo con CIRAWFilter, ricetta nominata e nessun fallback su JPEG incorporato.
+- [x] Conservare 16 bit/alpha, applicare EXIF una volta, mostrare provenienza e SHA-256.
+- [x] Definire quote 256 MiB/64 Mi pixel e cache, evitando la copia integrale del raster per la piramide.
+- [x] Superare 19 fixture di formati, 6 controlli aggiuntivi, 32 test Rust e 6 controlli IPC; generatori riproducibili senza fotografie esterne.
+- [x] Eseguire tre schermate native di griglia, DNG e JPEG 12 MP.
+- [x] Verificare pacchetto finale, regressioni di campionamento, XPC, Finder e copia autonoma; installare 0.1.3.
+- [ ] Aggiornare entrambe le architetture e pubblicare il commit completo, escludendo dati personali e artefatti locali.
+
+Restano: matrice reale fotocamere/sottotipi/ICC, RAW multipiattaforma con LibRaw, memoria globale e gate R0/R1/R3 completi. I test sul DNG sintetico non qualificano ogni RAW. HEIC/WebP sono un'anticipazione limitata della precedente lista post-v1.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 
@@ -88,7 +106,7 @@ Dipendenze: nessuna milestone precedente. Il prototipo corrente è una parte di 
 8. ADR toolkit, minimi OS/GPU, licenze, canali; pacchetti interni sui due OS.
 9. Almeno cinque interviste e raccolta autorizzata dei casi difficili. Richiede persone reali.
 
-Uscita: tutti i gate di §4.4/§22.4 misurati. Mancando prove, egui e il colore restano provvisori e gli archivi esterni non entrano nel decoder del prototipo.
+Uscita: tutti i gate di §4.4/§22.4 misurati. Mancando prove complete, egui e il colore restano provvisori. Le anteprime esterne macOS introdotte dalla 0.1.3 sono una deviazione esplicita di sviluppo (ADR 0004), non il superamento del gate.
 
 ## R1 — viewer SDR (10–16 settimane, dopo R0)
 
@@ -141,7 +159,7 @@ La firma/distribuzione richiede credenziali e decisioni del titolare, non dispon
 
 ## Post-v1
 
-Linux, Windows arm64, HDR/EDR, HEIF/AVIF/JXL/EXR/PSD, Android, soft proof, conversione/export pixel, scrittura incorporata, confronto oltre due foto e demosaic proprio: ciascuno richiede ADR, prova di bisogno e gate specifico.
+Linux, Windows arm64, HDR/EDR, AVIF/JXL/EXR/PSD, Android, soft proof, conversione/export pixel, scrittura incorporata, confronto oltre due foto e demosaic proprio: ciascuno richiede ADR, prova di bisogno e gate specifico.
 
 ## Stime e aggiornamento
 

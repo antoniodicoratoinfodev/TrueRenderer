@@ -3,6 +3,7 @@ name = "truerenderer"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
+license-file.workspace = true
 [dependencies]
 tr-core = { path = "../../crates/tr-core" }
 tr-app = { path = "../../crates/tr-app" }

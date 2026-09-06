@@ -3,6 +3,7 @@ name = "tr-worker"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
+license-file.workspace = true
 [lib]
 crate-type = ["rlib", "staticlib"]
 [dependencies]

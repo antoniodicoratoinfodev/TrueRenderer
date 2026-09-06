@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::io::{Read, Write};
 
 pub const MAX_CONTROL: usize = 64 * 1024;
-pub const MAX_SOURCE: usize = 32 * 1024 * 1024;
+pub const MAX_SOURCE: usize = 256 * 1024 * 1024;
 pub const REQUEST: u16 = 1;
 pub const RESPONSE: u16 = 2;
 pub const ERROR: u16 = 3;
@@ -93,8 +93,8 @@ pub fn validate_info(info: &RasterInfo) -> Result<usize> {
         "Metadati IPC fuori quota"
     );
     ensure!(
-        [8, 16].contains(&info.native_bits),
-        "Profondità non ammessa in R0"
+        [0, 1, 2, 4, 8, 10, 12, 14, 16, 32].contains(&info.native_bits),
+        "Profondità non ammessa (0 = non dichiarata dal decoder)"
     );
     Ok(info.width as usize * info.height as usize)
 }

@@ -9,7 +9,7 @@ begin, end = "<!-- TR_PROGRESS_START -->", "<!-- TR_PROGRESS_END -->"
 progress = (root / "docs/avanzamento.md").read_text()
 block = f"{begin}\n{progress}\n{end}\n"
 for path in (original, canonical):
-    body = path.read_text() if path.exists() else original.read_text()
+    body = path.read_text() if path.exists() else canonical.read_text()
     if begin in body:
         before, rest = body.split(begin, 1)
         _, after = rest.split(end, 1)

@@ -3,6 +3,7 @@ name = "tr-store"
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
+license-file.workspace = true
 [dependencies]
 tr-core = { path = "../tr-core" }
 anyhow.workspace = true

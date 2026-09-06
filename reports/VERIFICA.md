@@ -1,6 +1,6 @@
 # TrueRenderer — verifica del prototipo R0
 
-Aggiornamento: 6 settembre 2026. Build interna **0.1.2**, installata in `dist/TrueRenderer.app`.
+Aggiornamento: 7 settembre 2026. Build interna **0.1.3**, installata in `dist/TrueRenderer.app`.
 
 ## Risultati osservati
 
@@ -8,27 +8,51 @@ Aggiornamento: 6 settembre 2026. Build interna **0.1.2**, installata in `dist/Tr
 |---|---|---|
 | Workspace Rust, debug e release | Passato | `verification.log`, `build-macos.log` |
 | rustfmt e Clippy con `-D warnings` | Passato | `verification.log`, incluse le ultime modifiche UI |
-| Test Rust | 30 passati | 27 normali + 3 integrazioni eseguite esplicitamente dopo la build |
+| Test Rust | 32 passati | 28 normali + 4 integrazioni eseguite esplicitamente dopo la build |
 | IPC avversario sul binario worker | 6 controlli passati | `worker-protocol.json` |
 | Timeout del processo | Passato | worker fermo interrotto entro il limite del test |
 | Crash e riciclo del worker reale | Passato | decodifica, kill, errore contenuto, nuova decodifica |
-| Gate nel decoder | Passato | input fuori allowlist rifiutato prima del codec; il successivo job del corpus passa |
+| Gate nel worker su pipe | Passato | input fuori allowlist rifiutato prima del codec; il successivo job del corpus passa. Esterni ammessi solo nel bundle XPC (ADR 0004). |
 | Salvataggio durante decoder bloccato | Passato | test del servizio: commit delle annotazioni e shutdown entro i limiti |
 | Cambio dominio con decoder inattivo | Passato | worker reale riciclato senza inviare un nuovo job |
 | Libreria, revisioni e undo | Passato | conflitto di revisione, rollback, undo con incremento, servizio asincrono |
 | Backup/restore | Passato | Online Backup API, controllo integrità e restore verificato in database separato |
 | Eliminazione dell'indice | Passato | rating e UUID conservati dopo ricostruzione dell'indice |
-| Native UI nel bundle 0.1.2 | Passato | Metal/Apple M4, 12 immagini, 8 screenshot controllati, incluse frequenze radiali e griglia a tre dimensioni |
+| Native UI nel bundle 0.1.3 | Passato | Metal/Apple M4, 12 immagini, 8 screenshot controllati, incluse frequenze radiali e griglia a tre dimensioni |
 | Calcolo WGSL vs CPU | Passato per il solo stadio provato | 4.096 campioni, massimo errore assoluto 9,536743e-7; soglia 1e-4 |
 | Bundle `.app`, servizi XPC, plist, arm64 e firma ad hoc | Passato | `package-macos.json`: firma strict, entitlements dei servizi, hash dei quattro binari |
-| Avvio 0.1.2 via Finder/LaunchServices | Passato dopo il consenso macOS | `finder-macos.json`: 12 immagini, zero errori, Metal, due PID XPC |
-| Copia indipendente del runtime 0.1.2 | Passato | `relocation-check.json`, `relocation-macos.json`: bundle/corpus copiati, XPC e database integri nella nuova cartella |
+| Avvio 0.1.3 via Finder/LaunchServices | Passato dopo il consenso macOS | `finder-macos.json`: 12 immagini, zero errori, Metal, due PID XPC |
+| Copia indipendente del runtime 0.1.3 | Passato | `relocation-check.json`, `relocation-macos.json`: bundle/corpus copiati, XPC e database integri nella nuova cartella |
 | Laboratorio XPC con App Sandbox | Controlli del laboratorio passati | `xpc-sandbox-macos.json`: file/rete negati, FD readonly, versione errata e crash contenuti |
 | Laboratorio XPC con limite processi | Controlli del laboratorio passati | `xpc-sandbox-limited-macos.json`: `RLIMIT_NPROC` 0 blocca figli e non può essere rialzato |
 | Controllo del processo tramite task/audit token | Prova SPI locale passata | `xpc-control-macos.json`; `task_terminate` non è utilizzabile per questo processo BSD |
 | Decoder XPC integrati | Passato | `xpc-integration-macos.json`: due processi, pixel identici, 12 immagini, timeout e recupero indipendente |
 | Memoria in un servizio di fault injection separato | Passato per la traiettoria provata | `xpc-memory-growth-macos.json`: soglia superata, servizio terminato e sostituito |
 | Esclusione della fault injection dal bundle normale | Passato | `xpc-qualification-macos.json`: comando rifiutato, hash confrontati con il pacchetto installato |
+
+## Formati e pacchetto 0.1.3
+
+`installed-verification.log` registra l'esecuzione completa di `scripts/test-installed-macos.py` sul bundle installato, dopo la suite Rust. Il comando ripete decodifica, ricampionamento, XPC, Finder, confronto screenshot, formati nella UI, copia autonoma, integrità dei database di test e confronto firma/hash del pacchetto.
+
+| Verifica nuova | Esito | Evidenza |
+|---|---|---|
+| Apertura esterna JPEG, PNG, TIFF, GIF, BMP, HEIC, WebP e DNG | 19 fixture passate | `formats-macos.json`, byte propri rigenerati tramite gli script consegnati |
+| Campioni 16 bit e alpha | Passato | Test Rust Core Image su PNG RGBA16: due codici adiacenti rimangono distinti e alpha zero è zero premoltiplicato; PNG/TIFF 16 bit nei casi XPC |
+| EXIF 1–8 | Dimensioni/quadranti passati | Otto TIFF con riferimento analitico indipendente; nessuna rotazione duplicata |
+| RAW completo | Passato sul DNG sintetico | Bayer RGGB 1024×768, nessuna preview incorporata, `Apple RAW 8.dng · full · TR-linear-v1` |
+| Fotografia per dimensioni | JPEG 12 MP passato | 4000×3000 sorgente, crop 1:1 nella UI; contenuto sintetico |
+| Input malformati e recupero | Tre rifiuti passati | JPEG sconosciuto, PNG e TIFF troncati; successivo PNG valido con pixel identici e stesso PID |
+| Firma/estensione, quota, sorgente obsoleta | Tre controlli passati | PNG rinominato JPG riconosciuto come PNG, file oltre 256 MiB e token stat obsoleto rifiutati |
+| UI esterna | 19 immagini, zero errori | `formats-smoke-macos.json`: `10-external-grid`, `11-raw-full`, `12-jpeg12mp-1to1`, controllati visivamente |
+| Regressioni di campionamento | Passate sulla 0.1.3 | 24 sinusoidi, 8 screenshot corpus, 14 regioni con zero differenze di canale |
+| Firma, Finder e copia autonoma | Passati sulla 0.1.3 | `package-macos.json`, `finder-macos.json`, `relocation-check.json`; originali e libreria ordinaria preservati |
+| Repository/licenza | Pubblico, proprietaria | LICENSE, README, NOTICE; sorgenti originali riservati, dipendenze con proprie licenze |
+
+I quadranti bitmap hanno soglia di errore assoluto lineare 0,025 per includere la compressione: JPEG massimo 0,01592201, HEIC 0,00600189, casi lossless circa 0,00002821. Non è una misura ΔE00 né una qualifica ICC/CMYK universale. Per RAW si verifica lo sviluppo completo non costante; non un riferimento cromatico di fotocamere reali.
+
+La compatibilità RAW resta legata a fotocamera/OS. Core Image e ColorSync sono forniti da macOS; nessun LibRaw è incorporato nella 0.1.3. Quote e ricetta sono in ADR 0004. Il picco del worker nella prova formati è una misura singola, disponibile nel report; i 2 GiB supervisionati non sono un tetto kernel né il budget globale dell'app. Nessun nuovo test di crescita artificiale è stato dichiarato eseguito sulla 0.1.3.
+
+La costruzione delle fixture è stata ripetuta con `scripts/generate-format-fixtures.py`. Le schermate pubblicate mostrano solo queste immagini o il corpus numerico. Le verifiche Rust sono eseguite fuori dal sandbox aggiuntivo del terminale per consentire Core Image; i decoder dell'app restano nei servizi con App Sandbox. Durante il controllo visivo è stato corretto anche il testo lungo dell'inspector, che ora va a capo senza tagliare il pannello.
 
 ## Correzione del ricampionamento 0.1.2
 
@@ -46,7 +70,7 @@ Il problema della 0.1.1 è stato osservato nella finestra nativa e conservato in
 
 Il confronto fisico include miniature di griglia 402×268, 309×206 e 557×372, inspector 514×343, filmstrip 188×125, viewer 1200×800 a 1:1, 1625×1083 in Adatta e 444×296 al 37%. In questo layout Retina 2×, **Adatta è un ingrandimento**: cambia il numero di pixel rappresentati rispetto a 1:1. Il test confronta anche le ripetizioni dell’inspector/filmstrip nei diversi stati.
 
-La nuova finestra installata è stata anche riaperta e acquisita dal sistema in `09-installed-window.png`, quindi controllata visivamente; l’app è rimasta aperta per l’uso. Questa cattura del compositore è distinta dagli otto screenshot della superficie usati nei test.
+La finestra installata 0.1.3 è stata anche aperta con `--open` sul DNG sintetico e acquisita dal sistema in `09-installed-window.png`, quindi controllata visivamente; l’app è rimasta aperta per l’uso. Questa cattura del compositore è distinta dagli otto screenshot della superficie usati nei test.
 
 Le schermate a tutto frame, se visualizzate ridotte in un altro programma, possono introdurre nuovi motivi di moiré: l’esito quantitativo è sui pixel nativi, senza ridimensionare i PNG. Non dimostra assenza universale di alias/ringing, fedeltà del compositore o calibrazione del pannello. Restano i test completi di §19.3 elencati nell’ADR. Il renderer può mostrare brevemente lo sfondo mentre prepara un nuovo raster; il budget «mai viewport vuoto» non è ancora soddisfatto.
 
@@ -65,11 +89,11 @@ I tempi registrati nello smoke sono misure di una singola esecuzione e non sono 
 
 ## Misure XPC e provenienza delle prove
 
-La build release 0.1.2 ha usato due PID distinti. Un decoder sospeso è stato fermato in **217 ms**
+La build release 0.1.3 ha usato due PID distinti. Un decoder sospeso è stato fermato in **211 ms**
 nel test con timeout da 200 ms; l’altro ha continuato a decodificare. Il riavvio è riuscito
-con un nuovo processo. Il giro completo dura circa 10,83 s e include il ritardo di launchd.
+con un nuovo processo. Il giro completo dura circa 10,93 s e include il ritardo di launchd.
 
-La misura di crescita conservata in `xpc-memory-growth-macos.json` appartiene alla 0.1.1 e non è stata ripetuta come fault di crescita nella 0.1.2. Il bundle normale 0.1.2 è stato nuovamente verificato e rifiuta quel comando.
+La misura di crescita conservata in `xpc-memory-growth-macos.json` appartiene alla 0.1.1 e non è stata ripetuta come fault di crescita nella 0.1.2/0.1.3. Il bundle normale 0.1.3 è stato nuovamente verificato e rifiuta quel comando.
 
 Il servizio avversario separato alloca 512 MiB a passi nel singolo comando di prova e ignora
 gli errori di disconnessione XPC. Il broker campiona ogni 25 ms, con soglia 384 MiB:
@@ -97,7 +121,7 @@ App Sandbox da sola consente il figlio `/usr/bin/true`; il limite aggiuntivo è 
 soltanto sul Mac indicato. I due PID dell’app derivano da due servizi distinti; due connessioni
 allo stesso servizio nel laboratorio condividevano un PID. Dettagli in `docs/adr/0002-xpc-decoder-r0.md`.
 
-Non sono prove dell'accessibilità con VoiceOver/NVDA, di Windows, del recupero da device loss, della gestione ICC o della fedeltà del display. Il test GPU non misura ΔE00, LUT, gamut o filtro Lanczos3. Non qualificano RAW, XMP, JPEG/TIFF nativi o gigapixel. La rilocazione riguarda i file necessari al runtime; non prova una ricompilazione della toolchain dopo spostamento. I render rimangono Anteprima e R0 resta aperto.
+Non sono prove dell'accessibilità con VoiceOver/NVDA, di Windows, del recupero da device loss, della gestione ICC o della fedeltà del display. Il test GPU non misura ΔE00, LUT, gamut o filtro Lanczos3. Non qualificano le matrici complete di fotocamere RAW e sottotipi JPEG/TIFF, né XMP o gigapixel. Il sottoinsieme bitmap/RAW effettivamente provato nella 0.1.3 è registrato sopra. La rilocazione riguarda i file necessari al runtime; non prova una ricompilazione della toolchain dopo spostamento. I render rimangono Anteprima e R0 resta aperto.
 
 ## Riproduzione
 

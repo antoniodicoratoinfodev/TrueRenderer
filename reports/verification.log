@@ -1,34 +1,37 @@
-    Checking truerenderer v0.1.2 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
-    Finished `dev` profile [optimized + debuginfo] target(s) in 0.60s
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on package cache
-    Blocking waiting for file lock on package cache
-   Compiling tr-render v0.1.2 (/Users/antonio/Desktop/TrueRenderer/crates/tr-render)
-   Compiling truerenderer v0.1.2 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
-    Finished `dev` profile [optimized + debuginfo] target(s) in 13.18s
-   Compiling tr-render v0.1.2 (/Users/antonio/Desktop/TrueRenderer/crates/tr-render)
-   Compiling truerenderer v0.1.2 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
-    Finished `test` profile [optimized + debuginfo] target(s) in 3.38s
-     Running unittests src/lib.rs (target/debug/deps/tr_app-1269561d725af220)
+   Compiling tr-worker v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-worker)
+    Checking tr-platform v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-platform)
+    Checking truerenderer v0.1.3 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 1.48s
+   Compiling truerenderer v0.1.3 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
+    Finished `dev` profile [optimized + debuginfo] target(s) in 4.87s
+   Compiling tr-app v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-app)
+   Compiling tr-platform v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-platform)
+   Compiling tr-core v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-core)
+   Compiling tr-render v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-render)
+   Compiling tr-store v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-store)
+   Compiling truerenderer v0.1.3 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
+   Compiling tr-worker v0.1.3 (/Users/antonio/Desktop/TrueRenderer/crates/tr-worker)
+    Finished `test` profile [optimized + debuginfo] target(s) in 4.95s
+     Running unittests src/lib.rs (target/debug/deps/tr_app-ea3764523a99dfd4)
 
 running 2 tests
 test tests::filter_does_not_leave_hidden_selection ... ok
 test tests::ratings_wait_for_commit_and_deduplicate_pending ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_core-1ae3821adafbab79)
+     Running unittests src/lib.rs (target/debug/deps/tr_core-adf9505110c85137)
 
 running 14 tests
 test color::tests::no_working_clamp ... ok
-test color::tests::reduction_is_linear_not_encoded ... ok
-test color::tests::odd_edge_constant_and_identity ... ok
 test color::tests::invalid_raster_rejected ... ok
-test protocol::tests::framing_truncation_and_version ... ok
-test color::tests::transfer_and_matrix_round_trip ... ok
 test color::tests::invisible_rgb_does_not_leak_into_edges ... ok
+test color::tests::odd_edge_constant_and_identity ... ok
+test color::tests::reduction_is_linear_not_encoded ... ok
 test protocol::tests::reject_oversize_before_allocating ... ok
+test protocol::tests::framing_truncation_and_version ... ok
 test resample::tests::aligned_identity_and_crop_preserve_original_samples ... ok
+test color::tests::transfer_and_matrix_round_trip ... ok
 test resample::tests::transparent_hidden_colors_and_output_quota ... ok
 test tests::keywords_and_rating_are_bounded ... ok
 test tests::physical_one_to_one_on_retina ... ok
@@ -37,7 +40,7 @@ test resample::tests::minification_suppresses_nyquist_pattern_in_linear_light ..
 
 test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_platform-a43f8a460cc7c1c7)
+     Running unittests src/lib.rs (target/debug/deps/tr_platform-a69170ecc6b210ea)
 
 running 4 tests
 test tests::real_worker_is_recycled_after_crash ... ignored, requires cargo build --workspace; scripts/verify.sh runs this explicitly
@@ -45,40 +48,42 @@ test tests::source_change_is_detected_before_decode ... ok
 test tests::unknown_input_never_starts_a_worker ... ok
 test tests::absolute_timeout_kills_stalled_process ... ok
 
-test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.17s
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.15s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_render-0eebd6e46837c81c)
+     Running unittests src/lib.rs (target/debug/deps/tr_render-b7a85930151220e5)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_store-ec241702c7f70ed7)
+     Running unittests src/lib.rs (target/debug/deps/tr_store-b58997cd3731c853)
 
 running 3 tests
-test tests::replacement_and_equal_content_copy_have_distinct_identity ... ok
 test tests::stale_revision_rolls_back_every_table_and_undo_increments ... ok
+test tests::replacement_and_equal_content_copy_have_distinct_identity ... ok
 test tests::durable_state_survives_index_deletion_and_restore ... ok
 
 test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_worker-fb3253822647f4dd)
+     Running unittests src/lib.rs (target/debug/deps/tr_worker-ae86fcd4c58c6acf)
 
-running 4 tests
+running 6 tests
+test native::tests::native_bitmap_preserves_orientation_alpha_and_sixteen_bit_precision ... ignored, Core Image requires a native macOS session outside a terminal sandbox
 test tests::malformed_files_do_not_produce_valid_pixels ... ok
 test tests::native_sixteen_bit_samples_are_not_reduced_to_eight ... ok
 test tests::decoding_known_corpus_and_reduction ... ok
 test tests::transport_rejects_unapproved_bytes_and_accepts_next_corpus_job ... ok
+test native::tests::native_rejects_truncated_and_unknown_formats ... ok
 
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+test result: ok. 5 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.04s
 
-     Running unittests src/main.rs (target/debug/deps/tr_worker-985dd9273fa0f73c)
+     Running unittests src/main.rs (target/debug/deps/tr_worker-472e645910dc0d2b)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/main.rs (target/debug/deps/truerenderer-29b1f2ccf5c5ee6e)
+     Running unittests src/main.rs (target/debug/deps/truerenderer-7c1cd975128316c8)
 
 running 3 tests
 test decode_pool::tests::changing_domain_reaps_idle_decoder_without_a_new_job ... ignored, requires built worker; scripts/verify.sh runs this explicitly
@@ -123,57 +128,58 @@ running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-    Finished `test` profile [optimized + debuginfo] target(s) in 0.32s
-     Running unittests src/lib.rs (target/debug/deps/tr_app-1269561d725af220)
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.22s
+     Running unittests src/lib.rs (target/debug/deps/tr_app-ea3764523a99dfd4)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_core-1ae3821adafbab79)
+     Running unittests src/lib.rs (target/debug/deps/tr_core-adf9505110c85137)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_platform-a43f8a460cc7c1c7)
+     Running unittests src/lib.rs (target/debug/deps/tr_platform-a69170ecc6b210ea)
 
 running 1 test
 test tests::real_worker_is_recycled_after_crash ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.57s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.56s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_render-0eebd6e46837c81c)
+     Running unittests src/lib.rs (target/debug/deps/tr_render-b7a85930151220e5)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_store-ec241702c7f70ed7)
+     Running unittests src/lib.rs (target/debug/deps/tr_store-b58997cd3731c853)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
 
-     Running unittests src/lib.rs (target/debug/deps/tr_worker-fb3253822647f4dd)
+     Running unittests src/lib.rs (target/debug/deps/tr_worker-ae86fcd4c58c6acf)
 
-running 0 tests
+running 1 test
+test native::tests::native_bitmap_preserves_orientation_alpha_and_sixteen_bit_precision ... ok
 
-test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.09s
 
-     Running unittests src/main.rs (target/debug/deps/tr_worker-985dd9273fa0f73c)
+     Running unittests src/main.rs (target/debug/deps/tr_worker-472e645910dc0d2b)
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-     Running unittests src/main.rs (target/debug/deps/truerenderer-29b1f2ccf5c5ee6e)
+     Running unittests src/main.rs (target/debug/deps/truerenderer-7c1cd975128316c8)
 
 running 2 tests
 test service::tests::asynchronous_scan_save_undo_and_invalid_mutation ... ok
 test decode_pool::tests::changing_domain_reaps_idle_decoder_without_a_new_job ... ok
 
-test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.55s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.44s
 
    Doc-tests tr_app
 
@@ -212,3 +218,4 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
 Worker protocol: 6 checks passed
+Sampling: passed=true; 24 signal cases; exact 1:1=true

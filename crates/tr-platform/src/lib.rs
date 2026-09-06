@@ -1,5 +1,5 @@
 //! R0 private-pipe protocol, with native XPC leases in a macOS app bundle.
-//! The compiled corpus gate remains mandatory until complete OS qualification.
+//! Pipe workers retain the corpus gate; external previews require the macOS XPC bundle.
 #[cfg(target_os = "macos")]
 mod xpc;
 use anyhow::{Context, Result, bail, ensure};
@@ -28,7 +28,7 @@ pub fn snapshot(path: &Path) -> Result<(Vec<u8>, String)> {
     );
     ensure!(
         file.metadata()?.len() <= MAX_SOURCE as u64,
-        "Limite R0: sorgenti fino a 32 MiB"
+        "Limite sorgente: 256 MiB"
     );
     let mut bytes = vec![];
     file.take(MAX_SOURCE as u64 + 1).read_to_end(&mut bytes)?;
@@ -40,11 +40,60 @@ pub fn snapshot(path: &Path) -> Result<(Vec<u8>, String)> {
     // Hash applies to the exact private bytes sent to the worker, never to a later reopening.
     Ok((bytes, digest))
 }
+pub fn observation_token(metadata: &std::fs::Metadata) -> String {
+    format!(
+        "unverified:{}:{:?}",
+        metadata.len(),
+        metadata.modified().ok()
+    )
+}
+pub fn external_decoding_available(binary: &Path) -> bool {
+    cfg!(target_os = "macos")
+        && binary.parent().is_some_and(|p| {
+            p.file_name().is_some_and(|n| n == "MacOS")
+                && p.parent()
+                    .and_then(Path::parent)
+                    .is_some_and(|b| b.extension().is_some_and(|e| e == "app"))
+        })
+}
 pub fn supported_extension(path: &Path) -> bool {
     path.extension().and_then(|x| x.to_str()).is_some_and(|x| {
         matches!(
             x.to_ascii_lowercase().as_str(),
-            "png" | "jpg" | "jpeg" | "tif" | "tiff"
+            "png"
+                | "jpg"
+                | "jpeg"
+                | "jpe"
+                | "tif"
+                | "tiff"
+                | "dng"
+                | "nef"
+                | "nrw"
+                | "cr2"
+                | "cr3"
+                | "crw"
+                | "arw"
+                | "srf"
+                | "sr2"
+                | "raf"
+                | "orf"
+                | "rw2"
+                | "rwl"
+                | "pef"
+                | "srw"
+                | "3fr"
+                | "fff"
+                | "iiq"
+                | "mos"
+                | "mef"
+                | "mrw"
+                | "erf"
+                | "raw"
+                | "gif"
+                | "bmp"
+                | "webp"
+                | "heic"
+                | "heif"
         )
     })
 }
@@ -56,6 +105,14 @@ pub struct Decoded {
     pub transport: &'static str,
     pub worker_pid: Option<u32>,
 }
+#[derive(Debug)]
+struct SourceRejected(String);
+impl std::fmt::Display for SourceRejected {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl std::error::Error for SourceRejected {}
 struct Work {
     id: u64,
     bytes: Vec<u8>,
@@ -100,6 +157,9 @@ pub struct Broker {
     policy: CorpusPolicy,
     timeout: Duration,
     memory_limit: u64,
+    external_memory_limit: u64,
+    active_external: bool,
+    external_timeout: Duration,
     slot: u32,
     bundled_xpc: bool,
     statistics: BrokerStatistics,
@@ -124,6 +184,9 @@ impl Broker {
             policy: CorpusPolicy::default(),
             timeout: Duration::from_secs(12),
             memory_limit: 384 * 1024 * 1024,
+            external_memory_limit: 2 * 1024 * 1024 * 1024,
+            active_external: false,
+            external_timeout: Duration::from_secs(45),
             slot,
             bundled_xpc,
             statistics: BrokerStatistics::default(),
@@ -142,6 +205,8 @@ impl Broker {
     /// Internal qualification only; may only lower production limits.
     pub fn tighten_limits_for_probe(&mut self, timeout: Duration, memory_bytes: u64) {
         self.timeout = timeout.min(Duration::from_secs(12));
+        self.external_timeout = timeout.min(Duration::from_secs(45));
+        self.external_memory_limit = memory_bytes.min(2 * 1024 * 1024 * 1024);
         self.memory_limit = memory_bytes.min(384 * 1024 * 1024);
     }
     pub fn suspend_for_probe(&mut self) -> Result<()> {
@@ -190,7 +255,12 @@ impl Broker {
             self.statistics.peak_footprint_bytes =
                 self.statistics.peak_footprint_bytes.max(footprint);
             ensure!(
-                rss.max(footprint) <= self.memory_limit,
+                rss.max(footprint)
+                    <= (if self.active_external {
+                        self.external_memory_limit
+                    } else {
+                        self.memory_limit
+                    }),
                 "Quota memoria XPC superata: servizio interrotto"
             );
         }
@@ -246,7 +316,7 @@ impl Broker {
                     let (kind, id, data) = protocol::read_control(&mut output)?;
                     ensure!(id == work.id, "Risposta IPC tardiva o request ID errato");
                     if kind == protocol::ERROR {
-                        bail!("{}", protocol::parse::<String>(&data)?);
+                        return Err(SourceRejected(protocol::parse::<String>(&data)?).into());
                     }
                     ensure!(kind == protocol::RESPONSE, "Tipo di risposta IPC inatteso");
                     let info: RasterInfo = protocol::parse(&data)?;
@@ -265,7 +335,9 @@ impl Broker {
                     let raster = protocol::read_raster(&mut output, &info)?;
                     Ok((info, raster))
                 })();
-                let failed = result.is_err();
+                let failed = result
+                    .as_ref()
+                    .is_err_and(|error| error.downcast_ref::<SourceRejected>().is_none());
                 let _ = work.result.send(result);
                 if failed {
                     break;
@@ -289,22 +361,34 @@ impl Broker {
         cancelled: impl Fn() -> bool,
     ) -> Result<Decoded> {
         ensure!(!cancelled(), "Decodifica annullata");
+        let before = observation_token(&path.metadata()?);
         let (bytes, digest) = snapshot(path)?;
+        let external = !self.policy.approves(&digest);
         ensure!(
-            digest == expected_digest,
+            digest == expected_digest
+                || (self.bundled_xpc
+                    && expected_digest.starts_with("unverified:")
+                    && expected_digest == before
+                    && observation_token(&path.metadata()?) == before),
             "Sorgente cambiata: ricaricare la cartella"
         );
         ensure!(
-            self.policy.approves(&digest),
-            "Anteprima non disponibile: questo file non appartiene al corpus R0. La sandbox OS deve essere qualificata prima degli archivi esterni."
+            !external || self.bundled_xpc,
+            "File esterni: aprire il bundle macOS con decoder XPC isolati; il worker su pipe accetta solo il corpus R0"
         );
+        self.active_external = external;
+        let timeout = if external {
+            self.external_timeout
+        } else {
+            self.timeout
+        };
         ensure!(edge <= 2048, "Dimensione anteprima fuori quota");
         let started = Instant::now();
         if self.process.as_ref().is_some_and(|p| p.jobs >= 32) {
             self.process.take();
         }
         if self.process.is_none() {
-            self.process = Some(self.spawn(self.timeout)?);
+            self.process = Some(self.spawn(timeout)?);
             self.statistics.starts += 1;
         }
         self.next_id = self.next_id.checked_add(1).context("Request ID esauriti")?;
@@ -335,7 +419,7 @@ impl Broker {
                 self.statistics.forced_stops += 1;
                 return Err(error);
             }
-            let remaining = self.timeout.saturating_sub(started.elapsed());
+            let remaining = timeout.saturating_sub(started.elapsed());
             if remaining.is_zero() {
                 self.process.take();
                 self.statistics.forced_stops += 1;
@@ -358,7 +442,9 @@ impl Broker {
                     });
                 }
                 Ok(Err(error)) => {
-                    self.process.take();
+                    if error.downcast_ref::<SourceRejected>().is_none() {
+                        self.process.take();
+                    }
                     return Err(error);
                 }
                 Err(mpsc::RecvTimeoutError::Timeout) => continue,

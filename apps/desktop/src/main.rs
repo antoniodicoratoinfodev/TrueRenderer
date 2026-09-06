@@ -1,6 +1,7 @@
 mod decode_pool;
 mod service;
 mod ui;
+mod verify_formats;
 mod verify_resampling;
 mod verify_xpc;
 use anyhow::{Context, Result};
@@ -28,7 +29,10 @@ fn run() -> Result<()> {
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))
         .canonicalize()?;
     let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
-    let smoke = sampling_smoke || args.iter().any(|a| a == "--smoke-test");
+    let external_smoke = args.iter().any(|a| a == "--formats-smoke");
+    let smoke = external_smoke || sampling_smoke || args.iter().any(|a| a == "--smoke-test");
+    let initial_open =
+        option("--open").or_else(|| external_smoke.then(|| root.join("var/format-fixtures")));
     let worker = executable
         .parent()
         .context("Cartella binario")?
@@ -37,6 +41,9 @@ fn run() -> Result<()> {
         } else {
             "tr-worker"
         });
+    if args.iter().any(|a| a == "--verify-formats") {
+        return verify_formats::run(&root, &worker);
+    }
     if args.iter().any(|a| a == "--verify-sampling-screenshots") {
         return verify_resampling::screenshots(&root, &worker);
     }
@@ -83,8 +90,12 @@ fn run() -> Result<()> {
                 root,
                 data,
                 worker,
-                smoke,
-                sampling_smoke,
+                ui::Startup {
+                    smoke,
+                    sampling_smoke,
+                    external_smoke,
+                    open: initial_open,
+                },
             )))
         }),
     )
@@ -94,9 +105,12 @@ fn run() -> Result<()> {
 fn main() {
     if let Err(error) = run() {
         eprintln!("TrueRenderer: {error:#}");
-        if std::env::args()
-            .any(|a| a.starts_with("--verify-") || a == "--smoke-test" || a == "--sampling-smoke")
-        {
+        if std::env::args().any(|a| {
+            a.starts_with("--verify-")
+                || a == "--smoke-test"
+                || a == "--sampling-smoke"
+                || a == "--formats-smoke"
+        }) {
             std::process::exit(1);
         }
         rfd::MessageDialog::new()

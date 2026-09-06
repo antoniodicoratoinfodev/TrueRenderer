@@ -1,0 +1,44 @@
+TrueRenderer Proprietary License
+
+Copyright (c) 2026 Antonio Dicorato (antoniodicoratoinfodev).
+All rights reserved.
+
+1. Scope
+This notice applies to the original TrueRenderer source code, documentation,
+and project-created assets in this repository, except material explicitly
+identified as third-party material or covered by a separate license.
+
+2. Public availability and reserved rights
+The repository is made publicly available for inspection and information.
+Public availability does not grant a general license to use, run, modify,
+distribute, sublicense, sell, or incorporate TrueRenderer into another product.
+Those activities require prior written permission from the copyright holder,
+except to the extent permitted by applicable law or an agreement that applies
+to the recipient.
+
+This notice does not restrict the rights granted to GitHub or its users under
+the applicable GitHub Terms of Service, including viewing and forking within
+GitHub as provided by those terms. It does not grant additional rights beyond
+those terms. No trademark rights are granted.
+
+3. Third-party material
+Third-party dependencies and notices remain governed by their respective
+licenses. This notice does not replace, restrict, or relicense their terms.
+See NOTICE.md and reports/dependency-notices/ for the dependency inventory and
+available notices. Frameworks supplied by an operating system are governed by
+their own terms and are not relicensed by this repository.
+
+4. Warranty and liability
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE MATERIAL IS PROVIDED
+"AS IS", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDER SHALL
+NOT BE LIABLE FOR CLAIMS, DAMAGES, OR OTHER LIABILITY ARISING FROM ACCESS TO
+OR USE OF THE MATERIAL. Nothing here excludes rights or liabilities that
+cannot lawfully be excluded.
+
+5. Permissions
+Requests for separate permission or commercial licensing should be addressed
+to the repository owner: https://github.com/antoniodicoratoinfodev
+
+This is a proprietary notice, not an open-source license.

@@ -68,6 +68,11 @@ impl Pyramid {
         self.levels.len()
     }
     pub fn render(&self, region: Region) -> Result<LinearImage> {
+        ensure!(
+            (region.size[0] as u64) * (region.size[1] as u64)
+                <= crate::color::MAX_PRESENTATION_PIXELS as u64,
+            "Viewport oltre quota di 8 Mi pixel"
+        );
         let source = self.source();
         let mut level = 0;
         while self.levels.get(level + 1).is_some() {

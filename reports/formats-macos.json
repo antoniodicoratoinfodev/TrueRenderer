@@ -1,0 +1,678 @@
+{
+  "application": "TrueRenderer",
+  "checks": [
+    {
+      "digest": "31f26f4d6d3a15a5cf31357d948d40cd20ab942256caf040a763b4a267ef5faf",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "01-jpeg.jpg",
+      "green_range": [
+        0.011382341384887695,
+        0.9195200204849243
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "JPEG",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.01592200994491577,
+      "seconds": 0.097032667,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "4b3bc7ca959b62beb58b39a6fbb38750ac3bd3daebaa636f5171a27cc467d2de",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "02-png.png",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "PNG",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.0092135,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "e7d450e3a2cbbe5d45f563c3f353e9e3016a4ac2cf5121afbb1ed750aba4fe3f",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "03-tiff.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.012609167,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "7bfc1c130e844a1e16c7b9e56b50ba63c611cc62f717f384eb853b29fe5ea8ab",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "04-gif.gif",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "GIF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.007948667,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "afb3c31db17e77132dbe984fb661eaa0722e093c293e2c019225c5fd96c49002",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "05-bmp.bmp",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "BMP",
+        "height": 32,
+        "input_color": "Profilo ImageIO implicito/assunto; non assegnato dall'utente",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008232917,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "a44a19ed71ec02e24f2a948adcb76cb3aa1662830df7b8ea371905b0594d1119",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "06-heic.heic",
+      "green_range": [
+        0.011391337029635906,
+        0.925541877746582
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "HEIF/HEIC",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.006001889705657959,
+      "seconds": 0.085738375,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "26d32bba555bc6bd2989661da7d1ffd261c1c23a5b643f3dd6d58dfde1fa3ac0",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "16bit.png",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "PNG",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 16,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008599167,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "bc3e1a9592c31cb4fbdbef4f0f913df6fe066e47e4146ee10881735c66b1b712",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "16bit.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 16,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008494334,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "e7d450e3a2cbbe5d45f563c3f353e9e3016a4ac2cf5121afbb1ed750aba4fe3f",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "orientation-1.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008364542,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "e7a32beec9e3d361ba265e028c23fe14d3dddd42a998e008c873caf9a23add4c",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "orientation-2.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 2 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.0080355,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "97cb629744cd280b74a569878ab71bfdf9eea606c7b707ca7f0ac97268625933",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "orientation-3.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 3 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008268125,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "cf1dd811ac5ee5ad218322394d14ba4eca99e7a70b5f8da81498ddc43623cc8f",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "orientation-4.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 32,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 4 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008040333,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "fbd119ed94bcb024ef98604f3ea15ab491af843190b46e37befff86a3107d858",
+      "dimensions": [
+        32,
+        48
+      ],
+      "expected_dimensions": [
+        32,
+        48
+      ],
+      "file": "orientation-5.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 48,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 5 · applicato una volta",
+        "source_height": 48,
+        "source_width": 32,
+        "width": 32
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.013069917,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "a700a6ee06ec2cff870e2cea38fb1ddcb5046ee9011f156df94ba784f2eae728",
+      "dimensions": [
+        32,
+        48
+      ],
+      "expected_dimensions": [
+        32,
+        48
+      ],
+      "file": "orientation-6.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 48,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 6 · applicato una volta",
+        "source_height": 48,
+        "source_width": 32,
+        "width": 32
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.007788583,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "4860b9649a1326f32df72b8b18a8ab0fa4905ba38aa7be7cfa40f642a0ce6167",
+      "dimensions": [
+        32,
+        48
+      ],
+      "expected_dimensions": [
+        32,
+        48
+      ],
+      "file": "orientation-7.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 48,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 7 · applicato una volta",
+        "source_height": 48,
+        "source_width": 32,
+        "width": 32
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008110875,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "2b92a63f65dc1b494080ded7b1dc457d3f4e58592a9eee918efb9c94b3143857",
+      "dimensions": [
+        32,
+        48
+      ],
+      "expected_dimensions": [
+        32,
+        48
+      ],
+      "file": "orientation-8.tiff",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "TIFF",
+        "height": 48,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 8 · applicato una volta",
+        "source_height": 48,
+        "source_width": 32,
+        "width": 32
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.007955333,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "33b78420b683e072bddc4ebd84735cdbd56564a00406fbafc9102ccc7b1c67e7",
+      "dimensions": [
+        4000,
+        3000
+      ],
+      "expected_dimensions": [
+        4000,
+        3000
+      ],
+      "file": "12mp-jpeg.jpg",
+      "green_range": [
+        0.011057925410568714,
+        0.9195424318313599
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "JPEG",
+        "height": 3000,
+        "input_color": "Profilo ImageIO: sRGB IEC61966-2.1",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 3000,
+        "source_width": 4000,
+        "width": 4000
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.01592200994491577,
+      "seconds": 0.24043875,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "dimensions": [
+        1024,
+        768
+      ],
+      "expected_dimensions": [
+        1024,
+        768
+      ],
+      "file": "07-bayer.dng",
+      "green_range": [
+        0.09642363339662552,
+        0.7463644742965698
+      ],
+      "info": {
+        "decoder": "Apple RAW 8.dng · full · TR-linear-v1",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "RAW",
+        "height": 768,
+        "input_color": "RAW: WB/metadati Apple; baseline 0.000 EV; boost/NR/sharpen off",
+        "native_bits": 16,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 768,
+        "source_width": 1024,
+        "width": 1024
+      },
+      "passed": true,
+      "quadrant_error_linear": null,
+      "seconds": 2.285861917,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    },
+    {
+      "digest": "b55394f9e7fcb5f380a493285150b11868574af2701be3fa2a6259bea0f66e5e",
+      "dimensions": [
+        48,
+        32
+      ],
+      "expected_dimensions": [
+        48,
+        32
+      ],
+      "file": "08-webp.webp",
+      "green_range": [
+        0.01136031188070774,
+        0.9195144772529602
+      ],
+      "info": {
+        "decoder": "Apple ImageIO / ColorSync · Version 26.6.2 (Build 25G83)",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "WebP",
+        "height": 32,
+        "input_color": "Profilo ImageIO implicito/assunto; non assegnato dall'utente",
+        "native_bits": 8,
+        "orientation": "EXIF 1 · applicato una volta",
+        "source_height": 32,
+        "source_width": 48,
+        "width": 48
+      },
+      "passed": true,
+      "quadrant_error_linear": 0.000028207898139953613,
+      "seconds": 0.008746125,
+      "transport": "XPC / App Sandbox · R0",
+      "worker_pid": 41876
+    }
+  ],
+  "passed": true,
+  "rejection_checks": [
+    {
+      "case": "unknown.jpg",
+      "passed": true,
+      "rejected": true,
+      "same_worker_pid": true,
+      "valid_image_recovered": true
+    },
+    {
+      "case": "truncated.png",
+      "passed": true,
+      "rejected": true,
+      "same_worker_pid": true,
+      "valid_image_recovered": true
+    },
+    {
+      "case": "truncated.tiff",
+      "passed": true,
+      "rejected": true,
+      "same_worker_pid": true,
+      "valid_image_recovered": true
+    },
+    {
+      "case": "content signature takes precedence over extension",
+      "passed": true
+    },
+    {
+      "case": "source exceeds 256 MiB",
+      "passed": true
+    },
+    {
+      "case": "stale source observation",
+      "passed": true
+    }
+  ],
+  "scope": "Own generated external fixtures through actual XPC: JPEG/PNG/TIFF/GIF/BMP/HEIC/WebP, 16-bit, EXIF 1-8, 12 MP, Bayer DNG without embedded preview. No universal camera/ICC/display qualification.",
+  "statistics": {
+    "completed_jobs": 24,
+    "forced_stops": 0,
+    "peak_footprint_bytes": 477397808,
+    "peak_rss_bytes": 364675072,
+    "starts": 1,
+    "worker_pid": 41876
+  },
+  "version": "0.1.3"
+}
