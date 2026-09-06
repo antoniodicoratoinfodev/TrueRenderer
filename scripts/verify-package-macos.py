@@ -19,7 +19,7 @@ def main():
     info = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
     version = info["CFBundleShortVersionString"]
     command("/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle))
-    for report_name in ["finder-macos.json", "relocation-macos.json", "xpc-qualification-macos.json"]:
+    for report_name in ["finder-macos.json", "relocation-macos.json", "xpc-qualification-macos.json", "resampling-macos.json", "sampling-presentation-macos.json"]:
         report = json.loads((ROOT / "reports" / report_name).read_text())
         assert report["passed"] and report["version"] == version, report_name
         if "worker_transports" in report:

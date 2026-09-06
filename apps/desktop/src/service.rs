@@ -24,6 +24,7 @@ pub enum Request {
     Decode {
         item: Item,
         edge: u32,
+        urgent: bool,
         generation: u64,
     },
     Save {
@@ -220,6 +221,7 @@ impl Service {
                     Request::Decode {
                         item,
                         edge,
+                        urgent,
                         generation,
                     } => {
                         if generation != worker_generation.load(Ordering::Relaxed) {
@@ -228,6 +230,7 @@ impl Service {
                         if let Err(job) = pool.submit(Job {
                             item,
                             edge,
+                            urgent,
                             generation,
                         }) {
                             send(Event::DecodeDeferred {
@@ -366,6 +369,7 @@ mod tests {
             .send(Request::Decode {
                 item: item.clone(),
                 edge: 320,
+                urgent: false,
                 generation: 1,
             })
             .unwrap();

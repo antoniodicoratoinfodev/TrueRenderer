@@ -17,6 +17,7 @@ use tr_platform::Broker;
 pub struct Job {
     pub item: Item,
     pub edge: u32,
+    pub urgent: bool,
     pub generation: u64,
 }
 #[derive(Default)]
@@ -94,9 +95,9 @@ impl DecodePool {
                     };
                     let result = broker
                         .decode_cancellable(&job.item.path, &job.item.digest, job.edge, cancelled)
-                        .map(|decoded| {
-                            let prepared = tr_render::prepare(&decoded.raster);
-                            (decoded, prepared)
+                        .and_then(|decoded| {
+                            let prepared = tr_render::prepare(&decoded.raster)?;
+                            Ok((decoded, prepared))
                         })
                         .map_err(|error| format!("{error:#}"));
                     if !cancelled() {
@@ -135,7 +136,7 @@ impl DecodePool {
         {
             return Err(Box::new(job));
         }
-        if job.edge == 0 {
+        if job.urgent {
             queues.urgent.push_back(job);
         } else {
             queues.thumbnails.push_back(job);
@@ -202,6 +203,7 @@ mod tests {
                     revision: 0,
                 },
                 edge: 320,
+                urgent: false,
                 generation: 1,
             })
             .is_ok()

@@ -1,5 +1,9 @@
-   Compiling truerenderer v0.1.1 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
-    Finished `release` profile [optimized] target(s) in 32.93s
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+    Blocking waiting for file lock on package cache
+   Compiling tr-render v0.1.2 (/Users/antonio/Desktop/TrueRenderer/crates/tr-render)
+   Compiling truerenderer v0.1.2 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
+    Finished `release` profile [optimized] target(s) in 41.18s
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/XPCServices/Decoder0.xpc: replacing existing signature
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/XPCServices/Decoder1.xpc: replacing existing signature
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/MacOS/tr-worker: replacing existing signature

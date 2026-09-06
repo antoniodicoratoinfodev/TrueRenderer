@@ -1,6 +1,7 @@
 pub mod color;
 pub mod corpus;
 pub mod protocol;
+pub mod resample;
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 

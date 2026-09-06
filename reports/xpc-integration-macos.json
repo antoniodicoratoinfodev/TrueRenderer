@@ -1,42 +1,42 @@
 {
   "application": "TrueRenderer",
   "corpus_images_checked": 12,
-  "elapsed_seconds": 10.932696667,
+  "elapsed_seconds": 10.828495375,
   "first_before_stop": {
     "completed_jobs": 1,
     "forced_stops": 1,
-    "peak_footprint_bytes": 38404552,
-    "peak_rss_bytes": 44695552,
+    "peak_footprint_bytes": 38289840,
+    "peak_rss_bytes": 44597248,
     "starts": 1,
-    "worker_pid": 27690
+    "worker_pid": 31514
   },
-  "first_pid": 27690,
+  "first_pid": 31514,
   "full_sandbox_gate_passed": false,
   "lifecycle_api": "Mach task/audit token + dynamically resolved libproc SPI; no PID-only signal",
   "memory_before_stop": {
     "completed_jobs": 1,
     "forced_stops": 1,
-    "peak_footprint_bytes": 38404528,
-    "peak_rss_bytes": 44711936,
+    "peak_footprint_bytes": 38322608,
+    "peak_rss_bytes": 44630016,
     "starts": 1,
-    "worker_pid": 27699
+    "worker_pid": 31517
   },
   "memory_limit_is_hard_kernel_cap": false,
   "other_isolate_survived": true,
   "passed": true,
-  "recovered_pid": 27699,
+  "recovered_pid": 31517,
   "same_pixels": true,
   "scope": "integrated XPC R0 corpus, two processes, timeout and memory supervision; full sandbox/release gate open",
   "second": {
     "completed_jobs": 14,
     "forced_stops": 0,
-    "peak_footprint_bytes": 144048632,
-    "peak_rss_bytes": 150372352,
+    "peak_footprint_bytes": 143852024,
+    "peak_rss_bytes": 150175744,
     "starts": 1,
-    "worker_pid": 27691
+    "worker_pid": 31515
   },
-  "second_pid": 27691,
-  "suspended_worker_timeout_ms": 216,
+  "second_pid": 31515,
+  "suspended_worker_timeout_ms": 217,
   "two_distinct_processes": true,
-  "version": "0.1.1"
+  "version": "0.1.2"
 }

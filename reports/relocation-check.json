@@ -1,10 +1,10 @@
 {
   "application": "TrueRenderer",
-  "version": "0.1.1",
-  "root": "/Users/antonio/Desktop/TrueRenderer/var/relocation-0.1.1-final",
+  "version": "0.1.2",
+  "root": "/Users/antonio/Desktop/TrueRenderer/var/relocation-0.1.2-final",
   "passed": true,
   "stage": "passed",
-  "completed_at": "2026-09-06T12:11:46.307494+00:00",
+  "completed_at": "2026-09-06T17:25:05.303964+00:00",
   "runtime_payload": "independent copies of bundle and corpus, no symlink",
   "scope": "runtime root discovery and embedded XPC; not relocation/recompilation of Rust toolchain",
   "smoke_report": "relocation-macos.json",

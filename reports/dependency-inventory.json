@@ -1,10 +1,10 @@
 {
   "application": "TrueRenderer",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "target": "aarch64-apple-darwin",
   "scope": "Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval",
   "rust": "1.98.1",
-  "cargo_lock_sha256": "3c0f5e683739e6d3c2c80becdcd2200058f843ef7a176f78145325463a870f6a",
+  "cargo_lock_sha256": "4363e93c2c541301481789c389fcb0721a08815e7068ba5e7fc1fa11b18098e0",
   "packages": [
     {
       "name": "accesskit",
@@ -2706,7 +2706,7 @@
     },
     {
       "name": "tr-app",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,
@@ -2715,7 +2715,7 @@
     },
     {
       "name": "tr-core",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,
@@ -2724,7 +2724,7 @@
     },
     {
       "name": "tr-platform",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,
@@ -2733,7 +2733,7 @@
     },
     {
       "name": "tr-render",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,
@@ -2742,7 +2742,7 @@
     },
     {
       "name": "tr-store",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,
@@ -2751,7 +2751,7 @@
     },
     {
       "name": "tr-worker",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,
@@ -2802,7 +2802,7 @@
     },
     {
       "name": "truerenderer",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "license": null,
       "source": null,
       "repository": null,

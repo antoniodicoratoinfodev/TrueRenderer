@@ -3,13 +3,15 @@
 Aggiornato: 6 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
 Il nome corrente è **TrueRenderer**; TrueVision è il nome precedente.
 
+Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `../TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
+
 ## Obiettivo e regole
 
 Applicazione desktop Rust per sfogliare, selezionare e ispezionare immagini con una resa tracciabile. Prima versione supportata: macOS arm64 e Windows x86-64, SDR. Le tappe del documento sono criteri di accettazione: una schermata funzionante non chiude un gate di colore, sicurezza o accessibilità.
 
 Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, prove riproducibili, limiti osservati e aggiornamento dell'architettura. Nessuna modifica agli originali; annotazioni separate dall'indice. Nessun servizio cloud, account o canone. Tutto il progetto, inclusa la toolchain locale, rimane in questa cartella sul Desktop. Dati di sviluppo locali in `var/`; prima di una release spostarli nel percorso app-data nativo qualificato.
 
-## Incremento corrente — prototipo R0
+## Primo incremento — prototipo R0
 
 - [x] Leggere requisiti, invarianti, architettura, UX, schema e roadmap; conservare il documento originale.
 - [x] Registrare il nuovo nome e questo piano, con tracciamento progressivo nel documento richiesto.
@@ -38,7 +40,7 @@ Passati i controlli delle due varianti: sandbox base e sandbox con `RLIMIT_NPROC
 
 ## Incremento 0.1.1 — integrazione del confine XPC
 
-Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 installata in `dist/TrueRenderer.app`; prove native del decoder, controllo grafico e copia autonoma passati. Restano aperti i gate elencati sotto.
+Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 verificata all’epoca con prove native del decoder, controllo grafico e copia autonoma passati; ora conservata nello storico e sostituita dalla 0.1.2. Restano aperti i gate elencati sotto.
 
 - [x] Portare il decoder controllato in due servizi XPC con protocollo senza percorsi e allowlist anche nel decoder.
 - [x] Vincolare il broker al CDHash del servizio installato, verificare due PID reali e conservare la copia privata degli output.
@@ -54,6 +56,23 @@ Completata la verticale interna: broker macOS, decoder riutilizzabile e due serv
 - [ ] Affiancare la verticale Windows reale e le prove di display/accessibilità prima di chiudere R0.
 
 Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Il prossimo lavoro sul Mac è la suite avversaria del bootstrap e del ciclo di vita, seguita dal budget memoria end-to-end. I PNG esterni restano esclusi dal decoder; l’integrazione non chiude il gate completo della sandbox.
+
+## Incremento 0.1.2 — fedeltà del ricampionamento e documentazione
+
+Concluso il sottoinsieme correttivo richiesto. Build 0.1.2 installata e verificata; i gate generali R0/R1 restano aperti.
+
+- [x] Osservare la finestra precedente e riprodurre i problemi di Frequenze radiali in Adatta e griglia.
+- [x] Usare una sorgente/piramide condivisa in griglia, viewer, inspector, filmstrip e confronto.
+- [x] Filtrare in luce lineare alla dimensione fisica, mantenendo 1:1 allineato senza filtro; registrare la variante Lanczos e il trattamento alpha in ADR 0003.
+- [x] Eliminare il secondo ridimensionamento delle miniature e limitare il calcolo alle regioni visibili con coda asincrona e cache bounded.
+- [x] Superare quattro nuovi test Rust, 24 casi sinusoidali e confronto esatto LOD 0 del corpus invariato.
+- [x] Acquisire otto schermate native e confrontare 14 regioni con il raster atteso: zero differenze di canale su questo Mac.
+- [x] Superare fmt/clippy, 30 test Rust, 6 controlli IPC, suite XPC e verifica firma/hash del bundle 0.1.2.
+- [x] Verificare avvio Finder e copia autonoma con database integri; conservare il bundle precedente.
+- [x] Spiegare la differenza PLAN/Architettura e confrontare tutti i capitoli 1–24 con codice/prove, distinguendo mancante, parziale, non qualificato e post-v1.
+- [x] Aggiornare entrambe le architetture senza cambiare il backup originale.
+
+**Rimangono da qualificare (§10/§19.3):** alias 2D/Siemens, overshoot, grafo CPU/GPU e filtro diretto, transizioni LOD, EXIF 1–8, f64 della geometria completa, tile/cuciture, altri display/DPI e prestazioni. Il filtro CPU può mostrare brevemente lo sfondo durante il ricalcolo: «mai viewport vuoto» e tutti i p95 non sono ancora garantiti. Le 24 sinusoidi includono 11 casi di banda di transizione osservati senza soglia di accettazione. Le soglie valide riguardano 8 casi di stopband e 5 di passband.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 

@@ -1,5 +1,5 @@
 use crate::service::{Event, Request, Service};
-use eframe::egui::{self, Color32, RichText, TextureHandle, TextureOptions, Vec2};
+use eframe::egui::{self, Color32, RichText, Vec2};
 use std::{
     collections::{HashMap, HashSet},
     path::PathBuf,
@@ -7,7 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tr_app::{Command, Effect, State};
-use tr_core::{Item, Label, ViewMode, ViewTransform, color::LinearImage, protocol::RasterInfo};
+use tr_core::{Item, Label, ViewMode, ViewTransform, protocol::RasterInfo, resample::Pyramid};
 
 const TEXT: Color32 = Color32::from_rgb(232, 232, 232);
 const MUTED: Color32 = Color32::from_rgb(154, 154, 154);
@@ -15,10 +15,9 @@ const AMBER: Color32 = Color32::from_rgb(217, 164, 65);
 const SURFACE: Color32 = Color32::from_rgb(38, 38, 38);
 
 struct CachedImage {
-    texture: TextureHandle,
     info: RasterInfo,
     histogram: [[u32; 256]; 3],
-    raster: Option<Arc<LinearImage>>,
+    pyramid: Arc<Pyramid>,
     touched: u64,
     transport: &'static str,
     worker_pid: Option<u32>,
@@ -30,6 +29,7 @@ pub struct TrueRenderer {
     folder: PathBuf,
     generation: u64,
     cache: HashMap<(String, u32), CachedImage>,
+    presenter: tr_render::presenter::Presenter,
     pending_images: HashSet<(String, u32)>,
     errors: HashMap<String, String>,
     cell_size: f32,
@@ -47,6 +47,7 @@ pub struct TrueRenderer {
     frame_number: u64,
     sample: Option<tr_render::Sample>,
     smoke: bool,
+    sampling_smoke: bool,
     started: Instant,
     smoke_stage: u8,
     screenshots: HashSet<String>,
@@ -67,6 +68,7 @@ impl TrueRenderer {
         data: PathBuf,
         worker: PathBuf,
         smoke: bool,
+        sampling_smoke: bool,
     ) -> Self {
         let ctx = &cc.egui_ctx;
         ctx.set_theme(egui::Theme::Dark);
@@ -140,6 +142,7 @@ impl TrueRenderer {
             folder: folder.clone(),
             generation: 0,
             cache: HashMap::new(),
+            presenter: tr_render::presenter::Presenter::new(ctx.clone()),
             pending_images: HashSet::new(),
             errors: HashMap::new(),
             cell_size: 206.,
@@ -157,6 +160,7 @@ impl TrueRenderer {
             frame_number: 0,
             sample: None,
             smoke,
+            sampling_smoke,
             started: Instant::now(),
             smoke_stage: 0,
             screenshots: HashSet::new(),
@@ -187,6 +191,7 @@ impl TrueRenderer {
             .generation
             .store(self.generation, Ordering::Relaxed);
         self.cache.clear();
+        self.presenter.clear();
         self.pending_images.clear();
         self.errors.clear();
         self.state.replace_items(vec![]);
@@ -225,7 +230,7 @@ impl TrueRenderer {
         if !item.approved {
             return;
         }
-        let key = (item.id.clone(), edge);
+        let key = (item.id.clone(), 0);
         if self.cache.contains_key(&key) {
             if let Some(c) = self.cache.get_mut(&key) {
                 c.touched = self.frame_number;
@@ -237,7 +242,8 @@ impl TrueRenderer {
         }
         let request = Request::Decode {
             item: item.clone(),
-            edge,
+            edge: 0,
+            urgent: edge == 0,
             generation: self.generation,
         };
         let tx = if edge == 0 {
@@ -250,6 +256,10 @@ impl TrueRenderer {
         }
     }
     fn poll(&mut self, ctx: &egui::Context) {
+        self.presenter.poll(ctx);
+        if self.smoke {
+            self.presenter.begin_capture();
+        }
         if let Ok(result) = self.gpu_rx.try_recv() {
             match result {
                 Ok(check) => {
@@ -304,48 +314,34 @@ impl TrueRenderer {
                     self.pending_images.remove(&(id.clone(), edge));
                     match *result {
                         Ok((decoded, prepared)) => {
-                            let texture = ctx.load_texture(
-                                format!("{id}:{edge}"),
-                                egui::ColorImage::from_rgba_unmultiplied(
-                                    [
-                                        decoded.raster.width as usize,
-                                        decoded.raster.height as usize,
-                                    ],
-                                    &prepared.rgba,
-                                ),
-                                TextureOptions::NEAREST,
-                            );
                             self.cache.insert(
                                 (id, edge),
                                 CachedImage {
-                                    texture,
                                     info: decoded.info,
                                     histogram: prepared.histogram,
-                                    raster: if edge == 0 {
-                                        Some(Arc::new(decoded.raster))
-                                    } else {
-                                        None
-                                    },
+                                    pyramid: prepared.pyramid,
                                     touched: self.frame_number,
                                     transport: decoded.transport,
                                     worker_pid: decoded.worker_pid,
                                 },
                             );
-                            for (full, limit) in [(false, 64), (true, 3)] {
-                                while self.cache.keys().filter(|(_, e)| (*e == 0) == full).count()
-                                    > limit
-                                {
-                                    let key = self
-                                        .cache
-                                        .iter()
-                                        .filter(|((_, e), _)| (*e == 0) == full)
-                                        .min_by_key(|(_, v)| v.touched)
-                                        .map(|(k, _)| k.clone());
-                                    if let Some(k) = key {
-                                        self.cache.remove(&k);
-                                    } else {
-                                        break;
-                                    }
+                            while self.cache.len() > 64
+                                || self
+                                    .cache
+                                    .values()
+                                    .map(|c| c.pyramid.byte_len())
+                                    .sum::<usize>()
+                                    > 384 * 1024 * 1024
+                            {
+                                let key = self
+                                    .cache
+                                    .iter()
+                                    .min_by_key(|(_, v)| v.touched)
+                                    .map(|(k, _)| k.clone());
+                                if let Some(k) = key {
+                                    self.cache.remove(&k);
+                                } else {
+                                    break;
                                 }
                             }
                         }
@@ -657,19 +653,21 @@ impl TrueRenderer {
                         return;
                     };
                     self.ensure_image(&item, 320);
-                    let key = if self.cache.contains_key(&(item.id.clone(), 0)) {
-                        (item.id.clone(), 0)
-                    } else {
-                        (item.id.clone(), 320)
-                    };
+                    let key = (item.id.clone(), 0);
                     let info = self.cache.get(&key).map(|c| c.info.clone());
                     if let Some(cached) = self.cache.get(&key) {
-                        ui.add(
-                            egui::Image::new(&cached.texture).fit_to_exact_size(Vec2::new(
-                                ui.available_width(),
-                                ui.available_width() * cached.info.height as f32
-                                    / cached.info.width as f32,
-                            )),
+                        let size = Vec2::new(
+                            ui.available_width(),
+                            ui.available_width() * cached.info.height as f32
+                                / cached.info.width as f32,
+                        );
+                        let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+                        tr_render::presenter::fitted(
+                            &mut self.presenter,
+                            ui,
+                            format!("inspector:{}", item.id),
+                            &cached.pyramid,
+                            rect,
                         );
                         ui.add_space(16.);
                         tr_render::histogram(ui, &cached.histogram);
@@ -797,7 +795,9 @@ impl TrueRenderer {
                     }
                     if let Some(info) = info {
                         field(ui, "Decoder", &info.decoder);
-                        field(ui, "Riduzione", &info.filter);
+                        field(ui, "Decodifica", &info.filter);
+                        field(ui, "Presentazione", "Lineare · Lanczos3 / Mitchell");
+                        field(ui, "Alpha", "Area / triangolare");
                     }
                     ui.add_space(4.);
                     ui.label(
@@ -861,21 +861,13 @@ impl TrueRenderer {
             rect.min + Vec2::splat(10.),
             egui::pos2(rect.right() - 10., rect.bottom() - bottom),
         );
-        if let Some(cache) = self.cache.get(&(item.id.clone(), 320)) {
-            let ratio = (area.width() / cache.info.width as f32)
-                .min(area.height() / cache.info.height as f32);
-            let image_rect = egui::Rect::from_center_size(
-                area.center(),
-                Vec2::new(
-                    cache.info.width as f32 * ratio,
-                    cache.info.height as f32 * ratio,
-                ),
-            );
-            painter.image(
-                cache.texture.id(),
-                image_rect,
-                egui::Rect::from_min_max(egui::Pos2::ZERO, egui::pos2(1., 1.)),
-                Color32::WHITE,
+        if let Some(cache) = self.cache.get(&(item.id.clone(), 0)) {
+            tr_render::presenter::fitted(
+                &mut self.presenter,
+                ui,
+                format!("thumbnail:{}:{show_name}", item.id),
+                &cache.pyramid,
+                area,
             );
         } else {
             let text = if self.errors.contains_key(&item.id) {
@@ -1082,14 +1074,18 @@ impl TrueRenderer {
         }
     }
     fn paint_view(&mut self, ui: &mut egui::Ui, item: &Item, id: &str) {
-        if let Some(c) = self.cache.get(&(item.id.clone(), 0))
-            && let Some(raster) = &c.raster
-        {
-            let (response, sample) =
-                tr_render::viewport(ui, &c.texture, raster, &mut self.state.transform, id);
+        if let Some(c) = self.cache.get(&(item.id.clone(), 0)) {
+            let lane = format!("view:{id}:{}", item.id);
+            let (response, sample) = tr_render::viewport(
+                ui,
+                &mut self.presenter,
+                &c.pyramid,
+                &mut self.state.transform,
+                &lane,
+            );
             self.image_focus_ids.insert(response.id);
             if sample.is_some() {
-                self.sample_source = item.name.clone();
+                self.sample_source = format!("Sorgente LOD 0 · {}", item.name);
                 self.sample = sample;
             }
         } else {
@@ -1158,17 +1154,36 @@ impl TrueRenderer {
             ui.add_space(8.);ui.label(format!("Progetto e piano: {}",self.root.display()));
         });
     }
+    fn capture_screenshot(&self, ctx: &egui::Context, name: &str) {
+        let ppp = ctx.pixels_per_point();
+        let records: Vec<_> = self.presenter.captures().iter().filter_map(|c| {
+            let ((id,_), _) = self.cache.iter().find(|(_,cached)| cached.pyramid.id() == c.source)?;
+            let item = self.state.items.iter().find(|i| &i.id == id)?;
+            if item.name != "04_Frequenze_radiali.png" || !c.clip.contains_rect(c.rect) { return None; }
+            Some(serde_json::json!({"source":item.name,"rect_physical":[c.rect.min.x*ppp,c.rect.min.y*ppp,c.rect.max.x*ppp,c.rect.max.y*ppp],"size":c.region.size,"origin":c.region.origin,"step":c.region.step}))
+        }).collect();
+        let _ = std::fs::write(
+            self.root
+                .join("reports")
+                .join(format!("{name}-sampling.json")),
+            serde_json::to_vec_pretty(&records).unwrap(),
+        );
+        ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(
+            name.to_string(),
+        )));
+    }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
         if !self.smoke {
             return;
         }
         let elapsed = self.started.elapsed().as_secs_f32();
-        if self.smoke_stage == 0 && self.cache.keys().filter(|(_, edge)| *edge == 320).count() >= 12
-        {
+        if !self.presenter.is_idle() && elapsed < 55. {
+            ctx.request_repaint_after(Duration::from_millis(25));
+            return;
+        }
+        if self.smoke_stage == 0 && self.cache.len() >= 12 {
             self.smoke_stage = 1;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(
-                "01-grid".to_string(),
-            )));
+            self.capture_screenshot(ctx, "01-grid");
         } else if self.smoke_stage == 1 && self.screenshots.contains("01-grid") {
             if let Some(item) = self.state.items.get(1) {
                 self.command(Command::Select {
@@ -1186,9 +1201,7 @@ impl TrueRenderer {
                 .is_some_and(|id| self.cache.contains_key(&(id.clone(), 0)))
         {
             self.smoke_stage = 3;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(
-                "02-preview".to_string(),
-            )));
+            self.capture_screenshot(ctx, "02-preview");
         } else if self.smoke_stage == 3 && self.screenshots.contains("02-preview") {
             self.state.selected.clear();
             for index in [6, 7] {
@@ -1207,14 +1220,66 @@ impl TrueRenderer {
                 .all(|id| self.cache.contains_key(&(id.clone(), 0)))
         {
             self.smoke_stage = 5;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::new(
-                "03-compare".to_string(),
-            )));
-        } else if (self.smoke_stage == 5 && self.screenshots.len() == 3)
+            self.capture_screenshot(ctx, "03-compare");
+        } else if self.sampling_smoke
+            && self.smoke_stage == 5
+            && self.screenshots.contains("03-compare")
+        {
+            if let Some(item) = self
+                .state
+                .items
+                .iter()
+                .find(|i| i.name == "04_Frequenze_radiali.png")
+            {
+                self.command(Command::Select {
+                    id: item.id.clone(),
+                    extend: false,
+                });
+            }
+            self.state.view = ViewMode::Preview;
+            self.state.transform.set_zoom(1.);
+            self.smoke_stage = 6;
+        } else if self.sampling_smoke && [6, 8, 10, 12, 14].contains(&self.smoke_stage) {
+            let name = match self.smoke_stage {
+                6 => "04-radial-1to1",
+                8 => "05-radial-fit",
+                10 => "06-radial-37percent",
+                12 => "07-grid-small",
+                _ => "08-grid-large",
+            };
+            self.smoke_stage += 1;
+            self.capture_screenshot(ctx, name);
+        } else if self.sampling_smoke
+            && self.smoke_stage == 7
+            && self.screenshots.contains("04-radial-1to1")
+        {
+            self.state.transform = ViewTransform::default();
+            self.smoke_stage = 8;
+        } else if self.sampling_smoke
+            && self.smoke_stage == 9
+            && self.screenshots.contains("05-radial-fit")
+        {
+            self.state.transform.set_zoom(0.37);
+            self.smoke_stage = 10;
+        } else if self.sampling_smoke
+            && self.smoke_stage == 11
+            && self.screenshots.contains("06-radial-37percent")
+        {
+            self.state.view = ViewMode::Grid;
+            self.cell_size = 132.;
+            self.smoke_stage = 12;
+        } else if self.sampling_smoke
+            && self.smoke_stage == 13
+            && self.screenshots.contains("07-grid-small")
+        {
+            self.cell_size = 288.;
+            self.smoke_stage = 14;
+        } else if (self.smoke_stage == (if self.sampling_smoke { 15 } else { 5 })
+            && self.screenshots.len() == (if self.sampling_smoke { 8 } else { 3 }))
             || elapsed > 55.
             || self.fatal
         {
-            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==5&&self.screenshots.len()==3&&!self.fatal&&self.errors.is_empty()&&self.gpu_passed,"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
+            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==(if self.sampling_smoke {15} else {5})&&self.screenshots.len()==(if self.sampling_smoke {8} else {3})&&!self.fatal&&self.errors.is_empty()&&!self.presenter.has_errors()&&self.gpu_passed,"sampling":tr_core::resample::VERSION,"presentation_errors":self.presenter.has_errors(),"pixels_per_point":ctx.pixels_per_point(),"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
             let _ = std::fs::write(
                 self.root.join("reports/smoke-macos.json"),
                 serde_json::to_vec_pretty(&report).unwrap(),

@@ -1,21 +1,24 @@
-//! Native viewport presentation. CPU produces the opaque sRGB buffer.
-//! Nearest presentation avoids introducing an undeclared gamma-domain filter.
+//! Linear-light CPU filtering at the exact backing resolution; the GPU presents 1:1.
 pub mod diagnostic;
-use eframe::egui::{self, Color32, Pos2, Rect, Sense, Stroke, TextureHandle, Vec2};
+pub mod presenter;
+use eframe::egui::{self, Color32, Pos2, Rect, Sense, Stroke, Vec2};
+use presenter::Presenter;
+use std::sync::Arc;
 use tr_core::{
     ViewTransform,
     color::{LinearImage, Pixel, display_pixel},
+    resample::{Pyramid, Region},
 };
 
 pub struct PreparedImage {
-    pub rgba: Vec<u8>,
+    pub pyramid: Arc<Pyramid>,
     pub histogram: [[u32; 256]; 3],
 }
-pub fn prepare(image: &LinearImage) -> PreparedImage {
-    PreparedImage {
-        rgba: image.to_display(),
+pub fn prepare(image: &LinearImage) -> anyhow::Result<PreparedImage> {
+    Ok(PreparedImage {
+        pyramid: Arc::new(Pyramid::new(image.clone())?),
         histogram: image.histogram(),
-    }
+    })
 }
 pub struct Sample {
     pub x: u32,
@@ -25,11 +28,12 @@ pub struct Sample {
 }
 pub fn viewport(
     ui: &mut egui::Ui,
-    texture: &TextureHandle,
-    raster: &LinearImage,
+    presenter: &mut Presenter,
+    image: &Arc<Pyramid>,
     transform: &mut ViewTransform,
-    id: impl std::hash::Hash + std::fmt::Debug,
+    id: &str,
 ) -> (egui::Response, Option<Sample>) {
+    let raster = image.source();
     let available = ui.available_size().max(Vec2::splat(20.0));
     let (rect, _) = ui.allocate_exact_size(available, Sense::hover());
     let response = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
@@ -58,24 +62,47 @@ pub fn viewport(
         [rect.width(), rect.height()],
         ppp,
     );
-    let size = Vec2::new(raster.width as f32 * scale, raster.height as f32 * scale);
+    let physical_size = Vec2::new(
+        (raster.width as f32 * scale * ppp).round().max(1.),
+        (raster.height as f32 * scale * ppp).round().max(1.),
+    );
+    let size = physical_size / ppp;
     let top = rect.center() - Vec2::new(size.x * transform.center[0], size.y * transform.center[1]);
     let top = Pos2::new((top.x * ppp).round() / ppp, (top.y * ppp).round() / ppp);
     let image_rect = Rect::from_min_size(top, size);
     let painter = ui.painter().with_clip_rect(rect);
     painter.rect_filled(rect, 0, Color32::from_gray(119));
-    painter.image(
-        texture.id(),
-        image_rect,
-        Rect::from_min_max(Pos2::ZERO, Pos2::new(1., 1.)),
-        Color32::WHITE,
-    );
+    let visible = image_rect.intersect(rect);
+    let min = egui::pos2((visible.min.x * ppp).ceil(), (visible.min.y * ppp).ceil());
+    let max = egui::pos2((visible.max.x * ppp).floor(), (visible.max.y * ppp).floor());
+    if max.x > min.x && max.y > min.y {
+        let region = Region {
+            size: [(max.x - min.x) as u32, (max.y - min.y) as u32],
+            origin: [
+                ((min.x - top.x * ppp) as f64) * raster.width as f64 / physical_size.x as f64,
+                ((min.y - top.y * ppp) as f64) * raster.height as f64 / physical_size.y as f64,
+            ],
+            step: [
+                raster.width as f64 / physical_size.x as f64,
+                raster.height as f64 / physical_size.y as f64,
+            ],
+        };
+        presenter.paint(
+            ui,
+            id.to_owned(),
+            image,
+            Rect::from_min_max(min / ppp, max / ppp),
+            region,
+        );
+    }
     let sample = response
         .hover_pos()
         .filter(|p| image_rect.contains(*p))
         .map(|p| {
-            let x = (((p.x - top.x) / scale).floor() as u32).min(raster.width - 1);
-            let y = (((p.y - top.y) / scale).floor() as u32).min(raster.height - 1);
+            let x = (((p.x - top.x) / size.x * raster.width as f32).floor() as u32)
+                .min(raster.width - 1);
+            let y = (((p.y - top.y) / size.y * raster.height as f32).floor() as u32)
+                .min(raster.height - 1);
             let working = raster.pixels[(y * raster.width + x) as usize];
             Sample {
                 x,

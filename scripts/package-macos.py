@@ -31,6 +31,7 @@ def main():
     shutil.copy2(build / "truerenderer", contents / "MacOS/TrueRenderer")
     shutil.copy2(build / "tr-worker", contents / "MacOS/tr-worker")
     shutil.copy2(ROOT / "scripts/Info.plist", contents / "Info.plist")
+    host_info = plistlib.loads((contents / "Info.plist").read_bytes())
     staging = ROOT / "var/package-macos"
     staging.mkdir(parents=True, exist_ok=True)
     executable = staging / "Decoder"
@@ -46,7 +47,7 @@ def main():
         (service / "Contents/MacOS").mkdir(parents=True, exist_ok=True)
         shutil.copy2(executable, service / "Contents/MacOS/Decoder")
         info = {"CFBundleExecutable": "Decoder", "CFBundleIdentifier": f"it.truerenderer.prototype.decoder.{slot}",
-                "CFBundlePackageType": "XPC!", "CFBundleVersion": "2", "CFBundleShortVersionString": "0.1.1",
+                "CFBundlePackageType": "XPC!", "CFBundleVersion": host_info["CFBundleVersion"], "CFBundleShortVersionString": host_info["CFBundleShortVersionString"],
                 "XPCService": {"ServiceType": "Application", "RunLoopType": "dispatch_main"}}
         (service / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
         run("/usr/bin/codesign", "--force", "--sign", "-", "--entitlements", str(entitlements), str(service))

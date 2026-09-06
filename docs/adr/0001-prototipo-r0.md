@@ -5,6 +5,8 @@ Data: 5 settembre 2026. Stato: accettata per il prototipo interno, revocabile ai
 Aggiornamento 0.1.1: le decisioni 4–5 descrivono l’incremento iniziale. Il bundle macOS ora
 usa due decoder XPC e supervisione memoria, come registrato in `0002-xpc-decoder-r0.md`.
 
+Aggiornamento 0.1.2: il campionamento della decisione 6 è sostituito dalla pipeline fisica descritta in `0003-campionamento-fisico-r0.md`; le decisioni originali sotto restano storiche.
+
 ## Contesto
 
 La proposta v1.2 contiene un programma R0–R4 per macOS arm64/Windows x86-64. Questa sessione dispone di un Mac Apple Silicon, senza un target Windows reale, corpus fotografico autorizzato o prove di sandbox/display. Implementare una v1 dichiarandola già qualificata contraddirebbe i requisiti.

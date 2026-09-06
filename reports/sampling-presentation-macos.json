@@ -1,0 +1,346 @@
+{
+  "application": "TrueRenderer",
+  "channel_error_threshold_u8": 1,
+  "checks": [
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        1838.0,
+        315.0,
+        2240.0,
+        583.0
+      ],
+      "screenshot": "01-grid",
+      "size": [
+        402,
+        268
+      ],
+      "step": [
+        2.985074626865672,
+        2.985074626865672
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        2334.0,
+        185.0,
+        2848.0,
+        528.0
+      ],
+      "screenshot": "04-radial-1to1",
+      "size": [
+        514,
+        343
+      ],
+      "step": [
+        2.3346303501945527,
+        2.3323615160349855
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        1188.0,
+        1498.0,
+        1376.0,
+        1623.0
+      ],
+      "screenshot": "04-radial-1to1",
+      "size": [
+        188,
+        125
+      ],
+      "step": [
+        6.382978723404255,
+        6.4
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        740.0,
+        515.0,
+        1940.0,
+        1315.0
+      ],
+      "screenshot": "04-radial-1to1",
+      "size": [
+        1200,
+        800
+      ],
+      "step": [
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        2334.0,
+        185.0,
+        2848.0,
+        528.0
+      ],
+      "screenshot": "05-radial-fit",
+      "size": [
+        514,
+        343
+      ],
+      "step": [
+        2.3346303501945527,
+        2.3323615160349855
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        1188.0,
+        1498.0,
+        1376.0,
+        1623.0
+      ],
+      "screenshot": "05-radial-fit",
+      "size": [
+        188,
+        125
+      ],
+      "step": [
+        6.382978723404255,
+        6.4
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        528.0,
+        373.0,
+        2153.0,
+        1456.0
+      ],
+      "screenshot": "05-radial-fit",
+      "size": [
+        1625,
+        1083
+      ],
+      "step": [
+        0.7384615384615385,
+        0.7386888273314867
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        2334.0,
+        185.0,
+        2848.0,
+        528.0
+      ],
+      "screenshot": "06-radial-37percent",
+      "size": [
+        514,
+        343
+      ],
+      "step": [
+        2.3346303501945527,
+        2.3323615160349855
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        1188.0,
+        1498.0,
+        1376.0,
+        1623.0
+      ],
+      "screenshot": "06-radial-37percent",
+      "size": [
+        188,
+        125
+      ],
+      "step": [
+        6.382978723404255,
+        6.4
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        1118.0,
+        767.0,
+        1562.0,
+        1063.0
+      ],
+      "screenshot": "06-radial-37percent",
+      "size": [
+        444,
+        296
+      ],
+      "step": [
+        2.702702702702702,
+        2.702702702702702
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        2334.0,
+        185.0,
+        2848.0,
+        528.0
+      ],
+      "screenshot": "07-grid-small",
+      "size": [
+        514,
+        343
+      ],
+      "step": [
+        2.3346303501945527,
+        2.3323615160349855
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        1558.0,
+        307.0,
+        1867.0,
+        513.0
+      ],
+      "screenshot": "07-grid-small",
+      "size": [
+        309,
+        206
+      ],
+      "step": [
+        3.883495145631068,
+        3.883495145631068
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        2334.0,
+        185.0,
+        2848.0,
+        528.0
+      ],
+      "screenshot": "08-grid-large",
+      "size": [
+        514,
+        343
+      ],
+      "step": [
+        2.3346303501945527,
+        2.3323615160349855
+      ]
+    },
+    {
+      "differing_channels": 0,
+      "max_channel_error_u8": 0,
+      "origin": [
+        0.0,
+        0.0
+      ],
+      "passed": true,
+      "rect_physical": [
+        440.0,
+        854.0,
+        997.0,
+        1226.0
+      ],
+      "screenshot": "08-grid-large",
+      "size": [
+        557,
+        372
+      ],
+      "step": [
+        2.154398563734291,
+        2.150537634408602
+      ]
+    }
+  ],
+  "passed": true,
+  "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+  "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+  "version": "0.1.2"
+}

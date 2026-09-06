@@ -1,0 +1,334 @@
+{
+  "application": "TrueRenderer",
+  "exact_1to1": true,
+  "passed": true,
+  "radial_renders": [
+    [
+      160,
+      107
+    ],
+    [
+      320,
+      213
+    ],
+    [
+      444,
+      296
+    ],
+    [
+      860,
+      573
+    ],
+    [
+      1440,
+      960
+    ]
+  ],
+  "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+  "scope": "CPU subset: sine rejection/preservation, exact source pixels, unchanged radial corpus. Not a full orientation, tile, isotropy, temporal LOD, display or ICC qualification. Legacy PNGs model nearest Adatta; they are not captured UI screenshots.",
+  "signal_cases": [
+    {
+      "analytic_unfiltered_rms": 0.35649115741732745,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.017,
+      "linear_rms": 0.35922977218937385,
+      "output": [
+        96,
+        16
+      ],
+      "output_nyquist_in_source_units": 0.0625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35245615604383174,
+      "check": "passband",
+      "frequency_cycles_per_source_pixel": 0.017,
+      "linear_rms": 0.35277361377367067,
+      "output": [
+        192,
+        32
+      ],
+      "output_nyquist_in_source_units": 0.125,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3525258751394131,
+      "check": "passband",
+      "frequency_cycles_per_source_pixel": 0.017,
+      "linear_rms": 0.35258329138430156,
+      "output": [
+        320,
+        53
+      ],
+      "output_nyquist_in_source_units": 0.20833333333333334,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35399813206040215,
+      "check": "passband",
+      "frequency_cycles_per_source_pixel": 0.017,
+      "linear_rms": 0.35400008261194693,
+      "output": [
+        600,
+        100
+      ],
+      "output_nyquist_in_source_units": 0.390625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3564453355864094,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.043,
+      "linear_rms": 0.31608795597588435,
+      "output": [
+        96,
+        16
+      ],
+      "output_nyquist_in_source_units": 0.0625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3542694702085288,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.043,
+      "linear_rms": 0.359020486496656,
+      "output": [
+        192,
+        32
+      ],
+      "output_nyquist_in_source_units": 0.125,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35383898549929427,
+      "check": "passband",
+      "frequency_cycles_per_source_pixel": 0.043,
+      "linear_rms": 0.3550864580312787,
+      "output": [
+        320,
+        53
+      ],
+      "output_nyquist_in_source_units": 0.20833333333333334,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3544087888670512,
+      "check": "passband",
+      "frequency_cycles_per_source_pixel": 0.043,
+      "linear_rms": 0.3544795409722632,
+      "output": [
+        600,
+        100
+      ],
+      "output_nyquist_in_source_units": 0.390625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35403496344067764,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.113,
+      "linear_rms": 0.00020106187228275063,
+      "output": [
+        96,
+        16
+      ],
+      "output_nyquist_in_source_units": 0.0625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35384719620998967,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.113,
+      "linear_rms": 0.18332058571848084,
+      "output": [
+        192,
+        32
+      ],
+      "output_nyquist_in_source_units": 0.125,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35342721984104947,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.113,
+      "linear_rms": 0.3586881542793728,
+      "output": [
+        320,
+        53
+      ],
+      "output_nyquist_in_source_units": 0.20833333333333334,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35347719881108663,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.113,
+      "linear_rms": 0.3556646776003729,
+      "output": [
+        600,
+        100
+      ],
+      "output_nyquist_in_source_units": 0.390625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3592618855674891,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.183,
+      "linear_rms": 0.0005053365022630997,
+      "output": [
+        96,
+        16
+      ],
+      "output_nyquist_in_source_units": 0.0625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3537064065466764,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.183,
+      "linear_rms": 0.0024029541317222573,
+      "output": [
+        192,
+        32
+      ],
+      "output_nyquist_in_source_units": 0.125,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3535843743552645,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.183,
+      "linear_rms": 0.19704509554408603,
+      "output": [
+        320,
+        53
+      ],
+      "output_nyquist_in_source_units": 0.20833333333333334,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35341409851070793,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.183,
+      "linear_rms": 0.357915864074654,
+      "output": [
+        600,
+        100
+      ],
+      "output_nyquist_in_source_units": 0.390625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3592618855674895,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.317,
+      "linear_rms": 9.557253537566306e-6,
+      "output": [
+        96,
+        16
+      ],
+      "output_nyquist_in_source_units": 0.0625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.3537064065466776,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.317,
+      "linear_rms": 0.00004544543200799573,
+      "output": [
+        192,
+        32
+      ],
+      "output_nyquist_in_source_units": 0.125,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.353008978600545,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.317,
+      "linear_rms": 0.0037266060284804757,
+      "output": [
+        320,
+        53
+      ],
+      "output_nyquist_in_source_units": 0.20833333333333334,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35303482567732636,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.317,
+      "linear_rms": 0.27428271219889655,
+      "output": [
+        600,
+        100
+      ],
+      "output_nyquist_in_source_units": 0.390625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.27373091136611893,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.437,
+      "linear_rms": 0.0002067988980504661,
+      "output": [
+        96,
+        16
+      ],
+      "output_nyquist_in_source_units": 0.0625,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.354225886077061,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.437,
+      "linear_rms": 0.0008536152207133862,
+      "output": [
+        192,
+        32
+      ],
+      "output_nyquist_in_source_units": 0.125,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35405473203160415,
+      "check": "stopband",
+      "frequency_cycles_per_source_pixel": 0.437,
+      "linear_rms": 0.0008541086886578558,
+      "output": [
+        320,
+        53
+      ],
+      "output_nyquist_in_source_units": 0.20833333333333334,
+      "passed": true
+    },
+    {
+      "analytic_unfiltered_rms": 0.35296679429559663,
+      "check": "transition_observed_only",
+      "frequency_cycles_per_source_pixel": 0.437,
+      "linear_rms": 0.08803535221734915,
+      "output": [
+        600,
+        100
+      ],
+      "output_nyquist_in_source_units": 0.390625,
+      "passed": true
+    }
+  ],
+  "source_digest": "808ce6b559b9bd8beedb4aae44f08ef0815041780e7fab0fa6a2ac8bfc15c604",
+  "source_dimensions": [
+    1200,
+    800
+  ],
+  "thresholds": {
+    "boundary_exclusion_output_pixels": 12,
+    "passband_contrast_ratio": [
+      0.95,
+      1.05
+    ],
+    "stopband_rms_max": 0.02
+  },
+  "transport": "XPC / App Sandbox · R0",
+  "version": "0.1.2"
+}

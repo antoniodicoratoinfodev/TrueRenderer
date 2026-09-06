@@ -1,6 +1,7 @@
 mod decode_pool;
 mod service;
 mod ui;
+mod verify_resampling;
 mod verify_xpc;
 use anyhow::{Context, Result};
 use eframe::egui;
@@ -26,7 +27,8 @@ fn run() -> Result<()> {
         })
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))
         .canonicalize()?;
-    let smoke = args.iter().any(|a| a == "--smoke-test");
+    let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
+    let smoke = sampling_smoke || args.iter().any(|a| a == "--smoke-test");
     let worker = executable
         .parent()
         .context("Cartella binario")?
@@ -35,6 +37,12 @@ fn run() -> Result<()> {
         } else {
             "tr-worker"
         });
+    if args.iter().any(|a| a == "--verify-sampling-screenshots") {
+        return verify_resampling::screenshots(&root, &worker);
+    }
+    if args.iter().any(|a| a == "--verify-resampling") {
+        return verify_resampling::run(&root, &worker);
+    }
     if args.iter().any(|a| a == "--verify-xpc") {
         return verify_xpc::run(&root, &worker);
     }
@@ -71,7 +79,12 @@ fn run() -> Result<()> {
         options,
         Box::new(move |cc| {
             Ok(Box::new(ui::TrueRenderer::new(
-                cc, root, data, worker, smoke,
+                cc,
+                root,
+                data,
+                worker,
+                smoke,
+                sampling_smoke,
             )))
         }),
     )
@@ -81,7 +94,9 @@ fn run() -> Result<()> {
 fn main() {
     if let Err(error) = run() {
         eprintln!("TrueRenderer: {error:#}");
-        if std::env::args().any(|a| a.starts_with("--verify-xpc") || a == "--smoke-test") {
+        if std::env::args()
+            .any(|a| a.starts_with("--verify-") || a == "--smoke-test" || a == "--sampling-smoke")
+        {
             std::process::exit(1);
         }
         rfd::MessageDialog::new()
