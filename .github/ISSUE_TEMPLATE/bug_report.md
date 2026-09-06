@@ -1,19 +1,19 @@
 ---
-name: Segnala un problema
-about: Problemi di apertura immagini, resa o interfaccia
+name: Report a problem
+about: Problems opening images, with rendering, or with the interface
 labels: bug
 ---
 
-## Problema e passi per riprodurlo
+## Problem and steps to reproduce it
 
-## Risultato atteso e osservato
+## Expected and observed result
 
-## Ambiente
-- Versione TrueRenderer:
-- macOS e modello del Mac:
-- Formato, dimensioni e fotocamera (se RAW):
-- Modalità: griglia / Adatta / 1:1 / confronto
+## Environment
+- TrueRenderer version:
+- macOS version and Mac model:
+- Format, dimensions, and camera (for RAW):
+- Mode: grid / Fit / 1:1 / comparison
 
-## File di esempio o screenshot
-Allega solo materiale che puoi condividere pubblicamente. Non includere database
-personali, percorsi riservati o fotografie di terzi senza autorizzazione.
+## Sample file or screenshot
+Attach only material you can share publicly. Do not include personal databases,
+private paths, or third-party photographs without authorization.
