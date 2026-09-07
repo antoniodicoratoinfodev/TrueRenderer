@@ -5,7 +5,7 @@
     "corrupt": 0,
     "entries": 3,
     "evictions": 0,
-    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-whhhK5",
+    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-p4m3Uy",
     "hits": 15,
     "message": "Immagine riutilizzata dalla cache",
     "misses": 3,
@@ -15,50 +15,50 @@
   "checks": [
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 1.860974208,
+      "cold_seconds_including_write": 0.622299458,
       "file": "12mp-jpeg.jpg",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.994578542,
-        0.962228417,
-        0.963145084,
-        0.962358416,
-        0.963190625
+        0.154275125,
+        0.138123209,
+        0.13690625,
+        0.13715275,
+        0.137382792
       ]
     },
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.396601334,
+      "cold_seconds_including_write": 0.172680625,
       "file": "07-bayer.dng",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.069279042,
-        0.068856041,
-        0.06931525,
-        0.069284708,
-        0.069124042
+        0.010423792,
+        0.009676291,
+        0.009715667,
+        0.009719167,
+        0.009685667
       ]
     },
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.017036833,
+      "cold_seconds_including_write": 0.0102435,
       "file": "16bit.png",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.000352584,
-        0.000308417,
-        0.000299,
-        0.000301291,
-        0.000303667
+        0.000125584,
+        0.000101959,
+        0.000119,
+        0.00013825,
+        0.000112875
       ]
     }
   ],

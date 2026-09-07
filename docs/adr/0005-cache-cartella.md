@@ -1,6 +1,6 @@
 # ADR 0005 — cache lossless e temporanei accanto alle immagini
 
-Data: 7 settembre 2026. Stato: prima implementazione 0.1.4 verificata e pronta per la pubblicazione.
+Data: 7 settembre 2026. Stato: 0.1.4 verificata; primo incremento pubblicato (`59bf9d7`), ottimizzazioni successive qualificate.
 
 ## Scopo autorizzato
 
@@ -31,10 +31,18 @@ Errori di quota, lettura/scrittura, readonly, lock o filesystem non bloccano il 
 
 L'hit evita decoder e ricostruzione della piramide/istogramma, ma deve leggere e validare i campioni. Il fp32 non compresso può essere molto più grande della fotografia compressa. Il prototipo mantiene i limiti sorgente (64 Mi pixel), RAM/cache di ADR 0004 e renderer fisico di ADR 0003; non chiude il budget globale o «mai viewport vuoto».
 
-La prima implementazione scrive la cache nel thread di decodifica prima di consegnare l'immagine. Inoltre un miss può leggere/hashare la sorgente una volta per cercare la cache e una seconda volta nel broker per la decodifica. Questi costi saranno misurati dopo la prima pubblicazione, come richiesto, senza attribuire miglioramenti non osservati. Cache compressa/tiled, scheduler globale e memorie sotto pressione restano ulteriori passi.
+Il primo incremento è stato pubblicato con commit `59bf9d7` prima di queste ottimizzazioni. Il campionamento CPU di una finestra del benchmark (3 s richiesti, intervallo 1 ms) mostra SHA-256 in cima allo stack per 1.737 dei 2.153 campioni del thread di verifica. Non è una percentuale dell'uso complessivo dell'app.
+
+Abilitata la feature `asm` di `sha2 0.10.9`: su aarch64 seleziona le istruzioni SHA-256 dopo controllo delle capacità CPU e mantiene il fallback software. La nuova dipendenza opzionale `sha2-asm 0.6.4` è bloccata in Cargo.lock e la sua licenza MIT è conservata nell'inventario. Il vantaggio riguarda gli hash della cache e delle sorgenti, senza cambiare algoritmo, chiavi, checksum, fp32 o filtri.
+
+Il broker ora prepara un `SourceSnapshot` con byte/digest privati e non modificabili dai chiamanti: lookup e decodifica usano la stessa copia, eliminando la seconda lettura/hash sul miss. Le verifiche di digest/token e ammissibilità sono centralizzate nel broker; il percorso decoder ricontrolla la policy del proprio trasporto anche per uno snapshot proveniente da un altro broker. Questo riuso non risolve la revisione coerente sotto writer concorrente prevista per la v1.
+
+Sulle stesse fixture e sullo stesso Mac, la mediana di cinque riusi scende da 0,9631 a 0,1374 s per JPEG 12 MP (7,0×), da 0,06928 a 0,00972 s per DNG (7,1×), da 0,000304 a 0,000119 s per PNG piccolo (2,6×). I caricamenti a cache applicativa fredda, scrittura inclusa, sono rispettivamente 0,6223 / 0,1727 / 0,01024 s. Il cache OS non è svuotato; non si attribuisce una quota separata di guadagno alle due modifiche. Dati prima/dopo e limiti in `reports/cache-performance-comparison.json`.
+
+La scrittura resta nel thread di decodifica prima della consegna dell'immagine. Scrittura differita con coda bounded, cache compressa/tiled, scheduler globale e memorie sotto pressione restano ulteriori passi.
 
 ## Verifiche
 
-Cinque test Rust mirati: round-trip bit esatti inclusi valori RGB negativi/>1 e alpha, invalidazione per contenuto/pipeline, corruzione/troncamento, cancellazione senza pubblicazione parziale, LRU/scadenza e temporanei abbandonati, quote/spazio, impostazioni persistenti, directory non riconosciute, symlink/hardlink e lock dei reader. Restano fuzzing, power-fault reale, filesystem remoti e altri OS.
+Cinque test Rust mirati: round-trip bit esatti inclusi valori RGB negativi/>1 e alpha, invalidazione per contenuto/pipeline, corruzione/troncamento, cancellazione senza pubblicazione parziale, LRU/scadenza e temporanei abbandonati, quote/spazio, impostazioni persistenti, directory non riconosciute, symlink/hardlink e lock dei reader. Tre test aggiuntivi coprono vettori SHA-256 noti anche a confini di blocco, rifiuto di uno snapshot esterno su pipe e decodifica dei byte catturati dopo una modifica del file originale. Totale workspace: 40 test passati. Restano fuzzing, power-fault reale, filesystem remoti e altri OS.
 
 `--verify-cache` usa solo tre immagini generate del progetto: JPEG 12 MP, DNG Bayer e PNG 16 bit. Una corsa con cache applicativa fredda e cinque calde; confronta ogni bit di ogni livello e l'istogramma, verifica l'assenza di nuovi job decoder nei riusi e gli originali invariati. Il cache OS non viene svuotato: non è un benchmark p95. `--settings-smoke` acquisisce il pannello delle impostazioni. Esiti effettivi in `reports/cache-macos.json`, `reports/cache-settings-macos.json` e `reports/VERIFICA.md`.

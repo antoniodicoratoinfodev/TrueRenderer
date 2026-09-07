@@ -40,6 +40,17 @@ pub fn snapshot(path: &Path) -> Result<(Vec<u8>, String)> {
     // Hash applies to the exact private bytes sent to the worker, never to a later reopening.
     Ok((bytes, digest))
 }
+/// Private source bytes and their verified identity, shared by cache lookup and decode.
+/// Fields stay private so callers cannot substitute bytes after validation.
+pub struct SourceSnapshot {
+    bytes: Vec<u8>,
+    digest: String,
+}
+impl SourceSnapshot {
+    pub fn digest(&self) -> &str {
+        &self.digest
+    }
+}
 pub fn observation_token(metadata: &std::fs::Metadata) -> String {
     format!(
         "unverified:{}:{:?}",
@@ -360,10 +371,19 @@ impl Broker {
         edge: u32,
         cancelled: impl Fn() -> bool,
     ) -> Result<Decoded> {
+        let source = self.prepare_snapshot(path, expected_digest, &cancelled)?;
+        self.decode_snapshot_cancellable(source, edge, cancelled)
+    }
+    pub fn prepare_snapshot(
+        &self,
+        path: &Path,
+        expected_digest: &str,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<SourceSnapshot> {
         ensure!(!cancelled(), "Decodifica annullata");
         let before = observation_token(&path.metadata()?);
         let (bytes, digest) = snapshot(path)?;
-        let external = !self.policy.approves(&digest);
+        ensure!(!cancelled(), "Decodifica annullata");
         ensure!(
             digest == expected_digest
                 || (self.bundled_xpc
@@ -372,6 +392,22 @@ impl Broker {
                     && observation_token(&path.metadata()?) == before),
             "Sorgente cambiata: ricaricare la cartella"
         );
+        ensure!(
+            self.policy.approves(&digest) || self.bundled_xpc,
+            "File esterni: aprire il bundle macOS con decoder XPC isolati; il worker su pipe accetta solo il corpus R0"
+        );
+        Ok(SourceSnapshot { bytes, digest })
+    }
+    pub fn decode_snapshot_cancellable(
+        &mut self,
+        source: SourceSnapshot,
+        edge: u32,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Decoded> {
+        ensure!(!cancelled(), "Decodifica annullata");
+        let SourceSnapshot { bytes, digest } = source;
+        let external = !self.policy.approves(&digest);
+        // A snapshot may have been prepared by another broker. Recheck this transport's gate.
         ensure!(
             !external || self.bundled_xpc,
             "File esterni: aprire il bundle macOS con decoder XPC isolati; il worker su pipe accetta solo il corpus R0"
@@ -460,6 +496,73 @@ impl Broker {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn accelerated_sha256_matches_known_vectors_and_chunk_boundaries() {
+        for (bytes, expected) in [
+            (
+                Vec::new(),
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            ),
+            (
+                b"abc".to_vec(),
+                "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+            ),
+            (
+                vec![b'a'; 1_000_000],
+                "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0",
+            ),
+        ] {
+            assert_eq!(format!("{:x}", Sha256::digest(&bytes)), expected);
+            for chunk_size in [1, 63, 64, 65, 4096] {
+                let mut hash = Sha256::new();
+                for chunk in bytes.chunks(chunk_size) {
+                    hash.update(chunk);
+                }
+                assert_eq!(format!("{:x}", hash.finalize()), expected);
+            }
+        }
+    }
+    #[test]
+    fn snapshot_from_external_broker_cannot_bypass_pipe_gate() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("untrusted.png");
+        std::fs::write(&path, b"external source").unwrap();
+        let (_, digest) = snapshot(&path).unwrap();
+        let mut external = Broker::new("/not/a/worker".into());
+        external.bundled_xpc = true;
+        let source = external.prepare_snapshot(&path, &digest, || false).unwrap();
+        let mut pipe = Broker::new("/not/a/worker".into());
+        assert!(
+            pipe.decode_snapshot_cancellable(source, 0, || false)
+                .unwrap_err()
+                .to_string()
+                .contains("corpus R0")
+        );
+        assert!(pipe.process.is_none());
+    }
+    #[test]
+    #[ignore = "requires cargo build --workspace; scripts/verify.sh runs this explicitly"]
+    fn cache_miss_decodes_captured_bytes_without_reopening_source() {
+        let binary = std::env::var_os("TR_WORKER_BINARY")
+            .map(PathBuf::from)
+            .expect("TR_WORKER_BINARY");
+        let corpus =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../corpus/01_Studio_cromatico.png");
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("changing.png");
+        std::fs::copy(corpus, &path).unwrap();
+        let (_, digest) = snapshot(&path).unwrap();
+        let mut broker = Broker::new(binary);
+        let source = broker.prepare_snapshot(&path, &digest, || false).unwrap();
+        std::fs::write(&path, b"changed after cache lookup").unwrap();
+        let decoded = broker
+            .decode_snapshot_cancellable(source, 320, || false)
+            .unwrap();
+        assert_eq!(decoded.digest, digest);
+        assert_eq!(decoded.raster.width, 320);
+        assert!(broker.prepare_snapshot(&path, &digest, || false).is_err());
+        assert_eq!(broker.statistics.completed_jobs, 1);
+    }
     #[test]
     #[cfg(unix)]
     fn absolute_timeout_kills_stalled_process() {

@@ -154,31 +154,20 @@ pub fn prepare_cached(
         .path
         .parent()
         .ok_or_else(|| anyhow::anyhow!("Cartella sorgente assente"))?;
-    if edge == 0 && cache.settings().enabled {
-        let before = tr_platform::observation_token(&item.path.metadata()?);
-        let (_, digest) = tr_platform::snapshot(&item.path)?;
-        anyhow::ensure!(
-            item.digest == digest
-                || (item.digest == before
-                    && tr_platform::observation_token(&item.path.metadata()?) == before),
-            "Sorgente cambiata: ricaricare la cartella"
-        );
-        anyhow::ensure!(
-            tr_platform::CorpusPolicy::default().approves(&digest)
-                || broker.transport().starts_with("XPC"),
-            "File esterno non ammesso dal worker su pipe"
-        );
-        if let Some((info, prepared)) = cache.load(folder, &digest, cancelled) {
-            return Ok(crate::service::PreparedDecoded {
-                digest,
-                info,
-                prepared,
-                transport: "Cache disco · fp32 · Anteprima",
-                worker_pid: None,
-            });
-        }
+    let source = broker.prepare_snapshot(&item.path, &item.digest, cancelled)?;
+    if edge == 0
+        && cache.settings().enabled
+        && let Some((info, prepared)) = cache.load(folder, source.digest(), cancelled)
+    {
+        return Ok(crate::service::PreparedDecoded {
+            digest: source.digest().to_owned(),
+            info,
+            prepared,
+            transport: "Cache disco · fp32 · Anteprima",
+            worker_pid: None,
+        });
     }
-    let decoded = broker.decode_cancellable(&item.path, &item.digest, edge, cancelled)?;
+    let decoded = broker.decode_snapshot_cancellable(source, edge, cancelled)?;
     let prepared = tr_render::prepare(decoded.raster)?;
     if edge == 0
         && let Err(e) = cache.store(folder, &decoded.digest, &decoded.info, &prepared, cancelled)

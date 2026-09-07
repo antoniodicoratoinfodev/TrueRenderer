@@ -1,0 +1,59 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.4",
+  "baseline_commit": "59bf9d7",
+  "baseline_report": "cache-before-performance.json",
+  "baseline_sha256": "94663786f3f08f15302ceb54b1e795c05b6f3caaf35e832a39559b648754d6a2",
+  "optimized_report": "cache-macos.json",
+  "optimized_report_sha256": "9d5205860e4a338556fd08f19571f80a66d1535fa2ef0f72a1e5f253989bf360",
+  "machine": "Apple M4, arm64, macOS 26.6.2 (25G83)",
+  "baseline_profile": {
+    "tool": "/usr/bin/sample",
+    "requested_seconds": 3,
+    "interval_milliseconds": 1,
+    "main_thread_samples": 2153,
+    "sha256_top_of_stack_samples": 1737,
+    "sha256_sample_fraction": 0.8067812354853693,
+    "scope": "A sampled interval during the generated-image cache benchmark, not overall application CPU usage."
+  },
+  "changes": [
+    "Enable sha2 0.10.9 asm feature, aarch64 runtime detection and software fallback",
+    "Share one private source snapshot between cache lookup and decoder; recheck broker transport policy"
+  ],
+  "checks": [
+    {
+      "file": "12mp-jpeg.jpg",
+      "baseline_cold_seconds": 1.860974208,
+      "optimized_cold_seconds": 0.622299458,
+      "baseline_warm_median_seconds": 0.963145084,
+      "optimized_warm_median_seconds": 0.137382792,
+      "warm_speedup": 7.010667565993272,
+      "cold_speedup": 2.99048020061107,
+      "bit_exact_all_levels": true,
+      "no_warm_decoder_jobs": true
+    },
+    {
+      "file": "07-bayer.dng",
+      "baseline_cold_seconds": 0.396601334,
+      "optimized_cold_seconds": 0.172680625,
+      "baseline_warm_median_seconds": 0.069279042,
+      "optimized_warm_median_seconds": 0.009715667,
+      "warm_speedup": 7.130652172413895,
+      "cold_speedup": 2.2967332553956186,
+      "bit_exact_all_levels": true,
+      "no_warm_decoder_jobs": true
+    },
+    {
+      "file": "16bit.png",
+      "baseline_cold_seconds": 0.017036833,
+      "optimized_cold_seconds": 0.0102435,
+      "baseline_warm_median_seconds": 0.000303667,
+      "optimized_warm_median_seconds": 0.000119,
+      "warm_speedup": 2.5518235294117644,
+      "cold_speedup": 1.6631847513057063,
+      "bit_exact_all_levels": true,
+      "no_warm_decoder_jobs": true
+    }
+  ],
+  "scope": "Same generated fixtures and machine. Each report has one application-cache cold load (including cache write) and five warm loads. OS cache not flushed. No isolated attribution to each change; no p95, global memory or universal speed guarantee."
+}

@@ -1,7 +1,7 @@
 Sampling: passed=true; 24 signal cases; exact 1:1=true
-Cache 12mp-jpeg.jpg: passed=true, cold=1.861s, warm=[0.994578542, 0.962228417, 0.963145084, 0.962358416, 0.963190625]
-Cache 07-bayer.dng: passed=true, cold=0.397s, warm=[0.069279042, 0.068856041, 0.06931525, 0.069284708, 0.069124042]
-Cache 16bit.png: passed=true, cold=0.017s, warm=[0.000352584, 0.000308417, 0.000299, 0.000301291, 0.000303667]
+Cache 12mp-jpeg.jpg: passed=true, cold=0.622s, warm=[0.154275125, 0.138123209, 0.13690625, 0.13715275, 0.137382792]
+Cache 07-bayer.dng: passed=true, cold=0.173s, warm=[0.010423792, 0.009676291, 0.009715667, 0.009719167, 0.009685667]
+Cache 16bit.png: passed=true, cold=0.010s, warm=[0.000125584, 0.000101959, 0.000119, 0.00013825, 0.000112875]
 01-jpeg.jpg: passed · 48x32 · error 0.01592201
 02-png.png: passed · 48x32 · error 0.000028207898
 03-tiff.tiff: passed · 48x32 · error 0.000028207898
@@ -25,12 +25,12 @@ orientation-8.tiff: passed · 32x48 · error 0.000028207898
   "application": "TrueRenderer",
   "version": "0.1.4",
   "passed": true,
-  "checked_at": "2026-09-07T03:58:50.888952+00:00",
+  "checked_at": "2026-09-07T04:10:16.633473+00:00",
   "bundle": "dist/TrueRenderer.app",
   "binary_sha256": {
-    "Contents/MacOS/TrueRenderer": "d340d12f44170b8a1cf0afbadfd99d3c66836167f14d7316f53e01de32d60be7",
-    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "8248eb240297f10692db99786c5ec4aa0a4e06eb26256965058095f6c23c6738",
-    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "e4e121c9990baef02b57ba512f4ab0cafc7200690ccd943f571eeb1a7a0f8689"
+    "Contents/MacOS/TrueRenderer": "2aca879efbc51f765e6583542258a2cc2ed7c2ad9596c9dccf01cc415e7780ab",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "e47dd4050963fc9d14c6c37b592f39498781a38f2d4aee1bffcdd96f11e51d26",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "ca3697fa02e06867f4fb6243df1a968ec7087a0014dafab799f90f2c22257909"
   },
   "integration_report": "xpc-integration-macos.json",
   "production_rejects_fault_injection": true,
@@ -44,7 +44,7 @@ Native surface sampling: passed=true
   "application": "TrueRenderer",
   "version": "0.1.4",
   "passed": true,
-  "checked_at": "2026-09-07T03:59:00.793850+00:00",
+  "checked_at": "2026-09-07T04:10:22.047614+00:00",
   "format": "macOS arm64 app bundle",
   "bundle": "dist/TrueRenderer.app",
   "signature": "ad hoc; verified with codesign --deep --strict",
@@ -70,23 +70,23 @@ Native surface sampling: passed=true
   ],
   "binaries": {
     "Contents/MacOS/TrueRenderer": {
-      "bytes": 18233664,
-      "sha256": "d340d12f44170b8a1cf0afbadfd99d3c66836167f14d7316f53e01de32d60be7",
+      "bytes": 18239936,
+      "sha256": "2aca879efbc51f765e6583542258a2cc2ed7c2ad9596c9dccf01cc415e7780ab",
       "architecture": "arm64"
     },
     "Contents/MacOS/tr-worker": {
-      "bytes": 960096,
-      "sha256": "658379acfdd1da1e998b55a9b83b6237abdb9f917431eb6d8c5ff042410f6b28",
+      "bytes": 960080,
+      "sha256": "0d305c33aeac7964a342a8624b6e964684737b2ff4be6a81d7f7a3a5b24f912c",
       "architecture": "arm64"
     },
     "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
-      "bytes": 6143344,
-      "sha256": "8248eb240297f10692db99786c5ec4aa0a4e06eb26256965058095f6c23c6738",
+      "bytes": 6127840,
+      "sha256": "e47dd4050963fc9d14c6c37b592f39498781a38f2d4aee1bffcdd96f11e51d26",
       "architecture": "arm64"
     },
     "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
-      "bytes": 6143344,
-      "sha256": "e4e121c9990baef02b57ba512f4ab0cafc7200690ccd943f571eeb1a7a0f8689",
+      "bytes": 6127840,
+      "sha256": "ca3697fa02e06867f4fb6243df1a968ec7087a0014dafab799f90f2c22257909",
       "architecture": "arm64"
     }
   },

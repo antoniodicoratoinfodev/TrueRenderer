@@ -40,7 +40,7 @@ Passati i controlli delle due varianti: sandbox base e sandbox con `RLIMIT_NPROC
 
 ## Incremento 0.1.1 — integrazione del confine XPC
 
-Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 verificata all’epoca con prove native del decoder, controllo grafico e copia autonoma passati; ora conservata nello storico; versione corrente 0.1.3. Restano aperti i gate elencati sotto.
+Completata la verticale interna: broker macOS, decoder riutilizzabile e due servizi nel bundle; percorso su pipe per i test del core e i target non ancora qualificati. Build 0.1.1 verificata all’epoca con prove native del decoder, controllo grafico e copia autonoma passati; ora conservata nello storico; versione corrente 0.1.4. Restano aperti i gate elencati sotto.
 
 - [x] Portare il decoder controllato in due servizi XPC con protocollo senza percorsi e allowlist anche nel decoder.
 - [x] Vincolare il broker al CDHash del servizio installato, verificare due PID reali e conservare la copia privata degli output.
@@ -102,8 +102,9 @@ Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini
 - [x] Impostazioni persistenti e comandi di pulizia, stato cache e hit/miss visibili.
 - [x] Test di precisione, corruzione, limiti, concorrenza, symlink, cancellazione e file originali invariati; misure a cache fredda/calda.
 - [x] README in inglese, ADR e sincronizzazione dei due documenti; bundle e verifiche native.
-- [ ] Commit e push dell’incremento cache.
-- [ ] Solo dopo il push: profilare altre operazioni, implementare e misurare ottimizzazioni ulteriori, verificare e pubblicare.
+- [x] Commit e push dell’incremento cache: `59bf9d7` pubblicato su `main`, prima delle ottimizzazioni successive.
+- [x] Dopo il primo push: profilare, accelerare SHA-256 e riusare lo snapshot sul miss; 40 test e pacchetto finale verificati, JPEG/DNG caldi circa 7× più rapidi nelle prove locali.
+- [ ] Pubblicare il secondo incremento e registrare il commit finale nei documenti.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 

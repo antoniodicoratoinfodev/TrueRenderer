@@ -85,6 +85,8 @@ In Finder, press **Cmd+Shift+.** to reveal hidden folders. The cache holds deriv
 
 The cache preserves fidelity exactly. It stores the existing pyramid and histogram with their fp32 bits intact, adding no JPEG compression, no fp16 quantization, and no extra resampling step. A full SHA-256 of the source bytes is verified before a hit, and cache keys also include the app and pipeline version, the operating-system build, the working space, and the RAW recipe, so an edited file or a changed pipeline invalidates the entry. Disk hits skip decoding and pyramid construction entirely.
 
+On the development Apple M4, the optimization reduced the median warm load of a generated 12 MP JPEG from **0.963 s to 0.137 s** (7.0×), and a generated DNG from **0.0693 s to 0.00972 s** (7.1×). SHA-256 uses the library's hardware acceleration when supported, retaining its software fallback and all integrity checks. A cache miss reuses the same private source snapshot for decoding, avoiding a second file read and hash. These are local measurements of five warm loads with the OS cache left intact, not p95 guarantees; every pyramid level remains bit-identical. See the [before/after measurements](reports/cache-performance-comparison.json). Cold loads still include the lossless cache write before the image is delivered.
+
 Open **Impostazioni** (Settings) in the toolbar to configure:
 
 | Setting | Default | Behavior |

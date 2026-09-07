@@ -1,5 +1,13 @@
+   Compiling sha2-asm v0.6.4
+   Compiling sha2 v0.10.9
+   Compiling tr-core v0.1.4 (/Users/antonio/Desktop/TrueRenderer/crates/tr-core)
+   Compiling tr-app v0.1.4 (/Users/antonio/Desktop/TrueRenderer/crates/tr-app)
+   Compiling tr-store v0.1.4 (/Users/antonio/Desktop/TrueRenderer/crates/tr-store)
+   Compiling tr-render v0.1.4 (/Users/antonio/Desktop/TrueRenderer/crates/tr-render)
+   Compiling tr-platform v0.1.4 (/Users/antonio/Desktop/TrueRenderer/crates/tr-platform)
+   Compiling tr-worker v0.1.4 (/Users/antonio/Desktop/TrueRenderer/crates/tr-worker)
    Compiling truerenderer v0.1.4 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
-    Finished `release` profile [optimized] target(s) in 37.63s
+    Finished `release` profile [optimized] target(s) in 20.54s
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/XPCServices/Decoder0.xpc: replacing existing signature
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/XPCServices/Decoder1.xpc: replacing existing signature
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/MacOS/tr-worker: replacing existing signature

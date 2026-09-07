@@ -4,7 +4,7 @@
   "target": "aarch64-apple-darwin",
   "scope": "Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval",
   "rust": "1.98.1",
-  "cargo_lock_sha256": "2a2509119112774c173a0891190b5ba35ca8d9cb787a9ee16935c71cf3f0abb2",
+  "cargo_lock_sha256": "394f92a75132db1fe8be69e952c0865bd35a2a5ed62dbe3b6c85731c7d1ea6e8",
   "packages": [
     {
       "name": "accesskit",
@@ -2466,6 +2466,20 @@
         {
           "file": "reports/dependency-notices/sha2-0.10.9-LICENSE-MIT",
           "sha256": "b4eb00df6e2a4d22518fcaa6a2b4646f249b3a3c9814509b22bd2091f1392ff1"
+        }
+      ]
+    },
+    {
+      "name": "sha2-asm",
+      "version": "0.6.4",
+      "license": "MIT",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/RustCrypto/asm-hashes",
+      "checksum_sha256": "b845214d6175804686b2bd482bcffe96651bb2d1200742b712003504a2dac1ab",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/sha2-asm-0.6.4-LICENSE",
+          "sha256": "85010e75aef5bdcd10b9ce39e8865dfab508f620f9ddb6ca6e54833fe97f36fa"
         }
       ]
     },

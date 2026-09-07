@@ -9,13 +9,14 @@
   "presentation_errors": false,
   "scope": "generated external images, native grid, full DNG and 12 MP JPEG viewer; not camera-wide RAW qualification",
   "screenshots": [
-    "10-external-grid",
+    "12-jpeg12mp-1to1",
     "11-raw-full",
-    "12-jpeg12mp-1to1"
+    "10-external-grid"
   ],
-  "seconds": 2.384439706802368,
+  "seconds": 0.5162017345428467,
   "version": "0.1.4",
   "worker_transports": [
+    "Cache disco · fp32 · Anteprima",
     "XPC / App Sandbox · R0"
   ]
 }

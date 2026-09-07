@@ -2,12 +2,12 @@
   "application": "TrueRenderer",
   "version": "0.1.4",
   "passed": true,
-  "checked_at": "2026-09-07T03:58:50.888952+00:00",
+  "checked_at": "2026-09-07T04:10:16.633473+00:00",
   "bundle": "dist/TrueRenderer.app",
   "binary_sha256": {
-    "Contents/MacOS/TrueRenderer": "d340d12f44170b8a1cf0afbadfd99d3c66836167f14d7316f53e01de32d60be7",
-    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "8248eb240297f10692db99786c5ec4aa0a4e06eb26256965058095f6c23c6738",
-    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "e4e121c9990baef02b57ba512f4ab0cafc7200690ccd943f571eeb1a7a0f8689"
+    "Contents/MacOS/TrueRenderer": "2aca879efbc51f765e6583542258a2cc2ed7c2ad9596c9dccf01cc415e7780ab",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "e47dd4050963fc9d14c6c37b592f39498781a38f2d4aee1bffcdd96f11e51d26",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "ca3697fa02e06867f4fb6243df1a968ec7087a0014dafab799f90f2c22257909"
   },
   "integration_report": "xpc-integration-macos.json",
   "production_rejects_fault_injection": true,

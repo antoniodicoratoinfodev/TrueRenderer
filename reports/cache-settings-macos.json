@@ -1,14 +1,14 @@
 {
   "application": "TrueRenderer",
   "cache": {
-    "bytes": 156417438,
+    "bytes": 226882005,
     "corrupt": 0,
-    "entries": 7,
+    "entries": 10,
     "evictions": 0,
     "folder": "/Users/antonio/Desktop/TrueRenderer/corpus",
-    "hits": 6,
-    "message": "Immagine riutilizzata dalla cache",
-    "misses": 6,
+    "hits": 9,
+    "message": "Cache della cartella aggiornata",
+    "misses": 3,
     "temporary_bytes": 0,
     "writes": 2
   },

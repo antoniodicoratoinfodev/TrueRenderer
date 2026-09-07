@@ -30,9 +30,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.01592200994491577,
-      "seconds": 0.09685175,
+      "seconds": 0.047609125,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "4b3bc7ca959b62beb58b39a6fbb38750ac3bd3daebaa636f5171a27cc467d2de",
@@ -63,9 +63,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.009181959,
+      "seconds": 0.004058958,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "e7d450e3a2cbbe5d45f563c3f353e9e3016a4ac2cf5121afbb1ed750aba4fe3f",
@@ -96,9 +96,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.008810417,
+      "seconds": 0.004026375,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "7bfc1c130e844a1e16c7b9e56b50ba63c611cc62f717f384eb853b29fe5ea8ab",
@@ -129,9 +129,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.0087485,
+      "seconds": 0.003585375,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "afb3c31db17e77132dbe984fb661eaa0722e093c293e2c019225c5fd96c49002",
@@ -162,9 +162,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.01271025,
+      "seconds": 0.003542792,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "a44a19ed71ec02e24f2a948adcb76cb3aa1662830df7b8ea371905b0594d1119",
@@ -195,9 +195,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.006001889705657959,
-      "seconds": 0.086569584,
+      "seconds": 0.041170459,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "26d32bba555bc6bd2989661da7d1ffd261c1c23a5b643f3dd6d58dfde1fa3ac0",
@@ -228,9 +228,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.012087542,
+      "seconds": 0.003946208,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "bc3e1a9592c31cb4fbdbef4f0f913df6fe066e47e4146ee10881735c66b1b712",
@@ -261,9 +261,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.008726333,
+      "seconds": 0.00388175,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "e7d450e3a2cbbe5d45f563c3f353e9e3016a4ac2cf5121afbb1ed750aba4fe3f",
@@ -294,9 +294,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.008068834,
+      "seconds": 0.003820292,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "e7a32beec9e3d361ba265e028c23fe14d3dddd42a998e008c873caf9a23add4c",
@@ -327,9 +327,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.008175334,
+      "seconds": 0.004916958,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "97cb629744cd280b74a569878ab71bfdf9eea606c7b707ca7f0ac97268625933",
@@ -360,9 +360,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.00807275,
+      "seconds": 0.003595416,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "cf1dd811ac5ee5ad218322394d14ba4eca99e7a70b5f8da81498ddc43623cc8f",
@@ -393,9 +393,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.007914167,
+      "seconds": 0.003717625,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "fbd119ed94bcb024ef98604f3ea15ab491af843190b46e37befff86a3107d858",
@@ -426,9 +426,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.007831125,
+      "seconds": 0.003634625,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "a700a6ee06ec2cff870e2cea38fb1ddcb5046ee9011f156df94ba784f2eae728",
@@ -459,9 +459,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.007238584,
+      "seconds": 0.003609,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "4860b9649a1326f32df72b8b18a8ab0fa4905ba38aa7be7cfa40f642a0ce6167",
@@ -492,9 +492,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.00818375,
+      "seconds": 0.003770083,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "2b92a63f65dc1b494080ded7b1dc457d3f4e58592a9eee918efb9c94b3143857",
@@ -525,9 +525,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.007736125,
+      "seconds": 0.003416833,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "33b78420b683e072bddc4ebd84735cdbd56564a00406fbafc9102ccc7b1c67e7",
@@ -558,9 +558,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.01592200994491577,
-      "seconds": 0.224405833,
+      "seconds": 0.118449125,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
@@ -591,9 +591,9 @@
       },
       "passed": true,
       "quadrant_error_linear": null,
-      "seconds": 0.2724295,
+      "seconds": 0.139331209,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     },
     {
       "digest": "b55394f9e7fcb5f380a493285150b11868574af2701be3fa2a6259bea0f66e5e",
@@ -624,9 +624,9 @@
       },
       "passed": true,
       "quadrant_error_linear": 0.000028207898139953613,
-      "seconds": 0.00863075,
+      "seconds": 0.006291916,
       "transport": "XPC / App Sandbox · R0",
-      "worker_pid": 47405
+      "worker_pid": 48329
     }
   ],
   "passed": true,
@@ -669,10 +669,10 @@
   "statistics": {
     "completed_jobs": 24,
     "forced_stops": 0,
-    "peak_footprint_bytes": 477217632,
-    "peak_rss_bytes": 403701760,
+    "peak_footprint_bytes": 338461368,
+    "peak_rss_bytes": 258883584,
     "starts": 1,
-    "worker_pid": 47405
+    "worker_pid": 48329
   },
   "version": "0.1.4"
 }

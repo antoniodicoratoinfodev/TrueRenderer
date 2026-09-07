@@ -2,6 +2,20 @@
 
 Aggiornamento: 7 settembre 2026. Build interna **0.1.4**, installata in `dist/TrueRenderer.app`.
 
+## Ottimizzazioni dopo il primo push — pacchetto finale 0.1.4
+
+Il commit cache `59bf9d7` è stato pubblicato prima di profilare e modificare ulteriormente le prestazioni. Attivati SHA-256 hardware con rilevamento CPU/fallback software e riuso dello snapshot privato fra cache lookup e decode. Sono passati **40 test Rust** (35 ordinari + 5 integrazioni esplicite), fmt/Clippy, 6 controlli IPC, 19 fixture e 6 controlli aggiuntivi dei formati, 24 sinusoidi, XPC, Finder, copia autonoma e firma/hash del pacchetto. Tutte le 14 regioni di screenshot continuano a dare zero differenze di canale. Evidenze aggiornate: `verification.log`, `installed-verification.log`, `package-macos.json` e report nativi. Il pannello `13-cache-settings.png` è stato controllato visivamente.
+
+| Sorgente generata | Mediana calda prima | Mediana calda finale | Guadagno caldo | Fredda finale, scrittura inclusa |
+|---|---:|---:|---:|---:|
+| JPEG 12 MP | 0,9631 s | 0,1374 s | 7,0× | 0,6223 s |
+| DNG Bayer | 0,06928 s | 0,00972 s | 7,1× | 0,1727 s |
+| PNG 16 bit piccolo | 0,000304 s | 0,000119 s | 2,6× | 0,01024 s |
+
+Una corsa a cache applicativa fredda e cinque calde per sorgente, stesso Apple M4/macOS 26.6.2, cache OS non svuotata. Il confronto non isola il contributo di ciascuna modifica e non è un p95. Ogni bit fp32 di ogni livello e l'istogramma sono identici, senza nuovi job decoder a caldo; originali invariati e pulizia passata. `cache-performance-comparison.json` riporta valori non arrotondati, hash dei report e conteggi della profilazione: 1.737/2.153 campioni del thread in SHA-256, non dell'app intera. Tre nuovi test verificano vettori SHA noti e chunk, policy del broker dopo passaggio di snapshot e lettura della copia catturata anche quando il file sorgente viene sostituito.
+
+Le scritture restano sincrone nel thread decoder; dimensione fp32, quote locali e gate v1 rimangono quelli di ADR 0005. Inventario aggiornato a 207 package e 320 notice, compresa la licenza MIT di `sha2-asm 0.6.4`.
+
 ## Cache per cartella 0.1.4 — prima pubblicazione
 
 Passati **37 test Rust** (33 ordinari + 4 integrazioni esplicite), 6 controlli IPC e tutta la suite nativa del pacchetto. I cinque nuovi test cache coprono precisione bit esatti, corruzione/troncamento, chiavi obsolete, cancellazione, quote, scadenza/LRU, temporanei abbandonati, impostazioni, link e lock. Tutte le 19 fixture dei formati, le 24 sinusoidi e le 14 regioni di screenshot restano passate, con zero differenze di canale nelle regioni confrontate. Finder, XPC, copia autonoma e integrità dei database passati; screenshot delle impostazioni in `13-cache-settings.png`.
@@ -16,7 +30,7 @@ Misura della prima implementazione (`cache-before-performance.json`), prima dell
 
 Sono prove locali su Apple M4, con cache del sistema operativo non svuotata; non sono p95. Tutti i bit di ogni livello fp32 e l'istogramma sono identici; nei riusi non viene avviato alcun nuovo job decoder e i file originali rimangono invariati. La cache è riapribile da una nuova istanza del gestore e la pulizia elimina i derivati. La cartella è `.truerenderer-cache` dentro quella delle immagini; default 4 GiB complessivi, temporaneo massimo 2 GiB, scadenza 30 giorni, riserva libera 512 MiB.
 
-Il README pubblico è in inglese. Le ulteriori ottimizzazioni saranno eseguite dopo il commit/push di questo incremento, come richiesto. Il cache full-frame rimane Anteprima, senza qualifica tile/gigapixel, budget globale o filesystem remoti.
+Il README pubblico è in inglese. Le ulteriori ottimizzazioni sono state eseguite dopo il commit/push di questo incremento, come richiesto; vedere la sezione precedente. Il cache full-frame rimane Anteprima, senza qualifica tile/gigapixel, budget globale o filesystem remoti.
 
 ## Risultati precedenti e regressioni
 
