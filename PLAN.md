@@ -106,6 +106,24 @@ Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini
 - [x] Dopo il primo push: profilare, accelerare SHA-256 e riusare lo snapshot sul miss; 40 test e pacchetto finale verificati, JPEG/DNG caldi circa 7× più rapidi nelle prove locali.
 - [x] Pubblicare il secondo incremento: `da97b33` su `main`; registrati risultati e commit nei documenti.
 
+## Progetto di incremento — anteprime, cache e prestazioni
+
+Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la navigazione con cache RAM/SSD, scelta fra Anteprima Standard e Piena, limiti di memoria configurabili e uso intenso di CPU/GPU durante il lavoro utile. Specifica dettagliata: [progetto di anteprime, cache e prestazioni](docs/progetto-anteprime-cache-prestazioni.md), revisione 2 pubblicata nel commit `972007e`.
+
+**Stato: progetto documentale completato; nuovi percorsi e relative misure aperti.** La baseline è la 0.1.4: cache lossless per cartella, impostazioni disco e snapshot ottimizzati sono già implementati e vanno riutilizzati. Le due qualità dell'anteprima restano distinte dai badge di pipeline Standard/Riferimento, non ancora disponibili. Restano validi il perimetro XPC e le decisioni di ADR 0004–0005; nessuna milestone R0–R4 viene chiusa dalla progettazione.
+
+- [x] Confrontare la revisione con il codice 0.1.4, l'architettura e gli ADR; distinguere le funzioni esistenti dai nuovi incrementi.
+- [x] Definire qualità, preferenze, residenza RAM/SSD, budget globale, scheduler, CPU/GPU, protocollo, fasi e criteri di accettazione; verificare il documento prima della pubblicazione.
+- [ ] A: misurare la baseline 0.1.4, migrare le preferenze preservando quelle esistenti e introdurre budget/lease e ammissione prioritaria minima.
+- [ ] B: separare miniature, preview, sorgenti e frame; consegnare prima della persistenza e rendere le letture cache indipendenti dai decode RAW lunghi.
+- [ ] C: implementare Standard/Piena, override 1:1 e sviluppo ridotto esplicito; entrambe le qualità mantengono campioni lineari fp32 e provenienza.
+- [ ] D: estendere la cache per cartella con artefatti autonomi v2 e letture piccole, preservando verifica sorgente, quota comune, compatibilità e recupero.
+- [ ] E: collegare scheduler per visibilità, promozione/deduplicazione, prefetch, pool CPU parallelo e SIMD verificato.
+- [ ] F: implementare compute WGSL e residenza GPU; verificare contesti Core Image riutilizzabili/Metal nei due servizi XPC.
+- [ ] G: qualificare qualità, memoria e prestazioni su cache fredda/calda e 1.000 RAW autorizzati; registrare prove native, XPC e limiti dei target.
+
+Le fasi corrispondono alla checklist autonoma del progetto (§13) e ai suoi gate (§12). I valori iniziali richiedono misure; il confronto conserva la stessa qualità e include letture/hash, code e upload necessari. L'utilizzo CPU/GPU non sostituisce latenza e throughput.
+
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 
 Dipendenze: nessuna milestone precedente. Il prototipo corrente è una parte di R0.
