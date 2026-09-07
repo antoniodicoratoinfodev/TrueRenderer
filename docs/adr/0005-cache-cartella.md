@@ -1,6 +1,6 @@
 # ADR 0005 — cache lossless e temporanei accanto alle immagini
 
-Data: 7 settembre 2026. Stato: 0.1.4 verificata; primo incremento pubblicato (`59bf9d7`), ottimizzazioni successive qualificate.
+Data: 7 settembre 2026. Stato: 0.1.4 verificata; primo incremento pubblicato (`59bf9d7`), ottimizzazioni successive qualificate e pubblicate (`da97b33`).
 
 ## Scopo autorizzato
 

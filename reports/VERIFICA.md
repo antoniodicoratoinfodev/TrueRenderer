@@ -4,7 +4,7 @@ Aggiornamento: 7 settembre 2026. Build interna **0.1.4**, installata in `dist/Tr
 
 ## Ottimizzazioni dopo il primo push — pacchetto finale 0.1.4
 
-Il commit cache `59bf9d7` è stato pubblicato prima di profilare e modificare ulteriormente le prestazioni. Attivati SHA-256 hardware con rilevamento CPU/fallback software e riuso dello snapshot privato fra cache lookup e decode. Sono passati **40 test Rust** (35 ordinari + 5 integrazioni esplicite), fmt/Clippy, 6 controlli IPC, 19 fixture e 6 controlli aggiuntivi dei formati, 24 sinusoidi, XPC, Finder, copia autonoma e firma/hash del pacchetto. Tutte le 14 regioni di screenshot continuano a dare zero differenze di canale. Evidenze aggiornate: `verification.log`, `installed-verification.log`, `package-macos.json` e report nativi. Il pannello `13-cache-settings.png` è stato controllato visivamente.
+Il commit cache `59bf9d7` è stato pubblicato prima di profilare e modificare ulteriormente le prestazioni; il secondo incremento verificato è pubblicato in `da97b33`. Attivati SHA-256 hardware con rilevamento CPU/fallback software e riuso dello snapshot privato fra cache lookup e decode. Sono passati **40 test Rust** (35 ordinari + 5 integrazioni esplicite), fmt/Clippy, 6 controlli IPC, 19 fixture e 6 controlli aggiuntivi dei formati, 24 sinusoidi, XPC, Finder, copia autonoma e firma/hash del pacchetto. Tutte le 14 regioni di screenshot continuano a dare zero differenze di canale. Evidenze aggiornate: `verification.log`, `installed-verification.log`, `package-macos.json` e report nativi. Il pannello `13-cache-settings.png` è stato controllato visivamente.
 
 | Sorgente generata | Mediana calda prima | Mediana calda finale | Guadagno caldo | Fredda finale, scrittura inclusa |
 |---|---:|---:|---:|---:|

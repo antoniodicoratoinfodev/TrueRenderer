@@ -104,7 +104,7 @@ Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini
 - [x] README in inglese, ADR e sincronizzazione dei due documenti; bundle e verifiche native.
 - [x] Commit e push dell’incremento cache: `59bf9d7` pubblicato su `main`, prima delle ottimizzazioni successive.
 - [x] Dopo il primo push: profilare, accelerare SHA-256 e riusare lo snapshot sul miss; 40 test e pacchetto finale verificati, JPEG/DNG caldi circa 7× più rapidi nelle prove locali.
-- [ ] Pubblicare il secondo incremento e registrare il commit finale nei documenti.
+- [x] Pubblicare il secondo incremento: `da97b33` su `main`; registrati risultati e commit nei documenti.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 
