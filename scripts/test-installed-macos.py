@@ -14,6 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLE = ROOT / "dist/TrueRenderer.app"
@@ -24,7 +25,11 @@ def run(*args, timeout=150):
     subprocess.run([str(a) for a in args], cwd=ROOT, check=True, timeout=timeout)
 
 
+RUN_STARTED = time.time()
+
+
 def report(path, version):
+    assert path.stat().st_mtime >= RUN_STARTED, f"Stale report: {path}"
     value = json.loads(path.read_text())
     assert value["passed"] and value["version"] == version, path
     return value
@@ -37,6 +42,8 @@ def main():
     version = plistlib.loads((BUNDLE / "Contents/Info.plist").read_bytes())["CFBundleShortVersionString"]
     executable = BUNDLE / "Contents/MacOS/TrueRenderer"
     run(executable, "--verify-resampling")
+    run(executable, "--verify-cache")
+    report(REPORTS / "cache-macos.json", version)
     run(executable, "--verify-formats")
     report(REPORTS / "formats-macos.json", version)
     run(sys.executable, ROOT / "scripts/test-xpc-integration.py")
@@ -49,11 +56,14 @@ def main():
     run("/usr/bin/open", "-n", "-W", BUNDLE, "--args", "--formats-smoke")
     report(REPORTS / "formats-smoke-macos.json", version)
 
+    run("/usr/bin/open", "-n", "-W", BUNDLE, "--args", "--settings-smoke")
+    report(REPORTS / "cache-settings-macos.json", version)
+
     relocated = Path(tempfile.mkdtemp(prefix=f"relocation-{version}-", dir=ROOT / "var"))
     copied = relocated / "dist/TrueRenderer.app"
     copied.parent.mkdir()
     shutil.copytree(BUNDLE, copied)
-    shutil.copytree(ROOT / "corpus", relocated / "corpus")
+    shutil.copytree(ROOT / "corpus", relocated / "corpus", ignore=shutil.ignore_patterns(".truerenderer-cache"))
     run("/usr/bin/open", "-n", "-W", copied, "--args", "--smoke-test")
     report(relocated / "reports/smoke-macos.json", version)
     shutil.copy2(relocated / "reports/smoke-macos.json", REPORTS / "relocation-macos.json")

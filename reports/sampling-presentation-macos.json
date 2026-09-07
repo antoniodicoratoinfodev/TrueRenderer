@@ -342,5 +342,5 @@
   "passed": true,
   "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
   "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
-  "version": "0.1.3"
+  "version": "0.1.4"
 }

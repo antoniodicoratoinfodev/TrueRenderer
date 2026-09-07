@@ -6,3 +6,5 @@
 *.sqlite*
 __pycache__/
 *.py[cod]
+
+.truerenderer-cache/

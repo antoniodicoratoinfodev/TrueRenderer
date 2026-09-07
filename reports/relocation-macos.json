@@ -2,8 +2,8 @@
   "adapter": "Apple M4 · Metal",
   "application": "TrueRenderer",
   "decode_errors": {},
-  "elapsed_seconds": 1.4536527395248413,
-  "frames": 74,
+  "elapsed_seconds": 1.4305493831634521,
+  "frames": 78,
   "gpu": "GPU/CPU: 4096 campioni · errore max 9.54e-7 · entro soglia R0",
   "images": 12,
   "passed": true,
@@ -12,17 +12,17 @@
   "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
   "scope": "native macOS R0 corpus smoke; not color/display/sandbox qualification",
   "screenshots": [
-    "03-compare",
     "01-grid",
+    "03-compare",
     "02-preview"
   ],
   "sqlite": "3.53.2",
   "status": "Corpus pronto · 0 file non leggibili",
   "surface": "Bgra8Unorm",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "worker_pids": [
-    41934,
-    41935
+    47448,
+    47449
   ],
   "worker_transports": [
     "XPC / App Sandbox · R0"

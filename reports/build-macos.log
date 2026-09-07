@@ -1,5 +1,5 @@
-   Compiling truerenderer v0.1.3 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
-    Finished `release` profile [optimized] target(s) in 35.50s
+   Compiling truerenderer v0.1.4 (/Users/antonio/Desktop/TrueRenderer/apps/desktop)
+    Finished `release` profile [optimized] target(s) in 37.63s
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/XPCServices/Decoder0.xpc: replacing existing signature
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/XPCServices/Decoder1.xpc: replacing existing signature
 /Users/antonio/Desktop/TrueRenderer/dist/TrueRenderer-next.app/Contents/MacOS/tr-worker: replacing existing signature

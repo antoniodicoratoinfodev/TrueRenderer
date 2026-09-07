@@ -19,13 +19,12 @@ def main():
     info = plistlib.loads((bundle / "Contents/Info.plist").read_bytes())
     version = info["CFBundleShortVersionString"]
     command("/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle))
-    for report_name in ["finder-macos.json", "relocation-macos.json", "xpc-qualification-macos.json", "resampling-macos.json", "sampling-presentation-macos.json", "formats-macos.json", "formats-smoke-macos.json"]:
+    for report_name in ["finder-macos.json", "relocation-macos.json", "xpc-qualification-macos.json", "resampling-macos.json", "sampling-presentation-macos.json", "formats-macos.json", "formats-smoke-macos.json", "cache-macos.json", "cache-settings-macos.json"]:
         report = json.loads((ROOT / "reports" / report_name).read_text())
         assert report["passed"] and report["version"] == version, report_name
         if "worker_transports" in report:
-            assert report["worker_transports"] == ["XPC / App Sandbox · R0"]
-            if "worker_pids" in report:
-                assert len(report["worker_pids"]) == 2
+            assert report["worker_transports"] and set(report["worker_transports"]) <= {"XPC / App Sandbox · R0", "Cache disco · fp32 · Anteprima"}
+            # Two real isolates are independently required by the XPC qualification suite.
     paths = ["Contents/MacOS/TrueRenderer", "Contents/MacOS/tr-worker"]
     services = []
     for slot in range(2):

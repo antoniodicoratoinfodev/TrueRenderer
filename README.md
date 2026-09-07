@@ -8,7 +8,7 @@ TrueRenderer is a native desktop image browser and viewer built around a single 
 
 ## Color and rendering fidelity
 
-Color accuracy is the reason this application exists, so nothing in the path from file to screen is allowed to be approximate.
+Color accuracy is the design goal. The implemented rendering path and its remaining qualification gaps are described below.
 
 - **Linear-light working space.** Extended linear Rec.2020 in fp32 with premultiplied alpha. Resampling, compositing, and analysis all happen there, never in gamma-encoded 8-bit. Output is currently opaque sRGB8 on a neutral `#777777` surround.
 - **Real physical pixels.** At aligned physical 1:1, each source sample maps to one physical pixel with no filtering at all. On a Retina display, 1:1 means device pixels, not logical points.
@@ -18,7 +18,7 @@ Color accuracy is the reason this application exists, so nothing in the path fro
 - **RAW is actually developed.** CIRAWFilter runs at native resolution with the versioned `TR-linear-v1` recipe. An embedded JPEG preview is never silently substituted for the RAW data.
 - **Traceable results.** The inspector reports the decoder, color and orientation information, source pixel values under the cursor, a histogram, and the SHA-256 of the decoded source.
 
-Measured on the development Mac: maximum GPU sampling error of 9.54e-7 against a 1e-4 threshold on Apple M4 and Metal, and zero channel difference between the presented surface and the CPU reference raster across 14 compared screenshot regions.
+Measured on the development Mac: maximum absolute error of 9.54e-7 in the tested GPU color-conversion stage against a 1e-4 threshold on Apple M4 and Metal, and zero channel difference between the presented surface and the CPU reference raster across 14 compared screenshot regions.
 
 Two honest limits. Faithful reduction attenuates detail that the available pixels cannot represent, so a reduced view is not meant to look identical to 1:1; preserving that contrast would produce moiré. And every render currently carries the **Preview** status: Standard and Reference modes, full ICC and monitor profile handling, and fidelity across different displays are not yet qualified. [ADR 0003](docs/adr/0003-campionamento-fisico-r0.md) records the sampling criteria and what remains open.
 
@@ -29,7 +29,7 @@ Two honest limits. Faithful reduction attenuates detail that the available pixel
 - Fit, zoom, pan, physical 1:1, and synchronized side-by-side comparison of two images.
 - Sample source pixels, read the histogram, and check decoder, color, and orientation metadata.
 - Rate, reject, label, and add keywords, then search and filter. Annotations live in a local SQLite library.
-- Undo within a session, restore from verified SQLite backups, and export annotations as JSON.
+- Undo within a session, create verified SQLite backups, and export annotations as JSON.
 - Work offline. No account, no image upload, no network access.
 
 Original files are always read-only. Annotation saving runs in a writer separate from decoding, so a slow or failing decoder never blocks your edits.

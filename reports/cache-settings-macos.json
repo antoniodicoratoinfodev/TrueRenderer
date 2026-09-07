@@ -1,0 +1,24 @@
+{
+  "application": "TrueRenderer",
+  "cache": {
+    "bytes": 156417438,
+    "corrupt": 0,
+    "entries": 7,
+    "evictions": 0,
+    "folder": "/Users/antonio/Desktop/TrueRenderer/corpus",
+    "hits": 6,
+    "message": "Immagine riutilizzata dalla cache",
+    "misses": 6,
+    "temporary_bytes": 0,
+    "writes": 2
+  },
+  "passed": true,
+  "settings": {
+    "disk_mib": 4096,
+    "enabled": true,
+    "free_mib": 512,
+    "temporary_mib": 2048,
+    "unused_days": 30
+  },
+  "version": "0.1.4"
+}

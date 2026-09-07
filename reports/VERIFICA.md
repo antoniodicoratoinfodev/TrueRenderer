@@ -1,8 +1,24 @@
 # TrueRenderer — verifica del prototipo R0
 
-Aggiornamento: 7 settembre 2026. Build interna **0.1.3**, installata in `dist/TrueRenderer.app`.
+Aggiornamento: 7 settembre 2026. Build interna **0.1.4**, installata in `dist/TrueRenderer.app`.
 
-## Risultati osservati
+## Cache per cartella 0.1.4 — prima pubblicazione
+
+Passati **37 test Rust** (33 ordinari + 4 integrazioni esplicite), 6 controlli IPC e tutta la suite nativa del pacchetto. I cinque nuovi test cache coprono precisione bit esatti, corruzione/troncamento, chiavi obsolete, cancellazione, quote, scadenza/LRU, temporanei abbandonati, impostazioni, link e lock. Tutte le 19 fixture dei formati, le 24 sinusoidi e le 14 regioni di screenshot restano passate, con zero differenze di canale nelle regioni confrontate. Finder, XPC, copia autonoma e integrità dei database passati; screenshot delle impostazioni in `13-cache-settings.png`.
+
+Misura della prima implementazione (`cache-before-performance.json`), prima delle altre ottimizzazioni richieste:
+
+| Sorgente generata | Cache applicativa fredda, scrittura inclusa | Mediana di 5 riaperture calde | Rapporto |
+|---|---:|---:|---:|
+| 12mp-jpeg.jpg | 1.8610 s | 0.9631 s | 1.9× |
+| 07-bayer.dng | 0.3966 s | 0.0693 s | 5.7× |
+| 16bit.png | 0.0170 s | 0.0003 s | 56.1× |
+
+Sono prove locali su Apple M4, con cache del sistema operativo non svuotata; non sono p95. Tutti i bit di ogni livello fp32 e l'istogramma sono identici; nei riusi non viene avviato alcun nuovo job decoder e i file originali rimangono invariati. La cache è riapribile da una nuova istanza del gestore e la pulizia elimina i derivati. La cartella è `.truerenderer-cache` dentro quella delle immagini; default 4 GiB complessivi, temporaneo massimo 2 GiB, scadenza 30 giorni, riserva libera 512 MiB.
+
+Il README pubblico è in inglese. Le ulteriori ottimizzazioni saranno eseguite dopo il commit/push di questo incremento, come richiesto. Il cache full-frame rimane Anteprima, senza qualifica tile/gigapixel, budget globale o filesystem remoti.
+
+## Risultati precedenti e regressioni
 
 | Controllo | Esito | Evidenza |
 |---|---|---|

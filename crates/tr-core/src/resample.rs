@@ -55,6 +55,37 @@ impl Pyramid {
     pub fn id(&self) -> u64 {
         self.id
     }
+    pub fn levels(&self) -> &[LinearImage] {
+        &self.levels
+    }
+    /// Restore validated lossless levels without filtering the source again.
+    pub fn from_levels(levels: Vec<LinearImage>) -> Result<Self> {
+        ensure!(
+            !levels.is_empty() && levels.len() <= 32,
+            "Piramide cache non valida"
+        );
+        for pair in levels.windows(2) {
+            ensure!(
+                pair[0].width > 1 || pair[0].height > 1,
+                "Livello cache ridondante"
+            );
+            ensure!(
+                pair[1].width == pair[0].width.div_ceil(2)
+                    && pair[1].height == pair[0].height.div_ceil(2),
+                "Dimensioni livelli cache non valide"
+            );
+        }
+        ensure!(
+            levels.last().is_some_and(|l| l.width == 1 && l.height == 1),
+            "Piramide cache incompleta"
+        );
+        let opaque = levels[0].pixels.iter().all(|p| p[3] == 1.0);
+        Ok(Self {
+            id: NEXT_ID.fetch_add(1, Ordering::Relaxed),
+            levels,
+            opaque,
+        })
+    }
     pub fn source(&self) -> &LinearImage {
         &self.levels[0]
     }

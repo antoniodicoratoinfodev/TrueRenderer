@@ -1,0 +1,69 @@
+{
+  "application": "TrueRenderer",
+  "cache_before_clear": {
+    "bytes": 272821533,
+    "corrupt": 0,
+    "entries": 3,
+    "evictions": 0,
+    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-whhhK5",
+    "hits": 15,
+    "message": "Immagine riutilizzata dalla cache",
+    "misses": 3,
+    "temporary_bytes": 0,
+    "writes": 3
+  },
+  "checks": [
+    {
+      "bit_exact_all_levels": true,
+      "cold_seconds_including_write": 1.860974208,
+      "file": "12mp-jpeg.jpg",
+      "no_warm_decoder_jobs": true,
+      "passed": true,
+      "reopened_cache_hit": true,
+      "source_unchanged": true,
+      "warm_seconds": [
+        0.994578542,
+        0.962228417,
+        0.963145084,
+        0.962358416,
+        0.963190625
+      ]
+    },
+    {
+      "bit_exact_all_levels": true,
+      "cold_seconds_including_write": 0.396601334,
+      "file": "07-bayer.dng",
+      "no_warm_decoder_jobs": true,
+      "passed": true,
+      "reopened_cache_hit": true,
+      "source_unchanged": true,
+      "warm_seconds": [
+        0.069279042,
+        0.068856041,
+        0.06931525,
+        0.069284708,
+        0.069124042
+      ]
+    },
+    {
+      "bit_exact_all_levels": true,
+      "cold_seconds_including_write": 0.017036833,
+      "file": "16bit.png",
+      "no_warm_decoder_jobs": true,
+      "passed": true,
+      "reopened_cache_hit": true,
+      "source_unchanged": true,
+      "warm_seconds": [
+        0.000352584,
+        0.000308417,
+        0.000299,
+        0.000301291,
+        0.000303667
+      ]
+    }
+  ],
+  "clear_removes_only_derivatives": true,
+  "passed": true,
+  "scope": "Three generated sources; one cold application-cache run and five warm runs each; OS cache is not flushed. Bit-exact full fp32 pyramids and histogram. Not p95 or whole-machine memory qualification.",
+  "version": "0.1.4"
+}

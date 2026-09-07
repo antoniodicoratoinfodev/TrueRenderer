@@ -92,6 +92,19 @@ Richiesta del titolare: repository **pubblico**, **licenza proprietaria**, READM
 
 Restano: matrice reale fotocamere/sottotipi/ICC, RAW multipiattaforma con LibRaw, memoria globale e gate R0/R1/R3 completi. I test sul DNG sintetico non qualificano ogni RAW. HEIC/WebP sono un'anticipazione limitata della precedente lista post-v1.
 
+## Incremento 0.1.4 — cache per cartella e impostazioni
+
+Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini, quote configurabili, README inglese. Pubblicare questo incremento prima di ulteriori ottimizzazioni delle prestazioni.
+
+- [x] Creare `.truerenderer-cache/entries` e `tmp` nella cartella aperta, con proprietà riconoscibile e fallback in RAM per cartelle non scrivibili.
+- [x] Persistenza lossless fp32 della piramide e provenienza; chiave da SHA-256 sorgente, pipeline/decoder e versione; invalidazione e rifiuto dei file corrotti.
+- [x] Quote per cartella, temporanei prenotati, riserva di spazio libero, LRU/scadenza, pulizia sicura dei soli derivati.
+- [x] Impostazioni persistenti e comandi di pulizia, stato cache e hit/miss visibili.
+- [x] Test di precisione, corruzione, limiti, concorrenza, symlink, cancellazione e file originali invariati; misure a cache fredda/calda.
+- [x] README in inglese, ADR e sincronizzazione dei due documenti; bundle e verifiche native.
+- [ ] Commit e push dell’incremento cache.
+- [ ] Solo dopo il push: profilare altre operazioni, implementare e misurare ottimizzazioni ulteriori, verificare e pubblicare.
+
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 
 Dipendenze: nessuna milestone precedente. Il prototipo corrente è una parte di R0.

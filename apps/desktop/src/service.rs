@@ -81,10 +81,19 @@ pub struct Service {
     pub low: mpsc::SyncSender<Request>,
     pub events: mpsc::Receiver<Event>,
     pub generation: Arc<AtomicU64>,
+    pub cache: Arc<crate::cache::Manager>,
 }
 
 impl Service {
     pub fn start(root: PathBuf, data: PathBuf, worker: PathBuf, ctx: egui::Context) -> Self {
+        let settings = crate::cache::Settings::load(&data);
+        let cache = Arc::new(crate::cache::Manager::new(
+            settings.as_ref().cloned().unwrap_or_default(),
+        ));
+        if let Err(e) = settings {
+            cache.note(format!("Impostazioni non lette: {e:#}"));
+        }
+        let thread_cache = cache.clone();
         let (high, high_rx) = mpsc::sync_channel(64);
         let (low, low_rx) = mpsc::sync_channel(8);
         let (events_tx, events) = mpsc::sync_channel(16);
@@ -108,6 +117,7 @@ impl Service {
                 worker_generation.clone(),
                 events_tx.clone(),
                 ctx.clone(),
+                thread_cache.clone(),
             );
             let policy = CorpusPolicy::default();
             let corpus = root
@@ -135,6 +145,14 @@ impl Service {
                         let result = (|| -> anyhow::Result<(Vec<Item>, String)> {
                             let folder = folder.canonicalize()?;
                             let controlled_folder = folder == corpus;
+                            let maintenance = thread_cache.clone();
+                            let cache_folder = folder.clone();
+                            thread::spawn(move || {
+                                if let Err(e) = maintenance.maintain(&cache_folder, false) {
+                                    maintenance
+                                        .note(format!("Cache non disponibile, uso RAM: {e:#}"));
+                                }
+                            });
                             let mut paths = vec![];
                             let mut errors = 0;
                             for entry in std::fs::read_dir(&folder)? {
@@ -325,6 +343,7 @@ impl Service {
             }
         });
         Self {
+            cache,
             high,
             low,
             events,

@@ -1,6 +1,8 @@
+mod cache;
 mod decode_pool;
 mod service;
 mod ui;
+mod verify_cache;
 mod verify_formats;
 mod verify_resampling;
 mod verify_xpc;
@@ -30,7 +32,11 @@ fn run() -> Result<()> {
         .canonicalize()?;
     let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
     let external_smoke = args.iter().any(|a| a == "--formats-smoke");
-    let smoke = external_smoke || sampling_smoke || args.iter().any(|a| a == "--smoke-test");
+    let settings_smoke = args.iter().any(|a| a == "--settings-smoke");
+    let smoke = settings_smoke
+        || external_smoke
+        || sampling_smoke
+        || args.iter().any(|a| a == "--smoke-test");
     let initial_open =
         option("--open").or_else(|| external_smoke.then(|| root.join("var/format-fixtures")));
     let worker = executable
@@ -41,6 +47,9 @@ fn run() -> Result<()> {
         } else {
             "tr-worker"
         });
+    if args.iter().any(|a| a == "--verify-cache") {
+        return verify_cache::run(&root, &worker);
+    }
     if args.iter().any(|a| a == "--verify-formats") {
         return verify_formats::run(&root, &worker);
     }
@@ -94,6 +103,7 @@ fn run() -> Result<()> {
                     smoke,
                     sampling_smoke,
                     external_smoke,
+                    settings_smoke,
                     open: initial_open,
                 },
             )))
@@ -110,6 +120,7 @@ fn main() {
                 || a == "--smoke-test"
                 || a == "--sampling-smoke"
                 || a == "--formats-smoke"
+                || a == "--settings-smoke"
         }) {
             std::process::exit(1);
         }

@@ -27,6 +27,7 @@ pub struct Startup {
     pub smoke: bool,
     pub sampling_smoke: bool,
     pub external_smoke: bool,
+    pub settings_smoke: bool,
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
@@ -46,6 +47,11 @@ pub struct TrueRenderer {
     keyword_id: String,
     undo_available: bool,
     show_help: bool,
+    show_settings: bool,
+    settings_smoke: bool,
+    cache_settings: crate::cache::Settings,
+    settings_data: PathBuf,
+    cache_action: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
     show_inspector: bool,
     show_filmstrip: bool,
     fullscreen: bool,
@@ -82,6 +88,7 @@ impl TrueRenderer {
             smoke,
             sampling_smoke,
             external_smoke,
+            settings_smoke,
             open,
         } = startup;
         let ctx = &cc.egui_ctx;
@@ -124,7 +131,7 @@ impl TrueRenderer {
                 )
             })
             .unwrap_or(("GPU non disponibile".into(), "sconosciuta".into()));
-        let service = Service::start(root.clone(), data, worker, ctx.clone());
+        let service = Service::start(root.clone(), data.clone(), worker, ctx.clone());
         let (gpu_tx, gpu_rx) = std::sync::mpsc::sync_channel(1);
         if let Some(gpu) = &cc.wgpu_render_state {
             let device = gpu.device.clone();
@@ -151,6 +158,9 @@ impl TrueRenderer {
         let folder = root.join("corpus");
         let mut app = Self {
             state: State::default(),
+            cache_settings: service.cache.settings(),
+            settings_data: data,
+            cache_action: None,
             service,
             root,
             folder: folder.clone(),
@@ -166,6 +176,8 @@ impl TrueRenderer {
             keyword_id: String::new(),
             undo_available: false,
             show_help: false,
+            show_settings: settings_smoke,
+            settings_smoke,
             show_inspector: true,
             show_filmstrip: true,
             fullscreen: false,
@@ -636,6 +648,10 @@ impl TrueRenderer {
                             .clicked()
                         {
                             self.show_help = !self.show_help;
+                        }
+                        if ui.button("Impostazioni").clicked() {
+                            self.cache_settings = self.service.cache.settings();
+                            self.show_settings = true;
                         }
                         let response = ui.add(
                             egui::TextEdit::singleline(&mut self.state.query)
@@ -1278,8 +1294,111 @@ impl TrueRenderer {
         }
         ctx.request_repaint_after(Duration::from_millis(50));
     }
+    fn settings_window(&mut self, ctx: &egui::Context) {
+        if let Some(rx) = &self.cache_action {
+            match rx.try_recv() {
+                Ok(result) => {
+                    self.cache_action = None;
+                    self.scanning = false;
+                    self.status = match result {
+                        Ok(()) => "Impostazioni/cache aggiornate".into(),
+                        Err(e) => e,
+                    };
+                }
+                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
+                    self.cache_action = None;
+                    self.scanning = false;
+                    self.status = "Operazione cache interrotta".into();
+                }
+                _ => {}
+            }
+            ctx.request_repaint_after(Duration::from_millis(50));
+        }
+        let mut action = 0;
+        egui::Window::new("Impostazioni · cache e temporanei").open(&mut self.show_settings).default_width(570.).resizable(false).show(ctx,|ui|{
+            ui.label("Le impostazioni valgono per tutte le cartelle; la quota disco si applica a ciascuna cartella separatamente.");
+            ui.checkbox(&mut self.cache_settings.enabled,"Abilita cache su disco nella cartella delle immagini");
+            ui.add(egui::Slider::new(&mut self.cache_settings.disk_mib,64..=65536).logarithmic(true).text("Quota per cartella (MiB)"));
+            ui.add(egui::Slider::new(&mut self.cache_settings.temporary_mib,16..=2048).logarithmic(true).text("Temporanei (MiB)"));
+            ui.add(egui::Slider::new(&mut self.cache_settings.unused_days,1..=3650).logarithmic(true).text("Scadenza senza utilizzo (giorni)"));
+            ui.add(egui::Slider::new(&mut self.cache_settings.free_mib,0..=65536).logarithmic(true).text("Spazio libero da riservare (MiB)"));
+            ui.label("I temporanei rientrano nella quota disco. Le immagini troppo grandi per la cache restano visualizzabili in RAM. I file meno usati vengono rimossi per rispettare la quota.");
+            ui.separator();
+            ui.label("Cartella corrente:");
+            ui.add(egui::Label::new(self.folder.join(crate::cache::NAME).display().to_string()).wrap());
+            let stats=self.service.cache.stats();
+            if stats.folder==self.folder.display().to_string() {
+                ui.label(format!("Cache: {} in {} file · temporanei inattivi: {}",human_bytes(stats.bytes),stats.entries,human_bytes(stats.temporary_bytes)));
+            }
+            ui.label(format!("Sessione: {} riusi da disco · {} mancate corrispondenze · {} scritture",stats.hits,stats.misses,stats.writes));
+            ui.add(egui::Label::new(&stats.message).wrap());
+            ui.label("entries contiene i render fp32 senza perdita; tmp contiene le scritture in corso. I temporanei abbandonati vengono rimossi alla successiva apertura. Originali, annotazioni e backup sono separati.");
+            ui.horizontal(|ui|{
+                let ready=self.cache_action.is_none() && !self.scanning;
+                if ui.add_enabled(ready,egui::Button::new("Applica e salva")).clicked(){action=1;}
+                if ui.add_enabled(ready,egui::Button::new("Svuota cache cartella")).clicked(){action=2;}
+            });
+            if self.cache_action.is_some(){ui.label("Aggiornamento cache…");}
+        });
+        if action > 0 {
+            self.generation += 1;
+            self.service
+                .generation
+                .store(self.generation, Ordering::Release);
+            self.pending_images.clear();
+            self.scanning = true;
+            let cache = self.service.cache.clone();
+            let folder = self.folder.clone();
+            let data = self.settings_data.clone();
+            let settings = self.cache_settings.clone();
+            let (tx, rx) = std::sync::mpsc::sync_channel(1);
+            self.cache_action = Some(rx);
+            std::thread::spawn(move || {
+                let result = (|| -> anyhow::Result<()> {
+                    if action == 1 {
+                        settings.save(&data)?;
+                        cache.configure(settings);
+                    }
+                    let start = Instant::now();
+                    loop {
+                        match cache.maintain(&folder, action == 2) {
+                            Err(e)
+                                if e.downcast_ref::<std::io::Error>().is_some_and(|e| {
+                                    e.kind() == std::io::ErrorKind::WouldBlock
+                                }) && start.elapsed() < Duration::from_secs(3) =>
+                            {
+                                std::thread::sleep(Duration::from_millis(25))
+                            }
+                            result => return result,
+                        }
+                    }
+                })()
+                .map_err(|e| format!("Cache: {e:#}"));
+                let _ = tx.send(result);
+            });
+        }
+    }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
         if !self.smoke {
+            return;
+        }
+        if self.settings_smoke {
+            if self.started.elapsed().as_secs_f32() > 1.
+                && !self.scanning
+                && self.cache_action.is_none()
+            {
+                if self.screenshots.contains("13-cache-settings") {
+                    let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":!self.fatal,"settings":self.service.cache.settings(),"cache":self.service.cache.stats()});
+                    let _ = std::fs::write(
+                        self.root.join("reports/cache-settings-macos.json"),
+                        serde_json::to_vec_pretty(&report).unwrap(),
+                    );
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                } else {
+                    self.capture_screenshot(ctx, "13-cache-settings");
+                }
+            }
+            ctx.request_repaint_after(Duration::from_millis(50));
             return;
         }
         if self.external_smoke {
@@ -1474,6 +1593,7 @@ impl eframe::App for TrueRenderer {
                 }
             });
         self.help(&ctx);
+        self.settings_window(&ctx);
         self.smoke_tick(&ctx);
         if self.scanning || !self.pending_images.is_empty() || !self.state.pending.is_empty() {
             ctx.request_repaint_after(Duration::from_millis(50));

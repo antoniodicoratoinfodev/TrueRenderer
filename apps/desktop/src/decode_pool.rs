@@ -36,6 +36,7 @@ impl DecodePool {
         generation: Arc<AtomicU64>,
         events: mpsc::SyncSender<Event>,
         ctx: egui::Context,
+        cache: Arc<crate::cache::Manager>,
     ) -> Self {
         let queues = Arc::new((Mutex::new(Queues::default()), Condvar::new()));
         let stop = Arc::new(AtomicBool::new(false));
@@ -47,6 +48,7 @@ impl DecodePool {
             let events = events.clone();
             let ctx = ctx.clone();
             let binary = binary.clone();
+            let cache = cache.clone();
             workers.push(thread::spawn(move || {
                 let mut broker = Broker::with_slot(binary, slot);
                 let mut last_generation = None;
@@ -93,19 +95,9 @@ impl DecodePool {
                         stop.load(Ordering::Acquire)
                             || job.generation != generation.load(Ordering::Relaxed)
                     };
-                    let result = broker
-                        .decode_cancellable(&job.item.path, &job.item.digest, job.edge, cancelled)
-                        .and_then(|decoded| {
-                            let prepared = tr_render::prepare(decoded.raster)?;
-                            Ok(crate::service::PreparedDecoded {
-                                digest: decoded.digest,
-                                info: decoded.info,
-                                prepared,
-                                transport: decoded.transport,
-                                worker_pid: decoded.worker_pid,
-                            })
-                        })
-                        .map_err(|error| format!("{error:#}"));
+                    let result =
+                        prepare_cached(&cache, &mut broker, &job.item, job.edge, &cancelled)
+                            .map_err(|error| format!("{error:#}"));
                     if !cancelled() {
                         if events
                             .send(Event::Image {
@@ -151,6 +143,65 @@ impl DecodePool {
         Ok(())
     }
 }
+pub fn prepare_cached(
+    cache: &crate::cache::Manager,
+    broker: &mut Broker,
+    item: &Item,
+    edge: u32,
+    cancelled: &impl Fn() -> bool,
+) -> anyhow::Result<crate::service::PreparedDecoded> {
+    let folder = item
+        .path
+        .parent()
+        .ok_or_else(|| anyhow::anyhow!("Cartella sorgente assente"))?;
+    if edge == 0 && cache.settings().enabled {
+        let before = tr_platform::observation_token(&item.path.metadata()?);
+        let (_, digest) = tr_platform::snapshot(&item.path)?;
+        anyhow::ensure!(
+            item.digest == digest
+                || (item.digest == before
+                    && tr_platform::observation_token(&item.path.metadata()?) == before),
+            "Sorgente cambiata: ricaricare la cartella"
+        );
+        anyhow::ensure!(
+            tr_platform::CorpusPolicy::default().approves(&digest)
+                || broker.transport().starts_with("XPC"),
+            "File esterno non ammesso dal worker su pipe"
+        );
+        if let Some((info, prepared)) = cache.load(folder, &digest, cancelled) {
+            return Ok(crate::service::PreparedDecoded {
+                digest,
+                info,
+                prepared,
+                transport: "Cache disco · fp32 · Anteprima",
+                worker_pid: None,
+            });
+        }
+    }
+    let decoded = broker.decode_cancellable(&item.path, &item.digest, edge, cancelled)?;
+    let prepared = tr_render::prepare(decoded.raster)?;
+    if edge == 0
+        && let Err(e) = cache.store(folder, &decoded.digest, &decoded.info, &prepared, cancelled)
+    {
+        cache.note(
+            if e.downcast_ref::<std::io::Error>()
+                .is_some_and(|e| e.kind() == std::io::ErrorKind::WouldBlock)
+            {
+                "Cache occupata: scrittura saltata, immagine disponibile".into()
+            } else {
+                format!("Cache saltata, immagine disponibile: {e:#}")
+            },
+        );
+    }
+    Ok(crate::service::PreparedDecoded {
+        digest: decoded.digest,
+        info: decoded.info,
+        prepared,
+        transport: decoded.transport,
+        worker_pid: decoded.worker_pid,
+    })
+}
+
 impl Drop for DecodePool {
     fn drop(&mut self) {
         self.stop.store(true, Ordering::Release);
@@ -193,6 +244,10 @@ mod tests {
             generation.clone(),
             events,
             egui::Context::default(),
+            Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+                enabled: false,
+                ..Default::default()
+            })),
         );
         let path = root.join("corpus/01_Studio_cromatico.png");
         let (bytes, digest) = tr_platform::snapshot(&path).unwrap();
