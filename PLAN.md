@@ -128,6 +128,7 @@ Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la na
 - [ ] F, completamento: perdita device/ricreazione controllata e matrice driver/display; beneficio integrato sulle navigazioni reali e nei diversi profili.
 - [ ] §10, sorgenti residenti: osservazione delle modifiche/rimozioni durante la vista e indicazione esplicita del frame precedente. Il nuovo caricamento verifica già snapshot e SHA completo; manca l'invalidazione automatica di una vista già in RAM.
 - [ ] G: completare qualifica di tutti i gate del §12, 1.000 RAW reali, scenari freddi/caldi/disabilitati/sotto pressione, p95/p99 evento→frame e misure dei driver. I report sintetici dichiarano il proprio perimetro e non sostituiscono questi gate.
+- [x] Pubblicare l’incremento verificato richiesto dal titolare: commit `1b98b4f` su `origin/main`, 62 test Rust e suite nativa del bundle passati; documenti e licenza LibRaw aggiornati, requisiti residui espliciti.
 - [ ] Eliminare `docs/progetto-anteprime-cache-prestazioni.md` al completamento dell'intera richiesta, dopo aver trasferito risultati e decisioni nel registro. Il documento è conservato perché restano requisiti aperti.
 
 Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `reports/VERIFICA.md` e `docs/avanzamento.md`.
