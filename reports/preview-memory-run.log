@@ -1,0 +1,30 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "mode": "cache",
+  "passed": true,
+  "incomplete_samples": 0,
+  "limit_bytes": 2147483648,
+  "peak_sum_rss_bytes": 1034043392,
+  "peak_sum_physical_footprint_bytes": 1109149976,
+  "maximum_processes_in_sample": 3,
+  "sample_count": 59,
+  "maximum_sample_gap_seconds": 0.03914637500000007,
+  "elapsed_seconds": 2.084540958,
+  "scope": "Sampled host plus embedded XPC processes in this test bundle, using libproc RSS and physical footprint; sums can count shared pages twice. Includes process-attributed unified GPU memory, not independently measured driver/system allocations or sub-sampling peaks. Generated fixtures only; not the 1000-real-RAW qualification."
+}
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "mode": "viewer",
+  "passed": true,
+  "incomplete_samples": 0,
+  "limit_bytes": 2147483648,
+  "peak_sum_rss_bytes": 521420800,
+  "peak_sum_physical_footprint_bytes": 915212544,
+  "maximum_processes_in_sample": 3,
+  "sample_count": 22,
+  "maximum_sample_gap_seconds": 0.03809879199999999,
+  "elapsed_seconds": 0.7983720000000001,
+  "scope": "Sampled host plus embedded XPC processes in this test bundle, using libproc RSS and physical footprint; sums can count shared pages twice. Includes process-attributed unified GPU memory, not independently measured driver/system allocations or sub-sampling peaks. Generated fixtures only; not the 1000-real-RAW qualification."
+}

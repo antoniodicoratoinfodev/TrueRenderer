@@ -1,0 +1,149 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "requested_runs": 20,
+  "cases": [
+    {
+      "run": 1,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4897680282592773
+    },
+    {
+      "run": 2,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4294981956481934
+    },
+    {
+      "run": 3,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.506998062133789
+    },
+    {
+      "run": 4,
+      "mode": "--sampling-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 2.145725965499878
+    },
+    {
+      "run": 5,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4949522018432617
+    },
+    {
+      "run": 6,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.5083870887756348
+    },
+    {
+      "run": 7,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.484438180923462
+    },
+    {
+      "run": 8,
+      "mode": "--sampling-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 2.1516997814178467
+    },
+    {
+      "run": 9,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4297442436218262
+    },
+    {
+      "run": 10,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4423801898956299
+    },
+    {
+      "run": 11,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4893889427185059
+    },
+    {
+      "run": 12,
+      "mode": "--sampling-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 2.194584846496582
+    },
+    {
+      "run": 13,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4693171977996826
+    },
+    {
+      "run": 14,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.5022783279418945
+    },
+    {
+      "run": 15,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4933602809906006
+    },
+    {
+      "run": 16,
+      "mode": "--sampling-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 2.2064077854156494
+    },
+    {
+      "run": 17,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.477679967880249
+    },
+    {
+      "run": 18,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.4938151836395264
+    },
+    {
+      "run": 19,
+      "mode": "--settings-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 1.431396722793579
+    },
+    {
+      "run": 20,
+      "mode": "--sampling-smoke",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 2.1621267795562744
+    }
+  ],
+  "scope": "Repeated native startup plus grid/viewer/compare/zoom transitions on generated corpus; no automatic retries after a failure. Does not simulate device loss or qualify all window/display changes."
+}

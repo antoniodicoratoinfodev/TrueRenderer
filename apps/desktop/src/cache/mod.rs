@@ -1,14 +1,22 @@
 //! Disposable, lossless, bounded folder cache. It never contains annotations.
+mod artifact;
 mod directory;
+pub mod writer;
+pub use artifact::Lookup;
+mod settings;
 use anyhow::{Result, ensure};
 use directory::Directory;
 use serde::{Deserialize, Serialize};
+pub use settings::{PerformanceProfile, Prefetch, Settings};
 use sha2::{Digest, Sha256};
 use std::{
     fs::{File, FileTimes},
     io::{BufReader, BufWriter, Read, Write},
     path::Path,
-    sync::{Arc, Mutex, RwLock},
+    sync::{
+        Arc, Mutex, RwLock,
+        atomic::{AtomicI8, AtomicUsize, Ordering},
+    },
     time::{Duration, SystemTime},
 };
 use tr_core::{
@@ -21,67 +29,20 @@ pub const NAME: &str = ".truerenderer-cache";
 const OWNER: &[u8] = b"TrueRenderer disposable cache v1\n";
 const MAGIC: &[u8; 8] = b"TRCACHE1";
 const MIB: u64 = 1024 * 1024;
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[serde(default, deny_unknown_fields)]
-pub struct Settings {
-    pub enabled: bool,
-    pub disk_mib: u64,
-    pub temporary_mib: u64,
-    pub unused_days: u32,
-    pub free_mib: u64,
-}
-impl Default for Settings {
-    fn default() -> Self {
-        Self {
-            enabled: true,
-            disk_mib: 4096,
-            temporary_mib: 2048,
-            unused_days: 30,
-            free_mib: 512,
-        }
-    }
-}
-impl Settings {
-    pub fn validate(&self) -> Result<()> {
-        ensure!(
-            (64..=65536).contains(&self.disk_mib)
-                && (16..=2048).contains(&self.temporary_mib)
-                && (1..=3650).contains(&self.unused_days)
-                && self.free_mib <= 65536,
-            "Impostazioni cache fuori intervallo"
-        );
-        Ok(())
-    }
-    pub fn load(data: &Path) -> Result<Self> {
-        let path = data.join("settings.json");
-        if !path.exists() {
-            return Ok(Self::default());
-        }
-        ensure!(
-            path.metadata()?.len() <= 16384,
-            "Impostazioni troppo grandi"
-        );
-        let settings: Self = serde_json::from_slice(&std::fs::read(path)?)?;
-        settings.validate()?;
-        Ok(settings)
-    }
-    pub fn save(&self, data: &Path) -> Result<()> {
-        self.validate()?;
-        std::fs::create_dir_all(data)?;
-        let mut temp = tempfile::NamedTempFile::new_in(data)?;
-        temp.write_all(&serde_json::to_vec_pretty(self)?)?;
-        temp.as_file().sync_all()?;
-        temp.persist(data.join("settings.json"))?;
-        Ok(())
-    }
-}
 #[derive(Default, Clone, Serialize)]
 pub struct Statistics {
     pub hits: u64,
+    pub decode_jobs: u64,
+    pub coalesced_consumers: u64,
+    pub worker_peak_rss_bytes: u64,
+    pub worker_peak_footprint_bytes: u64,
     pub misses: u64,
     pub writes: u64,
     pub corrupt: u64,
+    pub busy: u64,
     pub evictions: u64,
+    pub writer_yields: u64,
+    pub memory_pressure: Option<tr_platform::MemoryPressure>,
     pub folder: String,
     pub bytes: u64,
     pub entries: u64,
@@ -91,10 +52,35 @@ pub struct Statistics {
 pub struct Manager {
     settings: RwLock<Settings>,
     statistics: Mutex<Statistics>,
+    settings_writer: Mutex<()>,
+    readers: AtomicUsize,
+    pressure: AtomicI8,
+    battery: std::sync::atomic::AtomicBool,
     fingerprint: String,
+    pub memory: tr_core::budget::MemoryBudget,
+    pub physical_mib: u64,
+    pub baseline_bytes: u64,
+    _baseline: tr_core::budget::Lease,
+}
+pub struct ReadDemand<'a>(&'a AtomicUsize);
+impl Drop for ReadDemand<'_> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::AcqRel);
+    }
 }
 impl Manager {
     pub fn new(settings: Settings) -> Self {
+        let _ = tr_core::compute::configure(settings.effective_threads());
+        let physical_mib = tr_platform::physical_memory_mib();
+        let memory =
+            tr_core::budget::MemoryBudget::new(settings.effective_memory_mib(physical_mib) * MIB);
+        // Explicit allowance for the host, persistent worker contexts and device
+        // infrastructure. Incremental image/native scratch remains separately
+        // reserved; this estimate is validated by sampled process reports.
+        let baseline_bytes = (384 * MIB).min(memory.usage().limit);
+        let baseline = memory
+            .try_reserve(baseline_bytes)
+            .expect("minimum memory exceeds baseline");
         let os = if cfg!(target_os = "macos") {
             std::process::Command::new("/usr/bin/sw_vers")
                 .output()
@@ -105,8 +91,16 @@ impl Manager {
             std::env::consts::OS.into()
         };
         Self {
+            memory,
+            physical_mib,
+            baseline_bytes,
+            _baseline: baseline,
             settings: RwLock::new(settings),
             statistics: Mutex::new(Statistics::default()),
+            settings_writer: Mutex::new(()),
+            readers: AtomicUsize::new(0),
+            pressure: AtomicI8::new(-1),
+            battery: std::sync::atomic::AtomicBool::new(false),
             fingerprint: format!(
                 "{}:{}:{}:Apple-TR-linear-v1:fp32-premultiplied-Rec2020",
                 env!("CARGO_PKG_VERSION"),
@@ -115,11 +109,84 @@ impl Manager {
             ),
         }
     }
+    pub fn read_demand(&self) -> ReadDemand<'_> {
+        self.readers.fetch_add(1, Ordering::AcqRel);
+        ReadDemand(&self.readers)
+    }
+    fn wait_for_readers(&self, cancelled: &impl Fn() -> bool) -> Result<()> {
+        let start = std::time::Instant::now();
+        let mut noted = false;
+        while self.readers.load(Ordering::Acquire) != 0 {
+            if !noted {
+                self.statistics.lock().unwrap().writer_yields += 1;
+                noted = true;
+            }
+            ensure!(
+                !cancelled() && start.elapsed() < Duration::from_millis(250),
+                "Persistenza rinviata per letture prioritarie"
+            );
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        Ok(())
+    }
+    pub fn under_pressure(&self) -> bool {
+        self.pressure.load(Ordering::Acquire) > 0
+    }
+    pub fn effective_threads(&self) -> usize {
+        self.threads_with_resources(&self.settings())
+    }
+    fn threads_with_resources(&self, settings: &Settings) -> usize {
+        let threads = settings.threads_for_power(self.on_battery());
+        if self.under_pressure() {
+            threads.min(2)
+        } else {
+            threads
+        }
+    }
+    pub fn set_pressure(&self, pressure: Option<tr_platform::MemoryPressure>) -> bool {
+        let next = pressure.map_or(-1, |p| p as i8);
+        if self.pressure.swap(next, Ordering::AcqRel) == next {
+            return false;
+        }
+        self.statistics.lock().unwrap().memory_pressure = pressure;
+        let _ = tr_core::compute::configure(self.effective_threads());
+        true
+    }
+    pub fn on_battery(&self) -> bool {
+        self.battery.load(std::sync::atomic::Ordering::Acquire)
+    }
+    pub fn refresh_power(&self) {
+        let next = tr_platform::on_battery();
+        if self.battery.swap(next, std::sync::atomic::Ordering::AcqRel) != next {
+            let settings = self.settings();
+            let _ = tr_core::compute::configure(self.threads_with_resources(&settings));
+        }
+    }
     pub fn settings(&self) -> Settings {
         self.settings.read().unwrap().clone()
     }
     pub fn configure(&self, settings: Settings) {
+        if let Err(error) = tr_core::compute::configure(self.threads_with_resources(&settings)) {
+            self.note(format!("Pool CPU: {error:#}"));
+        }
+        self.memory
+            .configure(settings.effective_memory_mib(self.physical_mib) * MIB);
         *self.settings.write().unwrap() = settings;
+    }
+    /// Serialize persistence and snapshot the latest live settings after acquiring
+    /// the writer, so rapid quality changes cannot restore an older preference.
+    pub fn save_current(&self, data: &Path) -> Result<()> {
+        let _writer = self.settings_writer.lock().unwrap();
+        self.settings().save(data)
+    }
+    pub fn decoded(&self, consumers: usize, stats: &tr_platform::BrokerStatistics) {
+        let mut s = self.statistics.lock().unwrap();
+        s.decode_jobs += 1;
+        s.coalesced_consumers += consumers.saturating_sub(1) as u64;
+        s.worker_peak_rss_bytes = s.worker_peak_rss_bytes.max(stats.peak_rss_bytes);
+        s.worker_peak_footprint_bytes = s
+            .worker_peak_footprint_bytes
+            .max(stats.peak_footprint_bytes);
     }
     pub fn stats(&self) -> Statistics {
         self.statistics.lock().unwrap().clone()
@@ -141,6 +208,7 @@ impl Manager {
             self.note("Cache disco disattivata · solo RAM".into());
             return Ok(());
         }
+        self.wait_for_readers(&|| false)?;
         let cache = Folder::open(folder, true, true)?;
         let (entries, removed) = cache.trim(
             if clear { 0 } else { settings.disk_mib * MIB },
@@ -298,6 +366,14 @@ struct Folder {
     tmp: Directory,
     _lock: File,
 }
+impl Drop for Folder {
+    fn drop(&mut self) {
+        // A concurrent fork can briefly inherit even a CLOEXEC descriptor until
+        // exec. Explicit unlock ends this critical section at the owner's drop,
+        // instead of leaving a transient Busy on an unrelated child descriptor.
+        let _ = fs2::FileExt::unlock(&self._lock);
+    }
+}
 struct Entry {
     name: String,
     bytes: u64,
@@ -351,12 +427,11 @@ impl Folder {
             if !managed(&name, suffix) {
                 continue;
             }
-            if let Ok(file) = dir.open_file(&name, false, false, false) {
-                let metadata = file.metadata()?;
+            if let Ok((bytes, modified)) = dir.file_info(&name) {
                 entries.push(Entry {
                     name,
-                    bytes: metadata.len(),
-                    modified: metadata.modified()?,
+                    bytes,
+                    modified,
                 });
             }
         }
@@ -364,6 +439,14 @@ impl Folder {
         Ok(entries)
     }
     fn trim(&self, limit: u64, days: u32) -> Result<(Vec<Entry>, u64)> {
+        self.trim_with_minimum(limit, days, limit / 5)
+    }
+    fn trim_with_minimum(
+        &self,
+        limit: u64,
+        days: u32,
+        thumbnail_minimum: u64,
+    ) -> Result<(Vec<Entry>, u64)> {
         // Exclusive lock excludes all active readers and writers in this folder.
         for entry in Self::files(&self.tmp, ".part")? {
             self.tmp.remove(&entry.name)?;
@@ -371,6 +454,23 @@ impl Folder {
         let mut entries = Self::files(&self.entries, ".tvc")?;
         entries.sort_by_key(|e| e.modified);
         let mut total: u64 = entries.iter().map(|e| e.bytes).sum();
+        let protected = if days > 0 && total > limit {
+            artifact::protected_thumbnails(self, &entries, thumbnail_minimum)
+        } else {
+            std::collections::HashSet::new()
+        };
+        // Unused thumbnail space is lent to other classes. Only the guaranteed
+        // minimum is placed after ordinary LRU candidates; expiry still wins.
+        ensure!(
+            entries
+                .iter()
+                .filter(|e| protected.contains(&e.name))
+                .map(|e| e.bytes)
+                .sum::<u64>()
+                <= limit,
+            "Artefatto invaderebbe la riserva miniature"
+        );
+        entries.sort_by_key(|e| (protected.contains(&e.name), e.modified));
         let mut removed = 0;
         entries.retain(|entry| {
             let expired = days == 0
@@ -553,6 +653,24 @@ mod tests {
         })
     }
     #[test]
+    fn pressure_limits_new_work_without_releasing_active_credits_or_preferences() {
+        let cache = manager();
+        let settings = serde_json::to_vec(&cache.settings()).unwrap();
+        let lease = cache.memory.try_reserve(1024 * 1024).unwrap();
+        let reserved = cache.memory.usage().reserved;
+        assert!(cache.set_pressure(Some(tr_platform::MemoryPressure::Warning)));
+        assert!(cache.under_pressure());
+        assert!(cache.effective_threads() <= 2);
+        assert_eq!(cache.memory.usage().reserved, reserved);
+        assert!(cache.set_pressure(Some(tr_platform::MemoryPressure::Critical)));
+        assert_eq!(cache.memory.usage().reserved, reserved);
+        assert!(cache.set_pressure(Some(tr_platform::MemoryPressure::Normal)));
+        assert!(!cache.under_pressure());
+        assert_eq!(serde_json::to_vec(&cache.settings()).unwrap(), settings);
+        drop(lease);
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+    }
+    #[test]
     fn roundtrip_is_bit_exact_and_invalidates_by_content_and_pipeline() {
         let folder = tempfile::tempdir().unwrap();
         let cache = manager();
@@ -729,6 +847,7 @@ mod tests {
             unused_days: 7,
             free_mib: 0,
             enabled: false,
+            ..Default::default()
         };
         settings.save(data.path()).unwrap();
         assert_eq!(Settings::load(data.path()).unwrap(), settings);

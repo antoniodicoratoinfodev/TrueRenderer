@@ -1,10 +1,10 @@
 {
   "application": "TrueRenderer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "target": "aarch64-apple-darwin",
   "scope": "Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval",
   "rust": "1.98.1",
-  "cargo_lock_sha256": "394f92a75132db1fe8be69e952c0865bd35a2a5ed62dbe3b6c85731c7d1ea6e8",
+  "cargo_lock_sha256": "e397cd5c722325121ee3a7de06729efbd127374c6d41d7d69fe9da4105790fb9",
   "packages": [
     {
       "name": "accesskit",
@@ -569,6 +569,60 @@
         {
           "file": "reports/dependency-notices/crc32fast-1.5.1-LICENSE-MIT",
           "sha256": "61d383b05b87d78f94d2937e2580cce47226d17823c0430fbcad09596537efcf"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-deque",
+      "version": "0.8.8",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "checksum_sha256": "622f3fc73690be383c7214310406f28a90e6edeadc3cea882f9d71e495b9711a",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/crossbeam-deque-0.8.8-LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "file": "reports/dependency-notices/crossbeam-deque-0.8.8-LICENSE-MIT",
+          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-epoch",
+      "version": "0.9.21",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "checksum_sha256": "dc74980687109a3b14c72fd458107bf0baa1da1a1a805e178d15501ba9b86d9d",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/crossbeam-epoch-0.9.21-LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "file": "reports/dependency-notices/crossbeam-epoch-0.9.21-LICENSE-MIT",
+          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab"
+        }
+      ]
+    },
+    {
+      "name": "crossbeam-utils",
+      "version": "0.8.22",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/crossbeam-rs/crossbeam",
+      "checksum_sha256": "61803da095bee82a81bb1a452ecc25d3b2f1416d1897eb86430c6159ef717c17",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/crossbeam-utils-0.8.22-LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "file": "reports/dependency-notices/crossbeam-utils-0.8.22-LICENSE-MIT",
+          "sha256": "5734ed989dfca1f625b40281ee9f4530f91b2411ec01cb748223e7eb87e201ab"
         }
       ]
     },
@@ -2222,6 +2276,42 @@
       ]
     },
     {
+      "name": "rayon",
+      "version": "1.11.0",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rayon-rs/rayon",
+      "checksum_sha256": "368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/rayon-1.11.0-LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "file": "reports/dependency-notices/rayon-1.11.0-LICENSE-MIT",
+          "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+        }
+      ]
+    },
+    {
+      "name": "rayon-core",
+      "version": "1.13.0",
+      "license": "MIT OR Apache-2.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/rayon-rs/rayon",
+      "checksum_sha256": "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/rayon-core-1.13.0-LICENSE-APACHE",
+          "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+        },
+        {
+          "file": "reports/dependency-notices/rayon-core-1.13.0-LICENSE-MIT",
+          "sha256": "0621878e61f0d0fda054bcbe02df75192c28bde1ecc8289cbd86aeba2dd72720"
+        }
+      ]
+    },
+    {
       "name": "read-fonts",
       "version": "0.41.0",
       "license": "MIT OR Apache-2.0",
@@ -2720,7 +2810,7 @@
     },
     {
       "name": "tr-app",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,
@@ -2730,7 +2820,7 @@
     },
     {
       "name": "tr-core",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,
@@ -2740,7 +2830,7 @@
     },
     {
       "name": "tr-platform",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,
@@ -2750,7 +2840,7 @@
     },
     {
       "name": "tr-render",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,
@@ -2760,7 +2850,7 @@
     },
     {
       "name": "tr-store",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,
@@ -2770,7 +2860,7 @@
     },
     {
       "name": "tr-worker",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,
@@ -2822,7 +2912,7 @@
     },
     {
       "name": "truerenderer",
-      "version": "0.1.4",
+      "version": "0.1.5",
       "license": null,
       "source": null,
       "repository": null,

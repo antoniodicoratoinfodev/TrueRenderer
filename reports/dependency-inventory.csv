@@ -33,6 +33,9 @@ core-graphics,0.23.2,MIT OR Apache-2.0,c07782be35f9e1140080c6b96f0d44b739e227847
 core-graphics-types,0.1.3,MIT OR Apache-2.0,45390e6114f68f718cc7a830514a96f903cccd70d02a8f6d9f643ac4ba45afaf,https://github.com/servo/core-foundation-rs
 cpufeatures,0.2.17,MIT OR Apache-2.0,59ed5838eebb26a2bb2e58f6d5b5316989ae9d08bab10e0e6d103e656d1b0280,https://github.com/RustCrypto/utils
 crc32fast,1.5.1,MIT OR Apache-2.0,8498c871161e1742aaa9d52551b2d6ebdd4c3d45a3be423e3728f33b955be550,https://github.com/srijs/rust-crc32fast
+crossbeam-deque,0.8.8,MIT OR Apache-2.0,622f3fc73690be383c7214310406f28a90e6edeadc3cea882f9d71e495b9711a,https://github.com/crossbeam-rs/crossbeam
+crossbeam-epoch,0.9.21,MIT OR Apache-2.0,dc74980687109a3b14c72fd458107bf0baa1da1a1a805e178d15501ba9b86d9d,https://github.com/crossbeam-rs/crossbeam
+crossbeam-utils,0.8.22,MIT OR Apache-2.0,61803da095bee82a81bb1a452ecc25d3b2f1416d1897eb86430c6159ef717c17,https://github.com/crossbeam-rs/crossbeam
 crypto-common,0.1.7,MIT OR Apache-2.0,78c8292055d1c1df0cce5d180393dc8cce0abec0a7102adb6c7b1eef6016d60a,https://github.com/RustCrypto/traits
 cursor-icon,1.2.0,MIT OR Apache-2.0 OR Zlib,f27ae1dd37df86211c42e150270f82743308803d90a6f6e6651cd730d5e1732f,https://github.com/rust-windowing/cursor-icon
 digest,0.10.7,MIT OR Apache-2.0,9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292,https://github.com/RustCrypto/traits
@@ -140,6 +143,8 @@ quick-error,2.0.1,MIT/Apache-2.0,a993555f31e5a609f617c12db6250dedcac1b0a85076912
 quote,1.0.47,MIT OR Apache-2.0,1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001,https://github.com/dtolnay/quote
 raw-window-handle,0.6.2,MIT OR Apache-2.0 OR Zlib,20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539,https://github.com/rust-windowing/raw-window-handle
 raw-window-metal,1.1.0,MIT OR Apache-2.0,40d213455a5f1dc59214213c7330e074ddf8114c9a42411eb890c767357ce135,https://github.com/rust-windowing/raw-window-metal
+rayon,1.11.0,MIT OR Apache-2.0,368f01d005bf8fd9b1206fb6fa653e6c4a81ceb1466406b81792d87c5677a58f,https://github.com/rayon-rs/rayon
+rayon-core,1.13.0,MIT OR Apache-2.0,22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91,https://github.com/rayon-rs/rayon
 read-fonts,0.41.0,MIT OR Apache-2.0,046a7d674daf459825b32f5062056d6882db0d2f5a479fbd76ccfc870ac18709,https://github.com/googlefonts/fontations
 renderdoc-sys,1.1.0,MIT OR Apache-2.0,19b30a45b0cd0bcca8037f3d0dc3421eaf95327a17cad11964fb8179b4fc4832,https://github.com/ebkalderon/renderdoc-rs
 rfd,0.17.2,MIT,20dafead71c16a34e1ff357ddefc8afc11e7d51d6d2b9fbd07eaa48e3e540220,https://github.com/PolyMeilex/rfd
@@ -169,16 +174,16 @@ termcolor,1.4.1,Unlicense OR MIT,06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397a
 thiserror,2.0.20,MIT OR Apache-2.0,ec86235f5fcc2a73650310756d2ac5b138a5780bbbdfae3eeccec992c435ba4f,https://github.com/dtolnay/thiserror
 thiserror-impl,2.0.20,MIT OR Apache-2.0,bc04cd3e1236dd4a98afca4569f2deb3f120e5422a4023be2cb683f8486292af,https://github.com/dtolnay/thiserror
 tiff,0.11.3,MIT,b63feaf3343d35b6ca4d50483f94843803b0f51634937cc2ec519fc32232bc52,https://github.com/image-rs/image-tiff
-tr-app,0.1.4,,,
-tr-core,0.1.4,,,
-tr-platform,0.1.4,,,
-tr-render,0.1.4,,,
-tr-store,0.1.4,,,
-tr-worker,0.1.4,,,
+tr-app,0.1.5,,,
+tr-core,0.1.5,,,
+tr-platform,0.1.5,,,
+tr-render,0.1.5,,,
+tr-store,0.1.5,,,
+tr-worker,0.1.5,,,
 tracing,0.1.44,MIT,63e71662fa4b2a2c3a26f570f037eb95bb1f85397f3cd8076caed2f026a6d100,https://github.com/tokio-rs/tracing
 tracing-attributes,0.1.31,MIT,7490cfa5ec963746568740651ac6781f701c9c5ea257c58e057f3ba8cf69e8da,https://github.com/tokio-rs/tracing
 tracing-core,0.1.36,MIT,db97caf9d906fbde555dd62fa95ddba9eecfd14cb388e4f491a66d74cd5fb79a,https://github.com/tokio-rs/tracing
-truerenderer,0.1.4,,,
+truerenderer,0.1.5,,,
 type-map,0.5.1,MIT/Apache-2.0,cb30dbbd9036155e74adad6812e9898d03ec374946234fbcebd5dfc7b9187b90,https://github.com/kardeiz/type-map
 typenum,1.20.1,MIT OR Apache-2.0,b6f5e870be6c3b371b77fe0ee0bafb859fa4964b4404c27de1d380043c4dda20,https://github.com/paholg/typenum
 unicode-general-category,1.1.0,Apache-2.0,0b993bddc193ae5bd0d623b49ec06ac3e9312875fdae725a975c51db1cc1677f,https://github.com/yeslogic/unicode-general-category

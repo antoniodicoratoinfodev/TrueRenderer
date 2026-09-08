@@ -1,6 +1,8 @@
 //! Linear-light CPU filtering at the exact backing resolution; the GPU presents 1:1.
 pub mod diagnostic;
 pub mod presenter;
+pub mod preview_compute;
+pub mod resident_compute;
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Stroke, Vec2};
 use presenter::Presenter;
 use std::sync::Arc;
@@ -12,6 +14,12 @@ use tr_core::{
 
 pub struct PreparedImage {
     pub pyramid: Arc<Pyramid>,
+    pub histogram: [[u32; 256]; 3],
+}
+#[derive(Clone)]
+pub struct PreparedPreview {
+    pub image: Arc<tr_core::provider::ImageLevels>,
+    /// Histogram of the first resident level, at composited display output.
     pub histogram: [[u32; 256]; 3],
 }
 pub fn prepare(image: LinearImage) -> anyhow::Result<PreparedImage> {
@@ -30,26 +38,27 @@ pub struct Sample {
 pub fn viewport(
     ui: &mut egui::Ui,
     presenter: &mut Presenter,
-    image: &Arc<Pyramid>,
+    image: &Arc<tr_core::provider::ImageLevels>,
     transform: &mut ViewTransform,
     id: &str,
 ) -> (egui::Response, Option<Sample>) {
     let raster = image.source();
+    let [source_width, source_height] = image.source_size();
     let available = ui.available_size().max(Vec2::splat(20.0));
     let (rect, _) = ui.allocate_exact_size(available, Sense::hover());
     let response = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
     let ppp = ui.ctx().pixels_per_point();
     let scale = transform.scale(
-        [raster.width as f32, raster.height as f32],
+        [source_width as f32, source_height as f32],
         [rect.width(), rect.height()],
         ppp,
     );
     if response.dragged() {
         let delta = ui.input(|i| i.pointer.delta());
         transform.center[0] =
-            (transform.center[0] - delta.x / (raster.width as f32 * scale)).clamp(0.0, 1.0);
+            (transform.center[0] - delta.x / (source_width as f32 * scale)).clamp(0.0, 1.0);
         transform.center[1] =
-            (transform.center[1] - delta.y / (raster.height as f32 * scale)).clamp(0.0, 1.0);
+            (transform.center[1] - delta.y / (source_height as f32 * scale)).clamp(0.0, 1.0);
     }
     if response.hovered() {
         let delta = ui.input(|i| i.smooth_scroll_delta.y);
@@ -59,13 +68,13 @@ pub fn viewport(
         }
     }
     let scale = transform.scale(
-        [raster.width as f32, raster.height as f32],
+        [source_width as f32, source_height as f32],
         [rect.width(), rect.height()],
         ppp,
     );
     let physical_size = Vec2::new(
-        (raster.width as f32 * scale * ppp).round().max(1.),
-        (raster.height as f32 * scale * ppp).round().max(1.),
+        (source_width as f32 * scale * ppp).round().max(1.),
+        (source_height as f32 * scale * ppp).round().max(1.),
     );
     let size = physical_size / ppp;
     let top = rect.center() - Vec2::new(size.x * transform.center[0], size.y * transform.center[1]);
@@ -80,12 +89,12 @@ pub fn viewport(
         let region = Region {
             size: [(max.x - min.x) as u32, (max.y - min.y) as u32],
             origin: [
-                ((min.x - top.x * ppp) as f64) * raster.width as f64 / physical_size.x as f64,
-                ((min.y - top.y * ppp) as f64) * raster.height as f64 / physical_size.y as f64,
+                ((min.x - top.x * ppp) as f64) * source_width as f64 / physical_size.x as f64,
+                ((min.y - top.y * ppp) as f64) * source_height as f64 / physical_size.y as f64,
             ],
             step: [
-                raster.width as f64 / physical_size.x as f64,
-                raster.height as f64 / physical_size.y as f64,
+                source_width as f64 / physical_size.x as f64,
+                source_height as f64 / physical_size.y as f64,
             ],
         };
         presenter.paint(
@@ -100,11 +109,13 @@ pub fn viewport(
         .hover_pos()
         .filter(|p| image_rect.contains(*p))
         .map(|p| {
-            let x = (((p.x - top.x) / size.x * raster.width as f32).floor() as u32)
-                .min(raster.width - 1);
-            let y = (((p.y - top.y) / size.y * raster.height as f32).floor() as u32)
-                .min(raster.height - 1);
-            let working = raster.pixels[(y * raster.width + x) as usize];
+            let x = (((p.x - top.x) / size.x * source_width as f32).floor() as u32)
+                .min(source_width - 1);
+            let y = (((p.y - top.y) / size.y * source_height as f32).floor() as u32)
+                .min(source_height - 1);
+            let sx = (x as u64 * raster.width as u64 / source_width as u64) as u32;
+            let sy = (y as u64 * raster.height as u64 / source_height as u64) as u32;
+            let working = raster.pixels[(sy * raster.width + sx) as usize];
             Sample {
                 x,
                 y,

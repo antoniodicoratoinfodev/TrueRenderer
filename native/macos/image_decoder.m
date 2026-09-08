@@ -2,6 +2,7 @@
 #import <Foundation/Foundation.h>
 #import <CoreImage/CoreImage.h>
 #import <ImageIO/ImageIO.h>
+#import <Metal/Metal.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #include <math.h>
 
@@ -19,6 +20,41 @@ static void message(char *error, size_t size, NSString *text) {
 static BOOL extent_ok(CGSize size, uint64_t limit) {
     return isfinite(size.width) && isfinite(size.height) && size.width > 0 && size.height > 0
         && size.width <= 32768 && size.height <= 32768 && size.width*size.height <= (double)limit;
+}
+int tr_image_probe(const uint8_t *bytes, size_t length, uint64_t max_pixels,
+                    TRImageInfo *info, char *error, size_t error_size) {
+    @autoreleasepool { @try {
+        if (!bytes || !length || !info) return 1;
+        memset(info,0,sizeof(*info));
+        NSData *data=[NSData dataWithBytesNoCopy:(void *)bytes length:length freeWhenDone:NO];
+        CGImageSourceRef source=CGImageSourceCreateWithData((__bridge CFDataRef)data,
+            (__bridge CFDictionaryRef)@{(__bridge NSString *)kCGImageSourceShouldCache:@NO});
+        if (!source) { message(error,error_size,@"Formato non riconosciuto"); return 1; }
+        NSString *name=(__bridge NSString *)CGImageSourceGetType(source);
+        UTType *type=name ? [UTType typeWithIdentifier:name] : nil;
+        NSDictionary *properties=CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source,0,NULL));
+        uint32_t orientation=[properties[(__bridge NSString *)kCGImagePropertyOrientation] unsignedIntValue];
+        if (orientation < 1 || orientation > 8) orientation=1;
+        CGSize size=CGSizeMake([properties[(__bridge NSString *)kCGImagePropertyPixelWidth] doubleValue],
+            [properties[(__bridge NSString *)kCGImagePropertyPixelHeight] doubleValue]);
+        BOOL raw=type && [type conformsToType:UTTypeRAWImage];
+        if (raw) {
+            CIRAWFilter *filter=[CIRAWFilter filterWithImageData:data identifierHint:name];
+            size=filter ? filter.nativeSize : CGSizeZero;
+        }
+        size_t frames=CGImageSourceGetCount(source);
+        CFRelease(source);
+        if (!extent_ok(size,max_pixels) || frames < 1 || frames > 256) {
+            message(error,error_size,@"Metadati/dimensioni fuori quota"); return 1;
+        }
+        if (orientation >= 5) { double swap=size.width; size.width=size.height; size.height=swap; }
+        info->width=(uint32_t)size.width; info->height=(uint32_t)size.height;
+        info->orientation=orientation; info->frames=(uint32_t)frames; info->raw=raw;
+        info->bits=[properties[(__bridge NSString *)kCGImagePropertyDepth] unsignedIntValue];
+        snprintf(info->format,sizeof(info->format),"%s",raw ? "RAW" : "ImageIO");
+        snprintf(info->decoder,sizeof(info->decoder),"Apple metadata probe");
+        return 0;
+    } @catch (NSException *exception) { message(error,error_size,exception.reason); return 1; } }
 }
 void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
                     TRImageInfo *info, char *error, size_t error_size) {
@@ -101,19 +137,45 @@ void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
         return (__bridge_retained void *)result;
     } @catch (NSException *exception) { message(error,error_size,exception.reason); return NULL; } }
 }
-int tr_image_render(void *handle, float *pixels, size_t count, char *error, size_t error_size) {
+// Each XPC service owns these contexts until its bounded broker recycle. The
+// decoder processes one request at a time; CI does not retain image intermediates.
+static CIContext *render_context(BOOL metal) {
+    static CIContext *softwareContext;
+    static CIContext *metalContext;
+    static dispatch_once_t softwareOnce, metalOnce;
+    void (^create)(void)=^{
+        CGColorSpaceRef working=CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearITUR_2020);
+        NSDictionary *options=@{kCIContextCacheIntermediates:@NO,
+            kCIContextWorkingFormat:@(kCIFormatRGBAf),
+            kCIContextWorkingColorSpace:(__bridge id)working,
+            kCIContextOutputPremultiplied:@YES};
+        if (metal) {
+            id<MTLDevice> device=MTLCreateSystemDefaultDevice();
+            if (device) metalContext=[CIContext contextWithMTLDevice:device options:options];
+        } else {
+            NSMutableDictionary *cpu=[options mutableCopy];
+            cpu[kCIContextUseSoftwareRenderer]=@YES;
+            softwareContext=[CIContext contextWithOptions:cpu];
+        }
+        CFRelease(working);
+    };
+    if (metal) dispatch_once(&metalOnce,create); else dispatch_once(&softwareOnce,create);
+    return metal ? metalContext : softwareContext;
+}
+int tr_image_render_backend(void *handle, float *pixels, size_t count, uint32_t metal, char *error, size_t error_size) {
     @autoreleasepool { @try {
         TRImage *image=(__bridge TRImage *)handle;
         if (!image || !pixels || count != (size_t)image.width*image.height) return 1;
+        CIContext *context=render_context(metal != 0);
+        if (!context) { message(error,error_size,@"Backend Core Image non disponibile"); return 1; }
         CGColorSpaceRef working=CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearITUR_2020);
-        if (!working) { message(error,error_size,@"Spazio lineare Rec.2020 non disponibile"); return 1; }
-        CIContext *context=[CIContext contextWithOptions:@{kCIContextUseSoftwareRenderer:@YES,
-            kCIContextCacheIntermediates:@NO, kCIContextWorkingFormat:@(kCIFormatRGBAf),
-            kCIContextWorkingColorSpace:(__bridge id)working, kCIContextOutputPremultiplied:@YES}];
         [context render:image.image toBitmap:pixels rowBytes:(size_t)image.width*16
             bounds:CGRectMake(0,0,image.width,image.height) format:kCIFormatRGBAf colorSpace:working];
-        [context clearCaches]; CFRelease(working);
+        CFRelease(working);
         return 0;
     } @catch (NSException *exception) { message(error,error_size,exception.reason); return 1; } }
+}
+int tr_image_render(void *handle, float *pixels, size_t count, char *error, size_t error_size) {
+    return tr_image_render_backend(handle,pixels,count,0,error,error_size);
 }
 void tr_image_close(void *handle) { if (handle) { id owner=CFBridgingRelease(handle); (void)owner; } }

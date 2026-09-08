@@ -1,10 +1,10 @@
 {
   "application": "TrueRenderer",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "passed": true,
-  "root": "var/relocation-0.1.4-8phvrmdl",
+  "root": "var/relocation-0.1.5-07it3ive",
   "stage": "passed",
-  "completed_at": "2026-09-07T04:10:21.948406+00:00",
+  "completed_at": "2026-09-08T18:43:54.699666+00:00",
   "runtime_payload": "independent copies of bundle and corpus, no symlink",
   "scope": "runtime root discovery and embedded XPC; not toolchain relocation",
   "smoke_report": "relocation-macos.json",

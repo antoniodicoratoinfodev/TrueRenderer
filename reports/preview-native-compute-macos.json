@@ -1,0 +1,279 @@
+{
+  "cases": [
+    {
+      "cpu_first_seconds": 0.316749042,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.002046333,
+      "fixture": "orientation-1.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.003765292,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.136597625,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.002870459,
+      "fixture": "06-heic.heic",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.003369042,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.266671666,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.155383583,
+      "fixture": "12mp-jpeg.jpg",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.191689917,
+      "size": [
+        4000,
+        3000
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.002862,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.002223375,
+      "fixture": "03-tiff.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.002040958,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.002434125,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001997417,
+      "fixture": "orientation-7.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.00218525,
+      "size": [
+        32,
+        48
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.002847167,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.002218291,
+      "fixture": "16bit.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.008402083,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.018857708,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.016639791,
+      "fixture": "08-webp.webp",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.023877959,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.021454708,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.016728042,
+      "fixture": "orientation-6.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.021649875,
+      "size": [
+        32,
+        48
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.003934375,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001621375,
+      "fixture": "16bit.png",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.001492333,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.001889042,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001680208,
+      "fixture": "orientation-5.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.00168975,
+      "size": [
+        32,
+        48
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.001985584,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001821333,
+      "fixture": "orientation-4.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.002011916,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.0055805,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.005664542,
+      "fixture": "01-jpeg.jpg",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.003306,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.002270625,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001944916,
+      "fixture": "orientation-8.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.002038208,
+      "size": [
+        32,
+        48
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.002128209,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001820833,
+      "fixture": "orientation-3.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.0019875,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.356124375,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.069976791,
+      "fixture": "07-bayer.dng",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.081496667,
+      "size": [
+        1024,
+        768
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.0024355,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001857917,
+      "fixture": "02-png.png",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.001692166,
+      "size": [
+        48,
+        32
+      ]
+    },
+    {
+      "cpu_first_seconds": 0.002010208,
+      "cpu_reuse_bit_exact": true,
+      "cpu_reused_seconds": 0.001786834,
+      "fixture": "orientation-2.tiff",
+      "metal": {
+        "failed_channels": 0,
+        "maximum_absolute_error": 0.0,
+        "passed": true
+      },
+      "metal_seconds": 0.001961167,
+      "size": [
+        48,
+        32
+      ]
+    }
+  ],
+  "metal_enabled_for_decode": false,
+  "scope": "Generated fixtures only, CPU persistent context bit-exact and explicit Metal experiment; no camera-wide or RSS qualification. Timings are single trials, not p95.",
+  "threshold": "1e-5 + 1e-4 * abs(cpu)"
+}

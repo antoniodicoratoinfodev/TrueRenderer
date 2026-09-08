@@ -21,6 +21,14 @@ struct Info {
     input_color: [c_char; 256],
 }
 unsafe extern "C" {
+    fn tr_image_probe(
+        bytes: *const u8,
+        length: usize,
+        max_pixels: u64,
+        info: *mut Info,
+        error: *mut c_char,
+        error_size: usize,
+    ) -> i32;
     fn tr_image_open(
         bytes: *const u8,
         length: usize,
@@ -29,14 +37,44 @@ unsafe extern "C" {
         error: *mut c_char,
         error_size: usize,
     ) -> *mut c_void;
-    fn tr_image_render(
+    fn tr_image_render_backend(
         handle: *mut c_void,
         pixels: *mut f32,
         count: usize,
+        metal: u32,
         error: *mut c_char,
         error_size: usize,
     ) -> i32;
     fn tr_image_close(handle: *mut c_void);
+}
+pub fn probe(bytes: &[u8]) -> Result<RasterInfo> {
+    let mut info: Info = unsafe { std::mem::zeroed() };
+    let mut error = [0; 512];
+    let status = unsafe {
+        tr_image_probe(
+            bytes.as_ptr(),
+            bytes.len(),
+            MAX_PIXELS as u64,
+            &mut info,
+            error.as_mut_ptr(),
+            error.len(),
+        )
+    };
+    ensure!(status == 0, "{}", text(&error));
+    let result = RasterInfo {
+        width: info.width,
+        height: info.height,
+        source_width: info.width,
+        source_height: info.height,
+        native_bits: info.bits as u16,
+        format: text(&info.format),
+        decoder: text(&info.decoder),
+        input_color: "Metadati · nessun raster".into(),
+        filter: "nessuno · probe".into(),
+        orientation: format!("EXIF {}", info.orientation),
+    };
+    tr_core::protocol::validate_info(&result)?;
+    Ok(result)
 }
 struct Handle(NonNull<c_void>);
 impl Drop for Handle {
@@ -53,6 +91,9 @@ fn text(bytes: &[c_char]) -> String {
         .into_owned()
 }
 pub fn decode(bytes: &[u8], edge: u32) -> Result<(RasterInfo, LinearImage)> {
+    decode_backend(bytes, edge, false)
+}
+fn decode_backend(bytes: &[u8], edge: u32, metal: bool) -> Result<(RasterInfo, LinearImage)> {
     let mut info: Info = unsafe { std::mem::zeroed() };
     let mut error = [0; 512];
     // The native handle borrows bytes only until it is dropped before this call returns.
@@ -77,10 +118,11 @@ pub fn decode(bytes: &[u8], edge: u32) -> Result<(RasterInfo, LinearImage)> {
     let mut pixels = vec![[f32::NAN; 4]; count];
     // A NaN sentinel detects a native failure that returns without writing the entire bitmap.
     let status = unsafe {
-        tr_image_render(
+        tr_image_render_backend(
             handle.0.as_ptr(),
             pixels.as_mut_ptr().cast(),
             count,
+            u32::from(metal),
             error.as_mut_ptr(),
             error.len(),
         )
@@ -149,6 +191,67 @@ mod tests {
         );
         assert_ne!(raster.pixels[0][0], raster.pixels[1][0]);
         assert_eq!(raster.pixels[3], [0.; 4]);
+    }
+    #[test]
+    #[ignore = "Core Image/Metal qualification requires the native macOS session"]
+    fn persistent_context_and_metal_backend_comparison() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let folder = root.join("var/format-fixtures");
+        let mut cases = Vec::new();
+        for entry in std::fs::read_dir(&folder).unwrap() {
+            let path = entry.unwrap().path();
+            if !path.is_file()
+                || !matches!(
+                    path.extension().and_then(|s| s.to_str()),
+                    Some("jpg" | "jpeg" | "png" | "tif" | "tiff" | "dng" | "heic" | "webp")
+                )
+            {
+                continue;
+            }
+            let bytes = std::fs::read(&path).unwrap();
+            let start = std::time::Instant::now();
+            let Ok((info, cpu)) = decode_backend(&bytes, 0, false) else {
+                continue;
+            };
+            let first = start.elapsed().as_secs_f64();
+            let start = std::time::Instant::now();
+            let (_, repeat) = decode_backend(&bytes, 0, false).unwrap();
+            let reused = start.elapsed().as_secs_f64();
+            assert_eq!(
+                cpu.pixels, repeat.pixels,
+                "Persistent CPU context changed pixels"
+            );
+            let start = std::time::Instant::now();
+            let metal = decode_backend(&bytes, 0, true);
+            let seconds = start.elapsed().as_secs_f64();
+            let report = match metal {
+                Ok((_, gpu)) => {
+                    assert_eq!([cpu.width, cpu.height], [gpu.width, gpu.height]);
+                    let mut failures = 0;
+                    let mut maximum = 0.0_f32;
+                    for (a, b) in gpu.pixels.iter().flatten().zip(cpu.pixels.iter().flatten()) {
+                        let error = (a - b).abs();
+                        maximum = maximum.max(error);
+                        if error > 1e-5 + 1e-4 * b.abs() {
+                            failures += 1;
+                        }
+                    }
+                    serde_json::json!({"failed_channels":failures,"maximum_absolute_error":maximum,"passed":failures==0})
+                }
+                Err(e) => serde_json::json!({"passed":false,"error":format!("{e:#}")}),
+            };
+            cases.push(serde_json::json!({"fixture":path.file_name().unwrap().to_string_lossy(),"size":[info.width,info.height],"cpu_first_seconds":first,"cpu_reused_seconds":reused,"metal_seconds":seconds,"cpu_reuse_bit_exact":true,"metal":report}));
+        }
+        assert!(
+            cases.len() >= 3,
+            "Generate format fixtures before native qualification"
+        );
+        let report = serde_json::json!({"scope":"Generated fixtures only, CPU persistent context bit-exact and explicit Metal experiment; no camera-wide or RSS qualification. Timings are single trials, not p95.","threshold":"1e-5 + 1e-4 * abs(cpu)","metal_enabled_for_decode":false,"cases":cases});
+        std::fs::write(
+            root.join("reports/preview-native-compute-macos.json"),
+            serde_json::to_vec_pretty(&report).unwrap(),
+        )
+        .unwrap();
     }
     #[test]
     fn native_rejects_truncated_and_unknown_formats() {

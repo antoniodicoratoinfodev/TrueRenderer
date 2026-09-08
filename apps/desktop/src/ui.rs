@@ -1,24 +1,30 @@
 use crate::service::{Event, Request, Service};
 use eframe::egui::{self, Color32, RichText, Vec2};
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     path::PathBuf,
     sync::{Arc, atomic::Ordering},
     time::{Duration, Instant},
 };
 use tr_app::{Command, Effect, State};
-use tr_core::{Item, Label, ViewMode, ViewTransform, protocol::RasterInfo, resample::Pyramid};
+use tr_core::{
+    Item, Label, ViewMode, ViewTransform,
+    preview::{ImageCompute, PreviewPriority, PreviewQuality, PreviewRequest},
+    protocol::RasterInfo,
+    provider::ImageLevels,
+};
 
 const TEXT: Color32 = Color32::from_rgb(232, 232, 232);
 const MUTED: Color32 = Color32::from_rgb(154, 154, 154);
 const AMBER: Color32 = Color32::from_rgb(217, 164, 65);
 const SURFACE: Color32 = Color32::from_rgb(38, 38, 38);
 
+#[derive(Clone)]
 struct CachedImage {
     digest: String,
     info: RasterInfo,
     histogram: [[u32; 256]; 3],
-    pyramid: Arc<Pyramid>,
+    pyramid: Arc<ImageLevels>,
     touched: u64,
     transport: &'static str,
     worker_pid: Option<u32>,
@@ -36,9 +42,24 @@ pub struct TrueRenderer {
     root: PathBuf,
     folder: PathBuf,
     generation: u64,
-    cache: HashMap<(String, u32), CachedImage>,
+    cache: HashMap<(String, PreviewRequest), CachedImage>,
     presenter: tr_render::presenter::Presenter,
-    pending_images: HashSet<(String, u32)>,
+    pending_images: HashSet<(String, PreviewRequest)>,
+    full_overrides: HashSet<String>,
+    demand: HashSet<(String, PreviewRequest)>,
+    last_demand: HashSet<(String, PreviewRequest)>,
+    foreground_demand: HashSet<(String, PreviewRequest)>,
+    navigation_changed: Instant,
+    navigation_anchor: Option<usize>,
+    navigation_direction: isize,
+    primary_demand: HashSet<String>,
+    viewer_prefetch_edge: u32,
+    requested_at: HashMap<(String, PreviewRequest), Instant>,
+    recent_latencies: VecDeque<u64>,
+
+    demand_jobs: Vec<crate::decode_pool::Job>,
+    promoted: HashMap<(String, PreviewRequest), PreviewPriority>,
+    rejected_admissions: u64,
     errors: HashMap<String, String>,
     cell_size: f32,
     status: String,
@@ -51,6 +72,9 @@ pub struct TrueRenderer {
     settings_smoke: bool,
     cache_settings: crate::cache::Settings,
     settings_data: PathBuf,
+    preparation_paused: bool,
+    rebuild: VecDeque<Item>,
+    rebuild_total: usize,
     cache_action: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
     show_inspector: bool,
     show_filmstrip: bool,
@@ -69,7 +93,7 @@ pub struct TrueRenderer {
     fatal: bool,
     closing: bool,
     search_focus: bool,
-    gpu_rx: std::sync::mpsc::Receiver<Result<tr_render::diagnostic::GpuCheck, String>>,
+    gpu_rx: std::sync::mpsc::Receiver<Result<tr_render::preview_compute::ComputeCheck, String>>,
     gpu_status: String,
     gpu_passed: bool,
     image_focus_ids: HashSet<egui::Id>,
@@ -138,36 +162,75 @@ impl TrueRenderer {
             let queue = gpu.queue.clone();
             let ctx = ctx.clone();
             let report_root = root.clone();
-            std::thread::spawn(move || {
-                let result =
-                    tr_render::diagnostic::check(&device, &queue).map_err(|e| format!("{e:#}"));
-                let report = match &result {
-                    Ok(c) => {
-                        serde_json::json!({"samples":c.samples,"maximum_absolute_error":c.max_error,"threshold":0.0001,"passed":c.passed,"scope":"Rec.2020 fp32 -> opaque encoded sRGB; arithmetic only, no display/ICC/LUT qualification"})
-                    }
-                    Err(e) => serde_json::json!({"passed":false,"error":e}),
-                };
-                let _ = std::fs::write(
-                    report_root.join("reports/gpu-diagnostic.json"),
-                    serde_json::to_vec_pretty(&report).unwrap(),
-                );
+            // All queue submissions share the UI thread with surface configure.
+            // Run this one-time qualification before entering the event loop;
+            // a concurrent submission can make wgpu surface configure abort.
+            {
+                let result = tr_render::preview_compute::check(&device, &queue)
+                    .map_err(|e| format!("{e:#}"));
+                if std::env::args().any(|a| a.ends_with("smoke")) {
+                    let report = match &result {
+                        Ok(check) => {
+                            serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":check.failures==0 && check.display_failures==0,"check":check,"linear_threshold":"1e-5 + 1e-4 * abs(cpu)","display_threshold_levels":1,"scope":"Separable WGSL with canonical coefficients and persistent display pipeline, odd sizes, alpha, boundaries, 1:1 and signed linear values up to 1000. GPU timing includes qualification compilation/upload/readback; not an interactive speed claim."})
+                        }
+                        Err(error) => serde_json::json!({"passed":false,"error":error}),
+                    };
+                    let _ = std::fs::write(
+                        report_root.join("reports/preview-quality-gpu-macos.json"),
+                        serde_json::to_vec_pretty(&report).unwrap(),
+                    );
+                }
+                if std::env::args().any(|a| a == "--preview-performance-smoke") {
+                    let report = match tr_render::preview_compute::performance(&device, &queue) {
+                        Ok(cases) => {
+                            serde_json::json!({"version":env!("CARGO_PKG_VERSION"),"cases":cases,"trials_per_case":100,"bootstrap_pairs":1000,"scope":"Rotating triads of scalar CPU, parallel/SIMD CPU and persistent GPU filter+SDR encoding through queue completion; source buffers reused after first upload. Excludes source/hash/cache and egui surface presentation. OS caches not flushed; generated pixels on the same adapter. Not user-event p95 or real RAW throughput."})
+                        }
+                        Err(error) => serde_json::json!({"error":format!("{error:#}")}),
+                    };
+                    let _ = std::fs::write(
+                        report_root.join("reports/preview-compute-performance-macos.json"),
+                        serde_json::to_vec_pretty(&report).unwrap(),
+                    );
+                }
                 let _ = gpu_tx.send(result);
                 ctx.request_repaint();
-            });
+            }
         }
+        let presenter = tr_render::presenter::Presenter::new(
+            ctx.clone(),
+            service.cache.memory.clone(),
+            cc.wgpu_render_state.clone(),
+        );
         let folder = root.join("corpus");
         let mut app = Self {
             state: State::default(),
             cache_settings: service.cache.settings(),
             settings_data: data,
             cache_action: None,
+            preparation_paused: false,
+            rebuild: VecDeque::new(),
+            rebuild_total: 0,
             service,
             root,
             folder: folder.clone(),
             generation: 0,
             cache: HashMap::new(),
-            presenter: tr_render::presenter::Presenter::new(ctx.clone()),
+            presenter,
             pending_images: HashSet::new(),
+            full_overrides: HashSet::new(),
+            demand: HashSet::new(),
+            last_demand: HashSet::new(),
+            foreground_demand: HashSet::new(),
+            navigation_changed: Instant::now(),
+            navigation_anchor: None,
+            navigation_direction: 1,
+            primary_demand: HashSet::new(),
+            viewer_prefetch_edge: 2048,
+            requested_at: HashMap::new(),
+            recent_latencies: VecDeque::new(),
+            demand_jobs: Vec::new(),
+            promoted: HashMap::new(),
+            rejected_admissions: 0,
             errors: HashMap::new(),
             cell_size: 206.,
             status: "Avvio del motore…".into(),
@@ -228,6 +291,8 @@ impl TrueRenderer {
         }
     }
     fn open_folder(&mut self, folder: PathBuf) {
+        self.rebuild.clear();
+        self.rebuild_total = 0;
         self.generation += 1;
         self.service
             .generation
@@ -235,6 +300,14 @@ impl TrueRenderer {
         self.cache.clear();
         self.presenter.clear();
         self.pending_images.clear();
+        self.full_overrides.clear();
+        self.demand.clear();
+        self.last_demand.clear();
+        self.demand_jobs.clear();
+        self.promoted.clear();
+        self.requested_at.clear();
+        self.recent_latencies.clear();
+        self.navigation_anchor = None;
         self.errors.clear();
         self.state.replace_items(vec![]);
         self.keyword_text.clear();
@@ -268,50 +341,370 @@ impl TrueRenderer {
             }
         }
     }
+    fn quality(&self, item: &Item) -> PreviewQuality {
+        if self.full_overrides.contains(&item.id) {
+            PreviewQuality::Full
+        } else {
+            self.service.cache.settings().quality
+        }
+    }
+    fn preview_request(&self, item: &Item, edge: u32) -> PreviewRequest {
+        PreviewRequest {
+            quality: self.quality(item),
+            edge,
+        }
+    }
+    fn image_key(&self, item: &Item, edge: u32) -> (String, PreviewRequest) {
+        (item.id.clone(), self.preview_request(item, edge))
+    }
     fn ensure_image(&mut self, item: &Item, edge: u32) {
+        self.ensure_image_priority(
+            item,
+            edge,
+            if edge == 0 || self.state.view == ViewMode::Grid {
+                PreviewPriority::Immediate
+            } else {
+                PreviewPriority::SecondaryVisible
+            },
+        );
+    }
+    fn ensure_image_priority(&mut self, item: &Item, edge: u32, priority: PreviewPriority) {
         if !item.approved {
             return;
         }
-        let key = (item.id.clone(), 0);
-        if self.cache.contains_key(&key) {
-            if let Some(c) = self.cache.get_mut(&key) {
-                c.touched = self.frame_number;
+        let key = self.image_key(item, edge);
+        if matches!(
+            priority,
+            PreviewPriority::Immediate | PreviewPriority::Refinement
+        ) {
+            self.primary_demand.insert(item.id.clone());
+        }
+        self.demand.insert(key.clone());
+        if let Some(c) = self.cache.get_mut(&key) {
+            c.touched = self.frame_number;
+            return;
+        }
+        // Equivalent geometries can share an already resident tail. Do not pin
+        // larger ancestors merely to satisfy a thumbnail, or cross qualities.
+        let compatible = self
+            .cache
+            .iter()
+            .find(|((id, request), cached)| {
+                id == &item.id
+                    && request.quality == key.1.quality
+                    && cached.pyramid.sufficient_for(key.1)
+                    && cached.pyramid.requested_base(key.1) == 0
+            })
+            .map(|(_, cached)| cached.clone());
+        if let Some(mut cached) = compatible {
+            cached.touched = self.frame_number;
+            self.cache.insert(key, cached);
+            return;
+        }
+        if self
+            .errors
+            .contains_key(&format!("{}:{:?}", item.id, key.1))
+        {
+            return;
+        }
+        let pending = self.pending_images.contains(&key);
+        if pending && self.promoted.get(&key).is_some_and(|old| *old <= priority) {
+            return;
+        }
+        if let Some(job) = self
+            .demand_jobs
+            .iter_mut()
+            .find(|job| job.item.id == item.id && job.request == key.1)
+        {
+            job.priority = job.priority.min(priority);
+            return;
+        }
+        self.demand_jobs.push(crate::decode_pool::Job {
+            item: item.clone(),
+            request: key.1,
+            priority,
+            generation: self.generation,
+        });
+    }
+    fn background_demand(&mut self, ctx: &egui::Context) {
+        if self.foreground_demand != self.demand {
+            let anchor = self
+                .state
+                .visible
+                .iter()
+                .position(|i| self.primary_demand.contains(&self.state.items[*i].id));
+            if let (Some(previous), Some(current)) = (self.navigation_anchor, anchor)
+                && current != previous
+            {
+                self.navigation_direction = if current > previous { 1 } else { -1 };
+            }
+            self.navigation_anchor = anchor;
+            self.foreground_demand.clone_from(&self.demand);
+            self.navigation_changed = Instant::now();
+        }
+        let delay = Duration::from_millis(tr_app::scheduler::prefetch_delay_ms(
+            self.recent_latencies.make_contiguous(),
+        ));
+        if self.rebuild.is_empty() && self.navigation_changed.elapsed() < delay {
+            if self.service.cache.settings().prefetch != crate::cache::Prefetch::Disabled {
+                ctx.request_repaint_after(delay.saturating_sub(self.navigation_changed.elapsed()));
             }
             return;
         }
-        if self.pending_images.contains(&key) || self.errors.contains_key(&item.id) {
+        if self.preparation_paused || self.scanning || self.service.cache.under_pressure() {
             return;
         }
-        let request = Request::Decode {
-            item: item.clone(),
-            edge: 0,
-            urgent: edge == 0,
-            generation: self.generation,
-        };
-        let tx = if edge == 0 {
-            &self.service.high
+        let settings = self.service.cache.settings();
+        if !self.rebuild.is_empty() {
+            self.trim_images(true);
+        }
+        let memory = self.service.cache.memory.usage();
+        // Leave at least half the budget for immediate navigation; never feed a
+        // background decode while visible dependencies are still outstanding.
+        if memory.reserved > memory.limit / 2
+            || self.demand.iter().any(|key| {
+                !self.cache.contains_key(key)
+                    && !self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
+            })
+        {
+            return;
+        }
+        let mut candidates = Vec::new();
+        if !self.rebuild.is_empty() {
+            if let Some(item) = self.rebuild.front() {
+                candidates.push((item.clone(), 256));
+            }
+            ctx.request_repaint_after(Duration::from_millis(50));
         } else {
-            &self.service.low
-        };
-        if tx.try_send(request).is_ok() {
-            self.pending_images.insert(key);
+            let primary: Vec<_> = self
+                .state
+                .visible
+                .iter()
+                .enumerate()
+                .filter(|(_, i)| self.primary_demand.contains(&self.state.items[**i].id))
+                .map(|(index, _)| index)
+                .collect();
+            if let (Some(first), Some(last)) = (primary.first(), primary.last()) {
+                let grid = self.state.view == ViewMode::Grid;
+                let count = match settings.prefetch {
+                    crate::cache::Prefetch::Disabled => 0,
+                    crate::cache::Prefetch::Automatic => {
+                        if grid {
+                            (primary.len() * 3 / 2).clamp(2, 16)
+                        } else {
+                            2
+                        }
+                    }
+                    crate::cache::Prefetch::Extended => {
+                        if grid {
+                            (primary.len() * 3 / 2).clamp(2, 32)
+                        } else {
+                            4
+                        }
+                    }
+                };
+                if settings.reusable_bytes(self.service.cache.physical_mib) > 0 {
+                    for index in tr_app::scheduler::prefetch_indices(
+                        self.state.visible.len(),
+                        *first..=*last,
+                        self.navigation_direction,
+                        count,
+                    ) {
+                        let item = &self.state.items[self.state.visible[index]];
+                        if !self.demand.iter().any(|(id, _)| id == &item.id) {
+                            candidates.push((
+                                item.clone(),
+                                if grid { 256 } else { self.viewer_prefetch_edge },
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        for (item, edge) in candidates {
+            let key = self.image_key(&item, edge);
+            self.demand.insert(key.clone());
+            let rebuild = self.rebuild.front().is_some_and(|i| i.id == item.id) && edge == 256;
+            if self.pending_images.contains(&key)
+                || self
+                    .demand_jobs
+                    .iter()
+                    .any(|j| j.item.id == item.id && j.request == key.1)
+                || (!rebuild
+                    && (self.cache.contains_key(&key)
+                        || self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))))
+            {
+                continue;
+            }
+            self.demand_jobs.push(crate::decode_pool::Job {
+                item,
+                request: key.1,
+                priority: if rebuild {
+                    PreviewPriority::Background
+                } else if self.state.view == ViewMode::Grid {
+                    PreviewPriority::AdjacentRows
+                } else {
+                    PreviewPriority::NeighborPreview
+                },
+                generation: self.generation,
+            });
         }
     }
+    fn flush_demand(&mut self) {
+        self.pending_images.retain(|key| self.demand.contains(key));
+        self.requested_at
+            .retain(|key, _| self.pending_images.contains(key));
+        self.promoted.retain(|key, _| self.demand.contains(key));
+        if self.last_demand == self.demand && self.demand_jobs.is_empty() {
+            return;
+        }
+        let jobs = std::mem::take(&mut self.demand_jobs);
+        let keys: Vec<_> = jobs
+            .iter()
+            .map(|job| ((job.item.id.clone(), job.request), job.priority))
+            .collect();
+        if self
+            .service
+            .high
+            .try_send(Request::ViewDemand {
+                wanted: self.demand.iter().cloned().collect(),
+                jobs,
+                generation: self.generation,
+            })
+            .is_ok()
+        {
+            for (key, priority) in keys {
+                if self.pending_images.insert(key.clone()) {
+                    self.requested_at.insert(key.clone(), Instant::now());
+                }
+                self.promoted
+                    .entry(key)
+                    .and_modify(|old| *old = (*old).min(priority))
+                    .or_insert(priority);
+            }
+            self.last_demand.clone_from(&self.demand);
+        }
+    }
+    fn trim_images(&mut self, pressure: bool) {
+        let settings = self.service.cache.settings();
+        let limit = if pressure {
+            0
+        } else {
+            settings.reusable_bytes(self.service.cache.physical_mib) as usize
+        };
+        loop {
+            let pinned: HashSet<_> = self
+                .cache
+                .values()
+                .filter(|c| c.touched + 1 >= self.frame_number)
+                .map(|c| c.pyramid.id())
+                .collect();
+            let mut counted = HashSet::new();
+            let bytes: usize = self
+                .cache
+                .values()
+                .filter(|c| !pinned.contains(&c.pyramid.id()) && counted.insert(c.pyramid.id()))
+                .map(|c| c.pyramid.byte_len())
+                .sum();
+            if bytes <= limit && self.cache.len() <= 1024 {
+                break;
+            }
+            let victim = self
+                .cache
+                .iter()
+                .filter(|(_, c)| c.touched + 1 < self.frame_number)
+                .min_by_key(|(_, c)| c.touched)
+                .map(|(k, _)| k.clone());
+            if let Some(victim) = victim {
+                self.cache.remove(&victim);
+            } else {
+                break;
+            }
+        }
+    }
+    fn set_quality(&mut self, quality: PreviewQuality) {
+        let mut settings = self.service.cache.settings();
+        if settings.quality == quality {
+            return;
+        }
+        settings.quality = quality;
+        self.full_overrides.clear();
+        self.errors.clear();
+        self.cache_settings = settings.clone();
+        self.service.cache.configure(settings.clone());
+        let data = self.settings_data.clone();
+        let (tx, rx) = std::sync::mpsc::sync_channel(1);
+        self.cache_action = Some(rx);
+        self.status = "Qualità aggiornata; override per foto rimossi".into();
+        let cache = self.service.cache.clone();
+        std::thread::spawn(move || {
+            let _ = tx.send(
+                cache
+                    .save_current(&data)
+                    .map_err(|e| format!("Salvataggio qualità fallito: {e:#}")),
+            );
+        });
+    }
+    fn full_for_current(&mut self) {
+        if let Some(item) = self.state.current_item() {
+            self.full_overrides.insert(item.id.clone());
+        }
+        if self.state.view == ViewMode::Compare {
+            self.full_overrides
+                .extend(self.state.selected.iter().cloned());
+            if self
+                .state
+                .selected
+                .iter()
+                .all(|id| Some(id) == self.state.current.as_ref())
+                && let Some(item) = self.state.current_item()
+                && let Some(index) = self
+                    .state
+                    .visible
+                    .iter()
+                    .position(|i| self.state.items[*i].id == item.id)
+                && let Some(next) = self.state.visible.get(index + 1)
+            {
+                self.full_overrides
+                    .insert(self.state.items[*next].id.clone());
+            }
+        }
+        self.state.transform.set_zoom(1.);
+    }
     fn poll(&mut self, ctx: &egui::Context) {
+        let settings = self.service.cache.settings();
+        let gpu_mib = if settings.gpu_mib == 0 {
+            256
+        } else {
+            settings.gpu_mib
+        };
+        self.presenter.configure_gpu_limit(
+            (gpu_mib * 1024 * 1024).min(self.service.cache.memory.usage().limit / 2),
+        );
         self.presenter.poll(ctx);
+        self.presenter
+            .set_pressure(self.service.cache.under_pressure());
+        if self.service.cache.under_pressure() {
+            self.trim_images(true);
+        }
+        let rejected = self.service.cache.memory.usage().rejected;
+        if rejected > self.rejected_admissions {
+            self.trim_images(true);
+            self.rejected_admissions = rejected;
+        }
         if self.smoke {
             self.presenter.begin_capture();
         }
         if let Ok(result) = self.gpu_rx.try_recv() {
             match result {
                 Ok(check) => {
-                    self.gpu_passed = check.passed;
+                    self.gpu_passed = check.failures == 0 && check.display_failures == 0;
                     self.gpu_status = format!(
                         "GPU/CPU: {} campioni · errore max {:.2e} · {}",
                         check.samples,
                         check.max_error,
-                        if check.passed {
-                            "entro soglia R0"
+                        if self.gpu_passed {
+                            "filtro e uscita verificati"
                         } else {
                             "fuori soglia"
                         }
@@ -320,15 +713,18 @@ impl TrueRenderer {
                 Err(e) => self.gpu_status = format!("Diagnostica GPU non disponibile: {e}"),
             }
         }
+        self.presenter
+            .configure_compute(self.gpu_passed, settings.compute.code());
         while let Ok(event) = self.service.events.try_recv() {
             match event {
+                Event::MemoryPressure => self.trim_images(true),
                 Event::DecodeDeferred {
                     id,
-                    edge,
+                    request,
                     generation,
                 } => {
                     if generation == self.generation {
-                        self.pending_images.remove(&(id, edge));
+                        self.pending_images.remove(&(id, request));
                         ctx.request_repaint_after(Duration::from_millis(25));
                     }
                 }
@@ -355,50 +751,46 @@ impl TrueRenderer {
                 Event::Scanned { .. } => {}
                 Event::Image {
                     id,
-                    edge,
+                    request,
                     generation,
                     result,
                 } => {
                     if generation != self.generation {
                         continue;
                     }
-                    self.pending_images.remove(&(id.clone(), edge));
+                    let key = (id.clone(), request);
+                    if let Some(started) = self.requested_at.remove(&key)
+                        && self.promoted.get(&key).is_some_and(|p| p.visible())
+                        && result.is_ok()
+                    {
+                        self.recent_latencies
+                            .push_back(started.elapsed().as_millis().min(u64::MAX as u128) as u64);
+                        if self.recent_latencies.len() > 128 {
+                            self.recent_latencies.pop_front();
+                        }
+                    }
+                    self.pending_images.remove(&key);
+                    if request.edge == 256 && self.rebuild.front().is_some_and(|i| i.id == id) {
+                        self.rebuild.pop_front();
+                    }
                     match *result {
                         Ok(decoded) => {
                             self.cache.insert(
-                                (id, edge),
+                                (id, request),
                                 CachedImage {
                                     digest: decoded.digest,
                                     info: decoded.info,
                                     histogram: decoded.prepared.histogram,
-                                    pyramid: decoded.prepared.pyramid,
+                                    pyramid: decoded.prepared.image,
                                     touched: self.frame_number,
                                     transport: decoded.transport,
                                     worker_pid: decoded.worker_pid,
                                 },
                             );
-                            while self.cache.len() > 64
-                                || self
-                                    .cache
-                                    .values()
-                                    .map(|c| c.pyramid.byte_len())
-                                    .sum::<usize>()
-                                    > 1536 * 1024 * 1024
-                            {
-                                let key = self
-                                    .cache
-                                    .iter()
-                                    .min_by_key(|(_, v)| v.touched)
-                                    .map(|(k, _)| k.clone());
-                                if let Some(k) = key {
-                                    self.cache.remove(&k);
-                                } else {
-                                    break;
-                                }
-                            }
+                            self.trim_images(false);
                         }
                         Err(error) => {
-                            self.errors.insert(id, error);
+                            self.errors.insert(format!("{id}:{request:?}"), error);
                         }
                     }
                 }
@@ -499,7 +891,7 @@ impl TrueRenderer {
                 self.state.transform = ViewTransform::default();
             }
             if key(egui::Key::Num1) {
-                self.state.transform.set_zoom(1.);
+                self.full_for_current();
             }
             if key(egui::Key::Plus) || key(egui::Key::Equals) {
                 self.state
@@ -559,7 +951,7 @@ impl TrueRenderer {
             if self.state.transform.zoom.is_some() {
                 self.state.transform = ViewTransform::default();
             } else {
-                self.state.transform.set_zoom(1.);
+                self.full_for_current();
             }
         }
         if key(egui::Key::ArrowRight) {
@@ -715,8 +1107,10 @@ impl TrueRenderer {
                         ui.label(RichText::new("Seleziona un'immagine").color(MUTED));
                         return;
                     };
-                    self.ensure_image(&item, 320);
-                    let key = (item.id.clone(), 0);
+                    let edge = (ui.available_width() * ui.ctx().pixels_per_point()).ceil() as u32;
+                    let edge = edge.next_power_of_two().min(4096);
+                    self.ensure_image(&item, edge);
+                    let key = self.image_key(&item, edge);
                     let info = self.cache.get(&key).map(|c| c.info.clone());
                     if let Some(cached) = self.cache.get(&key) {
                         let size = Vec2::new(
@@ -735,9 +1129,12 @@ impl TrueRenderer {
                         ui.add_space(16.);
                         tr_render::histogram(ui, &cached.histogram);
                         ui.label(
-                            RichText::new("Istogramma · uscita sRGB 8 bit composita")
-                                .small()
-                                .color(MUTED),
+                            RichText::new(format!(
+                                "Istogramma del livello {} · uscita sRGB composita",
+                                cached.pyramid.base_level()
+                            ))
+                            .small()
+                            .color(MUTED),
                         );
                     }
                     ui.add_space(12.);
@@ -897,7 +1294,10 @@ impl TrueRenderer {
             });
     }
     fn thumbnail(&mut self, ui: &mut egui::Ui, item: &Item, size: Vec2, show_name: bool) {
-        self.ensure_image(item, 320);
+        let edge = ((size.x - 20.).max(1.) * ui.ctx().pixels_per_point()).ceil() as u32;
+        let edge = edge.next_power_of_two().min(4096);
+        self.ensure_image(item, edge);
+        let key = self.image_key(item, edge);
         let selected = self.state.selected.contains(&item.id);
         let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
         self.image_focus_ids.insert(response.id);
@@ -932,7 +1332,7 @@ impl TrueRenderer {
             rect.min + Vec2::splat(10.),
             egui::pos2(rect.right() - 10., rect.bottom() - bottom),
         );
-        if let Some(cache) = self.cache.get(&(item.id.clone(), 0)) {
+        if let Some(cache) = self.cache.get(&key) {
             tr_render::presenter::fitted(
                 &mut self.presenter,
                 ui,
@@ -941,7 +1341,10 @@ impl TrueRenderer {
                 area,
             );
         } else {
-            let text = if self.errors.contains_key(&item.id) {
+            let text = if self
+                .errors
+                .contains_key(&format!("{}:{:?}", item.id, key.1))
+            {
                 "Errore di lettura"
             } else if !item.approved {
                 "Anteprima non abilitata"
@@ -1051,7 +1454,19 @@ impl TrueRenderer {
         let Some(item) = self.state.current_item().cloned() else {
             return;
         };
-        self.ensure_image(&item, 0);
+        let mut quality = self.service.cache.settings().quality;
+        ui.horizontal(|ui| {
+            ui.label("Qualità anteprima");
+            ui.selectable_value(&mut quality, PreviewQuality::Standard, "Standard");
+            ui.selectable_value(&mut quality, PreviewQuality::Full, "Piena");
+            if ui.button("Qualità piena per questa foto").clicked() {
+                self.full_overrides.insert(item.id.clone());
+            }
+            if self.full_overrides.contains(&item.id) {
+                ui.label("Override di sessione · il cambio globale lo rimuove");
+            }
+        });
+        self.set_quality(quality);
         ui.horizontal(|ui| {
             if ui.button("Adatta").clicked() {
                 self.state.transform = ViewTransform::default();
@@ -1061,7 +1476,7 @@ impl TrueRenderer {
                 .on_hover_text("Un pixel sorgente per pixel fisico dello schermo")
                 .clicked()
             {
-                self.state.transform.set_zoom(1.);
+                self.full_for_current();
             }
             if ui.button("−").clicked() {
                 self.state
@@ -1085,7 +1500,7 @@ impl TrueRenderer {
                 .color(MUTED),
             );
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new("ANTEPRIMA · CPU").small().color(AMBER));
+                ui.label(RichText::new("ANTEPRIMA").small().color(AMBER));
             });
         });
         ui.add_space(8.);
@@ -1126,7 +1541,6 @@ impl TrueRenderer {
                         .map(|i| self.state.items[*i].clone())
                 });
             if let Some(second) = second {
-                self.ensure_image(&second, 0);
                 let bottom = ui.available_rect_before_wrap().bottom();
                 ui.columns(2, |columns| {
                     for column in columns.iter_mut() {
@@ -1145,8 +1559,67 @@ impl TrueRenderer {
         }
     }
     fn paint_view(&mut self, ui: &mut egui::Ui, item: &Item, id: &str) {
-        if let Some(c) = self.cache.get(&(item.id.clone(), 0)) {
-            let lane = format!("view:{id}:{}", item.id);
+        let fitted_edge = (ui.available_width().max(ui.available_height())
+            * ui.ctx().pixels_per_point())
+        .ceil()
+        .clamp(1., 4096.) as u32;
+        self.viewer_prefetch_edge = self.viewer_prefetch_edge.max(fitted_edge);
+        let edge = if self.state.transform.zoom.is_none() {
+            fitted_edge
+        } else {
+            0
+        };
+        self.ensure_image_priority(
+            item,
+            edge,
+            if self.cache.keys().any(|(id, _)| id == &item.id) {
+                PreviewPriority::Refinement
+            } else {
+                PreviewPriority::Immediate
+            },
+        );
+        let key = self.image_key(item, edge);
+        let fallback = self
+            .cache
+            .iter()
+            .filter(|((id, _), _)| id == &item.id)
+            .max_by_key(|(_, c)| c.pyramid.source().width)
+            .map(|(key, _)| key.clone());
+        let completeness = if self.cache.contains_key(&key) {
+            tr_core::preview::Completeness::Complete
+        } else {
+            tr_core::preview::Completeness::Refining
+        };
+        let selected = if completeness == tr_core::preview::Completeness::Complete {
+            Some(key.clone())
+        } else {
+            fallback
+        };
+        if let Some(c) = selected.as_ref().and_then(|key| self.cache.get_mut(key)) {
+            c.touched = self.frame_number;
+        }
+        if let Some(c) = selected.as_ref().and_then(|key| self.cache.get(key)) {
+            if completeness == tr_core::preview::Completeness::Refining {
+                ui.label(
+                    if self.state.transform.zoom == Some(1.)
+                        && key.1.quality == PreviewQuality::Full
+                    {
+                        "Preparazione dettaglio 1:1…"
+                    } else {
+                        "Raffinamento anteprima…"
+                    },
+                );
+            } else {
+                ui.label(key.1.quality.label());
+                if key.1.quality == PreviewQuality::Standard && c.pyramid.base_level() > 0 {
+                    ui.label(format!(
+                        "Dettaglio limitato a {} × {} pixel",
+                        c.pyramid.source().width,
+                        c.pyramid.source().height
+                    ));
+                }
+            }
+            let lane = format!("view:{id}:{}:{}", item.id, c.digest);
             let (response, sample) = tr_render::viewport(
                 ui,
                 &mut self.presenter,
@@ -1156,13 +1629,13 @@ impl TrueRenderer {
             );
             self.image_focus_ids.insert(response.id);
             if sample.is_some() {
-                self.sample_source = format!("Sorgente LOD 0 · {}", item.name);
+                self.sample_source = format!("Livello {} · {}", c.pyramid.base_level(), item.name);
                 self.sample = sample;
             }
         } else {
             egui::Frame::new().fill(Color32::from_gray(119)).show(ui,|ui|{
                 ui.set_min_size(ui.available_size());ui.centered_and_justified(|ui|{
-                    ui.label(self.errors.get(&item.id).map(String::as_str).unwrap_or(if item.approved{"Preparazione dell'immagine…"}else{"Aprire il bundle macOS con decoder XPC.\nLimite: 256 MiB per file, 64 Mi pixel."}));
+                    ui.label(self.errors.get(&format!("{}:{:?}", item.id, key.1)).map(String::as_str).unwrap_or(if item.approved{"Preparazione dell'immagine…"}else{"Aprire il bundle macOS con decoder XPC.\nLimite: 256 MiB per file, 64 Mi pixel."}));
                 });
             });
         }
@@ -1231,7 +1704,7 @@ impl TrueRenderer {
             let ((id,_), _) = self.cache.iter().find(|(_,cached)| cached.pyramid.id() == c.source)?;
             let item = self.state.items.iter().find(|i| &i.id == id)?;
             if item.name != "04_Frequenze_radiali.png" || !c.clip.contains_rect(c.rect) { return None; }
-            Some(serde_json::json!({"source":item.name,"rect_physical":[c.rect.min.x*ppp,c.rect.min.y*ppp,c.rect.max.x*ppp,c.rect.max.y*ppp],"size":c.region.size,"origin":c.region.origin,"step":c.region.step}))
+            Some(serde_json::json!({"source":item.name,"rect_physical":[c.rect.min.x*ppp,c.rect.min.y*ppp,c.rect.max.x*ppp,c.rect.max.y*ppp],"size":c.region.size,"origin":c.region.origin,"step":c.region.step,"compute":c.compute}))
         }).collect();
         let _ = std::fs::write(
             self.root
@@ -1244,13 +1717,11 @@ impl TrueRenderer {
         )));
     }
     fn formats_smoke_tick(&mut self, ctx: &egui::Context) {
-        for item in self.state.items.clone() {
-            self.ensure_image(&item, 320);
-        }
         let elapsed = self.started.elapsed().as_secs_f32();
         if self.smoke_stage == 0
             && !self.state.items.is_empty()
-            && self.cache.len() == self.state.items.len()
+            && !self.demand.is_empty()
+            && self.demand.iter().all(|key| self.cache.contains_key(key))
             && self.presenter.is_idle()
         {
             self.capture_screenshot(ctx, "10-external-grid");
@@ -1262,7 +1733,7 @@ impl TrueRenderer {
                     extend: false,
                 });
                 self.state.view = ViewMode::Preview;
-                self.state.transform.set_zoom(1.);
+                self.full_for_current();
                 self.smoke_stage = 2;
             }
         } else if self.smoke_stage == 2 && self.presenter.is_idle() {
@@ -1274,7 +1745,7 @@ impl TrueRenderer {
                     id: item.id.clone(),
                     extend: false,
                 });
-                self.state.transform.set_zoom(1.);
+                self.full_for_current();
                 self.smoke_stage = 4;
             }
         } else if self.smoke_stage == 4 && self.presenter.is_idle() {
@@ -1315,8 +1786,71 @@ impl TrueRenderer {
             ctx.request_repaint_after(Duration::from_millis(50));
         }
         let mut action = 0;
-        egui::Window::new("Impostazioni · cache e temporanei").open(&mut self.show_settings).default_width(570.).resizable(false).show(ctx,|ui|{
+        egui::Window::new("Preferenze · Anteprime e prestazioni").open(&mut self.show_settings).default_width(570.).resizable(false).vscroll(true).max_height((ctx.viewport_rect().height()-80.).max(250.)).show(ctx,|ui|{
             ui.label("Le impostazioni valgono per tutte le cartelle; la quota disco si applica a ciascuna cartella separatamente.");
+            ui.horizontal(|ui| {
+                ui.label("Qualità anteprima");
+                ui.selectable_value(&mut self.cache_settings.quality, PreviewQuality::Standard, "Standard");
+                ui.selectable_value(&mut self.cache_settings.quality, PreviewQuality::Full, "Piena");
+            });
+            let physical = self.service.cache.physical_mib;
+            let mut automatic = self.cache_settings.memory_mib == 0;
+            if ui.checkbox(&mut automatic, "Memoria automatica").changed() {
+                self.cache_settings.memory_mib = if automatic {0} else {self.cache_settings.effective_memory_mib(physical).max(512)};
+            }
+            if !automatic { ui.add(egui::Slider::new(&mut self.cache_settings.memory_mib,512..=(physical*3/4).max(512)).text("Memoria richiesta (MiB)")); }
+            ui.label(format!("Budget di ammissione effettivo: {} MiB",self.cache_settings.effective_memory_mib(physical)));
+            let mut automatic = self.cache_settings.reusable_mib.is_none();
+            if ui.checkbox(&mut automatic,"Cache RAM automatica").changed() { self.cache_settings.reusable_mib = if automatic { None } else { Some(0) }; }
+            if let Some(value) = &mut self.cache_settings.reusable_mib { ui.add(egui::Slider::new(value,0..=self.service.cache.memory.usage().limit/(1024*1024)).text("Cache RAM riutilizzabile (MiB; 0 = solo viste)")); }
+            let memory = self.service.cache.memory.usage();
+            ui.label(format!("Memoria prenotata (base inclusa): {} · picco crediti: {}",human_bytes(memory.reserved),human_bytes(memory.peak)));
+            if memory.reserved > memory.limit { ui.label("Riduzione memoria in corso"); }
+            ui.label(format!("Stima di base app/worker/device: {} MiB",self.service.cache.baseline_bytes/(1024*1024)));
+            ui.label("Il budget include stime dei decoder; non è un limite RSS imposto dal sistema.");
+            ui.add(egui::Slider::new(&mut self.cache_settings.gpu_mib,0..=1024).text("Cache GPU (MiB; 0 = automatica)"));
+            ui.horizontal(|ui| {
+                ui.label("Profilo prestazioni");
+                ui.selectable_value(&mut self.cache_settings.profile,crate::cache::PerformanceProfile::Performance,"Prestazioni");
+                ui.selectable_value(&mut self.cache_settings.profile,crate::cache::PerformanceProfile::Balanced,"Bilanciato");
+                ui.selectable_value(&mut self.cache_settings.profile,crate::cache::PerformanceProfile::Saver,"Risparmio");
+            });
+            ui.horizontal(|ui| {
+                ui.label("Calcolo immagine");
+                ui.selectable_value(&mut self.cache_settings.compute,ImageCompute::Automatic,"Automatico");
+                ui.selectable_value(&mut self.cache_settings.compute,ImageCompute::Gpu,"GPU compatibile");
+                ui.selectable_value(&mut self.cache_settings.compute,ImageCompute::Cpu,"CPU");
+            });
+            ui.label(&self.gpu_status);
+            let compute=self.presenter.statistics();
+            ui.label(format!("Frame elaborati: {} GPU · {} CPU · {} ripieghi",compute.gpu_frames,compute.cpu_frames,compute.fallbacks));
+            if !compute.last_fallback.is_empty() {ui.label(format!("Ultimo ripiego CPU: {}",compute.last_fallback));}
+            ui.label("Il decoder Apple usa il contesto CPU; Metal viene qualificato separatamente dal viewer.");
+            ui.checkbox(&mut self.cache_settings.adapt_on_battery,"Riduci automaticamente il lavoro a batteria");
+            ui.label(format!("Thread applicativi effettivi: {} · {}",self.service.cache.effective_threads(),if self.service.cache.on_battery() {"batteria"} else {"alimentazione esterna / non rilevata"}));
+            ui.label(format!("Pressione memoria OS: {}", match self.service.cache.stats().memory_pressure {
+                Some(tr_platform::MemoryPressure::Normal) => "normale",
+                Some(tr_platform::MemoryPressure::Warning) => "elevata · lavoro anticipato sospeso",
+                Some(tr_platform::MemoryPressure::Critical) => "critica · cache riutilizzabili in rilascio",
+                None => "adattatore non disponibile",
+            }));
+            ui.add(egui::Slider::new(&mut self.cache_settings.cpu_threads,0..=std::thread::available_parallelism().map_or(1,usize::from)).text("Thread CPU (0 = automatici)"));
+            ui.horizontal(|ui| {
+                ui.label("Precaricamento");
+                ui.selectable_value(&mut self.cache_settings.prefetch,crate::cache::Prefetch::Disabled,"Disattivato");
+                ui.selectable_value(&mut self.cache_settings.prefetch,crate::cache::Prefetch::Automatic,"Automatico");
+                ui.selectable_value(&mut self.cache_settings.prefetch,crate::cache::Prefetch::Extended,"Esteso");
+            });
+            ui.checkbox(&mut self.preparation_paused,"Pausa preparazione in background");
+            ui.horizontal(|ui| {
+                if ui.add_enabled(self.rebuild.is_empty() && !self.scanning,egui::Button::new("Ricostruisci anteprime della cartella")).clicked() {
+                    self.rebuild=self.state.items.iter().filter(|i| i.approved).cloned().collect();
+                    self.rebuild_total=self.rebuild.len();
+                }
+                if !self.rebuild.is_empty() && ui.button("Annulla preparazione").clicked() {self.rebuild.clear(); self.rebuild_total=0;}
+            });
+            if self.rebuild_total>0 { ui.label(format!("Anteprime elaborate: {} / {}",self.rebuild_total-self.rebuild.len(),self.rebuild_total)); }
+            ui.separator();
             ui.checkbox(&mut self.cache_settings.enabled,"Abilita cache su disco nella cartella delle immagini");
             ui.add(egui::Slider::new(&mut self.cache_settings.disk_mib,64..=65536).logarithmic(true).text("Quota per cartella (MiB)"));
             ui.add(egui::Slider::new(&mut self.cache_settings.temporary_mib,16..=2048).logarithmic(true).text("Temporanei (MiB)"));
@@ -1341,23 +1875,23 @@ impl TrueRenderer {
             if self.cache_action.is_some(){ui.label("Aggiornamento cache…");}
         });
         if action > 0 {
-            self.generation += 1;
-            self.service
-                .generation
-                .store(self.generation, Ordering::Release);
-            self.pending_images.clear();
+            if action == 1 && self.cache_settings.quality != self.service.cache.settings().quality {
+                self.full_overrides.clear();
+            }
+            self.errors.clear();
             self.scanning = true;
+            if action == 1 {
+                self.service.cache.configure(self.cache_settings.clone());
+            }
             let cache = self.service.cache.clone();
             let folder = self.folder.clone();
             let data = self.settings_data.clone();
-            let settings = self.cache_settings.clone();
             let (tx, rx) = std::sync::mpsc::sync_channel(1);
             self.cache_action = Some(rx);
             std::thread::spawn(move || {
                 let result = (|| -> anyhow::Result<()> {
                     if action == 1 {
-                        settings.save(&data)?;
-                        cache.configure(settings);
+                        cache.save_current(&data)?;
                     }
                     let start = Instant::now();
                     loop {
@@ -1386,9 +1920,13 @@ impl TrueRenderer {
             if self.started.elapsed().as_secs_f32() > 1.
                 && !self.scanning
                 && self.cache_action.is_none()
+                && self.gpu_status != "Diagnostica GPU in corso…"
+                && self.presenter.is_idle()
+                && !self.demand.is_empty()
+                && self.demand.iter().all(|key| self.cache.contains_key(key))
             {
                 if self.screenshots.contains("13-cache-settings") {
-                    let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":!self.fatal,"settings":self.service.cache.settings(),"cache":self.service.cache.stats()});
+                    let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":!self.fatal && self.errors.is_empty() && !self.presenter.has_errors() && self.gpu_passed,"settings":self.service.cache.settings(),"cache":self.service.cache.stats()});
                     let _ = std::fs::write(
                         self.root.join("reports/cache-settings-macos.json"),
                         serde_json::to_vec_pretty(&report).unwrap(),
@@ -1410,11 +1948,18 @@ impl TrueRenderer {
             return;
         }
         let elapsed = self.started.elapsed().as_secs_f32();
-        if !self.presenter.is_idle() && elapsed < 55. {
+        if (!self.presenter.is_idle()
+            || self.demand.iter().any(|key| !self.cache.contains_key(key)))
+            && elapsed < 55.
+        {
             ctx.request_repaint_after(Duration::from_millis(25));
             return;
         }
-        if self.smoke_stage == 0 && self.cache.len() >= 12 {
+        if self.smoke_stage == 0
+            && !self.scanning
+            && !self.demand.is_empty()
+            && self.demand.iter().all(|key| self.cache.contains_key(key))
+        {
             self.smoke_stage = 1;
             self.capture_screenshot(ctx, "01-grid");
         } else if self.smoke_stage == 1 && self.screenshots.contains("01-grid") {
@@ -1427,11 +1972,11 @@ impl TrueRenderer {
             self.state.view = ViewMode::Preview;
             self.smoke_stage = 2;
         } else if self.smoke_stage == 2
-            && self
-                .state
-                .current
-                .as_ref()
-                .is_some_and(|id| self.cache.contains_key(&(id.clone(), 0)))
+            && self.state.current_item().is_some_and(|item| {
+                self.demand
+                    .iter()
+                    .any(|key| key.0 == item.id && self.cache.contains_key(key))
+            })
         {
             self.smoke_stage = 3;
             self.capture_screenshot(ctx, "02-preview");
@@ -1446,11 +1991,17 @@ impl TrueRenderer {
             self.state.view = ViewMode::Compare;
             self.smoke_stage = 4;
         } else if self.smoke_stage == 4
-            && self
-                .state
-                .selected
-                .iter()
-                .all(|id| self.cache.contains_key(&(id.clone(), 0)))
+            && self.state.selected.iter().all(|id| {
+                self.state
+                    .items
+                    .iter()
+                    .find(|item| &item.id == id)
+                    .is_some_and(|item| {
+                        self.demand
+                            .iter()
+                            .any(|key| key.0 == item.id && self.cache.contains_key(key))
+                    })
+            })
         {
             self.smoke_stage = 5;
             self.capture_screenshot(ctx, "03-compare");
@@ -1470,7 +2021,7 @@ impl TrueRenderer {
                 });
             }
             self.state.view = ViewMode::Preview;
-            self.state.transform.set_zoom(1.);
+            self.full_for_current();
             self.smoke_stage = 6;
         } else if self.sampling_smoke && [6, 8, 10, 12, 14].contains(&self.smoke_stage) {
             let name = match self.smoke_stage {
@@ -1512,7 +2063,7 @@ impl TrueRenderer {
             || elapsed > 55.
             || self.fatal
         {
-            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==(if self.sampling_smoke {15} else {5})&&self.screenshots.len()==(if self.sampling_smoke {8} else {3})&&!self.fatal&&self.errors.is_empty()&&!self.presenter.has_errors()&&self.gpu_passed,"sampling":tr_core::resample::VERSION,"presentation_errors":self.presenter.has_errors(),"pixels_per_point":ctx.pixels_per_point(),"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
+            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==(if self.sampling_smoke {15} else {5})&&self.screenshots.len()==(if self.sampling_smoke {8} else {3})&&!self.fatal&&self.errors.is_empty()&&!self.presenter.has_errors()&&self.gpu_passed,"sampling":tr_core::resample::VERSION,"presentation_errors":self.presenter.has_errors(),"pixels_per_point":ctx.pixels_per_point(),"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"compute":self.presenter.statistics(),"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
             let _ = std::fs::write(
                 self.root.join("reports/smoke-macos.json"),
                 serde_json::to_vec_pretty(&report).unwrap(),
@@ -1526,6 +2077,10 @@ impl eframe::App for TrueRenderer {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.frame_number += 1;
+        self.demand.clear();
+        self.primary_demand.clear();
+        self.viewer_prefetch_edge = 0;
+        self.demand_jobs.clear();
         self.poll(&ctx);
         self.keyboard(&ctx);
         self.image_focus_ids.clear();
@@ -1594,7 +2149,10 @@ impl eframe::App for TrueRenderer {
             });
         self.help(&ctx);
         self.settings_window(&ctx);
+        self.trim_images(false);
         self.smoke_tick(&ctx);
+        self.background_demand(&ctx);
+        self.flush_demand();
         if self.scanning || !self.pending_images.is_empty() || !self.state.pending.is_empty() {
             ctx.request_repaint_after(Duration::from_millis(50));
         }

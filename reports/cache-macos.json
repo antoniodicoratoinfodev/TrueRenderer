@@ -1,69 +1,76 @@
 {
   "application": "TrueRenderer",
   "cache_before_clear": {
+    "busy": 0,
     "bytes": 272821533,
+    "coalesced_consumers": 0,
     "corrupt": 0,
+    "decode_jobs": 0,
     "entries": 3,
     "evictions": 0,
-    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-p4m3Uy",
+    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-Oeptpf",
     "hits": 15,
+    "memory_pressure": null,
     "message": "Immagine riutilizzata dalla cache",
     "misses": 3,
     "temporary_bytes": 0,
+    "worker_peak_footprint_bytes": 0,
+    "worker_peak_rss_bytes": 0,
+    "writer_yields": 0,
     "writes": 3
   },
   "checks": [
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.622299458,
+      "cold_seconds_including_write": 1.034183541,
       "file": "12mp-jpeg.jpg",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.154275125,
-        0.138123209,
-        0.13690625,
-        0.13715275,
-        0.137382792
+        0.336436875,
+        0.292758333,
+        0.299551084,
+        0.295402291,
+        0.296877167
       ]
     },
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.172680625,
+      "cold_seconds_including_write": 0.342688542,
       "file": "07-bayer.dng",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.010423792,
-        0.009676291,
-        0.009715667,
-        0.009719167,
-        0.009685667
+        0.021523875,
+        0.0197785,
+        0.019407833,
+        0.019785375,
+        0.020615917
       ]
     },
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.0102435,
+      "cold_seconds_including_write": 0.00951325,
       "file": "16bit.png",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.000125584,
-        0.000101959,
-        0.000119,
-        0.00013825,
-        0.000112875
+        0.000255166,
+        0.000219584,
+        0.00020975,
+        0.000204584,
+        0.000193292
       ]
     }
   ],
   "clear_removes_only_derivatives": true,
   "passed": true,
   "scope": "Three generated sources; one cold application-cache run and five warm runs each; OS cache is not flushed. Bit-exact full fp32 pyramids and histogram. Not p95 or whole-machine memory qualification.",
-  "version": "0.1.4"
+  "version": "0.1.5"
 }

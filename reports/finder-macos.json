@@ -1,10 +1,16 @@
 {
   "adapter": "Apple M4 · Metal",
   "application": "TrueRenderer",
+  "compute": {
+    "cpu_frames": 56,
+    "fallbacks": 0,
+    "gpu_frames": 9,
+    "last_fallback": ""
+  },
   "decode_errors": {},
-  "elapsed_seconds": 1.1145052909851074,
-  "frames": 102,
-  "gpu": "GPU/CPU: 4096 campioni · errore max 9.54e-7 · entro soglia R0",
+  "elapsed_seconds": 1.8070473670959473,
+  "frames": 121,
+  "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
   "images": 12,
   "passed": true,
   "pixels_per_point": 2.0,
@@ -12,25 +18,21 @@
   "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
   "scope": "native macOS R0 corpus smoke; not color/display/sandbox qualification",
   "screenshots": [
+    "08-grid-large",
     "03-compare",
     "05-radial-fit",
     "06-radial-37percent",
     "07-grid-small",
-    "08-grid-large",
+    "01-grid",
     "02-preview",
-    "04-radial-1to1",
-    "01-grid"
+    "04-radial-1to1"
   ],
   "sqlite": "3.53.2",
   "status": "Corpus pronto · 0 file non leggibili",
   "surface": "Bgra8Unorm",
-  "version": "0.1.4",
-  "worker_pids": [
-    48376,
-    48377
-  ],
+  "version": "0.1.5",
+  "worker_pids": [],
   "worker_transports": [
-    "Cache disco · fp32 · Anteprima",
-    "XPC / App Sandbox · R0"
+    "Cache disco · fp32 · Anteprima"
   ]
 }

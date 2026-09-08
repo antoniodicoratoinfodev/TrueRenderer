@@ -1,0 +1,70 @@
+{
+  "application": "TrueRenderer",
+  "cache_before_clear": {
+    "bytes": 272821533,
+    "corrupt": 0,
+    "entries": 3,
+    "evictions": 0,
+    "folder": "generated baseline cache qualification folder",
+    "hits": 15,
+    "message": "Immagine riutilizzata dalla cache",
+    "misses": 3,
+    "temporary_bytes": 0,
+    "writes": 3
+  },
+  "checks": [
+    {
+      "bit_exact_all_levels": true,
+      "cold_seconds_including_write": 1.324126625,
+      "file": "12mp-jpeg.jpg",
+      "no_warm_decoder_jobs": true,
+      "passed": true,
+      "reopened_cache_hit": true,
+      "source_unchanged": true,
+      "warm_seconds": [
+        0.354340583,
+        0.299290667,
+        0.302173292,
+        0.2968705,
+        0.297974166
+      ]
+    },
+    {
+      "bit_exact_all_levels": true,
+      "cold_seconds_including_write": 0.347682375,
+      "file": "07-bayer.dng",
+      "no_warm_decoder_jobs": true,
+      "passed": true,
+      "reopened_cache_hit": true,
+      "source_unchanged": true,
+      "warm_seconds": [
+        0.021368708,
+        0.019526208,
+        0.01970375,
+        0.019570833,
+        0.019424667
+      ]
+    },
+    {
+      "bit_exact_all_levels": true,
+      "cold_seconds_including_write": 0.016080958,
+      "file": "16bit.png",
+      "no_warm_decoder_jobs": true,
+      "passed": true,
+      "reopened_cache_hit": true,
+      "source_unchanged": true,
+      "warm_seconds": [
+        0.000261917,
+        0.000207541,
+        0.000205541,
+        0.000192167,
+        0.000190625
+      ]
+    }
+  ],
+  "clear_removes_only_derivatives": true,
+  "passed": true,
+  "scope": "Three generated sources; one cold application-cache run and five warm runs each; OS cache is not flushed. Bit-exact full fp32 pyramids and histogram. Not p95 or whole-machine memory qualification.",
+  "version": "0.1.4",
+  "path_redaction": "Only the temporary folder path was replaced; measurements are unchanged."
+}

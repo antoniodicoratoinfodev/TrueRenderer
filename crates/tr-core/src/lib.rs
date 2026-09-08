@@ -1,6 +1,10 @@
+pub mod budget;
 pub mod color;
+pub mod compute;
 pub mod corpus;
+pub mod preview;
 pub mod protocol;
+pub mod provider;
 pub mod resample;
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};

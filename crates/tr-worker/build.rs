@@ -42,6 +42,7 @@ fn main() {
     for framework in [
         "Foundation",
         "CoreImage",
+        "Metal",
         "CoreGraphics",
         "ImageIO",
         "UniformTypeIdentifiers",

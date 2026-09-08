@@ -2,6 +2,7 @@
 //! sample centers are at n + 0.5. A final buffer maps 1:1 to backing pixels.
 use crate::color::{LinearImage, MAX_PIXELS, Pixel};
 use anyhow::{Result, ensure};
+use rayon::prelude::*;
 use std::{
     f64::consts::PI,
     sync::atomic::{AtomicU64, Ordering},
@@ -57,6 +58,9 @@ impl Pyramid {
     }
     pub fn levels(&self) -> &[LinearImage] {
         &self.levels
+    }
+    pub fn into_levels(self) -> Vec<LinearImage> {
+        self.levels
     }
     /// Restore validated lossless levels without filtering the source again.
     pub fn from_levels(levels: Vec<LinearImage>) -> Result<Self> {
@@ -156,7 +160,49 @@ fn mitchell(x: f64) -> f64 {
         0.
     }
 }
-type Taps = Vec<(usize, f64)>;
+pub type Taps = Vec<(usize, f64)>;
+/// Canonical f64 coefficients used by the CPU and GPU verifier. GPU packing may
+/// round weights to fp32; geometry and tap indices are computed here unchanged.
+pub fn coefficients(
+    source: [u32; 2],
+    region: Region,
+    opaque: bool,
+) -> Result<(Vec<Taps>, Vec<Taps>)> {
+    ensure!(
+        source[0] > 0
+            && source[1] > 0
+            && region.size[0] > 0
+            && region.size[1] > 0
+            && region.size[0] <= 16384
+            && region.size[1] <= 16384
+            && region.size[0] as u64 * region.size[1] as u64 <= MAX_PIXELS as u64
+            && region
+                .origin
+                .iter()
+                .all(|v| v.is_finite() && v.abs() <= 1e9)
+            && region
+                .step
+                .iter()
+                .all(|v| v.is_finite() && *v > 0. && *v <= 2.000001),
+        "Geometria coefficienti fuori quota"
+    );
+    Ok((
+        axis(
+            source[0],
+            region.size[0],
+            region.origin[0],
+            region.step[0],
+            opaque,
+        ),
+        axis(
+            source[1],
+            region.size[1],
+            region.origin[1],
+            region.step[1],
+            opaque,
+        ),
+    ))
+}
 fn axis(length: u32, count: u32, origin: f64, step: f64, opaque: bool) -> Vec<Taps> {
     (0..count)
         .map(|i| {
@@ -206,7 +252,19 @@ fn axis(length: u32, count: u32, origin: f64, step: f64, opaque: bool) -> Vec<Ta
         .collect()
 }
 
-fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
+pub(crate) fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
+    filter_mode(source, region, opaque, true)
+}
+/// Scalar reference retained for equivalence and A/B measurements.
+pub fn filter_scalar(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
+    filter_mode(source, region, opaque, false)
+}
+fn filter_mode(
+    source: &LinearImage,
+    region: Region,
+    opaque: bool,
+    parallel: bool,
+) -> Result<LinearImage> {
     let [width, height] = region.size;
     let count = (width as usize).saturating_mul(height as usize);
     ensure!(
@@ -246,31 +304,68 @@ fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearIm
         "Intermedio del filtro fuori quota"
     );
     let mut horizontal = vec![[0.; 4]; intermediate_count];
-    for y in min_y..=max_y {
+    let horizontal_row = |(row_index, row): (usize, &mut [[f32; 4]])| {
+        let y = min_y + row_index;
         for (x, taps) in xs.iter().enumerate() {
             let mut p = [0.0f64; 4];
             for &(sx, weight) in taps {
-                for (c, value) in p.iter_mut().enumerate() {
-                    *value += source.pixels[y * source.width as usize + sx][c] as f64 * weight;
+                let pixel = source.pixels[y * source.width as usize + sx];
+                if parallel {
+                    crate::compute::accumulate(&mut p, pixel, weight);
+                } else {
+                    for c in 0..4 {
+                        p[c] += pixel[c] as f64 * weight;
+                    }
                 }
             }
-            horizontal[(y - min_y) * width as usize + x] = p.map(|v| v as f32);
+            row[x] = p.map(|v| v as f32);
         }
+    };
+    if parallel && intermediate_count >= 32768 {
+        crate::compute::install(|| {
+            horizontal
+                .par_chunks_mut(width as usize)
+                .enumerate()
+                .for_each(horizontal_row)
+        });
+    } else {
+        horizontal
+            .chunks_mut(width as usize)
+            .enumerate()
+            .for_each(horizontal_row);
     }
-    let mut pixels = Vec::with_capacity(count);
-    for taps in &ys {
-        for x in 0..width as usize {
+    let mut pixels = vec![[0.; 4]; count];
+    let vertical_row = |(y, row): (usize, &mut [[f32; 4]])| {
+        for (x, out) in row.iter_mut().enumerate() {
             let mut p = [0.0f64; 4];
-            for &(sy, weight) in taps {
-                for (c, value) in p.iter_mut().enumerate() {
-                    *value += horizontal[(sy - min_y) * width as usize + x][c] as f64 * weight;
+            for &(sy, weight) in &ys[y] {
+                let pixel = horizontal[(sy - min_y) * width as usize + x];
+                if parallel {
+                    crate::compute::accumulate(&mut p, pixel, weight);
+                } else {
+                    for c in 0..4 {
+                        p[c] += pixel[c] as f64 * weight;
+                    }
                 }
             }
             if opaque {
                 p[3] = 1.;
             }
-            pixels.push(p.map(|v| v as f32));
+            *out = p.map(|v| v as f32);
         }
+    };
+    if parallel && count >= 32768 {
+        crate::compute::install(|| {
+            pixels
+                .par_chunks_mut(width as usize)
+                .enumerate()
+                .for_each(vertical_row)
+        });
+    } else {
+        pixels
+            .chunks_mut(width as usize)
+            .enumerate()
+            .for_each(vertical_row);
     }
     LinearImage::new(width, height, pixels)
 }
@@ -278,6 +373,43 @@ fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearIm
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn parallel_simd_matches_scalar_on_odd_shapes_alpha_and_edges() {
+        for opaque in [false, true] {
+            let source = LinearImage::new(
+                513,
+                257,
+                (0..513 * 257)
+                    .map(|i| {
+                        [
+                            i as f32 / 173. - 12.,
+                            (i % 19) as f32 / 5.,
+                            -0.1,
+                            if opaque { 1. } else { (i % 17) as f32 / 16. },
+                        ]
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            for region in [
+                Region::fitted([513, 257], [257, 129]),
+                Region {
+                    size: [350, 190],
+                    origin: [7.25, 0.5],
+                    step: [0.8, 1.1],
+                },
+                Region {
+                    size: [257, 129],
+                    origin: [256., 128.],
+                    step: [1., 1.],
+                },
+            ] {
+                let scalar = filter_scalar(&source, region, opaque).unwrap();
+                let actual = filter(&source, region, opaque).unwrap();
+                assert_eq!(scalar.pixels, actual.pixels);
+            }
+        }
+    }
     #[test]
     fn aligned_identity_and_crop_preserve_original_samples() {
         let source = LinearImage::new(

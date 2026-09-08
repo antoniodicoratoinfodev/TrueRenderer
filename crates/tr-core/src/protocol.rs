@@ -11,11 +11,26 @@ pub const REQUEST: u16 = 1;
 pub const RESPONSE: u16 = 2;
 pub const ERROR: u16 = 3;
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum DecodeIntent {
+    #[default]
+    LegacyRaster,
+    Probe,
+    FullSource,
+}
+fn default_output_bytes() -> u64 {
+    MAX_PIXELS as u64 * 16
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DecodeRequest {
     pub source_len: usize,
     pub max_edge: u32,
+    #[serde(default)]
+    pub intent: DecodeIntent,
+    #[serde(default = "default_output_bytes")]
+    pub maximum_output_bytes: u64,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -151,6 +166,8 @@ mod tests {
             &DecodeRequest {
                 source_len: 32,
                 max_edge: 320,
+                intent: DecodeIntent::LegacyRaster,
+                maximum_output_bytes: default_output_bytes(),
             },
         )
         .unwrap();

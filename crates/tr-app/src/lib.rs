@@ -1,4 +1,8 @@
 //! Deterministic UI state. Persistent edits only become visible after Commit.
+pub mod scheduler;
+pub mod budget {
+    pub use tr_core::budget::*;
+}
 use std::collections::BTreeSet;
 use tr_core::{Annotation, Item, Label, ViewMode, ViewTransform};
 

@@ -8,3 +8,4 @@ license-file.workspace = true
 tr-core = { path = "../tr-core" }
 eframe.workspace = true
 anyhow.workspace = true
+serde.workspace = true

@@ -2,10 +2,17 @@
 use eframe::egui::{self, Color32, Pos2, Rect, TextureHandle, TextureOptions};
 use std::{
     collections::{HashMap, VecDeque},
-    sync::{Arc, Condvar, Mutex},
+    sync::{
+        Arc, Condvar, Mutex,
+        atomic::{AtomicBool, AtomicU8, Ordering},
+    },
     thread::{self, JoinHandle},
 };
-use tr_core::resample::{Pyramid, Region};
+use tr_core::{
+    budget::{Lease, MemoryBudget},
+    provider::ImageLevels,
+    resample::Region,
+};
 
 #[derive(Clone, Debug, PartialEq)]
 struct Key {
@@ -15,25 +22,73 @@ struct Key {
 struct Job {
     lane: String,
     key: Key,
-    image: Arc<Pyramid>,
+    image: Arc<ImageLevels>,
+    lease: Lease,
+    gpu_lease: Lease,
+}
+enum Rendered {
+    Cpu(Vec<u8>),
+    Gpu(crate::resident_compute::GpuFrame),
 }
 struct Completed {
     lane: String,
     key: Key,
-    result: Result<Vec<u8>, String>,
+    result: Result<Rendered, String>,
+    lease: Arc<Lease>,
+    gpu_lease: Arc<Lease>,
 }
 #[derive(Default)]
 struct Shared {
     jobs: VecDeque<Job>,
     completed: VecDeque<Completed>,
     stop: bool,
+    statistics: ComputeStatistics,
 }
 struct Entry {
     key: Key,
-    texture: TextureHandle,
+    texture: FrameTexture,
     touched: u64,
+    lease: Arc<Lease>,
+    gpu_lease: Arc<Lease>,
+}
+enum FrameTexture {
+    Cpu(TextureHandle),
+    Gpu {
+        id: egui::TextureId,
+        frame: crate::resident_compute::GpuFrame,
+        state: eframe::egui_wgpu::RenderState,
+    },
+}
+impl FrameTexture {
+    fn id(&self) -> egui::TextureId {
+        match self {
+            Self::Cpu(t) => t.id(),
+            Self::Gpu { id, .. } => *id,
+        }
+    }
+    fn size(&self) -> [usize; 2] {
+        match self {
+            Self::Cpu(t) => t.size(),
+            Self::Gpu { frame, .. } => frame.size.map(|v| v as usize),
+        }
+    }
+}
+impl Drop for FrameTexture {
+    fn drop(&mut self) {
+        if let Self::Gpu { id, state, .. } = self {
+            state.renderer.write().free_texture(id);
+        }
+    }
+}
+#[derive(Default, Clone, serde::Serialize)]
+pub struct ComputeStatistics {
+    pub cpu_frames: u64,
+    pub gpu_frames: u64,
+    pub fallbacks: u64,
+    pub last_fallback: String,
 }
 pub struct Capture {
+    pub compute: &'static str,
     pub source: u64,
     pub rect: Rect,
     pub clip: Rect,
@@ -48,32 +103,114 @@ pub struct Presenter {
     clock: u64,
     capturing: bool,
     captures: Vec<Capture>,
+    memory: MemoryBudget,
+    gpu_memory: MemoryBudget,
+    queue: Option<eframe::wgpu::Queue>,
+    retired: Vec<(u64, Arc<Lease>, Arc<Lease>)>,
+    render_state: Option<eframe::egui_wgpu::RenderState>,
+    pressure: Arc<AtomicBool>,
+    compute_verified: Arc<AtomicBool>,
+    compute_mode: Arc<AtomicU8>,
 }
 impl Presenter {
-    pub fn new(ctx: egui::Context) -> Self {
+    pub fn new(
+        ctx: egui::Context,
+        memory: MemoryBudget,
+        render_state: Option<eframe::egui_wgpu::RenderState>,
+    ) -> Self {
         let shared = Arc::new((Mutex::new(Shared::default()), Condvar::new()));
         let worker_shared = shared.clone();
+        let queue = render_state.as_ref().map(|r| r.queue.clone());
+        let gpu_memory = MemoryBudget::new(256 * 1024 * 1024);
+        let compute_verified = Arc::new(AtomicBool::new(false));
+        let compute_mode = Arc::new(AtomicU8::new(0));
+        let pressure = Arc::new(AtomicBool::new(false));
+        let worker_pressure = pressure.clone();
+        let verified = compute_verified.clone();
+        let mode = compute_mode.clone();
+        let worker_gpu = render_state.clone();
+        let worker_memory = memory.clone();
+        let worker_gpu_memory = gpu_memory.clone();
         let worker = thread::spawn(move || {
+            let mut filter = worker_gpu
+                .as_ref()
+                .filter(|r| r.device.limits().max_storage_buffers_per_shader_stage >= 7)
+                .map(|r| crate::resident_compute::GpuFilter::new(r.device.clone()));
             loop {
-                let job = {
+                let mut job = {
                     let (lock, ready) = &*worker_shared;
                     let mut state = lock.lock().unwrap();
                     while state.jobs.is_empty() && !state.stop {
-                        state = ready.wait(state).unwrap();
+                        let (next, timeout) = ready
+                            .wait_timeout(state, std::time::Duration::from_secs(2))
+                            .unwrap();
+                        state = next;
+                        if (timeout.timed_out() || worker_pressure.load(Ordering::Acquire))
+                            && let Some(filter) = &mut filter
+                        {
+                            filter.clear();
+                        }
                     }
                     if state.stop {
                         break;
                     }
                     state.jobs.pop_front().unwrap()
                 };
-                let result = job
-                    .image
-                    .render(job.key.region)
-                    .map(|image| image.to_display())
-                    .map_err(|e| format!("{e:#}"));
+                let pixels = job.key.region.size[0] as u64 * job.key.region.size[1] as u64;
+                let choice = mode.load(Ordering::Acquire);
+                if (choice == 1
+                    || worker_pressure.load(Ordering::Acquire)
+                    || worker_gpu_memory.usage().reserved > worker_gpu_memory.usage().limit
+                    || worker_memory.usage().reserved > worker_memory.usage().limit)
+                    && let Some(filter) = &mut filter
+                {
+                    filter.clear();
+                }
+                let mut fallback = None;
+                let gpu = if verified.load(Ordering::Acquire)
+                    && choice != 1
+                    && (choice == 2 || pixels >= 512 * 1024)
+                    && let Some(filter) = &mut filter
+                {
+                    filter
+                        .render(
+                            &job.image,
+                            job.key.region,
+                            &worker_memory,
+                            &worker_gpu_memory,
+                            &mut job.lease,
+                        )
+                        .map_err(|e| {
+                            fallback = Some(format!("{e:#}"));
+                            e
+                        })
+                        .ok()
+                } else {
+                    None
+                };
+                let is_gpu = gpu.is_some();
+                let result = if let Some(frame) = gpu {
+                    Ok(Rendered::Gpu(frame))
+                } else {
+                    job.image
+                        .render(job.key.region)
+                        .map(|image| Rendered::Cpu(image.to_display()))
+                        .map_err(|e| format!("{e:#}"))
+                };
+                job.lease
+                    .shrink(if result.is_ok() { pixels * 12 } else { 0 });
+                let lease = Arc::new(job.lease);
+                let gpu_lease = Arc::new(job.gpu_lease);
                 let mut state = worker_shared.0.lock().unwrap();
                 if state.stop {
                     break;
+                }
+                if !is_gpu {
+                    state.statistics.cpu_frames += 1;
+                }
+                if let Some(error) = fallback {
+                    state.statistics.fallbacks += 1;
+                    state.statistics.last_fallback = error;
                 }
                 state.completed.retain(|old| old.lane != job.lane);
                 // At most 64 waiting lanes plus one active operation; never block shutdown.
@@ -84,6 +221,8 @@ impl Presenter {
                     lane: job.lane,
                     key: job.key,
                     result,
+                    lease,
+                    gpu_lease,
                 });
                 drop(state);
                 ctx.request_repaint();
@@ -98,7 +237,18 @@ impl Presenter {
             clock: 0,
             capturing: false,
             captures: Vec::new(),
+            memory,
+            gpu_memory,
+            queue,
+            retired: Vec::new(),
+            render_state,
+            pressure,
+            compute_verified,
+            compute_mode,
         }
+    }
+    pub fn statistics(&self) -> ComputeStatistics {
+        self.shared.0.lock().unwrap().statistics.clone()
     }
     pub fn begin_capture(&mut self) {
         self.capturing = true;
@@ -109,13 +259,24 @@ impl Presenter {
     }
     pub fn clear(&mut self) {
         self.waiting.clear();
-        self.entries.clear();
+        for (_, entry) in self.entries.drain() {
+            self.retired
+                .push((self.clock, entry.lease, entry.gpu_lease));
+        }
         self.errors.clear();
         let mut shared = self.shared.0.lock().unwrap();
         shared.jobs.clear();
         shared.completed.clear();
     }
     pub fn poll(&mut self, ctx: &egui::Context) {
+        self.clock += 1;
+        let mut retired = Vec::new();
+        // Credits for handles retired in the previous egui frame are released
+        // after that frame's GPU submission completes, never on cancellation.
+        std::mem::swap(&mut retired, &mut self.retired);
+        if let Some(queue) = &self.queue {
+            queue.on_submitted_work_done(move || drop(retired));
+        }
         let completed: Vec<_> = self.shared.0.lock().unwrap().completed.drain(..).collect();
         for finished in completed {
             if self.waiting.get(&finished.lane) != Some(&finished.key) {
@@ -123,22 +284,50 @@ impl Presenter {
             }
             self.waiting.remove(&finished.lane);
             match finished.result {
-                Ok(rgba) => {
+                Ok(rendered) => {
                     self.errors.remove(&finished.lane);
                     let [w, h] = finished.key.region.size;
-                    let texture = ctx.load_texture(
-                        &finished.lane,
-                        egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], &rgba),
-                        TextureOptions::NEAREST,
-                    );
-                    self.entries.insert(
+                    let texture = match rendered {
+                        Rendered::Cpu(rgba) => FrameTexture::Cpu(ctx.load_texture(
+                            &finished.lane,
+                            egui::ColorImage::from_rgba_unmultiplied(
+                                [w as usize, h as usize],
+                                &rgba,
+                            ),
+                            TextureOptions::NEAREST,
+                        )),
+                        Rendered::Gpu(mut frame) => {
+                            let state = self.render_state.as_ref().unwrap().clone();
+                            frame.submit(&state.queue);
+                            let memory = finished.lease.clone();
+                            let gpu_memory = finished.gpu_lease.clone();
+                            state.queue.on_submitted_work_done(move || {
+                                drop(memory);
+                                drop(gpu_memory);
+                            });
+                            self.shared.0.lock().unwrap().statistics.gpu_frames += 1;
+                            let id = state.renderer.write().register_native_texture(
+                                &state.device,
+                                &frame
+                                    .texture
+                                    .create_view(&eframe::wgpu::TextureViewDescriptor::default()),
+                                eframe::wgpu::FilterMode::Nearest,
+                            );
+                            FrameTexture::Gpu { id, frame, state }
+                        }
+                    };
+                    if let Some(old) = self.entries.insert(
                         finished.lane,
                         Entry {
                             key: finished.key,
                             texture,
                             touched: self.clock,
+                            lease: finished.lease,
+                            gpu_lease: finished.gpu_lease,
                         },
-                    );
+                    ) {
+                        self.retired.push((self.clock, old.lease, old.gpu_lease));
+                    }
                 }
                 Err(error) => {
                     if self.errors.len() >= 64 {
@@ -154,16 +343,41 @@ impl Presenter {
                 .values()
                 .map(|e| e.texture.size()[0] * e.texture.size()[1] * 4)
                 .sum::<usize>()
-                > 128 * 1024 * 1024
+                > self.gpu_memory.usage().limit as usize
         {
             let oldest = self
                 .entries
                 .iter()
+                .filter(|(_, e)| e.touched + 1 < self.clock)
                 .min_by_key(|(_, e)| e.touched)
-                .map(|(k, _)| k.clone())
-                .unwrap();
-            self.entries.remove(&oldest);
+                .map(|(k, _)| k.clone());
+            let Some(oldest) = oldest else {
+                break;
+            };
+            if let Some(old) = self.entries.remove(&oldest) {
+                self.retired.push((self.clock, old.lease, old.gpu_lease));
+            }
         }
+    }
+    pub fn set_pressure(&mut self, active: bool) {
+        if self.pressure.swap(active, Ordering::AcqRel) == active {
+            return;
+        }
+        if active {
+            let stale: Vec<_> = self
+                .entries
+                .iter()
+                .filter(|(_, e)| e.touched + 1 < self.clock)
+                .map(|(key, _)| key.clone())
+                .collect();
+            for key in stale {
+                if let Some(entry) = self.entries.remove(&key) {
+                    self.retired
+                        .push((self.clock, entry.lease, entry.gpu_lease));
+                }
+            }
+        }
+        self.shared.1.notify_all();
     }
     pub fn is_idle(&self) -> bool {
         self.waiting.is_empty()
@@ -171,15 +385,26 @@ impl Presenter {
     pub fn has_errors(&self) -> bool {
         !self.errors.is_empty()
     }
+    pub fn configure_compute(&mut self, verified: bool, mode: u8) {
+        let changed = self.compute_verified.swap(verified, Ordering::AcqRel) != verified;
+        if self.compute_mode.swap(mode, Ordering::AcqRel) != mode || changed {
+            self.clear();
+        }
+    }
+    pub fn configure_gpu_limit(&mut self, bytes: u64) {
+        if self.gpu_memory.usage().limit != bytes {
+            self.errors.clear();
+        }
+        self.gpu_memory.configure(bytes);
+    }
     pub fn paint(
         &mut self,
         ui: &egui::Ui,
         lane: String,
-        image: &Arc<Pyramid>,
+        image: &Arc<ImageLevels>,
         rect: Rect,
         region: Region,
     ) {
-        self.clock += 1;
         let key = Key {
             source: image.id(),
             region,
@@ -188,6 +413,11 @@ impl Presenter {
             entry.touched = self.clock;
             if self.capturing {
                 self.captures.push(Capture {
+                    compute: if matches!(&entry.texture, FrameTexture::Gpu { .. }) {
+                        "GPU"
+                    } else {
+                        "CPU"
+                    },
                     source: image.id(),
                     rect,
                     clip: ui.clip_rect(),
@@ -202,6 +432,13 @@ impl Presenter {
             );
             return;
         }
+        if let Some(entry) = self.entries.get_mut(&lane) {
+            entry.touched = self.clock;
+            if let Some((coverage, uv)) = reproject(entry.key.region, region, rect) {
+                ui.painter()
+                    .image(entry.texture.id(), coverage, uv, Color32::WHITE);
+            }
+        }
         if let Some((_, error)) = self.errors.get(&lane).filter(|(failed, _)| *failed == key) {
             ui.painter().text(
                 rect.center(),
@@ -214,15 +451,74 @@ impl Presenter {
         }
         self.errors.remove(&lane);
         if self.waiting.get(&lane) != Some(&key) {
+            let pixels = region.size[0] as u64 * region.size[1] as u64;
+            let required = pixels * 80 + 4 * 1024 * 1024;
+            if required > self.memory.usage().limit || pixels * 4 > self.gpu_memory.usage().limit {
+                self.errors.insert(
+                    lane,
+                    (key, "Vista oltre il limite di memoria configurato".into()),
+                );
+                ui.ctx().request_repaint();
+                return;
+            }
+            // Make room for the next visible frame before admitting it. Retired
+            // GPU credits become available after completion in a later poll.
+            let shortage = required
+                .saturating_sub(
+                    self.memory
+                        .usage()
+                        .limit
+                        .saturating_sub(self.memory.usage().reserved),
+                )
+                .max(
+                    (pixels * 4).saturating_sub(
+                        self.gpu_memory
+                            .usage()
+                            .limit
+                            .saturating_sub(self.gpu_memory.usage().reserved),
+                    ),
+                );
+            let mut released = 0;
+            while released < shortage {
+                let victim = self
+                    .entries
+                    .iter()
+                    .filter(|(name, e)| **name != lane && e.touched + 1 < self.clock)
+                    .min_by_key(|(_, e)| e.touched)
+                    .map(|(name, _)| name.clone());
+                let Some(victim) = victim else {
+                    break;
+                };
+                let old = self.entries.remove(&victim).unwrap();
+                released += old.lease.bytes();
+                self.retired.push((self.clock, old.lease, old.gpu_lease));
+            }
             let mut shared = self.shared.0.lock().unwrap();
             shared.jobs.retain(|j| j.lane != lane);
             if shared.jobs.len() < 64
                 && (self.waiting.contains_key(&lane) || self.waiting.len() < 64)
             {
+                let Some(lease) = self.memory.try_reserve(required) else {
+                    ui.ctx()
+                        .request_repaint_after(std::time::Duration::from_millis(25));
+                    return;
+                };
+                let Some(gpu_lease) = self.gpu_memory.try_reserve(pixels * 4) else {
+                    ui.painter().text(
+                        rect.center(),
+                        egui::Align2::CENTER_CENTER,
+                        "Limite cache GPU: aumentare la quota",
+                        egui::FontId::proportional(12.),
+                        Color32::LIGHT_RED,
+                    );
+                    return;
+                };
                 shared.jobs.push_back(Job {
                     lane: lane.clone(),
                     key: key.clone(),
                     image: image.clone(),
+                    lease,
+                    gpu_lease,
                 });
                 self.waiting.insert(lane, key);
                 self.shared.1.notify_one();
@@ -232,6 +528,42 @@ impl Presenter {
             .request_repaint_after(std::time::Duration::from_millis(25));
     }
 }
+
+/// Reuse only source coverage present in the previous frame; panning must not
+/// stretch old pixels into unrelated source coordinates.
+fn reproject(previous: Region, current: Region, rect: Rect) -> Option<(Rect, Rect)> {
+    let old_end = std::array::from_fn::<_, 2, _>(|a| {
+        previous.origin[a] + previous.step[a] * previous.size[a] as f64
+    });
+    let end = std::array::from_fn::<_, 2, _>(|a| {
+        current.origin[a] + current.step[a] * current.size[a] as f64
+    });
+    let min = std::array::from_fn::<_, 2, _>(|a| previous.origin[a].max(current.origin[a]));
+    let max = std::array::from_fn::<_, 2, _>(|a| old_end[a].min(end[a]));
+    if min[0] >= max[0] || min[1] >= max[1] {
+        return None;
+    }
+    let position = |p: [f64; 2]| {
+        Pos2::new(
+            rect.min.x
+                + ((p[0] - current.origin[0]) / (end[0] - current.origin[0])) as f32 * rect.width(),
+            rect.min.y
+                + ((p[1] - current.origin[1]) / (end[1] - current.origin[1])) as f32
+                    * rect.height(),
+        )
+    };
+    let uv = |p: [f64; 2]| {
+        Pos2::new(
+            ((p[0] - previous.origin[0]) / (old_end[0] - previous.origin[0])) as f32,
+            ((p[1] - previous.origin[1]) / (old_end[1] - previous.origin[1])) as f32,
+        )
+    };
+    Some((
+        Rect::from_min_max(position(min), position(max)),
+        Rect::from_min_max(uv(min), uv(max)),
+    ))
+}
+
 impl Drop for Presenter {
     fn drop(&mut self) {
         {
@@ -242,6 +574,14 @@ impl Drop for Presenter {
         self.shared.1.notify_one();
         if let Some(worker) = self.worker.take() {
             let _ = worker.join();
+        }
+        // No new submissions can arrive after the encoder has joined. Let the
+        // device complete outstanding work and release callback-owned credits.
+        if let Some(state) = &self.render_state {
+            let _ = state.device.poll(eframe::wgpu::PollType::Wait {
+                submission_index: None,
+                timeout: Some(std::time::Duration::from_secs(5)),
+            });
         }
     }
 }
@@ -263,25 +603,43 @@ pub fn fitted(
     presenter: &mut Presenter,
     ui: &egui::Ui,
     lane: String,
-    image: &Arc<Pyramid>,
+    image: &Arc<ImageLevels>,
     area: Rect,
 ) {
-    let source = image.source();
-    let rect = fitted_rect(
-        area,
-        [source.width, source.height],
-        ui.ctx().pixels_per_point(),
-    );
+    let source = image.source_size();
+    let rect = fitted_rect(area, source, ui.ctx().pixels_per_point());
     let ppp = ui.ctx().pixels_per_point();
     let size = [
         (rect.width() * ppp).round() as u32,
         (rect.height() * ppp).round() as u32,
     ];
-    presenter.paint(
-        ui,
-        lane,
-        image,
-        rect,
-        Region::fitted([source.width, source.height], size),
-    );
+    presenter.paint(ui, lane, image, rect, Region::fitted(source, size));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn refinement_reprojects_overlap_and_never_substitutes_an_uncovered_region() {
+        let old = Region::fitted([100, 100], [100, 100]);
+        let new = Region {
+            origin: [50., 0.],
+            ..old
+        };
+        let rect = Rect::from_min_max(Pos2::ZERO, Pos2::new(100., 100.));
+        let (coverage, uv) = reproject(old, new, rect).unwrap();
+        assert_eq!(coverage.max.x, 50.);
+        assert_eq!(uv.min.x, 0.5);
+        assert!(
+            reproject(
+                old,
+                Region {
+                    origin: [100., 0.],
+                    ..old
+                },
+                rect
+            )
+            .is_none()
+        );
+    }
 }

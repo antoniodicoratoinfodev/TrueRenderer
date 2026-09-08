@@ -68,6 +68,41 @@ fn decode(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, LinearImage)> {
     Ok((info, reduced))
 }
 
+fn probe(bytes: &[u8]) -> Result<RasterInfo> {
+    let mut limits = Limits::default();
+    limits.max_image_width = Some(16384);
+    limits.max_image_height = Some(16384);
+    limits.max_alloc = Some(256 * 1024 * 1024);
+    let mut decoder = PngDecoder::with_limits(Cursor::new(bytes), limits)?;
+    let (mut width, mut height) = decoder.dimensions();
+    let orientation = decoder.orientation()?;
+    use image::metadata::Orientation;
+    if matches!(
+        orientation,
+        Orientation::Rotate90
+            | Orientation::Rotate270
+            | Orientation::Rotate90FlipH
+            | Orientation::Rotate270FlipH
+    ) {
+        std::mem::swap(&mut width, &mut height);
+    }
+    let info = RasterInfo {
+        width,
+        height,
+        source_width: width,
+        source_height: height,
+        native_bits: decoder.color_type().bits_per_pixel()
+            / decoder.color_type().channel_count() as u16,
+        format: "PNG".into(),
+        decoder: "image metadata probe".into(),
+        input_color: "Metadati · nessun raster".into(),
+        filter: "nessuno · probe".into(),
+        orientation: format!("{orientation:?}"),
+    };
+    protocol::validate_info(&info)?;
+    Ok(info)
+}
+
 pub fn serve<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     serve_with_policy(input, output, false)
 }
@@ -85,28 +120,61 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
         );
         let mut bytes = vec![0; request.source_len];
         input.read_exact(&mut bytes)?;
-        let decoded = if policy.approves_bytes(&bytes) {
-            decode(&bytes, request.max_edge)
-        } else if external {
-            #[cfg(target_os = "macos")]
-            {
-                native::decode(&bytes, request.max_edge)
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                Err(anyhow::anyhow!(
-                    "Decoder esterno non disponibile su questa piattaforma"
-                ))
-            }
-        } else {
-            Err(anyhow::anyhow!(
+        let decoded = (|| -> Result<(RasterInfo, Option<LinearImage>)> {
+            let controlled = policy.approves_bytes(&bytes);
+            ensure!(
+                controlled || external,
                 "Sorgente rifiutata: non appartiene al corpus R0 compilato nel decoder"
-            ))
-        };
+            );
+            let metadata = if controlled {
+                probe(&bytes)?
+            } else {
+                #[cfg(target_os = "macos")]
+                {
+                    native::probe(&bytes)?
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    anyhow::bail!("Decoder esterno non disponibile");
+                }
+            };
+            if request.intent == protocol::DecodeIntent::Probe {
+                return Ok((metadata, None));
+            }
+            ensure!(
+                request.intent != protocol::DecodeIntent::FullSource || request.max_edge == 0,
+                "Intent Full con scala ridotta"
+            );
+            // This backend requires a full frame even for legacy reductions.
+            ensure!(
+                metadata.width as u64 * metadata.height as u64 * 16 <= request.maximum_output_bytes,
+                "Raster oltre prenotazione"
+            );
+            let (info, raster) = if controlled {
+                decode(&bytes, request.max_edge)?
+            } else {
+                #[cfg(target_os = "macos")]
+                {
+                    native::decode(&bytes, request.max_edge)?
+                }
+                #[cfg(not(target_os = "macos"))]
+                {
+                    anyhow::bail!("Decoder esterno non disponibile");
+                }
+            };
+            ensure!(
+                [info.source_width, info.source_height]
+                    == [metadata.source_width, metadata.source_height],
+                "Dimensioni diverse dal probe"
+            );
+            Ok((info, Some(raster)))
+        })();
         match decoded {
             Ok((info, raster)) => {
                 protocol::write_control(&mut output, protocol::RESPONSE, id, &info)?;
-                protocol::write_raster(&mut output, &raster)?;
+                if let Some(raster) = raster {
+                    protocol::write_raster(&mut output, &raster)?;
+                }
             }
             Err(error) => {
                 let error: String = format!("{error:#}").chars().take(2048).collect();
@@ -152,6 +220,8 @@ mod tests {
                 &DecodeRequest {
                     source_len: source.len(),
                     max_edge: 300,
+                    intent: protocol::DecodeIntent::LegacyRaster,
+                    maximum_output_bytes: MAX_PIXELS as u64 * 16,
                 },
             )
             .unwrap();

@@ -1,0 +1,33 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_at": "2026-09-08T18:45:55.619079+00:00",
+  "cpu": "Apple M4",
+  "logical_cpus": 10,
+  "ram_bytes": 17179869184,
+  "os_version": "26.6.2",
+  "os_build": "25G83",
+  "gpu": "Apple M4 \u00b7 Metal",
+  "surface": "Bgra8Unorm",
+  "pixels_per_point": 2.0,
+  "volume": {
+    "FilesystemType": "apfs",
+    "BusProtocol": "Apple Fabric",
+    "SolidState": true,
+    "Internal": true
+  },
+  "power_source": "Now drawing from 'Battery Power'",
+  "git_base_commit": "47f36b5d1527721c1bb4a18e8b0cd9397ea9302c",
+  "uncommitted_candidate": true,
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "56edd006dc881dfd3a541a883ea27d7bc655c409f7e7531da1dc7c3eec125cbe",
+    "Contents/MacOS/tr-worker": "e09eb4b7b843e654cb1809f01986589322a641dc3ee29cfee42c951549fa4f35",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7774f8130521595cdb5d19da0255efc040c6a4febd1cf6b2d2bba72e892d0f39",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "3c44c9a685e383d77a587769572c7cc0a766b80ffae76e7b962f6c546642a1b5"
+  },
+  "decoder": "Apple ImageIO/CIRAWFilter, TR-linear-v1, full source fallback, persistent CPU-requested context; Metal-requested decode only in separate experiment",
+  "corpus": "Project-generated fixtures and 1000 distinct Bayer DNGs; no personal photographs",
+  "quality": "Cache fixtures: Full/Standard edge 256; navigation: Full edge 256; compute: identical generated linear graph CPU/GPU",
+  "os_cache": "Not flushed",
+  "limits": "Driver version follows the OS build; no separate driver memory or thermal/power trace. Renderer benchmark excludes source/cache and surface presentation; navigation excludes presentation. Not full project qualification."
+}

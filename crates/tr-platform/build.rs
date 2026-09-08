@@ -13,7 +13,7 @@ fn main() {
     let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("../../native/macos");
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let mut objects = vec![];
-    for source in ["signing.m", "xpc_bridge.m"] {
+    for source in ["signing.m", "xpc_bridge.m", "resources.m"] {
         let input = root.join(source);
         println!("cargo:rerun-if-changed={}", input.display());
         let object = out.join(format!("{source}.o"));

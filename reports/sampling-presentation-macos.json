@@ -84,9 +84,9 @@
       "passed": true,
       "rect_physical": [
         740.0,
-        515.0,
+        574.0,
         1940.0,
-        1315.0
+        1374.0
       ],
       "screenshot": "04-radial-1to1",
       "size": [
@@ -147,27 +147,27 @@
       ]
     },
     {
-      "differing_channels": 0,
-      "max_channel_error_u8": 0,
+      "differing_channels": 36,
+      "max_channel_error_u8": 1,
       "origin": [
         0.0,
         0.0
       ],
       "passed": true,
       "rect_physical": [
-        528.0,
-        373.0,
-        2153.0,
+        616.0,
+        491.0,
+        2064.0,
         1456.0
       ],
       "screenshot": "05-radial-fit",
       "size": [
-        1625,
-        1083
+        1448,
+        965
       ],
       "step": [
-        0.7384615384615385,
-        0.7386888273314867
+        0.8287292817679558,
+        0.8290155440414507
       ]
     },
     {
@@ -228,9 +228,9 @@
       "passed": true,
       "rect_physical": [
         1118.0,
-        767.0,
+        826.0,
         1562.0,
-        1063.0
+        1122.0
       ],
       "screenshot": "06-radial-37percent",
       "size": [
@@ -342,5 +342,5 @@
   "passed": true,
   "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
   "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
-  "version": "0.1.4"
+  "version": "0.1.5"
 }

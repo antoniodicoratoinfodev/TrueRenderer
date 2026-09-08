@@ -4,6 +4,7 @@ mod service;
 mod ui;
 mod verify_cache;
 mod verify_formats;
+mod verify_previews;
 mod verify_resampling;
 mod verify_xpc;
 use anyhow::{Context, Result};
@@ -32,7 +33,9 @@ fn run() -> Result<()> {
         .canonicalize()?;
     let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
     let external_smoke = args.iter().any(|a| a == "--formats-smoke");
-    let settings_smoke = args.iter().any(|a| a == "--settings-smoke");
+    let settings_smoke = args.iter().any(|a| {
+        a == "--settings-smoke" || a == "--preview-gpu-smoke" || a == "--preview-performance-smoke"
+    });
     let smoke = settings_smoke
         || external_smoke
         || sampling_smoke
@@ -49,6 +52,12 @@ fn run() -> Result<()> {
         });
     if args.iter().any(|a| a == "--verify-cache") {
         return verify_cache::run(&root, &worker);
+    }
+    if args.iter().any(|a| a == "--verify-preview-navigation") {
+        return verify_previews::navigation(&root, &worker);
+    }
+    if args.iter().any(|a| a == "--verify-previews") {
+        return verify_previews::run(&root, &worker);
     }
     if args.iter().any(|a| a == "--verify-formats") {
         return verify_formats::run(&root, &worker);

@@ -1,24 +1,41 @@
 {
   "application": "TrueRenderer",
   "cache": {
-    "bytes": 226882005,
+    "busy": 0,
+    "bytes": 467978786,
+    "coalesced_consumers": 0,
     "corrupt": 0,
-    "entries": 10,
+    "decode_jobs": 0,
+    "entries": 287,
     "evictions": 0,
     "folder": "/Users/antonio/Desktop/TrueRenderer/corpus",
-    "hits": 9,
-    "message": "Cache della cartella aggiornata",
-    "misses": 3,
+    "hits": 13,
+    "memory_pressure": "Normal",
+    "message": "Cache della cartella pronta",
+    "misses": 0,
     "temporary_bytes": 0,
-    "writes": 2
+    "worker_peak_footprint_bytes": 0,
+    "worker_peak_rss_bytes": 0,
+    "writer_yields": 0,
+    "writes": 0
   },
   "passed": true,
   "settings": {
+    "adapt_on_battery": true,
+    "compute": "Automatic",
+    "cpu_threads": 0,
     "disk_mib": 4096,
     "enabled": true,
     "free_mib": 512,
+    "gpu_mib": 0,
+    "memory_mib": 0,
+    "prefetch": "Automatic",
+    "profile": "Performance",
+    "quality": "Standard",
+    "reusable_mib": null,
+    "schema": 2,
     "temporary_mib": 2048,
     "unused_days": 30
   },
-  "version": "0.1.4"
+  "version": "0.1.5"
 }

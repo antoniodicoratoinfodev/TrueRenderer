@@ -1,8 +1,10 @@
 //! R0 private-pipe protocol, with native XPC leases in a macOS app bundle.
 //! Pipe workers retain the corpus gate; external previews require the macOS XPC bundle.
+mod resources;
 #[cfg(target_os = "macos")]
 mod xpc;
 use anyhow::{Context, Result, bail, ensure};
+pub use resources::{MemoryPressure, memory_pressure};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::{
@@ -10,45 +12,90 @@ use std::{
     io::{BufReader, BufWriter, Read, Write},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
-    sync::mpsc,
+    sync::{Arc, mpsc},
     thread,
     time::{Duration, Instant},
 };
 pub use tr_core::corpus::CorpusPolicy;
+/// Read once at service startup; other resource adapters remain unqualified.
+pub fn physical_memory_mib() -> u64 {
+    #[cfg(target_os = "macos")]
+    if let Ok(output) = Command::new("/usr/sbin/sysctl")
+        .args(["-n", "hw.memsize"])
+        .output()
+        && let Ok(bytes) = String::from_utf8_lossy(&output.stdout)
+            .trim()
+            .parse::<u64>()
+    {
+        return bytes / (1024 * 1024);
+    }
+    8192
+}
+/// Queried off the UI thread; an unavailable adapter preserves the selected profile.
+pub fn on_battery() -> bool {
+    #[cfg(target_os = "macos")]
+    return Command::new("/usr/bin/pmset")
+        .args(["-g", "batt"])
+        .output()
+        .is_ok_and(|o| {
+            o.status.success() && String::from_utf8_lossy(&o.stdout).contains("Battery Power")
+        });
+    #[cfg(not(target_os = "macos"))]
+    false
+}
 use tr_core::{
     color::LinearImage,
     protocol::{self, DecodeRequest, MAX_SOURCE, RasterInfo},
 };
 
 pub fn snapshot(path: &Path) -> Result<(Vec<u8>, String)> {
+    snapshot_bounded(path, MAX_SOURCE as u64, &|| false)
+}
+fn snapshot_bounded(
+    path: &Path,
+    maximum: u64,
+    cancelled: &impl Fn() -> bool,
+) -> Result<(Vec<u8>, String)> {
     let file = File::open(path).context("Apertura in sola lettura")?;
     ensure!(
         file.metadata()?.is_file(),
         "La sorgente non è un file regolare"
     );
     ensure!(
-        file.metadata()?.len() <= MAX_SOURCE as u64,
+        file.metadata()?.len() <= maximum.min(MAX_SOURCE as u64),
         "Limite sorgente: 256 MiB"
     );
-    let mut bytes = vec![];
-    file.take(MAX_SOURCE as u64 + 1).read_to_end(&mut bytes)?;
+    let before = file.metadata()?;
+    let length = before.len() as usize;
+    let mut bytes = vec![0; length];
+    let mut reader = &file;
+    let mut hash = Sha256::new();
+    for block in bytes.chunks_mut(1024 * 1024) {
+        ensure!(!cancelled(), "Snapshot annullato");
+        reader.read_exact(block)?;
+        hash.update(block);
+    }
     ensure!(
-        bytes.len() <= MAX_SOURCE,
-        "La sorgente è cresciuta oltre la quota"
+        observation_token(&before) == observation_token(&file.metadata()?),
+        "Sorgente cambiata durante lo snapshot"
     );
-    let digest = format!("{:x}", Sha256::digest(&bytes));
+    let digest = format!("{:x}", hash.finalize());
     // Hash applies to the exact private bytes sent to the worker, never to a later reopening.
     Ok((bytes, digest))
 }
 /// Private source bytes and their verified identity, shared by cache lookup and decode.
 /// Fields stay private so callers cannot substitute bytes after validation.
+#[derive(Clone)]
 pub struct SourceSnapshot {
-    bytes: Vec<u8>,
+    bytes: Arc<Vec<u8>>,
     digest: String,
 }
 impl SourceSnapshot {
     pub fn digest(&self) -> &str {
         &self.digest
+    }
+    pub fn byte_len(&self) -> u64 {
+        self.bytes.len() as u64
     }
 }
 pub fn observation_token(metadata: &std::fs::Metadata) -> String {
@@ -126,9 +173,11 @@ impl std::fmt::Display for SourceRejected {
 impl std::error::Error for SourceRejected {}
 struct Work {
     id: u64,
-    bytes: Vec<u8>,
+    bytes: Arc<Vec<u8>>,
     edge: u32,
-    result: mpsc::SyncSender<Result<(RasterInfo, LinearImage)>>,
+    probe: bool,
+    maximum_output_bytes: u64,
+    result: mpsc::SyncSender<Result<(RasterInfo, Option<LinearImage>)>>,
 }
 enum Owner {
     Pipe(Child),
@@ -320,6 +369,14 @@ impl Broker {
                         &DecodeRequest {
                             source_len: work.bytes.len(),
                             max_edge: work.edge,
+                            intent: if work.probe {
+                                protocol::DecodeIntent::Probe
+                            } else if work.edge == 0 {
+                                protocol::DecodeIntent::FullSource
+                            } else {
+                                protocol::DecodeIntent::LegacyRaster
+                            },
+                            maximum_output_bytes: work.maximum_output_bytes,
                         },
                     )?;
                     input.write_all(&work.bytes)?;
@@ -343,7 +400,16 @@ impl Broker {
                             "Il worker ha restituito una risoluzione ridotta al posto dell'originale"
                         );
                     }
-                    let raster = protocol::read_raster(&mut output, &info)?;
+                    ensure!(
+                        info.width as u64 * info.height as u64 * 16 <= work.maximum_output_bytes
+                            || work.probe,
+                        "Output oltre prenotazione"
+                    );
+                    let raster = if work.probe {
+                        None
+                    } else {
+                        Some(protocol::read_raster(&mut output, &info)?)
+                    };
                     Ok((info, raster))
                 })();
                 let failed = result
@@ -380,9 +446,18 @@ impl Broker {
         expected_digest: &str,
         cancelled: impl Fn() -> bool,
     ) -> Result<SourceSnapshot> {
+        self.prepare_snapshot_bounded(path, expected_digest, MAX_SOURCE as u64, &cancelled)
+    }
+    pub fn prepare_snapshot_bounded(
+        &self,
+        path: &Path,
+        expected_digest: &str,
+        maximum_bytes: u64,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<SourceSnapshot> {
         ensure!(!cancelled(), "Decodifica annullata");
         let before = observation_token(&path.metadata()?);
-        let (bytes, digest) = snapshot(path)?;
+        let (bytes, digest) = snapshot_bounded(path, maximum_bytes, cancelled)?;
         ensure!(!cancelled(), "Decodifica annullata");
         ensure!(
             digest == expected_digest
@@ -396,7 +471,10 @@ impl Broker {
             self.policy.approves(&digest) || self.bundled_xpc,
             "File esterni: aprire il bundle macOS con decoder XPC isolati; il worker su pipe accetta solo il corpus R0"
         );
-        Ok(SourceSnapshot { bytes, digest })
+        Ok(SourceSnapshot {
+            bytes: Arc::new(bytes),
+            digest,
+        })
     }
     pub fn decode_snapshot_cancellable(
         &mut self,
@@ -404,6 +482,43 @@ impl Broker {
         edge: u32,
         cancelled: impl Fn() -> bool,
     ) -> Result<Decoded> {
+        self.decode_snapshot_bounded(source, edge, protocol::MAX_SOURCE as u64 * 4, cancelled)
+    }
+    pub fn decode_snapshot_bounded(
+        &mut self,
+        source: SourceSnapshot,
+        edge: u32,
+        maximum_output_bytes: u64,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Decoded> {
+        let digest = source.digest.clone();
+        let (info, raster) =
+            self.process_snapshot(source, edge, false, maximum_output_bytes, cancelled)?;
+        Ok(Decoded {
+            info,
+            raster: raster.context("Pixel assenti")?,
+            digest,
+            transport: self.transport(),
+            worker_pid: self.statistics.worker_pid,
+        })
+    }
+    pub fn probe_snapshot(
+        &mut self,
+        source: &SourceSnapshot,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<RasterInfo> {
+        Ok(self
+            .process_snapshot(source.clone(), 0, true, 0, cancelled)?
+            .0)
+    }
+    fn process_snapshot(
+        &mut self,
+        source: SourceSnapshot,
+        edge: u32,
+        probe: bool,
+        maximum_output_bytes: u64,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<(RasterInfo, Option<LinearImage>)> {
         ensure!(!cancelled(), "Decodifica annullata");
         let SourceSnapshot { bytes, digest } = source;
         let external = !self.policy.approves(&digest);
@@ -437,6 +552,8 @@ impl Broker {
                 id: self.next_id,
                 bytes,
                 edge,
+                probe,
+                maximum_output_bytes,
                 result: tx,
             })
             .is_err()
@@ -468,14 +585,10 @@ impl Broker {
                         self.statistics.forced_stops += 1;
                         return Err(error);
                     }
-                    self.statistics.completed_jobs += 1;
-                    return Ok(Decoded {
-                        info,
-                        raster,
-                        digest,
-                        transport: self.transport(),
-                        worker_pid: self.statistics.worker_pid,
-                    });
+                    if !probe {
+                        self.statistics.completed_jobs += 1;
+                    }
+                    return Ok((info, raster));
                 }
                 Ok(Err(error)) => {
                     if error.downcast_ref::<SourceRejected>().is_none() {

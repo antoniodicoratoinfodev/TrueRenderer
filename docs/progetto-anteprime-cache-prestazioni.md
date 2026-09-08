@@ -1,10 +1,13 @@
 # TrueRenderer — progetto di anteprime, cache e prestazioni
 
+> Aggiornamento implementazione, 8 settembre 2026: versione 0.1.5. Livelli autonomi, qualità, cache v2, writer asincrono, budget, priorità P0–P6, prefetch direzionale/adattivo, pressione macOS e compute sono implementati. Il confronto scalare/parallelo/GPU dello stadio renderer è misurato su 100 prove per caso. Stato dettagliato e requisiti ancora aperti in [PLAN.md](../PLAN.md), [avanzamento](avanzamento.md) e [ADR 0006](adr/0006-anteprime-residenza-compute.md). Restano anche lavoro applicativo (recovery device e revisione sorgenti residenti) e qualifica integrata: il documento rimane presente finché l'intera richiesta e i gate pertinenti non sono conclusi.
+
+
 Data: 7 settembre 2026. Revisione del progetto: 2, dopo verifica del ramo pubblico.
 
 **Stato: progetto dei prossimi incrementi.** Questo documento risponde alla richiesta del titolare di migliorare la navigazione di cartelle con circa 1.000 RAW, scegliere fra anteprima standard e qualità piena, configurare i limiti delle cache e sfruttare intensamente CPU/GPU durante il lavoro utile. Distingue le funzioni già presenti nella 0.1.4 da quelle ancora da implementare; non contiene nuovi benchmark eseguiti durante questa revisione.
 
-Baseline verificata: applicazione **0.1.4**, commit `4e5d07b398c183603048a0f2f2e880b52adbd7d5`, che comprende la cache di `59bf9d7` e le ottimizzazioni di `da97b33`. La prima stesura era basata sulla 0.1.3; questa revisione recepisce anche [ADR 0005](adr/0005-cache-cartella.md), inclusa la scelta autorizzata della cache accanto alle foto. R0–R4 rimangono aperti secondo [PLAN.md](../PLAN.md). I badge di pipeline **Standard/Riferimento** restano subordinati ai loro gate. Le anteprime esterne sono abilitate soltanto nel bundle macOS XPC/App Sandbox, come in [ADR 0004](adr/0004-formati-esterni-e-pubblicazione.md).
+Baseline verificata: applicazione **0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, che comprende la cache di `2dad0b2` e le ottimizzazioni di `a901942`. La prima stesura era basata sulla 0.1.3; questa revisione recepisce anche [ADR 0005](adr/0005-cache-cartella.md), inclusa la scelta autorizzata della cache accanto alle foto. R0–R4 rimangono aperti secondo [PLAN.md](../PLAN.md). I badge di pipeline **Standard/Riferimento** restano subordinati ai loro gate. Le anteprime esterne sono abilitate soltanto nel bundle macOS XPC/App Sandbox, come in [ADR 0004](adr/0004-formati-esterni-e-pubblicazione.md).
 
 La checklist dei prossimi incrementi è contenuta in §13: il documento è leggibile e pubblicabile autonomamente, senza richiedere aggiornamenti contestuali degli altri file del piano.
 
@@ -510,12 +513,12 @@ Le fasi sono incrementi verificabili; i primi miglioramenti RAM/CPU non devono a
 | F — GPU e decoder Apple | Compute WGSL, staging/residenza, contesti Core Image persistenti/Metal, adattamento | Confronti CPU/GPU e prove native/XPC; miglioramento per i percorsi abilitati |
 | G — Qualifica integrata | Tutti i profili/qualità, 1.000 RAW, cache fredda/calda, limiti bassi, driver/display | Report riproducibili, limiti dichiarati, documentazione utente e pacchetto verificato |
 
-Checklist autonoma di questa proposta, tutta ancora da implementare/verificare:
+Checklist della proposta aggiornata durante l’implementazione; le fasi parziali restano aperte:
 
 - [ ] A: baseline 0.1.4 e budget/priorità minimi verificati.
-- [ ] B: artefatti residenti autonomi e consegna prima della persistenza verificati.
-- [ ] C: due qualità e migrazione preferenze consegnate con prove.
-- [ ] D: nuovi artefatti nella cache per cartella, senza duplicare quote o indebolire controlli.
+- [x] B: artefatti residenti autonomi e consegna prima della persistenza verificati.
+- [x] C: due qualità e migrazione preferenze consegnate con prove; Standard usa il fallback esplicito di sviluppo completo temporaneo.
+- [x] D: nuovi artefatti nella cache per cartella, senza duplicare quote o indebolire controlli.
 - [ ] E: scheduler completo e parallelismo CPU con beneficio misurato.
 - [ ] F: compute GPU e percorso Apple verificati per gli stadi abilitati.
 - [ ] G: qualifica integrata e report di tutti i gate §12.

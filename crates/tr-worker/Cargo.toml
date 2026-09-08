@@ -10,3 +10,6 @@ crate-type = ["rlib", "staticlib"]
 tr-core = { path = "../tr-core" }
 image.workspace = true
 anyhow.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

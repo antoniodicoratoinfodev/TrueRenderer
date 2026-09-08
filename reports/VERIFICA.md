@@ -1,10 +1,37 @@
 # TrueRenderer — verifica del prototipo R0
 
-Aggiornamento: 7 settembre 2026. Build interna **0.1.4**, installata in `dist/TrueRenderer.app`.
+Aggiornamento: 8 settembre 2026. Build interna **0.1.5** installata e verificata su macOS arm64; qualifica integrata del progetto aperta.
+
+## Anteprime 0.1.5 — prove dell'implementazione
+
+`scripts/verify.sh` ha superato **62 test Rust** (55 ordinari + 7 integrazioni esplicite), rustfmt, Clippy con `-D warnings`, sei controlli IPC e 24 casi sinusoidali con 1:1 esatto. Le regressioni includono lease concorrenti, livelli autonomi, CPU scalare/NEON/parallela bit-exact, migrazione preferenze, cache v1/v2 con quota comune, corruzione/link/contesa, cancellazione fra batch, precedenza lettori, P0–P6/FIFO/promozioni durante lookup, prefetch e pressione macOS. Esecuzione nativa fuori dal sandbox aggiuntivo del terminale; XPC dell'app resta App Sandbox. Una regressione di arresto invia 40 salvataggi senza consumare il canale di 16 risultati: tutti risultano committati, con WAL chiusi e database integri quando Service viene rilasciato. Evidenza: `verification.log`.
+
+Il controllo del filtro e dell'uscita SDR GPU passa su 1.593.672 canali lineari entro `1e-5 + 1e-4*abs(cpu)`, errore massimo 0,00006103515625; altrettanti canali sRGB8 entro un livello. Copre dimensioni dispari, alpha, crop, bordi, 1:1 e valori firmati fino a 1000. Cancellazione prima del submit e crediti fino al completamento verificati. Non è qualifica ICC/ΔE00/display. Evidenza: `preview-quality-gpu-macos.json`.
+
+Contesto Core Image richiesto CPU riutilizzato bit-exact su 17 fixture. Richiesta separata Metal conforme nei casi provati, senza prova di backend effettivo diverso o beneficio generale: il decode produttivo resta CPU. Evidenza: `preview-native-compute-macos.json`.
+
+| Stadio renderer, stessa immagine/qualità | CPU scalare | CPU parallela | GPU | IC 95% parallela/scalare | IC 95% GPU/parallela |
+|---|---:|---:|---:|---:|---:|
+| 256×171 | 3.934 ms | 3.039 ms | 1.350 ms | 0.771–0.774 | 0.437–0.450 |
+| 1200×800 | 70.392 ms | 60.857 ms | 8.219 ms | 0.863–0.866 | 0.134–0.136 |
+
+100 terne con ordine ruotato per caso e 1.000 bootstrap appaiati. Criterio IC superiore < 0,95 passato per entrambe le accelerazioni nei due casi. CPU include filtro e codifica SDR; GPU submit e completamento, input residenti dopo il primo upload riportato separatamente. Esclusi sorgente/hash/cache/decode ed effettiva presentazione egui. **Non è un guadagno end-to-end dell'app né un p95 evento→frame**. Cache OS non svuotata. Dati grezzi, intervalli e hash del binario misurato: `preview-compute-performance-macos.json`. Misura precedente alla sola correzione della chiusura Service/catalogo; renderer e harness invariati.
+
+La preparazione di **1.000 DNG sintetici distinti 512×384**, senza preview incorporata, termina in **345.507 s** inclusa persistenza. I 106 ritorni con nuovo pool hanno mediana **9.483 ms**, zero nuovi decode, hash sorgente verificato e zero crediti di lavoro residui. Pulizia iniziale separata dalle espulsioni della corsa. La misura precede la sola correzione della chiusura Service/catalogo: questo harness usa direttamente DecodePool e non istanzia Service; gli hash dei binari misurati sono inclusi nel report. Evidenza: `preview-navigation-macos.json`; misura precedente conservata in `preview-navigation-before-batching-macos.json`. Le prove coprono consegna CPU, non GUI né la matrice di RAW reali 12/24/45 MP. Il generatore iniziale 256×192 era rifiutato da ImageIO; i dati usati nelle misure completate sono 512×384.
+
+Footprint aggregato host/XPC massimo **1,109,149,976 byte** nel test cache e **915,212,544 byte** nel viewer, entro 2 GiB con zero campioni incompleti. Intervalli massimi 39.15/38.10 ms. Include memoria GPU attribuita ai processi, non driver indipendenti o picchi fra campioni; le somme possono duplicare pagine condivise. Report `preview-memory-cache-macos.json` e `preview-memory-viewer-macos.json`.
+
+Il crash intermittente wgpu durante `Surface::configure` è stato riprodotto e corretto eliminando submit concorrenti dal worker: encoding asincrono, submit UI, qualifica iniziale prima del loop. Passati **20 avvii/transizioni** consecutivi sul bundle finale, senza retry dei fallimenti (`preview-lifecycle-macos.json`). Non è fault injection di device loss.
+
+`scripts/test-installed-macos.py` passa sul bundle finale: cache, 19 fixture e 6 controlli formati, XPC con due PID e rifiuto della fault injection nel servizio normale, Finder, screenshot, impostazioni, copia autonoma con database integri e binari identici, firma ad hoc/arm64. Evidenze: `installed-verification.log`, `package-macos.json`, report nativi. Ambiente e hash in `preview-environment-macos.json`. Inventario **212 package/330 notice** verificato contro il lockfile.
+
+Restano recovery del device, osservazione delle sorgenti residenti modificate/rimosse, corpus reale autorizzato, p95/p99 integrati, pressione fisica/matrice completa dei profili, driver/display/altri OS. Il progetto anteprime e R0–R4 rimangono aperti secondo PLAN/ADR 0006; il file della proposta è conservato. Baseline 0.1.4 separata in `preview-baseline-macos.json`, con solo il percorso temporaneo anonimizzato.
+
+I paragrafi seguenti sono lo storico delle versioni precedenti. I report con nomi condivisi vengono rigenerati dalla suite corrente; i confronti storici dedicati restano conservati.
 
 ## Ottimizzazioni dopo il primo push — pacchetto finale 0.1.4
 
-Il commit cache `59bf9d7` è stato pubblicato prima di profilare e modificare ulteriormente le prestazioni; il secondo incremento verificato è pubblicato in `da97b33`. Attivati SHA-256 hardware con rilevamento CPU/fallback software e riuso dello snapshot privato fra cache lookup e decode. Sono passati **40 test Rust** (35 ordinari + 5 integrazioni esplicite), fmt/Clippy, 6 controlli IPC, 19 fixture e 6 controlli aggiuntivi dei formati, 24 sinusoidi, XPC, Finder, copia autonoma e firma/hash del pacchetto. Tutte le 14 regioni di screenshot continuano a dare zero differenze di canale. Evidenze aggiornate: `verification.log`, `installed-verification.log`, `package-macos.json` e report nativi. Il pannello `13-cache-settings.png` è stato controllato visivamente.
+Il commit cache `2dad0b2` è stato pubblicato prima di profilare e modificare ulteriormente le prestazioni; il secondo incremento verificato è pubblicato in `a901942`. Attivati SHA-256 hardware con rilevamento CPU/fallback software e riuso dello snapshot privato fra cache lookup e decode. Sono passati **40 test Rust** (35 ordinari + 5 integrazioni esplicite), fmt/Clippy, 6 controlli IPC, 19 fixture e 6 controlli aggiuntivi dei formati, 24 sinusoidi, XPC, Finder, copia autonoma e firma/hash del pacchetto. Tutte le 14 regioni di screenshot continuano a dare zero differenze di canale. Evidenze aggiornate: `verification.log`, `installed-verification.log`, `package-macos.json` e report nativi. Il pannello `13-cache-settings.png` è stato controllato visivamente.
 
 | Sorgente generata | Mediana calda prima | Mediana calda finale | Guadagno caldo | Fredda finale, scrittura inclusa |
 |---|---:|---:|---:|---:|
