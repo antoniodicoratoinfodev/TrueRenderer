@@ -1,0 +1,37 @@
+{
+  "passed": true,
+  "recorded_at": "2026-09-09T00:33:34.740731+00:00",
+  "cases": [
+    {
+      "case": "--source-change-smoke",
+      "passed": true,
+      "exit_code": 0,
+      "report": "preview-source-changes-macos.json",
+      "elapsed_seconds": 1.5452721118927002,
+      "library_integrity": "ok"
+    },
+    {
+      "case": "--device-loss-smoke",
+      "passed": true,
+      "exit_code": 0,
+      "report": "preview-device-recovery-macos.json",
+      "elapsed_seconds": 0.9364340305328369,
+      "library_integrity": "ok"
+    },
+    {
+      "case": "--device-loss-twice-smoke",
+      "passed": true,
+      "exit_code": 1,
+      "report": "preview-device-recovery-bounded-macos.json",
+      "elapsed_seconds": 0.8378410339355469,
+      "library_integrity": "ok"
+    }
+  ],
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "9672fee28a1223bf9cd3040d591a0bef2c032181d84a3838a370a31b238fc4f8",
+    "Contents/MacOS/tr-worker": "e09eb4b7b843e654cb1809f01986589322a641dc3ee29cfee42c951549fa4f35",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b3d3bf040d4d04b50c174fdc678c2a5b3103431e880432c06897a95bf426f18c",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "47dbc7d0f5f84c06fee62684e13137289a43f3623adc491a54d1febb95288999"
+  },
+  "scope": "Generated sources only; real device.destroy callbacks with one recovery and stop on second loss. Does not qualify physical driver resets or OOM."
+}

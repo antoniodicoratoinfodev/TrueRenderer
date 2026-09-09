@@ -1,0 +1,14 @@
+{
+  "admission_limit_bytes": 2147483648,
+  "application": "TrueRenderer",
+  "completed_cases": [],
+  "failed_asset_index": 0,
+  "failure": "Memoria richiesta 1603 MiB; limite 2048 MiB, occupata/prenotata 460 MiB. Aumentare il limite o liberare le viste.",
+  "originals_unchanged": true,
+  "passed": false,
+  "peak_reserved_bytes": 616984646,
+  "requested_memory_mib": 0,
+  "scope": "Failed cold-delivery qualification on authorized copies; not a throughput or p95 claim.",
+  "version": "0.1.5",
+  "working_credits_after_shutdown": 0
+}

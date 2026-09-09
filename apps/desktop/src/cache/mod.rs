@@ -102,7 +102,7 @@ impl Manager {
             pressure: AtomicI8::new(-1),
             battery: std::sync::atomic::AtomicBool::new(false),
             fingerprint: format!(
-                "{}:{}:{}:Apple-TR-linear-v1:fp32-premultiplied-Rec2020",
+                "{}:{}:{}:Apple-TR-linear-v1:raw-detection-v2:fp32-premultiplied-Rec2020",
                 env!("CARGO_PKG_VERSION"),
                 tr_core::resample::VERSION,
                 os

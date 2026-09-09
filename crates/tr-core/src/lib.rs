@@ -89,6 +89,8 @@ pub struct Item {
     pub name: String,
     pub bytes: u64,
     pub digest: String,
+    /// Best-effort filesystem observation, separate from verified content identity.
+    pub observation: String,
     pub approved: bool,
     pub annotation: Annotation,
     pub revision: u64,

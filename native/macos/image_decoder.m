@@ -21,6 +21,31 @@ static BOOL extent_ok(CGSize size, uint64_t limit) {
     return isfinite(size.width) && isfinite(size.height) && size.width > 0 && size.height > 0
         && size.width <= 32768 && size.height <= 32768 && size.width*size.height <= (double)limit;
 }
+// ImageIO can classify TIFF-container NEFs as public.tiff and expose only IFD0
+// (the embedded 160x120 thumbnail). CIRAWFilter also accepts ordinary bitmaps,
+// so a non-nil filter/nativeSize alone does NOT establish a RAW decode.
+static CIRAWFilter *raw_filter(NSData *data, NSString *name, UTType *type) {
+    if ([type conformsToType:UTTypeRAWImage]) {
+        CIRAWFilter *filter=[CIRAWFilter filterWithImageData:data identifierHint:name];
+        return filter.decoderVersion.length ? filter : nil;
+    }
+    if (![type conformsToType:UTTypeTIFF]) return nil;
+    static NSArray<NSString *> *hints;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSMutableArray *supported=[NSMutableArray array];
+        for (NSString *identifier in CFBridgingRelease(CGImageSourceCopyTypeIdentifiers())) {
+            if ([[UTType typeWithIdentifier:identifier] conformsToType:UTTypeRAWImage])
+                [supported addObject:identifier];
+        }
+        hints=[supported copy];
+    });
+    for (NSString *hint in hints) {
+        CIRAWFilter *filter=[CIRAWFilter filterWithImageData:data identifierHint:hint];
+        if (filter.decoderVersion.length) return filter;
+    }
+    return nil;
+}
 int tr_image_probe(const uint8_t *bytes, size_t length, uint64_t max_pixels,
                     TRImageInfo *info, char *error, size_t error_size) {
     @autoreleasepool { @try {
@@ -37,9 +62,9 @@ int tr_image_probe(const uint8_t *bytes, size_t length, uint64_t max_pixels,
         if (orientation < 1 || orientation > 8) orientation=1;
         CGSize size=CGSizeMake([properties[(__bridge NSString *)kCGImagePropertyPixelWidth] doubleValue],
             [properties[(__bridge NSString *)kCGImagePropertyPixelHeight] doubleValue]);
-        BOOL raw=type && [type conformsToType:UTTypeRAWImage];
+        CIRAWFilter *filter=raw_filter(data,name,type);
+        BOOL raw=filter != nil || [type conformsToType:UTTypeRAWImage];
         if (raw) {
-            CIRAWFilter *filter=[CIRAWFilter filterWithImageData:data identifierHint:name];
             size=filter ? filter.nativeSize : CGSizeZero;
         }
         size_t frames=CGImageSourceGetCount(source);
@@ -50,7 +75,7 @@ int tr_image_probe(const uint8_t *bytes, size_t length, uint64_t max_pixels,
         if (orientation >= 5) { double swap=size.width; size.width=size.height; size.height=swap; }
         info->width=(uint32_t)size.width; info->height=(uint32_t)size.height;
         info->orientation=orientation; info->frames=(uint32_t)frames; info->raw=raw;
-        info->bits=[properties[(__bridge NSString *)kCGImagePropertyDepth] unsignedIntValue];
+        info->bits=raw ? 0 : [properties[(__bridge NSString *)kCGImagePropertyDepth] unsignedIntValue];
         snprintf(info->format,sizeof(info->format),"%s",raw ? "RAW" : "ImageIO");
         snprintf(info->decoder,sizeof(info->decoder),"Apple metadata probe");
         return 0;
@@ -76,7 +101,8 @@ void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
         NSNumber *bits = properties[(__bridge NSString *)kCGImagePropertyDepth];
         uint32_t orientation = [properties[(__bridge NSString *)kCGImagePropertyOrientation] unsignedIntValue];
         if (orientation < 1 || orientation > 8) orientation = 1;
-        BOOL raw = type && [type conformsToType:UTTypeRAWImage];
+        CIRAWFilter *filter=raw_filter(result.data,typeName,type);
+        BOOL raw = filter != nil || [type conformsToType:UTTypeRAWImage];
         BOOL allowed = raw || [type conformsToType:UTTypeJPEG] || [type conformsToType:UTTypePNG]
             || [type conformsToType:UTTypeTIFF] || [type conformsToType:UTTypeGIF]
             || [type conformsToType:UTTypeBMP] || [type conformsToType:UTTypeHEIC]
@@ -87,13 +113,13 @@ void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
             CFRelease(source); message(error,error_size,@"Formato, numero di pagine/fotogrammi o dimensioni non supportati (max 64 Mi pixel, 32768 per lato)"); return NULL;
         }
         info->frames=(uint32_t)frames; info->raw=raw; info->orientation=orientation;
-        info->bits=bits ? bits.unsignedIntValue : 0;
+        // IFD0 depth can describe an embedded 8-bit thumbnail, not the sensor.
+        info->bits=raw ? 0 : (bits ? bits.unsignedIntValue : 0);
         NSString *format = raw ? @"RAW" : ([type conformsToType:UTTypeJPEG] ? @"JPEG" :
             [type conformsToType:UTTypePNG] ? @"PNG" : [type conformsToType:UTTypeTIFF] ? @"TIFF" :
             [type conformsToType:UTTypeGIF] ? @"GIF" : [type conformsToType:UTTypeBMP] ? @"BMP" :
             [typeName containsString:@"webp"] ? @"WebP" : @"HEIF/HEIC");
         if (raw) {
-            CIRAWFilter *filter = [CIRAWFilter filterWithImageData:result.data identifierHint:typeName];
             if (!filter || !extent_ok(filter.nativeSize,max_pixels)) {
                 CFRelease(source); message(error,error_size,@"RAW non supportato dal decoder Apple installato, oppure oltre quota"); return NULL;
             }

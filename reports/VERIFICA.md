@@ -1,8 +1,76 @@
 # TrueRenderer — verifica del prototipo R0
 
-Aggiornamento: 8 settembre 2026. Build interna **0.1.5** installata e verificata su macOS arm64; qualifica integrata del progetto aperta.
+Aggiornamento: 9 settembre 2026. Build interna **0.1.5** installata e verificata su macOS arm64; qualifica integrata del progetto aperta.
 
-## Anteprime 0.1.5 — prove dell'implementazione
+## Continuazione della navigazione del 9 settembre 2026
+
+Corretto il lavoro che proseguiva dopo l’abbandono di una foto: snapshot/hash/cache e attesa dell’ammissione verificano ora la domanda corrente. Probe e decode nativi già iniziati terminano mantenendo processo e lease; il cambio qualità della stessa sorgente conserva lo sviluppo condivisibile. Prima della consegna si escludono i consumatori abbandonati e si liberano anche le richieste originarie dal registro pending. Un annullamento rimane riprovabile, senza errore permanente in UI.
+
+**Codice:** 71 test Rust (61 ordinari + 10 integrazioni), 2 regressioni Python, fmt/Clippy, 6 prove IPC e 24 sinusoidi passati. Le quattro nuove regressioni coprono annullamento prima dell’ammissione, lookup già bloccato sui crediti, cambio foto durante probe e cambio qualità sulla stessa sorgente; verificano il numero di sviluppi, il processo ancora vivo e i crediti restituiti. La prima esecuzione nel sandbox non aveva accesso a Core Image; la suite nella sessione macOS nativa è passata. Log locale `var/continuation-navigation-20260909-143737/verify-native.log`.
+
+**RAW e memoria:** [30 NEF autorizzati](preview-real-raw-macos.json) passati entro 2 GiB: 60 coppie Standard/Piena fredde/calde bit-exact, 30 riaperture senza decode, tre dettagli e due richieste fredde simultanee. Originali invariati, 1.815.038.714 byte di picco prenotato e zero crediti residui. [Misura isolata](preview-navigation-memory-real-raw-macos.json): footprint massimo 2.018.970.672 byte, RSS 1.965.047.808 byte, 7.042 campioni completi, intervallo massimo 54,63 ms. La misura comprende tutti i processi del bundle isolato e non qualifica driver indipendenti, picchi fra campioni o altri RAW; non è un confronto A/B né una latenza evento→frame.
+
+**Recupero:** [tre prove native](preview-review-native-macos.json) passate sul candidato: sorgente modificata/rimossa/ripristinata, prima perdita del device recuperata e seconda perdita con arresto atteso; database integri. I quattro binari corrispondono a quelli della misura RAW.
+
+**Bundle finale:** `dist/TrueRenderer.app`, precedente in `var/package-history/TrueRenderer-0.1.5-before-navigation-20260909-144830.app`. Suite completa installata passata: XPC, Finder, formati/cache, impostazioni, copia autonoma con database integri e firma/hash. Le 14 regioni di screenshot passano entro la soglia prestabilita di un livello sRGB8 (massimo osservato 1, con 36 canali differenti nella vista Adatta); 1:1 resta esatto. I quattro binari coincidono con quelli delle prove RAW e recupero. [Riepilogo e hash dei report](preview-navigation-continuation-macos.json); log `var/continuation-navigation-20260909-143737/installed.log`.
+
+Restano aperti corpus reale 1.000 RAW e matrici 12/24/45 MP, pressione fisica, p95/p99 evento→frame, A/B integrato, driver/display/altri OS e gate R0–R4. Le evidenze della continuazione precedente sono conservate separatamente e riportate sotto.
+
+## Continuazione verificata del 9 settembre 2026
+
+Base Git `e609310`, modifiche locali non pubblicate. Corretti rilascio dei buffer compressi, ammissione per fasi, geometria dei mip e contesa dei decode pesanti; massimo due snapshot pronti. Default 2 GiB e preferenze utente invariati. Corrette le verifiche affinché errori, interruzioni o carichi falliti non conservino un precedente successo come esito corrente.
+
+**Controlli del codice passati:** 67 test Rust (60 ordinari + 7 integrazioni), 2 regressioni Python dei report, rustfmt, Clippy, 6 prove IPC e 24 casi sinusoidali con 1:1 esatto. Log locale `var/preview-review/verify-concurrent.log`. Passati anche cache v2, integrazione dei due XPC e rifiuto del comando di fault injection. Le [tre prove native](preview-native-before-navigation-macos.json) verificano cambio/rimozione/ripristino sorgente, una ricreazione del device e arresto atteso alla seconda perdita; database integri. Non sono reset fisici del driver o OOM.
+
+| Prova reale, limite esplicito 2 GiB | Esito finale isolato |
+|---|---|
+| 30 NEF Nikon D750, 6016×4016 o orientamento equivalente | Passati; copie private, originali invariati |
+| Miniature Standard/Piena a freddo e caldo | 60 coppie, fp32 bit-exact |
+| Riapertura cache da nuovo pool | 30 hit, zero nuovi decode |
+| Dettaglio | Standard 2048 e Piena nativa su tre file |
+| Due richieste fredde visibili simultanee | Passate |
+| Picco crediti prenotati | 1.815.038.714 byte; zero residui allo shutdown |
+| Picco RSS aggregato host/XPC | 2.066.481.152 byte |
+| Picco physical footprint aggregato | 2.100.284.608 byte (circa 1,96 GiB) |
+| Campionamento | 7.245 campioni, zero incompleti, massimo tre processi; intervallo massimo 355 ms |
+
+Evidenze: [carico RAW finale](preview-real-raw-before-navigation-macos.json), [memoria finale](preview-memory-real-raw-macos.json), [ambiente e identità dei binari](preview-review-environment-macos.json). Ogni misura ora avvia una copia univoca del bundle, conteggiando tutti i suoi processi XPC. I tempi includono snapshot/hash/cache o decode fino agli artefatti CPU; escludono la presentazione GUI. Cache OS non svuotata, una prova per caso, nessun p95/p99 o A/B integrato. RSS e footprint sono campionati e possono duplicare pagine condivise: non misurano separatamente driver/sistema o picchi fra campioni.
+
+**Esiti negativi conservati:** la [precedente prova estesa](preview-memory-overlap-failure-macos.json) registrava 2.591.724.536 byte e cinque processi, a fronte di un [carico funzionalmente passato](preview-real-raw-overlap-functional-macos.json). La successiva diagnosi per PID ha rilevato un'altra istanza host già aperta dallo stesso percorso con un suo decoder. Quel totale era contaminato e non prova il consumo del solo carico; la nuova prova isolata lo sostituisce senza cancellarne l'evidenza. La modifica sperimentale alla terminazione XPC è stata rimossa. Separatamente, il [test a 512 MiB](preview-memory-low-budget-macos.json) registra correttamente un [rifiuto di ammissione](preview-real-raw-failure-macos.json), originali invariati e zero crediti residui: l'host di questa regressione precede l'ultima estensione della concorrenza, come mostrano gli hash, mentre i decoder coincidono.
+
+**Pacchetto finale:** `dist/TrueRenderer.app` aggiornato; precedente in `var/package-history/TrueRenderer-0.1.5-before-continuation-20260909-142049.app`. Suite installata completamente passata: Finder, formati/cache, 14 regioni di screenshot, impostazioni, XPC, rilocazione con database integri e firma/hash. Log `var/preview-review/installed-final-continuation.log`; report `package-macos.json` e `relocation-check.json`. I quattro binari installati sono identici a quelli della misura RAW/memoria e delle tre prove native.
+
+**Qualifica ancora aperta:** 1.000 RAW reali, altri modelli e 12/24/45 MP, carichi misti/tutte le viste, pressione fisica, p95/p99 evento→frame, A/B integrato, energia/termica, driver/display e altri OS. Il margine osservato sotto 2 GiB è limitato e non autorizza una garanzia universale. Le qualità Anteprima Standard/Piena non abilitano Standard/Riferimento; R0–R4 restano aperti.
+
+## Revisione locale del 9 settembre 2026 — sessione precedente, prima della continuazione
+
+Modifiche salvate nel working tree, base `e609310`; nessun nuovo commit o push. Bundle aggiornato in `dist/TrueRenderer.app`, versione interna 0.1.5. I risultati dell’8 settembre nella sezione successiva restano storici.
+
+Corretti tre problemi: invalidazione delle sorgenti richieste/residenti modificate, rimosse o ripristinate; ricreazione grafica limitata a un tentativo con conservazione di selezione, undo e salvataggi; riconoscimento dei NEF che ImageIO presentava come TIFF, evitando di usare la miniatura 160×120 al posto del RAW nativo. Il fingerprint `raw-detection-v2` rende obsolete le precedenti derivazioni. La profondità del sensore rimane sconosciuta quando non è disponibile: non viene dedotta dagli 8 bit della miniatura.
+
+**Verifiche passate nella sessione precedente:** 64 test Rust (57 ordinari + 7 integrazioni esplicite), rustfmt, Clippy, 6 controlli IPC e 24 casi sinusoidali con 1:1 esatto. Suite completa del bundle installato: XPC, cache, 19 fixture formati e controlli aggiuntivi, Finder, screenshot/campionamento, impostazioni, copia autonoma, integrità database e firma/hash. Cache v2: 6 casi freddi, 30 hit caldi, zero decode RAW a caldo, fp32 bit-exact e zero crediti residui. Log locali: `var/preview-review/verify-final.log`, `installed-final.log`, `native-review-final.log`, `preview-cache-final.log`.
+
+Le tre prove native della revisione passano sul bundle installato: modifica/rimozione/ripristino della sorgente, perdita del device con recupero, seconda perdita con arresto atteso (exit 1). Database integri in tutti i casi. Sono callback reali di `device.destroy`, non una qualifica di reset fisici del driver o OOM. Se il backend finestra ha già propagato un panic, si termina con diagnostica e completamento dei salvataggi accettati, senza tentare di riusare winit. Evidenza: [prove native della revisione](preview-review-before-phases-native-macos.json).
+
+**RAW reali autorizzati:** 30 NEF distinti Nikon D750, 6016×4016 o equivalente orientato. Lavorazione su copie private temporanee, originali verificati invariati; nessuna fotografia, percorso o digest delle foto pubblicato. Il test usa esplicitamente **3072 MiB**, senza modificare le preferenze dell’utente.
+
+| Prova | Esito |
+|---|---|
+| Miniature Standard, mediana fredda / calda | 2,917 s / 34,36 ms |
+| Miniature Piena, mediana fredda / calda | 2,898 s / 36,53 ms |
+| Standard dopo nuovo pool | 39,31 ms, 30 hit, zero nuovi decode |
+| Residenza miniature | 2.016.048 byte per qualità |
+| Dettaglio su tre foto, Standard / Piena | 32.216.368 / 515.421.488 byte residenti |
+| Picco crediti prenotati, limite 3 GiB | 2.163.241.030 byte; zero crediti residui |
+| Picco footprint aggregato host/XPC | 2.058.652.816 byte; zero campioni incompleti |
+
+Report: [RAW reali](preview-real-raw-before-phases-macos.json), [memoria](preview-memory-before-phases-macos.json), [ambiente e hash dei binari](preview-review-before-phases-environment-macos.json). Tempi esplorativi: cache OS non svuotata, alcune attività di build/regressione sovrapposte, nessun A/B isolato né p95 evento→frame. Il bundle misurato precede soltanto le ultime correzioni grafiche e dell’isolamento dei dati diagnostici; worker e decoder XPC sono identici nei byte al bundle finale. Il campionamento non include allocazioni indipendenti dei driver o picchi fra campioni e può contare due volte pagine condivise.
+
+**Fallimento storico a 2 GiB, prima della correzione per fasi:** un NEF da 24 MP viene rifiutato correttamente dall’ammissione conservativa, prima di superare il budget. Il [report di fallimento funzionale](preview-real-raw-before-phases-failure-macos.json) conserva `passed: false`, originali invariati e zero crediti residui. Questa prova verifica il rifiuto sicuro, non il funzionamento del carico entro il budget predefinito. Serve ridurre/qualificare i temporanei o un percorso RAW ridotto/regionale; non abbassare artificialmente le stime.
+
+Restano aperti 1.000 RAW reali e matrice 12/24/45 MP, p95/p99 e A/B evento→frame, pressione fisica e memoria driver, reset/OOM reali, display e altri OS. Specifica e ADR sono integrati nell’appendice E delle due architetture; piano e registro aggiornati. Per riprendere: [consegna della sessione](../docs/ripresa-codex.md).
+
+## Anteprime 0.1.5 — prove dell'8 settembre
 
 `scripts/verify.sh` ha superato **62 test Rust** (55 ordinari + 7 integrazioni esplicite), rustfmt, Clippy con `-D warnings`, sei controlli IPC e 24 casi sinusoidali con 1:1 esatto. Le regressioni includono lease concorrenti, livelli autonomi, CPU scalare/NEON/parallela bit-exact, migrazione preferenze, cache v1/v2 con quota comune, corruzione/link/contesa, cancellazione fra batch, precedenza lettori, P0–P6/FIFO/promozioni durante lookup, prefetch e pressione macOS. Esecuzione nativa fuori dal sandbox aggiuntivo del terminale; XPC dell'app resta App Sandbox. Una regressione di arresto invia 40 salvataggi senza consumare il canale di 16 risultati: tutti risultano committati, con WAL chiusi e database integri quando Service viene rilasciato. Evidenza: `verification.log`.
 

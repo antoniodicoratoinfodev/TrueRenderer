@@ -1,0 +1,15 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "mode": "real-raw",
+  "passed": true,
+  "incomplete_samples": 0,
+  "limit_bytes": 3221225472,
+  "peak_sum_rss_bytes": 2042314752,
+  "peak_sum_physical_footprint_bytes": 2058652816,
+  "maximum_processes_in_sample": 3,
+  "sample_count": 6777,
+  "maximum_sample_gap_seconds": 0.09905720900000858,
+  "elapsed_seconds": 211.64922816700002,
+  "scope": "Sampled host plus embedded XPC processes in this test bundle, using libproc RSS and physical footprint; sums can count shared pages twice. Includes process-attributed unified GPU memory, not independently measured driver/system allocations or sub-sampling peaks. Authorized real RAW copies; explicit test memory budget, user settings unchanged. Not the 1000-real-RAW qualification."
+}

@@ -1,9 +1,9 @@
 # TrueRenderer — piano di sviluppo
 
-Aggiornato: 8 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
+Aggiornato: 9 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
 Il nome corrente è **TrueRenderer**; TrueVision è il nome precedente.
 
-Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `../TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
+Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
 
 ## Obiettivo e regole
 
@@ -108,27 +108,35 @@ Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini
 
 ## Progetto di incremento — anteprime, cache e prestazioni
 
-Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la navigazione con cache RAM/SSD, scelta fra Anteprima Standard e Piena, limiti di memoria configurabili e uso intenso di CPU/GPU durante il lavoro utile. Specifica dettagliata: [progetto di anteprime, cache e prestazioni](docs/progetto-anteprime-cache-prestazioni.md), revisione 2 pubblicata nel commit `a2db2ab`.
+Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la navigazione con cache RAM/SSD, scelta fra Anteprima Standard e Piena, limiti di memoria configurabili e uso intenso di CPU/GPU durante il lavoro utile. Specifica dettagliata: [progetto di anteprime, cache e prestazioni](docs/progetto-anteprime-cache-prestazioni.md), revisione 2 pubblicata nel commit `a2db2ab`, ora revisione 4 integrata nell’appendice E dell’architettura.
 
 **Stato: implementazione 0.1.5 disponibile; qualifica integrata aperta.** Baseline 0.1.4 conservata in `reports/preview-baseline-macos.json`; decisioni applicate e limiti in [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md). Anteprima Standard/Piena rimane distinta dai badge di pipeline Standard/Riferimento. Nessun gate R0–R4 è chiuso da questo incremento.
 
 - [x] A, modelli: qualità/richieste, migrazione compatibile, budget/lease, ammissione prima delle allocazioni, preferenze RAM/GPU/CPU e adattamento all'alimentazione.
 - [x] A, baseline locale: conservare misure della build 0.1.4 senza confondere il caricamento dell'intera piramide con le nuove miniature autonome.
+- [x] Revisione locale 9 settembre: 30 NEF Nikon D750 a risoluzione nativa, Standard/Piena fredde/calde e riapertura cache verificati con budget esplicito 3 GiB; 64 test Rust e suite nativa finale passati. Nessun nuovo commit/push. Ripresa in [docs/ripresa-codex.md](docs/ripresa-codex.md).
 - [ ] A, qualifica RAW: baseline e target di throughput su corpus reale autorizzato 12/24/45 MP.
+- [x] Continuazione 9 settembre: ridurre la durata dei buffer compressi, stimare il massimo delle fasi e contenere snapshot/decode pesanti. 67 test Rust e 30 NEF a 2 GiB, incluse due richieste simultanee, passati; footprint campionato massimo 2.100.284.608 byte in un bundle isolato dalle altre istanze.
+- [x] Verificare e aggiornare il bundle della continuazione: cache, XPC, sorgenti/device, suite Finder/rilocazione/database/firma passati; quattro binari identici alla prova RAW. Conservare il pacchetto precedente e sincronizzare piano, registro e architetture.
+- [ ] Budget RAW full-frame: estendere la qualifica a 12/24/45 MP, carichi misti, tutte le viste e pressione fisica; valutare decode ridotto/regionale per i carichi non ammessi. I 30 NEF di una fotocamera non chiudono il requisito generale.
 - [x] B: livelli e frame autonomi, writer asincrono limitato in byte, I/O cache indipendente dai due decoder, consegna prima della persistenza.
 - [x] C: Standard/Piena persistenti, override per foto/1:1, provenienza e completezza, intent e probe; fallback dichiarato di sviluppo completo temporaneo per Standard.
 - [ ] C, ottimizzazione opzionale del backend: qualificare sviluppo RAW ridotto Apple; non attivato nella 0.1.5.
 - [x] D: artefatti v2 lossless a blocchi bounded nella stessa quota/lock v1, letture autonome, verifica SHA sorgente, pubblicazione descrittore per ultimo, GC e minimo recuperabile per miniature; regressioni cache negative.
 - [x] E, percorso disponibile: domanda visibile, promozione, cancellazione dei consumatori obsoleti, raggruppamento di uno sviluppo per richieste compatibili, prefetch dopo stabilità, pausa/preparazione esplicita; pool Rayon e NEON verificato bit-exact.
 - [x] E, scheduler macOS: P0–P6/FIFO, promozioni durante lookup, prefetch direzionale con ritardo adattivo, notifiche pressione OS e precedenza locale ai lettori durante writer/GC; regressioni passate.
+- [x] E, continuazione navigazione 9 settembre: annullare lookup/ammissioni non più richiesti, completare le chiamate native in corso senza riciclarle al cambio vista, riusare la stessa sorgente al cambio qualità e non consegnare consumatori abbandonati. Quattro regressioni aggiuntive; 71 test Rust e suite del codice passati.
 - [x] E, confronto dello stadio renderer: 100 prove CPU scalare/parallela/GPU per ciascuna di due geometrie, grafi identici; CPU parallela bit-exact e beneficio misurato con intervallo bootstrap.
+- [x] Consegna della continuazione navigazione: 30 NEF a 2 GiB nuovamente passati, tre prove native di recupero e suite completa del bundle installato; pacchetto precedente conservato. Evidenze in `reports/preview-navigation-continuation-macos.json`.
 - [ ] E, qualifica integrata: beneficio CPU scalare/parallela evento→frame, pressione fisica e adattatori sugli altri OS.
 - [x] F, percorso disponibile: compute WGSL separabile e display SDR, pipeline/input persistenti, texture diretta, controlli capability/quote, fallback CPU e lease fino al completamento GPU; controllo numerico prima dell'abilitazione.
 - [x] F, Apple: riuso del contesto CPU provato; esperimento Metal distinto conforme sui casi sintetici. Metal nel decoder rimane disabilitato finché backend e beneficio non sono qualificati.
-- [ ] F, completamento: perdita device/ricreazione controllata e matrice driver/display; beneficio integrato sulle navigazioni reali e nei diversi profili.
-- [ ] §10, sorgenti residenti: osservazione delle modifiche/rimozioni durante la vista e indicazione esplicita del frame precedente. Il nuovo caricamento verifica già snapshot e SHA completo; manca l'invalidazione automatica di una vista già in RAM.
+- [x] F, recupero applicativo: invalidare il presenter, ricreare una sola volta finestra/device, riverificare il compute e conservare servizio, salvataggi, undo e selezione. Arresto esplicito alla seconda perdita o se il backend finestra ha già propagato un panic.
+- [ ] F, qualifica: reset fisici, OOM, matrice driver/display e beneficio integrato sulle navigazioni reali nei diversi profili.
+- [x] §10, sorgenti residenti: monitor fuori UI dei file richiesti/residenti, invalidazione di RAM/presentazione e risultati tardivi su modifica/rimozione/ripristino, stato esplicito e annotazioni conservate. Token Unix più robusto; osservazione best-effort, non revisione coerente v1.
 - [ ] G: completare qualifica di tutti i gate del §12, 1.000 RAW reali, scenari freddi/caldi/disabilitati/sotto pressione, p95/p99 evento→frame e misure dei driver. I report sintetici dichiarano il proprio perimetro e non sostituiscono questi gate.
 - [x] Pubblicare l’incremento verificato richiesto dal titolare: commit `1b98b4f` su `origin/main`, 62 test Rust e suite nativa del bundle passati; documenti e licenza LibRaw aggiornati, requisiti residui espliciti.
+- [x] Integrare l’intero progetto e ADR 0005–0006 nell’appendice E delle architetture della radice e di `docs/`; correggere percorsi e sincronizzazione, preservando il testo utente e il backup originale.
 - [ ] Eliminare `docs/progetto-anteprime-cache-prestazioni.md` al completamento dell'intera richiesta, dopo aver trasferito risultati e decisioni nel registro. Il documento è conservato perché restano requisiti aperti.
 
 Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `reports/VERIFICA.md` e `docs/avanzamento.md`.

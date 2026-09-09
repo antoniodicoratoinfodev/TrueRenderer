@@ -99,6 +99,10 @@ pub struct TrueRenderer {
     image_focus_ids: HashSet<egui::Id>,
     grid_columns: i32,
     sample_source: String,
+    source_monitor: crate::source_monitor::Monitor,
+    watched_sources: HashSet<String>,
+    source_status: HashMap<String, String>,
+    context: egui::Context,
 }
 impl TrueRenderer {
     pub fn new(
@@ -202,6 +206,7 @@ impl TrueRenderer {
             cc.wgpu_render_state.clone(),
         );
         let folder = root.join("corpus");
+        let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
             state: State::default(),
             cache_settings: service.cache.settings(),
@@ -264,6 +269,10 @@ impl TrueRenderer {
             image_focus_ids: HashSet::new(),
             grid_columns: 1,
             sample_source: String::new(),
+            source_monitor,
+            context: ctx.clone(),
+            watched_sources: HashSet::new(),
+            source_status: HashMap::new(),
         };
         if let Some(path) = open {
             app.open_path(path);
@@ -271,6 +280,82 @@ impl TrueRenderer {
             app.open_folder(folder);
         }
         app
+    }
+    pub fn detach_graphics(&mut self) {
+        // Drop the old presenter and join its encoder before creating a device.
+        // CPU artifacts, pending saves, selection and undo history remain alive.
+        self.presenter = tr_render::presenter::Presenter::new(
+            egui::Context::default(),
+            self.service.cache.memory.clone(),
+            None,
+        );
+    }
+    pub fn rebind_graphics(&mut self, cc: &eframe::CreationContext<'_>) {
+        cc.egui_ctx.set_theme(egui::Theme::Dark);
+        cc.egui_ctx
+            .set_style_of(egui::Theme::Dark, self.context.style_of(egui::Theme::Dark));
+        self.context = cc.egui_ctx.clone();
+        self.service.wake.rebind(cc.egui_ctx.clone());
+        self.presenter = tr_render::presenter::Presenter::new(
+            cc.egui_ctx.clone(),
+            self.service.cache.memory.clone(),
+            cc.wgpu_render_state.clone(),
+        );
+        // Old qualification messages must not qualify the newly created device.
+        while self.gpu_rx.try_recv().is_ok() {}
+        self.gpu_passed = false;
+        if let Some(gpu) = &cc.wgpu_render_state {
+            self.adapter = format!(
+                "{} · {:?}",
+                gpu.adapter.get_info().name,
+                gpu.adapter.get_info().backend
+            );
+            self.surface = format!("{:?}", gpu.target_format);
+            match tr_render::preview_compute::check(&gpu.device, &gpu.queue) {
+                Ok(check) => {
+                    self.gpu_passed = check.failures == 0 && check.display_failures == 0;
+                    self.gpu_status = if self.gpu_passed {
+                        "GPU ricreata e riverificata".into()
+                    } else {
+                        "GPU ricreata · calcolo CPU, verifica compute non superata".into()
+                    };
+                }
+                Err(error) => self.gpu_status = format!("GPU ricreata · calcolo CPU: {error:#}"),
+            }
+        }
+        self.presenter.configure_compute(
+            self.gpu_passed,
+            self.service.cache.settings().compute.code(),
+        );
+        self.status = "Dispositivo grafico ripristinato · sessione e annotazioni conservate".into();
+        cc.egui_ctx.request_repaint();
+    }
+    pub fn graphics_test_ready(&self) -> bool {
+        !self.scanning
+            && !self.fatal
+            && self.presenter.is_idle()
+            && !self.demand.is_empty()
+            && self.demand.iter().all(|key| self.cache.contains_key(key))
+            && self.state.pending.is_empty()
+    }
+    pub fn graphics_test_save(&mut self) -> i8 {
+        let rating = if self
+            .state
+            .current_item()
+            .is_some_and(|item| item.annotation.rating == 4)
+        {
+            3
+        } else {
+            4
+        };
+        self.command(Command::Rate(rating));
+        rating
+    }
+    pub fn graphics_test_state(&self) -> serde_json::Value {
+        serde_json::json!({"current":self.state.current,"selected":self.state.selected,
+            "rating":self.state.current_item().map(|item| item.annotation.rating),
+            "undo_available":self.undo_available,"gpu_verified":self.gpu_passed,
+            "pending":self.state.pending.len()})
     }
     fn open_path(&mut self, path: PathBuf) {
         if path.is_dir() {
@@ -298,6 +383,9 @@ impl TrueRenderer {
             .generation
             .store(self.generation, Ordering::Relaxed);
         self.cache.clear();
+        self.watched_sources.clear();
+        self.source_status.clear();
+        self.source_monitor.watch(self.generation, vec![]);
         self.presenter.clear();
         self.pending_images.clear();
         self.full_overrides.clear();
@@ -369,6 +457,7 @@ impl TrueRenderer {
         );
     }
     fn ensure_image_priority(&mut self, item: &Item, edge: u32, priority: PreviewPriority) {
+        self.watched_sources.insert(item.id.clone());
         if !item.approved {
             return;
         }
@@ -551,6 +640,21 @@ impl TrueRenderer {
         }
     }
     fn flush_demand(&mut self) {
+        let mut watched = self.watched_sources.clone();
+        watched.extend(self.cache.keys().map(|(id, _)| id.clone()));
+        self.source_monitor.watch(
+            self.generation,
+            self.state
+                .items
+                .iter()
+                .filter(|item| watched.contains(&item.id))
+                .map(|item| crate::source_monitor::Watch {
+                    id: item.id.clone(),
+                    path: item.path.clone(),
+                    observation: item.observation.clone(),
+                })
+                .collect(),
+        );
         self.pending_images.retain(|key| self.demand.contains(key));
         self.requested_at
             .retain(|key, _| self.pending_images.contains(key));
@@ -671,7 +775,76 @@ impl TrueRenderer {
         }
         self.state.transform.set_zoom(1.);
     }
+    fn apply_source_changes(&mut self, changes: Vec<crate::source_monitor::Change>) {
+        let changed: HashSet<_> = changes.iter().map(|change| change.id.clone()).collect();
+        let sources: HashSet<_> = self
+            .cache
+            .iter()
+            .filter(|((id, _), _)| changed.contains(id))
+            .map(|(_, cached)| cached.pyramid.id())
+            .collect();
+        // Invalidate the decode epoch before accepting any queued completions.
+        // This is a source revision change, not a navigation/view generation.
+        self.generation += 1;
+        self.service
+            .generation
+            .store(self.generation, Ordering::Release);
+        self.pending_images.clear();
+        self.last_demand.clear();
+        self.demand_jobs.clear();
+        self.promoted.clear();
+        self.requested_at.clear();
+        self.cache.retain(|(id, _), _| !changed.contains(id));
+        self.presenter.invalidate_sources(&sources);
+        self.errors
+            .retain(|key, _| !changed.iter().any(|id| key.starts_with(&format!("{id}:"))));
+        self.sample = None;
+        for change in changes {
+            let Some(item) = self
+                .state
+                .items
+                .iter_mut()
+                .find(|item| item.id == change.id)
+            else {
+                continue;
+            };
+            item.observation.clone_from(&change.observation);
+            item.bytes = change.bytes;
+            // External sources retain the broker's unverified-token contract.
+            // The pipe corpus retains its pinned digest and never gains authority.
+            if item.digest.starts_with("unverified:") && change.available {
+                item.digest.clone_from(&change.observation);
+            }
+            item.approved = change.available
+                && change.bytes <= tr_core::protocol::MAX_SOURCE as u64
+                && (tr_platform::CorpusPolicy::default().approves(&item.digest)
+                    || std::env::current_exe()
+                        .ok()
+                        .is_some_and(|p| tr_platform::external_decoding_available(&p)));
+            self.source_status.insert(
+                item.id.clone(),
+                if change.available {
+                    "Sorgente modificata · aggiornamento anteprima…".into()
+                } else {
+                    "Sorgente non disponibile · anteprima precedente rimossa".into()
+                },
+            );
+        }
+        // A queued batch may contain old Item clones.
+        for queued in &mut self.rebuild {
+            if let Some(item) = self.state.items.iter().find(|item| item.id == queued.id) {
+                *queued = item.clone();
+            }
+        }
+        self.status = "Sorgenti cambiate: anteprime invalidate; annotazioni conservate".into();
+    }
     fn poll(&mut self, ctx: &egui::Context) {
+        while let Ok((generation, changes)) = self.source_monitor.changes.try_recv() {
+            if generation != self.generation {
+                continue;
+            }
+            self.apply_source_changes(changes);
+        }
         let settings = self.service.cache.settings();
         let gpu_mib = if settings.gpu_mib == 0 {
             256
@@ -775,6 +948,7 @@ impl TrueRenderer {
                     }
                     match *result {
                         Ok(decoded) => {
+                            self.source_status.remove(&id);
                             self.cache.insert(
                                 (id, request),
                                 CachedImage {
@@ -1559,6 +1733,9 @@ impl TrueRenderer {
         }
     }
     fn paint_view(&mut self, ui: &mut egui::Ui, item: &Item, id: &str) {
+        if let Some(status) = self.source_status.get(&item.id) {
+            ui.colored_label(AMBER, status);
+        }
         let fitted_edge = (ui.available_width().max(ui.available_height())
             * ui.ctx().pixels_per_point())
         .ceil()
@@ -1912,8 +2089,78 @@ impl TrueRenderer {
             });
         }
     }
+    fn source_change_smoke(&mut self, ctx: &egui::Context) {
+        let finish = |passed: bool, stage: u8, generation: u64| {
+            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),
+                "passed":passed,"stage":stage,"generation":generation,
+                "scope":"Native viewer on generated PNG: replace, remove and restore while resident, reject old decode epoch, preserve saved rating. Polling observation is best-effort, not a coherent snapshot under arbitrary concurrent writers."});
+            let _ = std::fs::write(
+                self.root.join("reports/preview-source-changes-macos.json"),
+                serde_json::to_vec_pretty(&report).unwrap(),
+            );
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+        };
+        if self.started.elapsed() > Duration::from_secs(60) || self.fatal {
+            finish(false, self.smoke_stage, self.generation);
+            return;
+        }
+        let Some(item) = self.state.current_item().cloned() else {
+            return;
+        };
+        let ready = self.demand.iter().any(|key| key.0 == item.id)
+            && self.demand.iter().all(|key| self.cache.contains_key(key))
+            && self.presenter.is_idle();
+        let replacement = self.root.join("corpus/04_Frequenze_radiali.png");
+        match self.smoke_stage {
+            0 if ready => {
+                self.command(Command::Rate(4));
+                self.smoke_stage = 1;
+            }
+            1 if self.state.pending.is_empty() && item.annotation.rating == 4 => {
+                std::fs::copy(&replacement, &item.path).unwrap();
+                self.smoke_stage = 2;
+            }
+            2 if self.generation >= 2 && ready => {
+                let expected = tr_platform::snapshot(&replacement).unwrap().1;
+                if self
+                    .cache
+                    .iter()
+                    .filter(|((id, _), _)| *id == item.id)
+                    .any(|(_, c)| c.digest != expected)
+                {
+                    finish(false, self.smoke_stage, self.generation);
+                    return;
+                }
+                std::fs::remove_file(&item.path).unwrap();
+                self.smoke_stage = 3;
+            }
+            3 if self.generation >= 3 && !item.approved => {
+                if self.cache.keys().any(|(id, _)| *id == item.id) {
+                    finish(false, self.smoke_stage, self.generation);
+                    return;
+                }
+                std::fs::copy(&replacement, &item.path).unwrap();
+                self.smoke_stage = 4;
+            }
+            4 if self.generation >= 4 && ready => {
+                finish(
+                    item.annotation.rating == 4
+                        && self.errors.is_empty()
+                        && !self.presenter.has_errors(),
+                    self.smoke_stage,
+                    self.generation,
+                );
+            }
+            _ => {}
+        }
+        ctx.request_repaint_after(Duration::from_millis(50));
+    }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
         if !self.smoke {
+            return;
+        }
+        if std::env::args().any(|arg| arg == "--source-change-smoke") {
+            self.source_change_smoke(ctx);
             return;
         }
         if self.settings_smoke {
@@ -2077,6 +2324,7 @@ impl eframe::App for TrueRenderer {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.frame_number += 1;
+        self.watched_sources.clear();
         self.demand.clear();
         self.primary_demand.clear();
         self.viewer_prefetch_edge = 0;

@@ -70,6 +70,10 @@ This is an internal arm64 build with an ad hoc signature, tested on macOS 26.6.2
 
 `G` grid, `E` preview, `C` comparison, arrow keys to change image. `Z` toggles Fit and 1:1, `Cmd+1` gives physical 1:1, and the wheel and dragging control zoom and pan. `0`–`5` set the rating, `X` marks a rejection, `6`–`9` apply labels. `Cmd+Z` undo, `Cmd+F` search, `I` inspector, `T` filmstrip, `F` fullscreen, `Esc` back to the grid. Edits and undo on a multi-selection currently apply per image rather than as one atomic batch.
 
+Changed or missing source files now invalidate requested and resident previews automatically. The app keeps annotations and reports when the previous preview has been removed. A lost graphics device triggers one controlled window/device recreation, preserving the catalog service and session; a second loss, or an unrecoverable window-backend panic, ends the session with a native diagnostic.
+
+The review also fixes TIFF-container Nikon NEFs being mistaken for their embedded thumbnails. RAW detection now requires an actual Apple RAW decoder, and old cache entries from the previous detection pipeline are not reused. Compressed buffers are released earlier, admission accounts for successive allocation phases, and heavy decodes share a bounded queue. A local test of 30 Nikon D750 NEFs, including two simultaneous requests, passed at the unchanged 2 GiB budget with a sampled host/XPC footprint of 2,100,284,608 bytes. Other cameras, mixed workloads, memory pressure and reduced or regional RAW decoding remain unqualified; this measurement is not an OS-enforced memory cap.
+
 ## Lossless disk cache
 
 Opening a writable image folder creates a hidden subfolder beside the photographs:

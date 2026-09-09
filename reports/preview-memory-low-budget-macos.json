@@ -1,0 +1,26 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_at": "2026-09-09T00:58:50.814280+00:00",
+  "mode": "real-raw",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "e0f0a47781a996256ee1d7c0a10a266a92eba9b3b9dd74157da06f641a3bd7ea",
+    "Contents/MacOS/tr-worker": "29c7d9c0c7c7961da2c56582cc208c30ee4902ef352257e0738d773aa0d9db4d",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+  },
+  "passed": false,
+  "workload_exit_code": 1,
+  "timed_out": false,
+  "incomplete_samples": 0,
+  "host_and_xpc_observed": true,
+  "limit_bytes": 536870912,
+  "peak_sum_rss_bytes": 371769344,
+  "peak_sum_physical_footprint_bytes": 458147472,
+  "maximum_processes_in_sample": 2,
+  "sample_count": 159,
+  "maximum_sample_gap_seconds": 0.039484458,
+  "status": "completed",
+  "elapsed_seconds": 5.534948417,
+  "scope": "Sampled host plus embedded XPC processes in this test bundle, using libproc RSS and physical footprint; sums can count shared pages twice. Includes process-attributed unified GPU memory, not independently measured driver/system allocations or sub-sampling peaks. Authorized real RAW copies; explicit test memory budget, user settings unchanged. Not the 1000-real-RAW qualification."
+}

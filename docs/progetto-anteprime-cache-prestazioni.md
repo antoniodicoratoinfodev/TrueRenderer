@@ -1,15 +1,26 @@
 # TrueRenderer — progetto di anteprime, cache e prestazioni
 
-> Aggiornamento implementazione, 8 settembre 2026: versione 0.1.5. Livelli autonomi, qualità, cache v2, writer asincrono, budget, priorità P0–P6, prefetch direzionale/adattivo, pressione macOS e compute sono implementati. Il confronto scalare/parallelo/GPU dello stadio renderer è misurato su 100 prove per caso. Stato dettagliato e requisiti ancora aperti in [PLAN.md](../PLAN.md), [avanzamento](avanzamento.md) e [ADR 0006](adr/0006-anteprime-residenza-compute.md). Restano anche lavoro applicativo (recovery device e revisione sorgenti residenti) e qualifica integrata: il documento rimane presente finché l'intera richiesta e i gate pertinenti non sono conclusi.
+> Revisione 4, verifica del codice locale dell’8–9 settembre 2026: specifica integrata nell'appendice E delle due architetture del progetto. La 0.1.5 contiene già livelli autonomi, qualità Standard/Piena, budget, cache v2, writer asincrono, scheduler/prefetch e compute CPU/GPU. La revisione aggiunge osservazione delle sorgenti residenti, recupero grafico, correzione dell'ammissione RAW e verifiche resistenti a risultati obsoleti; mantiene separati implementazione, prove locali e qualifica ancora aperta.
 
+**Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni passano soltanto dal bundle macOS XPC/App Sandbox secondo ADR 0004.
 
-Data: 7 settembre 2026. Revisione del progetto: 2, dopo verifica del ramo pubblico.
+La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [PLAN.md](../PLAN.md), [avanzamento](avanzamento.md), [ADR 0006](adr/0006-anteprime-residenza-compute.md) e [verifiche](../reports/VERIFICA.md).
 
-**Stato: progetto dei prossimi incrementi.** Questo documento risponde alla richiesta del titolare di migliorare la navigazione di cartelle con circa 1.000 RAW, scegliere fra anteprima standard e qualità piena, configurare i limiti delle cache e sfruttare intensamente CPU/GPU durante il lavoro utile. Distingue le funzioni già presenti nella 0.1.4 da quelle ancora da implementare; non contiene nuovi benchmark eseguiti durante questa revisione.
+La fonte rimane questo file, insieme ad ADR 0005–0006; `scripts/sync-docs.py` ne integra l'intero contenuto nell'architettura della radice e in quella sotto `docs/`, oltre al registro. Le future modifiche vanno sincronizzate insieme al piano. Il backup originale v1.2 rimane immutato.
 
-Baseline verificata: applicazione **0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, che comprende la cache di `2dad0b2` e le ottimizzazioni di `a901942`. La prima stesura era basata sulla 0.1.3; questa revisione recepisce anche [ADR 0005](adr/0005-cache-cartella.md), inclusa la scelta autorizzata della cache accanto alle foto. R0–R4 rimangono aperti secondo [PLAN.md](../PLAN.md). I badge di pipeline **Standard/Riferimento** restano subordinati ai loro gate. Le anteprime esterne sono abilitate soltanto nel bundle macOS XPC/App Sandbox, come in [ADR 0004](adr/0004-formati-esterni-e-pubblicazione.md).
+### Esito della revisione tecnica
 
-La checklist dei prossimi incrementi è contenuta in §13: il documento è leggibile e pubblicabile autonomamente, senza richiedere aggiornamenti contestuali degli altri file del piano.
+| Tema | Esito e limite |
+|---|---|
+| RAM/SSD | Corretto separare pixel residenti e catalogo. `ImageLevels` stacca i livelli piccoli; il writer limitato in byte conserva gli stessi lease dei dati trattenuti. Una miniatura non richiede una piramide completa residente. |
+| Qualità | Standard e Piena sono distinte da assurance e completezza. Standard usa attualmente sviluppo nativo completo temporaneo e riduzione; nessuna promessa di demosaic ridotto più veloce. |
+| Cache v1/v2 | Lossless RGBA32F, checksum e quota comune per cartella corretti. I record v2 non sono tile sorgente né un codec compresso; non qualificano gigapixel. ADR 0005 documenta la storia v1, ADR 0006 il percorso interattivo v2. |
+| Budget | Rilascio anticipato dei buffer compressi, massimo delle fasi, mip esatti, massimo due snapshot pronti e serializzazione dei decode pesanti. I 30 NEF D750 passano a 2 GiB, incluse due richieste simultanee; footprint campionato 2.100.284.608 byte. Default e baseline 384 MiB invariati. La precedente necessità di 3 GiB è conservata nei report storici; altre camere, carichi misti, pressione e driver restano da qualificare. Nessun tetto kernel è garantito. |
+| Prefetch/CPU | P0–P6, ritardo 100–500 ms, I/O distinto e Rayon/NEON implementati. Il ritardo usa consegna CPU recente; non misura la latenza evento→frame. AVX2, controllo termico e alcuni adattamenti restano da implementare/qualificare. |
+| GPU | Viewer compute e presentazione diretta disponibili, piramide CPU e decoder Apple richiesto software. Un fallimento compute con device sano permette CPU; perdere il device di presentazione richiede la ricreazione della finestra. |
+| Sorgenti cambiate | Monitor fuori UI e writer SQLite, ogni 500 ms sui file richiesti/residenti; invalidazione delle copie interessate e dei risultati tardivi. Su Unix il token comprende device/inode/ctime oltre a size/mtime; resta best-effort, con SHA completo al nuovo caricamento. |
+| Riconoscimento RAW | Corretto un bug trovato sui NEF Nikon D750: ImageIO identificava TIFF/miniatura. Probe e decode cercano un decoder RAW effettivo per i contenitori TIFF; il fingerprint cache cambia. Il report esige provenienza RAW e dimensioni native. |
+| Prove | Corpus sintetico e A/B del solo renderer già presenti; aggiunte prove native su sorgenti cambiate, recupero GPU e RAW reali autorizzati. Report e limiti effettivi in `reports/VERIFICA.md`; nessuna equivalenza con 1.000 RAW o p95 evento→frame. |
 
 ## 1. Decisione e confronto con il codice attuale
 
@@ -259,7 +270,7 @@ Se si introduce un codec compresso esterno, la decompressione passa dal worker i
 
 ### 7.1 Descrivere la domanda delle viste
 
-La UI pubblica un `ViewDemand` compatto quando cambiano selezione, area visibile, ordinamento, filtro, zoom, DPI o qualità. Contiene asset/revisione, ruolo della vista, regione sorgente in f64, dimensioni fisiche, qualità e scadenza. `state.visible` oggi identifica l'elenco filtrato: non confonderlo con le sole celle effettivamente sullo schermo.
+La UI pubblica un `ViewDemand` compatto quando cambiano selezione, area visibile, ordinamento, filtro, zoom, DPI o qualità. Contiene asset/revisione, ruolo della vista, regione sorgente in f64, dimensioni fisiche, qualità e scadenza. `state.visible` identifica l'elenco filtrato: non confonderlo con le sole celle effettivamente sullo schermo.
 
 Tre generazioni distinte:
 
@@ -267,7 +278,7 @@ Tre generazioni distinte:
 - `view_generation`: domanda visuale corrente; rende obsoleti i consumatori senza riciclare un servizio XPC a ogni scroll.
 - `settings_generation`: qualità/contratto display/impostazioni che cambiano la richiesta; impedisce l'arrivo tardivo di un risultato incompatibile.
 
-La chiave del lavoro identifica l'artefatto, non il singolo consumatore. Richieste equivalenti da griglia e filmstrip condividono decode e blocchi quando compatibili. Un gruppo per asset, stesso snapshot, ricetta e dominio coordina le richieste: un Full già in corso può produrre anche i derivati Standard ammessi dal contratto, mentre un decode Standard ridotto non soddisfa Full. Condividere prima le dipendenze utili; dimensioni o regioni diverse richiedono una verifica geometrica, non una deduplica per solo asset. Se una miniatura già in coda diventa la foto aperta, promuovere il job e le sue dipendenze; la deduplicazione non deve lasciarlo bloccato in priorità bassa. È un limite dell'attuale `pending_images` da correggere.
+La chiave del lavoro identifica l'artefatto, non il singolo consumatore. Richieste equivalenti da griglia e filmstrip condividono decode e blocchi quando compatibili. Un gruppo per asset, stesso snapshot, ricetta e dominio coordina le richieste: un Full già in corso può produrre anche i derivati Standard ammessi dal contratto, mentre un decode Standard ridotto non soddisfa Full. Condividere prima le dipendenze utili; dimensioni o regioni diverse richiedono una verifica geometrica, non una deduplica per solo asset. Se una miniatura già in coda diventa la foto aperta, promuovere il job e le sue dipendenze; la deduplicazione non deve lasciarlo bloccato in priorità bassa. La 0.1.5 promuove le richieste già pendenti anche durante il lookup; mantenere questa proprietà nelle evoluzioni.
 
 ### 7.2 Priorità
 
@@ -325,7 +336,7 @@ A immagine ferma e senza lavori pendenti non avviare nuovi calcoli o submit peri
 ### 8.2 Parallelismo CPU
 
 1. Separare orchestrazione, I/O, decode, calcolo e scrittura durevole. Il thread UI non esegue letture, decompressioni, filtri o attese GPU sincrone.
-2. Introdurre un unico pool di calcolo a work stealing, con Rayon come candidato già previsto dall'architettura ma assente dal lockfile corrente. Nessun pool completo per ogni miniatura.
+2. Introdurre un unico pool di calcolo a work stealing, con Rayon 1.11.0 già presente nel lockfile della 0.1.5. Nessun pool completo per ogni miniatura.
 3. Parallelizzare le righe/blocchi indipendenti del filtro. Ogni task produce pixel disgiunti e ha una quota esplicita di scratch; gestire aloni e intermedi dei passaggi senza buffer full-frame superflui.
 4. Precalcolare e riusare i coefficienti compatibili per geometria/versione del filtro; limitare anche la cache dei coefficienti.
 5. Conservare un'implementazione scalare di confronto e aggiungere NEON su macOS arm64, AVX2 con rilevamento runtime su Windows x86-64. Nessun requisito AVX2 globale sul binario e nessun cambio dei risultati oltre la tolleranza autorizzata.
@@ -337,7 +348,7 @@ A immagine ferma e senza lavori pendenti non avviare nuovi calcoli o submit peri
 È una parte richiesta del progetto, non un semplice mantenimento della presentazione wgpu esistente. Il lockfile attuale contiene **wgpu 30.0.1**, attraverso eframe 0.36.1; progettare contro quella versione senza aggiornamenti impliciti.
 
 - Condividere il `Device` e la `Queue` di eframe per il renderer. Pipeline WGSL per riduzione multistadio, ricampionamento del viewport, operazioni colore disponibili e composizione; CPU semanticamente equivalente per ogni stadio.
-- Oggi il viewport è calcolato su CPU e caricato sulla GPU. Nel nuovo percorso caricare blocchi riutilizzabili, calcolare e mantenere il risultato sulla GPU fino alla presentazione, evitando un readback a ogni cambio viewport. Readback soltanto quando serve per persistenza, ispezione o verifica, asincrono e prenotato; preferire per la cache i campioni CPU già disponibili quando compatibili.
+- Nella baseline 0.1.4 il viewport era calcolato su CPU e caricato sulla GPU. Nel percorso 0.1.5 caricare blocchi riutilizzabili, calcolare e mantenere il risultato sulla GPU fino alla presentazione, evitando un readback a ogni cambio viewport. Readback soltanto quando serve per persistenza, ispezione o verifica, asincrono e prenotato; preferire per la cache i campioni CPU già disponibili quando compatibili.
 - Piena mantiene RGBA32F per il working; usare `textureLoad` e accumuli espliciti quando servono. Non presumere filtraggio hardware di RGBA32Float né storage sulla swapchain. Se una capability manca, scegliere un percorso supportato o CPU.
 - Prima variante di workgroup 8×8, poi poche alternative come 16×16 solo dopo verifica dei limiti e confronto. Fusione di passaggi solo con identico dominio e semantica: non sostituire una catena di filtri con una diversa per ridurre i dispatch.
 - Ring di staging riutilizzabile e upload raggruppati. Dimensioni, allineamenti e byte in volo entrano nel budget; nessun readback o `poll(Wait)` bloccante nel disegno UI.
@@ -349,7 +360,7 @@ Il percorso GPU Full si abilita per gli stadi/dispositivi che superano il confro
 
 ### 8.4 Decoder macOS: verificare e accelerare il render nativo
 
-Oggi il render nativo crea un `CIContext` per ogni chiamata e richiede il renderer software tramite `kCIContextUseSoftwareRenderer: YES`. La verticale macOS deve valutare un contesto persistente per servizio XPC e un contesto su dispositivo Metal disponibile, mantenendo precisione fp32, ricetta, orientamento e comportamento alpha. Core Image gestisce stato e cache interni: il riuso va bilanciato con memoria residente e riciclo del dominio. Riferimenti API: [CIContext](https://developer.apple.com/documentation/coreimage/cicontext), [useSoftwareRenderer](https://developer.apple.com/documentation/coreimage/cicontextoption/usesoftwarerenderer).
+Nella baseline 0.1.4 il render nativo creava un `CIContext` per ogni chiamata e richiedeva il renderer software tramite `kCIContextUseSoftwareRenderer: YES`. La 0.1.5 riusa il contesto per servizio XPC; l’esperimento Metal è separato. Qualificare un contesto su dispositivo Metal disponibile, mantenendo precisione fp32, ricetta, orientamento e comportamento alpha. Core Image gestisce stato e cache interni: il riuso va bilanciato con memoria residente e riciclo del dominio. Riferimenti API: [CIContext](https://developer.apple.com/documentation/coreimage/cicontext), [useSoftwareRenderer](https://developer.apple.com/documentation/coreimage/cicontextoption/usesoftwarerenderer).
 
 La documentazione di `useSoftwareRenderer` precisa che l’opzione non ha effetto sulle piattaforme senza OpenCL: il flag nel codice non misura da solo il backend effettivo. Cambiare una singola opzione non prova che ogni stadio del RAW sia eseguito in GPU. Misurare CPU, tempi del decoder e attività GPU, mantenendo il percorso software come confronto. Se il renderer Metal non è disponibile nel servizio isolato, usare il percorso software all'interno dello stesso isolamento, senza estendere accessi filesystem/rete.
 
@@ -421,18 +432,18 @@ La regola di continuità vale dopo il primo contenuto valido e durante il raffin
 
 ## 11. Mappa delle modifiche e dipendenze
 
-I seguenti file nuovi sono **proposti**, non creati da questo documento. Preferire moduli nei crate esistenti prima di aggiungere altri servizi o processi.
+La tabella distingue i moduli effettivamente presenti nella 0.1.5 dalle estensioni ancora proposte. Non serve creare moduli duplicati per far coincidere i nomi con quelli del progetto iniziale.
 
 | Area | File/moduli interessati | Responsabilità |
 |---|---|---|
-| Dominio immagine | `tr-core`: nuovi `preview.rs`, `provider.rs`; `resample.rs`, `protocol.rs` | Qualità, artefatti, geometria, capability e protocollo |
-| Stato e scheduling | `tr-app`: nuovi `scheduler.rs`, `budget.rs`; `lib.rs` | Domanda delle viste, dipendenze, quote/lease e generazioni; tipi indipendenti dalla UI |
-| Cache e impostazioni | Estendere `apps/desktop/src/cache/mod.rs` e `cache/directory.rs`; eventuali sottomoduli `artifact.rs`, `writer.rs`, `settings.rs` | Riusare backend e controlli 0.1.4, aggiungere artefatti v2, writer separato, statistiche e migrazione preferenze. Nessun secondo backend o nuovo database obbligatorio |
-| Renderer | `tr-render`: `presenter.rs`, `lib.rs`; nuovi `residency.rs`, `compute.rs`, shader WGSL | Frame autonomi, livelli residenti, CPU/GPU e completamenti |
-| Piattaforma | `tr-platform`: broker, XPC e nuovi adattatori delle risorse OS | Ammissione prima delle copie, pressione RAM/VRAM, capability e verifiche |
+| Dominio immagine | `tr-core`: `preview.rs`, `provider.rs`, `resample.rs`, `protocol.rs` | Qualità, artefatti, geometria, capability e protocollo |
+| Stato e scheduling | `tr-app`: `scheduler.rs`, `lib.rs`; budget in `tr-core/src/budget.rs` | Domanda delle viste, dipendenze, quote/lease e generazioni; tipi indipendenti dalla UI |
+| Cache e impostazioni | `apps/desktop/src/cache/`: `mod.rs`, `directory.rs`, `artifact.rs`, `writer.rs`, `settings.rs` | Riusare backend e controlli 0.1.4, aggiungere artefatti v2, writer separato, statistiche e migrazione preferenze. Nessun secondo backend o nuovo database obbligatorio |
+| Renderer | `tr-render`: `presenter.rs`, `preview_compute.rs`, `resident_compute.rs`, shader WGSL; CPU in `tr-core/src/compute.rs` | Frame autonomi, livelli residenti, CPU/GPU e completamenti |
+| Piattaforma | `tr-platform`: broker, `xpc.rs`, `resources.rs`; adattatori non macOS ancora da realizzare | Ammissione prima delle copie, pressione RAM/VRAM, capability e verifiche |
 | Decoder | `tr-worker`, `native/macos/image_decoder.m/.h` | Intent espliciti, contesto riutilizzabile, decode ridotto/Full e codec cache isolati |
-| Desktop | `apps/desktop/src/ui.rs`, `service.rs`, `decode_pool.rs`, `main.rs` | Preferenze, selettore qualità, pubblicazione domanda, collegamento dei servizi |
-| Verifica | Nuovi harness per navigazione/cache/memoria, accanto alle verifiche esistenti | Benchmark riproducibili e regressioni del contratto visuale |
+| Desktop | `apps/desktop/src/`: `ui.rs`, `service.rs`, `decode_pool.rs`, `main.rs`, `source_monitor.rs`, `graphics.rs`, `wake.rs` | Preferenze, selettore qualità, pubblicazione domanda, collegamento dei servizi |
+| Verifica | `verify_previews.rs`, `scripts/test-preview-*.py`; harness evento→frame completo ancora aperto | Benchmark riproducibili e regressioni del contratto visuale |
 
 Rayon e l'eventuale Zstd richiedono scelta di versione, build riproducibile e aggiornamento dei notice delle dipendenze effettive. SHA-256 con accelerazione e snapshot resta quanto già implementato; non introdurre BLAKE3 in parallelo senza una necessità misurata. Non servono nuove dipendenze per approvare questo progetto documentale. Non modificare la licenza proprietaria o pubblicare cache, foto, database e toolchain.
 
@@ -527,7 +538,7 @@ Il nucleo di budget della fase A è prerequisito alle allocazioni delle altre fa
 
 Durante l'implementazione usare `scripts/cargo-local.sh` per Rust e i controlli pertinenti di `scripts/verify.sh`; `--gui` aggiunge la prova nativa. Sul bundle macOS modificato eseguire anche `scripts/test-xpc-integration.py`, verifiche formati/campionamento/pacchetto e smoke di navigazione. Il backend Windows esterno richiede prima isolamento OS reale; non aggirare la allowlist su pipe per ottenere benchmark.
 
-Durante i futuri incrementi applicativi aggiornare [avanzamento](avanzamento.md), le caselle di questo documento e di [PLAN.md](../PLAN.md) e sincronizzare il solo blocco di avanzamento con `python3 scripts/sync-docs.py`. Le caselle delle funzioni restano aperte fino a codice e prove effettivi. Conservare immutata [l'architettura originale v1.2](TrueVision-Architettura.originale-v1.2.md).
+Durante i futuri incrementi applicativi aggiornare [avanzamento](avanzamento.md), le caselle di questo documento e di [PLAN.md](../PLAN.md) e sincronizzare registro e appendice E con `python3 scripts/sync-docs.py`. Le caselle delle funzioni restano aperte fino a codice e prove effettivi. Conservare immutata [l'architettura originale v1.2](TrueVision-Architettura.originale-v1.2.md).
 
 ## 14. Decisioni iniziali e questioni da risolvere con misure
 

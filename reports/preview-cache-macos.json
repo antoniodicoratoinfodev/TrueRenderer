@@ -4,7 +4,7 @@
   "baseline_allowance_bytes": 402653184,
   "cache": {
     "busy": 0,
-    "bytes": 8251390,
+    "bytes": 8251388,
     "coalesced_consumers": 0,
     "corrupt": 0,
     "decode_jobs": 6,
@@ -16,14 +16,14 @@
     "message": "Cache della cartella aggiornata",
     "misses": 6,
     "temporary_bytes": 0,
-    "worker_peak_footprint_bytes": 476103496,
-    "worker_peak_rss_bytes": 409124864,
+    "worker_peak_footprint_bytes": 476218208,
+    "worker_peak_rss_bytes": 409075712,
     "writer_yields": 0,
     "writes": 6
   },
   "checks": [
     {
-      "cold_delivery_seconds": 0.443132291,
+      "cold_delivery_seconds": 1.8584080840000001,
       "first_resident_level": 3,
       "fp32_bit_exact": true,
       "quality": "Full",
@@ -36,15 +36,15 @@
       ],
       "warm_raw_decodes": 0,
       "warm_seconds": [
-        0.010042708,
-        0.008716875,
-        0.008860917,
-        0.008683084,
-        0.00869275
+        0.03628475,
+        0.0184735,
+        0.029931458,
+        0.034554208,
+        0.031969833
       ]
     },
     {
-      "cold_delivery_seconds": 0.438748292,
+      "cold_delivery_seconds": 1.309782125,
       "first_resident_level": 3,
       "fp32_bit_exact": true,
       "quality": "Standard",
@@ -57,15 +57,15 @@
       ],
       "warm_raw_decodes": 0,
       "warm_seconds": [
-        0.008333208,
-        0.008927542,
-        0.008707667,
-        0.008826667,
-        0.008792041
+        0.037842167,
+        0.022779292,
+        0.0258305,
+        0.014195542,
+        0.01395975
       ]
     },
     {
-      "cold_delivery_seconds": 0.309790416,
+      "cold_delivery_seconds": 7.132019625,
       "first_resident_level": 1,
       "fp32_bit_exact": true,
       "quality": "Full",
@@ -78,15 +78,15 @@
       ],
       "warm_raw_decodes": 0,
       "warm_seconds": [
-        0.009529125,
-        0.009635125,
-        0.009670042,
-        0.009632042,
-        0.009887042
+        0.0182575,
+        0.021784042,
+        0.026030875,
+        0.022405667,
+        0.036647833
       ]
     },
     {
-      "cold_delivery_seconds": 0.300487333,
+      "cold_delivery_seconds": 6.146695958,
       "first_resident_level": 1,
       "fp32_bit_exact": true,
       "quality": "Standard",
@@ -99,15 +99,15 @@
       ],
       "warm_raw_decodes": 0,
       "warm_seconds": [
-        0.009978459,
-        0.010118583,
-        0.009959167,
-        0.009920709,
-        0.010124875
+        0.018005625,
+        0.019661625,
+        0.01884,
+        0.017539042,
+        0.014125708
       ]
     },
     {
-      "cold_delivery_seconds": 0.002910334,
+      "cold_delivery_seconds": 0.010150583,
       "first_resident_level": 0,
       "fp32_bit_exact": true,
       "quality": "Full",
@@ -120,15 +120,15 @@
       ],
       "warm_raw_decodes": 0,
       "warm_seconds": [
-        0.000614334,
-        0.000583083,
-        0.000529583,
-        0.000550666,
-        0.000552375
+        0.001697916,
+        0.000793708,
+        0.002404125,
+        0.001353083,
+        0.00080325
       ]
     },
     {
-      "cold_delivery_seconds": 0.003077541,
+      "cold_delivery_seconds": 0.003393667,
       "first_resident_level": 0,
       "fp32_bit_exact": true,
       "quality": "Standard",
@@ -141,16 +141,16 @@
       ],
       "warm_raw_decodes": 0,
       "warm_seconds": [
-        0.000582875,
-        0.0005,
-        0.000507666,
-        0.000530458,
-        0.000510625
+        0.001191291,
+        0.001244791,
+        0.000798833,
+        0.000800458,
+        0.000748708
       ]
     }
   ],
   "passed": true,
-  "peak_reserved_bytes": 1306683384,
+  "peak_reserved_bytes": 1114683384,
   "scope": "Generated JPEG 12 MP, Bayer DNG 1024x768 and 16-bit PNG. Five warm trials; OS cache not flushed. End-to-end request to CPU artifact delivery includes queue, source read/hash, cache verification or probe/decode/filter; excludes presentation. Not p95, total RSS/GPU qualification or 1000 real RAWs.",
   "version": "0.1.5",
   "working_credits_after_shutdown": 0

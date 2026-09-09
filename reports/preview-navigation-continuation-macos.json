@@ -1,0 +1,66 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "status": "completed",
+  "recorded_at": "2026-09-09T12:50:23.678806+00:00",
+  "git_base_commit": "e609310bad4e4d346c4c22e26d83448b2c813ef1",
+  "uncommitted_changes": true,
+  "changed_subsystem": "View-demand cancellation at snapshot/cache/admission and native-call boundaries",
+  "source_sha256": {
+    "apps/desktop/src/decode_pool.rs": "2e2a705abbe81846733277042269787115c1178eb4b08579ab9cbd77ea4fc706"
+  },
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "d6d01624b6825369b42ab0124716cb897117f310eda3d83a815835afb968756f",
+    "Contents/MacOS/tr-worker": "29c7d9c0c7c7961da2c56582cc208c30ee4902ef352257e0738d773aa0d9db4d",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+  },
+  "os": "26.6.2",
+  "architecture": "arm64",
+  "code_checks": {
+    "passed": true,
+    "rust_tests": 71,
+    "python_reporting_tests": 2,
+    "ipc_checks": 6,
+    "sinusoidal_cases": 24,
+    "fmt": true,
+    "clippy": true,
+    "new_regressions": [
+      "Cancelled admission takes no credits",
+      "In-flight lookup releases memory wait on view change",
+      "Native probe completes but obsolete source is not developed",
+      "Changed quality reuses active source without old-consumer delivery"
+    ]
+  },
+  "raw_report": "preview-real-raw-macos.json",
+  "memory_report": "preview-navigation-memory-real-raw-macos.json",
+  "native_recovery_report": "preview-review-native-macos.json",
+  "installed_reports": [
+    "cache-macos.json",
+    "formats-macos.json",
+    "xpc-qualification-macos.json",
+    "finder-macos.json",
+    "sampling-presentation-macos.json",
+    "formats-smoke-macos.json",
+    "cache-settings-macos.json",
+    "relocation-check.json",
+    "package-macos.json"
+  ],
+  "report_sha256": {
+    "cache-macos.json": "0f462c7ef376ffeaca53be088e542f2289ba002075cd0632f97ca57d6d85c736",
+    "formats-macos.json": "b6a30056df7c18624e721c564cdc2f39d1900353cb7e7c0166955491379411c3",
+    "xpc-qualification-macos.json": "7449df08a98389190fe2647b50ca6fa57b55917f4a819d2b66e2417579db708e",
+    "finder-macos.json": "1eb4a0bdda53d1e496ad2a97a224c5913c8f080004f5571b0c87d6fffb2ded5e",
+    "sampling-presentation-macos.json": "dfd0db34678d1a7d53f54005782079a8349701b8d72bfe68586e2bc7380815a4",
+    "formats-smoke-macos.json": "2f419593cacaa878de8306787d5f8a474fa317307657f9ac5e9053b8006ea74c",
+    "cache-settings-macos.json": "c4ec261d90cd561fb021c928dfbc76655489423934fd0a4a9a86ea1125276445",
+    "relocation-check.json": "3acf5b9998a6aa54c4893f866f12f9e7115df49ed8ed5dcc6febd94e87a3264c",
+    "package-macos.json": "169822fbbe0029008e8f22f1cac75d1116977f7a9569ac2028ea39f8a7cbf75c",
+    "preview-real-raw-macos.json": "3f99ddc7f0b1eab78fe806d260388b485ec569f6bc77b8401c3ea68b74234c1f",
+    "preview-navigation-memory-real-raw-macos.json": "8a67d01e59a85adf850232f9d4af1eadfc64686002ec29d8696de7fb18fc0a01",
+    "preview-review-native-macos.json": "cf65d82df352c1dcc5d3e957ae06db356753fdd0cba35c12a74448ad30769d1e"
+  },
+  "previous_bundle": "var/package-history/TrueRenderer-0.1.5-before-navigation-20260909-144830.app",
+  "scope": "Functional scheduler regression and installed macOS bundle qualification on existing generated fixtures plus 30 authorized Nikon D750 RAWs. No event-to-frame p95/p99 or A/B performance claim; no 1000-real-RAW, physical-pressure, driver/display/other-platform or full R0-R4 qualification."
+}

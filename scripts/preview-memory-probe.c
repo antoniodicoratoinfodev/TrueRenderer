@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-int tr_preview_usage(const char *bundle, uint64_t *rss, uint64_t *footprint, uint64_t *count) {
+int tr_preview_usage(const char *bundle, uint64_t *rss, uint64_t *footprint, uint64_t *count, uint64_t *details) {
     int pids[8192];
     int n=proc_listallpids(pids,sizeof(pids));
     int missing=0;
@@ -21,6 +21,12 @@ int tr_preview_usage(const char *bundle, uint64_t *rss, uint64_t *footprint, uin
             if (proc_pidpath(pids[i],path,sizeof(path))>0 && strncmp(path,bundle,prefix)==0 && path[prefix]=='/') missing++;
             continue;
         }
+        if (*count >= 128) return -2;
+        size_t offset=(size_t)*count*4;
+        details[offset]=(uint64_t)pids[i];
+        details[offset+1]=info.ri_resident_size;
+        details[offset+2]=info.ri_phys_footprint;
+        details[offset+3]=strstr(path,"Decoder0.xpc/") ? 1 : strstr(path,"Decoder1.xpc/") ? 2 : 0;
         *rss+=info.ri_resident_size; *footprint+=info.ri_phys_footprint; *count+=1;
     }
     return missing;

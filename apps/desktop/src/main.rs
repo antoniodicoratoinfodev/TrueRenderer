@@ -1,14 +1,16 @@
 mod cache;
 mod decode_pool;
+mod graphics;
 mod service;
+mod source_monitor;
 mod ui;
 mod verify_cache;
 mod verify_formats;
 mod verify_previews;
 mod verify_resampling;
 mod verify_xpc;
+mod wake;
 use anyhow::{Context, Result};
-use eframe::egui;
 use std::{fs::OpenOptions, path::PathBuf};
 
 fn run() -> Result<()> {
@@ -32,16 +34,28 @@ fn run() -> Result<()> {
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))
         .canonicalize()?;
     let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
+    let source_smoke = args.iter().any(|a| a == "--source-change-smoke");
+    let graphics_smoke = args
+        .iter()
+        .any(|a| a == "--device-loss-smoke" || a == "--device-loss-twice-smoke");
     let external_smoke = args.iter().any(|a| a == "--formats-smoke");
     let settings_smoke = args.iter().any(|a| {
         a == "--settings-smoke" || a == "--preview-gpu-smoke" || a == "--preview-performance-smoke"
     });
-    let smoke = settings_smoke
+    let smoke = source_smoke
+        || settings_smoke
         || external_smoke
         || sampling_smoke
         || args.iter().any(|a| a == "--smoke-test");
-    let initial_open =
+    let mut initial_open =
         option("--open").or_else(|| external_smoke.then(|| root.join("var/format-fixtures")));
+    if source_smoke {
+        let folder = root.join("var/source-change-fixture");
+        std::fs::create_dir_all(&folder)?;
+        let path = folder.join("watched.png");
+        std::fs::copy(root.join("corpus/01_Studio_cromatico.png"), &path)?;
+        initial_open = Some(path);
+    }
     let worker = executable
         .parent()
         .context("Cartella binario")?
@@ -59,6 +73,14 @@ fn run() -> Result<()> {
     if args.iter().any(|a| a == "--verify-previews") {
         return verify_previews::run(&root, &worker);
     }
+    if let Some(folder) = option("--verify-real-raws") {
+        let memory_mib = option("--raw-memory-mib")
+            .map(|value| value.to_string_lossy().parse::<u64>())
+            .transpose()
+            .context("--raw-memory-mib deve essere un intero")?
+            .unwrap_or(0);
+        return verify_previews::real_raws(&root, &worker, &folder, memory_mib);
+    }
     if args.iter().any(|a| a == "--verify-formats") {
         return verify_formats::run(&root, &worker);
     }
@@ -74,8 +96,13 @@ fn run() -> Result<()> {
     if args.iter().any(|a| a == "--verify-xpc-growth") {
         return verify_xpc::run_growth(&root, &worker);
     }
-    let data =
-        option("--data").unwrap_or_else(|| root.join(if smoke { "var/smoke" } else { "var" }));
+    let data = option("--data").unwrap_or_else(|| {
+        root.join(if smoke || graphics_smoke {
+            "var/smoke"
+        } else {
+            "var"
+        })
+    });
     std::fs::create_dir_all(&data)?;
     std::fs::create_dir_all(root.join("reports"))?;
     let lock = OpenOptions::new()
@@ -90,35 +117,18 @@ fn run() -> Result<()> {
         worker.is_file(),
         "Manca tr-worker accanto all'applicazione. Eseguire scripts/build-macos.sh."
     );
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_title("TrueRenderer")
-            .with_app_id("it.truerenderer.prototype")
-            .with_inner_size([1440., 940.])
-            .with_min_inner_size([1100., 720.]),
-        renderer: eframe::Renderer::Wgpu,
-        ..Default::default()
-    };
-    eframe::run_native(
-        "TrueRenderer",
-        options,
-        Box::new(move |cc| {
-            Ok(Box::new(ui::TrueRenderer::new(
-                cc,
-                root,
-                data,
-                worker,
-                ui::Startup {
-                    smoke,
-                    sampling_smoke,
-                    external_smoke,
-                    settings_smoke,
-                    open: initial_open,
-                },
-            )))
-        }),
-    )
-    .map_err(|e| anyhow::anyhow!("Avvio UI: {e}"))?;
+    graphics::run(
+        root,
+        data,
+        worker,
+        ui::Startup {
+            smoke,
+            sampling_smoke,
+            external_smoke,
+            settings_smoke,
+            open: initial_open,
+        },
+    )?;
     Ok(())
 }
 fn main() {
@@ -126,6 +136,7 @@ fn main() {
         eprintln!("TrueRenderer: {error:#}");
         if std::env::args().any(|a| {
             a.starts_with("--verify-")
+                || a.ends_with("-smoke")
                 || a == "--smoke-test"
                 || a == "--sampling-smoke"
                 || a == "--formats-smoke"

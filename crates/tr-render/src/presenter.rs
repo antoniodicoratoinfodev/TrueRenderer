@@ -359,6 +359,30 @@ impl Presenter {
             }
         }
     }
+    pub fn invalidate_sources(&mut self, sources: &std::collections::HashSet<u64>) {
+        self.waiting.retain(|_, key| !sources.contains(&key.source));
+        self.errors
+            .retain(|_, (key, _)| !sources.contains(&key.source));
+        let lanes: Vec<_> = self
+            .entries
+            .iter()
+            .filter(|(_, entry)| sources.contains(&entry.key.source))
+            .map(|(lane, _)| lane.clone())
+            .collect();
+        for lane in lanes {
+            if let Some(entry) = self.entries.remove(&lane) {
+                self.retired
+                    .push((self.clock, entry.lease, entry.gpu_lease));
+            }
+        }
+        let mut shared = self.shared.0.lock().unwrap();
+        shared.jobs.retain(|job| !sources.contains(&job.key.source));
+        shared
+            .completed
+            .retain(|job| !sources.contains(&job.key.source));
+        // An active encoder may finish; the missing waiting key discards it
+        // before submission. In-flight GPU work keeps its completion leases.
+    }
     pub fn set_pressure(&mut self, active: bool) {
         if self.pressure.swap(active, Ordering::AcqRel) == active {
             return;

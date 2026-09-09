@@ -169,6 +169,9 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
             );
             Ok((info, Some(raster)))
         })();
+        // Native handles borrowing these bytes have already been closed. Do not
+        // retain compressed input while the host receives the full fp32 raster.
+        drop(bytes);
         match decoded {
             Ok((info, raster)) => {
                 protocol::write_control(&mut output, protocol::RESPONSE, id, &info)?;

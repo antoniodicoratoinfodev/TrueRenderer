@@ -1,0 +1,17 @@
+{
+  "application": "TrueRenderer",
+  "passed": true,
+  "recreations": 1,
+  "scope": "Native device.destroy injection, recreation of entire eframe window/device, compute requalification, retained CPU artifacts/service and accepted rating plus undo. Not physical driver reset, other adapters/displays or OOM qualification.",
+  "state": {
+    "current": "65f61d35-f2f8-4cb0-ba74-5066ab64fcd7",
+    "gpu_verified": true,
+    "pending": 0,
+    "rating": 3,
+    "selected": [
+      "65f61d35-f2f8-4cb0-ba74-5066ab64fcd7"
+    ],
+    "undo_available": true
+  },
+  "version": "0.1.5"
+}

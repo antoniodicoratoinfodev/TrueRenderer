@@ -87,11 +87,14 @@ pub struct Service {
     pub events: mpsc::Receiver<Event>,
     pub generation: Arc<AtomicU64>,
     pub cache: Arc<crate::cache::Manager>,
+    pub wake: crate::wake::Wake,
     worker: Option<thread::JoinHandle<()>>,
 }
 
 impl Service {
     pub fn start(root: PathBuf, data: PathBuf, worker: PathBuf, ctx: egui::Context) -> Self {
+        let wake = crate::wake::Wake::from(ctx);
+        let ctx = wake.clone();
         let (settings, warning) = crate::cache::Settings::load_or_recover(&data);
         let cache = Arc::new(crate::cache::Manager::new(settings));
         if let Some(warning) = warning {
@@ -254,6 +257,7 @@ impl Service {
                                         .into(),
                                     bytes: metadata.len(),
                                     digest,
+                                    observation: tr_platform::observation_token(&metadata),
                                     approved,
                                     annotation: asset.annotation,
                                     revision: asset.revision,
@@ -360,6 +364,7 @@ impl Service {
             high,
             events,
             generation,
+            wake,
             worker: Some(service_worker),
         }
     }

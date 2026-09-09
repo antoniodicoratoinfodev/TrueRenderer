@@ -203,6 +203,7 @@ mod tests {
             path: "test.png".into(),
             digest: "x".into(),
             bytes: 20,
+            observation: String::new(),
             approved: true,
             annotation: Annotation::default(),
             revision: 0,

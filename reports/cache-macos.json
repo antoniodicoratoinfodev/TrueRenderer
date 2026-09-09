@@ -2,13 +2,13 @@
   "application": "TrueRenderer",
   "cache_before_clear": {
     "busy": 0,
-    "bytes": 272821533,
+    "bytes": 272821532,
     "coalesced_consumers": 0,
     "corrupt": 0,
     "decode_jobs": 0,
     "entries": 3,
     "evictions": 0,
-    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-Oeptpf",
+    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-mL66kY",
     "hits": 15,
     "memory_pressure": null,
     "message": "Immagine riutilizzata dalla cache",
@@ -22,50 +22,50 @@
   "checks": [
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 1.034183541,
+      "cold_seconds_including_write": 1.13687775,
       "file": "12mp-jpeg.jpg",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.336436875,
-        0.292758333,
-        0.299551084,
-        0.295402291,
-        0.296877167
+        0.388747459,
+        0.294298708,
+        0.290969375,
+        0.299742125,
+        0.302117416
       ]
     },
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.342688542,
+      "cold_seconds_including_write": 0.348788833,
       "file": "07-bayer.dng",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.021523875,
-        0.0197785,
-        0.019407833,
-        0.019785375,
-        0.020615917
+        0.028953709,
+        0.02152925,
+        0.021812375,
+        0.021718834,
+        0.021656916
       ]
     },
     {
       "bit_exact_all_levels": true,
-      "cold_seconds_including_write": 0.00951325,
+      "cold_seconds_including_write": 0.008950333,
       "file": "16bit.png",
       "no_warm_decoder_jobs": true,
       "passed": true,
       "reopened_cache_hit": true,
       "source_unchanged": true,
       "warm_seconds": [
-        0.000255166,
-        0.000219584,
-        0.00020975,
-        0.000204584,
-        0.000193292
+        0.000269375,
+        0.000220125,
+        0.000202166,
+        0.000202542,
+        0.000194792
       ]
     }
   ],

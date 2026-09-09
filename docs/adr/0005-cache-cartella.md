@@ -1,6 +1,12 @@
 # ADR 0005 — cache lossless e temporanei accanto alle immagini
 
-Data: 7 settembre 2026. Stato: 0.1.4 verificata; primo incremento pubblicato (`2dad0b2`), ottimizzazioni successive qualificate e pubblicate (`a901942`).
+Data: 7 settembre 2026. Documento storico del formato v1; aggiornamento di raccordo 8 settembre 2026. Stato: 0.1.4 verificata; primo incremento pubblicato (`2dad0b2`), ottimizzazioni successive qualificate e pubblicate (`a901942`).
+
+## Raccordo con l'implementazione corrente
+
+Questo ADR conserva decisioni e misure della 0.1.4. Nella 0.1.5 il percorso interattivo usa artefatti autonomi v2, lettura separata e writer asincrono: [ADR 0006](0006-anteprime-residenza-compute.md) estende formato, residenza, budget, concorrenza e compute. V1/v2 condividono directory riconosciuta, lock e quota per cartella. Il vecchio percorso full-frame è ancora usato dal relativo harness di regressione. Le frasi seguenti sul decode con scrittura sincrona si riferiscono alla baseline 0.1.4, non alla consegna interattiva attuale.
+
+Il formato v1 `.tvc`, il formato di record v2 e il futuro container tiled/gigapixel sono tre contratti distinti. I checksum rilevano corruzioni, senza autenticare dati riscritti da un attaccante. Token di filesystem e qualità Piena non promuovono una cache ad assurance Standard/Riferimento.
 
 ## Scopo autorizzato
 

@@ -1,0 +1,41 @@
+{
+  "passed": true,
+  "status": "completed",
+  "recorded_at": "2026-09-09T12:17:53.967355+00:00",
+  "cases": [
+    {
+      "case": "--source-change-smoke",
+      "passed": true,
+      "report": "preview-source-changes-macos.json",
+      "stage": "completed",
+      "exit_code": 0,
+      "library_integrity": "ok",
+      "elapsed_seconds": 23.44706892967224
+    },
+    {
+      "case": "--device-loss-smoke",
+      "passed": true,
+      "report": "preview-device-recovery-macos.json",
+      "stage": "completed",
+      "exit_code": 0,
+      "library_integrity": "ok",
+      "elapsed_seconds": 3.517213821411133
+    },
+    {
+      "case": "--device-loss-twice-smoke",
+      "passed": true,
+      "report": "preview-device-recovery-bounded-macos.json",
+      "stage": "completed",
+      "exit_code": 1,
+      "library_integrity": "ok",
+      "elapsed_seconds": 2.8105599880218506
+    }
+  ],
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "0045b877136cd9bddbf5bc7d7d8cac00716075d8fc3d506918eb403dfb0ab59c",
+    "Contents/MacOS/tr-worker": "29c7d9c0c7c7961da2c56582cc208c30ee4902ef352257e0738d773aa0d9db4d",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+  },
+  "scope": "Generated sources only; real device.destroy callbacks with one recovery and stop on second loss. Does not qualify physical driver resets or OOM."
+}

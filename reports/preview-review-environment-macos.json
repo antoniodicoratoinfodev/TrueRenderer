@@ -1,0 +1,45 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_at": "2026-09-09T12:22:23.928364+00:00",
+  "base_commit": "e609310bad4e4d346c4c22e26d83448b2c813ef1",
+  "uncommitted_revision": true,
+  "raw_measured_binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "0045b877136cd9bddbf5bc7d7d8cac00716075d8fc3d506918eb403dfb0ab59c",
+    "Contents/MacOS/tr-worker": "29c7d9c0c7c7961da2c56582cc208c30ee4902ef352257e0738d773aa0d9db4d",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+  },
+  "installed_binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "0045b877136cd9bddbf5bc7d7d8cac00716075d8fc3d506918eb403dfb0ab59c",
+    "Contents/MacOS/tr-worker": "29c7d9c0c7c7961da2c56582cc208c30ee4902ef352257e0738d773aa0d9db4d",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+  },
+  "native_review_binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "0045b877136cd9bddbf5bc7d7d8cac00716075d8fc3d506918eb403dfb0ab59c",
+    "Contents/MacOS/tr-worker": "29c7d9c0c7c7961da2c56582cc208c30ee4902ef352257e0738d773aa0d9db4d",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+  },
+  "measured_and_installed_binaries_identical": true,
+  "hardware": {
+    "cpu": "Apple M4",
+    "logical_cpus": 10,
+    "ram_bytes": 17179869184,
+    "os_version": "26.6.2",
+    "os_build": "25G83",
+    "gpu": "Apple M4 \u00b7 Metal",
+    "volume": {
+      "FilesystemType": "apfs",
+      "BusProtocol": "Apple Fabric",
+      "SolidState": true,
+      "Internal": true
+    }
+  },
+  "power_source_at_recording": "Now drawing from 'Battery Power'",
+  "raw_corpus": "30 authorized distinct Nikon D750 NEFs, native 6016x4016 or oriented equivalent, private temporary copies",
+  "raw_budget_mib": 2048,
+  "os_cache": "not flushed",
+  "scope": "Final RAW/memory, native source/device and installed bundle checks use byte-identical binaries. Memory workload runs from a unique bundle copy, includes all its host/XPC processes and excludes unrelated app instances. No simultaneous agent build or native suite during this measurement; user/system background activity is not controlled. CPU artifact delivery excludes GUI presentation; not p95/p99, integrated A/B, driver/system-memory or 1000-real-RAW qualification. Hardware collected after the trial. Original photos, paths, names, EXIF and content hashes omitted."
+}

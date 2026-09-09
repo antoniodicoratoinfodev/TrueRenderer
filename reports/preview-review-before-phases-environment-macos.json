@@ -1,0 +1,37 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_at": "2026-09-09T00:34:13.091020+00:00",
+  "base_commit": "e609310bad4e4d346c4c22e26d83448b2c813ef1",
+  "uncommitted_revision": true,
+  "raw_measured_binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "32568e4236cca4a37488b54a43d07214073ae120a9ed755db0011d0494aa59fd",
+    "Contents/MacOS/tr-worker": "e09eb4b7b843e654cb1809f01986589322a641dc3ee29cfee42c951549fa4f35",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b3d3bf040d4d04b50c174fdc678c2a5b3103431e880432c06897a95bf426f18c",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "47dbc7d0f5f84c06fee62684e13137289a43f3623adc491a54d1febb95288999"
+  },
+  "installed_binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "9672fee28a1223bf9cd3040d591a0bef2c032181d84a3838a370a31b238fc4f8",
+    "Contents/MacOS/tr-worker": "e09eb4b7b843e654cb1809f01986589322a641dc3ee29cfee42c951549fa4f35",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b3d3bf040d4d04b50c174fdc678c2a5b3103431e880432c06897a95bf426f18c",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "47dbc7d0f5f84c06fee62684e13137289a43f3623adc491a54d1febb95288999"
+  },
+  "hardware_reference": "preview-environment-macos.json; same local Mac; hardware fields copied from the preceding recorded environment",
+  "hardware_as_previously_recorded": {
+    "cpu": "Apple M4",
+    "ram_bytes": 17179869184,
+    "os_version": "26.6.2",
+    "os_build": "25G83",
+    "gpu": "Apple M4 \u00b7 Metal",
+    "volume": {
+      "FilesystemType": "apfs",
+      "BusProtocol": "Apple Fabric",
+      "SolidState": true,
+      "Internal": true
+    }
+  },
+  "raw_corpus": "30 authorized distinct Nikon D750 NEFs, native 6016x4016 or oriented equivalent, private temporary copies",
+  "raw_budget_mib": 3072,
+  "os_cache": "not flushed",
+  "scope": "RAW delivery includes snapshot/hash/lookup or decode/filter to CPU artifacts, not event-to-frame. Same decoder binaries as installed bundle; measured host precedes only final graphics callback/pass handling and diagnostic data isolation. Some build/native regression activity ran during the RAW trial, so timings are exploratory, not an isolated performance A/B. Original photos, paths, names, EXIF and content hashes omitted."
+}

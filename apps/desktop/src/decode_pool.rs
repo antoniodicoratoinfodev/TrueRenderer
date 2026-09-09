@@ -2,8 +2,10 @@ use crate::{
     cache::{Lookup, writer::Writer},
     service::{Event, PreviewDecoded},
 };
+#[cfg(test)]
 use eframe::egui;
 use std::{
+    cell::Cell,
     collections::{HashMap, HashSet, VecDeque},
     path::PathBuf,
     sync::{
@@ -50,6 +52,20 @@ struct Queues {
     active: HashSet<(String, u64)>,
     claimed: HashSet<(String, PreviewRequest, u64)>,
 }
+impl Queues {
+    fn wants_job(&self, job: &Job) -> bool {
+        self.wanted.as_ref().is_none_or(|w| w.contains(&job.key()))
+    }
+
+    // Native development is full-frame: a new quality/edge for this source can
+    // still share the in-flight decode, even if its original consumer left.
+    fn wants_source(&self, job: &Job) -> bool {
+        self.wanted.as_ref().is_none_or(|w| {
+            w.iter()
+                .any(|(id, _, generation)| id == &job.item.id && *generation == job.generation)
+        })
+    }
+}
 pub struct DecodePool {
     queues: Arc<(Mutex<Queues>, Condvar)>,
     stop: Arc<AtomicBool>,
@@ -73,7 +89,7 @@ fn insert_ready(queue: &mut VecDeque<Ready>, ready: Ready) {
 fn deliver(
     events: &mpsc::SyncSender<Event>,
     mut event: Event,
-    ctx: &egui::Context,
+    ctx: &crate::wake::Wake,
     stop: &AtomicBool,
 ) -> bool {
     loop {
@@ -97,18 +113,16 @@ fn reserve(
     cache: &crate::cache::Manager,
     bytes: u64,
     events: &mpsc::SyncSender<Event>,
-    ctx: &egui::Context,
+    ctx: &crate::wake::Wake,
     cancelled: &impl Fn() -> bool,
 ) -> anyhow::Result<Lease> {
     let start = Instant::now();
     loop {
+        anyhow::ensure!(!cancelled(), "Richiesta sostituita");
         if let Some(lease) = cache.memory.try_reserve(bytes) {
             return Ok(lease);
         }
-        if start.elapsed() > Duration::from_secs(2)
-            || bytes > cache.memory.usage().limit
-            || cancelled()
-        {
+        if start.elapsed() > Duration::from_secs(2) || bytes > cache.memory.usage().limit {
             anyhow::bail!(
                 "Memoria richiesta {} MiB; limite {} MiB, occupata/prenotata {} MiB. Aumentare il limite o liberare le viste.",
                 bytes.div_ceil(1024 * 1024),
@@ -122,6 +136,41 @@ fn reserve(
         }
         thread::sleep(Duration::from_millis(25));
     }
+}
+
+/// Peak of successive full-decode phases, excluding separately owned snapshots.
+/// Native scratch remains a conservative estimate (32 bytes/pixel + 128 MiB),
+/// not a kernel limit. The native handle is closed before raster transfer.
+fn decode_working_bytes(width: u32, height: u32) -> anyhow::Result<u64> {
+    let pixels = u64::from(width) * u64::from(height);
+    anyhow::ensure!(
+        width > 0 && height > 0 && pixels <= tr_core::color::MAX_PIXELS as u64,
+        "Dimensioni del decode fuori quota"
+    );
+    let source = pixels * 16;
+    // During development: native output + two raster-sized scratch allowances.
+    // During transfer: native output + the host's private raster copy.
+    let mut peak = source * 3;
+    let (mut w, mut h) = (width, height);
+    let mut retained = source;
+    let mut all_tails = source;
+    let mut level = 1;
+    while w > 1 || h > 1 {
+        let (next_w, next_h) = (w.div_ceil(2), h.div_ceil(2));
+        let next = u64::from(next_w) * u64::from(next_h) * 16;
+        let horizontal = u64::from(next_w) * u64::from(h) * 16;
+        // Conservatively keep the worker output during host filtering too:
+        // receiving the final bytes does not synchronize its destructor.
+        peak = peak.max(source + retained + horizontal + next);
+        retained += next;
+        level += 1;
+        // Every distinct mip tail can be requested; count each owned copy.
+        // Exact ceil geometry also covers odd dimensions and 1-pixel strips.
+        all_tails += next * level;
+        (w, h) = (next_w, next_h);
+    }
+    peak = peak.max(source + all_tails);
+    Ok(peak + 128 * 1024 * 1024)
 }
 impl DecodePool {
     pub fn set_demand(&self, wanted: &[(String, PreviewRequest)], generation: u64) {
@@ -163,11 +212,13 @@ impl DecodePool {
         binary: PathBuf,
         generation: Arc<AtomicU64>,
         events: mpsc::SyncSender<Event>,
-        ctx: egui::Context,
+        ctx: impl Into<crate::wake::Wake>,
         cache: Arc<crate::cache::Manager>,
     ) -> Self {
+        let ctx = ctx.into();
         let queues = Arc::new((Mutex::new(Queues::default()), Condvar::new()));
         let stop = Arc::new(AtomicBool::new(false));
+        let decode_admission = Arc::new(Mutex::new(()));
         let writer = Arc::new(Writer::start(cache.clone(), generation.clone()));
         let mut workers = Vec::new();
         // One independent source/hash/cache lane: it never waits behind a RAW
@@ -208,9 +259,14 @@ impl DecodePool {
                         );
                         continue;
                     }
-                    let cancelled = || {
+                    let revoked = || {
                         stop.load(Ordering::Acquire)
                             || job.generation != generation.load(Ordering::Acquire)
+                    };
+                    let obsolete = Cell::new(false);
+                    let cancelled = || {
+                        obsolete.set(obsolete.get() || !queues.0.lock().unwrap().wants_job(&job));
+                        revoked() || obsolete.get()
                     };
                     let result = (|| -> anyhow::Result<Option<PreviewDecoded>> {
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
@@ -309,14 +365,48 @@ impl DecodePool {
                             _snapshot_lane: snapshot_lane,
                         };
                         insert_ready(&mut q.decode, ready);
+                        // Keep descriptors in the larger scheduling queue, not a
+                        // backlog of full compressed snapshots that can prevent
+                        // the next visible decode from ever acquiring its credits.
+                        let deferred =
+                            (q.decode.len() > 2).then(|| q.decode.pop_back().unwrap().job);
+                        if let Some(job) = &deferred {
+                            q.pending.remove(&job.key());
+                        }
                         queues.1.notify_all();
+                        drop(q);
+                        if let Some(job) = deferred {
+                            deliver(
+                                &events,
+                                Event::DecodeDeferred {
+                                    id: job.item.id,
+                                    request: job.request,
+                                    generation: job.generation,
+                                },
+                                &ctx,
+                                &stop,
+                            );
+                        }
                         Ok(None)
                     })();
                     if matches!(result, Ok(None)) {
                         continue;
                     }
                     queues.0.lock().unwrap().pending.remove(&job.key());
-                    if !cancelled() {
+                    if !revoked() && cancelled() {
+                        // A quick return to this request must be retryable. Do
+                        // not turn a cancelled lookup into a permanent UI error.
+                        deliver(
+                            &events,
+                            Event::DecodeDeferred {
+                                id: job.item.id,
+                                request: job.request,
+                                generation: job.generation,
+                            },
+                            &ctx,
+                            &stop,
+                        );
+                    } else if !revoked() {
                         let result = result.map(|v| v.unwrap()).map_err(|e| format!("{e:#}"));
                         if !deliver(
                             &events,
@@ -344,6 +434,7 @@ impl DecodePool {
             let cache = cache.clone();
             let binary = binary.clone();
             let writer = writer.clone();
+            let decode_admission = decode_admission.clone();
             workers.push(thread::spawn(move || {
                 let mut broker = Broker::with_slot(binary, slot);
                 let mut last_generation = None;
@@ -395,11 +486,17 @@ impl DecodePool {
                         let _ = broker.supervise_idle();
                         continue;
                     };
-                    let cancelled = || {
+                    let revoked = || {
                         stop.load(Ordering::Acquire)
                             || job.generation != generation.load(Ordering::Acquire)
                     };
-                    if cancelled() {
+                    let obsolete = Cell::new(false);
+                    let cancelled = || {
+                        obsolete
+                            .set(obsolete.get() || !queues.0.lock().unwrap().wants_source(&job));
+                        revoked() || obsolete.get()
+                    };
+                    if revoked() {
                         let mut q = queues.0.lock().unwrap();
                         q.pending.remove(&job.key());
                         q.active.remove(&(job.item.id.clone(), job.generation));
@@ -407,24 +504,53 @@ impl DecodePool {
                     }
                     last_generation = Some(job.generation);
                     let result = (|| -> anyhow::Result<Vec<(Job, PreviewDecoded)>> {
+                        // Probe admissions also wait behind a large decode. Small
+                        // jobs release this permit after probing and can overlap;
+                        // jobs using over half the working budget remain serial.
+                        // The hash/cache lane is independent of this permit.
+                        let waiting = Instant::now();
+                        let mut permit = Some(loop {
+                            anyhow::ensure!(!cancelled(), "Richiesta sostituita");
+                            match decode_admission.try_lock() {
+                                Ok(permit) => break permit,
+                                Err(std::sync::TryLockError::Poisoned(_)) => {
+                                    anyhow::bail!("Ammissione decoder interrotta")
+                                }
+                                Err(std::sync::TryLockError::WouldBlock) => {}
+                            }
+                            anyhow::ensure!(
+                                waiting.elapsed() < Duration::from_secs(90),
+                                "Attesa decoder oltre il limite; riprovare la richiesta"
+                            );
+                            thread::sleep(Duration::from_millis(25));
+                        });
                         // Parser state is an estimated allowance; OS footprint remains
                         // supervised independently and must be qualified on real RAWs.
                         let probe_lease =
                             reserve(&cache, 128 * 1024 * 1024, &events, &ctx, &cancelled)?;
-                        let info = broker.probe_snapshot(&source, cancelled)?;
+                        // Only domain revocation/shutdown may terminate a native
+                        // call. View changes cancel at boundaries, retaining all
+                        // leases until the actual probe/decode has completed.
+                        let info = broker.probe_snapshot(&source, revoked)?;
                         drop(probe_lease);
+                        anyhow::ensure!(!cancelled(), "Richiesta sostituita");
                         let pixels = info.width as u64 * info.height as u64;
-                        // Native raster + host copy + native scratch + reference
-                        // pyramid/filter intermediates. Snapshot credits are separate.
-                        let mut lease = reserve(
-                            &cache,
-                            pixels * 64 + 128 * 1024 * 1024,
-                            &events,
-                            &ctx,
-                            &cancelled,
-                        )?;
+                        let working_bytes = decode_working_bytes(info.width, info.height)?;
+                        if working_bytes
+                            <= cache
+                                .memory
+                                .usage()
+                                .limit
+                                .saturating_sub(cache.baseline_bytes)
+                                / 2
+                        {
+                            drop(permit.take());
+                        }
+                        // Reserve the peak of phases, not their sum. Pixel data,
+                        // native scratch allowance and fp32 precision are unchanged.
+                        let mut lease = reserve(&cache, working_bytes, &events, &ctx, &cancelled)?;
                         let decoded =
-                            broker.decode_snapshot_bounded(source, 0, pixels * 16, cancelled)?;
+                            broker.decode_snapshot_bounded(source, 0, pixels * 16, revoked)?;
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
                         // All current backends produce full source samples. Group
                         // compatible consumers before building the reference graph;
@@ -435,10 +561,7 @@ impl DecodePool {
                                 .pending
                                 .keys()
                                 .filter(|(id, _, g)| id == &job.item.id && *g == job.generation)
-                                .filter(|key| {
-                                    q.wanted.as_ref().is_none_or(|w| w.contains(*key))
-                                        || **key == job.key()
-                                })
+                                .filter(|key| q.wanted.as_ref().is_none_or(|w| w.contains(*key)))
                                 .map(|key| Job {
                                     request: key.1,
                                     priority: q.pending[key],
@@ -527,8 +650,11 @@ impl DecodePool {
                             jobs.into_iter().map(|j| (j, Err(error.clone()))).collect()
                         }
                     };
+                    let origin_delivered = results.iter().any(|(j, _)| j.key() == job.key());
                     {
                         let mut q = queues.0.lock().unwrap();
+                        q.pending.remove(&job.key());
+                        q.claimed.remove(&job.key());
                         for (consumer, _) in &results {
                             q.pending.remove(&consumer.key());
                             q.claimed.remove(&consumer.key());
@@ -536,10 +662,35 @@ impl DecodePool {
                         q.active.remove(&(job.item.id.clone(), job.generation));
                         queues.1.notify_all();
                     }
-                    if cancelled() {
+                    if revoked() {
                         continue;
                     }
+                    if !origin_delivered {
+                        deliver(
+                            &events,
+                            Event::DecodeDeferred {
+                                id: job.item.id.clone(),
+                                request: job.request,
+                                generation: job.generation,
+                            },
+                            &ctx,
+                            &stop,
+                        );
+                    }
                     for (consumer, result) in results {
+                        if obsolete.get() || !queues.0.lock().unwrap().wants_job(&consumer) {
+                            deliver(
+                                &events,
+                                Event::DecodeDeferred {
+                                    id: consumer.item.id,
+                                    request: consumer.request,
+                                    generation: consumer.generation,
+                                },
+                                &ctx,
+                                &stop,
+                            );
+                            continue;
+                        }
                         let persist = result.as_ref().ok().cloned();
                         if !deliver(
                             &events,
@@ -689,6 +840,272 @@ pub fn prepare_cached(
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
+    #[test]
+    fn cancelled_admission_does_not_acquire_even_available_credits() {
+        let cache = crate::cache::Manager::new(crate::cache::Settings::default());
+        let (tx, _rx) = mpsc::sync_channel(4);
+        let wake = egui::Context::default().into();
+        assert!(reserve(&cache, 1024, &tx, &wake, &|| true).is_err());
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+    }
+
+    fn navigation_job(id: &str) -> Job {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let path = root.join("corpus/01_Studio_cromatico.png");
+        let (bytes, digest) = tr_platform::snapshot(&path).unwrap();
+        Job {
+            item: Item {
+                id: id.into(),
+                name: "corpus".into(),
+                path,
+                bytes: bytes.len() as u64,
+                digest,
+                observation: String::new(),
+                approved: true,
+                annotation: Default::default(),
+                revision: 0,
+            },
+            request: PreviewRequest {
+                quality: tr_core::preview::PreviewQuality::Full,
+                edge: 128,
+            },
+            priority: PreviewPriority::Background,
+            generation: 1,
+        }
+    }
+
+    #[test]
+    #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
+    fn navigation_cancels_inflight_lookup_before_memory_becomes_available() {
+        let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+            enabled: false,
+            ..Default::default()
+        }));
+        let held = cache
+            .memory
+            .try_reserve(cache.memory.usage().limit - cache.baseline_bytes)
+            .unwrap();
+        let (tx, rx) = mpsc::sync_channel(16);
+        let pool = DecodePool::start(
+            std::env::var_os("TR_WORKER_BINARY").unwrap().into(),
+            Arc::new(AtomicU64::new(1)),
+            tx,
+            egui::Context::default(),
+            cache.clone(),
+        );
+        let old = navigation_job("old");
+        let mut next = navigation_job("next");
+        next.priority = PreviewPriority::Immediate;
+        assert!(pool.submit(old.clone()).is_ok());
+        // This event proves the lookup left the queue and is blocked on credits.
+        assert!(matches!(
+            rx.recv_timeout(Duration::from_secs(3)).unwrap(),
+            Event::MemoryPressure
+        ));
+        pool.set_demand(&[(next.item.id.clone(), next.request)], 1);
+        loop {
+            match rx.recv_timeout(Duration::from_secs(1)).unwrap() {
+                Event::DecodeDeferred { id, .. } => {
+                    assert_eq!(id, old.item.id);
+                    break;
+                }
+                Event::MemoryPressure => {}
+                _ => panic!("Obsolete lookup must defer, not decode or report a memory error"),
+            }
+        }
+        assert_eq!(cache.stats().decode_jobs, 0);
+        assert!(
+            !pool
+                .queues
+                .0
+                .lock()
+                .unwrap()
+                .pending
+                .contains_key(&old.key())
+        );
+        drop(held);
+        assert!(pool.submit(next.clone()).is_ok());
+        loop {
+            if let Event::Image { id, result, .. } =
+                rx.recv_timeout(Duration::from_secs(15)).unwrap()
+            {
+                assert_eq!(id, next.item.id);
+                assert!(result.is_ok());
+                break;
+            }
+        }
+        drop(pool);
+        drop(rx);
+        assert_eq!(cache.stats().decode_jobs, 1);
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+    }
+
+    fn change_view_during_native_probe(keep_source: bool) {
+        let binary = PathBuf::from(std::env::var_os("TR_WORKER_BINARY").unwrap());
+        let data = tempfile::tempdir().unwrap();
+        let wrapper = data.path().join("gated-worker");
+        let marker = data.path().join("started");
+        let gate = data.path().join("continue");
+        let quote =
+            |path: &std::path::Path| format!("'{}'", path.to_string_lossy().replace('\'', "'\\''"));
+        std::fs::write(
+            &wrapper,
+            format!(
+                "#!/bin/sh\nprintf '%s' \"$$\" > {}\nwhile [ ! -f {} ]; do /bin/sleep 0.01; done\nexec {}\n",
+                quote(&marker), quote(&gate), quote(&binary)
+            ),
+        ).unwrap();
+        std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+            enabled: false,
+            ..Default::default()
+        }));
+        let (tx, rx) = mpsc::sync_channel(16);
+        let pool = DecodePool::start(
+            wrapper,
+            Arc::new(AtomicU64::new(1)),
+            tx,
+            egui::Context::default(),
+            cache.clone(),
+        );
+        let old = navigation_job("old");
+        assert!(pool.submit(old.clone()).is_ok());
+        let start = Instant::now();
+        while !marker.exists() {
+            assert!(start.elapsed() < Duration::from_secs(5));
+            thread::sleep(Duration::from_millis(10));
+        }
+        let native_pid = std::fs::read_to_string(&marker).unwrap();
+        let mut next = if keep_source {
+            old.clone()
+        } else {
+            navigation_job("next")
+        };
+        next.priority = PreviewPriority::Immediate;
+        next.request = PreviewRequest {
+            quality: tr_core::preview::PreviewQuality::Standard,
+            edge: 64,
+        };
+        pool.set_demand(&[(next.item.id.clone(), next.request)], 1);
+        assert!(pool.submit(next.clone()).is_ok());
+        std::fs::write(&gate, b"continue").unwrap();
+        let mut deferred = false;
+        let mut delivered = false;
+        while !deferred || !delivered {
+            match rx.recv_timeout(Duration::from_secs(15)).unwrap() {
+                Event::DecodeDeferred { id, request, .. } => {
+                    assert_eq!((id, request), (old.item.id.clone(), old.request));
+                    deferred = true;
+                }
+                Event::Image {
+                    id,
+                    request,
+                    result,
+                    ..
+                } => {
+                    assert_eq!((id, request), (next.item.id.clone(), next.request));
+                    assert!(result.is_ok());
+                    delivered = true;
+                }
+                Event::MemoryPressure => {}
+                _ => panic!("Unexpected event"),
+            }
+        }
+        assert_eq!(
+            cache.stats().decode_jobs,
+            1,
+            "Only the current consumer needs development"
+        );
+        assert!(pool.queues.0.lock().unwrap().pending.is_empty());
+        assert!(
+            Command::new("/bin/kill")
+                .args(["-0", native_pid.trim()])
+                .output()
+                .unwrap()
+                .status
+                .success(),
+            "Changing view must not terminate the native call/process"
+        );
+        drop(pool);
+        drop(rx);
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+    }
+
+    #[test]
+    #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
+    fn navigation_finishes_native_probe_but_skips_obsolete_development() {
+        change_view_during_native_probe(false);
+    }
+
+    #[test]
+    #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
+    fn quality_change_reuses_active_source_without_delivering_removed_consumer() {
+        change_view_during_native_probe(true);
+    }
+
+    #[test]
+    fn phased_decode_admits_24mp_and_rejects_excess_without_changing_the_limit() {
+        let memory = tr_core::budget::MemoryBudget::new(2 * 1024 * 1024 * 1024);
+        let baseline = memory.try_reserve(384 * 1024 * 1024).unwrap();
+        let snapshot = memory.try_reserve(81 * 1024 * 1024).unwrap();
+        let working = memory
+            .try_reserve(decode_working_bytes(6016, 4016).unwrap())
+            .expect("24 MP full-frame phases fit the unchanged 2 GiB budget");
+        assert!(memory.try_reserve(working.bytes()).is_none());
+        drop((working, snapshot, baseline));
+        assert_eq!(memory.usage().reserved, 0);
+        assert!(decode_working_bytes(0, 10).is_err());
+        assert!(decode_working_bytes(u32::MAX, u32::MAX).is_err());
+    }
+
+    #[test]
+    fn phased_budget_covers_all_owned_mip_tails_including_thin_and_odd_images() {
+        for (width, height) in [(1, 1), (1, 129), (129, 1), (257, 129)] {
+            let budget = tr_core::budget::MemoryBudget::new(
+                decode_working_bytes(width, height).unwrap() - 128 * 1024 * 1024,
+            );
+            let worker_output = budget.try_reserve(u64::from(width * height) * 16).unwrap();
+            let image = ImageLevels::from_source(
+                tr_core::color::LinearImage::new(
+                    width,
+                    height,
+                    vec![[0., 0., 0., 1.]; (width * height) as usize],
+                )
+                .unwrap(),
+                PreviewRequest::full(),
+            )
+            .unwrap();
+            let main = budget.try_reserve(image.byte_len() as u64).unwrap();
+            let mut bases = HashSet::from([0]);
+            let tails: Vec<_> = image
+                .levels()
+                .iter()
+                .skip(1)
+                .filter_map(|level| {
+                    let request = PreviewRequest {
+                        quality: tr_core::preview::PreviewQuality::Full,
+                        edge: level.width.max(level.height).div_ceil(2),
+                    };
+                    let start = image.requested_base(request);
+                    if !bases.insert(start) {
+                        return None;
+                    }
+                    let bytes = image.levels()[start..]
+                        .iter()
+                        .map(|l| l.pixels.len() as u64 * 16)
+                        .sum();
+                    Some(
+                        image
+                            .detach(request, budget.try_reserve(bytes).unwrap())
+                            .unwrap(),
+                    )
+                })
+                .collect();
+            assert!(budget.usage().reserved <= budget.usage().limit);
+            drop((tails, main, worker_output));
+            assert_eq!(budget.usage().reserved, 0);
+        }
+    }
     use std::{os::unix::fs::PermissionsExt, process::Command, time::Instant};
 
     #[test]
@@ -717,6 +1134,7 @@ mod tests {
                     path: PathBuf::new(),
                     bytes: 1,
                     digest: "revision".into(),
+                    observation: String::new(),
                     approved: true,
                     annotation: Default::default(),
                     revision: 0,
@@ -760,6 +1178,7 @@ mod tests {
                 path: PathBuf::new(),
                 bytes: 1,
                 digest: "revision".into(),
+                observation: String::new(),
                 approved: true,
                 annotation: tr_core::Annotation::default(),
                 revision: 0,
@@ -800,6 +1219,7 @@ mod tests {
             path,
             bytes: bytes.len() as u64,
             digest,
+            observation: String::new(),
             approved: true,
             annotation: Default::default(),
             revision: 0,
@@ -918,6 +1338,7 @@ mod tests {
                     name: "Studio cromatico".into(),
                     bytes: bytes.len() as u64,
                     digest,
+                    observation: String::new(),
                     approved: true,
                     annotation: tr_core::Annotation::default(),
                     revision: 0,

@@ -3,6 +3,7 @@ set -eu
 TR_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$TR_ROOT"
 ./scripts/cargo-local.sh fmt --all --check
+python3 scripts/test-preview-reporting.py
 ./scripts/cargo-local.sh clippy --workspace --all-targets --locked --offline -- -D warnings
 ./scripts/cargo-local.sh build --workspace --locked --offline
 ./scripts/cargo-local.sh test --workspace --locked --offline

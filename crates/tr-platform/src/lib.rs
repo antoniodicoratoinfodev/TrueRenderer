@@ -99,6 +99,23 @@ impl SourceSnapshot {
     }
 }
 pub fn observation_token(metadata: &std::fs::Metadata) -> String {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        // Replacement and same-length writes with a restored mtime must invalidate
+        // resident previews too. This remains an observation, never a content hash.
+        format!(
+            "unverified:{}:{}:{}:{}:{}:{}:{}",
+            metadata.dev(),
+            metadata.ino(),
+            metadata.len(),
+            metadata.mtime(),
+            metadata.mtime_nsec(),
+            metadata.ctime(),
+            metadata.ctime_nsec()
+        )
+    }
+    #[cfg(not(unix))]
     format!(
         "unverified:{}:{:?}",
         metadata.len(),
@@ -381,6 +398,10 @@ impl Broker {
                     )?;
                     input.write_all(&work.bytes)?;
                     input.flush()?;
+                    // The worker owns its private copy now. In a full decode no
+                    // other owner needs the host's compressed snapshot. A probe
+                    // deliberately retains the caller's Arc for the later decode.
+                    drop(work.bytes);
                     let (kind, id, data) = protocol::read_control(&mut output)?;
                     ensure!(id == work.id, "Risposta IPC tardiva o request ID errato");
                     if kind == protocol::ERROR {

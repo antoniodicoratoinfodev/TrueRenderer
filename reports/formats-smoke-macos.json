@@ -2,18 +2,18 @@
   "adapter": "Apple M4 · Metal",
   "application": "TrueRenderer",
   "decode_errors": {},
-  "decoded": 35,
+  "decoded": 34,
   "images": 19,
   "passed": true,
   "pixels_per_point": 2.0,
   "presentation_errors": false,
   "scope": "generated external images, native grid, full DNG and 12 MP JPEG viewer; not camera-wide RAW qualification",
   "screenshots": [
-    "11-raw-full",
     "10-external-grid",
-    "12-jpeg12mp-1to1"
+    "12-jpeg12mp-1to1",
+    "11-raw-full"
   ],
-  "seconds": 0.4568389356136322,
+  "seconds": 0.49453046917915344,
   "version": "0.1.5",
   "worker_transports": [
     "Cache disco · fp32 · Anteprima"

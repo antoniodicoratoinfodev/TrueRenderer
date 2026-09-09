@@ -26,6 +26,7 @@ pub fn run(root: &Path, worker: &Path) -> Result<()> {
             name: name.into(),
             bytes: bytes.len() as u64,
             digest: digest.clone(),
+            observation: String::new(),
             approved: true,
             annotation: Annotation::default(),
             revision: 0,

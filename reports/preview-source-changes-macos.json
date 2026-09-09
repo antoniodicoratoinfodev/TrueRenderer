@@ -1,0 +1,8 @@
+{
+  "application": "TrueRenderer",
+  "generation": 4,
+  "passed": true,
+  "scope": "Native viewer on generated PNG: replace, remove and restore while resident, reject old decode epoch, preserve saved rating. Polling observation is best-effort, not a coherent snapshot under arbitrary concurrent writers.",
+  "stage": 4,
+  "version": "0.1.5"
+}
