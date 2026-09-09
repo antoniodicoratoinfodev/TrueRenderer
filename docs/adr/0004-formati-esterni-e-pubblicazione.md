@@ -2,6 +2,10 @@
 
 Data: 7 settembre 2026. Stato: implementato nella 0.1.3, qualifica limitata alle prove registrate.
 
+## Raccordo con la 0.1.5 — 9 settembre 2026
+
+Le quote fisse di cache e l’assenza di budget globale sotto descrivono la 0.1.3. La 0.1.5 applica le impostazioni e l’ammissione per fasi di [ADR 0006](0006-anteprime-residenza-compute.md). Oltre al DNG sintetico sono stati verificati 30 NEF Nikon D750 alla risoluzione nativa, inclusi due accessi simultanei entro 2 GiB. Il riconoscimento RAW nei contenitori TIFF è stato corretto. I report RAW pubblicati contengono risultati numerici; fotografie e copie di lavoro restano private. Le altre fotocamere e il gate sandbox completo rimangono da qualificare. [Ultime verifiche](../../reports/preview-navigation-continuation-macos.json).
+
 ## Richiesta e modifica dello scopo
 
 Il titolare ha richiesto un repository GitHub pubblico, README, licenza **proprietaria** e apertura effettiva di JPEG, PNG, RAW, TIFF e altri formati. La 0.1.2 ammetteva soltanto i dodici PNG del corpus. Questo incremento anticipa una parte dei formati R1/R3 attraverso i decoder Apple, conservando la modalità **Anteprima**. È una modifica esplicita del perimetro di sviluppo rispetto all'attesa del gate R0 completo nella proposta originale; non chiude quel gate e non sostituisce la futura matrice RAW/ICC multipiattaforma.

@@ -60,9 +60,10 @@ o di startup a freddo. Due connessioni non equivalgono a due isolati indipendent
 
 La primitiva XPC/App Sandbox è concretamente utilizzabile per il confine macOS. La prova
 fornisce anche una restrizione candidata per i figli. Il gate completo rimane **aperto** e
-`full_sandbox_gate_passed` resta `false` in entrambi i report. Il decoder dell’app mantiene
-la propria allowlist. L’incremento 0.1.1 ha ora integrato due servizi XPC distinti nel bundle;
-il trasporto su pipe rimane nei binari di sviluppo fuori bundle.
+`full_sandbox_gate_passed` resta `false` in entrambi i report. I binari di sviluppo su pipe mantengono
+la propria allowlist. L’incremento 0.1.1 ha integrato due servizi XPC distinti nel bundle;
+dalla 0.1.3 il bundle macOS ammette immagini esterne come Anteprima secondo
+[ADR 0004](../../docs/adr/0004-formati-esterni-e-pubblicazione.md), mantenendo aperto il gate completo.
 
 Il decoder senza percorsi, la copia privata, due PID distinti e le prove di timeout/memoria
 sono descritti in `docs/adr/0002-xpc-decoder-r0.md` e nei report `xpc-integration-macos.json`

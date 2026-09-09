@@ -2,6 +2,10 @@
 
 Data: 5 settembre 2026. Stato: accettata per il prototipo interno, revocabile ai gate R0/R1.
 
+## Raccordo con la 0.1.5 — 9 settembre 2026
+
+Questo ADR conserva contesto, quote e decisioni del 5 settembre 2026. Il confine macOS è stato esteso da [ADR 0002](0002-xpc-decoder-r0.md) e gli esterni ammessi come Anteprima da [ADR 0004](0004-formati-esterni-e-pubblicazione.md). Residenza, budget e compute correnti sono in [ADR 0006](0006-anteprime-residenza-compute.md); stato e prove aggiornate in [avanzamento](../avanzamento.md). I riferimenti al documento sul Desktop descrivono la collocazione iniziale: oggi la copia della radice è `TrueVision-Architettura.md` nella cartella del progetto.
+
 Aggiornamento 0.1.1: le decisioni 4–5 descrivono l’incremento iniziale. Il bundle macOS ora
 usa due decoder XPC e supervisione memoria, come registrato in `0002-xpc-decoder-r0.md`.
 

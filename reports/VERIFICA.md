@@ -2,6 +2,8 @@
 
 Aggiornamento: 9 settembre 2026. Build interna **0.1.5** installata e verificata su macOS arm64; qualifica integrata del progetto aperta.
 
+**Stato repository controllato il 9 settembre:** codice e report di queste prove sono ora inclusi in `10123b5`, verificato su `main` remoto. Gli hash nel riepilogo corrispondono ancora al codice e al bundle installato. Le basi Git e gli stati «non pubblicato» nelle sezioni/JSON storici descrivono il momento della misura. Questa revisione aggiorna i Markdown; non è una nuova esecuzione dei benchmark.
+
 ## Continuazione della navigazione del 9 settembre 2026
 
 Corretto il lavoro che proseguiva dopo l’abbandono di una foto: snapshot/hash/cache e attesa dell’ammissione verificano ora la domanda corrente. Probe e decode nativi già iniziati terminano mantenendo processo e lease; il cambio qualità della stessa sorgente conserva lo sviluppo condivisibile. Prima della consegna si escludono i consumatori abbandonati e si liberano anche le richieste originarie dal registro pending. Un annullamento rimane riprovabile, senza errore permanente in UI.
@@ -16,9 +18,9 @@ Corretto il lavoro che proseguiva dopo l’abbandono di una foto: snapshot/hash/
 
 Restano aperti corpus reale 1.000 RAW e matrici 12/24/45 MP, pressione fisica, p95/p99 evento→frame, A/B integrato, driver/display/altri OS e gate R0–R4. Le evidenze della continuazione precedente sono conservate separatamente e riportate sotto.
 
-## Continuazione verificata del 9 settembre 2026
+## Prima continuazione verificata del 9 settembre 2026 (storico)
 
-Base Git `e609310`, modifiche locali non pubblicate. Corretti rilascio dei buffer compressi, ammissione per fasi, geometria dei mip e contesa dei decode pesanti; massimo due snapshot pronti. Default 2 GiB e preferenze utente invariati. Corrette le verifiche affinché errori, interruzioni o carichi falliti non conservino un precedente successo come esito corrente.
+Al momento della prova: base Git `e609310`, modifiche ancora locali; successivamente incluse in `10123b5`. Corretti rilascio dei buffer compressi, ammissione per fasi, geometria dei mip e contesa dei decode pesanti; massimo due snapshot pronti. Default 2 GiB e preferenze utente invariati. Corrette le verifiche affinché errori, interruzioni o carichi falliti non conservino un precedente successo come esito corrente.
 
 **Controlli del codice passati:** 67 test Rust (60 ordinari + 7 integrazioni), 2 regressioni Python dei report, rustfmt, Clippy, 6 prove IPC e 24 casi sinusoidali con 1:1 esatto. Log locale `var/preview-review/verify-concurrent.log`. Passati anche cache v2, integrazione dei due XPC e rifiuto del comando di fault injection. Le [tre prove native](preview-native-before-navigation-macos.json) verificano cambio/rimozione/ripristino sorgente, una ricreazione del device e arresto atteso alla seconda perdita; database integri. Non sono reset fisici del driver o OOM.
 
@@ -44,7 +46,7 @@ Evidenze: [carico RAW finale](preview-real-raw-before-navigation-macos.json), [m
 
 ## Revisione locale del 9 settembre 2026 — sessione precedente, prima della continuazione
 
-Modifiche salvate nel working tree, base `e609310`; nessun nuovo commit o push. Bundle aggiornato in `dist/TrueRenderer.app`, versione interna 0.1.5. I risultati dell’8 settembre nella sezione successiva restano storici.
+Al momento della prova le modifiche erano nel working tree, base `e609310`; la successiva pubblicazione è inclusa in `10123b5`. Bundle aggiornato in `dist/TrueRenderer.app`, versione interna 0.1.5. I risultati dell’8 settembre nella sezione successiva restano storici.
 
 Corretti tre problemi: invalidazione delle sorgenti richieste/residenti modificate, rimosse o ripristinate; ricreazione grafica limitata a un tentativo con conservazione di selezione, undo e salvataggi; riconoscimento dei NEF che ImageIO presentava come TIFF, evitando di usare la miniatura 160×120 al posto del RAW nativo. Il fingerprint `raw-detection-v2` rende obsolete le precedenti derivazioni. La profondità del sensore rimane sconosciuta quando non è disponibile: non viene dedotta dagli 8 bit della miniatura.
 

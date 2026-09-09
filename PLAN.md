@@ -5,9 +5,13 @@ Il nome corrente è **TrueRenderer**; TrueVision è il nome precedente.
 
 Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
 
+**Stato verificato al 9 settembre 2026:** implementazione e report della continuazione inclusi in `10123b5`, presente su `origin/main` verificato in rete. Ultima suite: 71 test Rust, 30 NEF a 2 GiB e bundle macOS installato verificato. [Risultati e hash](reports/preview-navigation-continuation-macos.json). I conteggi e i commit nelle sezioni storiche descrivono i rispettivi incrementi.
+
+**Prossimo incremento locale:** misurare la navigazione dal comando al frame corretto sul Mac e sui dati disponibili; separare cache fredda, SSD dopo riavvio e RAM/GPU calde, con A/B della stessa qualità. Altri RAW/hardware e i gate R0–R4 restano attività distinte.
+
 ## Obiettivo e regole
 
-Applicazione desktop Rust per sfogliare, selezionare e ispezionare immagini con una resa tracciabile. Prima versione supportata: macOS arm64 e Windows x86-64, SDR. Le tappe del documento sono criteri di accettazione: una schermata funzionante non chiude un gate di colore, sicurezza o accessibilità.
+Applicazione desktop Rust per sfogliare, selezionare e ispezionare immagini con una resa tracciabile. Target previsti per la prima versione: macOS arm64 e Windows x86-64, SDR; oggi è verificato il prototipo macOS arm64, mentre Windows resta da implementare/qualificare. Le tappe del documento sono criteri di accettazione: una schermata funzionante non chiude un gate di colore, sicurezza o accessibilità.
 
 Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, prove riproducibili, limiti osservati e aggiornamento dell'architettura. Nessuna modifica agli originali; annotazioni separate dall'indice. Nessun servizio cloud, account o canone. Tutto il progetto, inclusa la toolchain locale, rimane in questa cartella sul Desktop. Dati di sviluppo locali in `var/`; prima di una release spostarli nel percorso app-data nativo qualificato.
 
@@ -55,7 +59,7 @@ Completata la verticale interna: broker macOS, decoder riutilizzabile e due serv
 - [ ] Estendere i test negativi a input ostili, descrittori residui, output concorrente e quota di risorse.
 - [ ] Affiancare la verticale Windows reale e le prove di display/accessibilità prima di chiudere R0.
 
-Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Il prossimo lavoro sul Mac è la suite avversaria del bootstrap e del ciclo di vita, seguita dal budget memoria end-to-end. Nella 0.1.1 i PNG esterni restavano esclusi; la modifica del perimetro nella 0.1.3 è registrata in ADR 0004. Il gate completo della sandbox rimane aperto.
+Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Per completare il gate XPC sul Mac restano la suite avversaria del bootstrap/ciclo di vita e la qualifica estesa della memoria end-to-end; l’ordine dell’incremento locale corrente è indicato in apertura. Nella 0.1.1 i PNG esterni restavano esclusi; la modifica del perimetro nella 0.1.3 è registrata in ADR 0004. Il gate completo della sandbox rimane aperto.
 
 ## Incremento 0.1.2 — fedeltà del ricampionamento e documentazione
 
@@ -108,13 +112,13 @@ Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini
 
 ## Progetto di incremento — anteprime, cache e prestazioni
 
-Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la navigazione con cache RAM/SSD, scelta fra Anteprima Standard e Piena, limiti di memoria configurabili e uso intenso di CPU/GPU durante il lavoro utile. Specifica dettagliata: [progetto di anteprime, cache e prestazioni](docs/progetto-anteprime-cache-prestazioni.md), revisione 2 pubblicata nel commit `a2db2ab`, ora revisione 4 integrata nell’appendice E dell’architettura.
+Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la navigazione con cache RAM/SSD, scelta fra Anteprima Standard e Piena, limiti di memoria configurabili e uso intenso di CPU/GPU durante il lavoro utile. Specifica dettagliata: [progetto di anteprime, cache e prestazioni](docs/progetto-anteprime-cache-prestazioni.md), revisione 2 pubblicata nel commit `a2db2ab`, ora revisione 5 integrata nell’appendice E dell’architettura.
 
 **Stato: implementazione 0.1.5 disponibile; qualifica integrata aperta.** Baseline 0.1.4 conservata in `reports/preview-baseline-macos.json`; decisioni applicate e limiti in [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md). Anteprima Standard/Piena rimane distinta dai badge di pipeline Standard/Riferimento. Nessun gate R0–R4 è chiuso da questo incremento.
 
 - [x] A, modelli: qualità/richieste, migrazione compatibile, budget/lease, ammissione prima delle allocazioni, preferenze RAM/GPU/CPU e adattamento all'alimentazione.
 - [x] A, baseline locale: conservare misure della build 0.1.4 senza confondere il caricamento dell'intera piramide con le nuove miniature autonome.
-- [x] Revisione locale 9 settembre: 30 NEF Nikon D750 a risoluzione nativa, Standard/Piena fredde/calde e riapertura cache verificati con budget esplicito 3 GiB; 64 test Rust e suite nativa finale passati. Nessun nuovo commit/push. Ripresa in [docs/ripresa-codex.md](docs/ripresa-codex.md).
+- [x] Revisione locale 9 settembre: 30 NEF Nikon D750 a risoluzione nativa, Standard/Piena fredde/calde e riapertura cache verificati con budget esplicito 3 GiB; 64 test Rust e suite nativa finale passati. Alla chiusura di quella prova il lavoro era locale; ora è incluso in `10123b5`. Ripresa in [docs/ripresa-codex.md](docs/ripresa-codex.md).
 - [ ] A, qualifica RAW: baseline e target di throughput su corpus reale autorizzato 12/24/45 MP.
 - [x] Continuazione 9 settembre: ridurre la durata dei buffer compressi, stimare il massimo delle fasi e contenere snapshot/decode pesanti. 67 test Rust e 30 NEF a 2 GiB, incluse due richieste simultanee, passati; footprint campionato massimo 2.100.284.608 byte in un bundle isolato dalle altre istanze.
 - [x] Verificare e aggiornare il bundle della continuazione: cache, XPC, sorgenti/device, suite Finder/rilocazione/database/firma passati; quattro binari identici alla prova RAW. Conservare il pacchetto precedente e sincronizzare piano, registro e architetture.

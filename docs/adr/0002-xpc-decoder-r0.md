@@ -2,6 +2,10 @@
 
 Data: 6 settembre 2026. Stato: adottata per il prototipo interno 0.1.1; gate di rilascio aperto.
 
+## Raccordo con la 0.1.5 — 9 settembre 2026
+
+Le quote 32 MiB/8 Mi pixel, la sola allowlist e le misure sotto descrivono la 0.1.1. [ADR 0004](0004-formati-esterni-e-pubblicazione.md) estende il bundle macOS agli esterni come Anteprima (256 MiB/64 Mi pixel, supervisione esterni 2 GiB/45 s); i binari su pipe conservano la allowlist. [ADR 0006](0006-anteprime-residenza-compute.md) aggiunge budget globale stimato, code indipendenti e P0–P6. La revoca del dominio continua a riciclare i servizi; l’abbandono di una vista interrompe soltanto i passaggi cancellabili e lascia terminare le chiamate native già iniziate. Firma di release e gate sandbox completi restano aperti.
+
 ## Decisione
 
 Il bundle macOS usa due servizi distinti, `it.truerenderer.prototype.decoder.0` e `.1`, ciascuno

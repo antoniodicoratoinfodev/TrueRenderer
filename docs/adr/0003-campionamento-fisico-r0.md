@@ -2,6 +2,10 @@
 
 Data: 6 settembre 2026. Versione app: 0.1.2. Decisione per il prototipo Anteprima; promozione Standard/Riferimento subordinata a §§10 e 19.3.
 
+## Raccordo con la 0.1.5 — 9 settembre 2026
+
+Le descrizioni di sorgente/piramide condivisa, quote fisse e attesa sullo sfondo documentano la 0.1.2. [ADR 0006](0006-anteprime-residenza-compute.md) mantiene il grafo del filtro ma usa livelli autonomi, budget con lease, compute GPU e riuso/riproiezione del frame durante il raffinamento. Istogramma e campionatore indicano ora il livello residente; 1:1 richiede il dettaglio nativo Full. La suite corrente confronta anche CPU/GPU e le fixture EXIF, entro il proprio perimetro; qualifica completa di transizioni, display e prestazioni ancora aperta. Risultati aggiornati in [VERIFICA](../../reports/VERIFICA.md).
+
 ## Problema osservato
 
 Il corpus `04_Frequenze_radiali.png` mostrava falsi dettagli e moiré in Adatta e nella griglia della 0.1.1. Il viewer applicava nearest alla texture sorgente a scala arbitraria; le miniature passavano da una riduzione area a 320 pixel e poi da un ulteriore ridimensionamento nearest, anche su Retina. La miniatura laterale poteva inoltre cambiare sorgente quando arrivava la decodifica intera. Screenshot della vecchia finestra acquisito prima della modifica; nessun cambiamento al generatore o ai PNG del corpus per nascondere il problema.

@@ -45,7 +45,7 @@ External image decoding requires the **macOS app bundle**, where decoding runs i
 | JPEG / JPG / JPE | ImageIO and ColorSync | RGB JPEG, including 4000×3000 pixels |
 | PNG | ImageIO and ColorSync | RGB/RGBA, alpha, 16-bit precision |
 | TIFF / TIF | ImageIO and ColorSync | RGB 8/16-bit, EXIF orientations 1–8 |
-| RAW, including DNG | CIRAWFilter at native resolution | Generated 1024×768 Bayer RGGB DNG without an embedded JPEG |
+| RAW, including DNG | CIRAWFilter at native resolution | Generated 1024×768 Bayer RGGB DNG without an embedded JPEG; 30 Nikon D750 NEFs at native 6016×4016 resolution (or oriented equivalent) |
 | HEIC / HEIF | Operating-system decoder | RGB HEIC |
 | WebP | Operating-system decoder | Lossless RGB WebP |
 | GIF and BMP | ImageIO and ColorSync | Generated RGB images |
@@ -72,7 +72,7 @@ This is an internal arm64 build with an ad hoc signature, tested on macOS 26.6.2
 
 Changed or missing source files now invalidate requested and resident previews automatically. The app keeps annotations and reports when the previous preview has been removed. A lost graphics device triggers one controlled window/device recreation, preserving the catalog service and session; a second loss, or an unrecoverable window-backend panic, ends the session with a native diagnostic.
 
-The review also fixes TIFF-container Nikon NEFs being mistaken for their embedded thumbnails. RAW detection now requires an actual Apple RAW decoder, and old cache entries from the previous detection pipeline are not reused. Compressed buffers are released earlier, admission accounts for successive allocation phases, and heavy decodes share a bounded queue. A local test of 30 Nikon D750 NEFs, including two simultaneous requests, passed at the unchanged 2 GiB budget with a sampled host/XPC footprint of 2,100,284,608 bytes. Other cameras, mixed workloads, memory pressure and reduced or regional RAW decoding remain unqualified; this measurement is not an OS-enforced memory cap.
+The review also fixes TIFF-container Nikon NEFs being mistaken for their embedded thumbnails. RAW detection now requires an actual Apple RAW decoder, and old cache entries from the previous detection pipeline are not reused. Compressed buffers are released earlier, admission accounts for successive allocation phases, and heavy decodes share a bounded queue. A local test of 30 Nikon D750 NEFs, including two simultaneous requests, passed at the unchanged 2 GiB budget with a sampled host/XPC footprint of 2,018,970,672 bytes in the latest [isolated memory check](reports/preview-navigation-memory-real-raw-macos.json). Other cameras, mixed workloads, memory pressure and reduced or regional RAW decoding remain unqualified; this measurement is not an OS-enforced memory cap.
 
 ## Lossless disk cache
 
@@ -116,14 +116,15 @@ Least recently used entries are evicted to make room. New maintenance protects a
 
 Standard currently derives at most 2048-pixel levels from a temporary full native decode; Full keeps the levels required by the physical view, including source detail for 1:1. Apple contexts are reused, but native reduced RAW decoding and production Metal decoding remain unqualified. These controls do not add regional RAW or gigapixel decoding. A source that cannot fit the selected admission limit produces an explicit memory error; increasing quality never silently bypasses the limit. Uncompressed fp32 data can be much larger than the original JPEG or RAW. Free-space checks also cannot reserve space against other applications writing to the same disk. [ADR 0005](docs/adr/0005-cache-cartella.md) and [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md) record the design and remaining qualification gates.
 
-Visible work uses seven priority classes with FIFO ordering and promotion of pending requests. Prefetch follows navigation direction with a bounded neighborhood and an adaptive delay. On macOS, memory-pressure notifications suspend speculative work and trim reusable CPU/GPU storage while active buffers keep their admission credits. Cache writers yield to waiting local readers between bounded batches.
+Visible work uses seven priority classes with FIFO ordering and promotion of pending requests. Prefetch follows navigation direction with a bounded neighborhood and an adaptive delay. On macOS, memory-pressure notifications suspend speculative work and trim reusable CPU/GPU storage while active buffers keep their admission credits. Cache writers yield to waiting local readers between bounded batches. When navigation abandons a request, snapshot/cache work and memory admission stop at interruptible boundaries. Native calls already in progress finish while keeping their memory credits; a new quality request for the same source can reuse development. Cancelled consumers remain retryable.
 
 ## Building and testing
 
-For the owner and authorized developers: macOS arm64, Xcode Command Line Tools, Python 3, and Rust via rustup. `rust-toolchain.toml` pins Rust 1.98.1 and `Cargo.lock` pins dependencies. A local `.tools/` toolchain takes precedence when present.
+For the owner and authorized developers: macOS arm64, Xcode Command Line Tools, Python 3, and Rust via rustup. `rust-toolchain.toml` pins Rust 1.98.1 and `Cargo.lock` pins dependencies. A local `.tools/` toolchain takes precedence when present. Install `cwebp` for the generated WebP fixture, then generate the format fixtures before `verify.sh`: its native integration tests require them.
 
 ```sh
 ./scripts/cargo-local.sh fetch --locked  # initial dependency download on a new checkout
+python3 scripts/generate-format-fixtures.py  # prerequisites for native integration tests
 ./scripts/verify.sh                     # lint, Rust/IPC tests, precision, resampling
 ./scripts/build-macos.sh                # release build and ad hoc signed XPC bundle
 python3 scripts/test-xpc-integration.py
@@ -133,10 +134,9 @@ open -n -W dist/TrueRenderer.app --args --sampling-smoke
 
 Native tests need a normal macOS desktop session, because an extra terminal sandbox can block Core Image, Cocoa, or XPC. `verify.sh` explicitly runs the ignored tests after building the worker.
 
-The external-format fixture generator additionally requires `cwebp`, used only to produce the WebP test image:
+After building the bundle, the additional checks below reuse those generated fixtures. `cwebp` is only a fixture-generation dependency, not an app dependency:
 
 ```sh
-python3 scripts/generate-format-fixtures.py
 ./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-formats
 ./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-cache
 ./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-previews
@@ -173,7 +173,9 @@ The workspace contains `tr-core`, `tr-app`, `tr-store`, `tr-platform`, `tr-worke
 
 ## Status
 
-This is a development prototype, not a qualified 1.0. Remaining work includes the full R0 gates, integrated memory qualification, device-loss recovery, live source-revision monitoring, faster XPC recovery, Windows support, ICC and display qualification, accessibility, complete catalog and XMP workflows, a real RAW and LibRaw camera matrix, tiles and gigapixel images, installers, and notarization. Worker memory is supervised rather than hard-capped, and XPC recovery can take roughly ten seconds.
+The implementation and verification records are included in commit `10123b5` on `main` (remote checked on 9 September 2026). The latest [verification summary](reports/preview-navigation-continuation-macos.json) records 71 Rust tests, 30 authorized Nikon D750 RAWs within a 2 GiB admission budget, and the installed macOS bundle checks. These results cover the stated workloads; the measurement-time Git metadata in the reports is retained.
+
+This is a development prototype, not a qualified 1.0. Requested/resident source monitoring, bounded graphics recovery, and view-demand cancellation are implemented and tested locally. Remaining work includes the full R0 gates, integrated event-to-frame navigation latency and CPU/GPU comparisons, broader memory/RAW qualification, physical device-loss/OOM and driver/display testing, coherent source revisions under concurrent writers, faster XPC recovery, Windows support, ICC and display qualification, accessibility, complete catalog and XMP workflows, a real RAW and LibRaw camera matrix, tiles and gigapixel images, installers, and notarization. Worker memory is supervised rather than hard-capped, and XPC recovery can take roughly ten seconds.
 
 LibRaw is planned for the future cross-platform RAW pipeline and is not bundled in 0.1.5. Its open-source licensing allows use in a commercial proprietary product without buying a commercial license, subject to the selected CDDL/LGPL obligations. See the [official licensing statement](https://www.libraw.org/about) and the project's [licensing review](docs/licenza-libraw.md).
 

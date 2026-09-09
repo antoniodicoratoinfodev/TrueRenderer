@@ -1,5 +1,11 @@
 # TrueRenderer — ripresa e revisione del 9 settembre 2026
 
+## Stato corrente verificato il 9 settembre 2026
+
+Il lavoro recuperato, le correzioni della navigazione e i relativi report sono inclusi nel commit `10123b5`, presente sia su `main` locale sia sul remoto verificato in rete. Gli hash di codice, bundle e report coincidono con il [riepilogo delle ultime prove](../reports/preview-navigation-continuation-macos.json): 71 test Rust, 30 NEF entro 2 GiB e suite installata passati. La successiva revisione dei Markdown aggiorna soltanto la documentazione.
+
+Le indicazioni «nessun nuovo commit/push» nelle sezioni storiche si riferiscono alla chiusura delle rispettive prove, prima della pubblicazione. Anche i campi Git nei JSON sono una fotografia del momento della misura e vanno conservati. Il prossimo lavoro è la misura integrata della navigazione; la qualifica generale su altri RAW/hardware rimane aperta.
+
 ## Richiesta recuperata
 
 Rilette le sessioni locali «Applica modifiche anteprime cache» e «Consulta la documentazione cache», inclusi i messaggi originali. L'ultima richiesta applicativa è verificare il progetto di anteprime/cache rispetto al codice, correggerlo e applicarlo, integrare la specifica nel documento di architettura spostato nella radice del progetto e rivedere `PLAN.md`. L'ultimo messaggio della sessione precedente chiedeva di salvare il lavoro e i punti aperti per il cambio di abbonamento. Questa continuazione è autorizzata dal titolare.
@@ -15,7 +21,7 @@ La richiesta precedente su LibRaw e commit/push era stata consegnata con `1b98b4
 - La sessione precedente registrava 64 test Rust e prove native positive; 30 NEF verificati con budget esplicito di 3 GiB. Il fallimento a 2 GiB era reale: richiesta 1603 MiB oltre a 460 MiB già prenotati. Non era una perdita di crediti.
 - Il presente file era citato nel piano e nel registro ma non era stato creato: ripristinato durante questa revisione.
 
-## Continuazione verificata
+## Prima continuazione verificata (storico, prima della revisione navigazione)
 
 1. Corrette le verifiche RAW, memoria e recupero nativo: un nuovo tentativo parte con esito non positivo; errori, timeout e risultati incompleti non lasciano come risultato corrente un precedente successo. I dettagli che possono contenere percorsi privati restano nei log locali. Il report memoria identifica i quattro binari effettivamente provati.
 2. Anticipato il rilascio dei byte compressi nel broker dopo l'invio e nel worker prima della risposta raster. La stima di ammissione considera il massimo delle fasi successive: sviluppo nativo, trasferimento privato, costruzione della piramide e copie dei livelli richiesti. Restano l'allowance nativa di 32 byte/pixel + 128 MiB, la baseline di 384 MiB e i crediti separati degli snapshot. Dimensioni dispari e immagini a una sola riga/colonna sono conteggiate con geometria esatta.
@@ -24,7 +30,7 @@ La richiesta precedente su LibRaw e commit/push era stata consegnata con `1b98b4
 5. Passate sul candidato le tre prove native di sorgente modificata e perdita del device, con database integri; passata l'integrazione dei due XPC e il rifiuto del comando di fault injection. Gli hash dei quattro binari coincidono con quelli della prova RAW/memoria. Il rifiuto a 512 MiB e i report negativi restano evidenze separate.
 6. Bundle finale aggiornato in `dist/TrueRenderer.app`; precedente conservato in `var/package-history/TrueRenderer-0.1.5-before-continuation-20260909-142049.app`. Suite completa installata passata: Finder, formati/cache, screenshot/campionamento, impostazioni, XPC, copia autonoma, database e firma/hash. I quattro binari installati sono identici a quelli delle prove RAW e native. Piano, registro e architetture sincronizzati. Modifiche salvate localmente, nessun nuovo commit/push. I risultati correnti sono in `reports/VERIFICA.md`.
 
-## Continuazione della navigazione — sessione recuperata nell’app
+## Ultima continuazione applicativa — navigazione
 
 Preservato il lavoro della sessione precedente; copia dei file interessati, diff iniziale e report in `var/continuation-navigation-20260909-143737`. Corretta una lacuna dello scheduler: un lookup già attivo o un decode in attesa poteva proseguire anche dopo il cambio foto. Ora i passaggi interrompibili controllano la domanda; le chiamate native già in corso terminano senza riciclare XPC, con i crediti mantenuti fino al completamento. La stessa foto con nuova qualità riusa lo sviluppo, mentre i consumatori abbandonati vengono rimossi e rimangono riprovabili.
 
@@ -32,7 +38,7 @@ Passati 71 test Rust (61 ordinari + 10 integrazioni), 2 regressioni Python, fmt/
 
 La nuova verifica su 30 NEF a 2 GiB è passata: 60 coppie Standard/Piena fredde/calde bit-exact, 30 riaperture senza decode, dettaglio su tre file e due richieste simultanee; originali invariati e zero crediti residui. Footprint aggregato massimo 2.018.970.672 byte, RSS 1.965.047.808 byte; 7.042 campioni completi, intervallo massimo 54,63 ms. Questo è un risultato campionato sul carico dichiarato, non un A/B, un p95 o una qualifica dei driver. Report `preview-navigation-memory-real-raw-macos.json` e `preview-real-raw-macos.json`.
 
-**Consegna finale di questa sessione:** aggiornato `dist/TrueRenderer.app`; precedente conservato in `var/package-history/TrueRenderer-0.1.5-before-navigation-20260909-144830.app`. Suite completa installata passata: XPC, Finder, formati/cache, 14 regioni di screenshot entro la soglia di un livello sRGB8, impostazioni, copia autonoma, integrità database e firma/hash. I quattro binari installati coincidono con quelli delle prove RAW/memoria e di recupero. [Riepilogo delle verifiche](../reports/preview-navigation-continuation-macos.json), log in `var/continuation-navigation-20260909-143737`. Piano, registro e architetture sincronizzati; lavoro salvato localmente, nessun nuovo commit/push. Il prossimo incremento rimane la misura integrata della navigazione evento→frame sui dati disponibili, mantenendo distinti i gate che richiedono altro corpus/hardware.
+**Consegna finale di questa sessione:** aggiornato `dist/TrueRenderer.app`; precedente conservato in `var/package-history/TrueRenderer-0.1.5-before-navigation-20260909-144830.app`. Suite completa installata passata: XPC, Finder, formati/cache, 14 regioni di screenshot entro la soglia di un livello sRGB8, impostazioni, copia autonoma, integrità database e firma/hash. I quattro binari installati coincidono con quelli delle prove RAW/memoria e di recupero. [Riepilogo delle verifiche](../reports/preview-navigation-continuation-macos.json), log in `var/continuation-navigation-20260909-143737`. Piano, registro e architetture sincronizzati; lavoro inizialmente salvato localmente e successivamente pubblicato nel commit `10123b5`. Il prossimo incremento rimane la misura integrata della navigazione evento→frame sui dati disponibili, mantenendo distinti i gate che richiedono altro corpus/hardware.
 
 ## Attività ancora aperte nel progetto complessivo
 
@@ -42,6 +48,10 @@ La nuova verifica su 30 NEF a 2 GiB è passata: 60 coppie Standard/Piena fredde/
 - Gate R0: bootstrap XPC ostile, handle/output concorrenti, riavvio <1 s, firma reciproca di release e API/minimi OS; verticale Windows e toolkit/accessibilità/display reali.
 - R1–R4 e funzionalità mancanti: elenco e dipendenze in `PLAN.md` e nella matrice del registro. Le qualità Anteprima Standard/Piena non abilitano Standard/Riferimento.
 - Il titolare aveva chiesto di eliminare `docs/progetto-anteprime-cache-prestazioni.md` **quando tutto fosse finito**. Rimane la fonte della specifica integrata finché i requisiti aperti non sono qualificati; non cancellarlo solo perché il codice di una fase è presente.
+
+## Audit dei Markdown successivo alla pubblicazione
+
+Il 9 settembre sono stati controllati 19 documenti di progetto. Corretti README (stato funzionale, RAW e fixture), piano/spec (prossima attività e stato delle fasi), riferimenti al commit pubblicato e raccordi storici degli ADR. Allineate entrambe le architetture tramite il sincronizzatore. Link locali e hash di codice/bundle/report verificati; l’audit riguarda la documentazione e non aggiunge misure o chiude gate applicativi. I dati di prova nei JSON restano quelli delle esecuzioni originali. Nel secondo controllo sono state corrette anche le voci della matrice di avanzamento su corpus RAW autorizzato, monitor dei file, cache v2, test e memoria, distinguendo quanto già provato dalla qualifica generale.
 
 ## Come proseguire senza perdere lavoro
 

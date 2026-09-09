@@ -12,6 +12,8 @@ Since 0.1.3 the external macOS decoder uses ImageIO, Core Image with CIRAWFilter
 
 The preview pipeline added Rayon 1.11.0 with the resolved rayon-core and Crossbeam dependencies listed in the lockfile. Their MIT/Apache notice files are included in the dependency inventory. Apple Metal is an operating-system framework used for viewer compute and explicit decoder experiments, not a bundled third-party library.
 
+The later authorized camera checks use private copies of 30 Nikon D750 NEFs. The published RAW reports contain numerical verification results; those photographs and their working copies are not included in the repository. Generated corpus/format fixtures and the camera dataset are separate test inputs.
+
 ## Trademarks
 
 TrueRenderer is an independent project. It is not affiliated with, sponsored by, endorsed by, or certified by any of the companies or projects named in this repository.

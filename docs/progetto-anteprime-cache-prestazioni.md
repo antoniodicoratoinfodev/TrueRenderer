@@ -1,6 +1,6 @@
 # TrueRenderer — progetto di anteprime, cache e prestazioni
 
-> Revisione 4, verifica del codice locale dell’8–9 settembre 2026: specifica integrata nell'appendice E delle due architetture del progetto. La 0.1.5 contiene già livelli autonomi, qualità Standard/Piena, budget, cache v2, writer asincrono, scheduler/prefetch e compute CPU/GPU. La revisione aggiunge osservazione delle sorgenti residenti, recupero grafico, correzione dell'ammissione RAW e verifiche resistenti a risultati obsoleti; mantiene separati implementazione, prove locali e qualifica ancora aperta.
+> Revisione 5, allineamento documentale del 9 settembre 2026 al codice e ai report inclusi in `10123b5`: specifica integrata nell'appendice E delle due architetture del progetto. La 0.1.5 contiene già livelli autonomi, qualità Standard/Piena, budget, cache v2, writer asincrono, scheduler/prefetch e compute CPU/GPU. La revisione aggiunge osservazione delle sorgenti residenti, recupero grafico, correzione dell'ammissione RAW, cancellazione dei lavori abbandonati in navigazione e verifiche resistenti a risultati obsoleti; mantiene separati implementazione, prove locali e qualifica ancora aperta.
 
 **Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni passano soltanto dal bundle macOS XPC/App Sandbox secondo ADR 0004.
 
@@ -15,12 +15,12 @@ La fonte rimane questo file, insieme ad ADR 0005–0006; `scripts/sync-docs.py` 
 | RAM/SSD | Corretto separare pixel residenti e catalogo. `ImageLevels` stacca i livelli piccoli; il writer limitato in byte conserva gli stessi lease dei dati trattenuti. Una miniatura non richiede una piramide completa residente. |
 | Qualità | Standard e Piena sono distinte da assurance e completezza. Standard usa attualmente sviluppo nativo completo temporaneo e riduzione; nessuna promessa di demosaic ridotto più veloce. |
 | Cache v1/v2 | Lossless RGBA32F, checksum e quota comune per cartella corretti. I record v2 non sono tile sorgente né un codec compresso; non qualificano gigapixel. ADR 0005 documenta la storia v1, ADR 0006 il percorso interattivo v2. |
-| Budget | Rilascio anticipato dei buffer compressi, massimo delle fasi, mip esatti, massimo due snapshot pronti e serializzazione dei decode pesanti. I 30 NEF D750 passano a 2 GiB, incluse due richieste simultanee; footprint campionato 2.100.284.608 byte. Default e baseline 384 MiB invariati. La precedente necessità di 3 GiB è conservata nei report storici; altre camere, carichi misti, pressione e driver restano da qualificare. Nessun tetto kernel è garantito. |
-| Prefetch/CPU | P0–P6, ritardo 100–500 ms, I/O distinto e Rayon/NEON implementati. Il ritardo usa consegna CPU recente; non misura la latenza evento→frame. AVX2, controllo termico e alcuni adattamenti restano da implementare/qualificare. |
+| Budget | Rilascio anticipato dei buffer compressi, massimo delle fasi, mip esatti, massimo due snapshot pronti e serializzazione dei decode pesanti. I 30 NEF D750 passano a 2 GiB, incluse due richieste simultanee; ultimo footprint campionato 2.018.970.672 byte (`preview-navigation-memory-real-raw-macos.json`). Default e baseline 384 MiB invariati. La precedente necessità di 3 GiB è conservata nei report storici; altre camere, carichi misti, pressione e driver restano da qualificare. Nessun tetto kernel è garantito. |
+| Prefetch/CPU | P0–P6, ritardo 100–500 ms, I/O distinto e Rayon/NEON implementati. Lookup/ammissioni abbandonati sono cancellati ai confini interrompibili; le chiamate native iniziate terminano e il cambio qualità della stessa sorgente può riusare lo sviluppo. Il ritardo usa consegna CPU recente; non misura la latenza evento→frame. AVX2, controllo termico e alcuni adattamenti restano da implementare/qualificare. |
 | GPU | Viewer compute e presentazione diretta disponibili, piramide CPU e decoder Apple richiesto software. Un fallimento compute con device sano permette CPU; perdere il device di presentazione richiede la ricreazione della finestra. |
 | Sorgenti cambiate | Monitor fuori UI e writer SQLite, ogni 500 ms sui file richiesti/residenti; invalidazione delle copie interessate e dei risultati tardivi. Su Unix il token comprende device/inode/ctime oltre a size/mtime; resta best-effort, con SHA completo al nuovo caricamento. |
 | Riconoscimento RAW | Corretto un bug trovato sui NEF Nikon D750: ImageIO identificava TIFF/miniatura. Probe e decode cercano un decoder RAW effettivo per i contenitori TIFF; il fingerprint cache cambia. Il report esige provenienza RAW e dimensioni native. |
-| Prove | Corpus sintetico e A/B del solo renderer già presenti; aggiunte prove native su sorgenti cambiate, recupero GPU e RAW reali autorizzati. Report e limiti effettivi in `reports/VERIFICA.md`; nessuna equivalenza con 1.000 RAW o p95 evento→frame. |
+| Prove | Corpus sintetico e A/B del solo renderer già presenti; 71 test Rust e suite installata passati; prove native su sorgenti cambiate, recupero GPU, cancellazione della navigazione e 30 RAW reali autorizzati. Report e limiti effettivi in `reports/VERIFICA.md`; nessuna equivalenza con 1.000 RAW o p95 evento→frame. |
 
 ## 1. Decisione e confronto con il codice attuale
 
@@ -41,7 +41,7 @@ Evolvere la cache lossless per cartella già implementata, aggiungendo miniature
 | GPU | wgpu presenta il raster; il kernel diagnostico non è il renderer completo | Ricampionamento e trasformate del viewer in compute, con confronto contro CPU |
 | Decoder Apple | `CIContext` creato nel render con `kCIContextUseSoftwareRenderer: YES`; RAW a scala nativa | Riutilizzo del contesto e percorso Metal nel worker, da verificare; decode ridotto esplicito per la qualità standard |
 
-Riferimenti della baseline: [stato UI e cache](../apps/desktop/src/ui.rs), [cache e impostazioni](../apps/desktop/src/cache/mod.rs), [primitive filesystem](../apps/desktop/src/cache/directory.rs), [snapshot e broker](../crates/tr-platform/src/lib.rs), [servizio catalogo](../apps/desktop/src/service.rs), [pool decoder](../apps/desktop/src/decode_pool.rs), [piramide](../crates/tr-core/src/resample.rs), [presenter](../crates/tr-render/src/presenter.rs), [decoder nativo Rust](../crates/tr-worker/src/native.rs), [decoder Apple](../native/macos/image_decoder.m).
+Mappa dei moduli (i link aprono il codice corrente; per ricostruire la baseline usare il commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`): [stato UI e cache](../apps/desktop/src/ui.rs), [cache e impostazioni](../apps/desktop/src/cache/mod.rs), [primitive filesystem](../apps/desktop/src/cache/directory.rs), [snapshot e broker](../crates/tr-platform/src/lib.rs), [servizio catalogo](../apps/desktop/src/service.rs), [pool decoder](../apps/desktop/src/decode_pool.rs), [piramide](../crates/tr-core/src/resample.rs), [presenter](../crates/tr-render/src/presenter.rs), [decoder nativo Rust](../crates/tr-worker/src/native.rs), [decoder Apple](../native/macos/image_decoder.m).
 
 Una sorgente 6000×4000 RGBA32F occupa circa 366 MiB; la piramide attuale completa circa 488 MiB. Il limite di 1.536 MiB contiene circa tre di queste immagini, esclusi worker e temporanei. È un calcolo delle dimensioni, non una misura RSS. L'obiettivo è evitare che ogni miniatura richieda di trattenere quei 488 MiB.
 
@@ -447,7 +447,7 @@ La tabella distingue i moduli effettivamente presenti nella 0.1.5 dalle estensio
 
 Rayon e l'eventuale Zstd richiedono scelta di versione, build riproducibile e aggiornamento dei notice delle dipendenze effettive. SHA-256 con accelerazione e snapshot resta quanto già implementato; non introdurre BLAKE3 in parallelo senza una necessità misurata. Non servono nuove dipendenze per approvare questo progetto documentale. Non modificare la licenza proprietaria o pubblicare cache, foto, database e toolchain.
 
-Gli attuali smoke che aspettano `cache.len() == numero immagini` devono essere sostituiti da condizioni sul risultato richiesto e sugli eventi completati. Con residenza corretta è normale non tenere tutte le sorgenti in RAM: un test non deve obbligare l'app a farlo.
+Gli smoke correnti verificano stadi, risultati richiesti e screenshot; `cache.len()` rimane una statistica e un limite di residenza, non una condizione di completamento dell’intera cartella. Mantenere condizioni sul risultato richiesto e sugli eventi completati. Con residenza corretta è normale non tenere tutte le sorgenti in RAM: un test non deve obbligare l'app a farlo.
 
 ## 12. Misure e criteri di accettazione
 
@@ -462,6 +462,8 @@ Corpus: sintetico deterministico per CI; raccolta autorizzata di RAW reali per m
 Distinguere almeno: primo accesso senza cache applicativa; SSD popolato dopo riavvio; RAM/GPU calde; cache disabilitata; pressione memoria. Dichiarare lo stato della cache OS. Usare manifest con CPU, GPU, RAM, SSD/volume, OS/driver, build, decoder, qualità, DPI e alimentazione; almeno 100 prove indipendenti per p95, campioni sufficienti per p99, dispersione/intervalli di confidenza. Windows prova gli esterni solo dopo il suo isolamento reale; prima, riportare i limiti del corpus ammesso.
 
 ### 12.2 Gate funzionali e di memoria
+
+Le caselle di §12 riguardano il requisito completo nel perimetro concordato, inclusi scenari e piattaforme richiesti. Una casella aperta può avere già codice e prove parziali: il dettaglio implementato/verificato è in §13 e in `PLAN.md`.
 
 - [ ] Una miniatura resta utilizzabile dopo l'espulsione della sorgente/piramide completa; la vista non ne richiede un nuovo decode senza bisogno di più dettaglio.
 - [ ] Entrambe le qualità, il cambio rapido, il confronto e l'override 1:1 rispettano il contratto di §2; nessun badge Standard/Riferimento abilitato dal selettore.
@@ -526,12 +528,15 @@ Le fasi sono incrementi verificabili; i primi miglioramenti RAM/CPU non devono a
 
 Checklist della proposta aggiornata durante l’implementazione; le fasi parziali restano aperte:
 
-- [ ] A: baseline 0.1.4 e budget/priorità minimi verificati.
+- [x] A, parte locale: baseline 0.1.4 e budget/priorità minimi verificati.
+- [ ] A, qualifica RAW: baseline e target di throughput per corpus reale 12/24/45 MP.
 - [x] B: artefatti residenti autonomi e consegna prima della persistenza verificati.
 - [x] C: due qualità e migrazione preferenze consegnate con prove; Standard usa il fallback esplicito di sviluppo completo temporaneo.
 - [x] D: nuovi artefatti nella cache per cartella, senza duplicare quote o indebolire controlli.
-- [ ] E: scheduler completo e parallelismo CPU con beneficio misurato.
-- [ ] F: compute GPU e percorso Apple verificati per gli stadi abilitati.
+- [x] E, parte locale: scheduler/priorità/cancellazione e CPU parallela/NEON verificati; confronto del solo stadio renderer eseguito.
+- [ ] E, qualifica integrata: beneficio evento→frame, pressione fisica e adattatori degli altri OS.
+- [x] F, parte locale: compute WGSL, contesto CPU Apple riutilizzato e recupero grafico limitato verificati.
+- [ ] F, qualifica: beneficio integrato, reset fisici/OOM, driver/display; Metal nel decoder resta un esperimento disabilitato.
 - [ ] G: qualifica integrata e report di tutti i gate §12.
 
 Il nucleo di budget della fase A è prerequisito alle allocazioni delle altre fasi; la fase B può continuare a usare temporaneamente il decoder Full esistente, serializzato entro quota. Le prove XPC accompagnano ogni modifica a broker/decoder/bundle, senza rimandarle tutte alla fase G.
@@ -555,7 +560,7 @@ Durante i futuri incrementi applicativi aggiornare [avanzamento](avanzamento.md)
 | RAM per le immagini utili e recupero delle lontane da SSD | §§4–7; espulsione senza risviluppo delle miniature, cache persistente e prefetch |
 | Scelta fra anteprima full qualità e standard | §§2–3, 9; selettore persistente, override 1:1, provenienza e gate di qualità |
 | Limiti cache scelti dall'utente | §§3, 5–6; quote RAM/SSD/GPU, riduzione dinamica, cache disabilitabile e manutenzione |
-| CPU/GPU molto utilizzate e app performante | §§7–9, 12; profilo Prestazioni, parallelismo/SIMD, compute WGSL e percorso Apple Metal verificato |
+| CPU/GPU molto utilizzate e app performante | §§7–9, 12; profilo Prestazioni, parallelismo/SIMD, compute WGSL verificato, riuso del contesto Apple; Metal nel decoder sperimentale e disabilitato, beneficio integrato ancora da misurare |
 | Confronto concreto con 1.000 RAW | §§1, 10, 12; baseline, scenari freddi/caldi e misure per la stessa qualità |
 | Progetto salvato prima dell'implementazione | Questo documento; checklist autonoma §13 e gate §12 ancora aperti |
 
