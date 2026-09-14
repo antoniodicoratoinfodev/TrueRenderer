@@ -16,7 +16,7 @@ Il criterio era il prodotto commerciale proprietario con la distribuzione più s
 
 ## Perché CDDL e non LGPL
 
-È il punto che decide tutto il resto, ed è già anticipato in `docs/licenza-libraw.md`.
+La nota preliminare dell'8 settembre è stata assorbita in questo ADR: la candidatura iniziale CDDL è diventata la decisione qui registrata.
 
 La CDDL è un copyleft **per file**. Gli obblighi riguardano i file coperti: renderne disponibile il sorgente, conservare le attribuzioni, identificare le proprie modifiche, non limitare nell'EULA i diritti sul sorgente coperto. Il §3.6 permette esplicitamente di combinare il software coperto con altro codice sotto termini diversi, compreso il proprietario, e di distribuire l'opera risultante. Non c'è alcun obbligo di rilink.
 
@@ -62,7 +62,7 @@ Provate su questa macchina, con MSVC 14.51 e LibRaw 0.21.1 vendorizzato.
 
 Con entrambe applicate i sorgenti C++ compilano. La build si ferma poi su libclang, che è esattamente il motivo della scelta dello shim.
 
-## Integrazione eseguita
+## Prima integrazione del 10 settembre (storico)
 
 LibRaw 0.21.1 vive in `third_party/libraw`, non modificato, 75 unità di traduzione compilate su 78 presenti: le tre escluse sono file inclusi da altri, non compilati per sé. Lo shim è in `native/libraw`, il binding in `crates/tr-worker/src/libraw.rs`, e `crates/tr-worker/build.rs` compila il percorso Apple su macOS e questo su Windows.
 
@@ -82,6 +82,12 @@ Non si dichiara alcun confronto di fedeltà con il percorso Apple: ADR 0004 dice
 
 ## Estensione locale del 12 settembre 2026
 
-Su richiesta del titolare, nessun commit: selettore di motore, AHD e demosaicing TrueRenderer fp32 affiancati al bilineare. Il nome della ricetta effettiva è ora `RawEngine::recipe()`, serializzato nelle richieste e separato nella cache; `RECIPE` rimane per la compatibilità storica. Il colore RAW è etichettato come sviluppo con ricetta, distinto dal profilo dichiarato da un file bitmap.
+Nella sessione del 12 settembre, prima della pubblicazione del 14: selettore di motore, AHD e demosaicing TrueRenderer fp32 affiancati al bilineare. Il nome della ricetta effettiva è ora `RawEngine::recipe()`, serializzato nelle richieste e separato nella cache; `RECIPE` rimane per la compatibilità storica. Il colore RAW è etichettato come sviluppo con ricetta, distinto dal profilo dichiarato da un file bitmap.
 
 Lo shim offre anche estrazione del mosaico e calibrazione per D750/DNG sintetici, con gestione delle eccezioni al confine C. L'AHD impiega il nucleo già vendorizzato; nessun file upstream o licenza è stato modificato. MSVC 14.51 richiede qui un archivio creato in una sola invocazione con response file: il merge progressivo di `cc` falliva con LNK1114. La build macOS aggiunge LibRaw ai componenti Apple e libc++ ai due XPC; resta da costruire e verificare su Mac. Risultati, ricette, limiti e istruzioni in [progetto motori RAW](../progetto-motori-raw.md).
+
+## Fonti e stato della nota preliminare assorbita
+
+La nota dell'8 settembre precedeva l'integrazione: quella baseline usava CIRAWFilter e non incorporava LibRaw. La scelta successiva è CDDL-1.0, con LibRaw 0.22.2 pubblicata in `67146e3`; versione e opzioni sono fissate nel manifest. Il nuovo bundle macOS resta da verificare.
+
+Fonti conservate dalla nota: [presentazione ufficiale LibRaw](https://www.libraw.org/about), [testo CDDL incluso](../../third_party/libraw/LICENSE.CDDL) e [alternativa LGPL inclusa](../../third_party/libraw/LICENSE.LGPL). Questi testi e le attribuzioni upstream rimangono nel repository. L'accorpamento documentale non è un nuovo parere legale né una qualifica di un pacchetto commerciale; il controllo di distribuzione resta quello indicato nelle conseguenze e in [NOTICE](../../NOTICE.md).

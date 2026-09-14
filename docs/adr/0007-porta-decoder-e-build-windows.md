@@ -59,3 +59,17 @@ Il costo di una piattaforma nuova nel percorso di decodifica diventa un'implemen
 La scelta definitiva del backend codec, che la sezione 4 lascia aperta, non è anticipata: LibRaw, libjpeg-turbo, libpng, libtiff e Little CMS restano candidati. `WorkingSpace` e `TileProvider`, altre due porte che il documento dà per esistenti, restano da estrarre.
 
 Il rifiuto è oggi più severo dell'obiettivo. Un JPEG Display P3 e un PNG con `cHRM` sono file legittimi e comuni, e questa build li rifiuta invece di mostrarli male: è la scelta corretta finché non c'è una trasformata, ma non è uno stato di arrivo. Ciò che lo scioglie è Little CMS come trasformata di ingresso, con la verifica ΔE00 che §8 elenca fra le misure ancora mancanti. È il primo lavoro che allarga davvero i formati leggibili senza rinunciare alla fedeltà, su entrambe le piattaforme.
+
+## Evoluzione del port Windows — sintesi del piano assorbito
+
+Il piano separato del 10–13 settembre è stato accorpato qui il 14 settembre. La parte precedente descrive il refactor iniziale, non il decoder Windows corrente.
+
+- Primo avvio: RTX 3060/Vulkan, 117 frame, 12 immagini e zero errori; errore GPU/CPU massimo 6,10e-5. In quella fase decoder esterno e cache Windows mancavano.
+- Primo isolamento: Job Object, poi creazione nel job dalla prima istruzione con lista esplicita delle tre pipe e token ristretto. L'audit ha dimostrato che il token ristretto consentiva ancora accesso a file non concessi: questo confine è stato sostituito da LPAC senza capacità, descritto in [ADR 0009](0009-isolamento-worker-windows.md).
+- Gli array passati a `UpdateProcThreadAttribute` devono restare vivi fino alla creazione del processo: l'API conserva puntatori, non copie. Questo vincolo spiega la struttura che possiede job e lista degli handle.
+- Il primo percorso RAW Windows estraeva un JPEG incorporato, dichiarandone lo stadio e lo spazio assunto. Il D750 esaminato conteneva JPEG 6016×4016, mosaico 6032×4032 a 14 bit e JPEG 1620×1080, mentre IFD0 descriveva una miniatura 160×120. Le dimensioni di una IFD non identificano automaticamente il sensore.
+- La successiva integrazione LibRaw ha sviluppato 30/30 NEF D750 dal mosaico. Licenza/build in [ADR 0008](0008-libraw-licenza-e-collegamento.md); ricette, fallback dichiarato e motori attuali nel [progetto RAW](../progetto-motori-raw.md).
+- La cache Windows ha sbloccato i test desktop: nella prima prova scrisse 88 voci per circa 14 MB e la seconda apertura non ne riscrisse. È un risultato storico, non una garanzia di riuso sotto contesa nella build corrente.
+- Le dimensioni native, l'orientamento, la profondità dichiarata e la stabilità della ricetta sono confrontabili fra decoder. CIRAWFilter e LibRaw non sono riferimenti bit-per-bit reciproci; la soglia del renderer GPU/CPU non qualifica il confronto colorimetrico fra sviluppatori RAW.
+
+Stato e prove correnti sono nel [registro](../avanzamento.md). Restano da qualificare gestione ICC, matrice camere, adattamento alla pressione memoria Windows, percorsi lunghi e distribuzione/installazione pulita; la correzione del percorso eseguibile UTF-16 non qualifica da sola tutti questi casi.

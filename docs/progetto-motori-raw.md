@@ -1,6 +1,8 @@
-# Motori RAW selezionabili — esperimento locale
+# Motori RAW selezionabili — progetto sperimentale
 
-Data: 12 settembre 2026. Richiesta del titolare: progettare e implementare un motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. **Nessun commit o pubblicazione.** Questa richiesta anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.
+**Stato corrente, 14 settembre 2026:** incremento pubblicato in `67146e3`, comprese le correzioni successive. Ultima suite Windows: 107 test Rust; [correzioni gamma/orientamento](revisione-aggiuntiva-2026-09-14.md#correzioni). Mac/XPC e qualifica colore restano aperti. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
+
+Progetto avviato il 12 settembre 2026 su richiesta del titolare: motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. Anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.
 
 ## Contratto e progetto
 

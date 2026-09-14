@@ -1,8 +1,10 @@
 # TrueRenderer — verifica del prototipo R0
 
+Registro storico delle esecuzioni. Codice e correzioni pubblicati in `67146e3` il 14 settembre 2026; le note «nessun commit» fotografano il momento delle prove. Gli audit negativi restano conservati accanto alle correzioni successive. Ogni risultato vale per sorgenti e binari identificati dal proprio rapporto; la revisione dei Markdown non costituisce una nuova prova applicativa. Stato corrente in [avanzamento](../docs/avanzamento.md), navigazione nell'[indice](../docs/README.md).
+
 ## Correzioni gamma/orientamento — 14 settembre 2026
 
-**Due P2 corretti e verificati su Windows:** curva PNG con sola gAMA, orientamento per IFD dell'anteprima RAW, cache v5. Passati 99 test ordinari + 8 integrazioni, debug/release, fmt/Clippy, 18 casi sintetici per worker, IPC/Python/ricampionamento e inventari. [Dettagli](../docs/correzioni-gamma-orientamento.md), [rapporto con hash](gamma-orientation-fixes-windows.json). Nessun commit/staging; Mac/XPC rinviato, GUI/Nikon non ripetuti.
+**Due P2 corretti e verificati su Windows:** curva PNG con sola gAMA, orientamento per IFD dell'anteprima RAW, cache v5. Passati 99 test ordinari + 8 integrazioni, debug/release, fmt/Clippy, 18 casi sintetici per worker, IPC/Python/ricampionamento e inventari. [Dettagli](../docs/revisione-aggiuntiva-2026-09-14.md#correzioni), [rapporto con hash](gamma-orientation-fixes-windows.json). Nessun commit/staging; Mac/XPC rinviato, GUI/Nikon non ripetuti.
 
 ## Revisione aggiuntiva — 14 settembre 2026
 
@@ -10,7 +12,7 @@
 
 ## Tre correzioni del ricontrollo — 14 settembre 2026
 
-**Tre P2 corretti e verificati su Windows; nessun commit/staging.** [Dettagli e limiti](../docs/correzioni-ricontrollo-generale.md), [rapporto con hash](general-review-fixes-windows.json). Passati 96 test ordinari + 7 integrazioni, build debug/release, fmt/Clippy, 36 casi sintetici su ciascun worker debug/release, sei controlli IPC, due Python, 24 segnali/1:1 e inventari. TIFF con colorimetria non supportata ora rifiutato esplicitamente, fallback RAW coerente col probe, timestamp cache aggiornato senza scrivere hard link. XPC non avviabile su Windows senza codesign, verifica Mac rinviata. GUI e campagna Nikon non ripetute.
+**Tre P2 corretti e verificati su Windows; nessun commit/staging.** [Dettagli e limiti](../docs/revisione-generale-2026-09-14.md#correzioni), [rapporto con hash](general-review-fixes-windows.json). Passati 96 test ordinari + 7 integrazioni, build debug/release, fmt/Clippy, 36 casi sintetici su ciascun worker debug/release, sei controlli IPC, due Python, 24 segnali/1:1 e inventari. TIFF con colorimetria non supportata ora rifiutato esplicitamente, fallback RAW coerente col probe, timestamp cache aggiornato senza scrivere hard link. XPC non avviabile su Windows senza codesign, verifica Mac rinviata. GUI e campagna Nikon non ripetute.
 
 ## Ricontrollo generale — 14 settembre 2026
 
@@ -18,7 +20,7 @@
 
 ## Correzioni della revisione serale — 14 settembre 2026
 
-**Verifiche Windows concluse; nessun commit/staging.** [Rapporto e hash](review-followup-fixes-windows.json), [correzioni e limiti](../docs/correzioni-revisione-serale.md). Ripresa la sessione dopo l'applicazione dei quattro fix: 86 test Rust ordinari recuperati + 6 integrazioni completate, 21 richieste bitmap LPAC, debug/release, fmt/Clippy, sei IPC, due Python, 24 segnali/1:1, LibRaw e inventario Windows (205 package/348 notice). Match con entrambe le varianti compilato nella prova minima; Mac/XPC nativi restano rinviati.
+**Verifiche Windows concluse; nessun commit/staging.** [Rapporto e hash](review-followup-fixes-windows.json), [correzioni e limiti](../docs/revisione-continuata-2026-09-13.md#correzioni). Ripresa la sessione dopo l'applicazione dei quattro fix: 86 test Rust ordinari recuperati + 6 integrazioni completate, 21 richieste bitmap LPAC, debug/release, fmt/Clippy, sei IPC, due Python, 24 segnali/1:1, LibRaw e inventario Windows (205 package/348 notice). Match con entrambe le varianti compilato nella prova minima; Mac/XPC nativi restano rinviati.
 
 GUI release: seconda foto e zoom/centro conservati attraverso tre motori e ritorno al primo, usando l'azione completa condivisa col pulsante. 577.296 pixel GPU entro un livello sRGB8; due database privati integri, sorgente e copie invariate. Una persistenza saltata per contesa del lock Windows 33 e nuovo decode del dettaglio al ritorno: la prova non attesta cache integralmente riutilizzata. La precedente campagna di 156 sviluppi non è stata ripetuta. Le sezioni sotto conservano gli audit precedenti alle rispettive correzioni.
 

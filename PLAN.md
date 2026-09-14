@@ -1,46 +1,27 @@
 # TrueRenderer — piano di sviluppo
 
-Aggiornato: 14 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
+Aggiornato: 14 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Architettura.md); matrice di implementazione: [avanzamento](docs/avanzamento.md); [indice documentale](docs/README.md).
 
-**Pubblicazione autorizzata dal titolare, 14 settembre 2026:** richiesta esplicita di commit e push dell'incremento corrente, comprendente port Windows, motori RAW e correzioni verificate. Le precedenti indicazioni «non da committare» sono storiche e superate da questa richiesta; restano validi il rinvio Mac/XPC e tutti i gate aperti. Ultima suite Windows: 107 test Rust, build debug/release e verifiche descritte nel [rapporto corrente](reports/gamma-orientation-fixes-windows.json). Dati privati e binari di sviluppo esclusi dal commit.
-Il nome corrente è **TrueRenderer**; TrueVision è il nome precedente.
+Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Il Mac verificato resta la baseline del 9 settembre; nuovo bundle/XPC rinviato. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
 
-Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
+## Revisioni Windows del 13–14 settembre
 
-**Stato verificato al 9 settembre 2026:** implementazione e report della continuazione inclusi in `10123b5`, presente su `origin/main` verificato in rete. Ultima suite: 71 test Rust, 30 NEF a 2 GiB e bundle macOS installato verificato. [Risultati e hash](reports/preview-navigation-continuation-macos.json). I conteggi e i commit nelle sezioni storiche descrivono i rispettivi incrementi.
-
-**Incremento locale corrente, non da committare:** corretti i rilievi dell'audit Windows: LPAC, LibRaw 0.22.2, colore/classificazione bitmap, robustezza, quote e cache. Passati 89 test Rust, build debug/release, 156 sviluppi Nikon e GUI con ritorno alla cache; [rapporto delle correzioni](reports/pre-main-fixes-windows.json). La promozione integrale Windows/macOS richiede ancora il nuovo bundle e i due XPC: il titolare ha rinviato queste prove a una successiva sessione sul Mac. Restano verifica su Windows pulito, confronto Apple controllato e misure di colore/prestazioni; R0–R4 non sono chiusi.
-
-**Correzioni della revisione serale completate su Windows, 14 settembre:** ripresa la sessione dopo l'applicazione delle quattro correzioni; completate integrazioni, bitmap LPAC, release e prova nativa. 86 test ordinari recuperati + 6 integrazioni, 21 richieste bitmap e 577.296 pixel GPU entro un livello sRGB8. [Correzioni e limiti](docs/correzioni-revisione-serale.md), [hash ed evidenze](reports/review-followup-fixes-windows.json). Il match Mac è corretto e verificato in una riproduzione minima; build nativa e XPC restano rinviati. Nessun commit/staging.
-
-## Ricontrollo generale — 14 settembre 2026
-
-**Due ulteriori P2 corretti e verificati su Windows:** curva PNG con sola gAMA e orientamento per IFD dell'anteprima RAW. 107 test Rust passati; [correzioni e limiti](docs/correzioni-gamma-orientamento.md), [rapporto corrente](reports/gamma-orientation-fixes-windows.json). [Audit negativo conservato](docs/revisione-aggiuntiva-2026-09-14.md). Nessun commit/staging; Mac/XPC rinviato.
-
+- [x] Revisionare README e Markdown dopo la pubblicazione: separare Windows/macOS e stato corrente/storico, indicare i documenti archiviabili, verificare i link locali e sincronizzare le architetture.
 - [x] Verificare i percorsi vicini alle ultime correzioni con 18 nuovi casi sintetici per worker debug/release e confrontare gli hash della precedente suite.
 - [x] Applicare la curva PNG con sola `gAMA=45455`, senza identificarla con sRGB; regressioni numeriche 8/16 bit, alpha, provenienza e precedenze, cache v5.
 - [x] Distinguere orientamento TIFF assente da 1 e impedire che una IFD secondaria ruoti l'anteprima principale; regressioni per directory/EXIF e worker LPAC, cache v5.
-
-**Tre P2 corretti e verificati su Windows dopo il ricontrollo:** 103 test Rust, build debug/release, 36 casi sintetici per ciascun worker debug/release. [Correzioni e limiti](docs/correzioni-ricontrollo-generale.md), [rapporto corrente](reports/general-review-fixes-windows.json). [Revisione negativa conservata](docs/revisione-generale-2026-09-14.md), [rapporto dell'audit](reports/recheck-windows-2026-09-14.json). Nessun commit/staging; Mac/XPC resta rinviato.
-
 - [x] Riesaminare il lavoro non committato e rieseguire fmt, Clippy, 86 test ordinari e 6 integrazioni; verificare LibRaw e inventario/notice.
 - [x] Riprodurre i nuovi rilievi con file sintetici, broker reale e modulo Directory di produzione; documentare risultati e limiti.
 - [x] Rifiutare esplicitamente la colorimetria TIFF non supportata nei tag 301/318/319/342/532; verificare rifiuti e pixel senza tag, invalidare le vecchie cache con `bitmap-tiff-color-v4`.
 - [x] Rendere coerenti probe e decode nel fallback RAW su anteprima di diversa risoluzione, conservando la validazione IPC; regressione LPAC passata.
 - [x] Correggere l'aggiornamento del timestamp degli hit cache Windows e verificare scadenza/LRU, descrittori/blocchi e preservazione degli hard link.
 - [ ] Estendere la diagnostica PNG per cICP malformato e dichiarazioni sRGB/gAMA discordanti, distinta dai tre P2.
-
-## Revisione prima di main — 13 settembre 2026
-
-**Ultimo controllo:** i quattro rilievi della [revisione serale](docs/revisione-continuata-2026-09-13.md) hanno correzioni applicate e verifiche Windows concluse. La prova nativa Mac rimane distinta e aperta. Le evidenze negative e le campagne precedenti sono conservate.
-
 - [x] Recuperare la sessione, verificare i rilievi e completare build release, ricampionamento e riproduzione del blocco di compilazione Mac; registrare gli esiti senza modifiche applicative o commit.
 - [x] Ripristinare il controllo esaustivo di `Owner` nel test di crash/recovery e compilare la prova minima con entrambe le varianti.
 - [ ] Compilare ed eseguire i test sul Mac con il nuovo bundle/XPC, come parte della verifica nativa rinviata.
 - [x] Correggere il percorso «Applica e salva» per conservare selezione/zoom al cambio motore; regressioni e smoke nativo sulla stessa azione completa del pulsante.
 - [x] Gestire o rifiutare esplicitamente PNG `cICP` e TIFF con alpha associata; aggiungere regressioni e invalidare le cache interessate.
 - [ ] Qualificare separatamente contesa del writer e persistenza del dettaglio: nello smoke serale una scrittura saltata per lock Windows 33 e nuovo decode al ritorno, senza interrompere la visualizzazione.
-
 - [x] Inventariare tutto il lavoro non committato e rivedere anche port Windows, cache, bridge nativo, build, dipendenze e documenti.
 - [x] Verificare debug/release, 82 test Rust, 6 prove IPC, 2 Python, ricampionamento e 156 sviluppi release D750/D40; originali invariati.
 - [x] Provare GUI release e cambio motore; riprodurre separatamente i difetti, conservando log e laboratorio privati.
@@ -50,14 +31,14 @@ Questo file è il piano operativo: ordina attività, dipendenze e caselle comple
 - [x] Incorporare il runtime C/C++ MSVC e controllare gli import release; generare inventario Windows, 348 notice e manifest nativo, preservando i byte upstream nei checkout Git.
 - [ ] Costruire e verificare il nuovo bundle Mac/XPC (rinviato dal titolare a una sessione sul Mac).
 - [ ] Verificare il pacchetto in un'installazione Windows pulita prima della distribuzione.
-
-Rilievi, severità, riproduzioni e limiti: [revisione completa](docs/revisione-pre-main.md). Il codice applicativo non è stato modificato durante questo audit; nessun commit o staging.
+- [x] Accorpare audit/correzioni, piano Windows e nota LibRaw; ridurre la cronologia duplicata, aggiornare riferimenti e verificare la sincronizzazione.
+- [ ] Qualificare notifiche di pressione memoria Windows, percorsi lunghi/manifest longPathAware e gestione ICC prima di dichiarare completa la piattaforma.
 
 ## Obiettivo e regole
 
-Applicazione desktop Rust per sfogliare, selezionare e ispezionare immagini con una resa tracciabile. Target previsti per la prima versione: macOS arm64 e Windows x86-64, SDR; oggi è verificato il prototipo macOS arm64, mentre Windows resta da implementare/qualificare. Le tappe del documento sono criteri di accettazione: una schermata funzionante non chiude un gate di colore, sicurezza o accessibilità.
+Applicazione desktop Rust per sfogliare, selezionare e ispezionare immagini con una resa tracciabile. Target previsti per la prima versione: macOS arm64 e Windows x86-64, SDR; sono implementati e provati prototipi macOS arm64 e Windows x86-64, con perimetri e qualifiche ancora aperti. Le tappe del documento sono criteri di accettazione: una schermata funzionante non chiude un gate di colore, sicurezza o accessibilità.
 
-Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, prove riproducibili, limiti osservati e aggiornamento dell'architettura. Nessuna modifica agli originali; annotazioni separate dall'indice. Nessun servizio cloud, account o canone. Tutto il progetto, inclusa la toolchain locale, rimane in questa cartella sul Desktop. Dati di sviluppo locali in `var/`; prima di una release spostarli nel percorso app-data nativo qualificato.
+Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, prove riproducibili, limiti osservati e aggiornamento dell'architettura. Nessuna modifica agli originali; annotazioni separate dall'indice. Nessun servizio cloud, account o canone. Tutto il progetto, inclusa la toolchain locale, rimane nella cartella del progetto. Dati di sviluppo locali in `var/`; prima di una release spostarli nel percorso app-data nativo qualificato.
 
 ## Primo incremento — prototipo R0
 
@@ -101,7 +82,7 @@ Completata la verticale interna: broker macOS, decoder riutilizzabile e due serv
 - [ ] Qualificare l’API di terminazione per i minimi OS: attualmente libproc SPI con audit token, verificata su macOS 26.6.2.
 - [ ] Estendere misure di revoca al cambio dominio, handle duplicati e overshoot sotto pressione; il campionamento RSS non è un tetto rigido.
 - [ ] Estendere i test negativi a input ostili, descrittori residui, output concorrente e quota di risorse.
-- [ ] Affiancare la verticale Windows reale e le prove di display/accessibilità prima di chiudere R0.
+- [ ] Completare la qualifica della verticale Windows e le prove di display/accessibilità prima di chiudere R0.
 
 Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Per completare il gate XPC sul Mac restano la suite avversaria del bootstrap/ciclo di vita e la qualifica estesa della memoria end-to-end; l’ordine dell’incremento locale corrente è indicato in apertura. Nella 0.1.1 i PNG esterni restavano esclusi; la modifica del perimetro nella 0.1.3 è registrata in ADR 0004. Il gate completo della sandbox rimane aperto.
 
@@ -189,11 +170,11 @@ Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la na
 
 Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `reports/VERIFICA.md` e `docs/avanzamento.md`.
 
-**Licenza LibRaw, verifica dell'8 settembre:** la libreria open source è utilizzabile anche per vendere software proprietario senza acquistare una licenza commerciale, rispettando CDDL 1.0 oppure LGPL 2.1. La build corrente non la incorpora. Fonti, obblighi e scelta candidata CDDL in [licenza LibRaw](docs/licenza-libraw.md) e §20.1 dell'architettura; l'audit della versione effettivamente distribuita resta necessario.
+**Licenza LibRaw, verifica dell'8 settembre:** la libreria open source è utilizzabile anche per vendere software proprietario senza acquistare una licenza commerciale, rispettando CDDL 1.0 oppure LGPL 2.1. La build corrente non la incorpora. Fonti, obblighi e scelta candidata CDDL in [licenza LibRaw](docs/adr/0008-libraw-licenza-e-collegamento.md) e §20.1 dell'architettura; l'audit della versione effettivamente distribuita resta necessario.
 
 ## Esperimento locale — motori RAW selezionabili (12 settembre 2026)
 
-Richiesta del titolare: progettare ed eseguire la pipeline sperimentale, affiancandola ai motori esistenti su Windows/macOS. **Nessun commit.** Progetto: [motori RAW](docs/progetto-motori-raw.md). Anticipazione locale del demosaic prima post-v1, senza modifica dei gate.
+Richiesta del titolare: progettare ed eseguire la pipeline sperimentale, affiancandola ai motori esistenti su Windows/macOS. Incremento pubblicato in `67146e3`. Progetto: [motori RAW](docs/progetto-motori-raw.md). Anticipazione locale del demosaic prima post-v1, senza modifica dei gate.
 
 - [x] Leggere AGENTS.md, piano, registro e architettura; definire contratto e verifiche.
 - [x] Collegare selezione persistente, IPC, identità cache e invalidazione al cambio motore.
@@ -212,7 +193,7 @@ Dipendenze: nessuna milestone precedente. Il prototipo corrente è una parte di 
 2. Finestra e device/coda condivisi, viewport opaco, shader, contratto sRGB della superficie.
 3. Input PNG ICC, alpha, CMYK, precisione di confine e confronto CPU/GPU quantitativo.
 4. Protocollo con framing, request ID, quote, handle e output del broker; fault injection e worker avversario.
-5. XPC firmato/App Sandbox su macOS; AppContainer/token ristretto e Job Object su Windows; test negativi filesystem/rete e memoria. Il solo processo separato **non** soddisfa questa voce.
+5. XPC firmato/App Sandbox su macOS; LPAC senza capacità e Job Object su Windows; test negativi filesystem/rete e memoria. Il solo processo separato **non** soddisfa questa voce.
 6. Snapshot/revisione sorgente sotto writer concorrente, nessuna promozione sul solo hash/stat.
 7. Griglia 100k, IME, focus, DnD, VoiceOver/NVDA, scala 200%, monitor con profili e scale differenti, device loss.
 8. ADR toolkit, minimi OS/GPU, licenze, canali; pacchetti interni sui due OS.
@@ -267,7 +248,7 @@ Uscita: matrice RAW esplicita, grandi immagini entro budget reali. Nessun demosa
 5. Test display reali, profili monitor, screen reader, IME, multimonitor e driver difettosi.
 6. Manuale, privacy locale, matrice supporto, release candidate e bug triage; rilascio solo dopo gate.
 
-La firma/distribuzione richiede credenziali e decisioni del titolare, non disponibili in questa sessione. Le prove Windows richiedono un target Windows reale. Non sono segnate come eseguite.
+La firma/distribuzione richiede credenziali e decisioni del titolare, non disponibili in questa sessione. Le prove Windows di sviluppo sono registrate; installazione pulita, firma e distribuzione restano da qualificare.
 
 ## Post-v1
 

@@ -1,6 +1,8 @@
-# Revisione aggiuntiva dopo le correzioni — 14 settembre 2026
+# Revisione e correzioni gamma PNG / orientamento RAW — 14 settembre 2026
 
-**Aggiornamento successivo:** i due P2 della baseline seguente sono stati corretti su richiesta del titolare. [Correzioni e verifiche Windows](correzioni-gamma-orientamento.md), [nuovo rapporto](../reports/gamma-orientation-fixes-windows.json). Le evidenze negative dell'audit restano conservate.
+Documento unico di audit e correzione. I rilievi sotto sono la baseline negativa storica; le correzioni successive sono verificate su Windows e incluse in `67146e3`. La qualifica nativa Mac/XPC resta aperta. I rapporti JSON conservano hash ed esiti delle singole esecuzioni.
+
+## Audit prima delle correzioni
 
 **Due ulteriori P2 riprodotti, ancora aperti.** Questa verifica non modifica il codice applicativo e non esegue staging o commit. Laboratorio privato `var/audit-extra-20260914/`; [rapporto con risultati e hash](../reports/additional-review-windows.json).
 
@@ -30,3 +32,26 @@ Correzione richiesta: distinguere orientamento assente da orientamento 1 e mante
 - Nessuna modifica applicativa; registro e piano aggiornati, architetture sincronizzate preservando il testo esterno ai blocchi gestiti. Report precedenti, LICENSE, vendor, backup originale e indice Git conservati.
 
 Restano distinti i limiti già aperti: diagnostica PNG, conversione TIFF/ICC, contesa writer, Windows pulito, GUI/corpus esteso e qualifiche colore/prestazioni. Mac/XPC rimane rinviato dal titolare. Le ultime tre correzioni non sono annullate da questi rilievi; i due casi aggiuntivi richiedono interventi propri. Nessun gate R0–R4 chiuso.
+
+<a id="correzioni"></a>
+
+## Correzioni ed esiti successivi
+
+## Comportamento
+
+- **PNG con sola gamma supportata:** `gAMA=45455` applica ora la curva di potenza con esponente `100000/45455`, prima della matrice verso Rec.2020 e della premoltiplicazione. Alpha rimane lineare. La provenienza distingue la curva dichiarata e applicata dalle sole primarie sRGB assunte, tramite `ColorSource::AssumedPrimaries`; non attribuisce fedeltà misurata all'assunzione. Il grigio 16/255 torna a circa **0,00226309**, invece di 0,00518151. `sRGB` e `cICP` prioritari mantengono la curva sRGB a tratti. Le altre gamma e le primarie dichiarate non supportate continuano a essere rifiutate: non è un'implementazione generale di gestione colore.
+- **Orientamento delle anteprime RAW:** ogni IFD conserva il proprio orientamento. L'anteprima scelta usa il valore della propria directory, oppure quello della primaria quando manca; directory estranee non possono modificarlo. `Some(1)` significa esplicitamente nessuna rotazione, mentre `None` permette di usare EXIF del JPEG. Il caso dell'audit resta **8×4** anche quando la miniatura secondaria dichiara orientamento 6. Una directory effettivamente selezionata conserva invece il proprio orientamento, anche se diverso dalla primaria.
+- **Compatibilità cache:** `bitmap-gamma-ifd-v5` entra nel fingerprint comune delle cache bitmap/anteprima RAW ed esclude i raster precedenti con interpretazione errata. Nessuna cancellazione di originali, cataloghi o backup.
+
+## Verifiche
+
+- **99 test ordinari + 8 integrazioni = 107 passati**, con toolchain locale offline; fmt e Clippy con warning negati passati.
+- Tre nuove regressioni ordinarie: curva PNG a 8/16 bit e alpha, precedenza sRGB/cICP; IFD secondaria irrilevante e fallback EXIF JPEG con primario assente/1/6; orientamento della IFD selezionata con fallback alla primaria.
+- Nuova integrazione col worker LPAC: le due varianti DNG restituiscono la stessa anteprima 8×4 e gli stessi pixel; sorgenti invariate. Le due integrazioni fotografiche dipendenti dal corpus privato non sono state rieseguite.
+- Build debug/release e **18 casi sintetici per ciascun worker** sui sei file dell'audit, con controllo dei valori gamma e delle dimensioni/pixel RAW. Rifiuti degli altri motori per il DNG non Bayer confermati.
+- **Sei controlli IPC, due regressioni Python, 24 segnali di ricampionamento e identità 1:1** passati. LibRaw invariato: 106 hash upstream, 79 unità compilate, tre ricette. Cargo.lock/inventario Windows e 348 notice coerenti, nessuna nuova dipendenza.
+- Conservati report precedenti, sorgenti non pertinenti, LICENSE, vendor, backup originale e indice Git. Piano/registro aggiornati e architetture sincronizzate senza cambiare il testo esterno ai blocchi gestiti.
+
+[Rapporto con hash ed esiti](../reports/gamma-orientation-fixes-windows.json). Il riferimento della curva gAMA rimane la [PNG Third Edition, §11.3.2.2 e gestione gamma](https://www.w3.org/TR/png-3/#11gAMA).
+
+La suite XPC è stata invocata ma non può partire su Windows senza `/usr/bin/codesign`; nuovo bundle e verifica Mac restano rinviati dal titolare. GUI e campagna Nikon non ripetute. Restano diagnostica PNG malformata/conflittuale, TIFF/ICC non supportati, contesa writer, Windows pulito e qualifiche generali colore/display/prestazioni. Nessun gate R0–R4 chiuso; Standard/Riferimento indisponibili.
