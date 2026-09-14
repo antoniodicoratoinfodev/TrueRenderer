@@ -1,0 +1,342 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-09-14",
+  "platform": "windows",
+  "passed": true,
+  "scope": "Four evening-review corrections; Windows verification completed. Native Mac/XPC deferred by owner. No general release gate closed.",
+  "git": {
+    "head": "1279012b8cbcd15889ff060143b197d2523212ba",
+    "working_tree": "uncommitted",
+    "staged_files": 0,
+    "commit_created": false
+  },
+  "fixes": {
+    "worker_test_match": "exhaustive; minimal two-variant compilation passed, native macOS pending",
+    "settings_action": "maintenance separated from scan; nonfirst selection, multiselection, zoom/center and pending-scan regressions",
+    "png_cicp": "full-range sRGB declared; unsupported encodings and detected conflicts refused",
+    "tiff_alpha": "stored associated RGB unassociated before transfer; linear premultiplication once; zero and ambiguous alpha covered",
+    "bitmap_cache_recipe": "bitmap-cicp-alpha-v3"
+  },
+  "checks": {
+    "tests": {
+      "name": "tests",
+      "command": [
+        "scripts/cargo-local.sh",
+        "test",
+        "--workspace",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "seconds": 14.337277800004813,
+      "origin": "recovered_previous_session",
+      "log_sha256": "5f1c691e841a61a9b5cd4e04037dced659059bce57e6347a8bc8b727488ba6e8"
+    },
+    "clippy": {
+      "name": "clippy",
+      "command": [
+        "scripts/cargo-local.sh",
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 88.30725240000174,
+      "origin": "recovered_previous_session",
+      "log_sha256": "c148764bd5d15298e480d2f92fd0cefc7c8c054790626d579dff4306427ab0a7"
+    },
+    "debug-build": {
+      "name": "debug-build",
+      "command": [
+        "scripts/cargo-local.sh",
+        "build",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "seconds": 24.538920699997107,
+      "origin": "recovered_previous_session",
+      "log_sha256": "9d987448ed5341bfce1e78a9f1cbb40e8346bdeb2d93fd01a51a8923caf12f56"
+    },
+    "fmt-check": {
+      "name": "fmt-check",
+      "command": [
+        "scripts/cargo-local.sh",
+        "fmt",
+        "--all",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 2.1591877000173554,
+      "origin": "resumed_session",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "integrations": {
+      "name": "integrations",
+      "command": [
+        "scripts/cargo-local.sh",
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--skip",
+        "full_quality_delivers_the_source_at_its_own_resolution",
+        "--skip",
+        "real_containers_deliver_their_embedded_preview_and_declare_the_stage"
+      ],
+      "exit_code": 0,
+      "seconds": 47.0955929000047,
+      "origin": "resumed_session",
+      "log_sha256": "bd7d48a9a8b9e88d9055fa754191375351740ea13698856a7b688182426310d8"
+    },
+    "bitmaps": {
+      "name": "bitmaps",
+      "command": [
+        "scripts/cargo-local.sh",
+        "run",
+        "--offline",
+        "--manifest-path",
+        "var/review-followup-fixes/bitmap-check/Cargo.toml",
+        "--bin",
+        "bitmap-fix-check",
+        "--target-dir",
+        "target"
+      ],
+      "exit_code": 0,
+      "seconds": 7.140057799988426,
+      "origin": "resumed_session",
+      "log_sha256": "4a8f8dbcf67a3a80c0b8844b4f1922a769f5a4e91f3caf08f928816fd4f7bc59"
+    },
+    "mac-pattern": {
+      "name": "mac-pattern",
+      "command": [
+        "scripts/cargo-local.sh",
+        "check",
+        "--offline",
+        "--manifest-path",
+        "var/review-followup-fixes/bitmap-check/Cargo.toml",
+        "--bin",
+        "mac-pattern-fixed",
+        "--target-dir",
+        "target"
+      ],
+      "exit_code": 0,
+      "seconds": 2.447908700007247,
+      "origin": "resumed_session",
+      "log_sha256": "0f7a66c72b669bd589a3a48f62ee3c2aa339da0ced061146f5dbf1d242331a44"
+    },
+    "release-build": {
+      "name": "release-build",
+      "command": [
+        "scripts/cargo-local.sh",
+        "build",
+        "--workspace",
+        "--release",
+        "--locked",
+        "--offline"
+      ],
+      "exit_code": 0,
+      "seconds": 104.39255960000446,
+      "origin": "resumed_session",
+      "log_sha256": "6cc33e49dda8b78a168a270df0811ce1e3ba4b5008d1e8d65246839c960671ef"
+    },
+    "isolation": {
+      "name": "isolation",
+      "command": [
+        "scripts/cargo-local.sh",
+        "run",
+        "--offline",
+        "--locked",
+        "-p",
+        "tr-platform",
+        "--example",
+        "windows-isolation-probe"
+      ],
+      "exit_code": 0,
+      "seconds": 5.7402189999993425,
+      "origin": "resumed_session",
+      "log_sha256": "9c966a7411af39018c2a79482b538925925783c7d8fccd84fca26deddf40a27b"
+    },
+    "support": {
+      "python-reporting": {
+        "exit_code": 0
+      },
+      "libraw": {
+        "exit_code": 0
+      },
+      "ipc": {
+        "exit_code": 0
+      }
+    },
+    "native": [
+      {
+        "name": "native-ui",
+        "exit_code": 0,
+        "seconds": 19.16998720000265
+      },
+      {
+        "name": "native-pixels",
+        "exit_code": 0,
+        "seconds": 0.8862931999901775
+      },
+      {
+        "name": "resampling",
+        "exit_code": 0,
+        "seconds": 1.12256879999768
+      }
+    ]
+  },
+  "rust_tests": {
+    "recovered_ordinary": 86,
+    "resumed_integrations": 6,
+    "total": 92,
+    "extended_photographic_integrations_repeated": false
+  },
+  "bitmap_cases": 21,
+  "bitmap_inputs_unchanged": true,
+  "native_ui": {
+    "passed": true,
+    "images": 2,
+    "source": "two private copies of previously authorized D40",
+    "settings_action": "shared production button action invoked by native smoke; no physical click automation",
+    "nonfirst_selection_preserved": true,
+    "zoom": 1.0,
+    "center": [
+      0.5,
+      0.5
+    ],
+    "changed_engine_during_scan": true,
+    "engines": [
+      "LibRawBilinear",
+      "LibRawAhd",
+      "TrueRenderer",
+      "LibRawBilinear"
+    ],
+    "decode_jobs": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "cache_hits": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "pixels": {
+      "checks": [
+        {
+          "checked_pixels": 144324,
+          "compute": "GPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 1
+        },
+        {
+          "checked_pixels": 144324,
+          "compute": "GPU",
+          "engine": "LibRawAhd",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 2
+        },
+        {
+          "checked_pixels": 144324,
+          "compute": "GPU",
+          "engine": "TrueRenderer",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 3
+        },
+        {
+          "checked_pixels": 144324,
+          "compute": "GPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 4
+        }
+      ],
+      "passed": true,
+      "scope": "Right quarter of native RAW viewport vs CPU raster; excludes settings overlay, compositor and physical display.",
+      "threshold_u8": 1
+    },
+    "databases": [
+      {
+        "file": "index.sqlite",
+        "integrity_check": "ok"
+      },
+      {
+        "file": "library.sqlite",
+        "integrity_check": "ok"
+      }
+    ],
+    "source_and_copies_unchanged": true
+  },
+  "resampling": {
+    "passed": true,
+    "exact_1to1": true,
+    "signals": 24,
+    "executed_platform": "windows",
+    "historical_private_filename": "resampling-macos.json"
+  },
+  "dependency_inventory": {
+    "packages": 205,
+    "notices": 348,
+    "report_sha256": "2cd0b5355dc8890e49f3059e21992a74a6cf23f57aaf297f2c0c4f5f6d70058b",
+    "cargo_lock_sha256": "7da04d66f686416ba48312824ed03e327d493567edd1a490195296ae4f292bb2",
+    "upstream_and_notice_files_unchanged": true
+  },
+  "binary_sha256": {
+    "target/debug/tr-worker.exe": "bcb7a80b0814de902e9eb215f76d65077fa5c1a117e7ed41a0be65fdfbb91d26",
+    "target/debug/truerenderer.exe": "8919687deb33a419f8a71ab184ac860b42737bcf6ffd3cea4e11f18a0fa4ff50",
+    "target/release/tr-worker.exe": "a276102825d37dc90ff580de4abb56d0ef1ca542d59f925a6ad37bdcf29771f0",
+    "target/release/truerenderer.exe": "97354ff6e9c661f38eabc2929a61a821b0db250541d0d76b7e62a06fe956fb6c"
+  },
+  "source_sha256": {
+    "apps/desktop/src/ui.rs": "ad8cbc10a10f621de3ead5fc027365714136be0244e27dfc676a09997b8e76b3",
+    "crates/tr-worker/src/lib.rs": "7013c3faa975c35289ec8bc0bad57dbe618624912afd74afcb76051301b4def5",
+    "crates/tr-core/src/decoder.rs": "fef84fe176098ba2298a7c9eceff1bbd9d154fe6ccbdd2a2123043152c7d765c",
+    "crates/tr-platform/src/lib.rs": "300882a1a39b3648b4b1994d603f1c1cf2846f292d68fc34edcfa3a0ab4377ba",
+    "Cargo.lock": "7da04d66f686416ba48312824ed03e327d493567edd1a490195296ae4f292bb2",
+    "Cargo.toml": "c467b49092871849167f79cfa57d6a21e588044516365712588e3ffce8758aae"
+  },
+  "evidence": {
+    "var/review-followup-fixes/bitmap-fixed-report.json": "d1c69d0663c60a0e95d9c0e5a48473fb182c46d3388204b8031799b0c42f8a79",
+    "var/review-followup-fixes/native-checks.json": "05d1ac7532c21097ad6a195858ffe09474c21544c9af3dc9660fc4f6ab0e87cb",
+    "var/review-followup-fixes/ui-root/var/raw-engine-ui.json": "bf2caf80861252b23d9e0aae63dfe64e0fd8e046695e245db4625f66dbddddd5",
+    "var/review-followup-fixes/ui-root/var/raw-engine-ui-pixels.json": "fc82e2ae388ae6f34d25b744526633356e877d24c392b29073bb8b9c271c157f",
+    "var/review-followup-fixes/ui-root/reports/resampling-macos.json": "a385e706e432ffe57d329267598f42443b42166af32531d12db289c9223c3a68",
+    "var/review-followup-fixes/worker-protocol.json": "fe7a516d8abf9bcf2fc51187b454b23b316efcfbb39f3e316157ece7cbf7e210"
+  },
+  "preservation": {
+    "protected_files": {
+      "LICENSE": "f54c6c6ee279ba06a1b1618009826fe2a3f3af97083e962d3a3ae76f50cc039e",
+      "docs/TrueVision-Architettura.originale-v1.2.md": "ad3db38205e58d7f02e85259d5e0516feb3ced143909c96e1699951d65500e4c"
+    },
+    "architecture_outside_managed_blocks": {
+      "TrueVision-Architettura.md": "850a41e538e52f5e3dfad9507e6de6779b41e34859ab7375234cdd57eea0350a",
+      "docs/TrueRenderer-Architettura.md": "25562e2c81a37c46ac47a5828142addffbf86eed4a70aeb39098f4e878fda204"
+    },
+    "no_application_source_changes_after_recovery": true
+  },
+  "limitations": [
+    "Native macOS tests, rebuilt bundle and both XPC services remain deferred. Minimal compilation is not Mac qualification.",
+    "One TrueRenderer cache persistence skipped on Windows lock error 33; return to bilinear includes a cache hit and another detail decode. No guarantee of complete cache reuse or persistence.",
+    "Surface checks exclude overlay, compositor and physical display; max channel difference is one sRGB8 level.",
+    "Prior 156 Nikon developments were not repeated or attributed to these rebuilt binaries.",
+    "LPAC Winsock initialization fails with 10107; not an exhaustive network-isolation test.",
+    "Clean Windows installation, measured colour, wider corpus, performance and R0-R4 gates remain open."
+  ],
+  "lab": "var/review-followup-fixes/"
+}

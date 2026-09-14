@@ -44,12 +44,15 @@ pub enum Completeness {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PreviewRequest {
+    #[serde(default)]
+    pub raw_engine: crate::decoder::RawEngine,
     pub quality: PreviewQuality,
     pub edge: u32,
 }
 impl PreviewRequest {
     pub fn full() -> Self {
         Self {
+            raw_engine: crate::decoder::RawEngine::default(),
             quality: PreviewQuality::Full,
             edge: 0,
         }

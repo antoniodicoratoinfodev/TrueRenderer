@@ -139,13 +139,14 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
             "Source changed during copy"
         );
         let metadata = copy.metadata()?;
+        let observation = tr_platform::observation_token(&copy, &metadata);
         items.push(Item {
             id: index.to_string(),
             name: format!("asset-{index}"),
             path: copy,
             bytes: metadata.len(),
             digest: before.clone(),
-            observation: tr_platform::observation_token(&metadata),
+            observation,
             approved: true,
             annotation: Annotation::default(),
             revision: 0,
@@ -155,7 +156,11 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
     let (pool, events) = start_pool();
     for (index, item) in items.iter().enumerate() {
         for quality in [PreviewQuality::Standard, PreviewQuality::Full] {
-            let requested = PreviewRequest { quality, edge: 256 };
+            let requested = PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
+                quality,
+                edge: 256,
+            };
             let writes = manager.stats().writes;
             let (cold, seconds) = match request(&pool, &events, item, requested) {
                 Ok(result) => result,
@@ -179,9 +184,13 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
                 }
             };
             let size = cold.prepared.image.source_size();
+            // `RAW` means the mosaic was developed, on every platform. A
+            // container served from its embedded preview qualifies the label,
+            // so this refuses that substitution without naming a vendor.
             ensure!(
-                cold.info.format == "RAW" && cold.info.decoder.starts_with("Apple RAW "),
-                "Real RAW was decoded as an embedded bitmap: asset {index}"
+                cold.info.format == "RAW",
+                "Real RAW was decoded as an embedded bitmap: asset {index} · {}",
+                cold.info.decoder
             );
             ensure!(
                 size[0] as u64 * size[1] as u64 >= 1_000_000,
@@ -200,9 +209,13 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
             while manager.stats().writes == writes && wait.elapsed() < Duration::from_secs(10) {
                 std::thread::sleep(Duration::from_millis(20));
             }
+            // The manager already records why a write was skipped; reporting
+            // only that one did not happen turns a diagnosable failure into a
+            // guess. This reaches the command log, never the published report.
             ensure!(
                 manager.stats().writes > writes,
-                "Cache persistence unavailable"
+                "Cache persistence unavailable: {}",
+                manager.stats().message
             );
             let (warm, warm_seconds) = request(&pool, &events, item, requested)?;
             ensure!(
@@ -234,6 +247,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
     std::fs::create_dir(&burst_folder)?;
     let (pool, events) = start_pool();
     let burst_request = PreviewRequest {
+        raw_engine: tr_core::decoder::RawEngine::default(),
         quality: PreviewQuality::Full,
         edge: 256,
     };
@@ -291,6 +305,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
             &events,
             item,
             PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: PreviewQuality::Standard,
                 edge: 256,
             },
@@ -308,6 +323,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
     for item in items.iter().take(3) {
         for requested in [
             PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: PreviewQuality::Standard,
                 edge: 2048,
             },
@@ -391,7 +407,11 @@ pub fn run(root: &Path, worker: &Path) -> Result<()> {
         };
         drop(bytes);
         for quality in [PreviewQuality::Full, PreviewQuality::Standard] {
-            let requested = PreviewRequest { quality, edge: 256 };
+            let requested = PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
+                quality,
+                edge: 256,
+            };
             let writes = manager.stats().writes;
             let (cold, cold_seconds) = request(&pool, &events, &item, requested)?;
             let expected: Vec<_> = cold
@@ -479,7 +499,7 @@ pub fn navigation(root: &Path, worker: &Path) -> Result<()> {
                 name: format!("generated-{i}"),
                 path: path.clone(),
                 bytes: metadata.len(),
-                digest: tr_platform::observation_token(&metadata),
+                digest: tr_platform::observation_token(path, &metadata),
                 observation: String::new(),
                 approved: true,
                 annotation: Default::default(),
@@ -509,6 +529,7 @@ pub fn navigation(root: &Path, worker: &Path) -> Result<()> {
     };
     let (pool, events) = start_pool();
     let requested = PreviewRequest {
+        raw_engine: tr_core::decoder::RawEngine::default(),
         quality: PreviewQuality::Full,
         edge: 256,
     };

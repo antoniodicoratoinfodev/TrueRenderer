@@ -3089,6 +3089,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "tr-core",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3118,9 +3119,13 @@ name = "tr-worker"
 version = "0.1.5"
 dependencies = [
  "anyhow",
+ "cc",
  "image",
+ "png",
  "serde_json",
+ "tiff",
  "tr-core",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3174,6 +3179,7 @@ dependencies = [
  "tr-platform",
  "tr-render",
  "tr-store",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

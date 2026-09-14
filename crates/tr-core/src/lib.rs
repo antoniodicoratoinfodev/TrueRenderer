@@ -2,6 +2,8 @@ pub mod budget;
 pub mod color;
 pub mod compute;
 pub mod corpus;
+pub mod decoder;
+pub mod demosaic;
 pub mod preview;
 pub mod protocol;
 pub mod provider;

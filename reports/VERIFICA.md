@@ -1,6 +1,59 @@
 # TrueRenderer — verifica del prototipo R0
 
-Aggiornamento: 9 settembre 2026. Build interna **0.1.5** installata e verificata su macOS arm64; qualifica integrata del progetto aperta.
+## Correzioni gamma/orientamento — 14 settembre 2026
+
+**Due P2 corretti e verificati su Windows:** curva PNG con sola gAMA, orientamento per IFD dell'anteprima RAW, cache v5. Passati 99 test ordinari + 8 integrazioni, debug/release, fmt/Clippy, 18 casi sintetici per worker, IPC/Python/ricampionamento e inventari. [Dettagli](../docs/correzioni-gamma-orientamento.md), [rapporto con hash](gamma-orientation-fixes-windows.json). Nessun commit/staging; Mac/XPC rinviato, GUI/Nikon non ripetuti.
+
+## Revisione aggiuntiva — 14 settembre 2026
+
+**Due ulteriori P2 aperti:** curva PNG con sola gAMA e orientamento dell'anteprima RAW contaminato da una IFD secondaria. [Rilievi](../docs/revisione-aggiuntiva-2026-09-14.md), [evidenze debug/release](additional-review-windows.json). 18 nuovi casi su ciascun worker, input invariati, sorgenti e binari identici all'ultima suite: i 103 test precedenti non sono stati rieseguiti. Nessuna modifica applicativa, staging o commit; Mac/XPC ancora rinviato.
+
+## Tre correzioni del ricontrollo — 14 settembre 2026
+
+**Tre P2 corretti e verificati su Windows; nessun commit/staging.** [Dettagli e limiti](../docs/correzioni-ricontrollo-generale.md), [rapporto con hash](general-review-fixes-windows.json). Passati 96 test ordinari + 7 integrazioni, build debug/release, fmt/Clippy, 36 casi sintetici su ciascun worker debug/release, sei controlli IPC, due Python, 24 segnali/1:1 e inventari. TIFF con colorimetria non supportata ora rifiutato esplicitamente, fallback RAW coerente col probe, timestamp cache aggiornato senza scrivere hard link. XPC non avviabile su Windows senza codesign, verifica Mac rinviata. GUI e campagna Nikon non ripetute.
+
+## Ricontrollo generale — 14 settembre 2026
+
+**Quattro correzioni confermate nei casi Windows verificati; tre nuovi P2 aperti.** [Rilievi](../docs/revisione-generale-2026-09-14.md), [rapporto e casi sintetici](recheck-windows-2026-09-14.json). Rieseguiti fmt/Clippy, 86 test ordinari e 6 integrazioni: tutti passati. Riprodotti con 36 casi sintetici e un controllo isolato degli handle: colorimetria TIFF ignorata, fallback RAW incompatibile col probe e mtime cache Windows non aggiornato. Verificati LibRaw, Cargo.lock e 348 notice. Nessuna modifica applicativa, staging o commit. Release/GUI/fotografie restano evidenze delle campagne precedenti; Mac/XPC e le altre qualifiche aperte non sono dichiarati passati.
+
+## Correzioni della revisione serale — 14 settembre 2026
+
+**Verifiche Windows concluse; nessun commit/staging.** [Rapporto e hash](review-followup-fixes-windows.json), [correzioni e limiti](../docs/correzioni-revisione-serale.md). Ripresa la sessione dopo l'applicazione dei quattro fix: 86 test Rust ordinari recuperati + 6 integrazioni completate, 21 richieste bitmap LPAC, debug/release, fmt/Clippy, sei IPC, due Python, 24 segnali/1:1, LibRaw e inventario Windows (205 package/348 notice). Match con entrambe le varianti compilato nella prova minima; Mac/XPC nativi restano rinviati.
+
+GUI release: seconda foto e zoom/centro conservati attraverso tre motori e ritorno al primo, usando l'azione completa condivisa col pulsante. 577.296 pixel GPU entro un livello sRGB8; due database privati integri, sorgente e copie invariate. Una persistenza saltata per contesa del lock Windows 33 e nuovo decode del dettaglio al ritorno: la prova non attesta cache integralmente riutilizzata. La precedente campagna di 156 sviluppi non è stata ripetuta. Le sezioni sotto conservano gli audit precedenti alle rispettive correzioni.
+
+## Revisione ripresa — 13 settembre 2026 sera
+
+**Quattro nuovi difetti confermati e non corretti in questo audit.** [Rilievi](../docs/revisione-continuata-2026-09-13.md), [rapporto con hash](review-continuation-windows.json). Recuperati dalla sessione interrotta 81 test ordinari + 6 integrazioni, build debug/fmt/Clippy, sei controlli IPC, LPAC e 18 risposte bitmap; completati build release, 24 segnali e 1:1, due regressioni Python e verifica manifest/notice. Confermato `E0005` con una riproduzione minima del pattern dei test Mac: nessuna build nativa Mac dichiarata. Il percorso completo del pulsante «Applica e salva» perde selezione/zoom; lo smoke precedente invocava direttamente `apply_settings()`. PNG con `cICP` e TIFF con alpha associata producono pixel errati. Nessuna modifica applicativa, commit o staging; le campagne Nikon precedenti non sono state ripetute.
+
+## Correzioni dell'audit — 13 settembre 2026
+
+**Verificate localmente su Windows; nessun commit/staging.** [Rapporto senza fotografie](pre-main-fixes-windows.json), [risoluzione dei rilievi](../docs/revisione-pre-main.md), [confine LPAC](../docs/adr/0009-isolamento-worker-windows.md). Passati 89 test Rust (81 ordinari + 8 integrazioni), fmt/Clippy, build debug/release, 6 prove IPC, 2 Python, 24 segnali e 1:1 esatto. LibRaw 0.22.2: 106 hash upstream/79 unità compilate; inventario Windows di 205 package e 348 notice verificati, con byte preservati da Git. Import release privi delle DLL VC redistributable; installazione pulita ancora da provare.
+
+**Nikon e UI:** 90/90 sviluppi D750 + 66/66 D40, risoluzioni rispettivamente 6032×4032 e 3039×2014 (o orientate); hash originali invariati rispetto all'audit. GUI D40: tre motori e ritorno al bilineare, cambio durante scansione, selezione preservata e riuso cache, quattro stadi riusciti. Confrontati 260.796 pixel fotografici della superficie con errore massimo zero; esclusi compositor e monitor. La prova native macOS/XPC è rinviata dal titolare; colore misurato, qualità generale, prestazioni p95 e R0–R4 restano aperti. La sezione seguente conserva l'audit iniziale, prima delle correzioni.
+
+## Audit prima di main — 13 settembre 2026
+
+**Promozione dell'intero incremento locale: non raccomandata finché i difetti restano aperti.** Verificati tutti i file non committati inventariati; codice applicativo e vendor invariati durante l'audit, nessun commit/staging. [Rilievi e riproduzioni](../docs/revisione-pre-main.md), [riepilogo senza fotografie](pre-main-review-windows.json).
+
+Passati build debug/release, fmt/Clippy, 75 test Rust ordinari + 7 integrazioni, 6 prove IPC, 2 Python, 24 casi di ricampionamento, 90 sviluppi release D750 e 66 D40 con originali invariati. GUI release D40: cambio motore, selezione e cache al ritorno passati; 260.796 pixel della superficie e ulteriori 180.056 pixel in regione fotografica a errore massimo zero. Queste prove non qualificano colore fisico, superiorità del demosaic, p95 o il nuovo Mac/XPC.
+
+Il laboratorio ha riprodotto accesso del worker a file non concessi, PNG a gamma dichiarata interpretati come sRGB, TIFF con miniatura scambiati per RAW, panic su preview troncata, quota errata nei riusi corpus→RAW, deroga hard link non esclusiva e token Windows invariato dopo modifica in-place con mtime ripristinato. Confermate correzioni upstream mancanti nella LibRaw 0.21.1 vendorizzata. Sono rilievi **non corretti** da questa revisione. Log e input sintetici privati in `var/pre-main-review/`; il tentativo Mac si ferma prima dei test perché manca `/usr/bin/codesign`.
+
+## Esperimento locale Windows — 12 settembre 2026, nessun commit
+
+**Revisione successiva D40:** [risultati](raw-engines-d40-windows.json) e [dettagli](../docs/verifica-motori-d40.md). Prima 22 rifiuti del motore proprio per modello escluso; dopo l'estensione controllata, 66/66 sviluppi completi sui 22 NEF con i tre motori, originali invariati. Corretto il cambio motore durante scansione e provato nella UI; 260.796 pixel della superficie identici a CPU (ricampionamento CPU per questa geometria), ritorno alla cache senza nuovo sviluppo. Regressione D750: tre sviluppi passati e nove ritagli 1:1 identici alla consegna sotto. Passati 82 test Rust, fmt/Clippy/build, due regressioni Python e sei controlli IPC. Questa revisione non qualifica altri ISO (tutti i D40 provati dichiarano ISO 200), colore misurato o Mac/XPC; nessuna fotografia pubblicata.
+
+Implementati motori RAW selezionabili, AHD e TrueRenderer direzionale fp32. [Progetto e limiti](../docs/progetto-motori-raw.md), [riepilogo numerico senza fotografie](raw-engines-windows.json). Il lavoro Windows preesistente e questo incremento restano locali, non da committare. Le sezioni Mac sotto descrivono la baseline precedente.
+
+- **Codice:** 82 test Rust (75 ordinari e 7 integrazioni esplicite), fmt/Clippy/build, 2 regressioni Python e 6 prove IPC passati. 24 segnali di ricampionamento e 1:1 esatto passati con report in `var/raw-engine-check/resampling/reports/`; il nome storico `resampling-macos.json` dentro quella cartella privata non cambia il target Windows della prova.
+- **RAW:** 30 NEF D750 × 3 motori, 90 sviluppi completi nel worker confinato, originali invariati. Mediane bilineare/AHD/proprio 2,67/4,61/6,10 s, build debug e cache OS non svuotata. fp32 proprio conserva −0,188…2,298. Non sono tempi evento→frame o una qualifica della memoria totale.
+- **Dettaglio sintetico:** 24 casi migliorano sul bilineare matematico, quattro rampe sono numericamente equivalenti e quattro trame a crominanze indipendenti peggiorano. Nessuna superiorità fotografica generale, ΔE00 misurato o confronto Apple qui.
+- **UI:** tre motori e ritorno al precedente, selezione conservata, livelli Adatta riusati in cache; quattro schermate private. Corrette le acquisizioni ripetute e rimosso il secondo dithering egui dal raster già quantizzato. Il confronto di 558.144 pixel del viewport con CPU passa entro un livello sRGB8; prima prova negativa a due livelli conservata in `var/raw-engine-ui-pixels-before-presentation.json`.
+
+**Mac aperto:** build Apple+LibRaw e collegamento libc++ dei due XPC predisposti, ma nuovo bundle non costruito né provato. La suite XPC invocata su questo PC non procede perché manca `/usr/bin/codesign`. Da ripetere anche campionamento della superficie e selettore sul Mac. R0–R4, matrice camere, ICC/display, firma e sandbox completi restano aperti. I risultati fotografici dettagliati e gli originali non sono pubblicati.
+
+Baseline del 9 settembre 2026. Build interna **0.1.5** installata e verificata su macOS arm64; qualifica integrata del progetto aperta.
 
 **Stato repository controllato il 9 settembre:** codice e report di queste prove sono ora inclusi in `10123b5`, verificato su `main` remoto. Gli hash nel riepilogo corrispondono ancora al codice e al bundle installato. Le basi Git e gli stati «non pubblicato» nelle sezioni/JSON storici descrivono il momento della misura. Questa revisione aggiorna i Markdown; non è una nuova esecuzione dei benchmark.
 

@@ -1,0 +1,268 @@
+{
+  "date": "2026-09-12",
+  "platform": "windows",
+  "version": "0.1.5 local RAW experiment",
+  "git_head": "1279012b8cbcd15889ff060143b197d2523212ba",
+  "committed": false,
+  "published": false,
+  "review": {
+    "examined": [
+      "Engine preferences, IPC and cache identity",
+      "Decode coalescing and generation invalidation",
+      "Native mosaic extraction and calibration",
+      "Bayer interpolation, borders and orientation"
+    ],
+    "fixed": [
+      "Engine changes during pending folder scan revoke old generation; now requeue the same folder in the new generation",
+      "Extend the exact Nikon model allowlist to D40 NEF with the same calibration guards",
+      "Update supported-camera hints and remove incorrect macOS attribution from Windows scan status"
+    ],
+    "scope": "Focused review of the RAW increment; not a complete security or colour audit."
+  },
+  "d40": {
+    "files": 22,
+    "all_originals_unchanged": true,
+    "raw_developments_passed": 66,
+    "iso_values_observed_in_exif": [
+      200
+    ],
+    "engines": [
+      {
+        "engine": "LibRawBilinear",
+        "baseline_passed": 22,
+        "baseline_rejected": 0,
+        "after_passed": 22,
+        "median_seconds": 0.7062816999999999,
+        "working_min": 0.0,
+        "working_max": 0.9999971389770508,
+        "dimensions": [
+          [
+            2014,
+            3039
+          ],
+          [
+            3039,
+            2014
+          ]
+        ]
+      },
+      {
+        "engine": "LibRawAhd",
+        "baseline_passed": 22,
+        "baseline_rejected": 0,
+        "after_passed": 22,
+        "median_seconds": 1.1972342999999999,
+        "working_min": 0.0,
+        "working_max": 1.0,
+        "dimensions": [
+          [
+            2014,
+            3039
+          ],
+          [
+            3039,
+            2014
+          ]
+        ]
+      },
+      {
+        "engine": "TrueRenderer",
+        "baseline_passed": 0,
+        "baseline_rejected": 22,
+        "after_passed": 22,
+        "median_seconds": 1.5608724,
+        "working_min": -0.17199163138866425,
+        "working_max": 2.095494270324707,
+        "dimensions": [
+          [
+            2014,
+            3039
+          ],
+          [
+            3039,
+            2014
+          ]
+        ]
+      }
+    ],
+    "baseline_report_sha256": "d2f9bc2890cc485ae77baa681be4a4c73f597845197436bcbca0a9192c257101",
+    "final_report_sha256": "b83f000e7fa4db5267ac5e8429d444d5e39ca69d56f504bea90e42196d79d4c9",
+    "scope": "Full-resolution functional checks through the confined worker. Sequential uncached develops; OS cache not flushed. Private 1:1 SDR crops of the first file. Numerical range is observed, not a quality verdict. No measured camera colour accuracy, Apple parity on Windows, p95 or total process-memory qualification."
+  },
+  "d750_regression": {
+    "passed": true,
+    "full_developments": 3,
+    "identical_crops": 9,
+    "full_range_and_metadata_unchanged": true,
+    "scope": "One authorized D750, three engines, three 1:1 SDR crops each byte-identical to previous verification; not an equality test of every float pixel.",
+    "checks": [
+      {
+        "engine": "LibRawBilinear",
+        "region": "center",
+        "png_sha256": "640434371ac7a878a88a27a7c59430023b79e2066f578a3987e3af363edeb79e",
+        "identical": true
+      },
+      {
+        "engine": "LibRawBilinear",
+        "region": "upper-left",
+        "png_sha256": "5ef68ed5941384f214307291fde8edc8431ef9e49d2defd9368f0f01c6f674ad",
+        "identical": true
+      },
+      {
+        "engine": "LibRawBilinear",
+        "region": "lower-right",
+        "png_sha256": "e70ed5941741aba16097f2706692ff5b7b4838fd4085b6235b424575ef8b0b21",
+        "identical": true
+      },
+      {
+        "engine": "LibRawAhd",
+        "region": "center",
+        "png_sha256": "6b6132fbc40ae68e9b8b03581db06d28d6195be3cb7464f220991b3f30896ef9",
+        "identical": true
+      },
+      {
+        "engine": "LibRawAhd",
+        "region": "upper-left",
+        "png_sha256": "ba76b387324f0da35acaeaf5719e5835601d361bae0fd13fce164ed7c51c634c",
+        "identical": true
+      },
+      {
+        "engine": "LibRawAhd",
+        "region": "lower-right",
+        "png_sha256": "c24c5599dcef6236cdd6b1e92d0b0b5b7037dbda4ad5b1b66dacae3a79f8ddce",
+        "identical": true
+      },
+      {
+        "engine": "TrueRenderer",
+        "region": "center",
+        "png_sha256": "a74c9671ee032f8b17ee44c2b8bad3b33507d17e4731e2d0d8dc993542609e3f",
+        "identical": true
+      },
+      {
+        "engine": "TrueRenderer",
+        "region": "upper-left",
+        "png_sha256": "0e7d819bbd671692e5e328505eb1bd319f7bbd51b3cf206143450d1f5a649464",
+        "identical": true
+      },
+      {
+        "engine": "TrueRenderer",
+        "region": "lower-right",
+        "png_sha256": "0c44915d45ef1fcc027914fa8250771f1e7d57f581da2ba371588bf5ddab77fc",
+        "identical": true
+      }
+    ]
+  },
+  "ui": {
+    "passed": true,
+    "changed_engine_during_scan": true,
+    "scanned_items": 1,
+    "selection_preserved": true,
+    "return_to_cache_without_new_decode": true,
+    "stages": [
+      {
+        "engine": "LibRawBilinear",
+        "generation": 3,
+        "decode_jobs": 1,
+        "cache_hits": 0
+      },
+      {
+        "engine": "LibRawAhd",
+        "generation": 4,
+        "decode_jobs": 2,
+        "cache_hits": 0
+      },
+      {
+        "engine": "TrueRenderer",
+        "generation": 5,
+        "decode_jobs": 3,
+        "cache_hits": 0
+      },
+      {
+        "engine": "LibRawBilinear",
+        "generation": 6,
+        "decode_jobs": 3,
+        "cache_hits": 2
+      }
+    ],
+    "surface_pixels": {
+      "checks": [
+        {
+          "checked_pixels": 65199,
+          "compute": "CPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 1
+        },
+        {
+          "checked_pixels": 65199,
+          "compute": "CPU",
+          "engine": "LibRawAhd",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 2
+        },
+        {
+          "checked_pixels": 65199,
+          "compute": "CPU",
+          "engine": "TrueRenderer",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 3
+        },
+        {
+          "checked_pixels": 65199,
+          "compute": "CPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 4
+        }
+      ],
+      "passed": true,
+      "scope": "Right quarter of native RAW viewport vs CPU raster; excludes settings overlay, compositor and physical display.",
+      "threshold_u8": 1
+    },
+    "scope": "Private portrait D40 copy and separate catalog; actual display pixels of CPU presentation, not a new GPU/compositor/monitor qualification."
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_all_targets_warnings_denied": true,
+    "build_workspace": true,
+    "rust_regular": 75,
+    "rust_explicit_integration": 7,
+    "integration_sample_camera": "Nikon D40",
+    "python_report_tests": 2,
+    "worker_protocol_checks": 6
+  },
+  "docs_sync": {
+    "passed": true,
+    "outside_blocks_unchanged": true,
+    "idempotent": true,
+    "original_sha256": "ad3db38205e58d7f02e85259d5e0516feb3ced143909c96e1699951d65500e4c"
+  },
+  "raw_measurement_binaries_sha256": {
+    "truerenderer.exe": "30b9e3c8992a99912f82d26dda157a22f8ac0dc8a2e064c5c8423f35c75af0ed",
+    "tr-worker.exe": "dc2953bea6f844e5c4960f1b17fcdd94b89d36883c33a2148dc6c9bd26795667"
+  },
+  "delivered_binaries_sha256": {
+    "truerenderer.exe": "d535b9cb18ec222ee1466bfbbb9c936ac0824b9e73999679ba8fa1231cc9ad27",
+    "tr-worker.exe": "dc2953bea6f844e5c4960f1b17fcdd94b89d36883c33a2148dc6c9bd26795667"
+  },
+  "source_files_sha256": {
+    "native/libraw/tr_libraw.cpp": "710ef964f0198695fa7c5a1baff6e0b5dbcffcb26a2451190b43c95becc46cd8",
+    "apps/desktop/src/ui.rs": "25b1474460c6aed9d0c8967d9c8aa5d6ec279e3ee4a6872edf8b3e187fccb5b3",
+    "apps/desktop/src/service.rs": "332e22bd4c900aa576cbf3d9d28e667842a74a26ef355732c0948aed00ef3a4e",
+    "crates/tr-core/src/demosaic.rs": "cd82db907feb2fbdf92b035ec6d692cf71d4ac3d90f1acc9167c52cdf7e02912",
+    "crates/tr-core/src/decoder.rs": "46801dc8e313c9eca79e8864a5602f2fa5f423901b5b8e33971cffdac519302d",
+    "crates/tr-worker/src/mosaic.rs": "2fb87b257d7341b8a8c44d979c4e778ef956f3ddb73a7080b24865633837b064",
+    "apps/desktop/src/verify_raw_engines.rs": "0994ad6742e99f8a9d2899ec2424c32b0d88de5d26c2e528589a054d6f433803"
+  },
+  "open": [
+    "Measured camera colour fidelity and superiority vs AHD/Apple",
+    "Additional ISO, camera/firmware and lighting coverage",
+    "Native macOS build, XPC and surface regression; XPC attempt cannot proceed without codesign on Windows",
+    "Full colour, memory, sandbox and release qualification"
+  ],
+  "privacy": "No photographs, original paths, annotation identifiers or per-photo source hashes in this summary. Camera reports and screenshots remain private in ignored var/."
+}

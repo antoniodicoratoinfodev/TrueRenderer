@@ -24,7 +24,7 @@ pub fn inspect(watch: &Watch) -> Option<Change> {
     let metadata = std::fs::metadata(&watch.path).ok().filter(|m| m.is_file());
     let observation = metadata
         .as_ref()
-        .map(tr_platform::observation_token)
+        .map(|m| tr_platform::observation_token(&watch.path, m))
         .unwrap_or_default();
     (observation != watch.observation).then(|| Change {
         id: watch.id.clone(),
@@ -106,7 +106,7 @@ mod tests {
         let mut watch = Watch {
             id: "asset".into(),
             path: path.clone(),
-            observation: tr_platform::observation_token(&path.metadata().unwrap()),
+            observation: tr_platform::observation_token(&path, &path.metadata().unwrap()),
         };
         assert!(inspect(&watch).is_none());
         let replacement = dir.path().join("replacement");

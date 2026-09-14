@@ -25,6 +25,8 @@ fn default_output_bytes() -> u64 {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DecodeRequest {
+    #[serde(default)]
+    pub raw_engine: crate::decoder::RawEngine,
     pub source_len: usize,
     pub max_edge: u32,
     #[serde(default)]
@@ -150,6 +152,26 @@ pub fn write_raster<W: Write>(writer: &mut W, raster: &LinearImage) -> Result<()
 mod tests {
     use super::*;
     #[test]
+    fn engine_is_explicit_and_unknown_recipes_are_not_silently_defaulted() {
+        let legacy: DecodeRequest =
+            serde_json::from_str(r#"{"source_len":32,"max_edge":0}"#).unwrap();
+        assert_eq!(legacy.raw_engine, Default::default());
+        for engine in crate::decoder::RawEngine::choices() {
+            let request = DecodeRequest {
+                raw_engine: engine,
+                ..legacy
+            };
+            let wire = serde_json::to_vec(&request).unwrap();
+            assert_eq!(parse::<DecodeRequest>(&wire).unwrap().raw_engine, engine);
+        }
+        assert!(
+            serde_json::from_str::<DecodeRequest>(
+                r#"{"source_len":32,"max_edge":0,"raw_engine":"Unknown"}"#
+            )
+            .is_err()
+        );
+    }
+    #[test]
     fn reject_oversize_before_allocating() {
         let mut wire = vec![];
         write_control(&mut wire, REQUEST, 7, &"ok").unwrap();
@@ -164,6 +186,7 @@ mod tests {
             REQUEST,
             42,
             &DecodeRequest {
+                raw_engine: Default::default(),
                 source_len: 32,
                 max_edge: 320,
                 intent: DecodeIntent::LegacyRaster,

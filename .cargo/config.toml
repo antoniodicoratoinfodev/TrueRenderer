@@ -1,0 +1,4 @@
+# The Windows package carries its C/C++ runtime inside the binaries. In
+# particular, a sandboxed worker must not depend on a user-installed VC DLL.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

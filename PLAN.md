@@ -1,13 +1,57 @@
 # TrueRenderer — piano di sviluppo
 
-Aggiornato: 9 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
+Aggiornato: 14 settembre 2026. Fonte: `docs/TrueRenderer-Architettura.md`.
+
+**Pubblicazione autorizzata dal titolare, 14 settembre 2026:** richiesta esplicita di commit e push dell'incremento corrente, comprendente port Windows, motori RAW e correzioni verificate. Le precedenti indicazioni «non da committare» sono storiche e superate da questa richiesta; restano validi il rinvio Mac/XPC e tutti i gate aperti. Ultima suite Windows: 107 test Rust, build debug/release e verifiche descritte nel [rapporto corrente](reports/gamma-orientation-fixes-windows.json). Dati privati e binari di sviluppo esclusi dal commit.
 Il nome corrente è **TrueRenderer**; TrueVision è il nome precedente.
 
 Questo file è il piano operativo: ordina attività, dipendenze e caselle completate. `TrueVision-Architettura.md` è la specifica tecnica e di prodotto, con criteri di accettazione e registro aggiornato. Il confronto completo requisiti/implementazione si trova nel §0 dell’architettura; la fonte del registro è `docs/avanzamento.md`.
 
 **Stato verificato al 9 settembre 2026:** implementazione e report della continuazione inclusi in `10123b5`, presente su `origin/main` verificato in rete. Ultima suite: 71 test Rust, 30 NEF a 2 GiB e bundle macOS installato verificato. [Risultati e hash](reports/preview-navigation-continuation-macos.json). I conteggi e i commit nelle sezioni storiche descrivono i rispettivi incrementi.
 
-**Prossimo incremento locale:** misurare la navigazione dal comando al frame corretto sul Mac e sui dati disponibili; separare cache fredda, SSD dopo riavvio e RAM/GPU calde, con A/B della stessa qualità. Altri RAW/hardware e i gate R0–R4 restano attività distinte.
+**Incremento locale corrente, non da committare:** corretti i rilievi dell'audit Windows: LPAC, LibRaw 0.22.2, colore/classificazione bitmap, robustezza, quote e cache. Passati 89 test Rust, build debug/release, 156 sviluppi Nikon e GUI con ritorno alla cache; [rapporto delle correzioni](reports/pre-main-fixes-windows.json). La promozione integrale Windows/macOS richiede ancora il nuovo bundle e i due XPC: il titolare ha rinviato queste prove a una successiva sessione sul Mac. Restano verifica su Windows pulito, confronto Apple controllato e misure di colore/prestazioni; R0–R4 non sono chiusi.
+
+**Correzioni della revisione serale completate su Windows, 14 settembre:** ripresa la sessione dopo l'applicazione delle quattro correzioni; completate integrazioni, bitmap LPAC, release e prova nativa. 86 test ordinari recuperati + 6 integrazioni, 21 richieste bitmap e 577.296 pixel GPU entro un livello sRGB8. [Correzioni e limiti](docs/correzioni-revisione-serale.md), [hash ed evidenze](reports/review-followup-fixes-windows.json). Il match Mac è corretto e verificato in una riproduzione minima; build nativa e XPC restano rinviati. Nessun commit/staging.
+
+## Ricontrollo generale — 14 settembre 2026
+
+**Due ulteriori P2 corretti e verificati su Windows:** curva PNG con sola gAMA e orientamento per IFD dell'anteprima RAW. 107 test Rust passati; [correzioni e limiti](docs/correzioni-gamma-orientamento.md), [rapporto corrente](reports/gamma-orientation-fixes-windows.json). [Audit negativo conservato](docs/revisione-aggiuntiva-2026-09-14.md). Nessun commit/staging; Mac/XPC rinviato.
+
+- [x] Verificare i percorsi vicini alle ultime correzioni con 18 nuovi casi sintetici per worker debug/release e confrontare gli hash della precedente suite.
+- [x] Applicare la curva PNG con sola `gAMA=45455`, senza identificarla con sRGB; regressioni numeriche 8/16 bit, alpha, provenienza e precedenze, cache v5.
+- [x] Distinguere orientamento TIFF assente da 1 e impedire che una IFD secondaria ruoti l'anteprima principale; regressioni per directory/EXIF e worker LPAC, cache v5.
+
+**Tre P2 corretti e verificati su Windows dopo il ricontrollo:** 103 test Rust, build debug/release, 36 casi sintetici per ciascun worker debug/release. [Correzioni e limiti](docs/correzioni-ricontrollo-generale.md), [rapporto corrente](reports/general-review-fixes-windows.json). [Revisione negativa conservata](docs/revisione-generale-2026-09-14.md), [rapporto dell'audit](reports/recheck-windows-2026-09-14.json). Nessun commit/staging; Mac/XPC resta rinviato.
+
+- [x] Riesaminare il lavoro non committato e rieseguire fmt, Clippy, 86 test ordinari e 6 integrazioni; verificare LibRaw e inventario/notice.
+- [x] Riprodurre i nuovi rilievi con file sintetici, broker reale e modulo Directory di produzione; documentare risultati e limiti.
+- [x] Rifiutare esplicitamente la colorimetria TIFF non supportata nei tag 301/318/319/342/532; verificare rifiuti e pixel senza tag, invalidare le vecchie cache con `bitmap-tiff-color-v4`.
+- [x] Rendere coerenti probe e decode nel fallback RAW su anteprima di diversa risoluzione, conservando la validazione IPC; regressione LPAC passata.
+- [x] Correggere l'aggiornamento del timestamp degli hit cache Windows e verificare scadenza/LRU, descrittori/blocchi e preservazione degli hard link.
+- [ ] Estendere la diagnostica PNG per cICP malformato e dichiarazioni sRGB/gAMA discordanti, distinta dai tre P2.
+
+## Revisione prima di main — 13 settembre 2026
+
+**Ultimo controllo:** i quattro rilievi della [revisione serale](docs/revisione-continuata-2026-09-13.md) hanno correzioni applicate e verifiche Windows concluse. La prova nativa Mac rimane distinta e aperta. Le evidenze negative e le campagne precedenti sono conservate.
+
+- [x] Recuperare la sessione, verificare i rilievi e completare build release, ricampionamento e riproduzione del blocco di compilazione Mac; registrare gli esiti senza modifiche applicative o commit.
+- [x] Ripristinare il controllo esaustivo di `Owner` nel test di crash/recovery e compilare la prova minima con entrambe le varianti.
+- [ ] Compilare ed eseguire i test sul Mac con il nuovo bundle/XPC, come parte della verifica nativa rinviata.
+- [x] Correggere il percorso «Applica e salva» per conservare selezione/zoom al cambio motore; regressioni e smoke nativo sulla stessa azione completa del pulsante.
+- [x] Gestire o rifiutare esplicitamente PNG `cICP` e TIFF con alpha associata; aggiungere regressioni e invalidare le cache interessate.
+- [ ] Qualificare separatamente contesa del writer e persistenza del dettaglio: nello smoke serale una scrittura saltata per lock Windows 33 e nuovo decode al ritorno, senza interrompere la visualizzazione.
+
+- [x] Inventariare tutto il lavoro non committato e rivedere anche port Windows, cache, bridge nativo, build, dipendenze e documenti.
+- [x] Verificare debug/release, 82 test Rust, 6 prove IPC, 2 Python, ricampionamento e 156 sviluppi release D750/D40; originali invariati.
+- [x] Provare GUI release e cambio motore; riprodurre separatamente i difetti, conservando log e laboratorio privati.
+- [x] Correggere accesso residuo ai file del worker Windows e verificare LibRaw 0.22.2 con le correzioni applicabili; perimetro LPAC e limiti in ADR 0009.
+- [x] Correggere colore PNG esterni, classificazione TIFF/RAW e accesso fuori limite nel parser preview; regressioni passate su Windows.
+- [x] Correggere quota al cambio tipo di sorgente, controllo hard link e invalidazione Windows con mtime ripristinato; completare provenienza/migrazione impostazioni.
+- [x] Incorporare il runtime C/C++ MSVC e controllare gli import release; generare inventario Windows, 348 notice e manifest nativo, preservando i byte upstream nei checkout Git.
+- [ ] Costruire e verificare il nuovo bundle Mac/XPC (rinviato dal titolare a una sessione sul Mac).
+- [ ] Verificare il pacchetto in un'installazione Windows pulita prima della distribuzione.
+
+Rilievi, severità, riproduzioni e limiti: [revisione completa](docs/revisione-pre-main.md). Il codice applicativo non è stato modificato durante questo audit; nessun commit o staging.
 
 ## Obiettivo e regole
 
@@ -146,6 +190,19 @@ Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la na
 Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `reports/VERIFICA.md` e `docs/avanzamento.md`.
 
 **Licenza LibRaw, verifica dell'8 settembre:** la libreria open source è utilizzabile anche per vendere software proprietario senza acquistare una licenza commerciale, rispettando CDDL 1.0 oppure LGPL 2.1. La build corrente non la incorpora. Fonti, obblighi e scelta candidata CDDL in [licenza LibRaw](docs/licenza-libraw.md) e §20.1 dell'architettura; l'audit della versione effettivamente distribuita resta necessario.
+
+## Esperimento locale — motori RAW selezionabili (12 settembre 2026)
+
+Richiesta del titolare: progettare ed eseguire la pipeline sperimentale, affiancandola ai motori esistenti su Windows/macOS. **Nessun commit.** Progetto: [motori RAW](docs/progetto-motori-raw.md). Anticipazione locale del demosaic prima post-v1, senza modifica dei gate.
+
+- [x] Leggere AGENTS.md, piano, registro e architettura; definire contratto e verifiche.
+- [x] Collegare selezione persistente, IPC, identità cache e invalidazione al cambio motore.
+- [x] Implementare LibRaw AHD e TrueRenderer direzionale fp32 con calibrazione esplicita.
+- [x] Verificare segnali sintetici, regressioni e RAW D750 su Windows; registrare i risultati: 32 casi analitici e 90 sviluppi completi, originali invariati. Superiorità generale non dimostrata.
+- [x] Provare selettore e ritorno al motore precedente nella finestra; confrontare la superficie con CPU. Rimosso il secondo dithering egui: 558.144 pixel delle quattro regioni entro un livello sRGB8, dopo un primo esito negativo a due livelli.
+- [x] Aggiornare stato, licenze locali e ripresa; sincronizzare le architetture preservando testo esterno ai blocchi e backup originale.
+- [x] Revisione richiesta e D40: correggere scansione revocata dal cambio motore, aggiungere il modello esatto e verificare 66 sviluppi, UI/scansione e regressione D750. [Dettagli](docs/verifica-motori-d40.md).
+- [ ] Qualificare build/bundle macOS e XPC, confronto Apple e fedeltà cromatica sul target.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
 

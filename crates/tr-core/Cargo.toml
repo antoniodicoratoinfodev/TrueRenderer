@@ -10,3 +10,8 @@ serde_json.workspace = true
 anyhow.workspace = true
 sha2.workspace = true
 rayon = "=1.11.0"
+
+# Unificata sull'intero grafo: abilita l'assembly di sha2 su ogni target
+# tranne MSVC, che non sa compilarne i sorgenti .S.
+[target.'cfg(not(target_env = "msvc"))'.dependencies]
+sha2 = { workspace = true, features = ["asm"] }

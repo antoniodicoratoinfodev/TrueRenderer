@@ -11,8 +11,7 @@ root = Path(__file__).resolve().parents[1]
 original = root / "TrueVision-Architettura.md"
 canonical = root / "docs/TrueRenderer-Architettura.md"
 begin, end = "<!-- TR_PROGRESS_START -->", "<!-- TR_PROGRESS_END -->"
-progress = (root / "docs/avanzamento.md").read_text()
-block = f"{begin}\n{progress}\n{end}\n"
+progress = (root / "docs/avanzamento.md").read_text(encoding="utf-8")
 spec_begin, spec_end = "<!-- TR_PREVIEW_SPEC_START -->", "<!-- TR_PREVIEW_SPEC_END -->"
 
 
@@ -22,7 +21,7 @@ def relative_links(body, source, target):
         if link.startswith(("http:", "https:", "#", "mailto:")):
             return match.group(0)
         name, separator, anchor = link.partition("#")
-        rebased = os.path.relpath((source.parent / name).resolve(), target.parent)
+        rebased = os.path.relpath((source.parent / name).resolve(), target.parent).replace(os.sep, "/")
         return f"[{label}]({rebased}{separator}{anchor})"
     return re.sub(r"\[([^\]\n]+)\]\(([^)\s]+)\)", replace, body)
 
@@ -36,7 +35,7 @@ def preview_spec(target):
     for source in (root / "docs/progetto-anteprime-cache-prestazioni.md",
                    root / "docs/adr/0005-cache-cartella.md",
                    root / "docs/adr/0006-anteprime-residenza-compute.md"):
-        body = relative_links(source.read_text(), source, target)
+        body = relative_links(source.read_text(encoding="utf-8"), source, target)
         # Shift headings outside fences; keep examples and diagrams intact.
         fenced = False
         lines = []
@@ -61,12 +60,13 @@ def replace_block(body, start, finish, content):
 
 
 for path in (original, canonical):
-    body = path.read_text() if path.exists() else canonical.read_text()
+    block = f"{begin}\n{relative_links(progress, root / 'docs/avanzamento.md', path)}\n{end}\n"
+    body = path.read_text(encoding="utf-8") if path.exists() else canonical.read_text(encoding="utf-8")
     if begin in body or end in body:
         body = replace_block(body, begin, end, block)
     else:
         first, rest = body.split("\n", 1)
         body = first + "\n\n" + block + rest
     body = replace_block(body, spec_begin, spec_end, preview_spec(path))
-    path.write_text(body)
+    path.write_text(body, encoding="utf-8", newline="\n")
     print(path)

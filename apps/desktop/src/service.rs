@@ -240,7 +240,7 @@ impl Service {
                                 } else {
                                     // Listing stays cheap; decoder snapshots/hashes the exact private bytes on demand.
                                     (
-                                        tr_platform::observation_token(&metadata),
+                                        tr_platform::observation_token(&path, &metadata),
                                         external
                                             && metadata.len()
                                                 <= tr_core::protocol::MAX_SOURCE as u64,
@@ -257,7 +257,7 @@ impl Service {
                                         .into(),
                                     bytes: metadata.len(),
                                     digest,
-                                    observation: tr_platform::observation_token(&metadata),
+                                    observation: tr_platform::observation_token(&path, &metadata),
                                     approved,
                                     annotation: asset.annotation,
                                     revision: asset.revision,
@@ -267,7 +267,7 @@ impl Service {
                                 format!("Corpus pronto · {errors} file non leggibili")
                             } else {
                                 if external {
-                                    "Cartella pronta · decoder di sistema macOS · Anteprima".into()
+                                    "Cartella pronta · Anteprima".into()
                                 } else {
                                     "File esterni: aprire il bundle macOS con servizi XPC.".into()
                                 }

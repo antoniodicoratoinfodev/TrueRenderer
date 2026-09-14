@@ -1,0 +1,28 @@
+# Correzioni del ricontrollo generale — 14 settembre 2026
+
+**Corretti su richiesta del titolare i tre P2 della [revisione generale](revisione-generale-2026-09-14.md), con verifiche Windows debug/release concluse.** Nessun commit o staging. Le riproduzioni negative precedenti restano conservate; il nuovo laboratorio è `var/fix-general-20260914/`.
+
+## Comportamento corretto
+
+1. **TIFF con colorimetria dichiarata:** il percorso portabile controlla `TransferFunction`, `WhitePoint`, `PrimaryChromaticities`, `TransferRange` e `ReferenceBlackWhite`, oltre a ICC e alpha. I tag non ancora applicabili producono un rifiuto esplicito prima dell'assunzione sRGB, anche per descrizioni parziali. Il TIFF lineare dell'audit non viene più visualizzato troppo scuro. Questa correzione non implementa la conversione dei tag TIFF: tali immagini restano non supportate da questo adattatore. Un TIFF senza dichiarazioni conserva l'assunzione sRGB visibile e i pixel attesi. La ricetta `bitmap-tiff-color-v4` invalida il riuso dei raster bitmap precedenti.
+2. **Fallback RAW coerente:** il probe LibRaw applica anche il limite della ricetta sui CFA non Bayer. Il motore bilineare sceglie quindi già nel probe l'anteprima incorporata quando lo sviluppo è escluso dai metadati, con le sue dimensioni e la ragione del rifiuto. Decode ripete la stessa scelta. Il DNG sintetico 32×24 con JPEG 8×8 ora attraversa il broker come `RAW · anteprima`, anche con riduzione a 4×4, mantenendo dimensioni sorgente 8×8. I controlli IPC restano attivi. Un errore successivo durante unpack/process di un RAW ammesso dal probe rimane un errore esplicito, senza sostituire lo stadio dopo il probe; non si esegue uno sviluppo completo per leggere i metadati. AHD e motore proprio conservano il rifiuto dei CFA non qualificati.
+3. **Timestamp degli hit cache:** `Directory::touch` aggiorna il file già validato. Su Windows usa `ReOpenFile` per ottenere sullo stesso oggetto i soli diritti di lettura/scrittura degli attributi; i normali handle di lettura non acquisiscono il diritto di modificare i pixel. Il conteggio dei link impedisce l'aggiornamento dei timestamp di hard link anche su Unix. Tutti i percorsi di hit, legacy, descrittori e blocchi, usano la stessa operazione. Scadenza e LRU vedono ora l'ultimo utilizzo. La lettura resta utilizzabile se il filesystem o i permessi impediscono il rinnovo: la persistenza continua a essere facoltativa.
+
+Il requisito Windows per modificare i tempi e la riapertura dello stesso oggetto sono documentati da Microsoft: [SetFileTime](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfiletime), [ReOpenFile](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-reopenfile). Il rinnovo non riapre il percorso, che potrebbe essere stato sostituito dopo la lettura.
+
+## Verifiche concluse
+
+- **96 test Rust ordinari + 7 integrazioni = 103 passati**, con toolchain locale e dipendenze offline. Cinque nuove regressioni ordinarie, una nuova integrazione LPAC e cinque test cache preesistenti abilitati anche su Windows. Il test specifico dei symlink Unix rimane condizionale.
+- Regressioni TIFF: rifiuto della descrizione completa e parziale in probe/decode, controllo numerico del TIFF privo di dichiarazioni; le precedenti regressioni alpha 8/16 bit e PNG restano passate.
+- Regressione RAW sia diretta sia col worker reale: provenienza, dimensioni native dell'anteprima, riduzione, rifiuto degli altri motori e input invariato.
+- Regressioni cache: un hit cambia realmente l'ordine di espulsione e impedisce la scadenza da inattività; descrittore e tutti i blocchi aggiornati; un handle di lettura non può sovrascrivere i pixel; un hard link non riceve modifiche al timestamp o ai contenuti. I tempi dei file vengono impostati artificialmente, senza attese di giorni.
+- Rieseguiti **36 casi sintetici col worker debug e 36 col worker release**, sugli stessi dodici input dell'audit: tutti gli esiti previsti delle correzioni confermati, fixture immutate. Questi sono casi osservati con accettazioni e rifiuti attesi, distinti dai 103 test Rust.
+- Passati **build debug/release, fmt, Clippy con warning negati, 6 controlli IPC, 2 regressioni Python, 24 segnali di ricampionamento e identità 1:1**. La prova di ricampionamento richiede il worker LPAC: il primo tentativo nella sandbox è stato negato alla creazione del profilo; l'esecuzione autorizzata fuori dalla sandbox è passata.
+- LibRaw invariato: **106 hash upstream, 79 unità compilate, tre ricette**. Cargo.lock e inventario Windows coerenti, **205 package e 348 notice** verificati. Nessuna nuova dipendenza. Le quattro fixture in `crates/tr-worker/tests/fixtures/` sono sintetiche, senza fotografie dell'utente.
+- Conservati LICENSE, backup originale, vendor, report preesistenti, modifiche non pertinenti e indice Git. Piano e registro aggiornati; testo delle architetture esterno ai blocchi gestiti preservato dalla sincronizzazione.
+
+[Rapporto con casi, test e hash dei binari](../reports/general-review-fixes-windows.json).
+
+## Limiti ancora aperti
+
+La suite XPC è stata invocata sul percorso del bundle, ma non può partire su questo Windows perché manca `/usr/bin/codesign`. Build nativa Mac, nuovo bundle e i due XPC restano rinviati dal titolare. Non ripetute GUI e campagna fotografica Nikon; i relativi report precedenti non qualificano i nuovi binari. Restano Windows pulito, contesa writer con errore 33, diagnostica PNG malformata/conflittuale già segnalata, conversione TIFF/ICC, corpus esteso, display e prestazioni. Nessun gate R0–R4 chiuso; Standard/Riferimento restano indisponibili.

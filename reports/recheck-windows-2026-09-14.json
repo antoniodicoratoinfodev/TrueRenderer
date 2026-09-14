@@ -1,0 +1,2202 @@
+{
+  "date": "2026-09-14",
+  "platform": "Windows x86_64",
+  "task": "Recheck four fixes and review uncommitted work; no application changes, staging or commit",
+  "checks": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 1.521775900007924,
+      "args": [
+        "fmt",
+        "--all",
+        "--check"
+      ]
+    },
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 4.101778799988097,
+      "args": [
+        "clippy",
+        "--workspace",
+        "--all-targets",
+        "--locked",
+        "--offline",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    },
+    {
+      "name": "tests",
+      "exit_code": 0,
+      "seconds": 6.275969000009354,
+      "args": [
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline"
+      ]
+    },
+    {
+      "name": "integrations",
+      "exit_code": 0,
+      "seconds": 4.82561609998811,
+      "args": [
+        "test",
+        "--workspace",
+        "--locked",
+        "--offline",
+        "--",
+        "--ignored",
+        "--skip",
+        "full_quality_delivers_the_source_at_its_own_resolution",
+        "--skip",
+        "real_containers_deliver_their_embedded_preview_and_declare_the_stage"
+      ]
+    }
+  ],
+  "test_counts": {
+    "tests": 86,
+    "integrations": 6
+  },
+  "git_diff_check": true,
+  "previous_fix_evidence": "reports/review-followup-fixes-windows.json",
+  "previous_fix_report_sha256": "c64cd9f293f23c40be07d2c5b02ceb0817199a2794f7f7d054a250ee9b971d29",
+  "new_findings": [
+    {
+      "id": "TIFF-COLOR",
+      "priority": "P2",
+      "status": "open",
+      "source": "crates/tr-worker/src/lib.rs:285",
+      "summary": "Complete TIFF linear RGB colorimetry ignored; middle gray decoded as sRGB",
+      "expected_linear_gray": 0.5019607843137255,
+      "observed_linear_gray": [
+        0.21586042642593384,
+        0.21586014330387115,
+        0.2158604860305786,
+        1.0
+      ]
+    },
+    {
+      "id": "RAW-PREVIEW",
+      "priority": "P2",
+      "status": "open",
+      "source": "crates/tr-worker/src/lib.rs:409",
+      "summary": "LibRaw probe dimensions prevent valid lower-resolution preview fallback through broker"
+    },
+    {
+      "id": "CACHE-TOUCH",
+      "priority": "P2",
+      "status": "open",
+      "source": "apps/desktop/src/cache/directory.rs:256",
+      "summary": "Read handles cannot update cache mtime on Windows; affects expiry and LRU",
+      "evidence": {
+        "platform": "windows",
+        "positive_write_handle_refresh": true,
+        "production_directory_module": true,
+        "read_handle_set_times_error": 5,
+        "scope": "Same Directory::open_file and File::set_times used by cache hits; isolated synthetic sentinel, not a full UI test.",
+        "timestamp_unchanged_on_read_handle": true
+      }
+    }
+  ],
+  "synthetic_cases": {
+    "cases": [
+      {
+        "decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_probe": {
+          "error": "invalid data"
+        },
+        "engine": "LibRawBilinear",
+        "file": "cicp-invalid-matrix.png",
+        "probe": {
+          "error": "invalid data"
+        }
+      },
+      {
+        "decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_probe": {
+          "error": "invalid data"
+        },
+        "engine": "LibRawAhd",
+        "file": "cicp-invalid-matrix.png",
+        "probe": {
+          "error": "invalid data"
+        }
+      },
+      {
+        "decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_probe": {
+          "error": "invalid data"
+        },
+        "engine": "TrueRenderer",
+        "file": "cicp-invalid-matrix.png",
+        "probe": {
+          "error": "invalid data"
+        }
+      },
+      {
+        "decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_probe": {
+          "error": "invalid data"
+        },
+        "engine": "LibRawBilinear",
+        "file": "cicp-invalid-range.png",
+        "probe": {
+          "error": "invalid data"
+        }
+      },
+      {
+        "decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_probe": {
+          "error": "invalid data"
+        },
+        "engine": "LibRawAhd",
+        "file": "cicp-invalid-range.png",
+        "probe": {
+          "error": "invalid data"
+        }
+      },
+      {
+        "decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_decode": {
+          "error": "invalid data"
+        },
+        "direct_bilinear_probe": {
+          "error": "invalid data"
+        },
+        "engine": "TrueRenderer",
+        "file": "cicp-invalid-range.png",
+        "probe": {
+          "error": "invalid data"
+        }
+      },
+      {
+        "decode": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "direct_bilinear_decode": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "direct_bilinear_probe": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "engine": "LibRawBilinear",
+        "file": "cicp-p3.png",
+        "probe": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        }
+      },
+      {
+        "decode": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "direct_bilinear_decode": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "direct_bilinear_probe": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "engine": "LibRawAhd",
+        "file": "cicp-p3.png",
+        "probe": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        }
+      },
+      {
+        "decode": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "direct_bilinear_decode": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "direct_bilinear_probe": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        },
+        "engine": "TrueRenderer",
+        "file": "cicp-p3.png",
+        "probe": {
+          "error": "cICP dichiara una codifica non supportata (CodingIndependentCodePoints { color_primaries: 12, transfer_function: 13, matrix_coefficients: 0, is_video_full_range_image: true }); nessun ripiego sRGB"
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "cicp-short.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "cicp-short.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "cicp-short.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "cicp-srgb.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "cicp-srgb.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "cicp-srgb.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · cICP · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "linear-srgb.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "linear-srgb.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "linear-srgb.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "linear-transfer.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "linear-transfer.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "linear-transfer.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "error": "Dimensioni diverse dal probe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "RAW · anteprima",
+            "height": 8,
+            "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 8,
+            "source_width": 8,
+            "width": 8
+          },
+          "pixel": [
+            0.39852359890937805,
+            0.24135971069335938,
+            0.06855587661266327,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · TrueRenderer Synthetic DNG",
+            "filter": "nessuno · probe",
+            "format": "RAW",
+            "height": 24,
+            "input_color": "sRGB primaries, linear; LibRaw-0.22.2-TR-libraw-linear-v1 · sviluppo RAW",
+            "native_bits": 16,
+            "orientation": "Applicato da LibRaw una volta",
+            "source_height": 24,
+            "source_width": 32,
+            "width": 32
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "non-bayer-preview.dng",
+        "probe": {
+          "info": {
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · TrueRenderer Synthetic DNG",
+            "filter": "nessuno · probe",
+            "format": "RAW",
+            "height": 24,
+            "input_color": "sRGB primaries, linear; LibRaw-0.22.2-TR-libraw-linear-v1 · sviluppo RAW",
+            "native_bits": 16,
+            "orientation": "Applicato da LibRaw una volta",
+            "source_height": 24,
+            "source_width": 32,
+            "width": 32
+          }
+        }
+      },
+      {
+        "decode": {
+          "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "RAW · anteprima",
+            "height": 8,
+            "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 8,
+            "source_width": 8,
+            "width": 8
+          },
+          "pixel": [
+            0.39852359890937805,
+            0.24135971069335938,
+            0.06855587661266327,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · TrueRenderer Synthetic DNG",
+            "filter": "nessuno · probe",
+            "format": "RAW",
+            "height": 24,
+            "input_color": "sRGB primaries, linear; LibRaw-0.22.2-TR-libraw-linear-v1 · sviluppo RAW",
+            "native_bits": 16,
+            "orientation": "Applicato da LibRaw una volta",
+            "source_height": 24,
+            "source_width": 32,
+            "width": 32
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "non-bayer-preview.dng",
+        "probe": {
+          "info": {
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · TrueRenderer Synthetic DNG",
+            "filter": "nessuno · probe",
+            "format": "RAW",
+            "height": 24,
+            "input_color": "Rec.2020 primaries, linear, uint16; LibRaw-0.22.2-TR-ahd-rec2020-v1 · sviluppo RAW",
+            "native_bits": 16,
+            "orientation": "Applicato da LibRaw una volta",
+            "source_height": 24,
+            "source_width": 32,
+            "width": 32
+          }
+        }
+      },
+      {
+        "decode": {
+          "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "RAW · anteprima",
+            "height": 8,
+            "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 8,
+            "source_width": 8,
+            "width": 8
+          },
+          "pixel": [
+            0.39852359890937805,
+            0.24135971069335938,
+            0.06855587661266327,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · TrueRenderer Synthetic DNG",
+            "filter": "nessuno · probe",
+            "format": "RAW",
+            "height": 24,
+            "input_color": "sRGB primaries, linear; LibRaw-0.22.2-TR-libraw-linear-v1 · sviluppo RAW",
+            "native_bits": 16,
+            "orientation": "Applicato da LibRaw una volta",
+            "source_height": 24,
+            "source_width": 32,
+            "width": 32
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "non-bayer-preview.dng",
+        "probe": {
+          "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "p3-primaries.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "p3-primaries.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "p3-primaries.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "plain.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "plain.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "plain.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "plain.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "plain.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "plain.tif",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Tiff · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawBilinear",
+        "file": "srgb-gamma-conflict.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "LibRawAhd",
+        "file": "srgb-gamma-conflict.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      },
+      {
+        "decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        },
+        "direct_bilinear_decode": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.21586042642593384,
+            0.21586014330387115,
+            0.2158604860305786,
+            1.0
+          ]
+        },
+        "direct_bilinear_probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        },
+        "engine": "TrueRenderer",
+        "file": "srgb-gamma-conflict.png",
+        "probe": {
+          "info": {
+            "decoder": "image 0.25.10 · Png · bitmap-cicp-alpha-v3",
+            "filter": "nessuno · probe",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          }
+        }
+      }
+    ],
+    "inputs_unchanged": true
+  },
+  "fixture_sha256": {
+    "cicp-invalid-matrix.png": "2701c3010b715f0be9e705113714e84a2f9685cb5959caaff39fa2a7cdb2057c",
+    "cicp-invalid-range.png": "4b1ed4c1bb0819baf436059f4fb1490aa5081beb437e31231632e935ec204c21",
+    "cicp-p3.png": "40935949532be7744effe94df87a657b7053bbd62c39558b6b4440b79262c3c6",
+    "cicp-short.png": "01d162b9d6c7a635a69eecfcf22546f06193e5edaeeac3062c43ee66976102b1",
+    "cicp-srgb.png": "ddb2099bc2e5aeb5c91a85ca86967e0763b892ff9c4a14beedc9cfc3cb75d0f8",
+    "linear-srgb.tif": "5bb935d809a58f58d7386afcd87aaffcdab648b911156046a6090f25d66002bb",
+    "linear-transfer.tif": "7abe46a06e12b5ac582816a1979ef967979e077a9ce64411d7b741b11fd1269e",
+    "non-bayer-preview.dng": "224bfac251790ad5160606ca22d21e83f1bb1ef22aa84c4f4c084969dc69b6e3",
+    "p3-primaries.tif": "612d8f234828a5f495c4fc79ed0f4cabce4c14d56b0f5afdb04713e9fd1d0dcb",
+    "plain.png": "e5dd92acd7d1f9550a1848c765289b33b408f0f6c002fd935696ac778965182d",
+    "plain.tif": "5c5dc5a1ba5b276cc11c909e67e439ab39c3cd45e15213fffe99d6bae1f9d349",
+    "srgb-gamma-conflict.png": "e64467b3c77a4e777c29c32f35b25978f72e05ad4ce0305e38a8fc638269e7d3"
+  },
+  "binary_sha256": {
+    "target/debug/tr-worker.exe": "bcb7a80b0814de902e9eb215f76d65077fa5c1a117e7ed41a0be65fdfbb91d26",
+    "target/debug/truerenderer.exe": "8919687deb33a419f8a71ab184ac860b42737bcf6ffd3cea4e11f18a0fa4ff50"
+  },
+  "source_and_existing_artifacts_preserved": true,
+  "existing_files_changed_during_review": [
+    "PLAN.md",
+    "TrueVision-Architettura.md",
+    "docs/TrueRenderer-Architettura.md",
+    "docs/avanzamento.md",
+    "docs/ripresa-codex.md",
+    "reports/VERIFICA.md"
+  ],
+  "license_and_original_architecture_preserved": true,
+  "protected_architecture_text_and_git_index_unchanged": true,
+  "libraw_verification": "LibRaw 0.22.2: 106 upstream hashes, 79 build sources and 3 recipes verified",
+  "cargo_packages": 205,
+  "notices_verified": 348,
+  "private_lab": "var/recheck-20260914",
+  "baseline_file_count": 1048,
+  "limits": [
+    "No new native macOS/XPC test; deferred by owner",
+    "Previous release/GUI/21 bitmap cases remain attributed to earlier report; not repeated here",
+    "No new real-photo campaign or display color qualification",
+    "Cache timestamp probe uses production Directory on a synthetic sentinel, not full UI/30-day wait",
+    "No full upstream LibRaw source/security audit",
+    "PNG malformed cICP and sRGB/gAMA conflict diagnostics remain limited"
+  ]
+}

@@ -7,6 +7,7 @@ mod ui;
 mod verify_cache;
 mod verify_formats;
 mod verify_previews;
+mod verify_raw_engines;
 mod verify_resampling;
 mod verify_xpc;
 mod wake;
@@ -33,6 +34,13 @@ fn run() -> Result<()> {
         })
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.."))
         .canonicalize()?;
+    if args.iter().any(|a| a == "--raw-engines-smoke") {
+        std::fs::create_dir_all(root.join("var"))?;
+        std::fs::write(
+            root.join("var/raw-engine-ui.json"),
+            br#"{"passed":false,"reason":"RAW engine UI verification started; incomplete"}"#,
+        )?;
+    }
     let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
     let source_smoke = args.iter().any(|a| a == "--source-change-smoke");
     let graphics_smoke = args
@@ -40,7 +48,10 @@ fn run() -> Result<()> {
         .any(|a| a == "--device-loss-smoke" || a == "--device-loss-twice-smoke");
     let external_smoke = args.iter().any(|a| a == "--formats-smoke");
     let settings_smoke = args.iter().any(|a| {
-        a == "--settings-smoke" || a == "--preview-gpu-smoke" || a == "--preview-performance-smoke"
+        a == "--settings-smoke"
+            || a == "--raw-engines-smoke"
+            || a == "--preview-gpu-smoke"
+            || a == "--preview-performance-smoke"
     });
     let smoke = source_smoke
         || settings_smoke
@@ -66,6 +77,16 @@ fn run() -> Result<()> {
         });
     if args.iter().any(|a| a == "--verify-cache") {
         return verify_cache::run(&root, &worker);
+    }
+    if args.iter().any(|a| a == "--verify-raw-engine-screenshots") {
+        return verify_raw_engines::screenshots(&root);
+    }
+    if let Some(folder) = option("--verify-raw-engines") {
+        let limit = option("--raw-limit")
+            .map(|p| p.to_string_lossy().parse::<usize>())
+            .transpose()?
+            .unwrap_or(0);
+        return verify_raw_engines::run(&root, &worker, &folder, limit);
     }
     if args.iter().any(|a| a == "--verify-preview-navigation") {
         return verify_previews::navigation(&root, &worker);

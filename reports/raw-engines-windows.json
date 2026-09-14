@@ -1,0 +1,251 @@
+{
+  "date": "2026-09-12",
+  "platform": "windows",
+  "version": "0.1.5 local experiment",
+  "status": "implemented and locally verified on Windows; new macOS bundle unbuilt and unqualified; not a release",
+  "git_head_at_verification": "1279012b8cbcd15889ff060143b197d2523212ba",
+  "committed": false,
+  "publish_authorized": false,
+  "checks": {
+    "rust_regular_passed": 75,
+    "rust_explicit_integration_passed": 7,
+    "fmt": true,
+    "clippy_all_targets_warnings_denied": true,
+    "workspace_build": true,
+    "python_report_regressions": 2,
+    "worker_protocol": 6,
+    "resampling_signal_cases": 24,
+    "exact_source_1to1": true
+  },
+  "raw": {
+    "files": 30,
+    "passed": 90,
+    "originals_unchanged": true,
+    "engines": [
+      {
+        "engine": "LibRawBilinear",
+        "full_developments": 30,
+        "median_seconds": 2.6709188,
+        "working_min": 0.0,
+        "working_max": 0.9999971389770508,
+        "oriented_dimensions": [
+          [
+            4032,
+            6032
+          ],
+          [
+            6032,
+            4032
+          ]
+        ]
+      },
+      {
+        "engine": "LibRawAhd",
+        "full_developments": 30,
+        "median_seconds": 4.6093110500000005,
+        "working_min": 0.0,
+        "working_max": 1.0,
+        "oriented_dimensions": [
+          [
+            4032,
+            6032
+          ],
+          [
+            6032,
+            4032
+          ]
+        ]
+      },
+      {
+        "engine": "TrueRenderer",
+        "full_developments": 30,
+        "median_seconds": 6.0987445000000005,
+        "working_min": -0.18803751468658447,
+        "working_max": 2.2975168228149414,
+        "oriented_dimensions": [
+          [
+            4032,
+            6032
+          ],
+          [
+            6032,
+            4032
+          ]
+        ]
+      }
+    ],
+    "scope": "Full-resolution functional checks through the confined worker. Sequential uncached develops; OS cache not flushed. Private 1:1 SDR crops of the first file. Numerical range is observed, not a quality verdict. No measured camera colour accuracy, Apple parity on Windows, p95 or total process-memory qualification.",
+    "report_sha256": "d4b01174904132217a155438e077d7c6d535608d03ac23ff8777343ec6ac7f99",
+    "measurement_binaries_sha256": {
+      "truerenderer.exe": "06ea7c1b2d90b0c0c13a4aa7a1d4a1567eada6cc898df9b3398eda7b3db1bccd",
+      "tr-worker.exe": "e0643b7b910410203f0a4961ee23a3741b972787acf577f2bce0b1b84814a0be"
+    }
+  },
+  "synthetic": {
+    "cases": 32,
+    "lower_mse_cases": 24,
+    "numerically_equivalent_ramps": 4,
+    "worse_independent_chroma_cases": 4,
+    "scenes": [
+      {
+        "scene": "ramp",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 3.599124641305323e-16,
+        "directional_mean_mse": 3.0534105905509107e-13
+      },
+      {
+        "scene": "horizontal-frequency",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.0007782295947285301,
+        "directional_mean_mse": 3.47744952130585e-05
+      },
+      {
+        "scene": "vertical-frequency",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.0007748172565283439,
+        "directional_mean_mse": 3.4622032028783944e-05
+      },
+      {
+        "scene": "diagonal-frequency",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.0005356265923491776,
+        "directional_mean_mse": 0.00010061272699337982
+      },
+      {
+        "scene": "slanted-edge",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.0004770448419131366,
+        "directional_mean_mse": 0.0001964986018118537
+      },
+      {
+        "scene": "chirp",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.008587454151206205,
+        "directional_mean_mse": 0.0065120894851603255
+      },
+      {
+        "scene": "uniform-noise",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.0008879977007244882,
+        "directional_mean_mse": 0.00016590039537981707
+      },
+      {
+        "scene": "independent-chroma",
+        "cfa_cases": 4,
+        "bilinear_mean_mse": 0.0009053900538730583,
+        "directional_mean_mse": 0.0032086991160753813
+      }
+    ],
+    "scope": "Own analytical linear RGB scenes remosaiced as Bayer; unit camera matrix and WB. Quality metrics exclude a 3-pixel border. Bilinear comparator is an independent mathematical reference, not LibRaw. No camera colour, Apple comparison, sensor noise qualification or universal quality verdict.",
+    "report_sha256": "4edf5cb230558fa987e0b7174f18e6b10530b5e216b597ec4c47754a108fd393"
+  },
+  "ui": {
+    "passed": true,
+    "stages": [
+      {
+        "engine": "LibRawBilinear",
+        "generation": 1,
+        "decode_jobs": 1,
+        "cache_hits": 0,
+        "cache_writes": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "generation": 2,
+        "decode_jobs": 2,
+        "cache_hits": 0,
+        "cache_writes": 4
+      },
+      {
+        "engine": "TrueRenderer",
+        "generation": 3,
+        "decode_jobs": 3,
+        "cache_hits": 0,
+        "cache_writes": 6
+      },
+      {
+        "engine": "LibRawBilinear",
+        "generation": 4,
+        "decode_jobs": 3,
+        "cache_hits": 2,
+        "cache_writes": 6
+      }
+    ],
+    "selection_preserved": true,
+    "source_is_private_copy": true,
+    "pixels": {
+      "checks": [
+        {
+          "checked_pixels": 139536,
+          "compute": "GPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 1
+        },
+        {
+          "checked_pixels": 139536,
+          "compute": "GPU",
+          "engine": "LibRawAhd",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 2
+        },
+        {
+          "checked_pixels": 139536,
+          "compute": "GPU",
+          "engine": "TrueRenderer",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 3
+        },
+        {
+          "checked_pixels": 139536,
+          "compute": "GPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 1,
+          "passed": true,
+          "stage": 4
+        }
+      ],
+      "passed": true,
+      "scope": "Right quarter of native RAW viewport vs CPU raster; excludes settings overlay, compositor and physical display.",
+      "threshold_u8": 1
+    },
+    "initial_surface_test_max_error_u8": 2,
+    "fix": "Disable egui second dithering over already quantized sRGB8 output; original threshold retained. One pending capture per stage prevents late duplicate screenshots."
+  },
+  "docs_sync": {
+    "passed": true,
+    "outside_blocks_unchanged": true,
+    "idempotent": true,
+    "original_sha256": "ad3db38205e58d7f02e85259d5e0516feb3ced143909c96e1699951d65500e4c"
+  },
+  "delivered_binaries_sha256": {
+    "truerenderer.exe": "53a5b70ae6ad6bf64ef929f909f8a57627871fc20183f5e50e219c8948e1fef8",
+    "tr-worker.exe": "b78d2eeb9bcc55dd88139c9ec62a9b25ab393c3a0fd9bde1c711fd6b4c8f7376"
+  },
+  "source_files_sha256": {
+    "crates/tr-core/src/decoder.rs": "46801dc8e313c9eca79e8864a5602f2fa5f423901b5b8e33971cffdac519302d",
+    "crates/tr-core/src/demosaic.rs": "cd82db907feb2fbdf92b035ec6d692cf71d4ac3d90f1acc9167c52cdf7e02912",
+    "crates/tr-core/src/protocol.rs": "5451fb1e9f4c8797a24093c0d1f4e2df8fe120d0453d4c118e967fce67764e48",
+    "crates/tr-worker/src/lib.rs": "39b5b2786cff4dbf7c691ea310e44a100a71904f9c75ea53b2217d917d076ddf",
+    "crates/tr-worker/src/libraw.rs": "73c710ff363b64f33809a56a382863f3641a9e976b4e73462e780d200e993223",
+    "crates/tr-worker/src/mosaic.rs": "2fb87b257d7341b8a8c44d979c4e778ef956f3ddb73a7080b24865633837b064",
+    "native/libraw/tr_libraw.cpp": "9cc59140911566d9b24afcd26ba1c3e9aa7b19f6364d4ba26ebdbcdd76034109",
+    "native/libraw/tr_libraw.h": "02db0762fce36ef112610b516637418aac989bb6b3e4355f4230b3e9f0f43502",
+    "apps/desktop/src/decode_pool.rs": "0bc1577e747eb85c0dbd667ebc8ccc01d696b0c74cdb6cae0823ffa1198d9010",
+    "apps/desktop/src/cache/artifact.rs": "7391284ca8e7a4a491bcfe7d1571222ac773c1110b7b2e53a1fd235b80853d2b",
+    "apps/desktop/src/cache/settings.rs": "9e7012f1281997c95e8faed06c1f28189a5dfdae9175f3f49e7651239b7c19fc",
+    "apps/desktop/src/ui.rs": "46181b1068c1218db9a1062f675c780480eb44f9f3f39adb7bcda18decb5eb20",
+    "apps/desktop/src/graphics.rs": "70a01255e06414677e73dad007d940a95c0cea8eb92f4385fa10ade674a1a123",
+    "apps/desktop/src/verify_raw_engines.rs": "0994ad6742e99f8a9d2899ec2424c32b0d88de5d26c2e528589a054d6f433803"
+  },
+  "open": [
+    "Native macOS build, bundle, XPC and surface regression",
+    "Measured camera colour fidelity and aligned Apple/AHD comparison",
+    "Other camera/CFA support, independent chroma artifacts, real noise and moire",
+    "Monitor ICC, broad memory/performance qualification, full sandbox and release gates"
+  ],
+  "privacy": "No photo, original path, per-photo digest or annotation identifier in this summary. Detailed camera reports and crops remain in ignored var/."
+}

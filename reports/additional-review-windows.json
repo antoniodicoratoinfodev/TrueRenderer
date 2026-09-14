@@ -1,0 +1,2528 @@
+{
+  "date": "2026-09-14",
+  "platform": "Windows x86_64",
+  "task": "Additional review after three fixes; no application changes or commit",
+  "new_findings": [
+    {
+      "id": "PNG-GAMMA",
+      "priority": "P2",
+      "status": "open",
+      "source": "crates/tr-worker/src/lib.rs:186",
+      "summary": "gAMA=45455 without sRGB is decoded using sRGB transfer",
+      "expected_linear_neutral": {
+        "16": 0.0022630910019177043,
+        "128": 0.2195230466733207
+      },
+      "reference": "https://www.w3.org/TR/png-3/#11gAMA"
+    },
+    {
+      "id": "RAW-ORIENTATION",
+      "priority": "P2",
+      "status": "open",
+      "source": "crates/tr-worker/src/container.rs:135",
+      "summary": "Secondary IFD orientation overrides explicit primary orientation 1",
+      "expected_dimensions": [
+        8,
+        4
+      ],
+      "observed_dimensions": [
+        4,
+        8
+      ],
+      "dng_changed_byte_offsets": [
+        6482
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "probe",
+      "args": [
+        "run",
+        "--offline",
+        "--manifest-path",
+        "var/audit-extra-20260914/probe/Cargo.toml",
+        "--target-dir",
+        "target",
+        "--bin",
+        "tr-audit-extra-probe"
+      ],
+      "exit_code": 0,
+      "seconds": 1.5344687000001613
+    },
+    {
+      "name": "release-probe",
+      "args": [
+        "run",
+        "--offline",
+        "--manifest-path",
+        "var/audit-extra-20260914/probe/Cargo.toml",
+        "--target-dir",
+        "target",
+        "--bin",
+        "tr-audit-extra-probe",
+        "--",
+        "release"
+      ],
+      "exit_code": 0,
+      "seconds": 1.6875922999997783
+    }
+  ],
+  "synthetic_cases": {
+    "debug": {
+      "cases": [
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "gamma-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "gamma-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "gamma-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "gamma-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "gamma-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "gamma-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "second-ifd-orientation-1.dng",
+          "probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          }
+        },
+        {
+          "decode": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "second-ifd-orientation-1.dng",
+          "probe": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          }
+        },
+        {
+          "decode": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "second-ifd-orientation-1.dng",
+          "probe": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "second-ifd-orientation-6.dng",
+          "probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          }
+        },
+        {
+          "decode": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "second-ifd-orientation-6.dng",
+          "probe": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          }
+        },
+        {
+          "decode": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "second-ifd-orientation-6.dng",
+          "probe": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "srgb-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "srgb-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "srgb-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "srgb-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "srgb-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "srgb-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        }
+      ],
+      "inputs_unchanged": true
+    },
+    "release": {
+      "cases": [
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "gamma-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "gamma-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "gamma-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "gamma-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "gamma-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "gamma-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB assunto · gAMA sRGB dichiarato, primarie non dichiarate",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "second-ifd-orientation-1.dng",
+          "probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          }
+        },
+        {
+          "decode": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "second-ifd-orientation-1.dng",
+          "probe": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          }
+        },
+        {
+          "decode": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            },
+            "pixel": [
+              0.0009240519138984382,
+              0.0020126046147197485,
+              0.004827541299164295,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 4,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 4,
+              "source_width": 8,
+              "width": 8
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "second-ifd-orientation-1.dng",
+          "probe": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "second-ifd-orientation-6.dng",
+          "probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          }
+        },
+        {
+          "decode": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "second-ifd-orientation-6.dng",
+          "probe": {
+            "error": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          }
+        },
+        {
+          "decode": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            },
+            "pixel": [
+              0.1283126175403595,
+              0.33782073855400085,
+              0.05786260962486267,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "Sviluppo rifiutato: CFA non Bayer: il demosaicing di questa ricetta non è qualificato",
+              "filter": "nessuno · probe",
+              "format": "RAW · anteprima",
+              "height": 8,
+              "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+              "native_bits": 8,
+              "orientation": "Rotate90 · applicato una volta",
+              "source_height": 8,
+              "source_width": 4,
+              "width": 4
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "second-ifd-orientation-6.dng",
+          "probe": {
+            "error": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "srgb-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "srgb-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.21586042642593384,
+              0.21586014330387115,
+              0.2158604860305786,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "srgb-128.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawBilinear",
+          "file": "srgb-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "LibRawAhd",
+          "file": "srgb-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        },
+        {
+          "decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ],
+            "transport": "LPAC senza capacità + Job Object · pipe"
+          },
+          "direct_bilinear_decode": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno (campioni LOD 0)",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            },
+            "pixel": [
+              0.005181514658033848,
+              0.0051815081387758255,
+              0.005181515589356422,
+              1.0
+            ]
+          },
+          "direct_bilinear_probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          },
+          "engine": "TrueRenderer",
+          "file": "srgb-16.png",
+          "probe": {
+            "info": {
+              "decoder": "image 0.25.10 · Png · bitmap-tiff-color-v4",
+              "filter": "nessuno · probe",
+              "format": "Png",
+              "height": 1,
+              "input_color": "sRGB · dichiarato dal file",
+              "native_bits": 8,
+              "orientation": "NoTransforms · applicato una volta",
+              "source_height": 1,
+              "source_width": 1,
+              "width": 1
+            }
+          }
+        }
+      ],
+      "inputs_unchanged": true
+    }
+  },
+  "fixture_sha256": {
+    "gamma-128.png": "3d1095ceff79c517093860c2a0233b219345375a8fc4b3dee4c477a24d28d77f",
+    "gamma-16.png": "0aaf3430036cc7eaea91253870ffb94979105ab12921a2fc4b58d2689aabcd23",
+    "second-ifd-orientation-1.dng": "26539fc32f5e122a8ae5369fe704bfc1fd482db640f108757d597afbae06e4f4",
+    "second-ifd-orientation-6.dng": "5e89adc0ef68261dd403d11742465b769c47bbb5eac654f0cd4d020e4b347efb",
+    "srgb-128.png": "11e410b8790368b2a6f0fb890366d8facff69b4d24f6dba0d385636a43b23952",
+    "srgb-16.png": "4928436a770c458f11a98afb8f370d49a81f732105337b93be596f4dd72b45cd"
+  },
+  "application_source_sha256": {
+    "crates/tr-core/src/decoder.rs": "9fde6330071e73f86afa4725ffcc5efd8a699fab288adba20ea7767aa28bfd58",
+    "crates/tr-worker/src/libraw.rs": "e16075ff2ca9d31fa04cd9973e0dc4458ab11299c5476e26d33565bd1b810dff",
+    "apps/desktop/src/cache/artifact.rs": "4011501f9f43d0b367e256650d14d2a04e1e34d6b69ac87a9a950573d93a0c49",
+    "apps/desktop/src/cache/directory.rs": "d550fd82753c2d8f7215ab86ecb12848301ab6c93deab9fb277f68dfd0701eb1",
+    "apps/desktop/src/cache/mod.rs": "8e937d0990d9b374a10db4313ac9706d9e23b2891201a1e5693e55d06441efb0",
+    "crates/tr-platform/src/lib.rs": "b14f2096c182f0414367813c1014d40eb88fa56970d93a44e7165daf13979a45",
+    "crates/tr-worker/src/lib.rs": "95fed1fcbe676942d6a6e9fde206e013ab0ac50f6a86115810d9aaa6da906743"
+  },
+  "binary_sha256": {
+    "target/debug/tr-worker.exe": "d8daae2d61848d7a9c2915a89f1cfe88a3d9c18ec375d7827dec852c6358b8ad",
+    "target/debug/truerenderer.exe": "f6b2eb43136bf6c231118a439c76de16d9ea1b957ba0e124bac00f3f60fe7ba5",
+    "target/release/tr-worker.exe": "64d9153a7858acc48df4e011d9235d775ed3e722fcb76f64592820f79cb5fa25",
+    "target/release/truerenderer.exe": "892ed725e6d4f4ad11e1917be34ae840daaa226b7d00e216d93701bb282c721d"
+  },
+  "previous_suite": {
+    "report": "reports/general-review-fixes-windows.json",
+    "sha256": "9893a963f02c4196bc6611c76305f7927ab7793706377d53d0c609e71ebb1a0f",
+    "rust_tests": 103,
+    "rerun": false,
+    "source_and_binaries_match": true
+  },
+  "private_lab": "var/audit-extra-20260914",
+  "existing_files_changed": [
+    "PLAN.md",
+    "TrueVision-Architettura.md",
+    "docs/TrueRenderer-Architettura.md",
+    "docs/avanzamento.md",
+    "docs/ripresa-codex.md",
+    "reports/VERIFICA.md"
+  ],
+  "application_files_unchanged": true,
+  "git_index_preserved": true,
+  "architecture_text_outside_managed_blocks_preserved": true,
+  "unrelated_files_preserved": true,
+  "git_diff_check": true,
+  "limits": [
+    "Targeted follow-up review, not exhaustive upstream audit",
+    "No native macOS/XPC or new GUI/photo campaign",
+    "Existing PNG malformed/conflict diagnostics and broader qualification gaps remain open"
+  ]
+}

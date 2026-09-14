@@ -13,12 +13,22 @@ license-file = "LICENSE"
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-sha2 = { version = "0.10", features = ["asm"] }
+# L'assembly di sha2-asm è in sintassi GNU e MSVC non lo compila. La feature
+# resta attiva ovunque tranne che su MSVC, dove si usa l'implementazione Rust.
+sha2 = { version = "0.10" }
 uuid = { version = "1", features = ["v4", "serde"] }
 eframe = { version = "=0.36.1", default-features = false, features = ["default_fonts", "wgpu", "accesskit", "x11", "wayland"] }
 image = { version = "=0.25.10", default-features = false, features = ["png", "jpeg", "tiff"] }
+# Già nel grafo tramite image. Diretto perché image non espone cHRM né il
+# chunk sRGB, e senza quelli un PNG non sRGB verrebbe assunto sRGB in silenzio.
+png = "=0.18.1"
+# Già nel grafo tramite image; serve ExtraSamples, non esposto da ImageDecoder.
+tiff = { version = "=0.11.3", default-features = false }
 rusqlite = { version = "=0.40.2", features = ["bundled", "backup"] }
 tempfile = "3"
+# Già nel grafo tramite wgpu e winit. Diretto per i Job Object, cioè limiti
+# di memoria applicati dal kernel e non dall'applicazione.
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Isolation", "Win32_Storage_FileSystem", "Win32_System_JobObjects", "Win32_System_Pipes", "Win32_System_Threading", "Win32_System_Environment", "Win32_Networking_WinSock", "Wdk_Storage_FileSystem"] }
 
 [profile.release]
 opt-level = 3

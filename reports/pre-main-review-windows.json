@@ -1,0 +1,257 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "review_date": "2026-09-13",
+  "platform": "windows",
+  "base_commit": "1279012b8cbcd15889ff060143b197d2523212ba",
+  "ready_for_main": false,
+  "application_code_changed_by_review": false,
+  "committed": false,
+  "staged": false,
+  "scope": "All uncommitted project changes inventoried before audit documentation; vendor compared to cached source crate and selected primary upstream fixes, not a full manual security audit of every parser.",
+  "uncommitted_files_before_audit_documentation": 153,
+  "binary_sha256": {
+    "target/debug/tr-worker.exe": "dc2953bea6f844e5c4960f1b17fcdd94b89d36883c33a2148dc6c9bd26795667",
+    "target/debug/truerenderer.exe": "d535b9cb18ec222ee1466bfbbb9c936ac0824b9e73999679ba8fa1231cc9ad27",
+    "target/release/tr-worker.exe": "9d07ca3e127dc19ceed484055faa5b9eef835bbdf6b416c2743ff1bd10757ada",
+    "target/release/truerenderer.exe": "6161a7fb30fd7e035d9ab217b69718c45ed007416f6112c10b26f78113db51e4"
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_all_targets_deny_warnings": true,
+    "debug_build": true,
+    "release_workspace_build": true,
+    "rust_unit_tests": 75,
+    "rust_explicit_integrations": 7,
+    "worker_protocol": 6,
+    "python_reporting_regressions": 2,
+    "resampling_cases": 24,
+    "release_native_ui_passed": true,
+    "release_ui_changed_engine_during_scan": true,
+    "release_ui_stages": [
+      {
+        "engine": "LibRawBilinear",
+        "generation": 3,
+        "decode_jobs": 1,
+        "cache_hits": 0
+      },
+      {
+        "engine": "LibRawAhd",
+        "generation": 4,
+        "decode_jobs": 2,
+        "cache_hits": 0
+      },
+      {
+        "engine": "TrueRenderer",
+        "generation": 5,
+        "decode_jobs": 3,
+        "cache_hits": 0
+      },
+      {
+        "engine": "LibRawBilinear",
+        "generation": 6,
+        "decode_jobs": 3,
+        "cache_hits": 2
+      }
+    ],
+    "release_surface_pixels": 260796,
+    "release_surface_max_error_u8": 0,
+    "additional_visible_photo_pixels": 180056,
+    "additional_photo_max_error_u8": 0,
+    "new_macos_bundle_and_xpc_verified": false,
+    "macos_attempt_limitation": "Windows has no /usr/bin/codesign; native qualification did not run"
+  },
+  "raw_campaigns": [
+    {
+      "camera": "Nikon D750",
+      "files": 30,
+      "developments": 90,
+      "passed": true,
+      "originals_unchanged": true,
+      "engines": [
+        "LibRawAhd",
+        "LibRawBilinear",
+        "TrueRenderer"
+      ],
+      "source_dimensions": [
+        [
+          4032,
+          6032
+        ],
+        [
+          6032,
+          4032
+        ]
+      ]
+    },
+    {
+      "camera": "Nikon D40",
+      "files": 22,
+      "developments": 66,
+      "passed": true,
+      "originals_unchanged": true,
+      "engines": [
+        "LibRawAhd",
+        "LibRawBilinear",
+        "TrueRenderer"
+      ],
+      "source_dimensions": [
+        [
+          2014,
+          3039
+        ],
+        [
+          3039,
+          2014
+        ]
+      ]
+    }
+  ],
+  "reproduced_cases": {
+    "existing_hardlink_writable_with_create": true,
+    "hardlink_canary_changed": true,
+    "in_production_job": true,
+    "isolation": {
+      "connect_loopback": false,
+      "loopback_error": "The requested service provider could not be loaded or initialized. (os error 10106)",
+      "read_ungranted_file": true,
+      "write_ungranted_file": true
+    },
+    "one_byte_preview_panics": true,
+    "ordinary_tiff_source_dimensions": [
+      16,
+      8
+    ],
+    "ordinary_tiff_through_broker": [
+      {
+        "engine": "LibRawBilinear",
+        "info": {
+          "decoder": "Sviluppo rifiutato: LibRaw: Unsupported file format or not RAW file",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "RAW · anteprima",
+          "height": 4,
+          "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+          "native_bits": 8,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 4,
+          "source_width": 8,
+          "width": 8
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "error": "LibRaw: Unsupported file format or not RAW file"
+      },
+      {
+        "engine": "TrueRenderer",
+        "error": "Unsupported file format or not RAW file"
+      }
+    ],
+    "png_gamma": {
+      "declared_gamma": 1,
+      "encoded_gray": 0.5019607843137255,
+      "info": {
+        "decoder": "image 0.25.10 · Png",
+        "filter": "nessuno (campioni LOD 0)",
+        "format": "Png",
+        "height": 1,
+        "input_color": "sRGB assunto · nessun profilo incorporato",
+        "native_bits": 8,
+        "orientation": "NoTransforms · applicato una volta",
+        "source_height": 1,
+        "source_width": 1,
+        "width": 1
+      },
+      "linear_rec2020_gray": [
+        0.21586042642593384,
+        0.21586014330387115,
+        0.2158604860305786,
+        1.0
+      ],
+      "provenance": "sRGB assunto · nessun profilo incorporato"
+    },
+    "same_length_restored_mtime_token_unchanged": true,
+    "tiff16_reported_native_bits": 8,
+    "tiff_with_thumbnail_decoded": {
+      "decoder": "Sviluppo rifiutato: LibRaw: Unsupported file format or not RAW file",
+      "filter": "nessuno (campioni LOD 0)",
+      "format": "RAW · anteprima",
+      "height": 4,
+      "input_color": "sRGB assunto · anteprima della fotocamera, nessuno spazio dichiarato",
+      "native_bits": 8,
+      "orientation": "NoTransforms · applicato una volta",
+      "source_height": 4,
+      "source_width": 8,
+      "width": 8
+    }
+  },
+  "corpus_to_raw_quota": {
+    "after_corpus": {
+      "error": "failed to fill whole buffer",
+      "ok": false
+    },
+    "after_explicit_recycle": {
+      "format": "RAW",
+      "ok": true
+    },
+    "original_unchanged": true
+  },
+  "vendor_comparison": {
+    "compared_to": "locally cached libraw_rs_vendor 1.0.0",
+    "identical_files": 99,
+    "missing_in_original": [],
+    "different_files": [],
+    "scope": "File byte comparison to the cached crate; not independent upstream authenticity or security validation."
+  },
+  "open_findings": [
+    {
+      "id": "F1",
+      "severity": "P1",
+      "title": "Windows worker retains access to ungranted files"
+    },
+    {
+      "id": "F2",
+      "severity": "P1",
+      "title": "Vendored LibRaw omits applicable upstream parser bounds fixes"
+    },
+    {
+      "id": "F3",
+      "severity": "P1",
+      "title": "External PNG bypasses declared colour contract"
+    },
+    {
+      "id": "F4",
+      "severity": "P1",
+      "title": "Ordinary TIFF thumbnail misclassifies bitmap as RAW"
+    },
+    {
+      "id": "F5",
+      "severity": "P2",
+      "title": "One-byte embedded preview panics"
+    },
+    {
+      "id": "F6",
+      "severity": "P2",
+      "title": "Worker job memory ceiling retained across corpus/external transition"
+    },
+    {
+      "id": "F7",
+      "severity": "P2",
+      "title": "Hard-link write exemption accepts non-exclusive create"
+    },
+    {
+      "id": "F8",
+      "severity": "P2",
+      "title": "In-place same-size write with restored mtime leaves Windows observation unchanged"
+    }
+  ],
+  "limitations": [
+    "No camera colour accuracy, Apple superiority, noise/moire or physical display qualification.",
+    "Sequential RAW develops with concurrent review work and OS cache not flushed; no comparative latency or global-memory verdict.",
+    "Synthetic isolation executable uses production Isolation::spawn; no decoder exploit performed.",
+    "Initial harness environment errors are retained in private logs and documented; no product changes were needed for the positive suite.",
+    "Photos, private source paths, per-photo digests, selection identifiers, detailed logs and crops omitted."
+  ],
+  "details": "docs/revisione-pre-main.md",
+  "original_architecture_sha256": "ad3db38205e58d7f02e85259d5e0516feb3ced143909c96e1699951d65500e4c"
+}

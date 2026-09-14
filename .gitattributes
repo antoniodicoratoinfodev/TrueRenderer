@@ -1,6 +1,11 @@
 * text=auto eol=lf
 /corpus/*.png -text
+/crates/tr-worker/tests/fixtures/*.tif -text
+/crates/tr-worker/tests/fixtures/*.dng -text
 /reports/*.png -text
 /reports/dependency-notices/** -text
+/reports/dependency-inventory-windows-notices/** -text
+/reports/dependency-inventory-windows.csv -text
+/third_party/libraw/** -text
 /reports/dependency-inventory.csv -text
 /docs/TrueVision-Architettura.originale-v1.2.md -text

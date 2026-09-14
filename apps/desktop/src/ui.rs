@@ -70,6 +70,9 @@ pub struct TrueRenderer {
     show_help: bool,
     show_settings: bool,
     settings_smoke: bool,
+    raw_engine_smoke_results: Vec<serde_json::Value>,
+    raw_engine_smoke_ready_at: Option<Instant>,
+    raw_engine_smoke_capture_pending: bool,
     cache_settings: crate::cache::Settings,
     settings_data: PathBuf,
     preparation_paused: bool,
@@ -180,7 +183,11 @@ impl TrueRenderer {
                         Err(error) => serde_json::json!({"passed":false,"error":error}),
                     };
                     let _ = std::fs::write(
-                        report_root.join("reports/preview-quality-gpu-macos.json"),
+                        report_root.join(if cfg!(windows) {
+                            "var/preview-quality-gpu-windows.json"
+                        } else {
+                            "reports/preview-quality-gpu-macos.json"
+                        }),
                         serde_json::to_vec_pretty(&report).unwrap(),
                     );
                 }
@@ -259,6 +266,9 @@ impl TrueRenderer {
             pending_selection: None,
             started: Instant::now(),
             smoke_stage: 0,
+            raw_engine_smoke_results: vec![],
+            raw_engine_smoke_ready_at: None,
+            raw_engine_smoke_capture_pending: false,
             screenshots: HashSet::new(),
             fatal: false,
             closing: false,
@@ -278,6 +288,15 @@ impl TrueRenderer {
             app.open_path(path);
         } else {
             app.open_folder(folder);
+        }
+        if app.smoke && std::env::args().any(|arg| arg == "--raw-engine-scan-change") {
+            // Exercise a settings change before the pending scan can be polled,
+            // independent of how quickly the background thread lists the files.
+            assert!(app.scanning, "Smoke requires a pending folder scan");
+            app.cache_settings.raw_engine = tr_core::decoder::RawEngine::choices()
+                .find(|engine| *engine != app.cache_settings.raw_engine)
+                .expect("At least two RAW engines for this smoke");
+            app.start_cache_action(true);
         }
         app
     }
@@ -438,6 +457,7 @@ impl TrueRenderer {
     }
     fn preview_request(&self, item: &Item, edge: u32) -> PreviewRequest {
         PreviewRequest {
+            raw_engine: self.service.cache.settings().raw_engine,
             quality: self.quality(item),
             edge,
         }
@@ -480,6 +500,7 @@ impl TrueRenderer {
             .iter()
             .find(|((id, request), cached)| {
                 id == &item.id
+                    && request.raw_engine == key.1.raw_engine
                     && request.quality == key.1.quality
                     && cached.pyramid.sufficient_for(key.1)
                     && cached.pyramid.requested_base(key.1) == 0
@@ -725,6 +746,43 @@ impl TrueRenderer {
                 break;
             }
         }
+    }
+    /// Revoke old work and presentation while preserving the catalogue and selection.
+    fn invalidate_raw_engine(&mut self) {
+        self.generation += 1;
+        self.service
+            .generation
+            .store(self.generation, Ordering::Release);
+        self.cache.clear();
+        self.presenter.clear();
+        self.pending_images.clear();
+        self.demand.clear();
+        self.last_demand.clear();
+        self.demand_jobs.clear();
+        self.promoted.clear();
+        self.requested_at.clear();
+        self.recent_latencies.clear();
+        self.rebuild.clear();
+        self.rebuild_total = 0;
+        self.watched_sources.clear();
+        self.source_monitor.watch(self.generation, vec![]);
+        self.sample = None;
+        self.errors.clear();
+        if self.scanning {
+            // Scan results carry this same generation. The old scan is revoked
+            // along with image work, so queue its replacement or expose failure
+            // instead of leaving the UI waiting for an obsolete result forever.
+            self.scanning = self.request(Request::Scan {
+                folder: self.folder.clone(),
+                generation: self.generation,
+            });
+        }
+    }
+    fn apply_settings(&mut self) {
+        if self.cache_settings.raw_engine != self.service.cache.settings().raw_engine {
+            self.invalidate_raw_engine();
+        }
+        self.service.cache.configure(self.cache_settings.clone());
     }
     fn set_quality(&mut self, quality: PreviewQuality) {
         let mut settings = self.service.cache.settings();
@@ -1027,7 +1085,14 @@ impl TrueRenderer {
             });
             for (name, img) in screenshots {
                 let pixels: Vec<u8> = img.pixels.iter().flat_map(|p| p.to_array()).collect();
-                let path = self.root.join("reports").join(format!("{name}.png"));
+                let path = self
+                    .root
+                    .join(if name.starts_with("raw-engine-") {
+                        "var"
+                    } else {
+                        "reports"
+                    })
+                    .join(format!("{name}.png"));
                 if image::save_buffer(
                     &path,
                     &pixels,
@@ -1865,7 +1930,7 @@ impl TrueRenderer {
             ui.heading("Un'immagine, una resa tracciabile.");
             ui.label(format!("Prototipo R0 · {} · 6 settembre 2026", env!("CARGO_PKG_VERSION")));ui.separator();
             ui.label("Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali.");
-            ui.add_space(8.);ui.label("Il bundle macOS apre JPEG, PNG, TIFF, RAW supportati da Apple, GIF, BMP, HEIC/HEIF e WebP in servizi XPC isolati. I RAW sono sviluppati con la ricetta Apple TR-linear-v1; il supporto dipende dalla fotocamera e dal sistema. Massimo 256 MiB e 64 Mi pixel. Per TIFF/GIF multipagina si mostra la prima pagina o fotogramma. Il percorso su pipe resta limitato al corpus.");
+            ui.add_space(8.);ui.label("Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 256 MiB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus.");
             ui.add_space(8.);ui.label("Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima.");
             ui.add_space(8.);ui.monospace(format!("GPU: {}\nSuperficie: {}\nSQLite: {}",self.adapter,self.surface,tr_store::sqlite_version()));
             ui.label(&self.gpu_status);
@@ -1878,14 +1943,23 @@ impl TrueRenderer {
     fn capture_screenshot(&self, ctx: &egui::Context, name: &str) {
         let ppp = ctx.pixels_per_point();
         let records: Vec<_> = self.presenter.captures().iter().filter_map(|c| {
-            let ((id,_), _) = self.cache.iter().find(|(_,cached)| cached.pyramid.id() == c.source)?;
+            let ((id,_), cached) = self.cache.iter().find(|(_,cached)| cached.pyramid.id() == c.source)?;
             let item = self.state.items.iter().find(|i| &i.id == id)?;
+            if name.starts_with("raw-engine-") && c.rect.width() > 400. && c.rect.height() > 200. {
+                let expected = cached.pyramid.render(c.region).ok()?.to_display();
+                image::save_buffer(self.root.join("var").join(format!("{name}-expected.png")), &expected, c.region.size[0], c.region.size[1], image::ColorType::Rgba8).ok()?;
+                return Some(serde_json::json!({"rect_physical":[c.rect.min.x*ppp,c.rect.min.y*ppp,c.rect.max.x*ppp,c.rect.max.y*ppp],"clip_physical":[c.clip.min.x*ppp,c.clip.min.y*ppp,c.clip.max.x*ppp,c.clip.max.y*ppp],"size":c.region.size,"compute":c.compute}));
+            }
             if item.name != "04_Frequenze_radiali.png" || !c.clip.contains_rect(c.rect) { return None; }
             Some(serde_json::json!({"source":item.name,"rect_physical":[c.rect.min.x*ppp,c.rect.min.y*ppp,c.rect.max.x*ppp,c.rect.max.y*ppp],"size":c.region.size,"origin":c.region.origin,"step":c.region.step,"compute":c.compute}))
         }).collect();
         let _ = std::fs::write(
             self.root
-                .join("reports")
+                .join(if name.starts_with("raw-engine-") {
+                    "var"
+                } else {
+                    "reports"
+                })
                 .join(format!("{name}-sampling.json")),
             serde_json::to_vec_pretty(&records).unwrap(),
         );
@@ -1942,12 +2016,11 @@ impl TrueRenderer {
         }
         ctx.request_repaint_after(Duration::from_millis(50));
     }
-    fn settings_window(&mut self, ctx: &egui::Context) {
+    fn poll_cache_action(&mut self, ctx: &egui::Context) {
         if let Some(rx) = &self.cache_action {
             match rx.try_recv() {
                 Ok(result) => {
                     self.cache_action = None;
-                    self.scanning = false;
                     self.status = match result {
                         Ok(()) => "Impostazioni/cache aggiornate".into(),
                         Err(e) => e,
@@ -1955,13 +2028,15 @@ impl TrueRenderer {
                 }
                 Err(std::sync::mpsc::TryRecvError::Disconnected) => {
                     self.cache_action = None;
-                    self.scanning = false;
                     self.status = "Operazione cache interrotta".into();
                 }
                 _ => {}
             }
             ctx.request_repaint_after(Duration::from_millis(50));
         }
+    }
+    fn settings_window(&mut self, ctx: &egui::Context) {
+        self.poll_cache_action(ctx);
         let mut action = 0;
         egui::Window::new("Preferenze · Anteprime e prestazioni").open(&mut self.show_settings).default_width(570.).resizable(false).vscroll(true).max_height((ctx.viewport_rect().height()-80.).max(250.)).show(ctx,|ui|{
             ui.label("Le impostazioni valgono per tutte le cartelle; la quota disco si applica a ciascuna cartella separatamente.");
@@ -1970,6 +2045,19 @@ impl TrueRenderer {
                 ui.selectable_value(&mut self.cache_settings.quality, PreviewQuality::Standard, "Standard");
                 ui.selectable_value(&mut self.cache_settings.quality, PreviewQuality::Full, "Piena");
             });
+            ui.horizontal(|ui| {
+                ui.label("Motore RAW");
+                egui::ComboBox::from_id_salt("raw-engine").selected_text(self.cache_settings.raw_engine.label()).show_ui(ui, |ui| {
+                    for engine in tr_core::decoder::RawEngine::choices() {
+                        ui.selectable_value(&mut self.cache_settings.raw_engine, engine, engine.label());
+                    }
+                });
+            });
+            ui.label(format!("Attivo: {}", self.service.cache.settings().raw_engine.label()));
+            ui.label("Applica e salva aggiorna le immagini. Ogni motore conserva le proprie anteprime in cache.");
+            if self.cache_settings.raw_engine == tr_core::decoder::RawEngine::TrueRenderer {
+                ui.label("Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore.");
+            }
             let physical = self.service.cache.physical_mib;
             let mut automatic = self.cache_settings.memory_mib == 0;
             if ui.checkbox(&mut automatic, "Memoria automatica").changed() {
@@ -2002,7 +2090,7 @@ impl TrueRenderer {
             let compute=self.presenter.statistics();
             ui.label(format!("Frame elaborati: {} GPU · {} CPU · {} ripieghi",compute.gpu_frames,compute.cpu_frames,compute.fallbacks));
             if !compute.last_fallback.is_empty() {ui.label(format!("Ultimo ripiego CPU: {}",compute.last_fallback));}
-            ui.label("Il decoder Apple usa il contesto CPU; Metal viene qualificato separatamente dal viewer.");
+            ui.label("Questa scelta riguarda il ricampionamento del viewer. Lo sviluppo usa il motore RAW selezionato sopra.");
             ui.checkbox(&mut self.cache_settings.adapt_on_battery,"Riduci automaticamente il lavoro a batteria");
             ui.label(format!("Thread applicativi effettivi: {} · {}",self.service.cache.effective_threads(),if self.service.cache.on_battery() {"batteria"} else {"alimentazione esterna / non rilevata"}));
             ui.label(format!("Pressione memoria OS: {}", match self.service.cache.stats().memory_pressure {
@@ -2052,42 +2140,47 @@ impl TrueRenderer {
             if self.cache_action.is_some(){ui.label("Aggiornamento cache…");}
         });
         if action > 0 {
-            if action == 1 && self.cache_settings.quality != self.service.cache.settings().quality {
-                self.full_overrides.clear();
-            }
-            self.errors.clear();
-            self.scanning = true;
-            if action == 1 {
-                self.service.cache.configure(self.cache_settings.clone());
-            }
-            let cache = self.service.cache.clone();
-            let folder = self.folder.clone();
-            let data = self.settings_data.clone();
-            let (tx, rx) = std::sync::mpsc::sync_channel(1);
-            self.cache_action = Some(rx);
-            std::thread::spawn(move || {
-                let result = (|| -> anyhow::Result<()> {
-                    if action == 1 {
-                        cache.save_current(&data)?;
-                    }
-                    let start = Instant::now();
-                    loop {
-                        match cache.maintain(&folder, action == 2) {
-                            Err(e)
-                                if e.downcast_ref::<std::io::Error>().is_some_and(|e| {
-                                    e.kind() == std::io::ErrorKind::WouldBlock
-                                }) && start.elapsed() < Duration::from_secs(3) =>
-                            {
-                                std::thread::sleep(Duration::from_millis(25))
-                            }
-                            result => return result,
-                        }
-                    }
-                })()
-                .map_err(|e| format!("Cache: {e:#}"));
-                let _ = tx.send(result);
-            });
+            self.start_cache_action(action == 1);
         }
+    }
+    /// Full settings-button action, also used by native and headless regression
+    /// checks. Cache maintenance has its own receiver; `scanning` only describes
+    /// a real pending Request::Scan and must survive maintenance completion.
+    fn start_cache_action(&mut self, save: bool) {
+        if save && self.cache_settings.quality != self.service.cache.settings().quality {
+            self.full_overrides.clear();
+        }
+        self.errors.clear();
+        if save {
+            self.apply_settings();
+        }
+        let cache = self.service.cache.clone();
+        let folder = self.folder.clone();
+        let data = self.settings_data.clone();
+        let (tx, rx) = std::sync::mpsc::sync_channel(1);
+        self.cache_action = Some(rx);
+        std::thread::spawn(move || {
+            let result = (|| -> anyhow::Result<()> {
+                if save {
+                    cache.save_current(&data)?;
+                }
+                let start = Instant::now();
+                loop {
+                    match cache.maintain(&folder, !save) {
+                        Err(e)
+                            if e.downcast_ref::<std::io::Error>()
+                                .is_some_and(|e| e.kind() == std::io::ErrorKind::WouldBlock)
+                                && start.elapsed() < Duration::from_secs(3) =>
+                        {
+                            std::thread::sleep(Duration::from_millis(25))
+                        }
+                        result => return result,
+                    }
+                }
+            })()
+            .map_err(|e| format!("Cache: {e:#}"));
+            let _ = tx.send(result);
+        });
     }
     fn source_change_smoke(&mut self, ctx: &egui::Context) {
         let finish = |passed: bool, stage: u8, generation: u64| {
@@ -2155,12 +2248,136 @@ impl TrueRenderer {
         }
         ctx.request_repaint_after(Duration::from_millis(50));
     }
+    fn raw_engines_smoke(&mut self, ctx: &egui::Context) {
+        use tr_core::decoder::RawEngine;
+        let mut engines: Vec<_> = RawEngine::choices().collect();
+        engines.push(RawEngine::default()); // return to an earlier engine/cache
+        if self.raw_engine_smoke_results.len() >= engines.len() {
+            return;
+        }
+        ctx.request_repaint_after(Duration::from_millis(50));
+        let stage = self.smoke_stage as usize;
+        if self.started.elapsed() > Duration::from_secs(180)
+            || self.fatal
+            || !self.errors.is_empty()
+        {
+            let report = serde_json::json!({"passed":false,"stage":stage,"errors":self.errors,"status":self.status});
+            let _ = std::fs::write(
+                self.root.join("var/raw-engine-ui.json"),
+                serde_json::to_vec_pretty(&report).unwrap(),
+            );
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            return;
+        }
+        if stage == 0
+            && !self.scanning
+            && self.cache_action.is_none()
+            && !self.state.items.is_empty()
+        {
+            let id = self
+                .state
+                .items
+                .get(1)
+                .unwrap_or(&self.state.items[0])
+                .id
+                .clone();
+            self.command(Command::Select { id, extend: false });
+            self.state.transform.zoom = Some(1.0);
+            self.state.view = ViewMode::Preview;
+            self.show_filmstrip = false;
+            self.cache_settings.quality = PreviewQuality::Full;
+            self.cache_settings.raw_engine = engines[0];
+            self.start_cache_action(true);
+            self.smoke_stage = 1;
+        } else if stage > 0
+            && !self.scanning
+            && self.cache_action.is_none()
+            && self.gpu_passed
+            && self.presenter.is_idle()
+            && !self.demand.is_empty()
+            && self.demand.iter().all(|key| self.cache.contains_key(key))
+        {
+            let engine = engines[stage - 1];
+            let correct = self.demand.iter().all(|key| {
+                key.1.raw_engine == engine
+                    && self.cache.get(key).is_some_and(|c| {
+                        c.info.format == "RAW"
+                            && (c.info.decoder.contains(engine.recipe())
+                                || engine == RawEngine::Apple)
+                    })
+            });
+            if !correct {
+                self.raw_engine_smoke_ready_at = None;
+                return;
+            }
+            // CPU delivery and an empty upload queue precede the first visible
+            // GPU frame. Require the current source in the main viewport and
+            // allow presentation to settle before requesting the screenshot.
+            let painted = self.presenter.captures().iter().any(|capture| {
+                capture.rect.width() > 400.
+                    && capture.rect.height() > 200.
+                    && self.demand.iter().any(|key| {
+                        self.cache
+                            .get(key)
+                            .is_some_and(|cached| cached.pyramid.id() == capture.source)
+                    })
+            });
+            if !painted {
+                self.raw_engine_smoke_ready_at = None;
+                return;
+            }
+            if self
+                .raw_engine_smoke_ready_at
+                .get_or_insert_with(Instant::now)
+                .elapsed()
+                < Duration::from_secs(1)
+            {
+                return;
+            }
+            let name = format!("raw-engine-ui-{stage}");
+            if !self.screenshots.contains(&name) {
+                if !self.raw_engine_smoke_capture_pending {
+                    self.capture_screenshot(ctx, &name);
+                    self.raw_engine_smoke_capture_pending = true;
+                }
+            } else {
+                let selection = self.state.current.clone();
+                self.raw_engine_smoke_results.push(serde_json::json!({"engine":engine,"selection":selection,"generation":self.generation,"cache":self.service.cache.stats(),"zoom":self.state.transform.zoom,"center":self.state.transform.center}));
+                if stage == engines.len() {
+                    let same_selection = self.raw_engine_smoke_results.iter().all(|r| {
+                        r["selection"] == self.raw_engine_smoke_results[0]["selection"]
+                            && r["zoom"] == self.raw_engine_smoke_results[0]["zoom"]
+                            && r["center"] == self.raw_engine_smoke_results[0]["center"]
+                    });
+                    let report = serde_json::json!({"passed":same_selection && !self.presenter.has_errors(),"platform":std::env::consts::OS,"stages":self.raw_engine_smoke_results,"changed_engine_during_scan":std::env::args().any(|arg| arg == "--raw-engine-scan-change"),"scanned_items":self.state.items.len(),"scope":"Native UI, production apply-settings path, full RAW, engine provenance, selection preserved and return to earlier engine; private screenshots in var. Not colour/display qualification."});
+                    let _ = std::fs::write(
+                        self.root.join("var/raw-engine-ui.json"),
+                        serde_json::to_vec_pretty(&report).unwrap(),
+                    );
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                } else {
+                    self.cache_settings.raw_engine = engines[stage];
+                    self.start_cache_action(true);
+                    self.smoke_stage += 1;
+                    self.raw_engine_smoke_ready_at = None;
+                    self.raw_engine_smoke_capture_pending = false;
+                }
+            }
+        } else {
+            self.raw_engine_smoke_ready_at = None;
+        }
+        ctx.request_repaint_after(Duration::from_millis(50));
+    }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
         if !self.smoke {
             return;
         }
         if std::env::args().any(|arg| arg == "--source-change-smoke") {
             self.source_change_smoke(ctx);
+            return;
+        }
+        if std::env::args().any(|arg| arg == "--raw-engines-smoke") {
+            self.raw_engines_smoke(ctx);
             return;
         }
         if self.settings_smoke {
@@ -2445,5 +2662,125 @@ fn human_bytes(bytes: u64) -> String {
         format!("{:.1} MiB", bytes as f64 / 1_048_576.)
     } else {
         format!("{:.0} KiB", bytes as f64 / 1024.)
+    }
+}
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod settings_regressions {
+    use super::*;
+
+    fn app() -> (tempfile::TempDir, egui::Context, TrueRenderer) {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("corpus")).unwrap();
+        std::fs::create_dir(dir.path().join("data")).unwrap();
+        for (name, bytes) in [
+            (
+                "first.png",
+                include_bytes!("../../../corpus/01_Studio_cromatico.png").as_slice(),
+            ),
+            (
+                "second.png",
+                include_bytes!("../../../corpus/05_Trasparenza.png").as_slice(),
+            ),
+        ] {
+            std::fs::write(dir.path().join("corpus").join(name), bytes).unwrap();
+        }
+        let ctx = egui::Context::default();
+        let cc = eframe::CreationContext::_new_kittest(ctx.clone());
+        let app = TrueRenderer::new(
+            &cc,
+            dir.path().into(),
+            dir.path().join("data"),
+            dir.path().join("unused-worker"),
+            Startup {
+                smoke: false,
+                sampling_smoke: false,
+                external_smoke: false,
+                settings_smoke: false,
+                open: None,
+            },
+        );
+        (dir, ctx, app)
+    }
+
+    fn settle(app: &mut TrueRenderer, ctx: &egui::Context, scans: bool) {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                let ctx = ui.ctx();
+                app.poll_cache_action(ctx);
+                if scans {
+                    app.poll(ctx);
+                }
+            });
+            // This is a headless state/service check, with no texture backend.
+            output.textures_delta.clear();
+            assert!(!app.fatal, "{}", app.status);
+            if app.cache_action.is_none() && (!scans || !app.scanning) {
+                return;
+            }
+            assert!(Instant::now() < deadline, "Timed out: {}", app.status);
+            std::thread::sleep(Duration::from_millis(10));
+        }
+    }
+
+    #[test]
+    fn full_settings_action_preserves_nonfirst_selection_and_zoom() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        assert_eq!(app.state.items.len(), 2);
+        let id = app.state.items[1].id.clone();
+        app.command(Command::Select { id, extend: true });
+        app.state.transform = ViewTransform {
+            zoom: Some(1.75),
+            center: [0.4, 0.6],
+        };
+        let selected = app.state.selected.clone();
+        let current = app.state.current.clone();
+        let original = app.cache_settings.raw_engine;
+        let other = tr_core::decoder::RawEngine::choices()
+            .find(|e| *e != original)
+            .unwrap();
+        for engine in [other, original] {
+            app.cache_settings.raw_engine = engine;
+            let generation = app.generation;
+            app.start_cache_action(true); // exact action used by Applica e salva
+            assert!(!app.scanning, "Saving preferences must not invent a scan");
+            assert_eq!(app.generation, generation + 1);
+            settle(&mut app, &ctx, true);
+            assert_eq!(app.state.current, current);
+            assert_eq!(app.state.selected, selected);
+            assert_eq!(app.state.transform.zoom, Some(1.75));
+            assert_eq!(app.state.transform.center, [0.4, 0.6]);
+            assert_eq!(
+                crate::cache::Settings::load(&app.settings_data)
+                    .unwrap()
+                    .raw_engine,
+                engine
+            );
+        }
+        // Clearing a cache is also maintenance, with no catalogue reset.
+        app.start_cache_action(false);
+        assert!(!app.scanning);
+        settle(&mut app, &ctx, true);
+        assert_eq!(app.state.current, current);
+        assert_eq!(app.state.transform.zoom, Some(1.75));
+    }
+
+    #[test]
+    fn finishing_maintenance_does_not_cancel_a_real_pending_scan() {
+        let (_dir, ctx, mut app) = app();
+        assert!(app.scanning); // initial scan queued, no event consumed yet
+        let generation = app.generation;
+        app.cache_settings.raw_engine = tr_core::decoder::RawEngine::choices()
+            .find(|e| *e != app.cache_settings.raw_engine)
+            .unwrap();
+        app.start_cache_action(true);
+        assert_eq!(app.generation, generation + 1);
+        settle(&mut app, &ctx, false); // consume maintenance only
+        assert!(app.scanning, "A pending scan must await its own result");
+        settle(&mut app, &ctx, true);
+        assert_eq!(app.state.items.len(), 2);
+        assert!(!app.scanning);
     }
 }

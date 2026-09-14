@@ -49,7 +49,8 @@ impl Manager {
             "{:x}",
             Sha256::digest(
                 serde_json::to_vec(&(
-                    "tr-preview-v2",
+                    "tr-preview-v3-engines",
+                    request.raw_engine.recipe(),
                     digest,
                     &self.fingerprint,
                     request,
@@ -194,7 +195,7 @@ impl Manager {
                         });
                         pixels.push(pixel);
                     }
-                    let _ = file.set_times(FileTimes::new().set_modified(SystemTime::now()));
+                    let _ = Directory::touch(&file);
                 }
                 levels.push(LinearImage::new(*width, *height, pixels)?);
             }
@@ -217,7 +218,7 @@ impl Manager {
             for (dest, src) in histogram.iter_mut().zip(header.histogram) {
                 dest.copy_from_slice(&src);
             }
-            let _ = descriptor.set_times(FileTimes::new().set_modified(SystemTime::now()));
+            let _ = Directory::touch(&descriptor);
             Ok(Lookup::Hit(
                 header.info,
                 Box::new(PreparedPreview {
@@ -261,6 +262,9 @@ impl Manager {
         budget: &MemoryBudget,
         cancelled: &impl Fn() -> bool,
     ) -> Result<Lookup> {
+        if request.raw_engine != tr_core::decoder::RawEngine::default() {
+            return Ok(Lookup::Missing);
+        }
         // Reuse only the exact recognized pipeline fingerprint. Older app/OS
         // fingerprints remain safe misses under the common quota.
         let key = self.key(digest);
@@ -283,7 +287,7 @@ impl Manager {
         let histogram = image.source().histogram();
         lease.shrink(image.byte_len() as u64);
         image.attach_lease(lease);
-        let _ = file.set_times(FileTimes::new().set_modified(SystemTime::now()));
+        let _ = Directory::touch(&file);
         Ok(Lookup::Hit(
             info,
             Box::new(PreparedPreview {
@@ -594,6 +598,7 @@ mod tests {
         .unwrap();
         let pyramid = Pyramid::new(source).unwrap();
         let request = PreviewRequest {
+            raw_engine: tr_core::decoder::RawEngine::default(),
             quality: PreviewQuality::Full,
             edge: 100,
         };
@@ -625,6 +630,97 @@ mod tests {
             free_mib: 0,
             ..Settings::default()
         })
+    }
+    #[test]
+    fn preview_hit_refreshes_descriptor_and_every_block_before_expiry() {
+        let folder = tempfile::tempdir().unwrap();
+        let cache = manager();
+        let (info, preview, request) = fixture();
+        cache
+            .store_preview(folder.path(), "touch", request, &info, &preview, &|| false)
+            .unwrap();
+        let names = {
+            let disk = Folder::open(folder.path(), false, true).unwrap();
+            let entries = Folder::files(&disk.entries, ".tvc").unwrap();
+            assert!(entries.len() > 1); // descriptor plus payload blocks
+            for entry in &entries {
+                disk.entries
+                    .open_file(&entry.name, true, false, false)
+                    .unwrap()
+                    .set_modified(SystemTime::now() - Duration::from_secs(86400 * 20))
+                    .unwrap();
+            }
+            entries.into_iter().map(|e| e.name).collect::<Vec<_>>()
+        };
+        assert!(matches!(
+            cache.load_preview(folder.path(), "touch", request, &cache.memory, &|| false),
+            Lookup::Hit(..)
+        ));
+        let disk = Folder::open(folder.path(), false, true).unwrap();
+        for name in names {
+            let (_, modified) = disk.entries.file_info(&name).unwrap();
+            assert!(
+                modified.elapsed().unwrap() < Duration::from_secs(60),
+                "timestamp not refreshed: {name}"
+            );
+        }
+        assert_eq!(disk.trim(u64::MAX, 1).unwrap().1, 0);
+    }
+    #[test]
+    fn engines_have_independent_cache_entries_and_legacy_cannot_supply_another_engine() {
+        use tr_core::decoder::RawEngine;
+        let folder = tempfile::tempdir().unwrap();
+        let cache = manager();
+        let (info, preview, mut request) = fixture();
+        request.raw_engine = RawEngine::LibRawBilinear;
+        cache
+            .store_preview(
+                folder.path(),
+                "engine-fixture",
+                request,
+                &info,
+                &preview,
+                &|| false,
+            )
+            .unwrap();
+        let original_key = cache.preview_key("engine-fixture", request);
+        assert!(matches!(
+            cache.load_preview(
+                folder.path(),
+                "engine-fixture",
+                request,
+                &cache.memory,
+                &|| false
+            ),
+            Lookup::Hit(..)
+        ));
+        for engine in [RawEngine::LibRawAhd, RawEngine::TrueRenderer] {
+            let changed = PreviewRequest {
+                raw_engine: engine,
+                ..request
+            };
+            assert_ne!(original_key, cache.preview_key("engine-fixture", changed));
+            assert!(matches!(
+                cache.load_preview(
+                    folder.path(),
+                    "engine-fixture",
+                    changed,
+                    &cache.memory,
+                    &|| false
+                ),
+                Lookup::Missing
+            ));
+        }
+        assert!(matches!(
+            cache.load_preview(
+                folder.path(),
+                "engine-fixture",
+                request,
+                &cache.memory,
+                &|| false
+            ),
+            Lookup::Hit(..)
+        ));
     }
     #[test]
     fn pending_reader_gets_precedence_before_optional_write() {
@@ -860,6 +956,7 @@ mod tests {
                 folder.path(),
                 "digest",
                 PreviewRequest {
+                    raw_engine: tr_core::decoder::RawEngine::default(),
                     quality: PreviewQuality::Standard,
                     ..request
                 },

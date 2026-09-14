@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 pub use settings::{PerformanceProfile, Prefetch, Settings};
 use sha2::{Digest, Sha256};
 use std::{
-    fs::{File, FileTimes},
+    fs::File,
     io::{BufReader, BufWriter, Read, Write},
     path::Path,
     sync::{
@@ -101,11 +101,16 @@ impl Manager {
             readers: AtomicUsize::new(0),
             pressure: AtomicI8::new(-1),
             battery: std::sync::atomic::AtomicBool::new(false),
+            // The recipe comes from the decoder that applies it. Hard-coding a
+            // name here would let pixels developed by one recipe be served
+            // under another's key after a platform or recipe change.
             fingerprint: format!(
-                "{}:{}:{}:Apple-TR-linear-v1:raw-detection-v2:fp32-premultiplied-Rec2020",
+                "{}:{}:{}:{}:{}:raw-detection-v2:fp32-premultiplied-Rec2020",
                 env!("CARGO_PKG_VERSION"),
                 tr_core::resample::VERSION,
-                os
+                os,
+                tr_core::decoder::RawEngine::default().recipe(),
+                tr_core::decoder::BITMAP_RECIPE
             ),
         }
     }
@@ -253,7 +258,7 @@ impl Manager {
             ensure!(!expired, "Cache scaduta");
             match read_artifact(&file, &key, digest, cancelled) {
                 Ok(value) => {
-                    let _ = file.set_times(FileTimes::new().set_modified(SystemTime::now()));
+                    let _ = Directory::touch(&file);
                     Ok(value)
                 }
                 Err(e) => {
@@ -360,6 +365,19 @@ impl Manager {
         Ok(())
     }
 }
+/// A held lock must look the same to callers on every platform.
+///
+/// Unix reports contention as `EWOULDBLOCK`, which `std` already classifies.
+/// Windows reports `ERROR_LOCK_VIOLATION`, which `std` leaves uncategorised,
+/// so a caller matching on `WouldBlock` would read a busy folder as a hard
+/// failure instead of a retryable one. Normalising happens once, here.
+fn contention(error: std::io::Error) -> std::io::Error {
+    #[cfg(windows)]
+    if error.raw_os_error() == Some(33) {
+        return std::io::Error::new(std::io::ErrorKind::WouldBlock, error);
+    }
+    error
+}
 struct Folder {
     root: Directory,
     entries: Directory,
@@ -405,9 +423,9 @@ impl Folder {
         ensure!(bytes == OWNER, "Cartella cache non riconosciuta");
         let lock = root.open_file("cache.lock", true, create, false)?;
         if exclusive {
-            fs2::FileExt::try_lock_exclusive(&lock)?
+            fs2::FileExt::try_lock_exclusive(&lock).map_err(contention)?
         } else {
-            fs2::FileExt::try_lock_shared(&lock)?
+            fs2::FileExt::try_lock_shared(&lock).map_err(contention)?
         }
         let (entries, _) = root.child("entries", create)?;
         let (tmp, _) = root.child("tmp", create)?;
@@ -618,9 +636,10 @@ impl<W: Write, F: Fn() -> bool> Write for HashWriter<'_, W, F> {
     }
 }
 
-#[cfg(all(test, unix))]
+#[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
     use std::os::unix::fs::symlink;
     fn image() -> (RasterInfo, PreparedImage) {
         let pixels = vec![
@@ -761,7 +780,7 @@ mod tests {
         let a = format!("{}.tvc", cache.key("a"));
         let b = format!("{}.tvc", cache.key("b"));
         disk.entries
-            .open_file(&a, false, false, false)
+            .open_file(&a, true, false, false)
             .unwrap()
             .set_modified(SystemTime::now() - Duration::from_secs(86400 * 10))
             .unwrap();
@@ -789,7 +808,7 @@ mod tests {
         assert!(!disk.entries.path.join(&a).exists());
         assert!(std::fs::read_dir(&disk.tmp.path).unwrap().next().is_none());
         disk.entries
-            .open_file(&b, false, false, false)
+            .open_file(&b, true, false, false)
             .unwrap()
             .set_modified(SystemTime::now() - Duration::from_secs(86400 * 31))
             .unwrap();
@@ -800,6 +819,33 @@ mod tests {
         );
     }
     #[test]
+    fn cache_hit_refreshes_lru_and_prevents_idle_expiry() {
+        let folder = tempfile::tempdir().unwrap();
+        let cache = manager();
+        let (info, image) = image();
+        for (name, days) in [("recent-hit", 20), ("idle", 10)] {
+            cache
+                .store(folder.path(), name, &info, &image, &|| false)
+                .unwrap();
+            let disk = Folder::open(folder.path(), false, true).unwrap();
+            disk.entries
+                .open_file(&format!("{}.tvc", cache.key(name)), true, false, false)
+                .unwrap()
+                .set_modified(SystemTime::now() - Duration::from_secs(86400 * days))
+                .unwrap();
+        }
+        assert!(cache.load(folder.path(), "recent-hit", &|| false).is_some());
+        let disk = Folder::open(folder.path(), false, true).unwrap();
+        let name = format!("{}.tvc", cache.key("recent-hit"));
+        let (bytes, modified) = disk.entries.file_info(&name).unwrap();
+        assert!(modified.elapsed().unwrap() < Duration::from_secs(60));
+        let (retained, removed) = disk.trim(bytes, 30).unwrap();
+        assert_eq!(removed, 1);
+        assert_eq!(retained[0].name, name);
+        assert_eq!(disk.trim(u64::MAX, 1).unwrap().1, 0);
+    }
+    #[test]
+    #[cfg(unix)]
     fn symlinks_hardlinks_busy_readers_and_unowned_directories_are_not_modified() {
         let folder = tempfile::tempdir().unwrap();
         let outside = tempfile::tempdir().unwrap();

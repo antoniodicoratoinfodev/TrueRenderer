@@ -1,0 +1,666 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-13",
+  "platform": "windows",
+  "base_commit": "1279012b8cbcd15889ff060143b197d2523212ba",
+  "review_completed": true,
+  "application_changes_in_this_continuation": false,
+  "committed": false,
+  "staged": false,
+  "ready_for_cross_platform_main": false,
+  "candidate_files_before_document_updates": 522,
+  "recovered_session": {
+    "title": "Controlla il lavoro non committato",
+    "start_local": "2026-09-13T20:05:21+02:00",
+    "interrupted_before_final_response": true
+  },
+  "recovered_checks": {
+    "ordinary_rust_tests_passed": 81,
+    "integration_rust_tests_passed": 6,
+    "raw_integration_tests_explicitly_excluded": 2,
+    "debug_build": "passed",
+    "fmt": "passed",
+    "clippy_all_targets": "passed",
+    "worker_ipc_checks_passed": 6,
+    "bitmap_responses": 18,
+    "lpac": {
+      "confined": {
+        "all_application_packages": {
+          "member": 0,
+          "ok": 1
+        },
+        "appcontainer": {
+          "error": null,
+          "ok": 1,
+          "value": 1
+        },
+        "capabilities": {
+          "bytes": 8,
+          "count": 0,
+          "ok": 1
+        },
+        "child_spawn_denied": true,
+        "code_read": true,
+        "job": {
+          "active": 1,
+          "flags": 9992,
+          "job_memory": 402653184,
+          "ok": 1,
+          "process_memory": 402653184
+        },
+        "lpac": {
+          "error": 87,
+          "ok": 0,
+          "value": 0
+        },
+        "lpac_native": {
+          "status": -1073741821,
+          "value": 0
+        },
+        "lpac_verified": true,
+        "network_error": 10107,
+        "read_error": 5,
+        "runtime_write_error": 5,
+        "winsock_init_error": 10107,
+        "write_error": 5
+      },
+      "control": {
+        "network_error": 0,
+        "read_error": 0,
+        "winsock_init_error": 0,
+        "write_error": 0
+      }
+    }
+  },
+  "completed_checks": {
+    "release_build": {
+      "exit_code": 0,
+      "command": "scripts/cargo-local.sh build --workspace --release --locked --offline"
+    },
+    "resampling": {
+      "passed": true,
+      "signal_cases": 24,
+      "exact_1to1": true,
+      "platform": "windows",
+      "private_report": "var/review-current-20260913/reports/resampling-macos.json",
+      "report_sha256": "a385e706e432ffe57d329267598f42443b42166af32531d12db289c9223c3a68"
+    },
+    "python_report_regressions_passed": 2,
+    "libraw": {
+      "version": "0.22.2",
+      "upstream_file_hashes": 106,
+      "compiled_sources": 79,
+      "recipes": 3
+    },
+    "windows_inventory": {
+      "cargo_packages": 205,
+      "notice_hashes_verified": 348
+    },
+    "mac_pattern_proof": {
+      "command": "scripts/cargo-local.sh check --manifest-path var/review-current-20260913/Cargo.toml --bin mac-pattern-proof --target-dir target --offline",
+      "observed_exit_code": 1,
+      "expected_failure_observed": true,
+      "diagnostic": "E0005: refutable pattern in local binding; &mut Owner::Xpc(_) not covered",
+      "native_macos_build": false
+    }
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "file": "crates/tr-platform/src/lib.rs",
+      "line": 928,
+      "status": "open",
+      "title": "Refutable Owner::Pipe binding prevents compiling tests on macOS",
+      "evidence": "Source review and compiled minimal reproduction with both enum variants; ignored tests still compile"
+    },
+    {
+      "id": "R2",
+      "priority": "P2",
+      "file": "apps/desktop/src/ui.rs",
+      "line": 2146,
+      "status": "open",
+      "title": "Apply and save resets selection and zoom when switching RAW engine",
+      "evidence": {
+        "after": "0",
+        "before": "2",
+        "scope": "Actual State reducer, with UI scheduling established by source review; no native button interaction claimed"
+      },
+      "native_button_interaction_performed": false,
+      "existing_smoke_limitation": "Calls apply_settings directly and starts with the first photo; skips the complete settings-button action"
+    },
+    {
+      "id": "R3",
+      "priority": "P2",
+      "file": "crates/tr-worker/src/lib.rs",
+      "line": 140,
+      "status": "open",
+      "title": "PNG cICP ignored and pixels silently interpreted as sRGB",
+      "evidence": "Plain, linear cICP, Display P3 cICP and conflicting linear cICP+sRGB produce identical pixels across all three Windows RAW engine selections"
+    },
+    {
+      "id": "R4",
+      "priority": "P2",
+      "file": "crates/tr-worker/src/lib.rs",
+      "line": 300,
+      "status": "open",
+      "title": "Associated-alpha TIFF is transformed as unassociated RGB and becomes too dark",
+      "evidence": "Equivalent white-alpha fixtures return RGB about 0.108353 and 0.501960 for the same alpha 0.501961, with all three Windows engine selections"
+    }
+  ],
+  "bitmap_evidence": {
+    "bitmap_cases": [
+      {
+        "engine": "LibRawBilinear",
+        "file": "plain.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "file": "plain.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "TrueRenderer",
+        "file": "plain.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawBilinear",
+        "file": "cicp-linear.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "file": "cicp-linear.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "TrueRenderer",
+        "file": "cicp-linear.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawBilinear",
+        "file": "cicp-p3.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "file": "cicp-p3.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "TrueRenderer",
+        "file": "cicp-p3.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun chunk di colore",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawBilinear",
+        "file": "cicp-linear-srgb.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "file": "cicp-linear-srgb.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "TrueRenderer",
+        "file": "cicp-linear-srgb.png",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Png",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Png",
+            "height": 1,
+            "input_color": "sRGB · dichiarato dal file",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.15293946862220764,
+            0.06222373992204666,
+            0.02098652347922325,
+            1.0
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawBilinear",
+        "file": "associated-alpha.tif",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Tiff",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.10835347324609756,
+            0.10835333168506622,
+            0.10835350304841995,
+            0.501960813999176
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "file": "associated-alpha.tif",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Tiff",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.10835347324609756,
+            0.10835333168506622,
+            0.10835350304841995,
+            0.501960813999176
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "TrueRenderer",
+        "file": "associated-alpha.tif",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Tiff",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.10835347324609756,
+            0.10835333168506622,
+            0.10835350304841995,
+            0.501960813999176
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawBilinear",
+        "file": "straight-alpha.tif",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Tiff",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.5019605755805969,
+            0.5019598603248596,
+            0.5019606947898865,
+            0.501960813999176
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "LibRawAhd",
+        "file": "straight-alpha.tif",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Tiff",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.5019605755805969,
+            0.5019598603248596,
+            0.5019606947898865,
+            0.501960813999176
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      },
+      {
+        "engine": "TrueRenderer",
+        "file": "straight-alpha.tif",
+        "result": {
+          "accepted": true,
+          "info": {
+            "decoder": "image 0.25.10 · Tiff",
+            "filter": "nessuno (campioni LOD 0)",
+            "format": "Tiff",
+            "height": 1,
+            "input_color": "sRGB assunto · nessun profilo incorporato",
+            "native_bits": 8,
+            "orientation": "NoTransforms · applicato una volta",
+            "source_height": 1,
+            "source_width": 1,
+            "width": 1
+          },
+          "pixel": [
+            0.5019605755805969,
+            0.5019598603248596,
+            0.5019606947898865,
+            0.501960813999176
+          ],
+          "transport": "LPAC senza capacità + Job Object · pipe"
+        }
+      }
+    ],
+    "rescan_reducer": {
+      "after": "0",
+      "before": "2",
+      "scope": "Actual State reducer, with UI scheduling established by source review; no native button interaction claimed"
+    }
+  },
+  "bitmap_report_sha256": "66711e0d4e4c9b26daa383ff0218ab3bb8851f4c8ea085695be643eb2b787e3a",
+  "binary_sha256": {
+    "target/debug/tr-worker.exe": "286fd61c6895dd430d3a714c869d2c61b29a4aeed328a84496a9e37641c5c24e",
+    "target/debug/truerenderer.exe": "73d0c40ee4f02d3cbe626aa46a3c8013f7f670de58153106e4f8cd8e556deec2",
+    "target/release/tr-worker.exe": "f26fab8f79793974a196f0f57f3a784f2a510112e285aa8b6c47759ceb39847e",
+    "target/release/truerenderer.exe": "ffb02533ea6186b51bf1849ae34666b0b456fc57ab6d72d816455b0486f1aa4a"
+  },
+  "reviewed_source_file_count": 152,
+  "reviewed_source_manifest_sha256": "192380929f3ca323e729a869675104f2add1b30e5b460b058e3f3bec3333ea83",
+  "sources_unchanged_during_continuation": true,
+  "protected_files_unchanged": {
+    "AGENTS.md": "b9246202b31386a36a6c526a0cb4b963b0ed1996b2167d950357863a7dddb4ec",
+    "LICENSE": "f54c6c6ee279ba06a1b1618009826fe2a3f3af97083e962d3a3ae76f50cc039e",
+    "docs/TrueVision-Architettura.originale-v1.2.md": "ad3db38205e58d7f02e85259d5e0516feb3ced143909c96e1699951d65500e4c"
+  },
+  "remaining": [
+    "Correct the four findings and verify their actual triggering paths",
+    "Native Mac build, both XPC services and GUI validation deferred by owner",
+    "Clean Windows package installation",
+    "Colour, camera corpus, performance, driver/display and R0-R4 qualification"
+  ],
+  "scope": "Completion of the interrupted review using recovered test logs and synthetic fixtures. No new photo campaign or native GUI button exercise. Previous Nikon results remain separate; current worker hashes differ from that campaign. LPAC networking failed during Winsock initialization, not a measured connection-denial test.",
+  "documentation_checks": {
+    "local_links": "passed",
+    "git_diff_check": "passed",
+    "architecture_outside_progress_blocks": "unchanged",
+    "staging_empty": true,
+    "changed_existing_files": [
+      "PLAN.md",
+      "README.md",
+      "TrueVision-Architettura.md",
+      "docs/TrueRenderer-Architettura.md",
+      "docs/avanzamento.md",
+      "docs/revisione-pre-main.md",
+      "docs/ripresa-codex.md",
+      "reports/VERIFICA.md"
+    ]
+  }
+}

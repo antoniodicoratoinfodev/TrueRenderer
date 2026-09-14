@@ -1,0 +1,252 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-13",
+  "base_commit": "1279012b8cbcd15889ff060143b197d2523212ba",
+  "committed": false,
+  "staged": false,
+  "windows_corrections_verified": true,
+  "ready_for_cross_platform_main": false,
+  "macos_native_validation": "deferred by owner to a later Mac session",
+  "rust_tests": {
+    "ordinary": 81,
+    "explicit_integration": 8,
+    "passed": 89
+  },
+  "checks": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 0.6438325999915833
+    },
+    {
+      "name": "libraw-manifest",
+      "exit_code": 0,
+      "seconds": 0.11759979999624193
+    },
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 82.1025410000002
+    },
+    {
+      "name": "debug-build",
+      "exit_code": 0,
+      "seconds": 40.48259020000114
+    },
+    {
+      "name": "rust-tests",
+      "exit_code": 0,
+      "seconds": 32.11786369999754
+    },
+    {
+      "name": "rust-integration-tests",
+      "exit_code": 0,
+      "seconds": 14.640282000007574
+    },
+    {
+      "name": "isolation",
+      "exit_code": 0,
+      "seconds": 4.153826099995058
+    },
+    {
+      "name": "release-build",
+      "exit_code": 0,
+      "seconds": 205.41481750000094
+    },
+    {
+      "name": "worker-ipc",
+      "exit_code": 0
+    },
+    {
+      "name": "preview-reporting",
+      "exit_code": 0
+    },
+    {
+      "name": "resampling",
+      "exit_code": 0
+    }
+  ],
+  "libraw": {
+    "version": "0.22.2",
+    "upstream_files_verified": 106,
+    "compiled_translation_units": 79,
+    "manifest_sha256": "574b2913235ca6a6269cd82e6510bb75ed2787be24d64f07fde70ace9d90a18a"
+  },
+  "windows_inventory": {
+    "cargo_packages": 205,
+    "notices_verified": 348,
+    "git_preserves_upstream_and_notice_bytes": true
+  },
+  "isolation": {
+    "confined": {
+      "all_application_packages": {
+        "member": 0,
+        "ok": 1
+      },
+      "appcontainer": {
+        "error": null,
+        "ok": 1,
+        "value": 1
+      },
+      "capabilities": {
+        "bytes": 8,
+        "count": 0,
+        "ok": 1
+      },
+      "child_spawn_denied": true,
+      "code_read": true,
+      "job": {
+        "active": 1,
+        "flags": 9992,
+        "job_memory": 402653184,
+        "ok": 1,
+        "process_memory": 402653184
+      },
+      "lpac": {
+        "error": 87,
+        "ok": 0,
+        "value": 0
+      },
+      "lpac_native": {
+        "status": -1073741821,
+        "value": 0
+      },
+      "lpac_verified": true,
+      "network_error": 10107,
+      "read_error": 5,
+      "runtime_write_error": 5,
+      "winsock_init_error": 10107,
+      "write_error": 5
+    },
+    "control": {
+      "network_error": 0,
+      "read_error": 0,
+      "winsock_init_error": 0,
+      "write_error": 0
+    }
+  },
+  "raw_campaigns": [
+    {
+      "camera": "d750",
+      "cases": 90,
+      "passed": true,
+      "originals_unchanged_from_audit": true,
+      "private_report": "var/pre-main-fixes/test-root/var/raw-engine-evaluation-1789320918/report.json",
+      "source_count": 30,
+      "dimensions": [
+        [
+          4032,
+          6032
+        ],
+        [
+          6032,
+          4032
+        ]
+      ]
+    },
+    {
+      "camera": "d40",
+      "cases": 66,
+      "passed": true,
+      "originals_unchanged_from_audit": true,
+      "private_report": "var/pre-main-fixes/test-root/var/raw-engine-evaluation-1789321182/report.json",
+      "source_count": 22,
+      "dimensions": [
+        [
+          2014,
+          3039
+        ],
+        [
+          3039,
+          2014
+        ]
+      ]
+    }
+  ],
+  "ui": {
+    "passed": true,
+    "stages": 4,
+    "changed_engine_during_scan": true,
+    "pixel_checks": [
+      {
+        "checked_pixels": 65199,
+        "compute": "CPU",
+        "engine": "LibRawBilinear",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 1
+      },
+      {
+        "checked_pixels": 65199,
+        "compute": "CPU",
+        "engine": "LibRawAhd",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 2
+      },
+      {
+        "checked_pixels": 65199,
+        "compute": "CPU",
+        "engine": "TrueRenderer",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 3
+      },
+      {
+        "checked_pixels": 65199,
+        "compute": "CPU",
+        "engine": "LibRawBilinear",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 4
+      }
+    ]
+  },
+  "release_imports": {
+    "tr-worker.exe": [
+      "KERNEL32.dll",
+      "advapi32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll",
+      "bcryptprimitives.dll",
+      "kernel32.dll",
+      "ntdll.dll",
+      "ws2_32.dll"
+    ],
+    "truerenderer.exe": [
+      "KERNEL32.dll",
+      "USER32.dll",
+      "advapi32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll",
+      "bcryptprimitives.dll",
+      "combase.dll",
+      "dwmapi.dll",
+      "dxgi.dll",
+      "gdi32.dll",
+      "imm32.dll",
+      "kernel32.dll",
+      "ntdll.dll",
+      "ole32.dll",
+      "oleaut32.dll",
+      "opengl32.dll",
+      "setupapi.dll",
+      "shell32.dll",
+      "uiautomationcore.dll",
+      "user32.dll",
+      "userenv.dll",
+      "uxtheme.dll"
+    ]
+  },
+  "binary_sha256": {
+    "target/debug/tr-worker.exe": "96592a629913422aae4fd378bdfc9b9a539af414dbd797e6862cde602abb9bd6",
+    "target/debug/truerenderer.exe": "73d0c40ee4f02d3cbe626aa46a3c8013f7f670de58153106e4f8cd8e556deec2",
+    "target/release/tr-worker.exe": "143738e4e4101b8dc010538e472d69b480170c2555f8ef9b6c2b7ae230aa954b",
+    "target/release/truerenderer.exe": "ffb02533ea6186b51bf1849ae34666b0b456fc57ab6d72d816455b0486f1aa4a"
+  },
+  "remaining": [
+    "Native Mac build, bundle and both XPC services, bitmap inputs and engine changes",
+    "Clean Windows installation/package verification",
+    "Colour target accuracy, broader camera/noise corpus, other displays/drivers and R0-R4 gates"
+  ],
+  "network_test_scope": "LPAC has zero capabilities and cannot initialize Winsock here (10107); this is not a measured WSAEACCES connection denial or an exhaustive networking security audit.",
+  "scope": "Fix verification of the pre-main audit on this Windows host; no claim of universal colour superiority or complete release sandbox qualification. Private photos and full raw reports stay in ignored var."
+}

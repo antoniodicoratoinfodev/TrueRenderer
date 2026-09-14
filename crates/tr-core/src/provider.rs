@@ -241,6 +241,7 @@ mod tests {
         let artifact = ImageLevels::from_pyramid(
             reference,
             PreviewRequest {
+                raw_engine: crate::decoder::RawEngine::default(),
                 quality: PreviewQuality::Full,
                 edge: 81,
             },
@@ -249,6 +250,7 @@ mod tests {
         assert!(artifact.base_level() > 0);
         assert!(!artifact.sufficient_for(PreviewRequest::full()));
         let larger_view = PreviewRequest {
+            raw_engine: crate::decoder::RawEngine::default(),
             quality: PreviewQuality::Full,
             edge: 257,
         };
@@ -279,6 +281,7 @@ mod tests {
         assert_eq!(PreviewRequest::full().maximum_level_edge(), u32::MAX);
         assert_eq!(
             PreviewRequest {
+                raw_engine: crate::decoder::RawEngine::default(),
                 quality: PreviewQuality::Standard,
                 edge: 0
             }

@@ -61,8 +61,11 @@ impl Queues {
     // still share the in-flight decode, even if its original consumer left.
     fn wants_source(&self, job: &Job) -> bool {
         self.wanted.as_ref().is_none_or(|w| {
-            w.iter()
-                .any(|(id, _, generation)| id == &job.item.id && *generation == job.generation)
+            w.iter().any(|(id, request, generation)| {
+                id == &job.item.id
+                    && *generation == job.generation
+                    && request.raw_engine == job.request.raw_engine
+            })
         })
     }
 }
@@ -531,6 +534,7 @@ impl DecodePool {
                         // Only domain revocation/shutdown may terminate a native
                         // call. View changes cancel at boundaries, retaining all
                         // leases until the actual probe/decode has completed.
+                        broker.set_raw_engine(job.request.raw_engine);
                         let info = broker.probe_snapshot(&source, revoked)?;
                         drop(probe_lease);
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
@@ -560,7 +564,11 @@ impl DecodePool {
                             let mut consumers: Vec<_> = q
                                 .pending
                                 .keys()
-                                .filter(|(id, _, g)| id == &job.item.id && *g == job.generation)
+                                .filter(|(id, request, g)| {
+                                    id == &job.item.id
+                                        && *g == job.generation
+                                        && request.raw_engine == job.request.raw_engine
+                                })
                                 .filter(|key| q.wanted.as_ref().is_none_or(|w| w.contains(*key)))
                                 .map(|key| Job {
                                     request: key.1,
@@ -573,10 +581,14 @@ impl DecodePool {
                                 q.claimed.insert(consumer.key());
                             }
                             q.lookup.retain(|j| {
-                                j.item.id != job.item.id || j.generation != job.generation
+                                j.item.id != job.item.id
+                                    || j.generation != job.generation
+                                    || j.request.raw_engine != job.request.raw_engine
                             });
                             q.decode.retain(|r| {
-                                r.job.item.id != job.item.id || r.job.generation != job.generation
+                                r.job.item.id != job.item.id
+                                    || r.job.generation != job.generation
+                                    || r.job.request.raw_engine != job.request.raw_engine
                             });
                             consumers
                         };
@@ -638,7 +650,11 @@ impl DecodePool {
                             let mut jobs: Vec<_> = q
                                 .claimed
                                 .iter()
-                                .filter(|(id, _, g)| id == &job.item.id && *g == job.generation)
+                                .filter(|(id, request, g)| {
+                                    id == &job.item.id
+                                        && *g == job.generation
+                                        && request.raw_engine == job.request.raw_engine
+                                })
                                 .map(|(_, request, _)| Job {
                                     request: *request,
                                     ..job.clone()
@@ -837,7 +853,7 @@ pub fn prepare_cached(
     })
 }
 
-#[cfg(all(test, unix))]
+#[cfg(test)]
 mod tests {
     use super::*;
     #[test]
@@ -866,12 +882,30 @@ mod tests {
                 revision: 0,
             },
             request: PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: tr_core::preview::PreviewQuality::Full,
                 edge: 128,
             },
             priority: PreviewPriority::Background,
             generation: 1,
         }
+    }
+    #[test]
+    fn another_engine_cannot_keep_an_abandoned_development_alive() {
+        let old = navigation_job("same-source");
+        let new = Job {
+            request: PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::TrueRenderer,
+                ..old.request
+            },
+            ..old.clone()
+        };
+        let queues = Queues {
+            wanted: Some(HashSet::from([new.key()])),
+            ..Queues::default()
+        };
+        assert!(!queues.wants_source(&old));
+        assert!(queues.wants_source(&new));
     }
 
     #[test]
@@ -940,6 +974,9 @@ mod tests {
         assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
     }
 
+    /// Drives the pool through a shell wrapper that pauses the worker, so it
+    /// is Unix-only until an equivalent exists for Windows.
+    #[cfg(unix)]
     fn change_view_during_native_probe(keep_source: bool) {
         let binary = PathBuf::from(std::env::var_os("TR_WORKER_BINARY").unwrap());
         let data = tempfile::tempdir().unwrap();
@@ -983,6 +1020,7 @@ mod tests {
         };
         next.priority = PreviewPriority::Immediate;
         next.request = PreviewRequest {
+            raw_engine: tr_core::decoder::RawEngine::default(),
             quality: tr_core::preview::PreviewQuality::Standard,
             edge: 64,
         };
@@ -1032,12 +1070,14 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
     fn navigation_finishes_native_probe_but_skips_obsolete_development() {
         change_view_during_native_probe(false);
     }
 
     #[test]
+    #[cfg(unix)]
     #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
     fn quality_change_reuses_active_source_without_delivering_removed_consumer() {
         change_view_during_native_probe(true);
@@ -1083,6 +1123,7 @@ mod tests {
                 .skip(1)
                 .filter_map(|level| {
                     let request = PreviewRequest {
+                        raw_engine: tr_core::decoder::RawEngine::default(),
                         quality: tr_core::preview::PreviewQuality::Full,
                         edge: level.width.max(level.height).div_ceil(2),
                     };
@@ -1106,7 +1147,10 @@ mod tests {
             assert_eq!(budget.usage().reserved, 0);
         }
     }
-    use std::{os::unix::fs::PermissionsExt, process::Command, time::Instant};
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
+    #[cfg(unix)]
+    use std::{process::Command, time::Instant};
 
     #[test]
     fn priority_order_is_fifo_and_inflight_lookup_keeps_promotion() {
@@ -1239,10 +1283,12 @@ mod tests {
         let requests = [
             PreviewRequest::full(),
             PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: tr_core::preview::PreviewQuality::Standard,
                 edge: 0,
             },
             PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: tr_core::preview::PreviewQuality::Full,
                 edge: 64,
             },
@@ -1297,6 +1343,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)]
     #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
     fn changing_domain_reaps_idle_decoder_without_a_new_job() {
         let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -1344,6 +1391,7 @@ mod tests {
                     revision: 0,
                 },
                 request: PreviewRequest {
+                    raw_engine: tr_core::decoder::RawEngine::default(),
                     quality: tr_core::preview::PreviewQuality::Full,
                     edge: 320
                 },

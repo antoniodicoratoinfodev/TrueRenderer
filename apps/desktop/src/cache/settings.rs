@@ -21,6 +21,7 @@ pub enum Prefetch {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
 pub struct Settings {
+    pub raw_engine: tr_core::decoder::RawEngine,
     pub schema: u32,
     pub enabled: bool,
     pub disk_mib: u64,
@@ -41,6 +42,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            raw_engine: tr_core::decoder::RawEngine::default(),
             schema: 2,
             enabled: true,
             disk_mib: 4096,
@@ -63,6 +65,10 @@ impl Settings {
     pub fn validate(&self) -> Result<()> {
         ensure!(self.schema == 2, "Versione impostazioni non supportata");
         ensure!(
+            self.raw_engine.available() || !cfg!(any(windows, target_os = "macos")),
+            "Motore RAW non disponibile su questa piattaforma: scegliere un motore nelle impostazioni"
+        );
+        ensure!(
             (64..=65536).contains(&self.disk_mib)
                 && (16..=2048).contains(&self.temporary_mib)
                 && (1..=3650).contains(&self.unused_days)
@@ -81,6 +87,11 @@ impl Settings {
     /// Call before Catalog::open creates library.sqlite. The directory/instance
     /// lock alone does not identify an existing installation.
     pub fn load(data: &Path) -> Result<Self> {
+        let settings = Self::read(data)?;
+        settings.validate()?;
+        Ok(settings)
+    }
+    fn read(data: &Path) -> Result<Self> {
         let path = data.join("settings.json");
         if !path.exists() {
             return Ok(Self {
@@ -103,10 +114,33 @@ impl Settings {
         if legacy {
             settings.quality = PreviewQuality::Full;
         }
-        settings.validate()?;
         Ok(settings)
     }
     pub fn load_or_recover(data: &Path) -> (Self, Option<String>) {
+        // Preserve the other preferences and the original cross-platform JSON.
+        if let Ok(mut settings) = Self::read(data)
+            && cfg!(any(windows, target_os = "macos"))
+            && !settings.raw_engine.available()
+        {
+            let previous = settings.raw_engine;
+            settings.raw_engine = Default::default();
+            if settings.validate().is_ok() {
+                let saved = (|| -> Result<()> {
+                    Self::backup(data, "settings-platform-")?;
+                    settings.save(data)
+                })();
+                let suffix = saved
+                    .err()
+                    .map(|e| format!("; migrazione non salvata: {e:#}"))
+                    .unwrap_or_default();
+                return (
+                    settings,
+                    Some(format!(
+                        "Motore {previous:?} non disponibile: selezionato il default della piattaforma; altre preferenze conservate{suffix}"
+                    )),
+                );
+            }
+        }
         match Self::load(data) {
             Ok(settings) => {
                 let message = settings
@@ -123,16 +157,7 @@ impl Settings {
                 let recovery = (|| -> Result<()> {
                     // Persist the original bytes before replacing anything, including
                     // unknown future schemas. Failure leaves settings.json untouched.
-                    let mut backup = tempfile::Builder::new()
-                        .prefix("settings-damaged-")
-                        .suffix(".json")
-                        .tempfile_in(data)?;
-                    std::io::copy(
-                        &mut std::fs::File::open(data.join("settings.json"))?,
-                        &mut backup,
-                    )?;
-                    backup.as_file().sync_all()?;
-                    backup.keep()?;
+                    Self::backup(data, "settings-damaged-")?;
                     settings.save(data)
                 })();
                 let suffix = recovery
@@ -147,6 +172,19 @@ impl Settings {
                 )
             }
         }
+    }
+    fn backup(data: &Path, prefix: &str) -> Result<()> {
+        let mut backup = tempfile::Builder::new()
+            .prefix(prefix)
+            .suffix(".json")
+            .tempfile_in(data)?;
+        std::io::copy(
+            &mut std::fs::File::open(data.join("settings.json"))?,
+            &mut backup,
+        )?;
+        backup.as_file().sync_all()?;
+        backup.keep()?;
+        Ok(())
     }
     pub fn save(&self, data: &Path) -> Result<()> {
         self.validate()?;
@@ -193,6 +231,45 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(windows)]
+    #[test]
+    fn apple_preference_migrates_with_warning_and_original_backup() {
+        let dir = tempfile::tempdir().unwrap();
+        let original = br#"{"schema":2,"raw_engine":"Apple","disk_mib":8192,"quality":"Full"}"#;
+        std::fs::write(dir.path().join("settings.json"), original).unwrap();
+        let (settings, message) = Settings::load_or_recover(dir.path());
+        assert_eq!(settings.raw_engine, Default::default());
+        assert_eq!(settings.disk_mib, 8192);
+        assert_eq!(settings.quality, PreviewQuality::Full);
+        assert!(message.unwrap().contains("non disponibile"));
+        let backup = std::fs::read_dir(dir.path())
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .find(|p| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .starts_with("settings-platform-")
+            })
+            .unwrap();
+        assert_eq!(std::fs::read(backup).unwrap(), original);
+        assert_eq!(Settings::load(dir.path()).unwrap(), settings);
+    }
+    #[test]
+    fn raw_engine_roundtrips_and_old_settings_keep_the_platform_default() {
+        let data = tempfile::tempdir().unwrap();
+        std::fs::write(data.path().join("settings.json"), br#"{"schema":2}"#).unwrap();
+        assert_eq!(
+            Settings::load(data.path()).unwrap().raw_engine,
+            Default::default()
+        );
+        let settings = Settings {
+            raw_engine: tr_core::decoder::RawEngine::TrueRenderer,
+            ..Settings::default()
+        };
+        settings.save(data.path()).unwrap();
+        assert_eq!(Settings::load(data.path()).unwrap(), settings);
+    }
     #[test]
     fn new_legacy_and_corrupt_installations_preserve_the_contract() {
         let data = tempfile::tempdir().unwrap();
