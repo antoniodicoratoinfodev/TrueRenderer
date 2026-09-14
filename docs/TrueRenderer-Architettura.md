@@ -11,6 +11,12 @@ Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubbli
 
 La baseline Mac verificata rimane quella del 9 settembre: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](../reports/preview-navigation-continuation-macos.json). Il nuovo bundle Apple/LibRaw e le prove XPC sono rinviati dal titolare; i risultati storici non li qualificano.
 
+### Interfaccia bilingue — incremento locale sul Mac
+
+Implementati catalogo inglese/italiano del frontend, inglese predefinito anche per impostazioni precedenti senza lingua, menu Language/Lingua con applicazione immediata e persistenza. Il cambio salva soltanto la lingua e conserva selezione, zoom, generazione delle anteprime e preferenze ancora in bozza. Tradotti controlli, preferenze, guida, stato e descrizioni di provenienza; nomi file, percorsi, parole chiave e identificatori tecnici restano invariati. I dialoghi nativi seguono il sistema e dettagli diagnostici esterni possono mantenere la lingua originale. README aggiornato con istruzioni in entrambe le lingue.
+
+Verificati build desktop/worker, fmt e Clippy desktop con warning negati, cinque nuove regressioni (default/migrazione, messaggi e percorsi, template, rendering bilingue, cambio lingua/persistenza/fallimento di scrittura). Suite desktop: 39 passati, 6 ignorati e un fallimento del test Unix sugli hard link della cache, riprodotto anche sul commit base `666f650` in una copia separata. Smoke grafico delle preferenze passato in inglese e italiano su corpus/dati temporanei; schermate controllate e conservate localmente in `var/localization/`, escluse da Git. [Rapporto e hash](../reports/localization-macos.json). Corretto `sync-docs.py` per Python 3.9 del Mac, preservando LF e blocchi esterni. Restano aperti il rilievo cache, la prova UI Windows e la qualifica del nuovo bundle/XPC; il bundle esistente non è sostituito. Nessun gate R0–R4 chiuso.
+
 ### Implementato e verificato nelle campagne Windows
 
 - LPAC senza capacità e Job Object; controlli filesystem e limiti descritti in [ADR 0009](adr/0009-isolamento-worker-windows.md).

@@ -184,6 +184,17 @@ impl Manager {
         let _writer = self.settings_writer.lock().unwrap();
         self.settings().save(data)
     }
+    /// Save only the language, serialized with background preference saves.
+    /// Failure preserves the active preference; no image work is invalidated.
+    pub fn set_language(&self, language: crate::i18n::Language, data: &Path) -> Result<()> {
+        let _writer = self.settings_writer.lock().unwrap();
+        let mut current = self.settings.write().unwrap();
+        let mut updated = current.clone();
+        updated.language = language;
+        updated.save(data)?;
+        *current = updated;
+        Ok(())
+    }
     pub fn decoded(&self, consumers: usize, stats: &tr_platform::BrokerStatistics) {
         let mut s = self.statistics.lock().unwrap();
         s.decode_jobs += 1;

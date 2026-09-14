@@ -1,0 +1,43 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-09-14",
+  "base_commit": "666f650dafe7170d89c8e6165c5482e219580a58",
+  "scope": "English/Italian desktop interface, persistent preference, unchanged selection/zoom and draft settings. Native settings smoke on a separate copy of the generated corpus and temporary data. No external photographs or new bundle/XPC qualification.",
+  "localization_passed": true,
+  "build": {
+    "command": "scripts/cargo-local.sh build --offline -p truerenderer -p tr-worker",
+    "passed": true,
+    "desktop_sha256": "28cd9d97283483c2b99ecfac7452ad92b4421a86515f6023fd159d48f15210bb",
+    "worker_sha256": "d0fe91c83a09dc534a659265d6374ddb5ce9e88a9324ce77cd3255cb50e008ca",
+    "notes": "Four existing unused-code warnings in the macOS worker; desktop Clippy passed with warnings denied. Existing dist bundle not replaced."
+  },
+  "checks": {
+    "format": true,
+    "desktop_clippy_all_targets_deny_warnings": true,
+    "new_regression_tests": 5,
+    "new_regressions_passed": true,
+    "desktop_suite": { "passed": 39, "failed": 1, "ignored": 6 },
+    "native_english_settings_smoke": true,
+    "native_italian_settings_smoke": true,
+    "native_screenshots_inspected": true,
+    "default_and_legacy_settings_english": true,
+    "language_roundtrip": true,
+    "failed_save_preserves_active_language": true,
+    "language_preserves_selection_zoom_generation_and_unapplied_settings": true,
+    "translated_messages_preserve_interpolated_paths": true,
+    "docs_sync_python_3_9": true
+  },
+  "known_failure": {
+    "test": "cache::tests::symlinks_hardlinks_busy_readers_and_unowned_directories_are_not_modified",
+    "assertion": "cache.store(..., link, ...).is_err()",
+    "reproduced_on_unmodified_base_commit": true,
+    "baseline_method": "git archive HEAD into a temporary checkout; run the exact test with the local toolchain",
+    "scope": "Existing Unix cache hard-link test, outside localization. Not fixed or treated as a passing full suite."
+  },
+  "limitations": [
+    "Native file dialogs follow the OS language; external diagnostic details can retain their original language.",
+    "Windows native UI not run in this session.",
+    "No gate R0-R4 closed; Standard/Reference assurance remains unavailable."
+  ]
+}

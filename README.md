@@ -23,8 +23,15 @@ Every output still has **Preview** assurance. Qualified Standard/Reference modes
 - Inspect decoder, colour and orientation provenance, source SHA-256, pixel values and a histogram labelled with the resident image stage.
 - Rate, reject, label and add keywords; undo within a session and export annotations as JSON.
 - Configure memory, GPU, CPU and disk-cache limits; pause background preparation or rebuild previews.
+- Switch between English and Italian from the Language menu; English is the default.
 
 Original photographs are read-only. Annotations are stored separately in SQLite, with verified backups. No account or image upload is required.
+
+## Interface language
+
+TrueRenderer starts in **English**, including when upgrading settings that do not yet contain a language preference. Use **Language → Italiano** to switch to Italian, or **Lingua → English** to switch back. The change takes effect immediately and is saved for the next launch, without changing image selection, zoom, or unapplied performance settings.
+
+Menus, preview controls, the inspector, preferences, help and application status messages support both languages. File names, paths, keywords and technical identifiers are preserved. Native file dialogs follow the operating system language; diagnostic details supplied by the OS or a decoder may retain their original language.
 
 ## Platforms and formats
 
@@ -39,7 +46,7 @@ Format recognition does not guarantee support for every variant. Windows rejects
 
 ### RAW engines
 
-In **Impostazioni → Motore RAW**, choose an engine and press **Applica e salva**. Windows offers LibRaw bilinear (default), LibRaw AHD and experimental TrueRenderer fp32. The macOS build configuration also offers Apple RAW (default); that updated bundle still needs native validation. Applying the setting refreshes previews while preserving selection and zoom, and cache identities distinguish the recipes.
+In **Settings → RAW engine**, choose an engine and press **Apply and save** (**Impostazioni → Motore RAW → Applica e salva** in Italian). Windows offers LibRaw bilinear (default), LibRaw AHD and experimental TrueRenderer fp32. The macOS build configuration also offers Apple RAW (default); that updated bundle still needs native validation. Applying the setting refreshes previews while preserving selection and zoom, and cache identities distinguish the recipes.
 
 LibRaw 0.22.2 reads the RAW data. Bilinear and AHD development pass through a 16-bit integer RGB raster; the independent Rust demosaic develops the mosaic in fp32 without an integer RGB intermediate. The Rust engine currently accepts Nikon D750 and D40 Bayer NEFs and the project's synthetic Bayer DNG fixtures. Other cameras and variants are not implicitly supported.
 
@@ -96,7 +103,7 @@ open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 
 ## Local data and documentation
 
-Keep `var/library.sqlite` and `var/backups/`: they are durable user data, not disposable caches. Settings live in `var/settings.json`. Private photographs, working reports, toolchains, build outputs and caches stay outside Git.
+Keep `var/library.sqlite` and `var/backups/`: they are durable user data, not disposable caches. Settings live in `var/settings.json`, including the interface language (`"language": "en"` or `"it"`). A custom `--data` directory stores its own settings. Private photographs, working reports, toolchains, build outputs and caches stay outside Git.
 
 Start with the [documentation index](docs/README.md), which distinguishes current specifications, historical reports and retained copies. The [development plan](PLAN.md) tracks work and gates; [avanzamento](docs/avanzamento.md) is the editable progress register. After changing that register or the integrated preview specification, run:
 

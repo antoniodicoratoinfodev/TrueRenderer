@@ -1,6 +1,7 @@
 mod cache;
 mod decode_pool;
 mod graphics;
+mod i18n;
 mod service;
 mod source_monitor;
 mod ui;

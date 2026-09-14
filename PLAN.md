@@ -4,6 +4,13 @@ Aggiornato: 14 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Archi
 
 Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Il Mac verificato resta la baseline del 9 settembre; nuovo bundle/XPC rinviato. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
 
+## Interfaccia bilingue — 14 settembre 2026
+
+- [x] Tradurre controlli, preferenze, guida e messaggi applicativi; inglese predefinito, menu Language/Lingua con English e Italiano.
+- [x] Salvare la lingua senza applicare altre preferenze in bozza o invalidare immagini, selezione e zoom; compatibilità con impostazioni precedenti.
+- [x] Aggiornare README con lingua, comandi inglesi e limiti dei dialoghi/diagnostica nativi.
+- [x] Verificare build, lint, cinque nuove regressioni e smoke grafico inglese/italiano; sincronizzare le architetture anche con Python 3.9. Suite desktop: 39 passati, 6 ignorati e un fallimento cache riprodotto sul commit base; [rapporto](reports/localization-macos.json).
+
 ## Revisioni Windows del 13–14 settembre
 
 - [x] Revisionare README e Markdown dopo la pubblicazione: separare Windows/macOS e stato corrente/storico, indicare i documenti archiviabili, verificare i link locali e sincronizzare le architetture.

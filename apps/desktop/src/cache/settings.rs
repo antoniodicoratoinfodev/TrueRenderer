@@ -21,6 +21,7 @@ pub enum Prefetch {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
 pub struct Settings {
+    pub language: crate::i18n::Language,
     pub raw_engine: tr_core::decoder::RawEngine,
     pub schema: u32,
     pub enabled: bool,
@@ -42,6 +43,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            language: crate::i18n::Language::default(),
             raw_engine: tr_core::decoder::RawEngine::default(),
             schema: 2,
             enabled: true,
@@ -231,6 +233,29 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn language_defaults_to_english_and_roundtrips_without_losing_preferences() {
+        use crate::i18n::Language;
+        let data = tempfile::tempdir().unwrap();
+        assert_eq!(
+            Settings::load(data.path()).unwrap().language,
+            Language::English
+        );
+        std::fs::write(
+            data.path().join("settings.json"),
+            br#"{"schema":2,"disk_mib":8192,"quality":"Full"}"#,
+        )
+        .unwrap();
+        let mut settings = Settings::load(data.path()).unwrap();
+        assert_eq!(settings.language, Language::English);
+        for language in [Language::Italian, Language::English] {
+            settings.language = language;
+            settings.save(data.path()).unwrap();
+            assert_eq!(Settings::load(data.path()).unwrap(), settings);
+            assert_eq!(settings.disk_mib, 8192);
+            assert_eq!(settings.quality, PreviewQuality::Full);
+        }
+    }
     #[cfg(windows)]
     #[test]
     fn apple_preference_migrates_with_warning_and_original_backup() {

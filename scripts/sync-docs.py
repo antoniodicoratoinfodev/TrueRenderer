@@ -68,5 +68,7 @@ for path in (original, canonical):
         first, rest = body.split("\n", 1)
         body = first + "\n\n" + block + rest
     body = replace_block(body, spec_begin, spec_end, preview_spec(path))
-    path.write_text(body, encoding="utf-8", newline="\n")
+    # Path.write_text(newline=...) requires Python 3.10; macOS ships 3.9.
+    with path.open("w", encoding="utf-8", newline="\n") as output:
+        output.write(body)
     print(path)
