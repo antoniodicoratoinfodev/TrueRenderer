@@ -15,6 +15,7 @@ use tr_core::{
     provider::ImageLevels,
 };
 
+pub(crate) mod navigation;
 mod preferences;
 mod style;
 use preferences::SettingsPage;
@@ -31,6 +32,7 @@ struct CachedImage {
     worker_pid: Option<u32>,
 }
 pub struct Startup {
+    pub navigation: bool,
     pub smoke: bool,
     pub sampling_smoke: bool,
     pub external_smoke: bool,
@@ -38,6 +40,7 @@ pub struct Startup {
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
+    navigation_probe: Option<navigation::Probe>,
     state: State,
     service: Service,
     root: PathBuf,
@@ -118,6 +121,7 @@ impl TrueRenderer {
         startup: Startup,
     ) -> Self {
         let Startup {
+            navigation,
             smoke,
             sampling_smoke,
             external_smoke,
@@ -193,6 +197,7 @@ impl TrueRenderer {
         let folder = root.join("corpus");
         let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
+            navigation_probe: navigation.then(navigation::Probe::new),
             state: State::default(),
             cache_settings: service.cache.settings(),
             settings_data: data,
@@ -905,6 +910,7 @@ impl TrueRenderer {
         }
         let rejected = self.service.cache.memory.usage().rejected;
         if rejected > self.rejected_admissions {
+            self.presenter.release_optional_frames();
             self.trim_images(true);
             self.rejected_admissions = rejected;
         }
@@ -1069,6 +1075,9 @@ impl TrueRenderer {
                     .collect::<Vec<_>>()
             });
             for (name, img) in screenshots {
+                if name.starts_with("navigation-") {
+                    continue;
+                }
                 let pixels: Vec<u8> = img.pixels.iter().flat_map(|p| p.to_array()).collect();
                 let path = self
                     .root
@@ -2289,7 +2298,13 @@ impl TrueRenderer {
                     ));
                 }
             }
-            let lane = format!("view:{id}:{}:{}", item.id, c.digest);
+            let lane = format!(
+                "view:{id}:{}:{}:{:?}:{:?}",
+                item.id,
+                c.digest,
+                self.cache_settings.raw_engine,
+                c.pyramid.source_size()
+            );
             let (response, sample) = tr_render::viewport(
                 ui,
                 &mut self.presenter,
@@ -2739,6 +2754,9 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
     }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
+        if self.navigation_probe.is_some() {
+            return;
+        }
         if !self.smoke {
             return;
         }
@@ -2921,7 +2939,11 @@ impl eframe::App for TrueRenderer {
         self.primary_demand.clear();
         self.viewer_prefetch_edge = 0;
         self.demand_jobs.clear();
+        self.navigation_receive(&ctx);
         self.poll(&ctx);
+        if !self.navigation_begin(&ctx) {
+            return;
+        }
         self.keyboard(&ctx);
         self.image_focus_ids.clear();
         if ctx.input(|i| i.viewport().close_requested()) && !self.state.pending.is_empty() {
@@ -2981,6 +3003,7 @@ impl eframe::App for TrueRenderer {
         self.smoke_tick(&ctx);
         self.background_demand(&ctx);
         self.flush_demand();
+        self.navigation_capture(&ctx);
         if self.scanning || !self.pending_images.is_empty() || !self.state.pending.is_empty() {
             ctx.request_repaint_after(Duration::from_millis(50));
         }
@@ -3087,6 +3110,7 @@ mod settings_regressions {
             dir.path().join("data"),
             dir.path().join("unused-worker"),
             Startup {
+                navigation: false,
                 smoke: false,
                 sampling_smoke: false,
                 external_smoke: false,

@@ -1,0 +1,166 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "checked_at": "2026-09-15T14:56:12.662096+00:00",
+  "base_commit": "cdca799996785e8fdaceedb2954119ef82caa325",
+  "passed": true,
+  "scope": "Cache integrity correction and native macOS validation on generated sources; no release or camera-wide qualification.",
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "arch": "arm64",
+    "gpu": "Apple M4 / Metal",
+    "native_checks_outside_terminal_sandbox": true
+  },
+  "changes": [
+    "Reject removal/replacement of cache hard links in the common directory primitive, including links added after a scan; preserve read-only validated reuse.",
+    "Keep Windows portable decoder code in Windows production and cross-platform test builds, resolving macOS dead-code warnings.",
+    "Explicitly skip two private-camera integration tests when TR_RAW_SAMPLE is absent.",
+    "Align current plans and resume notes with completed Mac checks and remaining navigation/RAW gates."
+  ],
+  "checks": {
+    "fmt": true,
+    "workspace_clippy_all_targets_warnings_denied": true,
+    "workspace_debug_build": true,
+    "workspace_release_build": true,
+    "verify_sh_exit_code": 0,
+    "ordinary_rust_passed": 106,
+    "explicit_rust_integrations_passed": 10,
+    "desktop_ordinary_passed": 45,
+    "cache_tests_passed_subset": 25,
+    "private_camera_tests_skipped": 2,
+    "python_reporting_tests_passed": 2,
+    "worker_protocol_checks_passed": 6,
+    "resampling_signal_cases_passed": 24,
+    "exact_numerical_1to1": true,
+    "historical_cache_failure_reproduced_before_fix": true,
+    "native_decode_generated": {
+      "cases": 17,
+      "cpu_reuse_bit_exact": true,
+      "explicit_metal_comparisons_passed": true,
+      "metal_enabled_for_decode": false
+    },
+    "codesign_deep_strict": true,
+    "xpc": {
+      "passed": true,
+      "two_distinct_processes": true,
+      "corpus_images": 12,
+      "production_rejects_fault_injection": true
+    },
+    "native_cache": {
+      "passed": true,
+      "checks": [
+        {
+          "bit_exact_all_levels": true,
+          "cold_seconds_including_write": 1.228861666,
+          "file": "12mp-jpeg.jpg",
+          "no_warm_decoder_jobs": true,
+          "passed": true,
+          "reopened_cache_hit": true,
+          "source_unchanged": true,
+          "warm_seconds": [
+            0.396010708,
+            0.286612417,
+            0.285318042,
+            0.285594208,
+            0.287321167
+          ]
+        },
+        {
+          "bit_exact_all_levels": true,
+          "cold_seconds_including_write": 2.709839541,
+          "file": "07-bayer.dng",
+          "no_warm_decoder_jobs": true,
+          "passed": true,
+          "reopened_cache_hit": true,
+          "source_unchanged": true,
+          "warm_seconds": [
+            0.025533125,
+            0.020485667,
+            0.020242625,
+            0.020121292,
+            0.020548875
+          ]
+        },
+        {
+          "bit_exact_all_levels": true,
+          "cold_seconds_including_write": 0.006546792,
+          "file": "16bit.png",
+          "no_warm_decoder_jobs": true,
+          "passed": true,
+          "reopened_cache_hit": true,
+          "source_unchanged": true,
+          "warm_seconds": [
+            0.000248333,
+            0.0002135,
+            0.000203167,
+            0.000208542,
+            0.000202833
+          ]
+        }
+      ],
+      "clear_removes_only_derivatives": true,
+      "scope": "Three generated sources; one cold application-cache run and five warm runs each; OS cache is not flushed. Bit-exact full fp32 pyramids and histogram. Not p95 or whole-machine memory qualification."
+    },
+    "native_surface": {
+      "passed": true,
+      "screenshots": 8,
+      "regions": 11,
+      "differing_channels": 77,
+      "max_channel_error_u8": 1,
+      "physical_1to1_exact": true,
+      "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification."
+    },
+    "gpu_filter_and_output": {
+      "application": "TrueRenderer",
+      "check": {
+        "cases": 9,
+        "cpu_seconds": 0.0072833329999999995,
+        "display_channels": 1593672,
+        "display_failures": 0,
+        "display_max_error": 1,
+        "failures": 0,
+        "gpu_seconds": 0.024895163999999997,
+        "max_error": 6.103515625e-05,
+        "samples": 1593672,
+        "worst_ratio": 0.7426846027374268
+      },
+      "display_threshold_levels": 1,
+      "linear_threshold": "1e-5 + 1e-4 * abs(cpu)",
+      "passed": true,
+      "scope": "Separable WGSL with canonical coefficients and persistent display pipeline, odd sizes, alpha, boundaries, 1:1 and signed linear values up to 1000. GPU timing includes qualification compilation/upload/readback; not an interactive speed claim.",
+      "version": "0.1.5"
+    }
+  },
+  "bundle": "dist/TrueRenderer-restyle.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "cb844b505a2ac7fc914a3876e54271bccc651202084fc30eaacb7772bd1ca88a",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+  },
+  "source_sha256": {
+    "apps/desktop/src/cache/directory.rs": "15ab9a1cb7ad42b514e913f1a3b900944d20552ad1c02105989c46d2c077a9dc",
+    "apps/desktop/src/cache/artifact.rs": "8651ec3b8d50e0f6de4e75df5c78734355fc6d67dab65c0d54d434f08e856081",
+    "apps/desktop/src/cache/mod.rs": "083d4714e5e78c5ab921f52354b359032755c5326139cd1db391f3f4bcd0fd17",
+    "crates/tr-worker/src/lib.rs": "50900c5452bafe848d488089566f25043b635180b561cd971ea7eb8ba7a17f92",
+    "crates/tr-worker/src/container.rs": "2b08ad735534be3d74fd9cb12ffb33017075c2f6e7f25fcf01c2893a031a399f",
+    "scripts/verify.sh": "8e7a23afbf01ca2ef7f67579425775edc3a149ed902275c877d143252c6eafaa"
+  },
+  "local_evidence_root": "var/cache-integrity",
+  "local_evidence_sha256": {
+    "verify.log": "08f3d2af4189e28d0a1d45e2a91912285ca5f366d98642c24478484e7754b9e7",
+    "package.log": "22ce92f8ad83be464896f6331f93d8ec2989c80db7ae2a2fb6d158479f176432",
+    "xpc-qualification-macos.json": "e056f3f3c65082286eb7fef70897c287de06094d74d79c4f38f9eb0c5a5e11d5",
+    "cache-macos.json": "8ac41e52045e06f0d45f7ba424186ea33b311a20adcb6c21f2d0ec5b83fdd72c",
+    "sampling-presentation-macos.json": "5e6aedbe78c390604b47bae40114dfa541612053dff0cd94f2bc4ac3476055aa"
+  },
+  "previous_bundle_backup": "var/cache-integrity/before.app",
+  "limits": [
+    "Hard-link checks are not atomic against every external rename/link race. Protected records may remain beyond removable cache quota.",
+    "Windows runtime tests were not repeated on this Mac.",
+    "Two private-camera tests explicitly skipped; broad Apple/LibRaw photographic matrix remains open.",
+    "LibRaw object deployment target 27.0 versus link target 13.0 still warns; minimum OS and notarized release unqualified.",
+    "Cache timings are isolated trials with OS cache not flushed; no event-to-frame p95/p99 or performance improvement claim.",
+    "UI layout screenshots in README remain those of the toolbar campaign; this increment changes no UI.",
+    "R0-R4, physical color/display, full sandbox and release gates remain open."
+  ]
+}

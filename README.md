@@ -12,9 +12,13 @@ TrueRenderer is a native desktop image browser and viewer designed to make the r
 
 The Windows port, selectable RAW engines and subsequent fixes were published in commit `67146e3` on 14 September 2026. The latest Windows campaign passed **107 Rust tests (99 ordinary tests and 8 integrations)**, debug/release builds, colour/orientation regressions and IPC checks. See the [corrections and limits](docs/revisione-aggiuntiva-2026-09-14.md#correzioni) and [report with hashes](reports/gamma-orientation-fixes-windows.json).
 
-A separate updated macOS build is available locally as `dist/TrueRenderer-restyle.app`. The September 15 toolbar revision passed seven UI regressions, native checks of all four preferences tabs in both languages, rendering comparisons and the two XPC service checks. The desktop suite reports **42 passed, 1 known cache failure and 6 ignored integrations**. See the [current report with binary hashes and limits](reports/toolbar-macos.json).
+A separate updated macOS build is available locally as `dist/TrueRenderer-restyle.app`. The September 15 toolbar revision passed seven UI regressions, native checks of all four preferences tabs in both languages, rendering comparisons and the two XPC service checks. The cache failure reported during the toolbar campaign was subsequently fixed; the [complete Mac verification](reports/cache-integrity-macos.json) passed 106 ordinary tests and 10 integrations. The current desktop suite passes 46 ordinary tests; its six integration tests were not repeated in that run. See the [toolbar evidence](reports/toolbar-macos.json) for the screenshots and layout checks.
 
-The broader macOS photographic baseline remains the [September 9 campaign](reports/preview-navigation-continuation-macos.json). Extended validation of the updated RAW engines remains open; historical results apply only to their identified binaries.
+The latest local build preserves a wider frame while refining zoom, pan and Fit, within the memory budgets. The generated-image trace passed **240 actions and 1,553 transition redraws with full image coverage**, including CPU/GPU and Standard/Full; final physical 1:1 pixels were exact. The reserve is optional: coverage may remain partial if it is unavailable or evicted. See the [Fit correction, binary hashes and limits](reports/fit-coverage-macos.json). The screenshots above and below document the unchanged toolbar layout.
+
+The latest Mac campaign also passed **240 viewer actions on generated 12/24/45 MP images**, pressure-policy recovery, and **120 full developments of 30 authorized D750 RAWs across all four engines**. It found and fixed LibRaw stack exhaustion in the XPC service. Nine registered crop comparisons describe pipeline differences; they do not establish camera colour accuracy. See the [report](reports/large-pressure-raw-macos.json) and [protocol](docs/verifica-grandi-raw-macos.md).
+
+The **physical memory gate remains open**: the 45 MP Full cases exceeded the configured 4 GiB in summed process RSS; physical footprint also slightly exceeded it. Renderer-pressure injection and safe low-budget rejection passed, but physical OS pressure and reduced/region-based RAW decoding remain unqualified. The [September 9 campaign](reports/preview-navigation-continuation-macos.json) remains a separate historical baseline.
 
 Every output still has **Preview** assurance. Qualified Standard/Reference modes, complete colour/display qualification, clean Windows installation testing and the general R0–R4 gates remain open.
 
@@ -134,7 +138,7 @@ python3 scripts/test-xpc-integration.py
 open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 ```
 
-`./scripts/verify.sh --gui` adds native presentation checks. After broker, decoder or bundle changes, test both XPC services on the newly built package. The restyling was checked on Apple M4/macOS 26.6.2 with an ad hoc signature, not notarization. The complete verification script is not green: the known Unix hard-link cache test still fails, and the worker has existing macOS unused-code warnings. The new package also emits LibRaw deployment-target linker warnings; minimum-OS compatibility remains unqualified.
+`./scripts/verify.sh --gui` adds native presentation checks. After broker, decoder or bundle changes, test both XPC services on the newly built package. The September 15 cache correction passes the complete script on Apple M4/macOS 26.6.2: 106 ordinary Rust tests, 10 explicit integrations, fmt/Clippy, Python/IPC and numerical resampling checks. The hard-link cache regression and macOS unused-code warnings are resolved. Without `TR_RAW_SAMPLE`, the script explicitly skips two private-camera tests. See the [cache verification report](reports/cache-integrity-macos.json) for bundle checks and limits. The package uses an ad hoc signature and still emits LibRaw deployment-target linker warnings; notarization and minimum-OS compatibility remain unqualified.
 
 To build and open the toolbar revision in a separate bundle:
 
@@ -145,6 +149,17 @@ open -n dist/TrueRenderer-restyle.app
 ```
 
 If the updated bundle already exists locally, only the last command is needed. The existing launcher opens `dist/TrueRenderer.app`. Both bundles use the same default library, which allows one running instance: close the other app first, or pass a separate `--data` directory for a comparison session.
+
+The navigation probe runs CPU/GPU selections with isolated cold application caches, reopened disk caches and resident returns:
+
+```sh
+python3 scripts/test-navigation-surface.py --bundle dist/TrueRenderer-restyle.app --trials 3
+python3 scripts/test-navigation-surface.py --bundle dist/TrueRenderer-restyle.app --trials 3 --transitions
+```
+
+Build the current sources first. The probe creates its own corpus copies and libraries under `var/`. It verifies screenshot pixels and reports command-to-encoded-raster and command-to-readback times. Readback includes capture overhead; it does not timestamp physical display presentation. The default run validates the method and suppresses p95/p99 estimates. [Protocol and remaining gates](docs/progetto-anteprime-cache-prestazioni.md#121-protocollo-delle-misure).
+
+`--transitions` adds zoom, pan, Fit, photo quality changes and physical 1:1. It records image coverage during each UI redraw and rejects completely empty draws. Coverage can be partial while a new region is rendered; this is not a guarantee of full coverage or physical display continuity.
 
 ## Local data and documentation
 

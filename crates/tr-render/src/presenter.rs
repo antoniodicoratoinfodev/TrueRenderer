@@ -86,6 +86,12 @@ pub struct ComputeStatistics {
     pub gpu_frames: u64,
     pub fallbacks: u64,
     pub last_fallback: String,
+    pub wide_frames: usize,
+    pub wide_gpu_bytes: u64,
+    pub wide_reprojections: u64,
+    pub wide_peak_frames: u64,
+    pub wide_peak_memory_bytes: u64,
+    pub wide_peak_gpu_bytes: u64,
 }
 pub struct Capture {
     pub compute: &'static str,
@@ -94,15 +100,26 @@ pub struct Capture {
     pub clip: Rect,
     pub region: Region,
 }
+/// Draw-command coverage for diagnostic traces, not compositor visibility.
+pub struct PaintCoverage {
+    pub source: u64,
+    pub fraction: f32,
+    pub exact: bool,
+}
 pub struct Presenter {
     shared: Arc<(Mutex<Shared>, Condvar)>,
     worker: Option<JoinHandle<()>>,
     waiting: HashMap<String, Key>,
     entries: HashMap<String, Entry>,
+    // Optional wider coverage, same revision lane and coordinate space only.
+    wide: HashMap<String, Entry>,
+    wide_reprojections: u64,
+    wide_peak: [u64; 3],
     errors: HashMap<String, (Key, String)>,
     clock: u64,
     capturing: bool,
     captures: Vec<Capture>,
+    coverage: Vec<PaintCoverage>,
     memory: MemoryBudget,
     gpu_memory: MemoryBudget,
     queue: Option<eframe::wgpu::Queue>,
@@ -233,10 +250,14 @@ impl Presenter {
             worker: Some(worker),
             waiting: HashMap::new(),
             entries: HashMap::new(),
+            wide: HashMap::new(),
+            wide_reprojections: 0,
+            wide_peak: [0; 3],
             errors: HashMap::new(),
             clock: 0,
             capturing: false,
             captures: Vec::new(),
+            coverage: Vec::new(),
             memory,
             gpu_memory,
             queue,
@@ -248,16 +269,106 @@ impl Presenter {
         }
     }
     pub fn statistics(&self) -> ComputeStatistics {
-        self.shared.0.lock().unwrap().statistics.clone()
+        let mut stats = self.shared.0.lock().unwrap().statistics.clone();
+        stats.wide_frames = self.wide.len();
+        stats.wide_gpu_bytes = self.wide.values().map(|e| e.gpu_lease.bytes()).sum();
+        stats.wide_reprojections = self.wide_reprojections;
+        [
+            stats.wide_peak_frames,
+            stats.wide_peak_memory_bytes,
+            stats.wide_peak_gpu_bytes,
+        ] = self.wide_peak;
+        stats
+    }
+    fn retire(&mut self, entry: Entry) {
+        self.retired
+            .push((self.clock, entry.lease, entry.gpu_lease));
+    }
+    fn discard_wide(&mut self) {
+        let old: Vec<_> = self.wide.drain().map(|(_, e)| e).collect();
+        for entry in old {
+            self.retire(entry);
+        }
+    }
+    /// Optional coverage must not pin credits needed by decode/source work.
+    pub fn release_optional_frames(&mut self) {
+        self.discard_wide();
+    }
+    fn trim_wide(&mut self) {
+        // Existing leases travel with the texture: retention reserves no new
+        // credits and never removes the original accounting. Optional frames
+        // use at most two slots and a quarter of either applicable budget.
+        while !self.wide.is_empty()
+            && (self.pressure.load(Ordering::Acquire)
+                || self.wide.len() > 2
+                || self.wide.len() + self.entries.len() > 64
+                || self.wide.values().map(|e| e.lease.bytes()).sum::<u64>()
+                    > self.memory.usage().limit / 4
+                || self.wide.values().map(|e| e.gpu_lease.bytes()).sum::<u64>()
+                    > self.gpu_memory.usage().limit / 4
+                || self.memory.usage().reserved > self.memory.usage().limit
+                || self.gpu_memory.usage().reserved > self.gpu_memory.usage().limit)
+        {
+            let lane = self
+                .wide
+                .iter()
+                .min_by_key(|(_, e)| e.touched)
+                .unwrap()
+                .0
+                .clone();
+            let old = self.wide.remove(&lane).unwrap();
+            self.retire(old);
+        }
+        let usage = [
+            self.wide.len() as u64,
+            self.wide.values().map(|e| e.lease.bytes()).sum(),
+            self.wide.values().map(|e| e.gpu_lease.bytes()).sum(),
+        ];
+        for (peak, value) in self.wide_peak.iter_mut().zip(usage) {
+            *peak = (*peak).max(value);
+        }
+    }
+    fn install(&mut self, lane: String, entry: Entry) {
+        if self
+            .wide
+            .get(&lane)
+            .is_some_and(|old| source_area(old.key.region) <= source_area(entry.key.region))
+        {
+            let old = self.wide.remove(&lane).unwrap();
+            self.retire(old);
+        }
+        if let Some(old) = self.entries.remove(&lane) {
+            let retain = lane.starts_with("view:")
+                && !self.pressure.load(Ordering::Acquire)
+                && source_area(old.key.region) > source_area(entry.key.region)
+                && self
+                    .wide
+                    .get(&lane)
+                    .is_none_or(|wide| source_area(old.key.region) > source_area(wide.key.region));
+            if retain {
+                if let Some(replaced) = self.wide.insert(lane.clone(), old) {
+                    self.retire(replaced);
+                }
+            } else {
+                self.retire(old);
+            }
+        }
+        self.entries.insert(lane, entry);
+        self.trim_wide();
     }
     pub fn begin_capture(&mut self) {
         self.capturing = true;
         self.captures.clear();
+        self.coverage.clear();
     }
     pub fn captures(&self) -> &[Capture] {
         &self.captures
     }
+    pub fn coverage(&self) -> &[PaintCoverage] {
+        &self.coverage
+    }
     pub fn clear(&mut self) {
+        self.discard_wide();
         self.waiting.clear();
         for (_, entry) in self.entries.drain() {
             self.retired
@@ -316,7 +427,7 @@ impl Presenter {
                             FrameTexture::Gpu { id, frame, state }
                         }
                     };
-                    if let Some(old) = self.entries.insert(
+                    self.install(
                         finished.lane,
                         Entry {
                             key: finished.key,
@@ -325,9 +436,7 @@ impl Presenter {
                             lease: finished.lease,
                             gpu_lease: finished.gpu_lease,
                         },
-                    ) {
-                        self.retired.push((self.clock, old.lease, old.gpu_lease));
-                    }
+                    );
                 }
                 Err(error) => {
                     if self.errors.len() >= 64 {
@@ -337,14 +446,20 @@ impl Presenter {
                 }
             }
         }
-        while self.entries.len() > 64
+        self.trim_wide();
+        while self.entries.len() + self.wide.len() > 64
             || self
                 .entries
                 .values()
+                .chain(self.wide.values())
                 .map(|e| e.texture.size()[0] * e.texture.size()[1] * 4)
                 .sum::<usize>()
                 > self.gpu_memory.usage().limit as usize
         {
+            if !self.wide.is_empty() {
+                self.discard_wide();
+                continue;
+            }
             let oldest = self
                 .entries
                 .iter()
@@ -360,6 +475,16 @@ impl Presenter {
         }
     }
     pub fn invalidate_sources(&mut self, sources: &std::collections::HashSet<u64>) {
+        let stale: Vec<_> = self
+            .wide
+            .iter()
+            .filter(|(_, entry)| sources.contains(&entry.key.source))
+            .map(|(lane, _)| lane.clone())
+            .collect();
+        for lane in stale {
+            let old = self.wide.remove(&lane).unwrap();
+            self.retire(old);
+        }
         self.waiting.retain(|_, key| !sources.contains(&key.source));
         self.errors
             .retain(|_, (key, _)| !sources.contains(&key.source));
@@ -388,6 +513,7 @@ impl Presenter {
             return;
         }
         if active {
+            self.discard_wide();
             let stale: Vec<_> = self
                 .entries
                 .iter()
@@ -420,7 +546,10 @@ impl Presenter {
             self.errors.clear();
         }
         self.gpu_memory.configure(bytes);
+        self.trim_wide();
     }
+    /// A lane must identify the asset revision, rendering recipe and source
+    /// coordinate space. Distinct provider instances may hold compatible levels.
     pub fn paint(
         &mut self,
         ui: &egui::Ui,
@@ -436,6 +565,11 @@ impl Presenter {
         if let Some(entry) = self.entries.get_mut(&lane).filter(|e| e.key == key) {
             entry.touched = self.clock;
             if self.capturing {
+                self.coverage.push(PaintCoverage {
+                    source: image.id(),
+                    fraction: 1.,
+                    exact: true,
+                });
                 self.captures.push(Capture {
                     compute: if matches!(&entry.texture, FrameTexture::Gpu { .. }) {
                         "GPU"
@@ -456,12 +590,39 @@ impl Presenter {
             );
             return;
         }
-        if let Some(entry) = self.entries.get_mut(&lane) {
+        let mut covered = 0.;
+        let wide_is_better = self
+            .wide
+            .get(&lane)
+            .and_then(|e| reproject(e.key.region, region, rect))
+            .is_some_and(|(wide, _)| {
+                let current = self
+                    .entries
+                    .get(&lane)
+                    .and_then(|e| reproject(e.key.region, region, rect))
+                    .map_or(0., |(r, _)| r.area());
+                wide.area() > current
+            });
+        let previous = if wide_is_better {
+            self.wide_reprojections += 1;
+            self.wide.get_mut(&lane)
+        } else {
+            self.entries.get_mut(&lane)
+        };
+        if let Some(entry) = previous {
             entry.touched = self.clock;
             if let Some((coverage, uv)) = reproject(entry.key.region, region, rect) {
+                covered = coverage.intersect(rect).area() / rect.area();
                 ui.painter()
                     .image(entry.texture.id(), coverage, uv, Color32::WHITE);
             }
+        }
+        if self.capturing {
+            self.coverage.push(PaintCoverage {
+                source: image.id(),
+                fraction: covered,
+                exact: false,
+            });
         }
         if let Some((_, error)) = self.errors.get(&lane).filter(|(failed, _)| *failed == key) {
             ui.painter().text(
@@ -502,6 +663,11 @@ impl Presenter {
                             .saturating_sub(self.gpu_memory.usage().reserved),
                     ),
                 );
+            // These are optional, including the current lane's backup. Their
+            // credits remain retired until the previous submission completes.
+            if shortage > 0 {
+                self.discard_wide();
+            }
             let mut released = 0;
             while released < shortage {
                 let victim = self
@@ -587,6 +753,9 @@ fn reproject(previous: Region, current: Region, rect: Rect) -> Option<(Rect, Rec
         Rect::from_min_max(uv(min), uv(max)),
     ))
 }
+fn source_area(region: Region) -> f64 {
+    region.step[0] * region.size[0] as f64 * region.step[1] * region.size[1] as f64
+}
 
 impl Drop for Presenter {
     fn drop(&mut self) {
@@ -643,6 +812,223 @@ pub fn fitted(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn fixture_entry(ctx: &egui::Context, p: &Presenter, source: u64, region: Region) -> Entry {
+        Entry {
+            key: Key { source, region },
+            texture: FrameTexture::Cpu(ctx.load_texture(
+                "wide-fixture",
+                egui::ColorImage::filled([2, 2], Color32::WHITE),
+                TextureOptions::NEAREST,
+            )),
+            touched: p.clock,
+            lease: Arc::new(p.memory.try_reserve(48).unwrap()),
+            gpu_lease: Arc::new(p.gpu_memory.try_reserve(16).unwrap()),
+        }
+    }
+    fn seed_wide(ctx: &egui::Context, p: &mut Presenter, lane: &str, source: u64) {
+        let full = Region::fitted([2, 2], [2, 2]);
+        let crop = Region {
+            origin: [1., 0.],
+            step: [0.5, 1.],
+            ..full
+        };
+        p.install(lane.into(), fixture_entry(ctx, p, source, full));
+        p.install(lane.into(), fixture_entry(ctx, p, source, crop));
+    }
+    #[test]
+    fn wider_frame_covers_pan_and_fit_without_duplicating_or_early_releasing_credits() {
+        let ctx = egui::Context::default();
+        let memory = MemoryBudget::new(4096);
+        let mut p = Presenter::new(ctx.clone(), memory.clone(), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(2, 2, vec![[1.; 4]; 4]).unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        // Cache reopening may create a new provider for the same revision.
+        let full = Region::fitted([2, 2], [2, 2]);
+        p.install(
+            "view:test".into(),
+            fixture_entry(&ctx, &p, image.id() + 100, full),
+        );
+        p.install(
+            "view:test".into(),
+            fixture_entry(
+                &ctx,
+                &p,
+                image.id(),
+                Region {
+                    origin: [1., 0.],
+                    step: [0.5, 1.],
+                    ..full
+                },
+            ),
+        );
+        assert_eq!(p.wide.len(), 1);
+        assert_eq!(memory.usage().reserved, 96); // Two owned frames, no duplicate lease.
+        assert_eq!(p.gpu_memory.usage().reserved, 32);
+        for region in [
+            Region {
+                origin: [0.5, 0.],
+                step: [0.5, 1.],
+                size: [2, 2],
+            },
+            Region::fitted([2, 2], [2, 2]),
+        ] {
+            p.begin_capture();
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                p.paint(
+                    ui,
+                    "view:test".into(),
+                    &image,
+                    Rect::from_min_size(Pos2::ZERO, egui::vec2(2., 2.)),
+                    region,
+                )
+            });
+            output.textures_delta.clear();
+            assert!(p.coverage().iter().all(|c| c.fraction == 1. && !c.exact));
+        }
+        assert!(p.statistics().wide_reprojections >= 2);
+        p.invalidate_sources(&std::collections::HashSet::from([
+            image.id(),
+            image.id() + 100,
+        ]));
+        assert!(p.wide.is_empty() && p.entries.is_empty());
+        assert_eq!(memory.usage().reserved, 96); // Still retired, not immediately free.
+        p.poll(&ctx); // No GPU queue in this fixture; native path uses its callback.
+        assert_eq!(memory.usage().reserved, 0);
+        assert_eq!(p.gpu_memory.usage().reserved, 0);
+    }
+    #[test]
+    fn wider_frames_obey_identity_slots_pressure_and_lowered_quota() {
+        let ctx = egui::Context::default();
+        let memory = MemoryBudget::new(4096);
+        let mut p = Presenter::new(ctx.clone(), memory.clone(), None);
+        for source in 1..=3 {
+            seed_wide(&ctx, &mut p, &format!("view:{source}"), source);
+        }
+        assert_eq!(p.wide.len(), 2);
+        assert_eq!(p.statistics().wide_peak_frames, 2);
+        let lane = p.wide.keys().next().unwrap().clone();
+        p.install(
+            lane.clone(),
+            fixture_entry(&ctx, &p, 99, Region::fitted([2, 2], [2, 2])),
+        );
+        assert!(!p.wide.contains_key(&lane));
+        p.set_pressure(true);
+        assert!(p.wide.is_empty());
+        seed_wide(&ctx, &mut p, "view:pressure", 100);
+        assert!(p.wide.is_empty());
+        p.set_pressure(false);
+        seed_wide(&ctx, &mut p, "view:quota", 101);
+        assert_eq!(p.wide.len(), 1);
+        p.configure_gpu_limit(16);
+        assert!(p.wide.is_empty());
+        p.clear();
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 0);
+        assert_eq!(p.gpu_memory.usage().reserved, 0);
+    }
+    #[test]
+    fn optional_coverage_yields_to_renderer_and_decoder_admission() {
+        let ctx = egui::Context::default();
+        let required = 4 * 80 + 4 * 1024 * 1024;
+        let memory = MemoryBudget::new(required + 64);
+        let mut p = Presenter::new(ctx.clone(), memory.clone(), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(2, 2, vec![[1.; 4]; 4]).unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        seed_wide(&ctx, &mut p, "view:test", image.id());
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            p.paint(
+                ui,
+                "view:test".into(),
+                &image,
+                Rect::from_min_size(Pos2::ZERO, egui::vec2(2., 2.)),
+                Region::fitted([2, 2], [2, 2]),
+            )
+        });
+        output.textures_delta.clear();
+        assert!(p.wide.is_empty());
+        assert_eq!(memory.usage().reserved, 96);
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 48);
+        assert!(memory.try_reserve(required).is_some());
+        p.clear();
+        p.poll(&ctx);
+        seed_wide(&ctx, &mut p, "view:decode", image.id());
+        p.release_optional_frames();
+        assert!(p.wide.is_empty());
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 48);
+        p.clear();
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 0);
+    }
+    #[test]
+    fn diagnostic_coverage_distinguishes_exact_overlap_and_missing_content() {
+        let ctx = egui::Context::default();
+        // Zero budget prevents asynchronous jobs from changing the fixture.
+        let budget = MemoryBudget::new(0);
+        let mut presenter = Presenter::new(ctx.clone(), budget.clone(), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(2, 2, vec![[1.; 4]; 4]).unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let region = Region::fitted([2, 2], [2, 2]);
+        let texture = ctx.load_texture(
+            "coverage",
+            egui::ColorImage::filled([2, 2], Color32::WHITE),
+            Default::default(),
+        );
+        presenter.entries.insert(
+            "view".into(),
+            Entry {
+                key: Key {
+                    source: image.id(),
+                    region,
+                },
+                texture: FrameTexture::Cpu(texture),
+                touched: 0,
+                lease: Arc::new(budget.try_reserve(0).unwrap()),
+                gpu_lease: Arc::new(budget.try_reserve(0).unwrap()),
+            },
+        );
+        for (lane, origin, fraction, exact) in [
+            ("view", [0., 0.], 1., true),
+            ("view", [1., 0.], 0.5, false),
+            ("view", [2., 0.], 0., false),
+            ("different-revision", [0., 0.], 0., false),
+        ] {
+            presenter.begin_capture();
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                presenter.paint(
+                    ui,
+                    lane.into(),
+                    &image,
+                    Rect::from_min_size(Pos2::ZERO, egui::vec2(2., 2.)),
+                    Region { origin, ..region },
+                );
+            });
+            output.textures_delta.clear();
+            assert!(!presenter.coverage().is_empty());
+            assert!(
+                presenter
+                    .coverage()
+                    .iter()
+                    .all(|c| c.source == image.id() && c.fraction == fraction && c.exact == exact)
+            );
+        }
+    }
     #[test]
     fn refinement_reprojects_overlap_and_never_substitutes_an_uncovered_region() {
         let old = Region::fitted([100, 100], [100, 100]);

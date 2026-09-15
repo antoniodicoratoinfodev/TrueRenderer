@@ -632,6 +632,70 @@ mod tests {
         })
     }
     #[test]
+    fn linked_descriptors_and_blocks_can_be_read_but_not_replaced_or_collected() {
+        for descriptor in [true, false] {
+            let folder = tempfile::tempdir().unwrap();
+            let outside = tempfile::tempdir().unwrap();
+            let cache = manager();
+            let (info, preview, request) = fixture();
+            cache
+                .store_preview(folder.path(), "linked", request, &info, &preview, &|| false)
+                .unwrap();
+            let descriptor_name = format!("{}.tvc", cache.preview_key("linked", request));
+            let entry = {
+                let disk = Folder::open(folder.path(), false, false).unwrap();
+                Folder::files(&disk.entries, ".tvc")
+                    .unwrap()
+                    .into_iter()
+                    .find(|entry| (entry.name == descriptor_name) == descriptor)
+                    .unwrap()
+                    .name
+            };
+            let target = folder.path().join(NAME).join("entries").join(entry);
+            let original = outside.path().join("retained");
+            std::fs::hard_link(&target, &original).unwrap();
+            let bytes = std::fs::read(&original).unwrap();
+            let modified = std::fs::metadata(&original).unwrap().modified().unwrap();
+            assert!(matches!(
+                cache.load_preview(folder.path(), "linked", request, &cache.memory, &|| false),
+                Lookup::Hit(..)
+            ));
+            // Valid shared records are reusable without rewriting their metadata.
+            cache
+                .store_preview(folder.path(), "linked", request, &info, &preview, &|| false)
+                .unwrap();
+            assert_eq!(std::fs::read(&original).unwrap(), bytes);
+            assert_eq!(
+                std::fs::metadata(&original).unwrap().modified().unwrap(),
+                modified
+            );
+
+            // An invalid shared record must cause a miss and a skipped write,
+            // preserving both names rather than unlinking and replacing one.
+            std::fs::write(&original, b"not a cache record").unwrap();
+            let modified = std::fs::metadata(&original).unwrap().modified().unwrap();
+            assert!(!matches!(
+                cache.load_preview(folder.path(), "linked", request, &cache.memory, &|| false),
+                Lookup::Hit(..)
+            ));
+            assert!(
+                cache
+                    .store_preview(folder.path(), "linked", request, &info, &preview, &|| false)
+                    .is_err()
+            );
+            // Windows may report that the requested zero quota cannot be met;
+            // either way collection must leave this shared record intact.
+            let _ = cache.maintain(folder.path(), true);
+            assert!(target.exists());
+            assert_eq!(std::fs::read(&target).unwrap(), b"not a cache record");
+            assert_eq!(std::fs::read(&original).unwrap(), b"not a cache record");
+            assert_eq!(
+                std::fs::metadata(&original).unwrap().modified().unwrap(),
+                modified
+            );
+        }
+    }
+    #[test]
     fn preview_hit_refreshes_descriptor_and_every_block_before_expiry() {
         let folder = tempfile::tempdir().unwrap();
         let cache = manager();

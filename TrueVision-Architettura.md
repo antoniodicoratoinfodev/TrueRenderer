@@ -9,7 +9,43 @@
 
 Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubblicati in `67146e3`. Ultima suite Windows: **99 test ordinari + 8 integrazioni**, build debug/release, 18 casi sintetici per worker e controlli IPC/Python/ricampionamento. [Audit e correzioni gamma/orientamento](docs/revisione-aggiuntiva-2026-09-14.md#correzioni), [rapporto con hash](reports/gamma-orientation-fixes-windows.json). GUI e Nikon non ripetuti per questi ultimi fix.
 
-La baseline fotografica ampia Mac rimane quella del 9 settembre: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
+La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
+
+### Immagini grandi, pressione e RAW Mac — verifiche del 15 settembre 2026
+
+**Implementato:** harness opt-in su input esterni isolati, registrazione di livello residente/coordinate native/crediti, pressione della sola policy renderer e ritagli RAW lineari privati. La campagna iniziale ha scoperto un crash dei tre motori LibRaw nel probe XPC (`Thread stack size exceeded`): i quattro oggetti nativi del bridge sono ora sullo heap con proprietà RAII, senza cambiare ricette o isolamento.
+
+**Verificato:** 24 processi e **240 azioni su PNG 12/24/45 MP**, Standard/Full e CPU/GPU con fallback dichiarati; copertura completa della traccia, 24 controlli 1:1 esatti. Le riaperture distinguono hit e nuovo decode dei Full non persistibili. Modifica, rimozione e ripristino di una sorgente da 45 MP passati con annotazione conservata. Due tracce di pressione renderer a 1536 MiB: riserva da uno a zero frame, copertura transitoria minima 3,14%, risultati finali corretti; picco footprint 1.594.870.688 byte, entro quota. A 512 MiB il RAW è rifiutato esplicitamente, originali invariati e zero crediti di lavoro dopo shutdown.
+
+**RAW Mac:** 30 NEF D750 autorizzati × quattro motori, **120 sviluppi completi passati**, originali invariati. Altre 40 azioni nel viewer sui quattro motori con 1:1 esatto, cinque stadi del cambio motore nella UI e confronto pixel passati. Nove ritagli centrali dei primi tre NEF allineati; le differenze tonali includono ricette/esposizione/WB e non stabiliscono fedeltà assoluta. I 32 Bayer sintetici confermano 24 casi con MSE inferiore del direzionale, quattro rampe sostanzialmente equivalenti e quattro trame a crominanze indipendenti peggiori.
+
+**Aperto:** nei quattro casi 45 MP Full, a 4 GiB configurati, la somma RSS supera quota: massimo **4.816.601.088 byte**, footprint **4.296.512.936 byte**. Crediti di ammissione entro quota; le somme possono contare pagine condivise più volte. Il superamento è conservato come evidenza negativa e il gate memoria fisica resta aperto. Non sono qualificati pressione fisica OS, decode RAW ridotto/regionale, driver, altre fotocamere, target colore/ΔE00/ICC o p95/p99. Standard riduce il livello residente dopo sviluppo completo; nessun gate R0–R4 chiuso.
+
+Passati fmt/Clippy workspace, build release, **75 test Rust** (46 desktop, 24 worker, 5 renderer), regressione Python dell’allineamento, firma e XPC; nove test ignorati in questa corsa. Il test TIFF nativo passa fuori dal sandbox aggiuntivo del terminale. Aggiornato `dist/TrueRenderer-restyle.app`, precedente in `var/large-pressure-raw/before.app`. README e protocollo aggiornati; fotografie e ritagli restano privati. [Rapporto con hash](reports/large-pressure-raw-macos.json), [protocollo](docs/verifica-grandi-raw-macos.md).
+
+### Prosecuzione — cache e verifica Mac, 15 settembre 2026
+
+**Copertura Fit implementata e verificata:** il presenter conserva facoltativamente un frame più ampio della stessa vista, foto, digest, motore e dimensioni sorgente, usando quello con la maggiore sovrapposizione corretta durante il ricalcolo. Il caricamento Full da SSD può creare provider distinti ma compatibili: una prima implementazione troppo restrittiva è fallita su questo caso; la regressione ora lo include. Massimo due frame facoltativi entro un quarto dei budget globale/GPU e 64 frame totali; lease originali mantenuti fino al completamento. Pressione, quote ridotte, invalidazione, cambio compute e ammissione renderer/decoder possono scartare la riserva.
+
+Release finale CPU/GPU e Standard/Full: **24 processi, 240 azioni, 1.553 ridisegni delle transizioni con copertura completa**, contro il minimo storico 40,5%. Pixel finali entro un livello sRGB8, **24 controlli 1:1 esatti**, zero fallback. Picco della riserva osservata: un frame, 38.263.752 byte di crediti globali e 12.754.584 GPU; sono contabilità di ammissione, non RSS. Passati fmt/Clippy workspace, build release, 46 test desktop e 5 renderer; sei integrazioni desktop non ripetute. Passate prove native di modifica sorgente, recupero grafico singolo e arresto alla seconda perdita, firma e XPC. Aggiornato `dist/TrueRenderer-restyle.app`, precedente in `var/fit-coverage/before.app`. [Rapporto e hash](reports/fit-coverage-macos.json).
+
+La copertura misurata riguarda i draw della traccia sintetica, non tutti i refresh fisici. Se manca un frame ampio compatibile o viene espulso per quota, può restare parziale. RAW ridotti, pressione fisica, altri OS e p95/p99 restano aperti; nessun gate R0–R4 chiuso.
+
+**Prima campagna delle transizioni (prima della correzione Fit):** il probe aggiunge zoom, pan, Fit, override Standard/Full e 1:1. Il presenter espone durante le sole catture diagnostiche la copertura dei comandi immagine: esatta, riproiettata o assente. Release CPU/GPU e Standard/Full: **24 processi, 240 azioni, 24 controlli 1:1 esatti**, pixel finali entro un livello sRGB8. Osservati **1.568 ridisegni** delle transizioni, di cui 1.007 riproiettati, senza draw completamente vuoti. Il ritorno dal ritaglio a Fit scende però al **40,5% di copertura** durante il ricalcolo: il resto attende contenuto corretto. L'incremento misura questo limite, senza modificare il comportamento di rendering né attribuire i draw a tutti i refresh del monitor. [Rapporto e campioni](reports/navigation-transitions-macos.json).
+
+Passati fmt/Clippy workspace, build debug/release, 46 test desktop e 2 renderer; la nuova regressione distingue esatto, sovrapposizione parziale, assenza e lane di revisione diversa. Sei integrazioni desktop ignorate in questa corsa; XPC e firma verificati sul bundle diagnostico separato `var/navigation-transitions/TrueRenderer-release.app`. Il limite di copertura osservato ha motivato la correzione Fit descritta sopra. RAW ridotti, pressione, mouse/rotella OS, baseline e prestazioni statistiche restano da qualificare.
+
+**Primo harness comando→superficie verificato:** aggiunto un probe opt-in al viewer di produzione e un orchestratore su corpus generato. Misura dal comando di selezione al raster esatto aggiunto a egui e alla ricezione del readback; il confronto numerico avviene dopo il timestamp finale. Configurazioni isolate, prefetch/ispettore/filmstrip esclusi e nessuna richiesta immagine prima del comando. CPU/GPU della stessa qualità, cache applicativa fredda, SSD dopo nuovo processo e ritorno RAM sono scenari distinti, confermati da contatori e residenza.
+
+Release Standard e Full: tre ripetizioni per modalità, **24 processi e 72 selezioni** complessivi, tutti passati entro un livello sRGB8 con geometrie identiche fra CPU/GPU e nessun fallback. Passati fmt/Clippy workspace, build debug/release, 46 test desktop (6 integrazioni ignorate in questa corsa), controllo Python dei quantili/soppressione dei piccoli campioni e XPC del bundle diagnostico `var/navigation-probe/TrueRenderer-release.app`. [Rapporto e campioni](reports/navigation-surface-macos.json). I tempi includono readback e consegna dell'evento, con repaint del probe a 10 ms; non sono timestamp del monitor, p95/p99 o beneficio prestazionale qualificato. Restano scroll/zoom/cambio qualità, RAW/pressione, baseline e campagna statistica; l'app ordinaria non attiva il probe.
+
+Riesaminati PLAN, ripresa, progetti anteprime/RAW/restyling e rispettivi gate dell'architettura. Corrette le indicazioni correnti che trattavano ancora il bundle Mac come rinviato: corpus, interfaccia e XPC sono stati verificati il 15 settembre; confronto fotografico Apple/LibRaw e qualifica colore restano aperti. Il prossimo incremento prestazionale resta l'harness evento→frame, dopo la verifica della base corrente.
+
+Riprodotto il fallimento Unix della cache: la lettura consente hard link, ma veniva usata anche per autorizzare la rimozione di una voce invalida prima di riscriverla. La primitiva di rimozione ora riapre senza seguire link e rifiuta file con più collegamenti, sia per v1 sia per record v2 e temporanei. Letture validate e riuso v2 restano disponibili senza aggiornare timestamp condivisi. Due nuove regressioni e il test storico rafforzato verificano nomi, byte e mtime; 25 test cache passati. Allineata inoltre la compilazione del decoder bitmap portabile a Windows e test, conservando la copertura su Mac. Nessuna garanzia contro tutte le corse con processi esterni o qualifica Windows dedotta dai soli test Mac.
+
+Verifica completa `scripts/verify.sh` passata fuori dal sandbox aggiuntivo del terminale: **106 test ordinari + 10 integrazioni**, fmt/Clippy workspace con warning negati, build debug, 2 test Python, 6 controlli IPC e 24 casi numerici con 1:1 esatto. Build release passata. Lo script ora esclude esplicitamente i due test fotografici privati quando manca `TR_RAW_SAMPLE`, evitando di contare come eseguite funzioni che ritornano subito. Generate 19 fixture locali; 17 confronti nativi CPU/esperimento Metal passati, senza abilitare Metal nel decode o qualificare prestazioni.
+
+Aggiornato `dist/TrueRenderer-restyle.app`, copia precedente in `var/cache-integrity/before.app`. Firma ad hoc e XPC passati; cache nativa su tre sorgenti generate con 15 riusi bit-exact, zero nuovi decode a caldo, riapertura e pulizia passate. Otto schermate del viewer/griglia/confronto, 11 regioni entro un livello sRGB8, 77 canali differenti e 1:1 esatto. [Rapporto con hash](reports/cache-integrity-macos.json), evidenze locali in `var/cache-integrity/`. Restano warning del deployment target LibRaw, minimi OS, matrice fotografica e gate R0–R4; i fallimenti cache e warning Rust riportati nelle campagne storiche seguenti sono superati da questo incremento.
 
 ### Restyling desktop — 15 settembre 2026
 
@@ -44,7 +80,7 @@ I conteggi e gli hash di ogni campagna restano nei [rapporti di verifica](report
 
 ### Aperto e mancante
 
-Nuovo bundle Mac/XPC; Windows pulito, pressione memoria e percorsi lunghi; contesa writer/cache; diagnostica PNG malformata/conflittuale e gestione ICC; qualifica colore/display e confronto fra decoder; corpus autorizzato esteso, p95/p99 evento→frame, driver e carichi sotto pressione. Nessun gate R0–R4 chiuso; Standard/Piena indicano qualità delle anteprime, non assurance Standard/Riferimento. Dettagli nelle caselle di [PLAN](PLAN.md) e nella matrice sotto.
+Matrice fotografica dei motori Mac; Windows pulito, pressione memoria e percorsi lunghi; contesa writer/cache; diagnostica PNG malformata/conflittuale e gestione ICC; qualifica colore/display e confronto fra decoder; corpus autorizzato esteso, p95/p99 evento→frame, driver e carichi sotto pressione. Nessun gate R0–R4 chiuso; Standard/Piena indicano qualità delle anteprime, non assurance Standard/Riferimento. Dettagli nelle caselle di [PLAN](PLAN.md) e nella matrice sotto.
 
 ### Manutenzione documentale
 
@@ -107,7 +143,7 @@ Stati: **parziale** = esiste codice utilizzabile ma non tutto il requisito; **da
 
 ### Ordine del lavoro rimanente
 
-Dopo la verifica del nuovo bundle Mac/XPC, attualmente rinviata: harness di navigazione evento→frame sul Mac e sul corpus disponibile, con scenari cache distinti e confronto CPU/GPU della stessa qualità. I gate che richiedono altri RAW, hardware o persone rimangono espliciti. Il seguente ordine riguarda invece la roadmap complessiva R0–R4.
+Il prossimo incremento deve investigare il superamento memoria misurato su 45 MP Full e ampliare pressione OS, target colore e fotocamere. Fit, livelli residenti ridotti e transizioni sono verificati nei perimetri PNG 12/24/45 MP e D750 descritti sopra; decode RAW ridotto/regionale, presentazione effettiva e campagna statistica restano aperti. I gate che richiedono altri RAW, hardware o persone rimangono espliciti. Il seguente ordine riguarda invece la roadmap complessiva R0–R4.
 
 1. L’incremento di ricampionamento 0.1.2 è chiuso per il sottoinsieme R0 provato; estendere in R1 orientamenti, isotropia, alias/overshoot, LOD e verifica fisica su più scale/display. ADR 0003 conserva le scelte e i criteri di revoca.
 2. Completare i confini R0 sul Mac: bootstrap/handle/output avversari, memoria end-to-end, sorgenti sotto writer concorrente e recupero XPC. Decidere API/minimi OS e firma reciproca con evidenze.
@@ -5026,7 +5062,7 @@ Questa appendice integra per intero la specifica revisionata e ADR 0005–0006. 
 
 > Revisione 5, allineamento documentale del 9 settembre 2026 al codice e ai report inclusi in `10123b5`: specifica integrata nell'appendice E delle due architetture del progetto. La 0.1.5 contiene già livelli autonomi, qualità Standard/Piena, budget, cache v2, writer asincrono, scheduler/prefetch e compute CPU/GPU. La revisione aggiunge osservazione delle sorgenti residenti, recupero grafico, correzione dell'ammissione RAW, cancellazione dei lavori abbandonati in navigazione e verifiche resistenti a risultati obsoleti; mantiene separati implementazione, prove locali e qualifica ancora aperta.
 
-**Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni passano soltanto dal bundle macOS XPC/App Sandbox secondo ADR 0004.
+**Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni richiedono il bundle macOS XPC/App Sandbox secondo ADR 0004 oppure il worker Windows LPAC secondo ADR 0009; il percorso su pipe mantiene il corpus controllato. Dopo restyling e correzione cache, il primo probe comando→superficie del 15 settembre verifica selezioni e ritorni CPU/GPU, Standard/Full, con cache distinte (§12.1). Presentazione effettiva e qualifica evento→frame completa restano aperte.
 
 La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [PLAN.md](PLAN.md), [avanzamento](docs/avanzamento.md), [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md) e [verifiche](reports/VERIFICA.md).
 
@@ -5117,7 +5153,7 @@ L'estrazione della preview della fotocamera potrà essere un'opzione distinta, `
 
 #### 3. Preferenze e controllo delle risorse
 
-Estendere il pannello esistente in **Preferenze → Anteprime e prestazioni**. Le impostazioni sono caricate una volta, fuori dal percorso di disegno, migrando l'attuale `settings.json` verso uno schema versionato nell'app-data; in sviluppo, nel percorso dati locale. Conservare `enabled`, `disk_mib`, `temporary_mib`, `unused_days` e `free_mib` già presenti. La configurazione non appartiene alla cache eliminabile.
+Il restyling del 15 settembre organizza questi controlli in **Settings → Previews and RAW**, **Performance** e **Cache and data** (tradotti in italiano). Le impostazioni sono caricate una volta, fuori dal percorso di disegno; la migrazione verso uno schema versionato nell'app-data resta un requisito di rilascio, mentre lo sviluppo usa il percorso dati locale. Conservare `enabled`, `disk_mib`, `temporary_mib`, `unused_days` e `free_mib` già presenti. La configurazione non appartiene alla cache eliminabile.
 
 | Controllo utente | Valore iniziale proposto | Semantica |
 |---|---|---|
@@ -5467,7 +5503,7 @@ La tabella distingue i moduli effettivamente presenti nella 0.1.5 dalle estensio
 | Piattaforma | `tr-platform`: broker, `xpc.rs`, `resources.rs`; adattatori non macOS ancora da realizzare | Ammissione prima delle copie, pressione RAM/VRAM, capability e verifiche |
 | Decoder | `tr-worker`, `native/macos/image_decoder.m/.h` | Intent espliciti, contesto riutilizzabile, decode ridotto/Full e codec cache isolati |
 | Desktop | `apps/desktop/src/`: `ui.rs`, `service.rs`, `decode_pool.rs`, `main.rs`, `source_monitor.rs`, `graphics.rs`, `wake.rs` | Preferenze, selettore qualità, pubblicazione domanda, collegamento dei servizi |
-| Verifica | `verify_previews.rs`, `scripts/test-preview-*.py`; harness evento→frame completo ancora aperto | Benchmark riproducibili e regressioni del contratto visuale |
+| Verifica | `verify_previews.rs`, `scripts/test-preview-*.py`, probe `ui/navigation.rs` e `scripts/test-navigation-surface.py`; harness evento→frame completo ancora aperto | Benchmark riproducibili e regressioni del contratto visuale |
 
 Rayon e l'eventuale Zstd richiedono scelta di versione, build riproducibile e aggiornamento dei notice delle dipendenze effettive. SHA-256 con accelerazione e snapshot resta quanto già implementato; non introdurre BLAKE3 in parallelo senza una necessità misurata. Non servono nuove dipendenze per approvare questo progetto documentale. Non modificare la licenza proprietaria o pubblicare cache, foto, database e toolchain.
 
@@ -5476,6 +5512,17 @@ Gli smoke correnti verificano stadi, risultati richiesti e screenshot; `cache.le
 #### 12. Misure e criteri di accettazione
 
 ##### 12.1 Protocollo delle misure
+
+**Primo probe della superficie, 15 settembre 2026.** `--navigation-smoke` esegue tre selezioni deterministiche (segnale radiale, paesaggio, ritorno al segnale) nel viewer reale; `scripts/test-navigation-surface.py` crea copie del corpus e cataloghi separati, confrontando CPU/GPU della medesima qualità. La prima selezione parte senza precedenti richieste immagine; la scansione del catalogo e la qualifica GPU sono già completate. Prefetch, filmstrip e ispettore sono disabilitati. Una corsa popola la cache; una nuova istanza ne verifica il riuso dal disco. Il terzo comando della seconda istanza misura il ritorno RAM. Contatori e residenza confermano lo scenario, senza dedurlo dal nome del test.
+
+Il primo timestamp precede `Command::Select`; il secondo registra l'inserimento del raster esatto richiesto nel frame egui, prima del submit. Il terzo registra la ricezione del readback della superficie. Solo dopo si confrontano tutti i pixel della regione con CPU, entro un livello sRGB8; frame precedenti, riproiettati o con qualità inferiore non terminano la prova. Il readback include copia GPU, mapping e consegna dell'evento; il probe richiede repaint a 10 ms e può alterare lo scheduling. **Non misura il timestamp del compositor/monitor e non chiude i target evento→frame.** Cache OS non svuotata; SSD indica la cache applicativa riaperta, senza affermare una lettura fisica dal disco.
+
+La corsa predefinita ha tre ripetizioni indipendenti per modalità/stato e riporta min/mediana/max. Lo script sopprime p95 sotto 100 processi indipendenti per scenario e p99 sotto 1.000; anche oltre queste soglie le stime sono descrittive, senza intervalli di confidenza o gate di accelerazione. Il corpus piccolo PNG, la geometria Fit e questo primo confine software non sostituiscono la campagna completa seguente: restano scroll/pan/zoom, cambi qualità, RAW, pressione, baseline storica e presentazione effettiva.
+
+**Estensione delle transizioni.** L'opzione `--transitions` aggiunge zoom 300%, pan a centro deterministico, ritorno Fit, override Standard, override Full, 1:1 fisico e ritorno Standard/Fit. Sono azioni sintetiche sullo stato del viewer e sugli stessi helper di qualità/zoom, non eventi OS di mouse o rotella. Per ogni ridisegno della stessa sorgente si registra la frazione dell'area immagine coperta da draw esatti o riproiettati; una copertura zero fa fallire la traccia. La riproiezione può coprire solo la parte in comune con il vecchio ritaglio, senza inventare pixel delle zone mancanti. La correttezza finale è verificata sul readback, con tolleranza zero a 1:1. Queste osservazioni non attestano tutti i refresh del monitor né copertura sempre completa; il corpus sotto 2048 pixel non prova ancora transizioni di risoluzione RAW ridotta.
+
+**Riserva di copertura.** Il presenter conserva facoltativamente un frame più ampio della stessa foto, digest, motore, dimensioni sorgente e vista, entro due slot e un quarto dei budget globale/GPU, con rilascio prioritario in caso di pressione o necessità di ammissione. I lease rimangono contabilizzati fino al completamento. Il runner `--transitions --require-full-coverage` richiede copertura geometrica completa a ogni ridisegno osservato della stessa sorgente; questo controllo non misura tutti i refresh fisici né garantisce copertura quando la riserva manca o viene espulsa. Contratto in ADR 0006.
+
 
 Creare un harness di navigazione con sequenza deterministica di scroll, selezioni, cambio qualità, zoom e ritorni. La baseline primaria è **0.1.4 al commit indicato in apertura**, comprensiva di cache e snapshot accelerati; 0.1.3 è un confronto storico opzionale. Confrontare nuova CPU e GPU sulla stessa macchina, corpus, superficie e quota.
 
@@ -5600,6 +5647,12 @@ Questo ADR conserva decisioni e misure della 0.1.4. Nella 0.1.5 il percorso inte
 
 Il formato v1 `.tvc`, il formato di record v2 e il futuro container tiled/gigapixel sono tre contratti distinti. I checksum rilevano corruzioni, senza autenticare dati riscritti da un attaccante. Token di filesystem e qualità Piena non promuovono una cache ad assurance Standard/Riferimento.
 
+##### Raccordo hard link — 15 settembre 2026
+
+Il lettore corrente consente file regolari con più hard link per tollerare la condivisione temporanea dei client di sincronizzazione; i record restano soggetti a tutte le verifiche di contenuto. Questo non autorizza scritture, aggiornamenti di timestamp o rimozioni. Corretto il percorso che usava la sola leggibilità per sostituire una voce invalida: la rimozione ricontrolla ora tipo e numero di link sul file aperto, sia per v1 sia per record v2 e temporanei. Una destinazione condivisa invalida conserva entrambi i nomi e fa saltare la scrittura; una valida può ancora essere riusata in sola lettura.
+
+La verifica Mac copre byte/mtime, nomi conservati, descrittore e blocchi v2, link aggiunti dopo la scansione e ritorno alla raccolta ordinaria dopo la loro rimozione esterna. Non è una garanzia atomica contro ogni sostituzione o creazione di link da processi non cooperanti tra controllo e unlink. File protetti possono restare sul disco oltre la quota eliminabile; non si attribuisce la qualifica Windows ai soli test Mac. Le frasi storiche seguenti sul rifiuto degli hard link vanno lette insieme a questo contratto corrente.
+
 #### Scopo autorizzato
 
 Il titolare richiede una cartella di cache/temporanei dentro ogni cartella aperta, impostazioni di limite e pulizia, README inglese e pubblicazione su GitHub prima di ulteriori ottimizzazioni. Questa richiesta anticipa esplicitamente la cache accanto alle foto che §11.4 collocava nel post-v1. Le fotografie rimangono in sola lettura; si scrive esclusivamente nella sottocartella derivata `.truerenderer-cache`. Annotazioni, backup e preferenze rimangono nel percorso dati dell'app.
@@ -5718,6 +5771,18 @@ La revoca del dominio rimane distinta dall’abbandono di una vista. Snapshot/ha
 La cancellazione osservata resta valida fino alla chiusura del tentativo: un ritorno rapido alla foto riceve una notifica di rinvio e può riprovare, senza un errore permanente di memoria. Prima della consegna/persistenza si verifica che i consumatori siano ancora richiesti; anche la richiesta originaria rimossa viene liberata dal registro pending. Le regressioni coprono attesa memoria, probe nativo in corso, cambio foto e cambio qualità, processo ancora vivo e crediti restituiti. Non misurano p95/p99 né la prelazione di chiamate native.
 
 La suite della continuazione navigazione registra 71 test Rust e le verifiche native del bundle passate. L’ultima misura isolata sui 30 NEF a 2 GiB ha footprint massimo 2.018.970.672 byte e RSS 1.965.047.808 byte, 7.042 campioni completi e intervallo massimo 54,63 ms; originali invariati, zero decode alla riapertura e zero crediti residui. Questa prova è successiva a quella da 2.100.284.608 byte descritta sopra; non è un A/B. Codice e report sono inclusi in `10123b5`. [Riepilogo e identità dei binari](reports/preview-navigation-continuation-macos.json).
+
+#### Copertura provvisoria del viewer — 15 settembre 2026
+
+Il presenter può conservare un frame più ampio per vista, foto, digest, motore e dimensioni sorgente, scegliendo durante il raffinamento quello con maggiore sovrapposizione geometrica. Il frame facoltativo mantiene i propri lease, senza nuove prenotazioni: massimo due complessivi, entro un quarto dei budget globale e GPU e nel limite di 64 frame. Non viene promosso a risultato esatto; il raster richiesto deve comunque essere calcolato.
+
+Invalidazione, cambio compute, pressione, riduzione quota e necessità di ammissione renderer/decoder possono eliminare questa riserva. I crediti ritirati restano contabilizzati fino al completamento previsto dalla coda. Se manca una rappresentazione ampia compatibile o la quota la espelle, la copertura può restare parziale; non si inventano pixel e non si garantisce continuità universale o un tetto RSS.
+
+#### Prova grandi immagini e riserva sotto pressione — 15 settembre 2026
+
+Le transizioni su PNG 12/24/45 MP verificano livelli residenti Standard ridotti, recupero del livello zero e 1:1 esatto. Il decode iniziale resta completo. I livelli oltre capability GPU ricadono sulla CPU dichiarandolo; il writer può non conservare i Full troppo grandi. Con pressione renderer iniettata la riserva viene espulsa e la copertura può diventare parziale, ma la traccia termina con raster corretti.
+
+La quota di ammissione non è ancora un limite fisico qualificato: su 45 MP Full, con 4 GiB configurati, la somma RSS arriva a 4.816.601.088 byte e il footprint a 4.296.512.936 byte. I crediti rimangono entro quota; la somma RSS può contare pagine condivise più volte. Il superamento resta aperto, senza sottrarre processi o attribuire i picchi ai soli driver. A 1536 MiB le due tracce di pressione restano entro la quota campionata; a 512 MiB il decode RAW viene rifiutato esplicitamente e restituisce i crediti. [Protocollo](docs/verifica-grandi-raw-macos.md).
 
 #### Qualifica aperta
 

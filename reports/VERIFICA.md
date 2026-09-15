@@ -2,6 +2,44 @@
 
 Registro storico delle esecuzioni. Codice e correzioni pubblicati in `67146e3` il 14 settembre 2026; le note «nessun commit» fotografano il momento delle prove. Gli audit negativi restano conservati accanto alle correzioni successive. Ogni risultato vale per sorgenti e binari identificati dal proprio rapporto; la revisione dei Markdown non costituisce una nuova prova applicativa. Stato corrente in [avanzamento](../docs/avanzamento.md), navigazione nell'[indice](../docs/README.md).
 
+## Immagini grandi, pressione e RAW Mac — 15 settembre 2026
+
+**Funzionalità verificata, gate memoria fisica aperto.** 240 azioni PNG 12/24/45 MP, 20 con pressione renderer iniettata, 40 RAW; tutti i controlli 1:1 esatti. 120 sviluppi su 30 D750 nei quattro motori dopo la correzione dello stack LibRaw/XPC, originali invariati; nove confronti centrali registrati e 32 Bayer sintetici. Passati invalidazione 45 MP, cambio motore UI/pixel, 75 test Rust, fmt/Clippy, release e XPC.
+
+A 4 GiB configurati, i quattro casi 45 MP Full superano quota nella somma RSS: massimo **4.816.601.088 byte**, footprint **4.296.512.936**. La pressione renderer a 1536 MiB passa entro quota campionata ma con copertura transitoria parziale; il rifiuto a 512 MiB restituisce i crediti. Non sono pressione OS reale, decode RAW ridotto, qualifica colore o p95/p99.
+
+[Riepilogo, hash e limiti](large-pressure-raw-macos.json), campagne [immagini grandi](large-navigation-macos.json), [pressione](renderer-pressure-macos.json), [viewer RAW](raw-navigation-macos.json), [protocollo](../docs/verifica-grandi-raw-macos.md). App aggiornata `dist/TrueRenderer-restyle.app`, precedente `var/large-pressure-raw/before.app`. Fotografie e ritagli restano privati; screenshot del layout ancora rappresentativi.
+
+## Copertura del ritorno a Fit — 15 settembre 2026
+
+Conservato un frame più ampio compatibile entro quota; corregge anche il caso Full da SSD con provider distinti per la stessa revisione. Prima della correzione il controllo completo falliva (minimo storico 40,5%); anche la prima implementazione ha fallito su Full/SSD e l'evidenza negativa è conservata.
+
+Release finale: **24 processi, 240 azioni, 1.553 ridisegni con copertura completa**, 993 riproiezioni, 287 usi della riserva ampia; 24 controlli 1:1 esatti, altri pixel entro un livello sRGB8, zero fallback. Picco facoltativo: un frame, 38.263.752 byte globali / 12.754.584 GPU contabilizzati. Fmt, Clippy, build release, 46 test desktop e 5 renderer passati; sei integrazioni desktop non ripetute. Invalidazione sorgente, recupero grafico e arresto alla seconda perdita, firma/XPC passati sullo stesso binario consegnato in `dist/TrueRenderer-restyle.app`.
+
+[Riepilogo e hash](fit-coverage-macos.json), tracce [Standard](fit-coverage-standard-macos.json) e [Full](fit-coverage-full-macos.json). Prove sul corpus piccolo e sui draw UI, non continuità di ogni refresh, RAW ridotti, pressione fisica o p95/p99. La riserva può mancare o essere espulsa; nessuna garanzia universale né tetto RSS. Screenshot del README ancora rappresentativi: nessun cambiamento al layout in questo incremento.
+
+## Transizioni del viewer — 15 settembre 2026
+
+Estesa la traccia con zoom 300%, pan deterministico, Fit, override Standard/Full, 1:1 e ritorno Standard/Fit. Il presenter diagnostico distingue draw esatti, riproiettati e assenti; zero copertura della stessa sorgente fa fallire la prova. Regressione separata su sovrapposizione, assenza e lane di revisione diversa. Passati fmt/Clippy workspace, build debug/release, **46 test desktop e 2 renderer**; 6 integrazioni desktop ignorate. Firma e XPC passati sul bundle diagnostico `var/navigation-transitions/TrueRenderer-release.app`.
+
+Release: **24 processi, 240 azioni**, tre ripetizioni CPU/GPU per qualità iniziale Standard/Full e stato cache. Tutti i pixel finali entro un livello sRGB8; **24 controlli fisici 1:1 esatti**, zero fallback. Durante le transizioni: **1.568 ridisegni, 1.007 riproiezioni, zero draw completamente vuoti**; copertura provvisoria minima **40,5%** al ritorno dal ritaglio a Fit. Questo incremento osserva il comportamento esistente e non rende completa la copertura. [Riepilogo e hash](navigation-transitions-macos.json), campioni [Standard](navigation-transitions-standard-macos.json) e [Full](navigation-transitions-full-macos.json).
+
+Le osservazioni riguardano i draw dei passaggi UI e i pixel degli endpoint, non ogni refresh del display. Azioni sintetiche, due PNG sotto 2048 pixel, cache OS non svuotata e nessuna qualifica RAW ridotta/pressione/p95/p99. Resta aperto mantenere una copertura più ampia della stessa revisione entro quota; non usare il vecchio ritaglio per inventare regioni mancanti. Le copie ordinarie in `dist/`, le qualifiche Windows/release e i limiti LibRaw restano invariati.
+
+## Probe comando→superficie — 15 settembre 2026
+
+Implementati `--navigation-smoke` e orchestratore `scripts/test-navigation-surface.py`: due PNG generati, tre selezioni con ritorno, CPU/GPU, Standard/Full. Nessuna richiesta immagine precede il primo comando; una nuova istanza verifica il riuso SSD e il ritorno successivo verifica RAM. Le catture richiedono il raster esatto corrente e vengono confrontate con CPU dopo il timestamp del readback, entro un livello sRGB8.
+
+Passati fmt/Clippy workspace, build debug/release, **46 test desktop** (6 integrazioni ignorate in questa corsa), regressione di geometria/pixel, controllo dei quantili e soppressione dei piccoli campioni. Prova debug: 4 processi; release: **24 processi e 72 selezioni**, errore massimo un livello, zero fallback, stessa geometria CPU/GPU. Firma e XPC passati sul bundle diagnostico `var/navigation-probe/TrueRenderer-release.app`. [Rapporto e hash](navigation-surface-macos.json), campioni [Standard](navigation-surface-standard-macos.json) e [Full](navigation-surface-full-macos.json).
+
+Questa è la validazione funzionale del probe: il readback include cattura GPU e consegna eventi, con repaint a 10 ms. Non è un timestamp del monitor né una qualifica p95/p99; tre ripetizioni per scenario non bastano. Cache OS non svuotata, carico della macchina non isolato, nessun confronto con la baseline storica. Il piccolo corpus non esercita riduzione RAW, zoom, pan, cambio qualità o pressione. Le normali copie `dist/` restano quelle dell'incremento cache; gate R0–R4 e avvisi LibRaw invariati.
+
+## Cache e suite Mac — 15 settembre 2026
+
+Corretto il rilievo sugli hard link: rimozione e sostituzione ora ricontrollano i collegamenti; lettura e riuso di record validi rimangono disponibili. Passati 25 test cache, inclusi due nuovi casi e il fallimento storico rafforzato. Eliminati i warning Rust Mac compilando il decoder portabile per Windows e test. Suite completa: **106 test ordinari + 10 integrazioni**, fmt/Clippy, build debug/release, 2 Python, 6 IPC e 24 casi numerici. Due prove fotografiche private esplicitamente escluse perché `TR_RAW_SAMPLE` non impostato.
+
+Nuovo `dist/TrueRenderer-restyle.app`: firma e XPC passati; tre sorgenti cache generate con 15 riusi bit-exact e zero nuovi decode a caldo; 8 schermate native, 11 regioni entro un livello sRGB8, 77 canali differenti, 1:1 esatto. [Rapporto con hash e limiti](cache-integrity-macos.json). Evidenze locali in `var/cache-integrity/`, backup del bundle precedente in `before.app` nella stessa cartella. Nessuna prova Windows o campagna fotografica ampia ripetuta. Warning di deployment target LibRaw, latenze evento→frame, colore/display e gate R0–R4 restano aperti. I fallimenti e warning Rust delle campagne sottostanti descrivono lo stato precedente alla correzione.
+
 ## Restyling desktop — 15 settembre 2026
 
 Revisione della barra e consegna completate: strumenti e motore in alto, cartella/conteggi in basso, selettori Globale e Solo questa foto bidirezionali, Settings coerente e bozze preservate. Corretto anche Esc nei popup, con regressione riprodotta prima della correzione. Bundle finale: fmt/Clippy/build/firma, 7 test UI, 12 schermate preferenze, 8 rendering e XPC passati; 11 regioni entro 1 livello sRGB8, 77 canali differenti, 1:1 esatto. Suite desktop: 42 passati, il medesimo fallimento cache e 6 ignorati. Prova diretta del viewer e apertura finale confermate. [Rapporto con hash e limiti](toolbar-macos.json), [viewer](toolbar-viewer.png). Le prove della prima iterazione seguono sotto.

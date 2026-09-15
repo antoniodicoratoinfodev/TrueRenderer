@@ -84,6 +84,7 @@ pub fn is_tiff_container(bytes: &[u8]) -> bool {
 /// between a full-size preview and a thumbnail without decoding either. The
 /// bytes are confirmed to start with an actual JPEG marker before being
 /// returned, so a wrong offset fails here rather than inside a decoder.
+#[cfg(any(windows, test))]
 pub fn embedded_preview(bytes: &[u8]) -> Result<Preview> {
     let (_, preview) = inspect(bytes)?;
     preview.ok_or_else(|| anyhow::anyhow!("Nessuna anteprima incorporata"))

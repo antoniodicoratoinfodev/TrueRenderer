@@ -1,8 +1,14 @@
 # Motori RAW selezionabili — progetto sperimentale
 
-**Stato corrente, 14 settembre 2026:** incremento pubblicato in `67146e3`, comprese le correzioni successive. Ultima suite Windows: 107 test Rust; [correzioni gamma/orientamento](revisione-aggiuntiva-2026-09-14.md#correzioni). Mac/XPC e qualifica colore restano aperti. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
+**Stato corrente, 15 settembre 2026:** incremento Windows pubblicato in `67146e3`, comprese le correzioni successive; 107 test Rust nella campagna [gamma/orientamento](revisione-aggiuntiva-2026-09-14.md#correzioni). Il bundle Mac con i motori collegati è stato costruito e verificato per UI/corpus/XPC nel [restyling](../reports/toolbar-macos.json). La campagna Mac D750 è ora verificata sotto; restano altre fotocamere, confronto fotografico esteso e qualifica colore. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
 
 Progetto avviato il 12 settembre 2026 su richiesta del titolare: motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. Anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.
+
+## Campagna Mac del 15 settembre
+
+Verificati 30 NEF D750 sui quattro motori nel bundle XPC: **120 sviluppi completi passati**, hash degli originali invariati. La prima prova ha scoperto un esaurimento dello stack nel probe LibRaw; gli oggetti del bridge sono ora sullo heap con gestione automatica della durata. Nove confronti centrali dei primi tre NEF risultano registrati, con geometrie Apple 6016×4016 e LibRaw/TrueRenderer 6032×4032 (o orientate). Le differenze tonali misurate includono esposizione, WB e scelte della ricetta; non sono un punteggio di fedeltà del motore.
+
+Ripetuti 32 Bayer sintetici: il metodo direzionale riduce MSE in 24 casi, quattro rampe sostanzialmente equivalenti e quattro trame a crominanze indipendenti peggiori. Restano target fotografato con riferimento noto, ΔE00/ICC, altre camere e corpus ampio di rumore/moire. [Protocollo e limiti](verifica-grandi-raw-macos.md). I paragrafi seguenti descrivono le campagne storiche quando indicano Mac come rinviato.
 
 ## Contratto e progetto
 
@@ -38,10 +44,11 @@ LibRaw AHD è un termine di confronto indipendente: ricetta 16 bit Rec.2020, gam
 - [x] Istruzioni e architettura lette; progetto e confini definiti.
 - [x] Selettore persistente, protocollo e cache collegati.
 - [x] Estrazione nativa e demosaicing fp32 implementati.
-- [x] AHD collegato alle configurazioni di build Windows e macOS; binari provati solo Windows.
+- [x] AHD collegato alle configurazioni di build Windows e macOS; prove fotografiche Windows, build/corpus/XPC Mac verificati il 15 settembre.
 - [x] Verifiche numeriche e 90 sviluppi completi Windows; report riproducibile.
 - [x] Revisione successiva, supporto D40 verificato (66 sviluppi), correzione del cambio motore durante scansione e regressione D750.
-- [ ] Qualifica nativa macOS/XPC, confronto fotografico e colore/display.
+- [x] Verifica funzionale macOS/XPC sui 30 D750, transizioni RAW e cambio motore UI; nove confronti centrali registrati, senza verità colore assoluta.
+- [ ] Qualifica colore/display, altre camere e confronto esteso di rumore/moire.
 
 Stato effettivo, prove e prossima attività sono aggiornati in `docs/avanzamento.md` e `PLAN.md` durante l'esecuzione.
 

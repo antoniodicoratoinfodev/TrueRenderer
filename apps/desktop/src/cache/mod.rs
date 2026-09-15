@@ -888,12 +888,28 @@ mod tests {
         assert_eq!(std::fs::read(&outside_file).unwrap(), b"original");
         std::fs::remove_file(&target).unwrap();
         std::fs::hard_link(&outside_file, &target).unwrap();
+        let before = std::fs::metadata(&outside_file).unwrap();
         assert!(
             cache
                 .store(folder.path(), "link", &info, &p, &|| false)
                 .is_err()
         );
-        assert_eq!(std::fs::read(outside_file).unwrap(), b"original");
+        cache.maintain(folder.path(), true).unwrap();
+        assert!(target.exists());
+        assert_eq!(std::fs::read(&outside_file).unwrap(), b"original");
+        assert_eq!(
+            std::fs::metadata(&outside_file)
+                .unwrap()
+                .modified()
+                .unwrap(),
+            before.modified().unwrap()
+        );
+        assert!(
+            std::fs::read_dir(folder.path().join(NAME).join("tmp"))
+                .unwrap()
+                .next()
+                .is_none()
+        );
     }
     #[test]
     fn settings_persist_and_resource_limits_skip_cache_without_touching_sources() {

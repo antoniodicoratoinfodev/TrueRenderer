@@ -1,0 +1,88 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "checked_at": "2026-09-15T15:10:14.918539+00:00",
+  "base_commit": "cdca799996785e8fdaceedb2954119ef82caa325",
+  "passed": true,
+  "meaning_of_passed": "Functional probe validation only; no performance gate passed",
+  "performance_gates_passed": false,
+  "changes": [
+    "Opt-in production-viewer probe with pre-command timestamp, exact requested raster capture and tagged surface-readback completion.",
+    "CPU reference pixel verification after endpoint timestamp; outdated/reprojected/fallback captures cannot complete the sample.",
+    "Isolated runner confirms cold decodes, reopened disk-cache hits and RAM returns; alternating CPU/GPU order and identical geometry/quality."
+  ],
+  "checks": {
+    "fmt": true,
+    "workspace_clippy_all_targets_warnings_denied": true,
+    "debug_build": true,
+    "workspace_release_build": true,
+    "desktop_ordinary_passed": 46,
+    "desktop_integrations_ignored_this_run": 6,
+    "new_surface_comparison_regression": true,
+    "python_quantiles_and_small_sample_suppression": true,
+    "debug_probe_processes": 4,
+    "release_probe_processes": 24,
+    "release_selections": 72,
+    "maximum_channel_error_u8": 1,
+    "compute_fallbacks": 0,
+    "ad_hoc_codesign_deep_strict": true,
+    "xpc": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-09-15T15:08:43.356259+00:00",
+      "bundle": "var/navigation-probe/TrueRenderer-release.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "00a45c52497642e39dac26c26f99c306d102dfdd8f0704727a75c074c568abf8",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    }
+  },
+  "raw_reports": {
+    "standard": {
+      "path": "reports/navigation-surface-standard-macos.json",
+      "sha256": "53d38177cb0214df030e4802e44ec89a5ccd9a5be84ca5dc04dc570ae31bb3cd"
+    },
+    "full": {
+      "path": "reports/navigation-surface-full-macos.json",
+      "sha256": "4db0335aa9ab065382de2b8fd68d0812a4727d4ae2c0bef16ef5dee24baab091"
+    }
+  },
+  "source_sha256": {
+    "apps/desktop/src/main.rs": "6f8008a05cb874419ded7d5907f23568312ecfdb299b4477195c953599964fc9",
+    "apps/desktop/src/ui.rs": "624dfb1d9bc54f9dc178e0403516bcef1c578ac05eaed3a312dbb632e6c0b469",
+    "apps/desktop/src/ui/navigation.rs": "501ecc0e3aa0c16b84fb04b6f7d4015f1679b49183214596de67e74bc63c6e89",
+    "scripts/test-navigation-surface.py": "326f239b643f2b8582157bc8e4209aa942cbda8969a03fc495c5b155a0b9153e",
+    "Cargo.lock": "7da04d66f686416ba48312824ed03e327d493567edd1a490195296ae4f292bb2"
+  },
+  "bundle": "var/navigation-probe/TrueRenderer-release.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "00a45c52497642e39dac26c26f99c306d102dfdd8f0704727a75c074c568abf8",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+  },
+  "reproduce": [
+    "scripts/cargo-local.sh build --release --workspace --locked --offline",
+    "python3 scripts/package-macos.py --bundle var/navigation-probe/TrueRenderer-release.app",
+    "python3 scripts/test-navigation-surface.py --bundle var/navigation-probe/TrueRenderer-release.app --trials 3 --quality Standard",
+    "python3 scripts/test-navigation-surface.py --bundle var/navigation-probe/TrueRenderer-release.app --trials 3 --quality Full"
+  ],
+  "limits": [
+    "Measures synthetic selection command to draw recorded and surface readback receipt, not OS input/compositor/physical display.",
+    "Readback and 10 ms probe repaint can affect scheduling; no transparent event-to-frame instrumentation claim.",
+    "Three independent process trials per mode/quality/cache scenario; p95 and p99 suppressed, no confidence intervals or GPU speedup conclusion.",
+    "Generated PNG corpus at Fit, prefetch/inspector/filmstrip disabled; these settings are not the default complete UI workload.",
+    "Standard/Full use the same small sources here, so this does not exercise reduced-resolution RAW quality transitions.",
+    "OS cache not flushed, storage/driver/workstation background load not qualified; not a dedicated hardware benchmark.",
+    "Windows, scroll/pan/zoom, quality changes, pressure, RAW matrix and historical baseline remain open.",
+    "LibRaw deployment-target warnings, ad hoc signing and XPC supervision retain existing limitations; no R0-R4 gate closed.",
+    "Normal dist bundles were not replaced by this diagnostic increment."
+  ]
+}

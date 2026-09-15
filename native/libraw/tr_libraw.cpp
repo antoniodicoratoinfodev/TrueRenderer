@@ -11,6 +11,7 @@
 #include <string>
 #include <cmath>
 #include <exception>
+#include <memory>
 
 #include "libraw/libraw.h"
 
@@ -126,7 +127,10 @@ extern "C" int tr_libraw_probe(const uint8_t *bytes, size_t length, uint32_t var
         message(error, error_size, "Argomenti non validi");
         return 1;
     }
-    LibRaw raw;
+    // LibRaw exceeds the stack available on macOS XPC dispatch threads.
+    // Keep its lifetime scoped and exception-safe without consuming that stack.
+    auto owner = std::make_unique<LibRaw>();
+    LibRaw &raw = *owner;
     if (open_and_identify(raw, bytes, length, error, error_size, variant)) {
         return 1;
     }
@@ -158,7 +162,10 @@ extern "C" int tr_libraw_develop(const uint8_t *bytes, size_t length, uint32_t v
         message(error, error_size, "Argomenti non validi");
         return 1;
     }
-    LibRaw raw;
+    // LibRaw exceeds the stack available on macOS XPC dispatch threads.
+    // Keep its lifetime scoped and exception-safe without consuming that stack.
+    auto owner = std::make_unique<LibRaw>();
+    LibRaw &raw = *owner;
     if (open_and_identify(raw, bytes, length, error, error_size, variant)) {
         return 1;
     }
@@ -285,7 +292,10 @@ int mosaic_info(LibRaw &raw, TRMosaicInfo *info, char *error, size_t size) {
 extern "C" int tr_mosaic_probe(const uint8_t *bytes, size_t length,
     TRMosaicInfo *info, char *error, size_t size) try {
     if (!bytes || !length || !info) return 1;
-    LibRaw raw;
+    // LibRaw exceeds the stack available on macOS XPC dispatch threads.
+    // Keep its lifetime scoped and exception-safe without consuming that stack.
+    auto owner = std::make_unique<LibRaw>();
+    LibRaw &raw = *owner;
     if (open_and_identify(raw, bytes, length, error, size)) return 1;
     return mosaic_info(raw, info, error, size);
 } catch (const std::exception &e) { message(error, size, e.what()); return 1; }
@@ -294,7 +304,10 @@ extern "C" int tr_mosaic_probe(const uint8_t *bytes, size_t length,
 extern "C" int tr_mosaic_read(const uint8_t *bytes, size_t length,
     uint16_t *samples, size_t count, TRMosaicInfo *info, char *error, size_t size) try {
     if (!bytes || !length || !samples || !info) return 1;
-    LibRaw raw;
+    // LibRaw exceeds the stack available on macOS XPC dispatch threads.
+    // Keep its lifetime scoped and exception-safe without consuming that stack.
+    auto owner = std::make_unique<LibRaw>();
+    LibRaw &raw = *owner;
     if (open_and_identify(raw, bytes, length, error, size) || mosaic_info(raw, info, error, size)) return 1;
     int status = raw.unpack();
     if (status == LIBRAW_SUCCESS) status = raw.raw2image();

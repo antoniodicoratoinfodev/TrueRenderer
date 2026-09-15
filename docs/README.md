@@ -15,6 +15,11 @@ Revisione del 15 settembre 2026. Il codice Windows e le correzioni sono pubblica
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
 | [Restyling desktop](progetto-restyling.md) | Composizioni, stile, preferenze e verifica del layout bilingue |
 | [Verifiche](../reports/VERIFICA.md) | Cronologia delle campagne e rapporti con hash |
+| [Cache e suite Mac, 15 settembre](../reports/cache-integrity-macos.json) | Correzione hard link e verifica della base prima delle misure di navigazione |
+| [Probe della superficie, 15 settembre](../reports/navigation-surface-macos.json) | Selezioni CPU/GPU e cache distinte; readback verificato, qualifica evento→display aperta |
+| [Immagini grandi, pressione e RAW Mac](verifica-grandi-raw-macos.md) | 12/24/45 MP, D750 e correzione stack XPC; superamento memoria esplicito |
+| [Correzione Fit, 15 settembre](../reports/fit-coverage-macos.json) | Riserva ampia entro quota; 240 azioni e copertura completa nella traccia, con limiti espliciti |
+| [Transizioni del viewer, 15 settembre](../reports/navigation-transitions-macos.json) | Zoom, pan, qualità e 1:1; copertura provvisoria misurata e limite al ritorno a Fit |
 
 ## Decisioni architetturali
 
@@ -64,4 +69,4 @@ Eliminate dal registro e dal documento di ripresa le cronologie ripetute e le is
 - [Modello di segnalazione](../.github/ISSUE_TEMPLATE/bug_report.md): supporto alle issue GitHub.
 - [NOTICE](../NOTICE.md), [LICENSE](../LICENSE), [README LibRaw](../third_party/libraw/README-TrueRenderer.md) e notice delle dipendenze: attribuzioni e informazioni da conservare.
 
-Dopo gli accorpamenti restano 30 Markdown di progetto e 31 di supporto alle dipendenze. Controllati riferimenti e percorsi locali, sezioni accorpate e sincronizzazione. Licenze, rapporti JSON e backup originale sono conservati; i termini legali non sono stati riesaminati.
+La revisione del 15 settembre riallinea i documenti di ripresa e progetto alle prove effettive del bundle Mac e distingue la prosecuzione cache/prestazioni dalla qualifica fotografica ancora aperta. Licenze, rapporti storici e backup originale sono conservati; i termini legali non sono stati riesaminati.

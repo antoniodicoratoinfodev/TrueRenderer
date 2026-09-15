@@ -329,6 +329,6 @@
     ],
     "stopband_rms_max": 0.02
   },
-  "transport": "XPC / App Sandbox · R0",
+  "transport": "Processo su pipe · corpus R0",
   "version": "0.1.5"
 }

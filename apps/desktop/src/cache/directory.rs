@@ -8,7 +8,7 @@
 //! that pinned folder. Ancestors above the cache root are not pinned: that is
 //! the one guarantee this platform does not reproduce, and it is stated rather
 //! than implied. The properties that do carry over are refusing a reparse point
-//! at the final component, refusing hard links and special files, and
+//! at the final component, refusing mutation of hard links and special files, and
 //! publishing without clobbering an existing entry.
 use anyhow::{Result, ensure};
 #[cfg(windows)]
@@ -340,6 +340,19 @@ impl Directory {
 
     pub fn remove(&self, name: &str) -> Result<()> {
         Self::validate(name)?;
+        // A readable payload is not necessarily ours to remove: readers permit
+        // extra hard links (e.g. while a sync client uploads an entry). Check
+        // again at every deletion, including replacement of invalid v1/v2 data
+        // and cleanup of temporary files, rather than relying on an earlier scan.
+        #[cfg(any(unix, windows))]
+        let file = self.open_file(name, false, false, false)?;
+        #[cfg(unix)]
+        ensure!(
+            file.metadata()?.nlink() == 1,
+            "Cache: hard link non rimosso"
+        );
+        #[cfg(windows)]
+        ensure!(links(&file)? == 1, "Cache: hard link non rimosso");
         #[cfg(unix)]
         {
             let name = CString::new(name)?;
@@ -352,8 +365,8 @@ impl Directory {
         }
         #[cfg(windows)]
         {
-            // Removes the entry itself; a reparse point would be unlinked, not
-            // followed, and `file_info` refuses one long before this.
+            // The validated handle shares deletion, so a regular cache entry
+            // can be unlinked while the handle stays alive until this returns.
             std::fs::remove_file(self.path.join(name))
                 .map_err(|e| anyhow::anyhow!("Rimozione cache: {e}"))
         }
@@ -515,5 +528,30 @@ mod tests {
             std::fs::read(folder.path().join("entry")).unwrap(),
             b"pixels"
         );
+    }
+
+    #[test]
+    fn removal_rechecks_links_added_after_a_directory_scan() {
+        let folder = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let dir = Directory::open(folder.path()).unwrap();
+        let path = folder.path().join("entry");
+        std::fs::write(&path, b"cached pixels").unwrap();
+        dir.file_info("entry").unwrap();
+        let original = outside.path().join("retained");
+        std::fs::hard_link(&path, &original).unwrap();
+        let modified = std::fs::metadata(&original).unwrap().modified().unwrap();
+        assert!(dir.open_file("entry", false, false, false).is_ok());
+        assert!(dir.remove("entry").is_err());
+        assert!(path.exists());
+        assert_eq!(std::fs::read(&original).unwrap(), b"cached pixels");
+        assert_eq!(
+            std::fs::metadata(&original).unwrap().modified().unwrap(),
+            modified
+        );
+        // Once the external link is gone, ordinary cache collection still works.
+        std::fs::remove_file(&original).unwrap();
+        dir.remove("entry").unwrap();
+        assert!(!path.exists());
     }
 }

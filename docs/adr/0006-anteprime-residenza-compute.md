@@ -64,6 +64,18 @@ La cancellazione osservata resta valida fino alla chiusura del tentativo: un rit
 
 La suite della continuazione navigazione registra 71 test Rust e le verifiche native del bundle passate. L’ultima misura isolata sui 30 NEF a 2 GiB ha footprint massimo 2.018.970.672 byte e RSS 1.965.047.808 byte, 7.042 campioni completi e intervallo massimo 54,63 ms; originali invariati, zero decode alla riapertura e zero crediti residui. Questa prova è successiva a quella da 2.100.284.608 byte descritta sopra; non è un A/B. Codice e report sono inclusi in `10123b5`. [Riepilogo e identità dei binari](../../reports/preview-navigation-continuation-macos.json).
 
+## Copertura provvisoria del viewer — 15 settembre 2026
+
+Il presenter può conservare un frame più ampio per vista, foto, digest, motore e dimensioni sorgente, scegliendo durante il raffinamento quello con maggiore sovrapposizione geometrica. Il frame facoltativo mantiene i propri lease, senza nuove prenotazioni: massimo due complessivi, entro un quarto dei budget globale e GPU e nel limite di 64 frame. Non viene promosso a risultato esatto; il raster richiesto deve comunque essere calcolato.
+
+Invalidazione, cambio compute, pressione, riduzione quota e necessità di ammissione renderer/decoder possono eliminare questa riserva. I crediti ritirati restano contabilizzati fino al completamento previsto dalla coda. Se manca una rappresentazione ampia compatibile o la quota la espelle, la copertura può restare parziale; non si inventano pixel e non si garantisce continuità universale o un tetto RSS.
+
+## Prova grandi immagini e riserva sotto pressione — 15 settembre 2026
+
+Le transizioni su PNG 12/24/45 MP verificano livelli residenti Standard ridotti, recupero del livello zero e 1:1 esatto. Il decode iniziale resta completo. I livelli oltre capability GPU ricadono sulla CPU dichiarandolo; il writer può non conservare i Full troppo grandi. Con pressione renderer iniettata la riserva viene espulsa e la copertura può diventare parziale, ma la traccia termina con raster corretti.
+
+La quota di ammissione non è ancora un limite fisico qualificato: su 45 MP Full, con 4 GiB configurati, la somma RSS arriva a 4.816.601.088 byte e il footprint a 4.296.512.936 byte. I crediti rimangono entro quota; la somma RSS può contare pagine condivise più volte. Il superamento resta aperto, senza sottrarre processi o attribuire i picchi ai soli driver. A 1536 MiB le due tracce di pressione restano entro la quota campionata; a 512 MiB il decode RAW viene rifiutato esplicitamente e restituisce i crediti. [Protocollo](../verifica-grandi-raw-macos.md).
+
 ## Qualifica aperta
 
 I report sotto `reports/preview-*` descrivono prove realmente eseguite, con soglie e scope. Restano il corpus autorizzato di 1000 RAW reali e sottoinsiemi 12/24/45 MP, la latenza evento→frame con p95/p99 e confronti indipendenti, la contabilità dei driver oltre l'attribuzione ai processi, pressione fisica/reset dei driver e la matrice di display/driver e altri target. Il corpus di 1000 Bayer distinti generati serve al catalogo e alle code e non sostituisce questi casi. R0–R4 restano aperti.

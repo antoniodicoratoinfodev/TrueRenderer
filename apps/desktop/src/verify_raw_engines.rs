@@ -80,6 +80,33 @@ pub fn run(root: &Path, worker: &Path, folder: &Path, limit: usize) -> Result<()
                         crop.save(output.join(format!("{engine:?}-{region}.png")))?;
                     }
                 }
+                // Private linear center patches permit registration before comparing
+                // engines with different active-area crops. They are not colour truth.
+                if index < 3 {
+                    use std::io::Write;
+                    let edge = 512.min(raster.width).min(raster.height);
+                    let origin = [(raster.width - edge) / 2, (raster.height - edge) / 2];
+                    let stem = format!("aligned-{index}-{engine:?}");
+                    let mut file = std::io::BufWriter::new(std::fs::File::create(
+                        output.join(format!("{stem}.f32")),
+                    )?);
+                    for y in 0..edge {
+                        for x in 0..edge {
+                            for value in &raster.pixels
+                                [((origin[1] + y) * raster.width + origin[0] + x) as usize][..3]
+                            {
+                                file.write_all(&value.to_le_bytes())?;
+                            }
+                        }
+                    }
+                    file.flush()?;
+                    std::fs::write(
+                        output.join(format!("{stem}.json")),
+                        serde_json::to_vec_pretty(
+                            &serde_json::json!({"size":[edge,edge],"origin":origin,"source_size":[raster.width,raster.height],"working":"linear Rec.2020 RGB f32 little-endian","engine":engine,"source_sha256":digest}),
+                        )?,
+                    )?;
+                }
                 Ok(
                     serde_json::json!({"passed":true,"info":decoded.info,"seconds":started.elapsed().as_secs_f64(),"working_min":minimum,"working_max":maximum,"channels_below_zero":below,"channels_above_one":above}),
                 )

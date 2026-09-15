@@ -1,0 +1,148 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "checked_at": "2026-09-15T15:42:01.924161+00:00",
+  "passed": true,
+  "meaning_of_passed": "Full image draw coverage in the declared synthetic trace, endpoint pixels and resource-policy regressions; not universal or physical display continuity",
+  "performance_gates_passed": false,
+  "changes": [
+    "Optional wider frame retained by view, asset, digest, RAW engine and source dimensions; compatible provider instances may differ after SSD reopening.",
+    "At most two optional frames within a quarter of global/GPU admission budgets and 64 total entries; existing leases are retained.",
+    "Optional frames yield to renderer/decoder admission, pressure, invalidation, compute changes and reduced quotas; retired credits wait for completion."
+  ],
+  "checks": {
+    "fmt": true,
+    "workspace_clippy_all_targets_warnings_denied": true,
+    "workspace_release_build": true,
+    "desktop_tests_passed": 46,
+    "desktop_integrations_ignored_this_run": 6,
+    "renderer_tests_passed": 5,
+    "release_processes": 24,
+    "release_actions": 240,
+    "same_source_transition_actions": 168,
+    "same_source_redraws": 1553,
+    "reprojected_redraws": 993,
+    "minimum_draw_coverage": 1.0,
+    "maximum_channel_error_u8": 1,
+    "physical_1to1_checks": 24,
+    "compute_fallbacks": 0,
+    "wide_reprojections": 287,
+    "wide_peak_frames": 1,
+    "wide_peak_memory_bytes": 38263752,
+    "wide_peak_gpu_bytes": 12754584,
+    "xpc": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-09-15T15:41:58.554127+00:00",
+      "bundle": "dist/TrueRenderer-restyle.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "b924003735d4e533665033f1907f4238660cc75f184d413bd01e37fe580290fc",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "native_review": {
+      "passed": true,
+      "binary_sha256": "b924003735d4e533665033f1907f4238660cc75f184d413bd01e37fe580290fc",
+      "cases": [
+        {
+          "case": "source-change-smoke",
+          "exit_code": 0,
+          "passed": true,
+          "report": {
+            "application": "TrueRenderer",
+            "generation": 4,
+            "passed": true,
+            "scope": "Native viewer on generated PNG: replace, remove and restore while resident, reject old decode epoch, preserve saved rating. Polling observation is best-effort, not a coherent snapshot under arbitrary concurrent writers.",
+            "stage": 4,
+            "version": "0.1.5"
+          },
+          "library_integrity": "ok"
+        },
+        {
+          "case": "device-loss-smoke",
+          "exit_code": 0,
+          "passed": true,
+          "report": {
+            "application": "TrueRenderer",
+            "passed": true,
+            "recreations": 1,
+            "scope": "Native device.destroy injection, recreation of entire eframe window/device, compute requalification, retained CPU artifacts/service and accepted rating plus undo. Not physical driver reset, other adapters/displays or OOM qualification.",
+            "state": {
+              "current": "8bf47825-3067-43c9-ab0c-277c9d4139e0",
+              "gpu_verified": true,
+              "pending": 0,
+              "rating": 4,
+              "selected": [
+                "8bf47825-3067-43c9-ab0c-277c9d4139e0"
+              ],
+              "undo_available": true
+            },
+            "version": "0.1.5"
+          },
+          "library_integrity": "ok"
+        },
+        {
+          "case": "device-loss-twice-smoke",
+          "exit_code": 1,
+          "passed": true,
+          "report": {
+            "passed": true,
+            "injected_losses": 2,
+            "recreations": 1,
+            "stopped_after_second_loss": true
+          },
+          "library_integrity": "ok"
+        }
+      ]
+    }
+  },
+  "raw_reports": {
+    "standard": {
+      "path": "reports/fit-coverage-standard-macos.json",
+      "sha256": "e83ab31fc399db54336411300c1b4d2086a077484472d65536b7ee6cb4939cec",
+      "local_evidence": "var/navigation-surface-i2oe9_na"
+    },
+    "full": {
+      "path": "reports/fit-coverage-full-macos.json",
+      "sha256": "c1b8446e06abecec6451dfcf59d152084e73ecfaa02c54559be0049a41305f7d",
+      "local_evidence": "var/navigation-surface-5c_1zof6"
+    }
+  },
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "b924003735d4e533665033f1907f4238660cc75f184d413bd01e37fe580290fc",
+    "Contents/MacOS/tr-worker": "40d8efac004bb9d732036031cf1ee15b193a75f3abe9a675f5e517eea0ed123b",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+  },
+  "source_sha256": {
+    "crates/tr-render/src/presenter.rs": "c95c7fbebccf683e8e42a4094dbc5b1f19b86d3b9a9d5ac80e23535663a5caaa",
+    "apps/desktop/src/ui.rs": "940d99efae75604ab9cf7b571e6d7b98c1eac3346de28dba71090082fb05d5b2",
+    "apps/desktop/src/ui/navigation.rs": "b6246313d2da356500e478182d284a070f203df793db20b3cd567cf4ecf0584f",
+    "scripts/test-navigation-surface.py": "9b29c6147330392c6ccad5292bcf418f8f1d9f56a522756121d94cc74b78e608"
+  },
+  "delivered_bundle": "dist/TrueRenderer-restyle.app",
+  "previous_bundle": "var/fit-coverage/before.app",
+  "negative_evidence": {
+    "baseline_report": "reports/navigation-transitions-macos.json",
+    "baseline_minimum_coverage": 0.4050000309944153,
+    "baseline_full_coverage_rejected": "var/navigation-surface-lzapx4hw",
+    "intermediate_full_ssd_rejected": "var/navigation-surface-r05yw2zj",
+    "intermediate_failure": "Provider instance identity was too restrictive for compatible full-resolution levels reopened from cache; retained in regression evidence."
+  },
+  "limits": [
+    "Coverage is measured per UI redraw, not every display refresh; readback includes capture overhead.",
+    "Only generated small PNG sources; reduced RAW, physical pressure, driver resets and other platforms remain unqualified.",
+    "When no compatible wider frame exists or quota evicts it, partial coverage remains possible.",
+    "Lease peaks are admission accounting, not measured physical RSS or a kernel cap.",
+    "Three independent trials per mode and phase; no p95/p99, confidence intervals or speedup claim.",
+    "Ad hoc signature and XPC smoke do not close the sandbox/release gates; R0-R4 remain open."
+  ]
+}

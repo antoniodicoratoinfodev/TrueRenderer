@@ -1,0 +1,1061 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_at": "2026-09-15T16:45:11.501501+00:00",
+  "functional_checks_passed": true,
+  "physical_memory_gate_passed": false,
+  "colour_accuracy_gate_passed": false,
+  "os": "26.6.2",
+  "changes": [
+    "LibRaw native objects moved from XPC dispatch thread stack to exception-safe heap ownership after reproducible stack exhaustion. Pixel recipe unchanged.",
+    "Opt-in viewer diagnostics accept isolated external inputs, record actual source size/base level and admission memory, and inject renderer reserve pressure.",
+    "Private linear RAW patches and bounded integer registration enable geometric comparisons without treating another engine as scene truth."
+  ],
+  "tests": {
+    "fmt": true,
+    "clippy_workspace_all_targets_warnings_denied": true,
+    "release_workspace_build": true,
+    "desktop_passed": 46,
+    "renderer_passed": 5,
+    "worker_passed": 24,
+    "ignored_this_run": 9,
+    "native_tiff_test_requires_unsandboxed_terminal": true,
+    "python_registration_known_shift_gain_offset_and_flat_rejection": true,
+    "python_compile": true
+  },
+  "large_images": {
+    "sizes": [
+      [
+        4000,
+        3000
+      ],
+      [
+        6000,
+        4000
+      ],
+      [
+        8256,
+        5504
+      ]
+    ],
+    "processes": 24,
+    "actions": 240,
+    "quota_bytes": 4294967296,
+    "physical_1to1_exact": 24,
+    "minimum_draw_coverage": 1.0,
+    "compute_fallbacks": 50,
+    "reopened_decode_cases": 6,
+    "peak_sum_rss_bytes": 4816601088,
+    "peak_sum_footprint_bytes": 4296512936,
+    "peak_admission_credits": 3565176128,
+    "over_quota_cases": [
+      {
+        "size": "45",
+        "quality": "Full",
+        "mode": "Cpu",
+        "phase": "cold"
+      },
+      {
+        "size": "45",
+        "quality": "Full",
+        "mode": "Cpu",
+        "phase": "ssd"
+      },
+      {
+        "size": "45",
+        "quality": "Full",
+        "mode": "Gpu",
+        "phase": "cold"
+      },
+      {
+        "size": "45",
+        "quality": "Full",
+        "mode": "Gpu",
+        "phase": "ssd"
+      }
+    ],
+    "source_invalidation_45mp": {
+      "application": "TrueRenderer",
+      "generation": 4,
+      "passed": true,
+      "scope": "Native viewer on generated PNG: replace, remove and restore while resident, reject old decode epoch, preserve saved rating. Polling observation is best-effort, not a coherent snapshot under arbitrary concurrent writers.",
+      "stage": 4,
+      "version": "0.1.5"
+    }
+  },
+  "pressure": {
+    "scope": "Renderer policy injection, not physical OS pressure",
+    "processes": 2,
+    "actions": 20,
+    "quota_bytes": 1610612736,
+    "reserve_before_after": [
+      [
+        1,
+        0
+      ],
+      [
+        1,
+        0
+      ]
+    ],
+    "minimum_draw_coverage": 0.03137778490781784,
+    "exact_endpoints_passed": true,
+    "peak_sum_rss_bytes": 1398292480,
+    "peak_sum_footprint_bytes": 1594870688,
+    "observed_within_quota": true,
+    "safe_low_budget_rejection": {
+      "expected_rejection_verified": true,
+      "exit_code": 1,
+      "native_report": {
+        "admission_limit_bytes": 536870912,
+        "application": "TrueRenderer",
+        "completed_cases": [],
+        "failed_asset_index": 0,
+        "failure": "Memoria richiesta 128 MiB; limite 512 MiB, occupata/prenotata 440 MiB. Aumentare il limite o liberare le viste.",
+        "originals_unchanged": true,
+        "passed": false,
+        "peak_reserved_bytes": 461642378,
+        "requested_memory_mib": 512,
+        "scope": "Failed cold-delivery qualification on authorized copies; not a throughput or p95 claim.",
+        "version": "0.1.5",
+        "working_credits_after_shutdown": 0
+      }
+    }
+  },
+  "raw": {
+    "authorized_files": 30,
+    "originals_unchanged": true,
+    "developments": 120,
+    "engines": {
+      "Apple": {
+        "passed": true,
+        "developments": 30,
+        "oriented_dimensions": [
+          [
+            4016,
+            6016
+          ],
+          [
+            6016,
+            4016
+          ]
+        ],
+        "working_min": -0.2265925109386444,
+        "working_max": 4.6532673835754395,
+        "channels_below_zero": 111540171,
+        "channels_above_one": 28042783
+      },
+      "LibRawBilinear": {
+        "passed": true,
+        "developments": 30,
+        "oriented_dimensions": [
+          [
+            4032,
+            6032
+          ],
+          [
+            6032,
+            4032
+          ]
+        ],
+        "working_min": 0.0,
+        "working_max": 0.9999971389770508,
+        "channels_below_zero": 0,
+        "channels_above_one": 0
+      },
+      "LibRawAhd": {
+        "passed": true,
+        "developments": 30,
+        "oriented_dimensions": [
+          [
+            4032,
+            6032
+          ],
+          [
+            6032,
+            4032
+          ]
+        ],
+        "working_min": 0.0,
+        "working_max": 1.0,
+        "channels_below_zero": 0,
+        "channels_above_one": 0
+      },
+      "TrueRenderer": {
+        "passed": true,
+        "developments": 30,
+        "oriented_dimensions": [
+          [
+            4032,
+            6032
+          ],
+          [
+            6032,
+            4032
+          ]
+        ],
+        "working_min": -0.18803751468658447,
+        "working_max": 2.2975168228149414,
+        "channels_below_zero": 11365938,
+        "channels_above_one": 9764259
+      }
+    },
+    "viewer_processes": 4,
+    "viewer_actions": 40,
+    "physical_1to1_exact": 4,
+    "aligned_comparisons": {
+      "complete": true,
+      "comparisons": [
+        {
+          "source_index": 0,
+          "reference": "Apple",
+          "candidate": "LibRawBilinear",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "LibRawBilinear",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9986872571950748,
+            "runner_up_cosine": 0.8733573632239534,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.037155136157084684,
+              0.01716446248009262,
+              0.013311107763833879
+            ],
+            "linear_rgb_rmse": [
+              0.054129609204448585,
+              0.028601956244287876,
+              0.026550224987247125
+            ],
+            "reference_rgb_mean": [
+              0.171538336806568,
+              0.10488652330049512,
+              0.08107646092547266
+            ],
+            "candidate_rgb_mean": [
+              0.13506569342498226,
+              0.08845322615514246,
+              0.07097780519180372
+            ],
+            "channels_below_zero": [
+              15559,
+              0
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 0,
+          "reference": "Apple",
+          "candidate": "LibRawAhd",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "LibRawAhd",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9995703192963227,
+            "runner_up_cosine": 0.8720529691333754,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.09928394052263212,
+              0.05761871820240567,
+              0.04330164694641788
+            ],
+            "linear_rgb_rmse": [
+              0.13619999013158604,
+              0.08726778117978816,
+              0.07417352054002907
+            ],
+            "reference_rgb_mean": [
+              0.171538336806568,
+              0.10488652330049512,
+              0.08107646092547266
+            ],
+            "candidate_rgb_mean": [
+              0.07231502565476809,
+              0.04738976051232635,
+              0.037990986855004585
+            ],
+            "channels_below_zero": [
+              15559,
+              0
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 0,
+          "reference": "Apple",
+          "candidate": "TrueRenderer",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "TrueRenderer",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9995844773802962,
+            "runner_up_cosine": 0.8710589029927162,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.036726344581440286,
+              0.016743206872061853,
+              0.011766721239879993
+            ],
+            "linear_rgb_rmse": [
+              0.05325287081668479,
+              0.027378878605315723,
+              0.022986651772127595
+            ],
+            "reference_rgb_mean": [
+              0.171538336806568,
+              0.10488652330049512,
+              0.08107646092547266
+            ],
+            "candidate_rgb_mean": [
+              0.13508440543144037,
+              0.08851913107804861,
+              0.07093614366095435
+            ],
+            "channels_below_zero": [
+              15559,
+              29
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 1,
+          "reference": "Apple",
+          "candidate": "LibRawBilinear",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "LibRawBilinear",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.998647457558639,
+            "runner_up_cosine": 0.8739531851491905,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.03735832319607386,
+              0.016964724265062618,
+              0.013077020687147837
+            ],
+            "linear_rgb_rmse": [
+              0.05454119700588485,
+              0.028488352371867365,
+              0.026364054180079425
+            ],
+            "reference_rgb_mean": [
+              0.1717380419534875,
+              0.10371208374597618,
+              0.07946777187448684
+            ],
+            "candidate_rgb_mean": [
+              0.13508681806128234,
+              0.08751452611379057,
+              0.06972532806966378
+            ],
+            "channels_below_zero": [
+              14171,
+              0
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 1,
+          "reference": "Apple",
+          "candidate": "LibRawAhd",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "LibRawAhd",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9995314380424235,
+            "runner_up_cosine": 0.8718403303806007,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.09946444951010237,
+              0.05694305087310876,
+              0.04236924765252481
+            ],
+            "linear_rgb_rmse": [
+              0.13683419489098292,
+              0.08683618267547655,
+              0.0732878343917542
+            ],
+            "reference_rgb_mean": [
+              0.1717380419534875,
+              0.10371208374597618,
+              0.07946777187448684
+            ],
+            "candidate_rgb_mean": [
+              0.07232706862791476,
+              0.0468846495909988,
+              0.03731856914736593
+            ],
+            "channels_below_zero": [
+              14171,
+              0
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 1,
+          "reference": "Apple",
+          "candidate": "TrueRenderer",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "TrueRenderer",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9995527215939328,
+            "runner_up_cosine": 0.8692192738028738,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.036901285484125496,
+              0.016505993811846,
+              0.011482003255584662
+            ],
+            "linear_rgb_rmse": [
+              0.053657781244906624,
+              0.02724142620899427,
+              0.022701855562553643
+            ],
+            "reference_rgb_mean": [
+              0.1717380419534875,
+              0.10371208374597618,
+              0.07946777187448684
+            ],
+            "candidate_rgb_mean": [
+              0.1351107017623547,
+              0.0875830128249062,
+              0.0696753854744411
+            ],
+            "channels_below_zero": [
+              14171,
+              33
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 2,
+          "reference": "Apple",
+          "candidate": "LibRawBilinear",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "LibRawBilinear",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9986009251642828,
+            "runner_up_cosine": 0.8737106766564248,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.03917597935244689,
+              0.01795709678748186,
+              0.013824551615495041
+            ],
+            "linear_rgb_rmse": [
+              0.05698562943540602,
+              0.029911349996133672,
+              0.02758962072021849
+            ],
+            "reference_rgb_mean": [
+              0.17991287763715044,
+              0.10914988259915029,
+              0.08412779302238432
+            ],
+            "candidate_rgb_mean": [
+              0.14142174000734758,
+              0.09194033713442173,
+              0.07358390249762062
+            ],
+            "channels_below_zero": [
+              11244,
+              0
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 2,
+          "reference": "Apple",
+          "candidate": "LibRawAhd",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "LibRawAhd",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9994229568144752,
+            "runner_up_cosine": 0.8720405994768454,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.1040694337346319,
+              0.05990137908623822,
+              0.044859119499576466
+            ],
+            "linear_rgb_rmse": [
+              0.14275524415936625,
+              0.09089988251582257,
+              0.07686669530505665
+            ],
+            "reference_rgb_mean": [
+              0.17991287763715044,
+              0.10914988259915029,
+              0.08412779302238432
+            ],
+            "candidate_rgb_mean": [
+              0.07588662019013015,
+              0.049357248384744326,
+              0.03946118515465369
+            ],
+            "channels_below_zero": [
+              11244,
+              0
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        },
+        {
+          "source_index": 2,
+          "reference": "Apple",
+          "candidate": "TrueRenderer",
+          "reference_geometry": {
+            "engine": "Apple",
+            "origin": [
+              2752,
+              1752
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+            "source_size": [
+              6016,
+              4016
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "candidate_geometry": {
+            "engine": "TrueRenderer",
+            "origin": [
+              2760,
+              1760
+            ],
+            "size": [
+              512,
+              512
+            ],
+            "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+            "source_size": [
+              6032,
+              4032
+            ],
+            "working": "linear Rec.2020 RGB f32 little-endian"
+          },
+          "registration": {
+            "dx": 0,
+            "dy": 0,
+            "gradient_cosine": 0.9994465120857535,
+            "runner_up_cosine": 0.8705984767186176,
+            "at_search_boundary": false,
+            "search_radius": 16,
+            "sampling_stride": 8
+          },
+          "metrics": {
+            "pixels": 222784,
+            "linear_rgb_mae": [
+              0.03873322850023693,
+              0.017514354349206087,
+              0.01224614937750772
+            ],
+            "linear_rgb_rmse": [
+              0.05608524617276104,
+              0.028653902291894462,
+              0.023907633789923156
+            ],
+            "reference_rgb_mean": [
+              0.17991287763715044,
+              0.10914988259915029,
+              0.08412779302238432
+            ],
+            "candidate_rgb_mean": [
+              0.1414409353784353,
+              0.09200116080891009,
+              0.07354423946308895
+            ],
+            "channels_below_zero": [
+              11244,
+              27
+            ],
+            "channels_above_one": [
+              0,
+              0
+            ]
+          },
+          "alignment_supported": true
+        }
+      ],
+      "scope": "Integer translation search of centered private linear Rec.2020 patches, gradient cosine insensitive to a common positive gain. No scaling, lens-warp or subpixel correction; weak/boundary matches remain unqualified. Differences include exposure, WB, active-area and pipeline choices, not just demosaic. No calibrated scene truth or DeltaE00 accuracy claim."
+    },
+    "synthetic_cases": 32,
+    "synthetic_lower_directional_mse": 24,
+    "ui_stages": 5,
+    "ui_surface": {
+      "checks": [
+        {
+          "checked_pixels": 646700,
+          "compute": "CPU",
+          "engine": "Apple",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 1
+        },
+        {
+          "checked_pixels": 646700,
+          "compute": "CPU",
+          "engine": "LibRawBilinear",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 2
+        },
+        {
+          "checked_pixels": 646700,
+          "compute": "CPU",
+          "engine": "LibRawAhd",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 3
+        },
+        {
+          "checked_pixels": 646700,
+          "compute": "CPU",
+          "engine": "TrueRenderer",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 4
+        },
+        {
+          "checked_pixels": 646700,
+          "compute": "CPU",
+          "engine": "Apple",
+          "max_channel_error_u8": 0,
+          "passed": true,
+          "stage": 5
+        }
+      ],
+      "passed": true,
+      "scope": "Right quarter of native RAW viewport vs CPU raster; excludes settings overlay, compositor and physical display.",
+      "threshold_u8": 1
+    }
+  },
+  "sampled_memory": {
+    "all_process_counts_present": true,
+    "incomplete_samples": 0,
+    "maximum_gap_seconds": 0.125171832999996
+  },
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-09-15T16:43:03.268183+00:00",
+    "bundle": "var/large-pressure-raw/TrueRenderer-final.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "e1add8d01bf7ad7aa8d55b518a56dbeba642b51c9a70e6921f2df26eada495e5",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1100d74f8272c4adafbb7b2d070b1f6bf400a105891404fe66a4d8c73a5a7d05",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b00a87f577e523d375459583fc80c497899e2bdece501a58627f8aa433a56232"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "raw_reports": {
+    "large-navigation": {
+      "path": "reports/large-navigation-macos.json",
+      "sha256": "22f49b369cced158b07f1b360f10d0f2c976ec47ca0943a1509cef443cc4d6cd",
+      "local_evidence": "var/large-navigation-bvbeci5p"
+    },
+    "renderer-pressure": {
+      "path": "reports/renderer-pressure-macos.json",
+      "sha256": "2960f0546fdf088b0fba6231d0654e6ec9119099bdecbccd0dd0d48fb22a4d45",
+      "local_evidence": "var/large-navigation-f8t12dkr"
+    },
+    "raw-navigation": {
+      "path": "reports/raw-navigation-macos.json",
+      "sha256": "b7fd539d3041846ef0673967b961ff7306556299461795215cdcb437ea9b567d",
+      "local_evidence": "var/large-navigation-ghaw4hlb"
+    }
+  },
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "e1add8d01bf7ad7aa8d55b518a56dbeba642b51c9a70e6921f2df26eada495e5",
+    "Contents/MacOS/tr-worker": "bdebc3eb0812f4608b4c3afb9a14051cc48c4a16e1d28374941816c2b486050e",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1100d74f8272c4adafbb7b2d070b1f6bf400a105891404fe66a4d8c73a5a7d05",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b00a87f577e523d375459583fc80c497899e2bdece501a58627f8aa433a56232"
+  },
+  "source_sha256": {
+    "native/libraw/tr_libraw.cpp": "ca90cd56b28c379c2c4886619fadb31771418e0dcfe2eeb6e48363ef3eb16f98",
+    "apps/desktop/src/main.rs": "0dd5417f0cafc3b7ba8a984aa4afcc0736da52cbd3390dfc8bf68643c4fd2136",
+    "apps/desktop/src/ui/navigation.rs": "4a996ff715c5b86dd87ec60aae21a11ce9615d1cff13dd9351757971cfcc450e",
+    "apps/desktop/src/verify_raw_engines.rs": "7a3feea40f897c802cf85a6561a4e724f0b08c50bc1bc9b57d4996d73a63929e",
+    "scripts/test-large-navigation.py": "6e0a607432498afcb78313f45eb3aa15f092cb24f4345c007cd59b96900081cf",
+    "scripts/test-navigation-surface.py": "6deef2bc20a89fd54d392b8642b600b81b618743f891f987930934075008820a",
+    "scripts/compare-raw-patches.py": "717902e4913e8bf958e2a17501b7e37a99fdcf2783de996d1b9745cb5bc9c254"
+  },
+  "delivered_bundle": "dist/TrueRenderer-restyle.app",
+  "backup_bundle": "var/large-pressure-raw/before.app",
+  "negative_baseline": {
+    "local_report": "var/large-pressure-raw/var/raw-engine-evaluation-1789487312/report.json",
+    "completed_engine_cases": 19,
+    "failed_libraw_cases": 14,
+    "interrupted_after_repeated_failure": true,
+    "crash_reason": "Thread stack size exceeded in tr_libraw_probe on XPC dispatch queue",
+    "baseline_binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "b924003735d4e533665033f1907f4238660cc75f184d413bd01e37fe580290fc",
+      "Contents/MacOS/tr-worker": "40d8efac004bb9d732036031cf1ee15b193a75f3abe9a675f5e517eea0ed123b",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+    }
+  },
+  "limits": [
+    "Functional success does not close the physical memory gate: four 45 MP Full cases exceed the configured 4 GiB in summed RSS; footprint also slightly exceeds it. Shared pages may be counted more than once; no process was subtracted.",
+    "Only resident levels are reduced; full-frame RAW development remains in use.",
+    "Pressure injection tests only renderer reserve policy; physical OS pressure, driver attribution and sub-sampling peaks remain unqualified.",
+    "Native screenshot readback is not physical monitor presentation; no p95/p99 or acceleration claim.",
+    "RAW comparisons cover one camera and three central patches; no known-illuminant target, DeltaE00/ICC qualification, wider noise/moire or general engine superiority.",
+    "The full sandbox/release gates and Windows qualification remain open; originals and photographic artifacts stay private."
+  ]
+}

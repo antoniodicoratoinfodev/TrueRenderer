@@ -1,0 +1,2610 @@
+{
+  "passed": true,
+  "complete": true,
+  "cases": [
+    {
+      "size": "raw",
+      "engine": "Apple",
+      "quality": "Standard",
+      "mode": "Cpu",
+      "phase": "cold",
+      "passed": true,
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 1,
+          "wide_gpu_bytes": 12737088,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12737088,
+          "wide_peak_memory_bytes": 38211264,
+          "wide_reprojections": 42
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 13,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "pressure_injected": false,
+        "pressure_wide_after": 0,
+        "pressure_wide_before": 0,
+        "samples": [
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 5849.1181670000005,
+            "event_to_readback_ms": 5908.133917,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1755552394,
+            "memory_reserved": 470706112,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2115,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 0,
+            "step_size": [
+              2.8444444444444446,
+              2.8441926345609065
+            ]
+          },
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 5753.325666000001,
+            "event_to_readback_ms": 5811.081208,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1824102448,
+            "memory_reserved": 538759040,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2115,
+              1412
+            ],
+            "source": "1.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 1,
+            "step_size": [
+              2.8444444444444446,
+              2.8441926345609065
+            ]
+          },
+          {
+            "action": "return",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.15062499999999998,
+            "event_to_readback_ms": 31.552625,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1824102448,
+            "memory_reserved": 538759040,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2115,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 2,
+            "step_size": [
+              2.8444444444444446,
+              2.8441926345609065
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.720834,
+            "event_to_readback_ms": 215.39266700000002,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1824102448,
+            "memory_reserved": 579424640,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2608.0,
+              1772.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 3,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11945520,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11945520,
+              "wide_peak_memory_bytes": 35836560,
+              "wide_reprojections": 0
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 159.334167,
+            "event_to_readback_ms": 216.980792,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1824102448,
+            "memory_reserved": 579424640,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2908.6666666666665,
+              1652.3333333333333
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 4,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11945520,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11945520,
+              "wide_peak_memory_bytes": 35836560,
+              "wide_reprojections": 11
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 142.809584,
+            "event_to_readback_ms": 201.501292,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1824102448,
+            "memory_reserved": 538759040,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11945520,
+              "wide_peak_memory_bytes": 35836560,
+              "wide_reprojections": 21
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2115,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 5,
+            "step_size": [
+              2.8444444444444446,
+              2.8441926345609065
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.140334,
+            "event_to_readback_ms": 46.643625,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1824102448,
+            "memory_reserved": 538759040,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11945520,
+              "wide_peak_memory_bytes": 35836560,
+              "wide_reprojections": 21
+            },
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2115,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 6,
+            "step_size": [
+              2.8444444444444446,
+              2.8441926345609065
+            ]
+          },
+          {
+            "action": "photo-full",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 3391.730583,
+            "event_to_readback_ms": 3451.474583,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1891658250,
+            "memory_reserved": 669991136,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 6,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11945520,
+              "wide_peak_memory_bytes": 35836560,
+              "wide_reprojections": 21
+            },
+            "redraws": 208,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2184,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              3008,
+              2008
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 7,
+            "step_size": [
+              2.7545787545787546,
+              2.7544581618655695
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 3915.017041,
+            "event_to_readback_ms": 3971.43675,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2063555946,
+            "memory_reserved": 1227403024,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              1808.0,
+              1279.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "presenter": {
+              "cpu_frames": 8,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 12737088,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12737088,
+              "wide_peak_memory_bytes": 38211264,
+              "wide_reprojections": 32
+            },
+            "redraws": 239,
+            "reprojected_redraws": 22,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              6016,
+              4016
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 150.58670800000002,
+            "event_to_readback_ms": 209.25591599999998,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2063555946,
+            "memory_reserved": 1060175424,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 9,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 12737088,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12737088,
+              "wide_peak_memory_bytes": 38211264,
+              "wide_reprojections": 42
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2115,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1504,
+              1004
+            ],
+            "source_size": [
+              6016,
+              4016
+            ],
+            "step": 9,
+            "step_size": [
+              2.8444444444444446,
+              2.8441926345609065
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 4096,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "0.nef",
+          "1.nef",
+          "0.nef"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      },
+      "first_access": "decode",
+      "memory": {
+        "sample_count": 732,
+        "peak_rss": 2364555264,
+        "peak_footprint": 2539425536,
+        "maximum_processes": 3,
+        "incomplete_samples": 0,
+        "maximum_gap_seconds": 0.03774287499999929,
+        "within_requested_budget": true
+      },
+      "inputs_unchanged": true
+    },
+    {
+      "size": "raw",
+      "engine": "LibRawBilinear",
+      "quality": "Standard",
+      "mode": "Cpu",
+      "phase": "cold",
+      "passed": true,
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12719592,
+          "wide_peak_memory_bytes": 38158776,
+          "wide_reprojections": 39
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 13,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "pressure_injected": false,
+        "pressure_wide_after": 0,
+        "pressure_wide_before": 0,
+        "samples": [
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1726.301542,
+            "event_to_readback_ms": 1785.024167,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1763269258,
+            "memory_reserved": 470869824,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 0,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1786.694875,
+            "event_to_readback_ms": 1844.9565830000001,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "1.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 1,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "return",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.15687500000000001,
+            "event_to_readback_ms": 47.636583,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 2,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.554,
+            "event_to_readback_ms": 215.024959,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 579752064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2616.0,
+              1780.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 3,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11928576,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 0
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.16025,
+            "event_to_readback_ms": 215.724084,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 579752064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2917.6666666666665,
+              1659.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 4,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11928576,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 10
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 141.511084,
+            "event_to_readback_ms": 199.615584,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 19
+            },
+            "redraws": 12,
+            "reprojected_redraws": 9,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 5,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.132292,
+            "event_to_readback_ms": 32.017625,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 19
+            },
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 6,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "photo-full",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1873.923875,
+            "event_to_readback_ms": 1931.960125,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1899702538,
+            "memory_reserved": 671174520,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 6,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 19
+            },
+            "redraws": 116,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2181,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              3016,
+              2016
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 7,
+            "step_size": [
+              2.7657038055937644,
+              2.765432098765432
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 2405.634292,
+            "event_to_readback_ms": 2461.93375,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2307088898,
+            "memory_reserved": 1232016312,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              1816.0,
+              1287.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "presenter": {
+              "cpu_frames": 8,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 12719592,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12719592,
+              "wide_peak_memory_bytes": 38158776,
+              "wide_reprojections": 29
+            },
+            "redraws": 148,
+            "reprojected_redraws": 21,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              6032,
+              4032
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 149.86525,
+            "event_to_readback_ms": 208.382541,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2307088898,
+            "memory_reserved": 1025506944,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 9,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12719592,
+              "wide_peak_memory_bytes": 38158776,
+              "wide_reprojections": 39
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 9,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 4096,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "LibRawBilinear",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "0.nef",
+          "1.nef",
+          "0.nef"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      },
+      "first_access": "decode",
+      "memory": {
+        "sample_count": 351,
+        "peak_rss": 3353198592,
+        "peak_footprint": 3459108800,
+        "maximum_processes": 3,
+        "incomplete_samples": 0,
+        "maximum_gap_seconds": 0.038308332999999806,
+        "within_requested_budget": true
+      },
+      "inputs_unchanged": true
+    },
+    {
+      "size": "raw",
+      "engine": "LibRawAhd",
+      "quality": "Standard",
+      "mode": "Cpu",
+      "phase": "cold",
+      "passed": true,
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12719592,
+          "wide_peak_memory_bytes": 38158776,
+          "wide_reprojections": 41
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 13,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "pressure_injected": false,
+        "pressure_wide_after": 0,
+        "pressure_wide_before": 0,
+        "samples": [
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 2166.080542,
+            "event_to_readback_ms": 2225.3519170000004,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1763269258,
+            "memory_reserved": 470869824,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 0,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 2150.2193749999997,
+            "event_to_readback_ms": 2207.652334,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "1.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 1,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "return",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.152167,
+            "event_to_readback_ms": 46.132875,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 2,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.848541,
+            "event_to_readback_ms": 215.38479099999998,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 579752064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2616.0,
+              1780.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 3,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11928576,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 0
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.67558300000002,
+            "event_to_readback_ms": 216.33875,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 579752064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2917.6666666666665,
+              1659.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 4,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11928576,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 11
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 142.41037500000002,
+            "event_to_readback_ms": 200.492166,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 21
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 5,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.150584,
+            "event_to_readback_ms": 32.719291999999996,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 21
+            },
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 6,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "photo-full",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 2207.6475,
+            "event_to_readback_ms": 2265.6594999999998,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1899702538,
+            "memory_reserved": 671174520,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 6,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 21
+            },
+            "redraws": 137,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2181,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              3016,
+              2016
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 7,
+            "step_size": [
+              2.7657038055937644,
+              2.765432098765432
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 2833.6789169999997,
+            "event_to_readback_ms": 2890.291459,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2307088898,
+            "memory_reserved": 1232016312,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              1816.0,
+              1287.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "presenter": {
+              "cpu_frames": 8,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 12719592,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12719592,
+              "wide_peak_memory_bytes": 38158776,
+              "wide_reprojections": 31
+            },
+            "redraws": 174,
+            "reprojected_redraws": 21,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              6032,
+              4032
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 149.09716600000002,
+            "event_to_readback_ms": 207.301166,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2307088898,
+            "memory_reserved": 1025506944,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 9,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12719592,
+              "wide_peak_memory_bytes": 38158776,
+              "wide_reprojections": 41
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 9,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 4096,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "LibRawAhd",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "0.nef",
+          "1.nef",
+          "0.nef"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      },
+      "first_access": "decode",
+      "memory": {
+        "sample_count": 403,
+        "peak_rss": 3366109184,
+        "peak_footprint": 3472363480,
+        "maximum_processes": 3,
+        "incomplete_samples": 0,
+        "maximum_gap_seconds": 0.03314149999999927,
+        "within_requested_budget": true
+      },
+      "inputs_unchanged": true
+    },
+    {
+      "size": "raw",
+      "engine": "TrueRenderer",
+      "quality": "Standard",
+      "mode": "Cpu",
+      "phase": "cold",
+      "passed": true,
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12719592,
+          "wide_peak_memory_bytes": 38158776,
+          "wide_reprojections": 41
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 13,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "pressure_injected": false,
+        "pressure_wide_after": 0,
+        "pressure_wide_before": 0,
+        "samples": [
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 2330.057209,
+            "event_to_readback_ms": 2388.046542,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1763269258,
+            "memory_reserved": 470869824,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 0,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 2365.478834,
+            "event_to_readback_ms": 2412.6085000000003,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "1.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 1,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "return",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.16691699999999998,
+            "event_to_readback_ms": 43.72575,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 2,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.790083,
+            "event_to_readback_ms": 215.319708,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 579752064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2616.0,
+              1780.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 3,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11928576,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 0
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.359291,
+            "event_to_readback_ms": 216.26524999999998,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 579752064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              2917.6666666666665,
+              1659.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 4,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11928576,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 11
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 141.238166,
+            "event_to_readback_ms": 199.619083,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 20
+            },
+            "redraws": 12,
+            "reprojected_redraws": 9,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 5,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.138083,
+            "event_to_readback_ms": 48.036542000000004,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1831983024,
+            "memory_reserved": 539086464,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 20
+            },
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 6,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          },
+          {
+            "action": "photo-full",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1956.9719169999998,
+            "event_to_readback_ms": 2014.85525,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 1899702538,
+            "memory_reserved": 671174520,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 6,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11928576,
+              "wide_peak_memory_bytes": 35785728,
+              "wide_reprojections": 20
+            },
+            "redraws": 121,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2181,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              3016,
+              2016
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 7,
+            "step_size": [
+              2.7657038055937644,
+              2.765432098765432
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 2623.333291,
+            "event_to_readback_ms": 2679.7645829999997,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2307088898,
+            "memory_reserved": 1232016312,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              1816.0,
+              1287.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "presenter": {
+              "cpu_frames": 8,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 12719592,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12719592,
+              "wide_peak_memory_bytes": 38158776,
+              "wide_reprojections": 31
+            },
+            "redraws": 161,
+            "reprojected_redraws": 23,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              6032,
+              4032
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "admission_rejections": 0,
+            "base_level": 2,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 150.924959,
+            "event_to_readback_ms": 208.890584,
+            "max_channel_error_u8": 0,
+            "memory_limit": 4294967296,
+            "memory_peak": 2307088898,
+            "memory_reserved": 1025506944,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 9,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 12719592,
+              "wide_peak_memory_bytes": 38158776,
+              "wide_reprojections": 41
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2112,
+              1412
+            ],
+            "source": "0.nef",
+            "source_dimensions": [
+              1508,
+              1008
+            ],
+            "source_size": [
+              6032,
+              4032
+            ],
+            "step": 9,
+            "step_size": [
+              2.856060606060606,
+              2.855524079320113
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 4096,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "TrueRenderer",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "0.nef",
+          "1.nef",
+          "0.nef"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      },
+      "first_access": "decode",
+      "memory": {
+        "sample_count": 397,
+        "peak_rss": 3062431744,
+        "peak_footprint": 3361754952,
+        "maximum_processes": 3,
+        "incomplete_samples": 0,
+        "maximum_gap_seconds": 0.04799650000000355,
+        "within_requested_budget": true
+      },
+      "inputs_unchanged": true
+    }
+  ],
+  "configuration": {
+    "bundle": "var/large-pressure-raw/TrueRenderer-final.app",
+    "sizes": "12,24,45",
+    "qualities": "Standard",
+    "modes": "Cpu",
+    "memory_mib": 4096,
+    "pressure": false,
+    "raw_folder": "var/large-pressure-raw/raw-pair",
+    "engines": "Apple,LibRawBilinear,LibRawAhd,TrueRenderer"
+  },
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "e1add8d01bf7ad7aa8d55b518a56dbeba642b51c9a70e6921f2df26eada495e5",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1100d74f8272c4adafbb7b2d070b1f6bf400a105891404fe66a4d8c73a5a7d05",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b00a87f577e523d375459583fc80c497899e2bdece501a58627f8aa433a56232"
+  },
+  "scope": "Generated large PNG or explicitly authorized RAW. Renderer pressure is injected; no physical OS-pressure claim. Memory sums sampled host and XPC, not all driver allocations or shorter peaks. Endpoints compare the selected provider to CPU, not independent camera colour truth."
+}

@@ -8,6 +8,12 @@ Questo ADR conserva decisioni e misure della 0.1.4. Nella 0.1.5 il percorso inte
 
 Il formato v1 `.tvc`, il formato di record v2 e il futuro container tiled/gigapixel sono tre contratti distinti. I checksum rilevano corruzioni, senza autenticare dati riscritti da un attaccante. Token di filesystem e qualità Piena non promuovono una cache ad assurance Standard/Riferimento.
 
+### Raccordo hard link — 15 settembre 2026
+
+Il lettore corrente consente file regolari con più hard link per tollerare la condivisione temporanea dei client di sincronizzazione; i record restano soggetti a tutte le verifiche di contenuto. Questo non autorizza scritture, aggiornamenti di timestamp o rimozioni. Corretto il percorso che usava la sola leggibilità per sostituire una voce invalida: la rimozione ricontrolla ora tipo e numero di link sul file aperto, sia per v1 sia per record v2 e temporanei. Una destinazione condivisa invalida conserva entrambi i nomi e fa saltare la scrittura; una valida può ancora essere riusata in sola lettura.
+
+La verifica Mac copre byte/mtime, nomi conservati, descrittore e blocchi v2, link aggiunti dopo la scansione e ritorno alla raccolta ordinaria dopo la loro rimozione esterna. Non è una garanzia atomica contro ogni sostituzione o creazione di link da processi non cooperanti tra controllo e unlink. File protetti possono restare sul disco oltre la quota eliminabile; non si attribuisce la qualifica Windows ai soli test Mac. Le frasi storiche seguenti sul rifiuto degli hard link vanno lette insieme a questo contratto corrente.
+
 ## Scopo autorizzato
 
 Il titolare richiede una cartella di cache/temporanei dentro ogni cartella aperta, impostazioni di limite e pulizia, README inglese e pubblicazione su GitHub prima di ulteriori ottimizzazioni. Questa richiesta anticipa esplicitamente la cache accanto alle foto che §11.4 collocava nel post-v1. Le fotografie rimangono in sola lettura; si scrive esclusivamente nella sottocartella derivata `.truerenderer-cache`. Annotazioni, backup e preferenze rimangono nel percorso dati dell'app.

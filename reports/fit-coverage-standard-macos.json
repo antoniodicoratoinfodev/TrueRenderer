@@ -1,0 +1,5142 @@
+{
+  "application": "TrueRenderer",
+  "passed": true,
+  "checked_at": "2026-09-15T15:39:48.328856+00:00",
+  "quality": "Standard",
+  "trials_per_mode": 3,
+  "transitions": true,
+  "require_full_coverage": true,
+  "os": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "physical_memory_bytes": 17179869184,
+  "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=21561443)\t39%; discharging; 1:42 remaining present: true",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "b924003735d4e533665033f1907f4238660cc75f184d413bd01e37fe580290fc",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+  },
+  "corpus_sha256": {
+    "01_Studio_cromatico.png": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+    "02_Paesaggio_analitico.png": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "03_Gradiente_16bit.png": "d3df38d0e808beb0d1e744aed0694a596321195f3681a9ab05a4dd334e941d0f",
+    "04_Frequenze_radiali.png": "808ce6b559b9bd8beedb4aae44f08ef0815041780e7fab0fa6a2ac8bfc15c604",
+    "05_Trasparenza.png": "eda5d0d51461f24f6f1efa05fbb65f89195441ed74fdfdbe2b0a4d91a9a00868",
+    "06_Scala_neutra.png": "0029174a941fb546159a8ebbf5f16f0438328291ec8cd6f6eeef47cf1b28f477",
+    "07_Confronto_A.png": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "08_Confronto_B.png": "960d719d279be3792dc445474e99be25ee457c3d9ff130e83972586dba65cc70",
+    "09_Campioni_primari.png": "ccf46cc96dcfec6cf27f278c2f38a86144f1465d41cf850d14101b4ecc7689a6",
+    "10_Bordi_dispari.png": "881b5e5b7c343671824b3241a6ffcefd9a513bda1cc70ea91b9347bce20e351d",
+    "11_Ombre_16bit.png": "a98dcd990660c74aa821bd6f4ecf9f5208a5241fd1a9748d94c59d86317d089e",
+    "12_Luci_16bit.png": "e1fd0f4c945a36b41ed328367e401fda59743e3b4d19895642ae971b04613fc2"
+  },
+  "runs": [
+    {
+      "trial": 0,
+      "mode": "Cpu",
+      "phase": "cold",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 20
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 14,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 305.75562499999995,
+            "event_to_readback_ms": 362.809291,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 308.31145799999996,
+            "event_to_readback_ms": 367.970792,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.173792,
+            "event_to_readback_ms": 36.923583,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 161.897834,
+            "event_to_readback_ms": 220.193,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.272042,
+            "event_to_readback_ms": 212.295042,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 155.117292,
+            "event_to_readback_ms": 213.368958,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.14825,
+            "event_to_readback_ms": 37.18825,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 295.247167,
+            "event_to_readback_ms": 354.200417,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 22,
+            "reprojected_redraws": 19,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 58.795624999999994,
+            "event_to_readback_ms": 119.53970799999999,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 8,
+            "reprojected_redraws": 5,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 161.04674999999997,
+            "event_to_readback_ms": 219.2885,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 0,
+      "mode": "Cpu",
+      "phase": "ssd",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 20
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 14,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 213.807417,
+            "event_to_readback_ms": 287.517375,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 225.281792,
+            "event_to_readback_ms": 283.436292,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.163208,
+            "event_to_readback_ms": 39.126458,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 162.997625,
+            "event_to_readback_ms": 220.83675,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 155.19708400000002,
+            "event_to_readback_ms": 212.87645899999998,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.388791,
+            "event_to_readback_ms": 212.941083,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.165459,
+            "event_to_readback_ms": 34.6755,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 295.272667,
+            "event_to_readback_ms": 354.317459,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 22,
+            "reprojected_redraws": 19,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 58.056167,
+            "event_to_readback_ms": 117.967458,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 8,
+            "reprojected_redraws": 5,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 161.8195,
+            "event_to_readback_ms": 220.5805,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 0,
+      "mode": "Gpu",
+      "phase": "cold",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 9,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 4
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 5,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 148.488125,
+            "event_to_readback_ms": 211.216375,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 1,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 135.92537499999997,
+            "event_to_readback_ms": 196.258458,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.16699999999999998,
+            "event_to_readback_ms": 36.46125,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 110,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.504875,
+            "event_to_readback_ms": 51.95175,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 121,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 14.918375,
+            "event_to_readback_ms": 76.00375,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 16.751790999999997,
+            "event_to_readback_ms": 77.73929100000001,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.142792,
+            "event_to_readback_ms": 34.265083000000004,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 143.693875,
+            "event_to_readback_ms": 203.699041,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 3,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1.208458,
+            "event_to_readback_ms": 52.587958,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 9.401667000000002,
+            "event_to_readback_ms": 70.225667,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 0,
+      "mode": "Gpu",
+      "phase": "ssd",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 9,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 4
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 5,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 61.828208000000004,
+            "event_to_readback_ms": 107.802208,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 1,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 99.252083,
+            "event_to_readback_ms": 164.863292,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.17433300000000002,
+            "event_to_readback_ms": 34.736667,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 110,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 2.029083,
+            "event_to_readback_ms": 51.116875,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 121,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 15.906666,
+            "event_to_readback_ms": 76.892166,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 16.47775,
+            "event_to_readback_ms": 77.837917,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.15829200000000002,
+            "event_to_readback_ms": 34.344291999999996,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 74.66125,
+            "event_to_readback_ms": 136.27208299999998,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 9,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1.088291,
+            "event_to_readback_ms": 52.588333,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 9.494833,
+            "event_to_readback_ms": 70.67729200000001,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Gpu",
+      "phase": "cold",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 9,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 3
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 5,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 146.86029200000002,
+            "event_to_readback_ms": 207.917084,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 1,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 167.1965,
+            "event_to_readback_ms": 228.035709,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.178667,
+            "event_to_readback_ms": 35.869541999999996,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 110,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.416625,
+            "event_to_readback_ms": 53.967,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 121,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 15.242208,
+            "event_to_readback_ms": 76.733542,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.15825,
+            "event_to_readback_ms": 61.104459,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.16466699999999998,
+            "event_to_readback_ms": 36.868792,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 92.54424999999999,
+            "event_to_readback_ms": 153.62716600000002,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 10,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1.0247089999999999,
+            "event_to_readback_ms": 51.090917,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 9.224958,
+            "event_to_readback_ms": 70.589708,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Gpu",
+      "phase": "ssd",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 9,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 2
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 5,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 62.159583999999995,
+            "event_to_readback_ms": 108.405625,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 1,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 97.53895899999999,
+            "event_to_readback_ms": 147.136042,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.179167,
+            "event_to_readback_ms": 35.683958000000004,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 110,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.6375000000000002,
+            "event_to_readback_ms": 52.341167,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 121,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.622125,
+            "event_to_readback_ms": 60.3585,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.163958,
+            "event_to_readback_ms": 61.416540999999995,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.151625,
+            "event_to_readback_ms": 36.302875,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 76.397375,
+            "event_to_readback_ms": 137.782875,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 9,
+            "reprojected_redraws": 3,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1.144375,
+            "event_to_readback_ms": 50.325874999999996,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 8.831291,
+            "event_to_readback_ms": 69.823041,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Cpu",
+      "phase": "cold",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 20
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 14,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 301.842292,
+            "event_to_readback_ms": 358.53687499999995,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 309.162292,
+            "event_to_readback_ms": 368.900625,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.169917,
+            "event_to_readback_ms": 37.53429199999999,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 177.838625,
+            "event_to_readback_ms": 235.63383299999998,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 15,
+            "reprojected_redraws": 12,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.381125,
+            "event_to_readback_ms": 212.342583,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.645791,
+            "event_to_readback_ms": 213.414166,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.161833,
+            "event_to_readback_ms": 35.256916,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 295.37775,
+            "event_to_readback_ms": 353.88629199999997,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 22,
+            "reprojected_redraws": 19,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 59.588916999999995,
+            "event_to_readback_ms": 119.63799999999999,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 8,
+            "reprojected_redraws": 5,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 161.831792,
+            "event_to_readback_ms": 220.57666700000001,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Cpu",
+      "phase": "ssd",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 20
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 14,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 217.79754200000002,
+            "event_to_readback_ms": 291.006209,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 224.783792,
+            "event_to_readback_ms": 282.715333,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.15104199999999998,
+            "event_to_readback_ms": 38.576667,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 162.558708,
+            "event_to_readback_ms": 220.589958,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.730375,
+            "event_to_readback_ms": 212.861541,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 153.877666,
+            "event_to_readback_ms": 212.151333,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.16825,
+            "event_to_readback_ms": 37.439458,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 295.61808299999996,
+            "event_to_readback_ms": 355.67375,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 22,
+            "reprojected_redraws": 19,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 57.539874999999995,
+            "event_to_readback_ms": 117.835542,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 8,
+            "reprojected_redraws": 5,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 160.587625,
+            "event_to_readback_ms": 218.96033300000002,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Cpu",
+      "phase": "cold",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 20
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 15,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 298.452834,
+            "event_to_readback_ms": 355.534917,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 308.528791,
+            "event_to_readback_ms": 368.290375,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.173125,
+            "event_to_readback_ms": 35.951125,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 162.058917,
+            "event_to_readback_ms": 220.034292,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 153.63125,
+            "event_to_readback_ms": 211.590666,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.726584,
+            "event_to_readback_ms": 212.992084,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.15062499999999998,
+            "event_to_readback_ms": 36.036209,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 295.7445,
+            "event_to_readback_ms": 354.27720800000003,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 22,
+            "reprojected_redraws": 19,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 59.037625000000006,
+            "event_to_readback_ms": 119.134375,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 8,
+            "reprojected_redraws": 5,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 178.59225,
+            "event_to_readback_ms": 236.804875,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 15,
+            "reprojected_redraws": 12,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Cpu",
+      "phase": "ssd",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 9,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 20
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 14,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 214.61825000000002,
+            "event_to_readback_ms": 288.264083,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 223.97120800000002,
+            "event_to_readback_ms": 281.959541,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.16404200000000002,
+            "event_to_readback_ms": 38.691625,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 162.509291,
+            "event_to_readback_ms": 220.411291,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.396417,
+            "event_to_readback_ms": 212.253167,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 154.62425,
+            "event_to_readback_ms": 213.00329100000002,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.133958,
+            "event_to_readback_ms": 36.099208,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 295.412041,
+            "event_to_readback_ms": 354.196333,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 22,
+            "reprojected_redraws": 19,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 59.820583,
+            "event_to_readback_ms": 119.691,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 8,
+            "reprojected_redraws": 5,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 162.360958,
+            "event_to_readback_ms": 219.921625,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Gpu",
+      "phase": "cold",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 9,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 4
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 5,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 165.685541,
+            "event_to_readback_ms": 227.88208300000002,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 1,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 169.80895900000002,
+            "event_to_readback_ms": 230.678792,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.17450000000000002,
+            "event_to_readback_ms": 35.798584,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 110,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.494875,
+            "event_to_readback_ms": 52.199166999999996,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 121,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 15.026833,
+            "event_to_readback_ms": 75.847,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 19.354708000000002,
+            "event_to_readback_ms": 80.60725000000001,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.13295900000000002,
+            "event_to_readback_ms": 32.364375,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 92.68558300000001,
+            "event_to_readback_ms": 154.1235,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 10,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1.09375,
+            "event_to_readback_ms": 53.545541,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 8.861875,
+            "event_to_readback_ms": 70.871667,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Gpu",
+      "phase": "ssd",
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 9,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 12754584,
+          "wide_peak_memory_bytes": 38263752,
+          "wide_reprojections": 3
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 5,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 63.286542000000004,
+            "event_to_readback_ms": 110.583583,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "select",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 1,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 98.622833,
+            "event_to_readback_ms": 148.23875,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "action": "return",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.1795,
+            "event_to_readback_ms": 34.961583999999995,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 110,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 2.101,
+            "event_to_readback_ms": 52.78375,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              200.0,
+              157.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 121,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.1808750000000001,
+            "event_to_readback_ms": 59.562708,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              260.0,
+              133.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 18.656375,
+            "event_to_readback_ms": 80.010541,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 5,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.175458,
+            "event_to_readback_ms": 34.065375,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 6,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "photo-full",
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 76.596,
+            "event_to_readback_ms": 138.37375,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 9,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 7,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 1.130625,
+            "event_to_readback_ms": 51.383916,
+            "max_channel_error_u8": 0,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              1200,
+              800
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 8.903542,
+            "event_to_readback_ms": 70.191042,
+            "max_channel_error_u8": 1,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 9,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      }
+    }
+  ],
+  "summary": {
+    "Cpu-cold": {
+      "samples": 3,
+      "minimum_ms": 355.534917,
+      "median_ms": 358.53687499999995,
+      "maximum_ms": 362.809291,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Cpu-ssd": {
+      "samples": 3,
+      "minimum_ms": 287.517375,
+      "median_ms": 288.264083,
+      "maximum_ms": 291.006209,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Cpu-ram": {
+      "samples": 3,
+      "minimum_ms": 38.576667,
+      "median_ms": 38.691625,
+      "maximum_ms": 39.126458,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Gpu-cold": {
+      "samples": 3,
+      "minimum_ms": 207.917084,
+      "median_ms": 211.216375,
+      "maximum_ms": 227.88208300000002,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Gpu-ssd": {
+      "samples": 3,
+      "minimum_ms": 107.802208,
+      "median_ms": 108.405625,
+      "maximum_ms": 110.583583,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Gpu-ram": {
+      "samples": 3,
+      "minimum_ms": 34.736667,
+      "median_ms": 34.961583999999995,
+      "maximum_ms": 35.683958000000004,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    }
+  },
+  "limits": [
+    "Synthetic Command::Select boundary, not OS input injection; no compositor/scanout timestamp.",
+    "Readback includes GPU copy/map and event delivery. CPU reference comparison follows timestamp.",
+    "Probe requests repaint after 10 ms while active; instrumentation can affect scheduling and is not a transparent production trace.",
+    "No app image demand before first command; listing and GPU qualification excluded from latency.",
+    "OS file cache not flushed; SSD means reopened application artifact storage, not physical disk cache cold.",
+    "CPU/GPU order alternates per trial; SSD necessarily follows its cold population run.",
+    "RAM sample is the third selection after visiting another image, in the same process as the SSD run.",
+    "Two generated PNG sources below 2048 pixels; even the extended trace does not qualify reduced-resolution RAW, scrolling, disabled cache or pressure.",
+    "Extended continuity measures image draw coverage per UI redraw, not all physical screen refreshes. Partial coverage is reported; zero image coverage fails.",
+    "Fewer than 100 independent process trials suppress p95; fewer than 1000 suppress p99. No CI or acceleration claim."
+  ]
+}

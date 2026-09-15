@@ -2,7 +2,7 @@
 
 > Revisione 5, allineamento documentale del 9 settembre 2026 al codice e ai report inclusi in `10123b5`: specifica integrata nell'appendice E delle due architetture del progetto. La 0.1.5 contiene già livelli autonomi, qualità Standard/Piena, budget, cache v2, writer asincrono, scheduler/prefetch e compute CPU/GPU. La revisione aggiunge osservazione delle sorgenti residenti, recupero grafico, correzione dell'ammissione RAW, cancellazione dei lavori abbandonati in navigazione e verifiche resistenti a risultati obsoleti; mantiene separati implementazione, prove locali e qualifica ancora aperta.
 
-**Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni passano soltanto dal bundle macOS XPC/App Sandbox secondo ADR 0004.
+**Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni richiedono il bundle macOS XPC/App Sandbox secondo ADR 0004 oppure il worker Windows LPAC secondo ADR 0009; il percorso su pipe mantiene il corpus controllato. Dopo restyling e correzione cache, il primo probe comando→superficie del 15 settembre verifica selezioni e ritorni CPU/GPU, Standard/Full, con cache distinte (§12.1). Presentazione effettiva e qualifica evento→frame completa restano aperte.
 
 La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [PLAN.md](../PLAN.md), [avanzamento](avanzamento.md), [ADR 0006](adr/0006-anteprime-residenza-compute.md) e [verifiche](../reports/VERIFICA.md).
 
@@ -93,7 +93,7 @@ L'estrazione della preview della fotocamera potrà essere un'opzione distinta, `
 
 ## 3. Preferenze e controllo delle risorse
 
-Estendere il pannello esistente in **Preferenze → Anteprime e prestazioni**. Le impostazioni sono caricate una volta, fuori dal percorso di disegno, migrando l'attuale `settings.json` verso uno schema versionato nell'app-data; in sviluppo, nel percorso dati locale. Conservare `enabled`, `disk_mib`, `temporary_mib`, `unused_days` e `free_mib` già presenti. La configurazione non appartiene alla cache eliminabile.
+Il restyling del 15 settembre organizza questi controlli in **Settings → Previews and RAW**, **Performance** e **Cache and data** (tradotti in italiano). Le impostazioni sono caricate una volta, fuori dal percorso di disegno; la migrazione verso uno schema versionato nell'app-data resta un requisito di rilascio, mentre lo sviluppo usa il percorso dati locale. Conservare `enabled`, `disk_mib`, `temporary_mib`, `unused_days` e `free_mib` già presenti. La configurazione non appartiene alla cache eliminabile.
 
 | Controllo utente | Valore iniziale proposto | Semantica |
 |---|---|---|
@@ -443,7 +443,7 @@ La tabella distingue i moduli effettivamente presenti nella 0.1.5 dalle estensio
 | Piattaforma | `tr-platform`: broker, `xpc.rs`, `resources.rs`; adattatori non macOS ancora da realizzare | Ammissione prima delle copie, pressione RAM/VRAM, capability e verifiche |
 | Decoder | `tr-worker`, `native/macos/image_decoder.m/.h` | Intent espliciti, contesto riutilizzabile, decode ridotto/Full e codec cache isolati |
 | Desktop | `apps/desktop/src/`: `ui.rs`, `service.rs`, `decode_pool.rs`, `main.rs`, `source_monitor.rs`, `graphics.rs`, `wake.rs` | Preferenze, selettore qualità, pubblicazione domanda, collegamento dei servizi |
-| Verifica | `verify_previews.rs`, `scripts/test-preview-*.py`; harness evento→frame completo ancora aperto | Benchmark riproducibili e regressioni del contratto visuale |
+| Verifica | `verify_previews.rs`, `scripts/test-preview-*.py`, probe `ui/navigation.rs` e `scripts/test-navigation-surface.py`; harness evento→frame completo ancora aperto | Benchmark riproducibili e regressioni del contratto visuale |
 
 Rayon e l'eventuale Zstd richiedono scelta di versione, build riproducibile e aggiornamento dei notice delle dipendenze effettive. SHA-256 con accelerazione e snapshot resta quanto già implementato; non introdurre BLAKE3 in parallelo senza una necessità misurata. Non servono nuove dipendenze per approvare questo progetto documentale. Non modificare la licenza proprietaria o pubblicare cache, foto, database e toolchain.
 
@@ -452,6 +452,17 @@ Gli smoke correnti verificano stadi, risultati richiesti e screenshot; `cache.le
 ## 12. Misure e criteri di accettazione
 
 ### 12.1 Protocollo delle misure
+
+**Primo probe della superficie, 15 settembre 2026.** `--navigation-smoke` esegue tre selezioni deterministiche (segnale radiale, paesaggio, ritorno al segnale) nel viewer reale; `scripts/test-navigation-surface.py` crea copie del corpus e cataloghi separati, confrontando CPU/GPU della medesima qualità. La prima selezione parte senza precedenti richieste immagine; la scansione del catalogo e la qualifica GPU sono già completate. Prefetch, filmstrip e ispettore sono disabilitati. Una corsa popola la cache; una nuova istanza ne verifica il riuso dal disco. Il terzo comando della seconda istanza misura il ritorno RAM. Contatori e residenza confermano lo scenario, senza dedurlo dal nome del test.
+
+Il primo timestamp precede `Command::Select`; il secondo registra l'inserimento del raster esatto richiesto nel frame egui, prima del submit. Il terzo registra la ricezione del readback della superficie. Solo dopo si confrontano tutti i pixel della regione con CPU, entro un livello sRGB8; frame precedenti, riproiettati o con qualità inferiore non terminano la prova. Il readback include copia GPU, mapping e consegna dell'evento; il probe richiede repaint a 10 ms e può alterare lo scheduling. **Non misura il timestamp del compositor/monitor e non chiude i target evento→frame.** Cache OS non svuotata; SSD indica la cache applicativa riaperta, senza affermare una lettura fisica dal disco.
+
+La corsa predefinita ha tre ripetizioni indipendenti per modalità/stato e riporta min/mediana/max. Lo script sopprime p95 sotto 100 processi indipendenti per scenario e p99 sotto 1.000; anche oltre queste soglie le stime sono descrittive, senza intervalli di confidenza o gate di accelerazione. Il corpus piccolo PNG, la geometria Fit e questo primo confine software non sostituiscono la campagna completa seguente: restano scroll/pan/zoom, cambi qualità, RAW, pressione, baseline storica e presentazione effettiva.
+
+**Estensione delle transizioni.** L'opzione `--transitions` aggiunge zoom 300%, pan a centro deterministico, ritorno Fit, override Standard, override Full, 1:1 fisico e ritorno Standard/Fit. Sono azioni sintetiche sullo stato del viewer e sugli stessi helper di qualità/zoom, non eventi OS di mouse o rotella. Per ogni ridisegno della stessa sorgente si registra la frazione dell'area immagine coperta da draw esatti o riproiettati; una copertura zero fa fallire la traccia. La riproiezione può coprire solo la parte in comune con il vecchio ritaglio, senza inventare pixel delle zone mancanti. La correttezza finale è verificata sul readback, con tolleranza zero a 1:1. Queste osservazioni non attestano tutti i refresh del monitor né copertura sempre completa; il corpus sotto 2048 pixel non prova ancora transizioni di risoluzione RAW ridotta.
+
+**Riserva di copertura.** Il presenter conserva facoltativamente un frame più ampio della stessa foto, digest, motore, dimensioni sorgente e vista, entro due slot e un quarto dei budget globale/GPU, con rilascio prioritario in caso di pressione o necessità di ammissione. I lease rimangono contabilizzati fino al completamento. Il runner `--transitions --require-full-coverage` richiede copertura geometrica completa a ogni ridisegno osservato della stessa sorgente; questo controllo non misura tutti i refresh fisici né garantisce copertura quando la riserva manca o viene espulsa. Contratto in ADR 0006.
+
 
 Creare un harness di navigazione con sequenza deterministica di scroll, selezioni, cambio qualità, zoom e ritorni. La baseline primaria è **0.1.4 al commit indicato in apertura**, comprensiva di cache e snapshot accelerati; 0.1.3 è un confronto storico opzionale. Confrontare nuova CPU e GPU sulla stessa macchina, corpus, superficie e quota.
 

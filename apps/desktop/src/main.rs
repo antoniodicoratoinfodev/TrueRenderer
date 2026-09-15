@@ -43,6 +43,20 @@ fn run() -> Result<()> {
         )?;
     }
     let sampling_smoke = args.iter().any(|a| a == "--sampling-smoke");
+    let navigation = args
+        .iter()
+        .any(|a| a == "--navigation-smoke" || a == "--navigation-transitions-smoke");
+    if navigation {
+        anyhow::ensure!(
+            option("--data").is_some() && option("--open").is_none(),
+            "Navigation probe requires isolated --data and the generated corpus (no --open)"
+        );
+        std::fs::create_dir_all(root.join("reports"))?;
+        std::fs::write(
+            root.join("reports/navigation-surface.json"),
+            br#"{"passed":false,"reason":"probe started; incomplete"}"#,
+        )?;
+    }
     let source_smoke = args.iter().any(|a| a == "--source-change-smoke");
     let graphics_smoke = args
         .iter()
@@ -55,7 +69,8 @@ fn run() -> Result<()> {
             || a == "--preview-gpu-smoke"
             || a == "--preview-performance-smoke"
     });
-    let smoke = source_smoke
+    let smoke = navigation
+        || source_smoke
         || settings_smoke
         || external_smoke
         || sampling_smoke
@@ -77,6 +92,13 @@ fn run() -> Result<()> {
         } else {
             "tr-worker"
         });
+    if let Some(folder) = option("--navigation-folder") {
+        anyhow::ensure!(
+            navigation && tr_platform::external_decoding_available(&worker),
+            "External navigation probe requires isolated platform decoder and navigation mode"
+        );
+        initial_open = Some(folder);
+    }
     if args.iter().any(|a| a == "--verify-cache") {
         return verify_cache::run(&root, &worker);
     }
@@ -145,6 +167,7 @@ fn run() -> Result<()> {
         data,
         worker,
         ui::Startup {
+            navigation,
             smoke,
             sampling_smoke,
             external_smoke,

@@ -1,0 +1,94 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "checked_at": "2026-09-15T15:21:20.274115+00:00",
+  "base_commit": "cdca799996785e8fdaceedb2954119ef82caa325",
+  "passed": true,
+  "meaning_of_passed": "Functional endpoint pixels and nonzero image draw coverage in the declared synthetic trace; not full coverage or physical display continuity",
+  "performance_gates_passed": false,
+  "changes": [
+    "Extended opt-in trace to zoom 300%, deterministic pan, Fit, photo Standard/Full, physical 1:1 and return to Standard/Fit.",
+    "Diagnostic presenter coverage distinguishes exact draw, partial reprojection and no image draw. Same-source zero coverage fails.",
+    "Physical 1:1 endpoint requires exact geometry and zero differing channels; other endpoints retain one sRGB8-level tolerance."
+  ],
+  "checks": {
+    "fmt": true,
+    "workspace_clippy_all_targets_warnings_denied": true,
+    "debug_build": true,
+    "workspace_release_build": true,
+    "desktop_ordinary_passed": 46,
+    "desktop_integrations_ignored_this_run": 6,
+    "renderer_tests_passed": 2,
+    "new_coverage_regression": "Exact, half overlap, no overlap, distinct revision lane and capture reset; zero-budget fixture prevents asynchronous races",
+    "debug_probe_processes": 4,
+    "release_probe_processes": 24,
+    "release_actions": 240,
+    "same_source_transition_actions": 168,
+    "same_source_ui_redraws": 1568,
+    "reprojected_redraws": 1007,
+    "completely_empty_image_draws": 0,
+    "minimum_draw_coverage": 0.4050000309944153,
+    "maximum_channel_error_u8": 1,
+    "physical_1to1_checks": 24,
+    "compute_fallbacks": 0,
+    "xpc": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-09-15T15:20:29.120350+00:00",
+      "bundle": "var/navigation-transitions/TrueRenderer-release.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "18c7d5b3896bf3f19d4c2576c73056f1c70aa2d9bef9841b7f83c0a189b14603",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    }
+  },
+  "raw_reports": {
+    "standard": {
+      "path": "reports/navigation-transitions-standard-macos.json",
+      "sha256": "1df70beeb6246acd6582579f657263b8931255ad389dc02b379ee33ee2eb65df"
+    },
+    "full": {
+      "path": "reports/navigation-transitions-full-macos.json",
+      "sha256": "64b837c807c2cdc0962212b87767faa18f3f436066836cb50b108aeaaf28c861"
+    }
+  },
+  "bundle": "var/navigation-transitions/TrueRenderer-release.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "18c7d5b3896bf3f19d4c2576c73056f1c70aa2d9bef9841b7f83c0a189b14603",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+  },
+  "source_sha256": {
+    "apps/desktop/src/main.rs": "07fdaef8651944c425851d685249d343d22873c8886081779933598adfb0df5c",
+    "apps/desktop/src/ui.rs": "624dfb1d9bc54f9dc178e0403516bcef1c578ac05eaed3a312dbb632e6c0b469",
+    "apps/desktop/src/ui/navigation.rs": "b6246313d2da356500e478182d284a070f203df793db20b3cd567cf4ecf0584f",
+    "crates/tr-render/src/presenter.rs": "67f579c81840a1d5aabe48b3867d58d56602aae768db45bb93aa9c4aafc9b80a",
+    "scripts/test-navigation-surface.py": "f5a3b8d82b4ec344f10bbeda2d7704848c6d8a765e3d0e9f978f421c0859db18",
+    "Cargo.lock": "7da04d66f686416ba48312824ed03e327d493567edd1a490195296ae4f292bb2"
+  },
+  "reproduce": [
+    "scripts/cargo-local.sh build --release --workspace --locked --offline",
+    "python3 scripts/package-macos.py --bundle var/navigation-transitions/TrueRenderer-release.app",
+    "python3 scripts/test-navigation-surface.py --bundle var/navigation-transitions/TrueRenderer-release.app --trials 3 --transitions",
+    "python3 scripts/test-navigation-surface.py --bundle var/navigation-transitions/TrueRenderer-release.app --trials 3 --transitions --quality Full"
+  ],
+  "limits": [
+    "Coverage measures image draw commands on UI passes, not compositor/monitor refreshes; only final endpoint screenshots are compared numerically.",
+    "During pan and return to Fit, only the overlapping old crop can be drawn; minimum observed coverage 40.5%, with the remainder awaiting refinement. This increment observes that limit without changing rendering behavior.",
+    "Small generated PNG corpus below 2048 pixels does not exercise reduced-resolution RAW quality transitions or memory pressure.",
+    "Synthetic transform/state actions and photo-quality helpers, not injected mouse/scroll OS input.",
+    "Readback includes capture overhead; 10 ms repaint instrumentation and uncontrolled background load preclude a production-latency claim.",
+    "Three trials per mode/quality/scenario, p95/p99 suppressed; no acceleration, full coverage or R0-R4 gate qualified.",
+    "Normal dist bundles remain the cache-delivery versions; this is a separate diagnostic bundle.",
+    "Ad hoc signing, LibRaw deployment-target warning, Windows and full sandbox/display/release qualifications remain unchanged."
+  ],
+  "next_increment": "Retain an appropriately budgeted wider-coverage frame of the same source/revision for return-to-Fit refinement, without inventing uncovered pixels; verify identity, memory release and continuity."
+}

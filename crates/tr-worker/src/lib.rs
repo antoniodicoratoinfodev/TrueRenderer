@@ -225,6 +225,7 @@ impl Decoder for CorpusPng {
 }
 
 /// Resolve the primary TIFF image's stored alpha semantics before colour conversion.
+#[cfg(any(windows, test))]
 fn tiff_associated_alpha(bytes: &[u8], has_alpha: bool) -> Result<bool> {
     // Reuse the exact TIFF reader used by image, including BigTIFF/endian
     // support and bounded IFD values. No raster is allocated by this query.
@@ -262,6 +263,7 @@ fn tiff_associated_alpha(bytes: &[u8], has_alpha: bool) -> Result<bool> {
 /// Decode an ordinary bitmap or an explicitly identified embedded RAW preview.
 /// A preview describes the camera-developed JPEG, never an undeclared substitute
 /// for the sensor mosaic; `format` and `decoder` retain that distinction.
+#[cfg(any(windows, test))]
 fn portable_decode(
     bytes: &[u8],
     max_edge: u32,
@@ -438,6 +440,7 @@ fn portable_decode(
 /// substitute. The two are told apart by the provenance without exception:
 /// development says `RAW · sviluppo` and states its colour space, the preview
 /// says `RAW · anteprima` and states that sRGB was assumed.
+#[cfg(any(windows, test))]
 struct PortablePreview;
 #[cfg(windows)]
 fn portable_preview_fallback(
@@ -456,6 +459,7 @@ fn portable_preview_fallback(
     info.decoder.truncate(info.decoder.floor_char_boundary(128));
     Ok((info, color, pixels))
 }
+#[cfg(any(windows, test))]
 impl Decoder for PortablePreview {
     fn name(&self) -> &'static str {
         "libraw-e-anteprima"

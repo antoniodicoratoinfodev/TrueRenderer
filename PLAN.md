@@ -4,6 +4,44 @@ Aggiornato: 15 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Archi
 
 Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Nuovo restyling locale Mac con prove UI/corpus/XPC; la campagna fotografica ampia resta quella del 9 settembre. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
 
+## Prosecuzione — cache e verifica Mac, 15 settembre 2026
+
+- [x] Riesaminare i progetti attivi: il restyling e il bundle/corpus/XPC sono verificati; qualifica fotografica RAW, prestazioni integrate e gate R0–R4 restano aperti.
+- [x] Correggere la rimozione di hard link nella cache v1/v2, mantenendo le letture valide e proteggendo anche link comparsi dopo una scansione; 25 test cache passati.
+- [x] Completare suite workspace (106 ordinari + 10 integrazioni), build debug/release e prove native del nuovo bundle: cache, 8 schermate, 11 regioni e XPC passati; [hash e limiti](reports/cache-integrity-macos.json), due test fotografici privati esplicitamente saltati.
+- [ ] Qualifica integrata evento→frame (§12 della specifica anteprime): primo probe comando→superficie implementato sotto; presentazione effettiva e campagna completa ancora aperte.
+
+### Harness della superficie — 15 settembre 2026
+
+- [x] Collegare un probe opt-in al viewer reale: comando, raster esatto aggiunto a egui, ricezione della superficie e confronto pixel successivo alla misura.
+- [x] Preparare esecuzioni isolate CPU/GPU, cache applicativa fredda, SSD dopo riavvio e ritorno RAM; impedire caricamenti prima del primo comando.
+- [x] Verificare release Standard/Full: 24 processi isolati, 72 selezioni e confronto pixel entro un livello sRGB8; CPU/GPU, cache fredda/SSD/RAM confermati. [Rapporto](reports/navigation-surface-macos.json). Il readback non è un timestamp del display; tre selezioni dipendenti non qualificano p95/p99.
+- [ ] Completare scroll, transizioni di risoluzione RAW, pressione, baseline e campagna statistica con intervalli di confidenza prima di chiudere §12; zoom/pan e override sul corpus piccolo sono verificati sotto.
+
+### Transizioni del viewer — 15 settembre 2026
+
+- [x] Estendere il probe a zoom 300%, pan, Fit, override Standard/Full e 1:1 fisico usando gli stessi comandi del viewer.
+- [x] Registrare copertura completa/parziale e riproiezione a ogni ridisegno della stessa sorgente; fallire se manca completamente il contenuto.
+- [x] Verificare release Standard/Full e CPU/GPU: 24 processi, 240 azioni, 24 controlli 1:1 esatti, 1.568 ridisegni delle transizioni senza draw completamente vuoti; [rapporto](reports/navigation-transitions-macos.json). Copertura provvisoria minima 40,5%, non sempre completa.
+- [x] Migliorare il ritorno a Fit conservando una rappresentazione con copertura più ampia della stessa sorgente/revisione entro quota; verificare invalidazione, rilascio memoria e continuità senza inventare pixel mancanti.
+
+### Copertura del ritorno a Fit — 15 settembre 2026
+
+- [x] Conservare facoltativamente un frame più ampio per vista, foto, digest, motore e dimensioni sorgente: massimo due complessivi, entro un quarto dei budget applicabile/GPU e 64 frame totali.
+- [x] Abbandonare prima i frame facoltativi in caso di pressione, riduzione quota, ammissione renderer/decoder o invalidazione; mantenere i crediti fino al completamento previsto.
+- [x] Riprodurre il fallimento di copertura completa sul bundle precedente e aggiungere regressioni di geometria, identità, quote e rilascio.
+- [x] Verificare CPU/GPU e Standard/Full: 24 processi, 240 azioni, 1.553 ridisegni con copertura completa, 24 controlli 1:1 esatti; invalidazione, recupero grafico e XPC passati. Bundle aggiornato e [rapporto](reports/fit-coverage-macos.json).
+- [ ] Estendere le prove a livelli RAW ridotti, pressione reale e assenza della riserva; la copertura completa del corpus piccolo non è una garanzia universale.
+
+## Immagini grandi, pressione e RAW Mac — 15 settembre 2026
+
+- [x] Verificare livelli residenti 12/24/45 MP, Standard/Full, CPU/GPU con fallback esplicito, freddo/riapertura: 24 processi e 240 azioni, 1:1 esatto.
+- [x] Provare espulsione della riserva a 1536 MiB e rifiuto sicuro del decode a 512 MiB con crediti restituiti; distinguere pressione iniettata e memoria fisica campionata.
+- [x] Riprodurre e correggere il crash LibRaw sullo stack XPC; 120 sviluppi su 30 D750 autorizzati passati, originali invariati.
+- [x] Confrontare nove ritagli centrali registrati e ripetere 32 casi Bayer con verità nota; non attribuire differenze di ricetta alla sola qualità del demosaic.
+- [x] Completare 40 azioni RAW, invalidazione 45 MP, cinque stadi del cambio motore UI e verifica XPC; 75 test Rust passati, bundle aggiornato. [Rapporto e limiti](reports/large-pressure-raw-macos.json).
+- [ ] Ridurre/qualificare il picco memoria su 45 MP Full: la somma RSS supera 4 GiB e il footprint arriva poco oltre 4 GiB, pur con crediti entro quota. Pressione fisica OS, decode RAW ridotto/regionale e target colore calibrato restano aperti.
+
 ## Restyling desktop — 15 settembre 2026
 
 - [x] Rivedere il README dopo la consegna: schermate aggiornate di viewer, griglia e preferenze, spiegazione dei selettori e istruzioni per il bundle separato; controllare immagini e collegamenti locali.
@@ -36,7 +74,8 @@ Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 9
 - [ ] Estendere la diagnostica PNG per cICP malformato e dichiarazioni sRGB/gAMA discordanti, distinta dai tre P2.
 - [x] Recuperare la sessione, verificare i rilievi e completare build release, ricampionamento e riproduzione del blocco di compilazione Mac; registrare gli esiti senza modifiche applicative o commit.
 - [x] Ripristinare il controllo esaustivo di `Owner` nel test di crash/recovery e compilare la prova minima con entrambe le varianti.
-- [ ] Completare la verifica nativa Mac dei motori e la suite completa: copia restyling/corpus/XPC provata il 15 settembre, rilievo cache Unix ancora aperto.
+- [x] Completare la suite Mac: rilievo cache risolto, 106 test ordinari e 10 integrazioni passati il 15 settembre, fmt/Clippy e build debug/release senza warning Rust.
+- [ ] Estendere la verifica fotografica nativa Mac dei motori; le prove del corpus e del bundle non qualificano la matrice Apple/LibRaw.
 - [x] Correggere il percorso «Applica e salva» per conservare selezione/zoom al cambio motore; regressioni e smoke nativo sulla stessa azione completa del pulsante.
 - [x] Gestire o rifiutare esplicitamente PNG `cICP` e TIFF con alpha associata; aggiungere regressioni e invalidare le cache interessate.
 - [ ] Qualificare separatamente contesa del writer e persistenza del dettaglio: nello smoke serale una scrittura saltata per lock Windows 33 e nuovo decode al ritorno, senza interrompere la visualizzazione.
@@ -188,7 +227,7 @@ Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la na
 
 Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `reports/VERIFICA.md` e `docs/avanzamento.md`.
 
-**Licenza LibRaw, verifica dell'8 settembre:** la libreria open source è utilizzabile anche per vendere software proprietario senza acquistare una licenza commerciale, rispettando CDDL 1.0 oppure LGPL 2.1. La build corrente non la incorpora. Fonti, obblighi e scelta candidata CDDL in [licenza LibRaw](docs/adr/0008-libraw-licenza-e-collegamento.md) e §20.1 dell'architettura; l'audit della versione effettivamente distribuita resta necessario.
+**Licenza LibRaw, verifica storica dell'8 settembre:** la nota e le fonti sono conservate in [ADR 0008](docs/adr/0008-libraw-licenza-e-collegamento.md) e §20.1 dell'architettura. La build di quella campagna non incorporava LibRaw; quella attuale collega LibRaw 0.22.2. Inventario, notice e obblighi dell'artefatto effettivamente distribuito restano da verificare prima del rilascio.
 
 ## Esperimento locale — motori RAW selezionabili (12 settembre 2026)
 

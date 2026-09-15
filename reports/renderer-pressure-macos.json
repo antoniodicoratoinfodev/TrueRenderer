@@ -1,0 +1,1316 @@
+{
+  "passed": true,
+  "complete": true,
+  "cases": [
+    {
+      "size": "12",
+      "engine": "Apple",
+      "quality": "Standard",
+      "mode": "Cpu",
+      "phase": "cold",
+      "passed": true,
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 8,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11337408,
+          "wide_peak_memory_bytes": 34012224,
+          "wide_reprojections": 9
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 12,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "pressure_injected": true,
+        "pressure_wide_after": 0,
+        "pressure_wide_before": 1,
+        "samples": [
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 794.581,
+            "event_to_readback_ms": 852.105167,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1116691428,
+            "memory_reserved": 498562512,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 0,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 753.0554579999999,
+            "event_to_readback_ms": 810.973708,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1212602066,
+            "memory_reserved": 594471840,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 1,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "return",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.157334,
+            "event_to_readback_ms": 44.081584,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1212602066,
+            "memory_reserved": 594471840,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 2,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 2,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 155.16674999999998,
+            "event_to_readback_ms": 211.733958,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1212602066,
+            "memory_reserved": 635137440,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              1600.0,
+              1264.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 3,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 10635184,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 158.000459,
+            "event_to_readback_ms": 216.09449999999998,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1212602066,
+            "memory_reserved": 571326336,
+            "minimum_draw_coverage": 0.6065863966941833,
+            "origin": [
+              1800.0,
+              1174.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 4,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 13,
+            "reprojected_redraws": 10,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 122.433458,
+            "event_to_readback_ms": 180.999417,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1212602066,
+            "memory_reserved": 562566288,
+            "minimum_draw_coverage": 0.03137778490781784,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 11,
+            "reprojected_redraws": 8,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 5,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.143958,
+            "event_to_readback_ms": 44.899583,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1212602066,
+            "memory_reserved": 562566288,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 5,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 6,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "photo-full",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 838.544625,
+            "event_to_readback_ms": 895.9657920000001,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1276604532,
+            "memory_reserved": 820676736,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 6,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 54,
+            "reprojected_redraws": 8,
+            "resident_at_command": true,
+            "size": [
+              1944,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              4000,
+              3000
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 7,
+            "step_size": [
+              2.05761316872428,
+              2.05761316872428
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 163.888083,
+            "event_to_readback_ms": 220.252208,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1276604532,
+            "memory_reserved": 862667136,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              800.0,
+              771.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "presenter": {
+              "cpu_frames": 7,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11337408,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11337408,
+              "wide_peak_memory_bytes": 34012224,
+              "wide_reprojections": 0
+            },
+            "redraws": 14,
+            "reprojected_redraws": 11,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              4000,
+              3000
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 132.900459,
+            "event_to_readback_ms": 191.28983399999998,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1276604532,
+            "memory_reserved": 818570064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 8,
+              "fallbacks": 0,
+              "gpu_frames": 0,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11337408,
+              "wide_peak_memory_bytes": 34012224,
+              "wide_reprojections": 9
+            },
+            "redraws": 12,
+            "reprojected_redraws": 9,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 9,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 1536,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      },
+      "first_access": "decode",
+      "memory": {
+        "sample_count": 178,
+        "peak_rss": 1398292480,
+        "peak_footprint": 1542638616,
+        "maximum_processes": 3,
+        "incomplete_samples": 0,
+        "maximum_gap_seconds": 0.038313624999999796,
+        "within_requested_budget": true
+      },
+      "inputs_unchanged": true
+    },
+    {
+      "size": "12",
+      "engine": "Apple",
+      "quality": "Standard",
+      "mode": "Gpu",
+      "phase": "cold",
+      "passed": true,
+      "result": {
+        "actions": [
+          "select",
+          "select",
+          "return",
+          "zoom-300",
+          "pan",
+          "fit",
+          "photo-standard",
+          "photo-full",
+          "physical-1to1",
+          "fit-standard"
+        ],
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 1,
+          "fallbacks": 1,
+          "gpu_frames": 7,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11337408,
+          "wide_peak_memory_bytes": 34012224,
+          "wide_reprojections": 3
+        },
+        "continuity_scope": "Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
+        "error": null,
+        "inflight_minimum_draw_coverage": 1.0,
+        "inflight_redraws": 6,
+        "inflight_step": 10,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "pressure_injected": true,
+        "pressure_wide_after": 0,
+        "pressure_wide_before": 1,
+        "samples": [
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 33,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 568.749625,
+            "event_to_readback_ms": 630.554917,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1116691428,
+            "memory_reserved": 563339728,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 1,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 0,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "select",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 33,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 560.735042,
+            "event_to_readback_ms": 622.047,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1260602066,
+            "memory_reserved": 707249056,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 2,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": false,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 1,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "return",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 33,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.145541,
+            "event_to_readback_ms": 43.2,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1260602066,
+            "memory_reserved": 690471840,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 2,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 0,
+              "wide_peak_gpu_bytes": 0,
+              "wide_peak_memory_bytes": 0,
+              "wide_reprojections": 0
+            },
+            "redraws": 0,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 2,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "zoom-300",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 10,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 1.361291,
+            "event_to_readback_ms": 61.250208,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1260602066,
+            "memory_reserved": 731137440,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              1600.0,
+              1264.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 3,
+              "last_fallback": "",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 10635184,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 4,
+            "reprojected_redraws": 1,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 3,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "pan",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 9,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 20.467917,
+            "event_to_readback_ms": 81.741375,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1260602066,
+            "memory_reserved": 571326336,
+            "minimum_draw_coverage": 0.6065863966941833,
+            "origin": [
+              1800.0,
+              1174.6666666666667
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 4,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 5,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 4,
+            "step_size": [
+              0.3333333333333333,
+              0.3333333333333333
+            ]
+          },
+          {
+            "action": "fit",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 33,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 20.505291,
+            "event_to_readback_ms": 81.726541,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1260602066,
+            "memory_reserved": 562566288,
+            "minimum_draw_coverage": 0.03137778490781784,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 5,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 6,
+            "reprojected_redraws": 3,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 5,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "photo-standard",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 33,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 0.165792,
+            "event_to_readback_ms": 31.127709,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1260602066,
+            "memory_reserved": 562566288,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 5,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 3,
+            "reprojected_redraws": 0,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 6,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          },
+          {
+            "action": "photo-full",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 39,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 718.273333,
+            "event_to_readback_ms": 779.305292,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1276604532,
+            "memory_reserved": 868676736,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 0,
+              "fallbacks": 0,
+              "gpu_frames": 6,
+              "last_fallback": "",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 10635184,
+              "wide_peak_memory_bytes": 31905552,
+              "wide_reprojections": 0
+            },
+            "redraws": 47,
+            "reprojected_redraws": 2,
+            "resident_at_command": true,
+            "size": [
+              1944,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              4000,
+              3000
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 7,
+            "step_size": [
+              2.05761316872428,
+              2.05761316872428
+            ]
+          },
+          {
+            "action": "physical-1to1",
+            "admission_rejections": 0,
+            "base_level": 0,
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "effective_quality": "Full",
+            "event_to_encoded_ms": 180.14325,
+            "event_to_readback_ms": 236.491875,
+            "max_channel_error_u8": 0,
+            "memory_limit": 1610612736,
+            "memory_peak": 1276604532,
+            "memory_reserved": 910667136,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              800.0,
+              771.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": true,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 1,
+              "gpu_frames": 6,
+              "last_fallback": "Livello oltre capability GPU",
+              "wide_frames": 1,
+              "wide_gpu_bytes": 11337408,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11337408,
+              "wide_peak_memory_bytes": 34012224,
+              "wide_reprojections": 0
+            },
+            "redraws": 15,
+            "reprojected_redraws": 12,
+            "resident_at_command": true,
+            "size": [
+              2400,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              4000,
+              3000
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 8,
+            "step_size": [
+              1.0,
+              1.0
+            ]
+          },
+          {
+            "action": "fit-standard",
+            "admission_rejections": 0,
+            "base_level": 1,
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 33,
+            "effective_quality": "Standard",
+            "event_to_encoded_ms": 30.608,
+            "event_to_readback_ms": 91.500875,
+            "max_channel_error_u8": 1,
+            "memory_limit": 1610612736,
+            "memory_peak": 1276604532,
+            "memory_reserved": 914570064,
+            "minimum_draw_coverage": 1.0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "physical_1to1_exact": null,
+            "presenter": {
+              "cpu_frames": 1,
+              "fallbacks": 1,
+              "gpu_frames": 7,
+              "last_fallback": "Livello oltre capability GPU",
+              "wide_frames": 0,
+              "wide_gpu_bytes": 0,
+              "wide_peak_frames": 1,
+              "wide_peak_gpu_bytes": 11337408,
+              "wide_peak_memory_bytes": 34012224,
+              "wide_reprojections": 3
+            },
+            "redraws": 6,
+            "reprojected_redraws": 3,
+            "resident_at_command": true,
+            "size": [
+              1883,
+              1412
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              2000,
+              1500
+            ],
+            "source_size": [
+              4000,
+              3000
+            ],
+            "step": 9,
+            "step_size": [
+              2.1242697822623473,
+              2.1246458923512748
+            ]
+          }
+        ],
+        "scope": "Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 1536,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "transitions": true,
+        "version": "0.1.5"
+      },
+      "first_access": "decode",
+      "memory": {
+        "sample_count": 130,
+        "peak_rss": 1357889536,
+        "peak_footprint": 1594870688,
+        "maximum_processes": 3,
+        "incomplete_samples": 0,
+        "maximum_gap_seconds": 0.03809158299999993,
+        "within_requested_budget": true
+      },
+      "inputs_unchanged": true
+    }
+  ],
+  "configuration": {
+    "bundle": "var/large-pressure-raw/TrueRenderer-final.app",
+    "sizes": "12",
+    "qualities": "Standard",
+    "modes": "Cpu,Gpu",
+    "memory_mib": 1536,
+    "pressure": true,
+    "raw_folder": null,
+    "engines": "Apple"
+  },
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "e1add8d01bf7ad7aa8d55b518a56dbeba642b51c9a70e6921f2df26eada495e5",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1100d74f8272c4adafbb7b2d070b1f6bf400a105891404fe66a4d8c73a5a7d05",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b00a87f577e523d375459583fc80c497899e2bdece501a58627f8aa433a56232"
+  },
+  "scope": "Generated large PNG or explicitly authorized RAW. Renderer pressure is injected; no physical OS-pressure claim. Memory sums sampled host and XPC, not all driver allocations or shorter peaks. Endpoints compare the selected provider to CPU, not independent camera colour truth."
+}

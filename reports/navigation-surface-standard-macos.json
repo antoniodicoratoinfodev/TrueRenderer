@@ -1,0 +1,1707 @@
+{
+  "application": "TrueRenderer",
+  "passed": true,
+  "checked_at": "2026-09-15T15:06:54.755725+00:00",
+  "quality": "Standard",
+  "trials_per_mode": 3,
+  "os": "macOS-26.6.2-arm64-arm-64bit",
+  "machine": "arm64",
+  "physical_memory_bytes": 17179869184,
+  "power_state": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=21561443)\t51%; discharging; 2:30 remaining present: true",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "00a45c52497642e39dac26c26f99c306d102dfdd8f0704727a75c074c568abf8",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "d9cecd8e28e59d83e8645fd71c231515f521c3b919cd511f1aa8177d8dcc3ff4",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8fb7a69adc848d35b015c955621f72d55cbf5f278ea0ae528e743da522804319"
+  },
+  "corpus_sha256": {
+    "01_Studio_cromatico.png": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+    "02_Paesaggio_analitico.png": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "03_Gradiente_16bit.png": "d3df38d0e808beb0d1e744aed0694a596321195f3681a9ab05a4dd334e941d0f",
+    "04_Frequenze_radiali.png": "808ce6b559b9bd8beedb4aae44f08ef0815041780e7fab0fa6a2ac8bfc15c604",
+    "05_Trasparenza.png": "eda5d0d51461f24f6f1efa05fbb65f89195441ed74fdfdbe2b0a4d91a9a00868",
+    "06_Scala_neutra.png": "0029174a941fb546159a8ebbf5f16f0438328291ec8cd6f6eeef47cf1b28f477",
+    "07_Confronto_A.png": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "08_Confronto_B.png": "960d719d279be3792dc445474e99be25ee457c3d9ff130e83972586dba65cc70",
+    "09_Campioni_primari.png": "ccf46cc96dcfec6cf27f278c2f38a86144f1465d41cf850d14101b4ecc7689a6",
+    "10_Bordi_dispari.png": "881b5e5b7c343671824b3241a6ffcefd9a513bda1cc70ea91b9347bce20e351d",
+    "11_Ombre_16bit.png": "a98dcd990660c74aa821bd6f4ecf9f5208a5241fd1a9748d94c59d86317d089e",
+    "12_Luci_16bit.png": "e1fd0f4c945a36b41ed328367e401fda59743e3b4d19895642ae971b04613fc2"
+  },
+  "runs": [
+    {
+      "trial": 0,
+      "mode": "Cpu",
+      "phase": "cold",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 664.76975,
+            "event_to_readback_ms": 805.1046670000001,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 422.332041,
+            "event_to_readback_ms": 482.888625,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 0.159583,
+            "event_to_readback_ms": 33.598875,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 0,
+      "mode": "Cpu",
+      "phase": "ssd",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 227.539041,
+            "event_to_readback_ms": 301.469791,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 241.156666,
+            "event_to_readback_ms": 298.576416,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 0.165875,
+            "event_to_readback_ms": 39.181458,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 0,
+      "mode": "Gpu",
+      "phase": "cold",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 145.594584,
+            "event_to_readback_ms": 215.112125,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 1,
+            "event_to_encoded_ms": 178.651167,
+            "event_to_readback_ms": 240.161959,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 0.183458,
+            "event_to_readback_ms": 32.859708000000005,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 0,
+      "mode": "Gpu",
+      "phase": "ssd",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 75.291,
+            "event_to_readback_ms": 137.087667,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 1,
+            "event_to_encoded_ms": 98.7355,
+            "event_to_readback_ms": 164.187917,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 0.170292,
+            "event_to_readback_ms": 32.652792,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Gpu",
+      "phase": "cold",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 152.69254199999997,
+            "event_to_readback_ms": 232.36641699999998,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 1,
+            "event_to_encoded_ms": 166.6465,
+            "event_to_readback_ms": 227.90375,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 0.171375,
+            "event_to_readback_ms": 33.243750000000006,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Gpu",
+      "phase": "ssd",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 70.76287500000001,
+            "event_to_readback_ms": 125.00941700000001,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 1,
+            "event_to_encoded_ms": 86.497,
+            "event_to_readback_ms": 164.382375,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 0.17650000000000002,
+            "event_to_readback_ms": 33.797209,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Cpu",
+      "phase": "cold",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 338.488625,
+            "event_to_readback_ms": 395.389208,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 275.591042,
+            "event_to_readback_ms": 335.35062500000004,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 0.16674999999999998,
+            "event_to_readback_ms": 36.426208,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 1,
+      "mode": "Cpu",
+      "phase": "ssd",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 214.883125,
+            "event_to_readback_ms": 288.710625,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 222.63312499999998,
+            "event_to_readback_ms": 280.414041,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 0.167083,
+            "event_to_readback_ms": 38.766124999999995,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Cpu",
+      "phase": "cold",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 338.03337500000004,
+            "event_to_readback_ms": 395.05649999999997,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 1,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 306.46975,
+            "event_to_readback_ms": 367.90466599999996,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 0.1545,
+            "event_to_readback_ms": 32.447375,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Cpu",
+      "phase": "ssd",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 263.872458,
+            "event_to_readback_ms": 308.541583,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 1,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 225.6305,
+            "event_to_readback_ms": 283.430541,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "CPU",
+            "decode_jobs": 0,
+            "differing_channels": 0,
+            "event_to_encoded_ms": 0.170625,
+            "event_to_readback_ms": 39.027375000000006,
+            "max_channel_error_u8": 0,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Cpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Gpu",
+      "phase": "cold",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 150.363417,
+            "event_to_readback_ms": 225.84454200000002,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 1,
+            "differing_channels": 1,
+            "event_to_encoded_ms": 189.1775,
+            "event_to_readback_ms": 251.36275000000003,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 0.174833,
+            "event_to_readback_ms": 48.521541,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    },
+    {
+      "trial": 2,
+      "mode": "Gpu",
+      "phase": "ssd",
+      "result": {
+        "adapter": "Apple M4 \u00b7 Metal",
+        "application": "TrueRenderer",
+        "compute": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": ""
+        },
+        "error": null,
+        "passed": true,
+        "pixels_per_point": 2.0,
+        "samples": [
+          {
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 70.988375,
+            "event_to_readback_ms": 131.12633300000002,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 0,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          },
+          {
+            "cache_hits": 1,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 1,
+            "event_to_encoded_ms": 83.50925,
+            "event_to_readback_ms": 143.747041,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": false,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "02_Paesaggio_analitico.png",
+            "source_dimensions": [
+              1440,
+              960
+            ],
+            "step": 1,
+            "step_size": [
+              0.6584362139917695,
+              0.6584362139917695
+            ]
+          },
+          {
+            "cache_hits": 0,
+            "compute": "GPU",
+            "decode_jobs": 0,
+            "differing_channels": 92,
+            "event_to_encoded_ms": 0.162917,
+            "event_to_readback_ms": 35.601792,
+            "max_channel_error_u8": 1,
+            "origin": [
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "resident_at_command": true,
+            "size": [
+              2187,
+              1458
+            ],
+            "source": "04_Frequenze_radiali.png",
+            "source_dimensions": [
+              1200,
+              800
+            ],
+            "step": 2,
+            "step_size": [
+              0.5486968449931413,
+              0.5486968449931413
+            ]
+          }
+        ],
+        "scope": "Synthetic selection commands through the production viewer. Event timestamp precedes Command::Select; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Three dependent selections per process, not independent p95/p99 samples.",
+        "settings": {
+          "adapt_on_battery": false,
+          "compute": "Gpu",
+          "cpu_threads": 0,
+          "disk_mib": 4096,
+          "enabled": true,
+          "free_mib": 512,
+          "gpu_mib": 0,
+          "language": "en",
+          "memory_mib": 2048,
+          "prefetch": "Disabled",
+          "profile": "Performance",
+          "quality": "Standard",
+          "raw_engine": "Apple",
+          "reusable_mib": 512,
+          "schema": 2,
+          "temporary_mib": 2048,
+          "unused_days": 30
+        },
+        "surface": "Bgra8Unorm",
+        "trace": [
+          "04_Frequenze_radiali.png",
+          "02_Paesaggio_analitico.png",
+          "04_Frequenze_radiali.png"
+        ],
+        "version": "0.1.5"
+      }
+    }
+  ],
+  "summary": {
+    "Cpu-cold": {
+      "samples": 3,
+      "minimum_ms": 395.05649999999997,
+      "median_ms": 395.389208,
+      "maximum_ms": 805.1046670000001,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Cpu-ssd": {
+      "samples": 3,
+      "minimum_ms": 288.710625,
+      "median_ms": 301.469791,
+      "maximum_ms": 308.541583,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Cpu-ram": {
+      "samples": 3,
+      "minimum_ms": 38.766124999999995,
+      "median_ms": 39.027375000000006,
+      "maximum_ms": 39.181458,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Gpu-cold": {
+      "samples": 3,
+      "minimum_ms": 215.112125,
+      "median_ms": 225.84454200000002,
+      "maximum_ms": 232.36641699999998,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Gpu-ssd": {
+      "samples": 3,
+      "minimum_ms": 125.00941700000001,
+      "median_ms": 131.12633300000002,
+      "maximum_ms": 137.087667,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    },
+    "Gpu-ram": {
+      "samples": 3,
+      "minimum_ms": 32.652792,
+      "median_ms": 33.797209,
+      "maximum_ms": 35.601792,
+      "p95_ms": null,
+      "p99_ms": null,
+      "scope": "Descriptive readback latency only; no confidence interval or performance gate claim"
+    }
+  },
+  "limits": [
+    "Synthetic Command::Select boundary, not OS input injection; no compositor/scanout timestamp.",
+    "Readback includes GPU copy/map and event delivery. CPU reference comparison follows timestamp.",
+    "Probe requests repaint after 10 ms while active; instrumentation can affect scheduling and is not a transparent production trace.",
+    "No app image demand before first command; listing and GPU qualification excluded from latency.",
+    "OS file cache not flushed; SSD means reopened application artifact storage, not physical disk cache cold.",
+    "CPU/GPU order alternates per trial; SSD necessarily follows its cold population run.",
+    "RAM sample is the third selection after visiting another image, in the same process as the SSD run.",
+    "Fixed fit geometry, two generated PNG sources; no scrolling, zoom, quality transition, RAW, disabled cache or pressure qualification.",
+    "Fewer than 100 independent process trials suppress p95; fewer than 1000 suppress p99. No CI or acceleration claim."
+  ]
+}
