@@ -10,9 +10,9 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def invoke(bundle, flag):
+def invoke(bundle, flag, report_root):
     return subprocess.run(
-        [str(bundle / "Contents/MacOS/TrueRenderer"), flag, "--root", str(ROOT)],
+        [str(bundle / "Contents/MacOS/TrueRenderer"), flag, "--root", str(report_root)],
         capture_output=True, text=True, timeout=75,
     )
 
@@ -21,23 +21,28 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", default="dist/TrueRenderer.app")
     parser.add_argument("--fault-bundle", help="separately compiled test service under var/")
+    parser.add_argument("--report-root", type=Path, default=ROOT,
+                        help="isolated root containing corpus/ and reports/; defaults to the repository")
     args = parser.parse_args()
+    report_root = args.report_root.resolve(strict=True)
+    assert (report_root / "corpus/manifest.json").is_file()
+    (report_root / "reports").mkdir(exist_ok=True)
     bundle = (ROOT / args.bundle).resolve()
     assert bundle.suffix == ".app" and ROOT in bundle.parents
     subprocess.run(["/usr/bin/codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)
-    normal = invoke(bundle, "--verify-xpc")
+    normal = invoke(bundle, "--verify-xpc", report_root)
     if normal.returncode:
         raise SystemExit(normal.stderr or normal.stdout)
     integrated = json.loads(normal.stdout)
     assert integrated["passed"] and integrated["two_distinct_processes"]
     assert integrated["corpus_images_checked"] == 12
-    rejected = invoke(bundle, "--verify-xpc-growth")
+    rejected = invoke(bundle, "--verify-xpc-growth", report_root)
     assert rejected.returncode == 1 and "non è una build di fault injection" in rejected.stderr, rejected
     growth = None
     if args.fault_bundle:
         fault = (ROOT / args.fault_bundle).resolve()
         assert (ROOT / "var") in fault.parents and fault != bundle
-        measured = invoke(fault, "--verify-xpc-growth")
+        measured = invoke(fault, "--verify-xpc-growth", report_root)
         if measured.returncode:
             raise SystemExit(measured.stderr or measured.stdout)
         growth = json.loads(measured.stdout)
@@ -57,7 +62,7 @@ def main():
         "memory_growth_report": "xpc-memory-growth-macos.json" if growth else None,
         "full_sandbox_gate_passed": False,
     }
-    (ROOT / "reports/xpc-qualification-macos.json").write_text(json.dumps(report, indent=2) + "\n")
+    (report_root / "reports/xpc-qualification-macos.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
 
 

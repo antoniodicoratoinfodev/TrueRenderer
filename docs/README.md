@@ -1,6 +1,6 @@
 # Documentazione di TrueRenderer
 
-Revisione del 14 settembre 2026. Il codice Windows e le correzioni sono pubblicati in `67146e3`; le prove native del nuovo bundle Mac/XPC restano aperte. I conteggi nei resoconti storici si riferiscono alle rispettive esecuzioni.
+Revisione del 15 settembre 2026. Il codice Windows e le correzioni sono pubblicati in `67146e3`; il restyling locale Mac aggiunge prove UI/corpus/XPC su una copia separata, mentre la matrice estesa dei motori resta aperta. I conteggi nei resoconti storici si riferiscono alle rispettive esecuzioni.
 
 ## Documenti correnti
 
@@ -13,6 +13,7 @@ Revisione del 14 settembre 2026. Il codice Windows e le correzioni sono pubblica
 | [Ripresa del lavoro](ripresa-codex.md) | Punto di ripresa e vincoli delle sessioni |
 | [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md) | Fonte della specifica integrata, con requisiti ancora da qualificare |
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
+| [Restyling desktop](progetto-restyling.md) | Composizioni, stile, preferenze e verifica del layout bilingue |
 | [Verifiche](../reports/VERIFICA.md) | Cronologia delle campagne e rapporti con hash |
 
 ## Decisioni architetturali

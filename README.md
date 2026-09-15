@@ -4,13 +4,17 @@ TrueRenderer is a native desktop image browser and viewer designed to make the r
 
 **Version 0.1.5 · development prototype · proprietary license.** This public repository is available for inspection; rights to original project material are reserved by Antonio Dicorato. Use, modification, and distribution require permission under [LICENSE](LICENSE), subject to applicable law, GitHub's terms, and third-party licenses. This is not an open-source project.
 
-![TrueRenderer displaying generated fixtures on the historical macOS build](reports/10-external-grid.png)
+![TrueRenderer viewer with the applied RAW engine, upper zoom controls and separate global and per-photo quality selectors](reports/toolbar-viewer.png)
+
+*macOS development build, 15 September 2026. Screenshots show the project's generated test images.*
 
 ## Current status
 
 The Windows port, selectable RAW engines and subsequent fixes were published in commit `67146e3` on 14 September 2026. The latest Windows campaign passed **107 Rust tests (99 ordinary tests and 8 integrations)**, debug/release builds, colour/orientation regressions and IPC checks. See the [corrections and limits](docs/revisione-aggiuntiva-2026-09-14.md#correzioni) and [report with hashes](reports/gamma-orientation-fixes-windows.json).
 
-The last verified macOS bundle is the **9 September baseline**, recorded in the [macOS verification report](reports/preview-navigation-continuation-macos.json). Native build and XPC verification of the new LibRaw/engine configuration remain pending. Earlier photographic and GUI campaigns apply to the binaries identified in their own reports; they were not repeated for the latest gamma/orientation fixes.
+A separate updated macOS build is available locally as `dist/TrueRenderer-restyle.app`. The September 15 toolbar revision passed seven UI regressions, native checks of all four preferences tabs in both languages, rendering comparisons and the two XPC service checks. The desktop suite reports **42 passed, 1 known cache failure and 6 ignored integrations**. See the [current report with binary hashes and limits](reports/toolbar-macos.json).
+
+The broader macOS photographic baseline remains the [September 9 campaign](reports/preview-navigation-continuation-macos.json). Extended validation of the updated RAW engines remains open; historical results apply only to their identified binaries.
 
 Every output still has **Preview** assurance. Qualified Standard/Reference modes, complete colour/display qualification, clean Windows installation testing and the general R0–R4 gates remain open.
 
@@ -23,15 +27,46 @@ Every output still has **Preview** assurance. Qualified Standard/Reference modes
 - Inspect decoder, colour and orientation provenance, source SHA-256, pixel values and a histogram labelled with the resident image stage.
 - Rate, reject, label and add keywords; undo within a session and export annotations as JSON.
 - Configure memory, GPU, CPU and disk-cache limits; pause background preparation or rebuild previews.
-- Switch between English and Italian from the Language menu; English is the default.
+- Switch between English and Italian from Menu → Language; English is the default.
 
 Original photographs are read-only. Annotations are stored separately in SQLite, with verified backups. No account or image upload is required.
 
 ## Interface language
 
-TrueRenderer starts in **English**, including when upgrading settings that do not yet contain a language preference. Use **Language → Italiano** to switch to Italian, or **Lingua → English** to switch back. The change takes effect immediately and is saved for the next launch, without changing image selection, zoom, or unapplied performance settings.
+TrueRenderer starts in **English**, including when upgrading settings that do not yet contain a language preference. Use **Menu → Language → Italiano** to switch to Italian, or **Menu → Lingua → English** to switch back. Language is also available in **Settings → General**. The change takes effect immediately and is saved for the next launch, without changing image selection, zoom, or unapplied performance settings.
 
 Menus, preview controls, the inspector, preferences, help and application status messages support both languages. File names, paths, keywords and technical identifiers are preserved. Native file dialogs follow the operating system language; diagnostic details supplied by the OS or a decoder may retain their original language.
+
+## Workspace and preferences
+
+### Browse and inspect
+
+The top bar groups file actions under **Open**, followed by view choices, a discreet indicator of the applied RAW engine, search, **Settings** and **Menu**. Folder name and image counts sit in the bottom status bar. At narrow widths, view choices and library filters move into menus.
+
+![Thumbnail grid with library filters, a collapsible inspector and folder information in the bottom status bar](reports/toolbar-grid.png)
+
+The inspector groups File, Rating, Keywords and Render provenance into collapsible sections. In the viewer, its duplicate image preview starts collapsed, leaving room for the histogram and metadata.
+
+### Viewer and preview quality
+
+**Fit**, physical **1:1**, zoom and both quality selectors sit above the image, as shown in the opening screenshot. The **Preview** assurance badge remains visible in the bottom status bar.
+
+| Control | What it changes |
+|---|---|
+| **Global: Standard / Full** | Saves the default preview quality for all photos and clears session overrides. |
+| **This photo only: Standard / Full** | Overrides the current photo for this session and displays its effective quality. |
+| **Use global quality** | Removes the current photo's override; available inside the photo selector. |
+| **1:1** | Requests Full for the affected photo and maps source pixels to physical display pixels. The global setting stays unchanged. |
+
+Press **Esc** to close an open menu or quality selector while keeping the current view. With no popup open and the image focused, Esc returns to the grid.
+
+### Settings
+
+Preferences are organized into **General**, **Previews and RAW**, **Performance**, and **Cache and data**. **Revert changes**, **Close**, and **Apply and save** remain visible outside the scrolling content. Switching tabs or clicking Settings again preserves unapplied changes; changing global quality in the toolbar preserves unrelated preference drafts.
+
+![Preferences grouped by topic, with persistent footer actions](reports/toolbar-preferences.png)
+
+Language changes save immediately; inspector and filmstrip switches apply to the current session. Choose a RAW engine in **Previews and RAW**, then **Apply and save**. The toolbar shows the applied engine; CPU/GPU processing for the viewer is configured separately under **Performance**.
 
 ## Platforms and formats
 
@@ -46,7 +81,7 @@ Format recognition does not guarantee support for every variant. Windows rejects
 
 ### RAW engines
 
-In **Settings → RAW engine**, choose an engine and press **Apply and save** (**Impostazioni → Motore RAW → Applica e salva** in Italian). Windows offers LibRaw bilinear (default), LibRaw AHD and experimental TrueRenderer fp32. The macOS build configuration also offers Apple RAW (default); that updated bundle still needs native validation. Applying the setting refreshes previews while preserving selection and zoom, and cache identities distinguish the recipes.
+In **Settings → Previews and RAW → RAW engine**, choose an engine and press **Apply and save** (**Impostazioni → Anteprime e RAW → Motore RAW → Applica e salva** in Italian). Windows offers LibRaw bilinear (default), LibRaw AHD and experimental TrueRenderer fp32. The macOS build configuration also offers Apple RAW (default); extended validation of the updated engine configuration remains open. Applying the setting refreshes previews while preserving selection and zoom, and cache identities distinguish the recipes.
 
 LibRaw 0.22.2 reads the RAW data. Bilinear and AHD development pass through a 16-bit integer RGB raster; the independent Rust demosaic develops the mosaic in fp32 without an integer RGB intermediate. The Rust engine currently accepts Nikon D750 and D40 Bayer NEFs and the project's synthetic Bayer DNG fixtures. Other cameras and variants are not implicitly supported.
 
@@ -99,7 +134,17 @@ python3 scripts/test-xpc-integration.py
 open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 ```
 
-`./scripts/verify.sh --gui` adds native presentation checks. After broker, decoder or bundle changes, test both XPC services on the newly built package. These commands describe the workflow; the updated Mac bundle has not yet passed it. The historical arm64 bundle was tested on Apple M4/macOS 26.6.2 with an ad hoc signature, not notarization.
+`./scripts/verify.sh --gui` adds native presentation checks. After broker, decoder or bundle changes, test both XPC services on the newly built package. The restyling was checked on Apple M4/macOS 26.6.2 with an ad hoc signature, not notarization. The complete verification script is not green: the known Unix hard-link cache test still fails, and the worker has existing macOS unused-code warnings. The new package also emits LibRaw deployment-target linker warnings; minimum-OS compatibility remains unqualified.
+
+To build and open the toolbar revision in a separate bundle:
+
+```sh
+./scripts/build-macos.sh dist/TrueRenderer-restyle.app
+python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-restyle.app
+open -n dist/TrueRenderer-restyle.app
+```
+
+If the updated bundle already exists locally, only the last command is needed. The existing launcher opens `dist/TrueRenderer.app`. Both bundles use the same default library, which allows one running instance: close the other app first, or pass a separate `--data` directory for a comparison session.
 
 ## Local data and documentation
 

@@ -1,8 +1,19 @@
 # TrueRenderer — piano di sviluppo
 
-Aggiornato: 14 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Architettura.md); matrice di implementazione: [avanzamento](docs/avanzamento.md); [indice documentale](docs/README.md).
+Aggiornato: 15 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Architettura.md); matrice di implementazione: [avanzamento](docs/avanzamento.md); [indice documentale](docs/README.md).
 
-Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Il Mac verificato resta la baseline del 9 settembre; nuovo bundle/XPC rinviato. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
+Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Nuovo restyling locale Mac con prove UI/corpus/XPC; la campagna fotografica ampia resta quella del 9 settembre. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
+
+## Restyling desktop — 15 settembre 2026
+
+- [x] Rivedere il README dopo la consegna: schermate aggiornate di viewer, griglia e preferenze, spiegazione dei selettori e istruzioni per il bundle separato; controllare immagini e collegamenti locali.
+- [x] Completare la ripresa e la consegna: correggere Esc nei popup senza uscire dal viewer, verificare il bundle finale con UI/pixel/XPC, recuperare rapporto e screenshot mancanti e aprire l'app aggiornata.
+- [x] Revisione richiesta dal titolare: allineare barra e Settings, mostrare motore applicato, spostare strumenti in alto e cartella/conteggi in basso; selettori espliciti Globale e Solo questa foto Standard/Piena; sette regressioni UI con clic reali egui, screenshot e verifiche del bundle in [rapporto](reports/toolbar-macos.json).
+- [x] Definire composizioni per griglia, viewer e preferenze; [progetto](docs/progetto-restyling.md).
+- [x] Centralizzare stile e gerarchia visiva; compattare barra, navigazione, miniature e strumenti del viewer.
+- [x] Organizzare ispettore in sezioni richiudibili e preferenze in quattro schede con azioni fuori dall'area scorrevole.
+- [x] Verificare bozze, comandi, italiano/inglese e layout alle dimensioni ridotte/200%; 12 screenshot preferenze e 8 di rendering, 11 regioni entro la soglia di 1 livello sRGB8.
+- [x] Completare build release e copia separata `dist/TrueRenderer-restyle.app`, firma e XPC; aggiornare registro/README e sincronizzare le architetture. [Rapporto e limiti](reports/restyle-macos.json).
 
 ## Interfaccia bilingue — 14 settembre 2026
 
@@ -25,7 +36,7 @@ Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 9
 - [ ] Estendere la diagnostica PNG per cICP malformato e dichiarazioni sRGB/gAMA discordanti, distinta dai tre P2.
 - [x] Recuperare la sessione, verificare i rilievi e completare build release, ricampionamento e riproduzione del blocco di compilazione Mac; registrare gli esiti senza modifiche applicative o commit.
 - [x] Ripristinare il controllo esaustivo di `Owner` nel test di crash/recovery e compilare la prova minima con entrambe le varianti.
-- [ ] Compilare ed eseguire i test sul Mac con il nuovo bundle/XPC, come parte della verifica nativa rinviata.
+- [ ] Completare la verifica nativa Mac dei motori e la suite completa: copia restyling/corpus/XPC provata il 15 settembre, rilievo cache Unix ancora aperto.
 - [x] Correggere il percorso «Applica e salva» per conservare selezione/zoom al cambio motore; regressioni e smoke nativo sulla stessa azione completa del pulsante.
 - [x] Gestire o rifiutare esplicitamente PNG `cICP` e TIFF con alpha associata; aggiungere regressioni e invalidare le cache interessate.
 - [ ] Qualificare separatamente contesa del writer e persistenza del dettaglio: nello smoke serale una scrittura saltata per lock Windows 33 e nuovo decode al ritorno, senza interrompere la visualizzazione.
@@ -36,7 +47,7 @@ Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 9
 - [x] Correggere colore PNG esterni, classificazione TIFF/RAW e accesso fuori limite nel parser preview; regressioni passate su Windows.
 - [x] Correggere quota al cambio tipo di sorgente, controllo hard link e invalidazione Windows con mtime ripristinato; completare provenienza/migrazione impostazioni.
 - [x] Incorporare il runtime C/C++ MSVC e controllare gli import release; generare inventario Windows, 348 notice e manifest nativo, preservando i byte upstream nei checkout Git.
-- [ ] Costruire e verificare il nuovo bundle Mac/XPC (rinviato dal titolare a una sessione sul Mac).
+- [x] Costruire una copia del nuovo bundle Mac/XPC: release separata del 15 settembre con corpus, UI e XPC verificati; la matrice fotografica estesa dei motori resta aperta.
 - [ ] Verificare il pacchetto in un'installazione Windows pulita prima della distribuzione.
 - [x] Accorpare audit/correzioni, piano Windows e nota LibRaw; ridurre la cronologia duplicata, aggiornare riferimenti e verificare la sincronizzazione.
 - [ ] Qualificare notifiche di pressione memoria Windows, percorsi lunghi/manifest longPathAware e gestione ICC prima di dichiarare completa la piattaforma.

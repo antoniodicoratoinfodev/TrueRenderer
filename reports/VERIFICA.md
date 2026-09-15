@@ -2,6 +2,14 @@
 
 Registro storico delle esecuzioni. Codice e correzioni pubblicati in `67146e3` il 14 settembre 2026; le note «nessun commit» fotografano il momento delle prove. Gli audit negativi restano conservati accanto alle correzioni successive. Ogni risultato vale per sorgenti e binari identificati dal proprio rapporto; la revisione dei Markdown non costituisce una nuova prova applicativa. Stato corrente in [avanzamento](../docs/avanzamento.md), navigazione nell'[indice](../docs/README.md).
 
+## Restyling desktop — 15 settembre 2026
+
+Revisione della barra e consegna completate: strumenti e motore in alto, cartella/conteggi in basso, selettori Globale e Solo questa foto bidirezionali, Settings coerente e bozze preservate. Corretto anche Esc nei popup, con regressione riprodotta prima della correzione. Bundle finale: fmt/Clippy/build/firma, 7 test UI, 12 schermate preferenze, 8 rendering e XPC passati; 11 regioni entro 1 livello sRGB8, 77 canali differenti, 1:1 esatto. Suite desktop: 42 passati, il medesimo fallimento cache e 6 ignorati. Prova diretta del viewer e apertura finale confermate. [Rapporto con hash e limiti](toolbar-macos.json), [viewer](toolbar-viewer.png). Le prove della prima iterazione seguono sotto.
+
+Implementazione locale con copia release separata `dist/TrueRenderer-restyle.app`; precedente bundle e launcher intatti. Passati fmt, Clippy desktop, 4 regressioni UI, 4 test app/renderer, 6 integrazioni desktop e 2 Python. Preferenze: 12 schermate native nelle due lingue, incluse finestra minima e UI 200%. Rendering: 8 schermate, 11 regioni entro la soglia di 1 livello sRGB8 (58 canali differenti), 1:1 esatto; 24 casi numerici passati. Firma ad hoc e suite XPC su due processi passate sull'hash finale. [Rapporto](restyle-macos.json), [progetto e riproduzione](../docs/progetto-restyling.md).
+
+La suite desktop ordinaria resta a 39 passati, 1 fallimento cache Unix sugli hard link e 6 ignorati; il fallimento è già riprodotto sulla baseline della [localizzazione](localization-macos.json). Restano warning worker Mac e warning di deployment target LibRaw nel link, matrice motori/RAW Mac estesa, UI Windows e gate di accessibilità/display/sandbox/release. Nessun gate R0–R4 chiuso, nessun commit o pubblicazione.
+
 ## Correzioni gamma/orientamento — 14 settembre 2026
 
 **Due P2 corretti e verificati su Windows:** curva PNG con sola gAMA, orientamento per IFD dell'anteprima RAW, cache v5. Passati 99 test ordinari + 8 integrazioni, debug/release, fmt/Clippy, 18 casi sintetici per worker, IPC/Python/ricampionamento e inventari. [Dettagli](../docs/revisione-aggiuntiva-2026-09-14.md#correzioni), [rapporto con hash](gamma-orientation-fixes-windows.json). Nessun commit/staging; Mac/XPC rinviato, GUI/Nikon non ripetuti.

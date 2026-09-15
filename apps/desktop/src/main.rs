@@ -50,6 +50,7 @@ fn run() -> Result<()> {
     let external_smoke = args.iter().any(|a| a == "--formats-smoke");
     let settings_smoke = args.iter().any(|a| {
         a == "--settings-smoke"
+            || a == "--restyle-smoke"
             || a == "--raw-engines-smoke"
             || a == "--preview-gpu-smoke"
             || a == "--preview-performance-smoke"

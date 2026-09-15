@@ -15,10 +15,10 @@ use tr_core::{
     provider::ImageLevels,
 };
 
-const TEXT: Color32 = Color32::from_rgb(232, 232, 232);
-const MUTED: Color32 = Color32::from_rgb(154, 154, 154);
-const AMBER: Color32 = Color32::from_rgb(217, 164, 65);
-const SURFACE: Color32 = Color32::from_rgb(38, 38, 38);
+mod preferences;
+mod style;
+use preferences::SettingsPage;
+use style::{AMBER, CANVAS, MUTED, PANEL, TEXT};
 
 #[derive(Clone)]
 struct CachedImage {
@@ -46,7 +46,7 @@ pub struct TrueRenderer {
     cache: HashMap<(String, PreviewRequest), CachedImage>,
     presenter: tr_render::presenter::Presenter,
     pending_images: HashSet<(String, PreviewRequest)>,
-    full_overrides: HashSet<String>,
+    quality_overrides: HashMap<String, PreviewQuality>,
     demand: HashSet<(String, PreviewRequest)>,
     last_demand: HashSet<(String, PreviewRequest)>,
     foreground_demand: HashSet<(String, PreviewRequest)>,
@@ -70,6 +70,7 @@ pub struct TrueRenderer {
     undo_available: bool,
     show_help: bool,
     show_settings: bool,
+    settings_page: SettingsPage,
     settings_smoke: bool,
     raw_engine_smoke_results: Vec<serde_json::Value>,
     raw_engine_smoke_ready_at: Option<Instant>,
@@ -124,31 +125,7 @@ impl TrueRenderer {
             open,
         } = startup;
         let ctx = &cc.egui_ctx;
-        ctx.set_theme(egui::Theme::Dark);
-        let mut visuals = egui::Visuals::dark();
-        visuals.panel_fill = Color32::from_gray(28);
-        visuals.window_fill = SURFACE;
-        visuals.extreme_bg_color = Color32::from_gray(20);
-        visuals.faint_bg_color = SURFACE;
-        visuals.override_text_color = Some(TEXT);
-        visuals.selection.bg_fill = Color32::from_rgb(49, 66, 84);
-        visuals.selection.stroke = egui::Stroke::new(1.5, Color32::from_rgb(100, 163, 229));
-        visuals.widgets.inactive.bg_fill = Color32::from_gray(46);
-        visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., Color32::from_gray(90));
-        ctx.set_visuals(visuals);
-        ctx.style_mut_of(egui::Theme::Dark, |s| {
-            s.spacing.item_spacing = Vec2::new(8., 8.);
-            s.spacing.button_padding = Vec2::new(10., 5.);
-            s.spacing.interact_size = Vec2::new(28., 28.);
-            s.text_styles
-                .insert(egui::TextStyle::Body, egui::FontId::proportional(13.));
-            s.text_styles
-                .insert(egui::TextStyle::Button, egui::FontId::proportional(13.));
-            s.text_styles
-                .insert(egui::TextStyle::Small, egui::FontId::proportional(11.));
-            s.text_styles
-                .insert(egui::TextStyle::Monospace, egui::FontId::monospace(12.));
-        });
+        style::apply(ctx);
         let (adapter, surface) = cc
             .wgpu_render_state
             .as_ref()
@@ -230,7 +207,7 @@ impl TrueRenderer {
             cache: HashMap::new(),
             presenter,
             pending_images: HashSet::new(),
-            full_overrides: HashSet::new(),
+            quality_overrides: HashMap::new(),
             demand: HashSet::new(),
             last_demand: HashSet::new(),
             foreground_demand: HashSet::new(),
@@ -253,6 +230,7 @@ impl TrueRenderer {
             undo_available: false,
             show_help: false,
             show_settings: settings_smoke,
+            settings_page: SettingsPage::Previews,
             settings_smoke,
             show_inspector: true,
             show_filmstrip: true,
@@ -408,7 +386,7 @@ impl TrueRenderer {
         self.source_monitor.watch(self.generation, vec![]);
         self.presenter.clear();
         self.pending_images.clear();
-        self.full_overrides.clear();
+        self.quality_overrides.clear();
         self.demand.clear();
         self.last_demand.clear();
         self.demand_jobs.clear();
@@ -450,11 +428,10 @@ impl TrueRenderer {
         }
     }
     fn quality(&self, item: &Item) -> PreviewQuality {
-        if self.full_overrides.contains(&item.id) {
-            PreviewQuality::Full
-        } else {
-            self.service.cache.settings().quality
-        }
+        self.quality_overrides
+            .get(&item.id)
+            .copied()
+            .unwrap_or_else(|| self.service.cache.settings().quality)
     }
     fn preview_request(&self, item: &Item, edge: u32) -> PreviewRequest {
         PreviewRequest {
@@ -791,9 +768,10 @@ impl TrueRenderer {
             return;
         }
         settings.quality = quality;
-        self.full_overrides.clear();
+        self.quality_overrides.clear();
         self.errors.clear();
-        self.cache_settings = settings.clone();
+        // The toolbar changes only quality, not other unapplied preferences.
+        self.cache_settings.quality = quality;
         self.service.cache.configure(settings.clone());
         let data = self.settings_data.clone();
         let (tx, rx) = std::sync::mpsc::sync_channel(1);
@@ -810,11 +788,17 @@ impl TrueRenderer {
     }
     fn full_for_current(&mut self) {
         if let Some(item) = self.state.current_item() {
-            self.full_overrides.insert(item.id.clone());
+            self.quality_overrides
+                .insert(item.id.clone(), PreviewQuality::Full);
         }
         if self.state.view == ViewMode::Compare {
-            self.full_overrides
-                .extend(self.state.selected.iter().cloned());
+            self.quality_overrides.extend(
+                self.state
+                    .selected
+                    .iter()
+                    .cloned()
+                    .map(|id| (id, PreviewQuality::Full)),
+            );
             if self
                 .state
                 .selected
@@ -828,8 +812,8 @@ impl TrueRenderer {
                     .position(|i| self.state.items[*i].id == item.id)
                 && let Some(next) = self.state.visible.get(index + 1)
             {
-                self.full_overrides
-                    .insert(self.state.items[*next].id.clone());
+                self.quality_overrides
+                    .insert(self.state.items[*next].id.clone(), PreviewQuality::Full);
             }
         }
         self.state.transform.set_zoom(1.);
@@ -1109,6 +1093,11 @@ impl TrueRenderer {
         }
     }
     fn keyboard(&mut self, ctx: &egui::Context) {
+        // Menus and quality selectors own keyboard input until they close.
+        // In particular, Escape must not also leave the viewer behind a popup.
+        if egui::Popup::is_any_open(ctx) {
+            return;
+        }
         if ctx.input(|i| i.modifiers.command && i.key_pressed(egui::Key::F)) {
             self.search_focus = true;
         }
@@ -1240,369 +1229,636 @@ impl TrueRenderer {
     }
     fn toolbar(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
+        let compact = ui.available_width() < 1000.;
+        let viewer = self.state.view != ViewMode::Grid;
         egui::Panel::top("toolbar")
-            .exact_size(52.)
             .frame(
                 egui::Frame::new()
-                    .fill(Color32::from_gray(28))
+                    .fill(PANEL)
                     .inner_margin(egui::Margin::symmetric(16, 10)),
             )
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("TrueRenderer").size(20.).strong());
-                    ui.label(RichText::new("R0").small().color(AMBER));
-                    ui.add_space(12.);
-                    if ui
-                        .button(lang.text("Apri cartella…"))
-                        .on_hover_text(lang.text(
-                            "Apri immagini della cartella; su macOS il bundle usa decoder isolati.",
-                        ))
-                        .clicked()
-                        && let Some(path) = rfd::FileDialog::new()
-                            .set_directory(&self.folder)
-                            .pick_folder()
-                    {
-                        self.open_folder(path);
-                    }
-                    if ui.button(lang.text("Apri file…")).clicked()
-                        && let Some(path) = rfd::FileDialog::new()
-                            .set_directory(&self.folder)
-                            .pick_file()
-                    {
-                        self.open_path(path);
-                    }
-                    if ui
-                        .button("↻")
-                        .on_hover_text(lang.text("Rileggi cartella"))
-                        .clicked()
-                    {
-                        self.open_folder(self.folder.clone());
-                    }
-                    ui.separator();
-                    for (mode, title) in [
-                        (ViewMode::Grid, lang.text("Griglia")),
-                        (ViewMode::Preview, lang.text("Anteprima")),
-                        (ViewMode::Compare, lang.text("Confronto")),
-                    ] {
-                        if ui
-                            .selectable_label(self.state.view == mode, title)
-                            .clicked()
-                        {
-                            self.command(Command::SetView(mode));
+                    ui.label(RichText::new("TrueRenderer").size(17.).strong());
+                    ui.add_space(8.);
+                    ui.menu_button(lang.text("Apri"), |ui| {
+                        if ui.button(lang.text("Apri cartella…")).clicked() {
+                            ui.close();
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_directory(&self.folder)
+                                .pick_folder()
+                            {
+                                self.open_folder(path);
+                            }
                         }
+                        if ui.button(lang.text("Apri file…")).clicked() {
+                            ui.close();
+                            if let Some(path) = rfd::FileDialog::new()
+                                .set_directory(&self.folder)
+                                .pick_file()
+                            {
+                                self.open_path(path);
+                            }
+                        }
+                        if ui.button(lang.text("Rileggi cartella")).clicked() {
+                            self.open_folder(self.folder.clone());
+                            ui.close();
+                        }
+                    });
+                    if compact {
+                        ui.menu_button(lang.text("Vista"), |ui| {
+                            self.view_choices(ui);
+                        });
+                    } else {
+                        ui.add_space(8.);
+                        self.view_choices(ui);
+                    }
+                    if !compact {
+                        self.engine_indicator(ui);
                     }
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.menu_button(lang.text("Lingua"), |ui| {
-                            for (language, name) in [
-                                (Language::English, "English"),
-                                (Language::Italian, "Italiano"),
-                            ] {
-                                if ui.selectable_label(lang == language, name).clicked() {
-                                    self.set_language(language);
-                                    ui.close();
-                                }
+                        ui.menu_button(lang.text("Menu"), |ui| {
+                            ui.set_min_width(200.);
+                            ui.menu_button(lang.text("Lingua"), |ui| {
+                                self.language_choices(ui);
+                            });
+                            if compact {
+                                ui.menu_button(lang.text("Libreria e filtri"), |ui| {
+                                    self.navigation_contents(ui);
+                                });
                             }
-                        });
-                        if ui
-                            .button("?")
-                            .on_hover_text(lang.text("Guida e stato del prototipo"))
-                            .clicked()
-                        {
-                            self.show_help = !self.show_help;
-                        }
-                        if ui.button(lang.text("Impostazioni")).clicked() {
-                            self.cache_settings = self.service.cache.settings();
-                            self.show_settings = true;
-                        }
-                        let response = ui.add(
-                            egui::TextEdit::singleline(&mut self.state.query)
-                                .hint_text(lang.text("Cerca nome o parola chiave"))
-                                .desired_width(ui.available_width().clamp(80., 225.)),
-                        );
-                        if self.search_focus {
-                            response.request_focus();
-                            self.search_focus = false;
-                        }
-                        if response.changed() {
-                            self.state.refilter();
-                        }
-                    });
-                });
-            });
-    }
-    fn sidebar(&mut self, ui: &mut egui::Ui) {
-        let lang = self.cache_settings.language;
-        egui::Panel::left("navigation").default_size(190.).size_range(165.0..=250.0).frame(egui::Frame::new().fill(Color32::from_gray(28)).inner_margin(16)).show(ui,|ui|{
-            section(ui,lang.text("LIBRERIA"));
-            if nav(ui,lang.text("Corpus di prova"),"12",self.folder==self.root.join("corpus")).clicked(){self.state.query.clear();self.state.minimum_rating=0;self.state.label_filter=None;self.state.rejected_only=false;self.open_folder(self.root.join("corpus"));}
-            ui.add_space(20.);section(ui,lang.text("SELEZIONE"));
-            if nav(ui,lang.text("Tutte le immagini"),&self.state.items.len().to_string(),self.state.minimum_rating==0&&!self.state.rejected_only).clicked(){self.state.minimum_rating=0;self.state.rejected_only=false;self.state.refilter();}
-            if nav(ui,lang.text("Da conservare"),"≥ 1 ★",self.state.minimum_rating==1).clicked(){self.state.minimum_rating=1;self.state.rejected_only=false;self.state.refilter();}
-            if nav(ui,lang.text("Cinque stelle"),"5 ★",self.state.minimum_rating==5).clicked(){self.state.minimum_rating=5;self.state.rejected_only=false;self.state.refilter();}
-            if nav(ui,lang.text("Scartate"),"×",self.state.rejected_only).clicked(){self.state.rejected_only=true;self.state.minimum_rating=0;self.state.refilter();}
-            ui.add_space(20.);section(ui,lang.text("FILTRI"));
-            ui.label(RichText::new(lang.text("Valutazione minima")).color(MUTED));
-            if ui.add(egui::Slider::new(&mut self.state.minimum_rating,0..=5).suffix(" ★")).changed(){self.state.rejected_only=false;self.state.refilter();}
-            ui.add_space(6.);let previous=self.state.label_filter;
-            egui::ComboBox::from_id_salt("label_filter").selected_text(self.state.label_filter.map(|label| lang.text(label.text())).unwrap_or(lang.text("Tutte le etichette"))).width(ui.available_width()).show_ui(ui,|ui|{
-                ui.selectable_value(&mut self.state.label_filter,None,lang.text("Tutte le etichette"));
-                for label in Label::ALL{ui.selectable_value(&mut self.state.label_filter,Some(label),lang.text(label.text()));}
-            });
-            if previous!=self.state.label_filter{self.state.refilter();}
-            if ui.small_button(lang.text("Azzera filtri")).clicked(){self.state.query.clear();self.state.minimum_rating=0;self.state.rejected_only=false;self.state.label_filter=None;self.state.refilter();}
-            ui.add_space(24.);section(ui,lang.text("DATI LOCALI"));
-            if ui.add_enabled(self.undo_available&&self.state.pending.is_empty(),egui::Button::new(lang.text("Annulla modifica"))).on_hover_text(lang.text("Cmd/Ctrl + Z · crea una nuova revisione")).clicked(){self.command(Command::Undo);}
-            if ui.button(lang.text("Crea backup")).clicked(){self.request(Request::Backup);}
-            if ui.button(lang.text("Esporta annotazioni…")).on_hover_text(lang.text("JSON con annotazioni e percorsi locali")).clicked() && let Some(path)=rfd::FileDialog::new().set_file_name("TrueRenderer-annotazioni.json").add_filter("JSON",&["json"]).save_file(){self.request(Request::Export(path));}
-            ui.add_space(24.);section(ui,lang.text("MOTORE"));
-            ui.label(RichText::new("CPU · fp32").monospace());
-            ui.label(RichText::new(lang.text("SDR / sRGB di sistema")).small().color(MUTED));
-            ui.label(RichText::new(lang.text("Anteprima di sviluppo")).small().color(AMBER));
-            ui.add_space(8.);ui.label(RichText::new(lang.text("Gli originali rimangono intatti. Le annotazioni sono nella libreria locale.")).small().color(MUTED));
-        });
-    }
-    fn inspector(&mut self, ui: &mut egui::Ui) {
-        let lang = self.cache_settings.language;
-        egui::Panel::right("inspector")
-            .default_size(290.)
-            .size_range(250.0..=370.0)
-            .frame(
-                egui::Frame::new()
-                    .fill(Color32::from_gray(28))
-                    .inner_margin(16),
-            )
-            .show(ui, |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    section(ui, lang.text("ISPEZIONE"));
-                    let Some(item) = self.state.current_item().cloned() else {
-                        ui.label(RichText::new(lang.text("Seleziona un'immagine")).color(MUTED));
-                        return;
-                    };
-                    let edge = (ui.available_width() * ui.ctx().pixels_per_point()).ceil() as u32;
-                    let edge = edge.next_power_of_two().min(4096);
-                    self.ensure_image(&item, edge);
-                    let key = self.image_key(&item, edge);
-                    let info = self.cache.get(&key).map(|c| c.info.clone());
-                    if let Some(cached) = self.cache.get(&key) {
-                        let size = Vec2::new(
-                            ui.available_width(),
-                            ui.available_width() * cached.info.height as f32
-                                / cached.info.width as f32,
-                        );
-                        let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
-                        tr_render::presenter::fitted(
-                            &mut self.presenter,
-                            ui,
-                            format!("inspector:{}", item.id),
-                            &cached.pyramid,
-                            rect,
-                        );
-                        ui.add_space(16.);
-                        tr_render::histogram(ui, &cached.histogram);
-                        ui.label(
-                            RichText::new(localized_format!(
-                                lang,
-                                "Istogramma del livello {} · uscita sRGB composita",
-                                "Level {} histogram · composited sRGB output",
-                                cached.pyramid.base_level()
-                            ))
-                            .small()
-                            .color(MUTED),
-                        );
-                    }
-                    ui.add_space(12.);
-                    ui.label(RichText::new(&item.name).strong());
-                    ui.label(
-                        RichText::new(if item.approved {
-                            lang.text("ANTEPRIMA")
-                        } else {
-                            lang.text("ANTEPRIMA NON DISPONIBILE")
-                        })
-                        .small()
-                        .color(AMBER),
-                    );
-                    if let Some(error) = self.errors.get(&item.id) {
-                        ui.colored_label(AMBER, error);
-                    }
-                    ui.add_space(12.);
-                    section(ui, "FILE");
-                    field(
-                        ui,
-                        lang.text("Dimensioni"),
-                        &info
-                            .as_ref()
-                            .map(|i| format!("{} × {} px", i.source_width, i.source_height))
-                            .unwrap_or_else(|| lang.text("Non decodificato").into()),
-                    );
-                    field(
-                        ui,
-                        lang.text("Formato"),
-                        &info
-                            .as_ref()
-                            .map(|i| {
-                                if i.native_bits == 0 {
-                                    localized_format!(
-                                        lang,
-                                        "{} · profondità non dichiarata",
-                                        "{} · bit depth not declared",
-                                        i.format
-                                    )
-                                } else {
-                                    localized_format!(
-                                        lang,
-                                        "{} · {} bit/canale",
-                                        "{} · {} bits/channel",
-                                        i.format,
-                                        i.native_bits
-                                    )
-                                }
-                            })
-                            .unwrap_or_else(|| "—".into()),
-                    );
-                    field(ui, lang.text("Dimensione"), &human_bytes(item.bytes));
-                    ui.add_space(12.);
-                    section(ui, lang.text("VALUTAZIONE"));
-                    ui.horizontal(|ui| {
-                        if ui
-                            .selectable_label(item.annotation.rating == 0, "0")
-                            .clicked()
-                        {
-                            self.command(Command::Rate(0));
-                        }
-                        for r in 1..=5 {
+                            ui.checkbox(&mut self.show_inspector, lang.text("Mostra ispettore"));
+                            ui.checkbox(
+                                &mut self.show_filmstrip,
+                                lang.text("Mostra miniature nel viewer"),
+                            );
+                            ui.separator();
+                            self.library_actions(ui);
+                            ui.separator();
                             if ui
-                                .selectable_label(item.annotation.rating >= r, "★")
-                                .on_hover_text(localized_format!(
-                                    lang,
-                                    "{r} stelle · tasto {r}",
-                                    "{r} stars · key {r}"
-                                ))
+                                .button(lang.text("Guida e stato del prototipo"))
                                 .clicked()
                             {
-                                self.command(Command::Rate(r));
-                            }
-                        }
-                        if ui
-                            .selectable_label(item.annotation.rating == -1, "×")
-                            .on_hover_text(lang.text("Scarta · X"))
-                            .clicked()
-                        {
-                            self.command(Command::Rate(-1));
-                        }
-                    });
-                    let mut label = item.annotation.label;
-                    egui::ComboBox::from_id_salt("annotation_label")
-                        .selected_text(localized_format!(
-                            lang,
-                            "Etichetta: {}",
-                            "Label: {}",
-                            lang.text(label.text())
-                        ))
-                        .show_ui(ui, |ui| {
-                            for v in Label::ALL {
-                                ui.selectable_value(&mut label, v, lang.text(v.text()));
+                                self.show_help = true;
+                                ui.close();
                             }
                         });
-                    if label != item.annotation.label {
-                        self.command(Command::Label(label));
-                    }
-                    ui.add_space(12.);
-                    section(ui, lang.text("PAROLE CHIAVE"));
-                    ui.add(
-                        egui::TextEdit::multiline(&mut self.keyword_text)
-                            .hint_text(lang.text("paesaggio, studio, colore"))
-                            .desired_rows(2)
-                            .desired_width(f32::INFINITY),
+                        if ui
+                            .add(egui::Button::new(lang.text("Impostazioni")))
+                            .clicked()
+                        {
+                            self.open_preferences(SettingsPage::Previews);
+                        }
+                        if !compact {
+                            self.search_box(ui, ui.available_width().clamp(100., 240.));
+                        }
+                    });
+                });
+                if compact {
+                    ui.horizontal(|ui| {
+                        self.engine_indicator(ui);
+                        self.search_box(ui, ui.available_width());
+                    });
+                }
+                if viewer {
+                    ui.add_space(4.);
+                    self.viewer_controls(ui);
+                }
+            });
+    }
+
+    fn engine_indicator(&self, ui: &mut egui::Ui) {
+        let settings = self.service.cache.settings();
+        let lang = self.cache_settings.language;
+        let name = match settings.raw_engine {
+            tr_core::decoder::RawEngine::Apple => "Apple RAW",
+            tr_core::decoder::RawEngine::LibRawBilinear => "LibRaw bilinear",
+            tr_core::decoder::RawEngine::LibRawAhd => "LibRaw AHD",
+            tr_core::decoder::RawEngine::TrueRenderer => "TrueRenderer fp32",
+        };
+        ui.add_sized([150., 28.], egui::Label::new(RichText::new(format!("RAW: {name}")).small().color(MUTED)).truncate())
+            .on_hover_text(format!("{}: {}\n{}", lang.text("Motore RAW"), lang.text(settings.raw_engine.label()),
+                lang.text("Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni.")));
+    }
+
+    fn search_box(&mut self, ui: &mut egui::Ui, width: f32) {
+        let lang = self.cache_settings.language;
+        let response = ui.add(
+            egui::TextEdit::singleline(&mut self.state.query)
+                .id(egui::Id::new("catalog-search"))
+                .hint_text(lang.text("Cerca nome o parola chiave"))
+                .desired_width(width),
+        );
+        if self.search_focus {
+            response.request_focus();
+            self.search_focus = false;
+        }
+        if response.changed() {
+            self.state.refilter();
+        }
+    }
+
+    fn view_choices(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        for (mode, title, shortcut) in [
+            (ViewMode::Grid, "Griglia", "G"),
+            (ViewMode::Preview, "Anteprima", "E"),
+            (ViewMode::Compare, "Confronto", "C"),
+        ] {
+            if ui
+                .add(
+                    egui::Button::new(lang.text(title))
+                        .selected(self.state.view == mode)
+                        .min_size(egui::vec2(72., 28.)),
+                )
+                .on_hover_text(shortcut)
+                .clicked()
+            {
+                self.command(Command::SetView(mode));
+            }
+        }
+    }
+
+    fn language_choices(&mut self, ui: &mut egui::Ui) {
+        for (language, name) in [
+            (Language::English, "English"),
+            (Language::Italian, "Italiano"),
+        ] {
+            if ui
+                .selectable_label(self.cache_settings.language == language, name)
+                .clicked()
+            {
+                self.set_language(language);
+                ui.close();
+            }
+        }
+    }
+
+    fn library_actions(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        if ui
+            .add_enabled(
+                self.undo_available && self.state.pending.is_empty(),
+                egui::Button::new(lang.text("Annulla modifica")),
+            )
+            .on_hover_text("Cmd/Ctrl + Z")
+            .clicked()
+        {
+            self.command(Command::Undo);
+        }
+        if ui.button(lang.text("Crea backup")).clicked() {
+            self.request(Request::Backup);
+        }
+        if ui
+            .button(lang.text("Esporta annotazioni…"))
+            .on_hover_text(lang.text("JSON con annotazioni e percorsi locali"))
+            .clicked()
+            && let Some(path) = rfd::FileDialog::new()
+                .set_file_name("TrueRenderer-annotations.json")
+                .add_filter("JSON", &["json"])
+                .save_file()
+        {
+            self.request(Request::Export(path));
+        }
+    }
+
+    fn sidebar(&mut self, ui: &mut egui::Ui) {
+        egui::Panel::left("navigation")
+            .default_size(208.)
+            .size_range(192.0..=270.0)
+            .frame(style::panel())
+            .show(ui, |ui| {
+                egui::ScrollArea::vertical()
+                    .id_salt("navigation-scroll")
+                    .show(ui, |ui| {
+                        self.navigation_contents(ui);
+                    });
+            });
+    }
+
+    fn navigation_contents(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        section(ui, lang.text("Libreria"));
+        if nav(
+            ui,
+            lang.text("Corpus di prova"),
+            "12",
+            self.folder == self.root.join("corpus"),
+        )
+        .clicked()
+        {
+            self.reset_filters();
+            self.open_folder(self.root.join("corpus"));
+        }
+        ui.add_space(20.);
+        section(ui, lang.text("Selezione"));
+        if nav(
+            ui,
+            lang.text("Tutte le immagini"),
+            &self.state.items.len().to_string(),
+            self.state.minimum_rating == 0 && !self.state.rejected_only,
+        )
+        .clicked()
+        {
+            self.state.minimum_rating = 0;
+            self.state.rejected_only = false;
+            self.state.refilter();
+        }
+        if nav(
+            ui,
+            lang.text("Da conservare"),
+            "≥1 ★",
+            self.state.minimum_rating == 1 && !self.state.rejected_only,
+        )
+        .clicked()
+        {
+            self.state.minimum_rating = 1;
+            self.state.rejected_only = false;
+            self.state.refilter();
+        }
+        if nav(
+            ui,
+            lang.text("Cinque stelle"),
+            "5 ★",
+            self.state.minimum_rating == 5 && !self.state.rejected_only,
+        )
+        .clicked()
+        {
+            self.state.minimum_rating = 5;
+            self.state.rejected_only = false;
+            self.state.refilter();
+        }
+        if nav(ui, lang.text("Scartate"), "×", self.state.rejected_only).clicked() {
+            self.state.rejected_only = true;
+            self.state.minimum_rating = 0;
+            self.state.refilter();
+        }
+        ui.add_space(24.);
+        section(ui, lang.text("Filtri"));
+        ui.label(
+            RichText::new(lang.text("Valutazione minima"))
+                .small()
+                .color(MUTED),
+        );
+        let previous = self.state.minimum_rating;
+        egui::ComboBox::from_id_salt("minimum-rating")
+            .width(ui.available_width())
+            .selected_text(if previous == 0 {
+                lang.text("Qualsiasi valutazione").to_owned()
+            } else {
+                format!("{} ★ +", previous)
+            })
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut self.state.minimum_rating,
+                    0,
+                    lang.text("Qualsiasi valutazione"),
+                );
+                for rating in 1..=5 {
+                    ui.selectable_value(
+                        &mut self.state.minimum_rating,
+                        rating,
+                        format!("{rating} ★ +"),
                     );
+                }
+            });
+        if previous != self.state.minimum_rating {
+            self.state.rejected_only = false;
+            self.state.refilter();
+        }
+        ui.add_space(8.);
+        ui.label(RichText::new(lang.text("Etichetta")).small().color(MUTED));
+        let previous = self.state.label_filter;
+        egui::ComboBox::from_id_salt("label_filter")
+            .selected_text(
+                self.state
+                    .label_filter
+                    .map(|label| lang.text(label.text()))
+                    .unwrap_or(lang.text("Tutte le etichette")),
+            )
+            .width(ui.available_width())
+            .show_ui(ui, |ui| {
+                ui.selectable_value(
+                    &mut self.state.label_filter,
+                    None,
+                    lang.text("Tutte le etichette"),
+                );
+                for label in Label::ALL {
+                    ui.selectable_value(
+                        &mut self.state.label_filter,
+                        Some(label),
+                        lang.text(label.text()),
+                    );
+                }
+            });
+        if previous != self.state.label_filter {
+            self.state.refilter();
+        }
+        ui.add_space(8.);
+        if ui
+            .add(egui::Button::new(lang.text("Azzera filtri")).frame(false))
+            .clicked()
+        {
+            self.reset_filters();
+        }
+        ui.add_space(24.);
+        ui.separator();
+        ui.label(
+            RichText::new(lang.text("Originali in sola lettura"))
+                .small()
+                .color(MUTED),
+        );
+    }
+
+    fn reset_filters(&mut self) {
+        self.state.query.clear();
+        self.state.minimum_rating = 0;
+        self.state.rejected_only = false;
+        self.state.label_filter = None;
+        self.state.refilter();
+    }
+
+    fn inspector(&mut self, ui: &mut egui::Ui) {
+        if ui.available_width() < 700. {
+            let mut open = self.show_inspector;
+            egui::Window::new(self.cache_settings.language.text("Ispettore"))
+                .id(egui::Id::new("compact-inspector"))
+                .open(&mut open)
+                .default_width(300.)
+                .max_width((ui.ctx().content_rect().width() - 56.).max(220.))
+                .max_height((ui.ctx().content_rect().height() - 120.).max(180.))
+                .vscroll(true)
+                .show(ui.ctx(), |ui| self.inspector_contents(ui));
+            self.show_inspector = open;
+        } else {
+            egui::Panel::right("inspector")
+                .default_size(280.)
+                .size_range(260.0..=360.0)
+                .frame(style::panel())
+                .show(ui, |ui| {
+                    egui::ScrollArea::vertical()
+                        .id_salt("inspector-scroll")
+                        .show(ui, |ui| self.inspector_contents(ui));
+                });
+        }
+    }
+
+    fn inspector_contents(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        let Some(item) = self.state.current_item().cloned() else {
+            ui.label(RichText::new(lang.text("Seleziona un'immagine")).color(MUTED));
+            return;
+        };
+        ui.add_space(12.);
+        ui.label(RichText::new(&item.name).strong());
+        ui.label(
+            RichText::new(if item.approved {
+                lang.text("ANTEPRIMA")
+            } else {
+                lang.text("ANTEPRIMA NON DISPONIBILE")
+            })
+            .small()
+            .color(AMBER),
+        );
+        if let Some(error) =
+            self.errors
+                .get(&format!("{}:{:?}", item.id, self.image_key(&item, 0).1))
+        {
+            ui.colored_label(AMBER, error);
+        }
+
+        ui.add_space(12.);
+        let edge = (ui.available_width() * ui.ctx().pixels_per_point()).ceil() as u32;
+        let edge = edge.next_power_of_two().min(4096);
+        self.ensure_image(&item, edge);
+        let key = self.image_key(&item, edge);
+        let info = self.cache.get(&key).map(|c| c.info.clone());
+        if let Some(cached) = self.cache.get(&key) {
+            let mut preview = |ui: &mut egui::Ui| {
+                let size = Vec2::new(
+                    ui.available_width(),
+                    ui.available_width() * cached.info.height as f32 / cached.info.width as f32,
+                );
+                let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+                tr_render::presenter::fitted(
+                    &mut self.presenter,
+                    ui,
+                    format!("inspector:{}", item.id),
+                    &cached.pyramid,
+                    rect,
+                );
+                ui.add_space(12.);
+            };
+            if self.state.view == ViewMode::Grid {
+                preview(ui);
+            } else {
+                egui::CollapsingHeader::new(lang.text("Anteprima immagine"))
+                    .id_salt("inspector-preview")
+                    .default_open(false)
+                    .show(ui, preview);
+            }
+            tr_render::histogram(ui, &cached.histogram);
+            ui.label(
+                RichText::new(localized_format!(
+                    lang,
+                    "Istogramma del livello {} · uscita sRGB composita",
+                    "Level {} histogram · composited sRGB output",
+                    cached.pyramid.base_level()
+                ))
+                .small()
+                .color(MUTED),
+            );
+        }
+        ui.add_space(12.);
+        egui::CollapsingHeader::new(lang.text("File"))
+            .id_salt("inspector-file")
+            .default_open(true)
+            .show(ui, |ui| {
+                field(
+                    ui,
+                    lang.text("Dimensioni"),
+                    &info
+                        .as_ref()
+                        .map(|i| format!("{} × {} px", i.source_width, i.source_height))
+                        .unwrap_or_else(|| lang.text("Non decodificato").into()),
+                );
+                field(
+                    ui,
+                    lang.text("Formato"),
+                    &info
+                        .as_ref()
+                        .map(|i| {
+                            if i.native_bits == 0 {
+                                localized_format!(
+                                    lang,
+                                    "{} · profondità non dichiarata",
+                                    "{} · bit depth not declared",
+                                    i.format
+                                )
+                            } else {
+                                localized_format!(
+                                    lang,
+                                    "{} · {} bit/canale",
+                                    "{} · {} bits/channel",
+                                    i.format,
+                                    i.native_bits
+                                )
+                            }
+                        })
+                        .unwrap_or_else(|| "—".into()),
+                );
+                field(ui, lang.text("Dimensione"), &human_bytes(item.bytes));
+            });
+        ui.add_space(12.);
+        egui::CollapsingHeader::new(lang.text("Valutazione"))
+            .id_salt("inspector-rating")
+            .default_open(true)
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
                     if ui
-                        .add_enabled(
-                            !self.state.pending.contains(&item.id),
-                            egui::Button::new(lang.text("Salva parole chiave")),
-                        )
+                        .selectable_label(item.annotation.rating == 0, "0")
                         .clicked()
                     {
-                        let mut annotation = item.annotation.clone();
-                        match annotation.set_keywords(&self.keyword_text) {
-                            Ok(()) => self.command(Command::Keywords(self.keyword_text.clone())),
-                            Err(e) => self.status = e.to_string(),
+                        self.command(Command::Rate(0));
+                    }
+                    for r in 1..=5 {
+                        if ui
+                            .selectable_label(item.annotation.rating >= r, "★")
+                            .on_hover_text(localized_format!(
+                                lang,
+                                "{r} stelle · tasto {r}",
+                                "{r} stars · key {r}"
+                            ))
+                            .clicked()
+                        {
+                            self.command(Command::Rate(r));
                         }
                     }
-                    ui.label(
-                        RichText::new(if self.state.pending.contains(&item.id) {
-                            lang.text("Salvataggio in corso…")
-                        } else {
-                            lang.text("Solo libreria · XMP non attivo")
-                        })
-                        .small()
-                        .color(MUTED),
-                    );
-                    ui.add_space(16.);
-                    section(ui, lang.text("PROVENIENZA DEL RENDER"));
-                    field(
-                        ui,
-                        lang.text("Ingresso"),
-                        &lang.message(
-                            info.as_ref()
-                                .map(|i| i.input_color.as_str())
-                                .unwrap_or(lang.text("Non determinato")),
-                        ),
-                    );
-                    field(
-                        ui,
-                        lang.text("Lavoro"),
-                        lang.text("Rec.2020 lineare · fp32"),
-                    );
-                    field(ui, "Alpha", lang.text("Premoltiplicata in luce lineare"));
-                    field(
-                        ui,
-                        lang.text("Uscita"),
-                        lang.text("sRGB 8 bit · clamp dichiarato"),
-                    );
-                    field(ui, "Display", lang.text("Contratto da qualificare"));
-                    if let Some(cached) = self.cache.get(&key) {
-                        field(ui, lang.text("Isolamento"), cached.transport);
-                        field(ui, "SHA-256", &cached.digest);
-                    }
-                    if let Some(info) = info {
-                        field(ui, "Decoder", &info.decoder);
-                        field(
-                            ui,
-                            lang.text("Orientamento"),
-                            &lang.message(&info.orientation),
-                        );
-                        field(ui, lang.text("Decodifica"), &lang.message(&info.filter));
-                        field(
-                            ui,
-                            lang.text("Presentazione"),
-                            lang.text("Lineare · Lanczos3 / Mitchell"),
-                        );
-                        field(ui, "Alpha", lang.text("Area / triangolare"));
-                    }
-                    ui.add_space(4.);
-                    ui.label(
-                        RichText::new(lang.text("Standard e Riferimento richiedono le prove R1."))
-                            .small()
-                            .color(MUTED),
-                    );
-                    if let Some(sample) = &self.sample {
-                        ui.add_space(12.);
-                        section(ui, lang.text("CAMPIONE DEL VIEWPORT"));
-                        ui.label(RichText::new(&self.sample_source).small().color(MUTED));
-                        ui.monospace(format!("x {:5}   y {:5}", sample.x, sample.y));
-                        ui.monospace(format!(
-                            "RGB8  {} / {} / {}",
-                            sample.display[0], sample.display[1], sample.display[2]
-                        ));
-                        ui.monospace(format!(
-                            "lin R {:.5}\nlin G {:.5}\nlin B {:.5}\nalpha {:.5}",
-                            sample.working[0],
-                            sample.working[1],
-                            sample.working[2],
-                            sample.working[3]
-                        ));
+                    if ui
+                        .selectable_label(item.annotation.rating == -1, "×")
+                        .on_hover_text(lang.text("Scarta · X"))
+                        .clicked()
+                    {
+                        self.command(Command::Rate(-1));
                     }
                 });
+                let mut label = item.annotation.label;
+                egui::ComboBox::from_id_salt("annotation_label")
+                    .selected_text(localized_format!(
+                        lang,
+                        "Etichetta: {}",
+                        "Label: {}",
+                        lang.text(label.text())
+                    ))
+                    .show_ui(ui, |ui| {
+                        for v in Label::ALL {
+                            ui.selectable_value(&mut label, v, lang.text(v.text()));
+                        }
+                    });
+                if label != item.annotation.label {
+                    self.command(Command::Label(label));
+                }
             });
+        ui.add_space(12.);
+        egui::CollapsingHeader::new(lang.text("Parole chiave"))
+            .id_salt("inspector-keywords")
+            .default_open(true)
+            .show(ui, |ui| {
+                ui.add(
+                    egui::TextEdit::multiline(&mut self.keyword_text)
+                        .hint_text(lang.text("paesaggio, studio, colore"))
+                        .desired_rows(2)
+                        .desired_width(f32::INFINITY),
+                );
+                if ui
+                    .add_enabled(
+                        !self.state.pending.contains(&item.id),
+                        egui::Button::new(lang.text("Salva parole chiave")),
+                    )
+                    .clicked()
+                {
+                    let mut annotation = item.annotation.clone();
+                    match annotation.set_keywords(&self.keyword_text) {
+                        Ok(()) => self.command(Command::Keywords(self.keyword_text.clone())),
+                        Err(e) => self.status = e.to_string(),
+                    }
+                }
+                ui.label(
+                    RichText::new(if self.state.pending.contains(&item.id) {
+                        lang.text("Salvataggio in corso…")
+                    } else {
+                        lang.text("Solo libreria · XMP non attivo")
+                    })
+                    .small()
+                    .color(MUTED),
+                );
+            });
+        ui.add_space(16.);
+        egui::CollapsingHeader::new(lang.text("Provenienza del render"))
+            .id_salt("inspector-provenance")
+            .default_open(false)
+            .show(ui, |ui| {
+                field(
+                    ui,
+                    lang.text("Ingresso"),
+                    &lang.message(
+                        info.as_ref()
+                            .map(|i| i.input_color.as_str())
+                            .unwrap_or(lang.text("Non determinato")),
+                    ),
+                );
+                field(
+                    ui,
+                    lang.text("Lavoro"),
+                    lang.text("Rec.2020 lineare · fp32"),
+                );
+                field(ui, "Alpha", lang.text("Premoltiplicata in luce lineare"));
+                field(
+                    ui,
+                    lang.text("Uscita"),
+                    lang.text("sRGB 8 bit · clamp dichiarato"),
+                );
+                field(ui, "Display", lang.text("Contratto da qualificare"));
+                if let Some(cached) = self.cache.get(&key) {
+                    field(ui, lang.text("Isolamento"), cached.transport);
+                    field(ui, "SHA-256", &cached.digest);
+                }
+                if let Some(info) = info {
+                    field(ui, "Decoder", &info.decoder);
+                    field(
+                        ui,
+                        lang.text("Orientamento"),
+                        &lang.message(&info.orientation),
+                    );
+                    field(ui, lang.text("Decodifica"), &lang.message(&info.filter));
+                    field(
+                        ui,
+                        lang.text("Presentazione"),
+                        lang.text("Lineare · Lanczos3 / Mitchell"),
+                    );
+                    field(ui, "Alpha", lang.text("Area / triangolare"));
+                }
+                ui.add_space(4.);
+                ui.label(
+                    RichText::new(lang.text("Standard e Riferimento richiedono le prove R1."))
+                        .small()
+                        .color(MUTED),
+                );
+            });
+        if let Some(sample) = &self.sample {
+            ui.add_space(12.);
+            section(ui, lang.text("CAMPIONE DEL VIEWPORT"));
+            ui.label(RichText::new(&self.sample_source).small().color(MUTED));
+            ui.monospace(format!("x {:5}   y {:5}", sample.x, sample.y));
+            ui.monospace(format!(
+                "RGB8  {} / {} / {}",
+                sample.display[0], sample.display[1], sample.display[2]
+            ));
+            ui.monospace(format!(
+                "lin R {:.5}\nlin G {:.5}\nlin B {:.5}\nalpha {:.5}",
+                sample.working[0], sample.working[1], sample.working[2], sample.working[3]
+            ));
+        }
     }
     fn thumbnail(&mut self, ui: &mut egui::Ui, item: &Item, size: Vec2, show_name: bool) {
         let lang = self.cache_settings.language;
@@ -1626,9 +1882,11 @@ impl TrueRenderer {
             rect,
             5,
             if selected {
-                Color32::from_gray(48)
+                Color32::from_gray(42)
+            } else if response.hovered() {
+                Color32::from_gray(32)
             } else {
-                SURFACE
+                CANVAS
             },
         );
         if selected || response.has_focus() {
@@ -1672,17 +1930,18 @@ impl TrueRenderer {
             );
         }
         if show_name {
-            let title = item.name.trim_end_matches(".png").replace('_', " ");
-            let title = if title.chars().count() > 29 {
-                format!("{}…", title.chars().take(27).collect::<String>())
-            } else {
-                title
-            };
-            painter.text(
-                egui::pos2(rect.left() + 12., rect.bottom() - 34.),
-                egui::Align2::LEFT_CENTER,
-                title,
+            let mut title = egui::text::LayoutJob::simple_singleline(
+                item.name.clone(),
                 egui::FontId::proportional(12.),
+                TEXT,
+            );
+            title.wrap.max_width = (rect.width() - 28.).max(20.);
+            title.wrap.max_rows = 1;
+            title.wrap.break_anywhere = true;
+            let galley = painter.layout_job(title);
+            painter.galley(
+                egui::pos2(rect.left() + 12., rect.bottom() - 42.),
+                galley,
                 TEXT,
             );
             let stars = if item.annotation.rating == -1 {
@@ -1691,7 +1950,11 @@ impl TrueRenderer {
                 format!(
                     "{}{}",
                     "★".repeat(item.annotation.rating.max(0) as usize),
-                    "·".repeat((5 - item.annotation.rating.max(0)) as usize)
+                    if item.annotation.rating == 0 {
+                        "—".into()
+                    } else {
+                        String::new()
+                    }
                 )
             };
             painter.text(
@@ -1720,18 +1983,23 @@ impl TrueRenderer {
         if response.double_clicked() {
             self.command(Command::SetView(ViewMode::Preview));
         }
-        response.on_hover_text(self.errors.get(&item.id).cloned().unwrap_or_else(|| {
-            format!(
-                "{}\n{} · {}",
-                item.name,
-                human_bytes(item.bytes),
-                if item.approved {
-                    lang.text("Anteprima disponibile · dettagli del decoder in Ispezione")
-                } else {
-                    lang.text("Decoder non disponibile o file oltre quota")
-                }
-            )
-        }));
+        response.on_hover_text(
+            self.errors
+                .get(&format!("{}:{:?}", item.id, key.1))
+                .cloned()
+                .unwrap_or_else(|| {
+                    format!(
+                        "{}\n{} · {}",
+                        item.name,
+                        human_bytes(item.bytes),
+                        if item.approved {
+                            lang.text("Anteprima disponibile · dettagli del decoder in Ispezione")
+                        } else {
+                            lang.text("Decoder non disponibile o file oltre quota")
+                        }
+                    )
+                }),
+        );
     }
     fn grid(&mut self, ui: &mut egui::Ui) {
         let columns = ((ui.available_width() + 12.) / (self.cell_size + 12.))
@@ -1762,68 +2030,149 @@ impl TrueRenderer {
                 }
             });
     }
+    fn viewer_controls(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        let compact = ui.available_width() < 780.;
+        ui.horizontal_wrapped(|ui| {
+            ui.add_enabled_ui(self.state.current_item().is_some(), |ui| {
+                if ui
+                    .add(
+                        egui::Button::new(lang.text("Adatta"))
+                            .selected(self.state.transform.zoom.is_none())
+                            .min_size(egui::vec2(52., 28.)),
+                    )
+                    .clicked()
+                {
+                    self.state.transform = ViewTransform::default();
+                }
+                if ui
+                    .add(
+                        egui::Button::new("1:1")
+                            .selected(
+                                self.state.transform.zoom == Some(1.)
+                                    && self.state.current_item().is_some_and(|item| {
+                                        self.quality(item) == PreviewQuality::Full
+                                    }),
+                            )
+                            .min_size(egui::vec2(42., 28.)),
+                    )
+                    .on_hover_text(lang.text("Un pixel sorgente per pixel fisico dello schermo"))
+                    .clicked()
+                {
+                    self.full_for_current();
+                }
+                if ui.small_button("−").clicked() {
+                    self.state
+                        .transform
+                        .set_zoom(self.state.transform.zoom.unwrap_or(1.) / 1.25);
+                }
+                ui.label(
+                    RichText::new(
+                        self.state
+                            .transform
+                            .zoom
+                            .map(|z| format!("{:.0}%", z * 100.))
+                            .unwrap_or_else(|| lang.text("Adatta").into()),
+                    )
+                    .monospace()
+                    .color(MUTED),
+                );
+                if ui.small_button("+").clicked() {
+                    self.state
+                        .transform
+                        .set_zoom(self.state.transform.zoom.unwrap_or(1.) * 1.25);
+                }
+            });
+            if !compact {
+                ui.separator();
+                self.quality_controls(ui);
+            }
+        });
+        if compact {
+            ui.horizontal(|ui| self.quality_controls(ui));
+        }
+    }
+
+    fn quality_controls(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        let mut global = self.service.cache.settings().quality;
+        let quality_name = |quality| match quality {
+            PreviewQuality::Standard => "Standard",
+            PreviewQuality::Full => lang.text("Piena"),
+        };
+        ui.add_enabled_ui(self.cache_action.is_none(), |ui| {
+            egui::ComboBox::from_id_salt("global-quality")
+                .width(155.)
+                .selected_text(format!(
+                    "{}: {}",
+                    lang.text("Globale"),
+                    quality_name(global)
+                ))
+                .show_ui(ui, |ui| {
+                    ui.label(lang.text("Qualità globale delle anteprime"));
+                    ui.selectable_value(&mut global, PreviewQuality::Standard, "Standard");
+                    ui.selectable_value(&mut global, PreviewQuality::Full, lang.text("Piena"));
+                    ui.separator();
+                    ui.label(lang.text("Cambia tutte le foto e azzera le eccezioni di sessione."));
+                })
+                .response
+                .on_hover_text(
+                    lang.text("Cambia tutte le foto e azzera le eccezioni di sessione."),
+                );
+        });
+        self.set_quality(global);
+        let item = self.state.current_item().cloned();
+        let effective = item.as_ref().map_or(global, |item| self.quality(item));
+        ui.add_enabled_ui(item.is_some(), |ui| {
+            egui::ComboBox::from_id_salt("photo-quality")
+                .width(210.)
+                .selected_text(format!(
+                    "{}: {}",
+                    lang.text("Solo questa foto"),
+                    quality_name(effective)
+                ))
+                .show_ui(ui, |ui| {
+                    let Some(item) = &item else {
+                        return;
+                    };
+                    let mut choice = self.quality_overrides.get(&item.id).copied();
+                    let before = choice;
+                    ui.selectable_value(&mut choice, Some(PreviewQuality::Standard), "Standard");
+                    ui.selectable_value(
+                        &mut choice,
+                        Some(PreviewQuality::Full),
+                        lang.text("Piena"),
+                    );
+                    ui.separator();
+                    ui.selectable_value(&mut choice, None, lang.text("Usa la qualità globale"));
+                    ui.label(lang.text("Solo la foto corrente · eccezione per questa sessione."));
+                    if choice != before {
+                        self.set_photo_quality(&item.id, choice);
+                    }
+                })
+                .response
+                .on_hover_text(lang.text("Solo la foto corrente · eccezione per questa sessione."));
+        });
+    }
+
+    fn set_photo_quality(&mut self, id: &str, quality: Option<PreviewQuality>) {
+        if let Some(quality) = quality {
+            self.quality_overrides.insert(id.to_owned(), quality);
+        } else {
+            self.quality_overrides.remove(id);
+        }
+        self.context.request_repaint();
+    }
+
     fn preview(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         let Some(item) = self.state.current_item().cloned() else {
             return;
         };
-        let mut quality = self.service.cache.settings().quality;
-        ui.horizontal(|ui| {
-            ui.label(lang.text("Qualità anteprima"));
-            ui.selectable_value(&mut quality, PreviewQuality::Standard, "Standard");
-            ui.selectable_value(&mut quality, PreviewQuality::Full, lang.text("Piena"));
-            if ui
-                .button(lang.text("Qualità piena per questa foto"))
-                .clicked()
-            {
-                self.full_overrides.insert(item.id.clone());
-            }
-            if self.full_overrides.contains(&item.id) {
-                ui.label(lang.text("Override di sessione · il cambio globale lo rimuove"));
-            }
-        });
-        self.set_quality(quality);
-        ui.horizontal(|ui| {
-            if ui.button(lang.text("Adatta")).clicked() {
-                self.state.transform = ViewTransform::default();
-            }
-            if ui
-                .button("1:1")
-                .on_hover_text(lang.text("Un pixel sorgente per pixel fisico dello schermo"))
-                .clicked()
-            {
-                self.full_for_current();
-            }
-            if ui.button("−").clicked() {
-                self.state
-                    .transform
-                    .set_zoom(self.state.transform.zoom.unwrap_or(1.) / 1.25);
-            }
-            if ui.button("+").clicked() {
-                self.state
-                    .transform
-                    .set_zoom(self.state.transform.zoom.unwrap_or(1.) * 1.25);
-            }
-            ui.label(
-                RichText::new(
-                    self.state
-                        .transform
-                        .zoom
-                        .map(|z| format!("{:.0}%", z * 100.))
-                        .unwrap_or(lang.text("Adatta alla finestra").into()),
-                )
-                .monospace()
-                .color(MUTED),
-            );
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(RichText::new(lang.text("ANTEPRIMA")).small().color(AMBER));
-            });
-        });
-        ui.add_space(8.);
         if self.show_filmstrip {
             egui::Panel::bottom("filmstrip")
-                .exact_size(110.)
-                .frame(egui::Frame::new().inner_margin(8))
+                .exact_size(104.)
+                .frame(egui::Frame::new().fill(PANEL).inner_margin(8))
                 .show(ui, |ui| {
                     egui::ScrollArea::horizontal().show(ui, |ui| {
                         ui.horizontal(|ui| {
@@ -1930,7 +2279,6 @@ impl TrueRenderer {
                     },
                 );
             } else {
-                ui.label(lang.text(key.1.quality.label()));
                 if key.1.quality == PreviewQuality::Standard && c.pyramid.base_level() > 0 {
                     ui.label(localized_format!(
                         lang,
@@ -1968,59 +2316,90 @@ impl TrueRenderer {
             });
         }
     }
+    fn folder_label(&self) -> &str {
+        if self.folder == self.root.join("corpus") {
+            self.cache_settings.language.text("Corpus di prova")
+        } else {
+            self.folder
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or(self.cache_settings.language.text("Immagini"))
+        }
+    }
+
+    fn thumbnail_size_control(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        ui.spacing_mut().slider_width = 100.;
+        ui.add(egui::Slider::new(&mut self.cell_size, 150.0..=300.0).show_value(false))
+            .on_hover_text(lang.text("Miniature"));
+        ui.label(RichText::new(lang.text("Miniature")).small().color(MUTED));
+    }
+
     fn footer(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
+        let compact = ui.available_width() < 1000.;
         egui::Panel::bottom("status")
-            .exact_size(39.)
             .frame(
                 egui::Frame::new()
-                    .fill(Color32::from_gray(28))
-                    .inner_margin(egui::Margin::symmetric(16, 8)),
+                    .fill(PANEL)
+                    .inner_margin(egui::Margin::symmetric(16, 6)),
             )
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
+                    let name = self.folder_label().to_owned();
+                    ui.add_sized(
+                        [if compact { 135. } else { 200. }, 28.],
+                        egui::Label::new(RichText::new(name).small()).truncate(),
+                    )
+                    .on_hover_text(self.folder.display().to_string());
                     ui.label(
                         RichText::new(localized_format!(
                             lang,
-                            "{} immagini · {} selezionate",
-                            "{} images · {} selected",
+                            "/ {} immagini · {} selezionate",
+                            "/ {} images · {} selected",
                             self.state.visible.len(),
                             self.state.selected.len()
                         ))
                         .small(),
                     );
                     ui.separator();
-                    ui.label(
-                        RichText::new(lang.text("sRGB > lineare Rec.2020 > sRGB"))
-                            .small()
-                            .color(MUTED),
-                    );
-                    if !self.pending_images.is_empty() {
-                        ui.label(
-                            RichText::new(localized_format!(
-                                lang,
-                                "{} in coda",
-                                "{} queued",
-                                self.pending_images.len()
-                            ))
-                            .small()
-                            .color(AMBER),
-                        );
+                    ui.label(RichText::new(lang.text("Anteprima")).small().color(AMBER))
+                        .on_hover_text(lang.message(&self.status));
+                    if !compact {
+                        ui.label(RichText::new("sRGB > Rec.2020 > sRGB").small().color(MUTED));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            self.thumbnail_size_control(ui);
+                            ui.add(
+                                egui::Label::new(
+                                    RichText::new(lang.message(&self.status))
+                                        .small()
+                                        .color(if self.fatal { AMBER } else { MUTED }),
+                                )
+                                .truncate(),
+                            )
+                            .on_hover_text(lang.message(&self.status));
+                        });
                     }
-                    if !self.state.pending.is_empty() {
-                        ui.label(
-                            RichText::new(lang.text("Salvataggio…"))
+                });
+                if compact {
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new("sRGB > Rec.2020 > sRGB").small().color(MUTED));
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            self.thumbnail_size_control(ui);
+                        });
+                    });
+                }
+                if self.fatal && compact {
+                    ui.add(
+                        egui::Label::new(
+                            RichText::new(lang.message(&self.status))
                                 .small()
                                 .color(AMBER),
-                        );
-                    }
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add(
-                            egui::Slider::new(&mut self.cell_size, 150.0..=300.0).show_value(false),
-                        );
-                        ui.label(RichText::new(lang.text("Miniature")).small().color(MUTED));
-                    });
-                });
+                        )
+                        .truncate(),
+                    )
+                    .on_hover_text(lang.message(&self.status));
+                }
             });
     }
     fn help(&mut self, ctx: &egui::Context) {
@@ -2134,121 +2513,12 @@ impl TrueRenderer {
             ctx.request_repaint_after(Duration::from_millis(50));
         }
     }
-    fn settings_window(&mut self, ctx: &egui::Context) {
-        let lang = self.cache_settings.language;
-        self.poll_cache_action(ctx);
-        let mut action = 0;
-        egui::Window::new(lang.text("Preferenze · Anteprime e prestazioni")).id(egui::Id::new("settings-window")).open(&mut self.show_settings).default_width(570.).resizable(false).vscroll(true).max_height((ctx.viewport_rect().height()-80.).max(250.)).show(ctx,|ui|{
-            ui.label(lang.text("Le impostazioni valgono per tutte le cartelle; la quota disco si applica a ciascuna cartella separatamente."));
-            ui.horizontal(|ui| {
-                ui.label(lang.text("Qualità anteprima"));
-                ui.selectable_value(&mut self.cache_settings.quality, PreviewQuality::Standard, "Standard");
-                ui.selectable_value(&mut self.cache_settings.quality, PreviewQuality::Full, lang.text("Piena"));
-            });
-            ui.horizontal(|ui| {
-                ui.label(lang.text("Motore RAW"));
-                egui::ComboBox::from_id_salt("raw-engine").selected_text(lang.text(self.cache_settings.raw_engine.label())).show_ui(ui, |ui| {
-                    for engine in tr_core::decoder::RawEngine::choices() {
-                        ui.selectable_value(&mut self.cache_settings.raw_engine, engine, lang.text(engine.label()));
-                    }
-                });
-            });
-            ui.label(localized_format!(lang, "Attivo: {}", "Active: {}", lang.text(self.service.cache.settings().raw_engine.label())));
-            ui.label(lang.text("Applica e salva aggiorna le immagini. Ogni motore conserva le proprie anteprime in cache."));
-            if self.cache_settings.raw_engine == tr_core::decoder::RawEngine::TrueRenderer {
-                ui.label(lang.text("Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore."));
-            }
-            let physical = self.service.cache.physical_mib;
-            let mut automatic = self.cache_settings.memory_mib == 0;
-            if ui.checkbox(&mut automatic, lang.text("Memoria automatica")).changed() {
-                self.cache_settings.memory_mib = if automatic {0} else {self.cache_settings.effective_memory_mib(physical).max(512)};
-            }
-            if !automatic { ui.add(egui::Slider::new(&mut self.cache_settings.memory_mib,512..=(physical*3/4).max(512)).text(lang.text("Memoria richiesta (MiB)"))); }
-            ui.label(localized_format!(lang, "Budget di ammissione effettivo: {} MiB", "Effective admission budget: {} MiB",self.cache_settings.effective_memory_mib(physical)));
-            let mut automatic = self.cache_settings.reusable_mib.is_none();
-            if ui.checkbox(&mut automatic,lang.text("Cache RAM automatica")).changed() { self.cache_settings.reusable_mib = if automatic { None } else { Some(0) }; }
-            if let Some(value) = &mut self.cache_settings.reusable_mib { ui.add(egui::Slider::new(value,0..=self.service.cache.memory.usage().limit/(1024*1024)).text(lang.text("Cache RAM riutilizzabile (MiB; 0 = solo viste)"))); }
-            let memory = self.service.cache.memory.usage();
-            ui.label(localized_format!(lang, "Memoria prenotata (base inclusa): {} · picco crediti: {}", "Reserved memory (including baseline): {} · peak credits: {}",human_bytes(memory.reserved),human_bytes(memory.peak)));
-            if memory.reserved > memory.limit { ui.label(lang.text("Riduzione memoria in corso")); }
-            ui.label(localized_format!(lang, "Stima di base app/worker/device: {} MiB", "App/worker/device baseline estimate: {} MiB",self.service.cache.baseline_bytes/(1024*1024)));
-            ui.label(lang.text("Il budget include stime dei decoder; non è un limite RSS imposto dal sistema."));
-            ui.add(egui::Slider::new(&mut self.cache_settings.gpu_mib,0..=1024).text(lang.text("Cache GPU (MiB; 0 = automatica)")));
-            ui.horizontal(|ui| {
-                ui.label(lang.text("Profilo prestazioni"));
-                ui.selectable_value(&mut self.cache_settings.profile,crate::cache::PerformanceProfile::Performance,lang.text("Prestazioni"));
-                ui.selectable_value(&mut self.cache_settings.profile,crate::cache::PerformanceProfile::Balanced,lang.text("Bilanciato"));
-                ui.selectable_value(&mut self.cache_settings.profile,crate::cache::PerformanceProfile::Saver,lang.text("Risparmio"));
-            });
-            ui.horizontal(|ui| {
-                ui.label(lang.text("Calcolo immagine"));
-                ui.selectable_value(&mut self.cache_settings.compute,ImageCompute::Automatic,lang.text("Automatico"));
-                ui.selectable_value(&mut self.cache_settings.compute,ImageCompute::Gpu,lang.text("GPU compatibile"));
-                ui.selectable_value(&mut self.cache_settings.compute,ImageCompute::Cpu,"CPU");
-            });
-            ui.label(lang.message(&self.gpu_status));
-            let compute=self.presenter.statistics();
-            ui.label(localized_format!(lang, "Frame elaborati: {} GPU · {} CPU · {} ripieghi", "Processed frames: {} GPU · {} CPU · {} fallbacks",compute.gpu_frames,compute.cpu_frames,compute.fallbacks));
-            if !compute.last_fallback.is_empty() {ui.label(localized_format!(lang, "Ultimo ripiego CPU: {}", "Last CPU fallback: {}",compute.last_fallback));}
-            ui.label(lang.text("Questa scelta riguarda il ricampionamento del viewer. Lo sviluppo usa il motore RAW selezionato sopra."));
-            ui.checkbox(&mut self.cache_settings.adapt_on_battery,lang.text("Riduci automaticamente il lavoro a batteria"));
-            ui.label(localized_format!(lang, "Thread applicativi effettivi: {} · {}", "Effective application threads: {} · {}",self.service.cache.effective_threads(),if self.service.cache.on_battery() {lang.text("batteria")} else {lang.text("alimentazione esterna / non rilevata")}));
-            ui.label(localized_format!(lang, "Pressione memoria OS: {}", "OS memory pressure: {}", match self.service.cache.stats().memory_pressure {
-                Some(tr_platform::MemoryPressure::Normal) => lang.text("normale"),
-                Some(tr_platform::MemoryPressure::Warning) => lang.text("elevata · lavoro anticipato sospeso"),
-                Some(tr_platform::MemoryPressure::Critical) => lang.text("critica · cache riutilizzabili in rilascio"),
-                None => lang.text("adattatore non disponibile"),
-            }));
-            ui.add(egui::Slider::new(&mut self.cache_settings.cpu_threads,0..=std::thread::available_parallelism().map_or(1,usize::from)).text(lang.text("Thread CPU (0 = automatici)")));
-            ui.horizontal(|ui| {
-                ui.label(lang.text("Precaricamento"));
-                ui.selectable_value(&mut self.cache_settings.prefetch,crate::cache::Prefetch::Disabled,lang.text("Disattivato"));
-                ui.selectable_value(&mut self.cache_settings.prefetch,crate::cache::Prefetch::Automatic,lang.text("Automatico"));
-                ui.selectable_value(&mut self.cache_settings.prefetch,crate::cache::Prefetch::Extended,lang.text("Esteso"));
-            });
-            ui.checkbox(&mut self.preparation_paused,lang.text("Pausa preparazione in background"));
-            ui.horizontal(|ui| {
-                if ui.add_enabled(self.rebuild.is_empty() && !self.scanning,egui::Button::new(lang.text("Ricostruisci anteprime della cartella"))).clicked() {
-                    self.rebuild=self.state.items.iter().filter(|i| i.approved).cloned().collect();
-                    self.rebuild_total=self.rebuild.len();
-                }
-                if !self.rebuild.is_empty() && ui.button(lang.text("Annulla preparazione")).clicked() {self.rebuild.clear(); self.rebuild_total=0;}
-            });
-            if self.rebuild_total>0 { ui.label(localized_format!(lang, "Anteprime elaborate: {} / {}", "Previews processed: {} / {}",self.rebuild_total-self.rebuild.len(),self.rebuild_total)); }
-            ui.separator();
-            ui.checkbox(&mut self.cache_settings.enabled,lang.text("Abilita cache su disco nella cartella delle immagini"));
-            ui.add(egui::Slider::new(&mut self.cache_settings.disk_mib,64..=65536).logarithmic(true).text(lang.text("Quota per cartella (MiB)")));
-            ui.add(egui::Slider::new(&mut self.cache_settings.temporary_mib,16..=2048).logarithmic(true).text(lang.text("Temporanei (MiB)")));
-            ui.add(egui::Slider::new(&mut self.cache_settings.unused_days,1..=3650).logarithmic(true).text(lang.text("Scadenza senza utilizzo (giorni)")));
-            ui.add(egui::Slider::new(&mut self.cache_settings.free_mib,0..=65536).logarithmic(true).text(lang.text("Spazio libero da riservare (MiB)")));
-            ui.label(lang.text("I temporanei rientrano nella quota disco. Le immagini troppo grandi per la cache restano visualizzabili in RAM. I file meno usati vengono rimossi per rispettare la quota."));
-            ui.separator();
-            ui.label(lang.text("Cartella corrente:"));
-            ui.add(egui::Label::new(self.folder.join(crate::cache::NAME).display().to_string()).wrap());
-            let stats=self.service.cache.stats();
-            if stats.folder==self.folder.display().to_string() {
-                ui.label(localized_format!(lang, "Cache: {} in {} file · temporanei inattivi: {}", "Cache: {} in {} files · inactive temporary files: {}",human_bytes(stats.bytes),stats.entries,human_bytes(stats.temporary_bytes)));
-            }
-            ui.label(localized_format!(lang, "Sessione: {} riusi da disco · {} mancate corrispondenze · {} scritture", "Session: {} disk hits · {} misses · {} writes",stats.hits,stats.misses,stats.writes));
-            ui.add(egui::Label::new(lang.message(&stats.message)).wrap());
-            ui.label(lang.text("entries contiene i render fp32 senza perdita; tmp contiene le scritture in corso. I temporanei abbandonati vengono rimossi alla successiva apertura. Originali, annotazioni e backup sono separati."));
-            ui.horizontal(|ui|{
-                let ready=self.cache_action.is_none() && !self.scanning;
-                if ui.add_enabled(ready,egui::Button::new(lang.text("Applica e salva"))).clicked(){action=1;}
-                if ui.add_enabled(ready,egui::Button::new(lang.text("Svuota cache cartella"))).clicked(){action=2;}
-            });
-            if self.cache_action.is_some(){ui.label(lang.text("Aggiornamento cache…"));}
-        });
-        if action > 0 {
-            self.start_cache_action(action == 1);
-        }
-    }
     /// Full settings-button action, also used by native and headless regression
     /// checks. Cache maintenance has its own receiver; `scanning` only describes
     /// a real pending Request::Scan and must survive maintenance completion.
     fn start_cache_action(&mut self, save: bool) {
         if save && self.cache_settings.quality != self.service.cache.settings().quality {
-            self.full_overrides.clear();
+            self.quality_overrides.clear();
         }
         self.errors.clear();
         if save {
@@ -2481,6 +2751,10 @@ impl TrueRenderer {
             return;
         }
         if self.settings_smoke {
+            if std::env::args().any(|arg| arg == "--restyle-smoke") {
+                self.restyle_smoke(ctx);
+                return;
+            }
             if self.started.elapsed().as_secs_f32() > 1.
                 && !self.scanning
                 && self.cache_action.is_none()
@@ -2660,54 +2934,37 @@ impl eframe::App for TrueRenderer {
         }
         self.toolbar(ui);
         self.footer(ui);
-        self.sidebar(ui);
-        if self.show_inspector {
+        if ui.available_width() >= 1000. {
+            self.sidebar(ui);
+        }
+        if self.show_inspector && (!self.show_settings || ui.available_width() >= 700.) {
             self.inspector(ui);
         }
         egui::CentralPanel::default()
-            .frame(
-                egui::Frame::new()
-                    .fill(Color32::from_gray(20))
-                    .inner_margin(20),
-            )
+            .frame(egui::Frame::new().fill(CANVAS).inner_margin(16))
             .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    ui.heading(if self.folder == self.root.join("corpus") {
-                        lang.text("Corpus di prova")
-                    } else {
-                        self.folder
-                            .file_name()
-                            .and_then(|x| x.to_str())
-                            .unwrap_or(lang.text("Immagini"))
-                    });
-                    ui.label(
-                        RichText::new(localized_format!(
-                            lang,
-                            "/ {} immagini",
-                            "/ {} images",
-                            self.state.visible.len()
-                        ))
-                        .color(MUTED),
-                    );
-                });
-                ui.label(
-                    RichText::new(lang.message(&self.status))
-                        .small()
-                        .color(if self.fatal { AMBER } else { MUTED }),
-                );
-                ui.add_space(14.);
                 if self.scanning {
                     ui.label(lang.text("Lettura dei file…"));
                 } else if self.state.visible.is_empty() {
-                    ui.add_space(70.);
+                    ui.add_space((ui.available_height() * 0.2).min(70.));
                     ui.vertical_centered(|ui| {
                         ui.heading(lang.text("Nessuna immagine da mostrare"));
                         ui.label(lang.text("Apri una cartella oppure azzera i filtri."));
+                        ui.add_space(16.);
+                        if ui.button(lang.text("Apri cartella…")).clicked()
+                            && let Some(folder) = rfd::FileDialog::new()
+                                .set_directory(&self.folder)
+                                .pick_folder()
+                        {
+                            self.open_folder(folder);
+                        }
+                        if !self.state.items.is_empty()
+                            && ui.button(lang.text("Azzera filtri")).clicked()
+                        {
+                            self.reset_filters();
+                        }
                         if ui.button(lang.text("Apri il corpus di prova")).clicked() {
-                            self.state.query.clear();
-                            self.state.minimum_rating = 0;
-                            self.state.rejected_only = false;
-                            self.state.label_filter = None;
+                            self.reset_filters();
                             self.open_folder(self.root.join("corpus"));
                         }
                     });
@@ -2743,8 +3000,8 @@ impl eframe::App for TrueRenderer {
     }
 }
 fn section(ui: &mut egui::Ui, title: &str) {
-    ui.label(RichText::new(title).size(11.).strong().color(MUTED));
-    ui.add_space(4.);
+    ui.label(RichText::new(title).size(12.).strong().color(TEXT));
+    ui.add_space(8.);
 }
 fn field(ui: &mut egui::Ui, key: &str, value: &str) {
     ui.horizontal_top(|ui| {
@@ -2756,12 +3013,43 @@ fn field(ui: &mut egui::Ui, key: &str, value: &str) {
     });
 }
 fn nav(ui: &mut egui::Ui, title: &str, count: &str, selected: bool) -> egui::Response {
-    ui.add_sized(
-        [ui.available_width(), 31.],
-        egui::Button::new(format!("{title}   {count}"))
-            .selected(selected)
-            .frame(selected),
-    )
+    let response = ui.add_sized(
+        [ui.available_width(), 32.],
+        egui::Button::new("").selected(selected).frame(false),
+    );
+    response.widget_info(|| {
+        egui::WidgetInfo::selected(
+            egui::WidgetType::SelectableLabel,
+            ui.is_enabled(),
+            selected,
+            format!("{title} {count}"),
+        )
+    });
+    let painter = ui.painter();
+    let mut job = egui::text::LayoutJob::simple_singleline(
+        title.to_owned(),
+        egui::FontId::proportional(13.),
+        TEXT,
+    );
+    job.wrap.max_width = (response.rect.width() - 60.).max(20.);
+    job.wrap.max_rows = 1;
+    let title = painter.layout_job(job);
+    painter.galley(
+        egui::pos2(
+            response.rect.left() + 10.,
+            response.rect.center().y - title.size().y / 2.,
+        ),
+        title,
+        TEXT,
+    );
+    painter.text(
+        egui::pos2(response.rect.right() - 10., response.rect.center().y),
+        egui::Align2::RIGHT_CENTER,
+        count,
+        egui::FontId::monospace(12.),
+        MUTED,
+    );
+    response
 }
 fn human_bytes(bytes: u64) -> String {
     if bytes >= 1_048_576 {
@@ -2831,16 +3119,238 @@ mod settings_regressions {
     }
 
     #[test]
-    fn both_languages_render_in_the_toolbar_and_preferences() {
-        fn text(shape: &egui::epaint::Shape, result: &mut String) {
+    fn photo_quality_is_bidirectional_independent_and_global_resets_overrides() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let first = app.state.items[0].clone();
+        let second = app.state.items[1].clone();
+        app.set_quality(PreviewQuality::Full);
+        settle(&mut app, &ctx, false);
+        app.set_photo_quality(&first.id, Some(PreviewQuality::Standard));
+        assert_eq!(
+            app.preview_request(&first, 512).quality,
+            PreviewQuality::Standard
+        );
+        assert_eq!(app.quality(&second), PreviewQuality::Full);
+        assert_eq!(app.service.cache.settings().quality, PreviewQuality::Full);
+        app.set_photo_quality(&first.id, Some(PreviewQuality::Full));
+        assert_eq!(app.quality(&first), PreviewQuality::Full);
+        app.set_photo_quality(&first.id, None);
+        assert!(!app.quality_overrides.contains_key(&first.id));
+        app.cache_settings.disk_mib += 1024;
+        let draft_disk = app.cache_settings.disk_mib;
+        let selected = app.state.selected.clone();
+        app.state.transform.zoom = Some(1.75);
+        app.set_photo_quality(&second.id, Some(PreviewQuality::Full));
+        app.set_quality(PreviewQuality::Standard);
+        settle(&mut app, &ctx, false);
+        assert!(app.quality_overrides.is_empty());
+        assert_eq!(app.quality(&second), PreviewQuality::Standard);
+        assert_eq!(app.cache_settings.disk_mib, draft_disk);
+        assert_ne!(app.service.cache.settings().disk_mib, draft_disk);
+        assert_eq!(app.state.selected, selected);
+        assert_eq!(app.state.transform.zoom, Some(1.75));
+        app.full_for_current();
+        assert_eq!(
+            app.quality(app.state.current_item().unwrap()),
+            PreviewQuality::Full
+        );
+        assert_eq!(
+            app.service.cache.settings().quality,
+            PreviewQuality::Standard
+        );
+    }
+
+    fn chrome_frame(
+        app: &mut TrueRenderer,
+        ctx: &egui::Context,
+        size: Vec2,
+        events: Vec<egui::Event>,
+    ) -> Vec<(String, egui::Rect)> {
+        fn collect(shape: &egui::epaint::Shape, result: &mut Vec<(String, egui::Rect)>) {
+            match shape {
+                egui::epaint::Shape::Text(text) => result.push((
+                    text.galley.job.text.clone(),
+                    text.galley.rect.translate(text.pos.to_vec2()),
+                )),
+                egui::epaint::Shape::Vec(shapes) => {
+                    for shape in shapes {
+                        collect(shape, result);
+                    }
+                }
+                _ => {}
+            }
+        }
+        let mut output = ctx.run_ui(
+            egui::RawInput {
+                screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                events,
+                ..Default::default()
+            },
+            |ui| {
+                app.keyboard(ui.ctx());
+                app.toolbar(ui);
+                app.footer(ui);
+                app.settings_window(ui.ctx());
+            },
+        );
+        output.textures_delta.clear();
+        let mut text = Vec::new();
+        for shape in output.shapes {
+            collect(&shape.shape, &mut text);
+        }
+        text
+    }
+
+    #[test]
+    fn chrome_is_aligned_tools_are_above_and_folder_is_below_in_both_languages() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.state.view = ViewMode::Preview;
+        for lang in [Language::English, Language::Italian] {
+            app.set_language(lang);
+            for size in [
+                Vec2::new(1440., 940.),
+                Vec2::new(1100., 720.),
+                Vec2::new(550., 360.),
+            ] {
+                let mut text = Vec::new();
+                for _ in 0..20 {
+                    text = chrome_frame(&mut app, &ctx, size, Vec::new());
+                }
+                let rect = |label: &str| {
+                    text.iter()
+                        .find(|(s, _)| s == label)
+                        .unwrap_or_else(|| panic!("Missing {label}: {text:?}"))
+                        .1
+                };
+                assert!(
+                    (rect(lang.text("Apri")).center().y
+                        - rect(lang.text("Impostazioni")).center().y)
+                        .abs()
+                        < 1.
+                );
+                for label in [
+                    format!("{}: Standard", lang.text("Globale")),
+                    format!("{}: Standard", lang.text("Solo questa foto")),
+                    "1:1".to_owned(),
+                    if cfg!(target_os = "macos") {
+                        "RAW: Apple RAW"
+                    } else {
+                        "RAW: LibRaw bilinear"
+                    }
+                    .to_owned(),
+                ] {
+                    let r = rect(&label);
+                    assert!(
+                        r.bottom() < size.y / 2. && r.left() >= 0. && r.right() <= size.x,
+                        "Toolbar overflow: {label}, {size:?}: {r:?}"
+                    );
+                }
+                assert!(rect(lang.text("Corpus di prova")).top() > size.y - 100.);
+            }
+        }
+    }
+
+    #[test]
+    fn menus_and_preferences_are_reachable_by_click_without_losing_drafts() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.state.view = ViewMode::Preview;
+        let size = Vec2::new(1440., 940.);
+        let click = |app: &mut TrueRenderer, label: &str| {
+            let mut text = Vec::new();
+            for _ in 0..10 {
+                text = chrome_frame(app, &ctx, size, Vec::new());
+            }
+            let pos = text
+                .iter()
+                .find(|(s, _)| s == label)
+                .unwrap_or_else(|| panic!("Missing {label}: {text:?}"))
+                .1
+                .center();
+            for pressed in [true, false] {
+                chrome_frame(
+                    app,
+                    &ctx,
+                    size,
+                    vec![
+                        egui::Event::PointerMoved(pos),
+                        egui::Event::PointerButton {
+                            pos,
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: Default::default(),
+                        },
+                    ],
+                );
+            }
+            chrome_frame(app, &ctx, size, Vec::new())
+        };
+        let open = click(&mut app, "Open");
+        for label in ["Open folder…", "Open file…", "Refresh folder"] {
+            assert!(open.iter().any(|(s, _)| s == label));
+        }
+        let menu = click(&mut app, "Menu");
+        for label in [
+            "Language",
+            "Show inspector",
+            "Create backup",
+            "Export annotations…",
+        ] {
+            assert!(
+                menu.iter().any(|(s, _)| s == label),
+                "Missing {label}: {menu:?}"
+            );
+        }
+        chrome_frame(
+            &mut app,
+            &ctx,
+            size,
+            vec![egui::Event::Key {
+                key: egui::Key::Escape,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: Default::default(),
+            }],
+        );
+        assert_eq!(app.state.view, ViewMode::Preview);
+        assert!(!egui::Popup::is_any_open(&ctx));
+        click(&mut app, "Settings");
+        assert!(app.show_settings);
+        app.cache_settings.disk_mib += 1024;
+        let draft = app.cache_settings.clone();
+        for title in [
+            "General",
+            "Previews and RAW",
+            "Performance",
+            "Cache and data",
+            "Settings",
+        ] {
+            click(&mut app, title);
+            assert_eq!(app.cache_settings, draft);
+        }
+    }
+
+    #[test]
+    fn both_languages_render_all_preferences_with_visible_footer_at_small_sizes() {
+        fn text(
+            shape: &egui::epaint::Shape,
+            clip: egui::Rect,
+            result: &mut Vec<(String, egui::Rect, egui::Rect)>,
+        ) {
             match shape {
                 egui::epaint::Shape::Text(text) => {
-                    result.push_str(&text.galley.job.text);
-                    result.push('\n');
+                    result.push((
+                        text.galley.job.text.clone(),
+                        text.galley.rect.translate(text.pos.to_vec2()),
+                        clip,
+                    ));
                 }
                 egui::epaint::Shape::Vec(shapes) => {
                     for shape in shapes {
-                        text(shape, result);
+                        text(shape, clip, result);
                     }
                 }
                 _ => {}
@@ -2848,43 +3358,63 @@ mod settings_regressions {
         }
         let (_dir, ctx, mut app) = app();
         settle(&mut app, &ctx, true);
-        for (language, labels) in [
-            (
-                Language::English,
-                ["Open folder…", "Language", "RAW engine", "Automatic memory"],
-            ),
-            (
-                Language::Italian,
-                [
-                    "Apri cartella…",
-                    "Lingua",
-                    "Motore RAW",
-                    "Memoria automatica",
-                ],
-            ),
-        ] {
+        for language in [Language::English, Language::Italian] {
             app.set_language(language);
             app.show_settings = true;
-            let mut rendered = String::new();
-            for _ in 0..3 {
-                let input = egui::RawInput {
-                    screen_rect: Some(egui::Rect::from_min_size(
-                        egui::Pos2::ZERO,
-                        egui::vec2(1440., 1100.),
-                    )),
-                    ..Default::default()
-                };
-                let mut output = ctx.run_ui(input, |ui| {
-                    app.toolbar(ui);
-                    app.settings_window(ui.ctx());
-                });
-                output.textures_delta.clear(); // headless: no texture backend
-                for shape in output.shapes {
-                    text(&shape.shape, &mut rendered);
+            app.cache_settings.disk_mib += 1;
+            let draft = app.cache_settings.clone();
+            for size in [
+                egui::vec2(1440., 940.),
+                egui::vec2(1100., 720.),
+                egui::vec2(550., 360.),
+            ] {
+                for (page, expected) in [
+                    (SettingsPage::General, "Lingua"),
+                    (SettingsPage::Previews, "Motore RAW"),
+                    (SettingsPage::Performance, "Prestazioni"),
+                    (SettingsPage::Cache, "Cache e dati"),
+                ] {
+                    app.settings_page = page;
+                    let mut rendered = Vec::new();
+                    // Let egui's window sizing and scroll-bar animation converge after each resize.
+                    for _ in 0..20 {
+                        let input = egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                            ..Default::default()
+                        };
+                        let mut output = ctx.run_ui(input, |ui| {
+                            app.toolbar(ui);
+                            app.footer(ui);
+                            app.settings_window(ui.ctx());
+                        });
+                        output.textures_delta.clear(); // headless: no texture backend
+                        rendered.clear();
+                        for shape in output.shapes {
+                            text(&shape.shape, shape.clip_rect, &mut rendered);
+                        }
+                    }
+                    for label in ["Apri", "Menu", expected, "Chiudi", "Applica e salva"] {
+                        let label = language.text(label);
+                        assert!(
+                            rendered.iter().any(|(s, _, _)| s == label),
+                            "Missing {label}, {page:?}: {rendered:?}"
+                        );
+                    }
+                    let viewport = egui::Rect::from_min_size(egui::Pos2::ZERO, size);
+                    for label in ["Chiudi", "Applica e salva", "Ripristina modifiche"] {
+                        let label = language.text(label);
+                        let (_, rect, clip) = rendered.iter().find(|(s, _, _)| s == label).unwrap();
+                        assert!(
+                            viewport.contains_rect(*rect) && clip.contains_rect(*rect),
+                            "Clipped {label}, {page:?}, {size:?}: {rect:?}, clip {clip:?}"
+                        );
+                    }
+                    assert_eq!(
+                        app.cache_settings, draft,
+                        "Rendering or changing tabs altered the draft"
+                    );
+                    assert_ne!(app.service.cache.settings().disk_mib, draft.disk_mib);
                 }
-            }
-            for label in labels {
-                assert!(rendered.contains(label), "Missing {label}: {rendered}");
             }
         }
     }

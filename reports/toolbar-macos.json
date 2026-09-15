@@ -1,0 +1,88 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-09-15",
+  "base_commit": "b29b18aa35f961d496bd508315aca040725680cf",
+  "status": "Requested toolbar revision completed; scoped checks passed, full desktop suite retains a known cache failure",
+  "bundle": "dist/TrueRenderer-restyle.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "a75c803abccf33a236734fadfd5a22ad821e0e54fc8007cdab54e83639e0321f",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "dc1efa173bb5fa13c8e1783b3abcc2d4c63d1dae2db81e542716658d9f01a9fa",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "fb9b1fb77bf7a296e6f7a246c1ded4c6af141851e5d07b106b6ab8fe4a64e464"
+  },
+  "changes": [
+    "Aligned Open, view, Settings and Menu buttons with consistent styling",
+    "Discreet applied RAW engine indicator in the upper toolbar",
+    "Fit, physical 1:1, zoom and preview quality selectors in the upper toolbar",
+    "Folder and image counts in the bottom status bar",
+    "Global: Standard/Full and This photo only: Standard/Full with bidirectional session overrides and Use global quality",
+    "Opening Settings preserves existing drafts; toolbar quality changes preserve unrelated preference drafts",
+    "Popup keyboard input takes precedence over photo shortcuts: Escape closes a menu without leaving the viewer"
+  ],
+  "checks": {
+    "fmt": "passed",
+    "desktop_clippy_warnings_denied": "passed",
+    "workspace_release_build": "passed",
+    "ad_hoc_codesign_deep_strict": "passed",
+    "desktop_ordinary": {
+      "passed": 42,
+      "failed": 1,
+      "ignored": 6,
+      "known_failure": "cache::tests::symlinks_hardlinks_busy_readers_and_unowned_directories_are_not_modified",
+      "baseline_reproduction": "reports/localization-macos.json"
+    },
+    "ui_regressions": {
+      "passed": 7,
+      "languages": ["en", "it"],
+      "logical_sizes": [[1440, 940], [1100, 720], [550, 360]],
+      "escape_regression_failed_before_fix": true,
+      "scope": "Real egui clicks on Open/Menu/Settings, popup Escape, alignment, upper tools/lower folder, four preference tabs, drafts, persistence, selection/zoom and bidirectional quality"
+    },
+    "native_preferences": {
+      "passed": true,
+      "screenshots": 12,
+      "scope": "Four tabs in both languages, minimum native window and 200% UI scale"
+    },
+    "native_rendering": {
+      "passed": true,
+      "screenshots": 8,
+      "regions_compared": 11,
+      "max_channel_error_u8": 1,
+      "differing_channels": 77,
+      "channel_error_threshold_u8": 1,
+      "exact_physical_1_to_1": true,
+      "adapter": "Apple M4 / Metal",
+      "scope": "Generated corpus and expected rasters, not full display or color qualification"
+    },
+    "xpc": {
+      "passed": true,
+      "checked_at": "2026-09-15T14:29:21.618762+00:00",
+      "two_distinct_processes": true,
+      "corpus_images_checked": 12,
+      "production_rejects_fault_injection": true,
+      "full_sandbox_gate_passed": false
+    },
+    "native_manual": {
+      "passed": true,
+      "quality_override": "Standard and Full selected for one generated image while global Full remained unchanged; then Use global quality restored",
+      "final_bundle_escape": "Photo quality popup closed and Preview view remained active",
+      "handoff": "Updated bundle opened on the generated landscape in Preview"
+    }
+  },
+  "evidence_local": "var/toolbar/reports/",
+  "prior_revision_evidence_local": "var/toolbar/prior-reports/",
+  "previous_revision_backup": "var/toolbar/before-escape-fix.app",
+  "public_screenshots": [
+    "reports/toolbar-grid.png",
+    "reports/toolbar-viewer.png",
+    "reports/toolbar-preferences.png"
+  ],
+  "limitations": [
+    "Known Unix hard-link cache test remains failing; scripts/verify.sh is not declared green",
+    "Four existing macOS worker unused-code warnings",
+    "LibRaw link warns about macOS 27.0 objects against a 13.0 deployment target; minimum OS compatibility remains unqualified",
+    "No extended photographic RAW-engine matrix, Windows UI, VoiceOver/NVDA or distribution signing/notarization in this revision",
+    "No R0-R4 gate closed; Standard/Full are preview quality choices, not assurance grades"
+  ],
+  "data_scope": "Automated native checks use copied generated corpus and separate data. Manual checks use the generated corpus and restore photo quality inheritance. No photo edits or library annotations; historical app and launcher retained."
+}

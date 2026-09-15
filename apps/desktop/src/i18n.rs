@@ -16,6 +16,21 @@ impl Language {
             return source;
         }
         match source {
+            "Globale" => "Global",
+            "Qualità globale delle anteprime" => "Global preview quality",
+            "Cambia tutte le foto e azzera le eccezioni di sessione." => {
+                "Changes all photos and resets per-photo session overrides."
+            }
+            "Usa la qualità globale" => "Use global quality",
+            "Solo la foto corrente · eccezione per questa sessione." => {
+                "Current photo only · override for this session."
+            }
+            "Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni." => {
+                "Selected and applied RAW engine. Configure viewer CPU/GPU processing in Performance."
+            }
+            "Questa scelta riguarda il ricampionamento del viewer. Il motore RAW si sceglie in Anteprime e RAW." => {
+                "This controls viewer resampling. Choose the RAW engine in Previews and RAW."
+            }
             "Apri cartella…" => "Open folder…",
             "Apri immagini della cartella; su macOS il bundle usa decoder isolati." => {
                 "Open images from a folder; the macOS bundle uses isolated decoders."
@@ -321,6 +336,54 @@ impl Language {
             }
             "Manca tr-worker accanto all'applicazione. Eseguire scripts/build-macos.sh." => {
                 "tr-worker is missing beside the application. Run the platform build script."
+            }
+            "Apri" => "Open",
+            "Vista" => "View",
+            "Menu" => "Menu",
+            "Libreria e filtri" => "Library and filters",
+            "Libreria" => "Library",
+            "Selezione" => "Selection",
+            "Filtri" => "Filters",
+            "Etichetta" => "Label",
+            "Qualsiasi valutazione" => "Any rating",
+            "Originali in sola lettura" => "Read-only originals",
+            "Generale" => "General",
+            "Anteprime e RAW" => "Previews and RAW",
+            "Cache e dati" => "Cache and data",
+            "Il tuo spazio di lavoro, le tue preferenze." => "Your workspace, your preferences.",
+            "Manutenzione" => "Maintenance",
+            "Svuota solo le anteprime ricostruibili della cartella corrente." => {
+                "Clear only the rebuildable previews in the current folder."
+            }
+            "Ripristina modifiche" => "Revert changes",
+            "Chiudi" => "Close",
+            "Modifiche da applicare" => "Unapplied changes",
+            "La lingua viene applicata e salvata subito." => {
+                "Language changes are applied and saved immediately."
+            }
+            "Vista · questa sessione" => "View · this session",
+            "Mostra ispettore" => "Show inspector",
+            "Mostra miniature nel viewer" => "Show viewer filmstrip",
+            "Dati locali" => "Local data",
+            "Resa delle anteprime" => "Preview rendering",
+            "Preparazione in background" => "Background preparation",
+            "Elaborazione" => "Processing",
+            "Memoria e GPU" => "Memory and GPU",
+            "Archiviazione delle anteprime" => "Preview storage",
+            "Utilizzo memoria" => "Memory usage",
+            "Diagnostica GPU" => "GPU diagnostics",
+            "Valutazione" => "Rating",
+            "Parole chiave" => "Keywords",
+            "Provenienza del render" => "Render provenance",
+            "Anteprima immagine" => "Image preview",
+            "Ispettore" => "Inspector",
+            "Qualità" => "Quality",
+            "Solo questa foto" => "This photo only",
+            "Piena · questa foto" => "Full · this photo",
+            "Dettagli" => "Details",
+            "Trascina qui le immagini" => "Drop images here",
+            "Apri una cartella per iniziare, oppure trascina file e cartelle nella finestra." => {
+                "Open a folder to get started, or drop files and folders into this window."
             }
             _ => source,
         }

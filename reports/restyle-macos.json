@@ -1,0 +1,110 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-09-15",
+  "base_commit": "b29b18aa35f961d496bd508315aca040725680cf",
+  "status": "Restyling implemented and scoped checks passed; full verification suite is not green",
+  "platform": "Apple M4, macOS 26.6.2 (25G83), arm64, Metal",
+  "bundle": "dist/TrueRenderer-restyle.app",
+  "previous_bundle_replaced": false,
+  "user_launcher_changed": false,
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "8626fd4f473c2524d452fc6f3cb9f2b163a4dcc73d1f8145487084791ae79cf2",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "dc1efa173bb5fa13c8e1783b3abcc2d4c63d1dae2db81e542716658d9f01a9fa",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "fb9b1fb77bf7a296e6f7a246c1ded4c6af141851e5d07b106b6ab8fe4a64e464"
+  },
+  "checks": {
+    "fmt": "passed",
+    "desktop_clippy_warnings_denied": "passed",
+    "release_build": "passed",
+    "ad_hoc_codesign_deep_strict": "passed",
+    "desktop_ordinary": {
+      "passed": 39,
+      "failed": 1,
+      "ignored": 6,
+      "known_failure": "cache::tests::symlinks_hardlinks_busy_readers_and_unowned_directories_are_not_modified",
+      "baseline_reproduction": "reports/localization-macos.json"
+    },
+    "desktop_worker_integrations": {
+      "passed": 6
+    },
+    "app_and_renderer_unit_tests": {
+      "passed": 4
+    },
+    "python_preview_reporting": {
+      "passed": 2
+    },
+    "ui_regressions": {
+      "passed": 4,
+      "languages": [
+        "en",
+        "it"
+      ],
+      "logical_sizes": [
+        [
+          1440,
+          940
+        ],
+        [
+          1100,
+          720
+        ],
+        [
+          550,
+          360
+        ]
+      ],
+      "tabs": 4,
+      "checks": [
+        "Tab rendering retains drafts without applying them",
+        "Close/Apply/Revert labels inside viewport and clip rect after sizing settles",
+        "Language persists independently of draft; failed persistence does not claim success",
+        "Full apply preserves selection and zoom; maintenance does not cancel real pending scan"
+      ]
+    },
+    "native_preferences": {
+      "passed": true,
+      "screenshots": 12,
+      "ui_zoom_factors": [
+        1,
+        2
+      ],
+      "scope": "Four tabs in two languages; minimum native window and 200% in both languages"
+    },
+    "native_rendering": {
+      "passed": true,
+      "screenshots": 8,
+      "regions_compared": 11,
+      "max_channel_error_u8": 1,
+      "differing_channels": 58,
+      "channel_error_threshold_u8": 1,
+      "exact_physical_1_to_1": true,
+      "scope": "Generated corpus; new geometry compared against expected rasters, not universal display/ICC qualification"
+    },
+    "numerical_resampling": {
+      "passed": true,
+      "signal_cases": 24,
+      "exact_1_to_1": true
+    },
+    "xpc": {
+      "passed": true,
+      "two_distinct_processes": true,
+      "corpus_images_checked": 12,
+      "production_rejects_fault_injection": true,
+      "full_sandbox_gate_passed": false
+    }
+  },
+  "evidence_local": "var/restyle/reports/",
+  "public_screenshots": [
+    "reports/restyle-grid.png",
+    "reports/restyle-preferences.png"
+  ],
+  "limitations": [
+    "Known baseline Unix hard-link cache test remains failing; no claim that scripts/verify.sh is green",
+    "Four existing unused-code warnings in the macOS worker",
+    "Packaging linker warns LibRaw objects target macOS 27.0 while the XPC link requests 13.0; minimum OS compatibility unqualified",
+    "No repeated photographic RAW-engine matrix, Windows UI, VoiceOver/NVDA, distribution signing or notarization",
+    "No R0-R4 gate closed; all output remains Preview assurance"
+  ],
+  "data_scope": "Only generated corpus and isolated temporary data used; original photos, user database, backups, previous app bundle and historical reports preserved"
+}
