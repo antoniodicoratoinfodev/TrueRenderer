@@ -1,133 +1,94 @@
 # TrueRenderer
 
-TrueRenderer is a native desktop image browser and viewer designed to make the rendering path traceable: linear-light processing in 32-bit floating point, physical-pixel viewing, and explicit decoder and colour provenance.
+## See the image. Understand the rendering.
 
-**Version 0.1.5 · development prototype · proprietary license.** This public repository is available for inspection; rights to original project material are reserved by Antonio Dicorato. Use, modification, and distribution require permission under [LICENSE](LICENSE), subject to applicable law, GitHub's terms, and third-party licenses. This is not an open-source project.
+TrueRenderer is a native desktop application for browsing, inspecting and comparing photographs with a rendering path you can actually understand.
 
-![TrueRenderer viewer with the applied RAW engine, upper zoom controls and separate global and per-photo quality selectors](reports/toolbar-viewer.png)
+It is built for photographers, archivists and image professionals who want to know what happens between an original file and the pixels shown on screen. Instead of hiding every decision behind a generic preview, TrueRenderer makes resolution, RAW development, colour handling and decoder provenance part of the experience.
 
-*macOS development build, 15 September 2026. Screenshots show the project's generated test images.*
+Your photographs remain untouched. The library stays on your computer. No account, upload or subscription is required.
 
-## Current status
+![TrueRenderer viewer with RAW engine information, zoom controls and independent global and per photo quality selectors](reports/toolbar-viewer.png)
 
-The Windows port, selectable RAW engines and subsequent fixes were published in commit `67146e3` on 14 September 2026. The latest Windows campaign passed **107 Rust tests (99 ordinary tests and 8 integrations)**, debug/release builds, colour/orientation regressions and IPC checks. See the [corrections and limits](docs/revisione-aggiuntiva-2026-09-14.md#correzioni) and [report with hashes](reports/gamma-orientation-fixes-windows.json).
+*TrueRenderer on macOS. The image shown is part of the generated test corpus.*
 
-A separate updated macOS build is available locally as `dist/TrueRenderer-restyle.app`. The September 15 toolbar revision passed seven UI regressions, native checks of all four preferences tabs in both languages, rendering comparisons and the two XPC service checks. The cache failure reported during the toolbar campaign was subsequently fixed; the [complete Mac verification](reports/cache-integrity-macos.json) passed 106 ordinary tests and 10 integrations. The current desktop suite passes 46 ordinary tests; its six integration tests were not repeated in that run. See the [toolbar evidence](reports/toolbar-macos.json) for the screenshots and layout checks.
+## A serious alternative to expensive photo software
 
-The latest local build preserves a wider frame while refining zoom, pan and Fit, within the memory budgets. The generated-image trace passed **240 actions and 1,553 transition redraws with full image coverage**, including CPU/GPU and Standard/Full; final physical 1:1 pixels were exact. The reserve is optional: coverage may remain partial if it is unavailable or evicted. See the [Fit correction, binary hashes and limits](reports/fit-coverage-macos.json). The screenshots above and below document the unchanged toolbar layout.
+Professional image applications can be costly, complex and surprisingly opaque about how a preview was produced. The price of a suite does not make its scaling choices, RAW interpretation or colour pipeline easier to inspect. Two programs can open the same file and show meaningfully different results, while giving the photographer very little information about why.
 
-The latest Mac campaign also passed **240 viewer actions on generated 12/24/45 MP images**, pressure-policy recovery, and **120 full developments of 30 authorized D750 RAWs across all four engines**. It found and fixed LibRaw stack exhaustion in the XPC service. Nine registered crop comparisons describe pipeline differences; they do not establish camera colour accuracy. See the [report](reports/large-pressure-raw-macos.json) and [protocol](docs/verifica-grandi-raw-macos.md).
+TrueRenderer takes a different position. It does not ask you to trust a brand, a hidden pipeline or a convenient approximation. It gives you direct control over preview quality, exposes the decoder and RAW engine in use, preserves the identity of the source and provides a physical pixel view for close inspection.
 
-The **physical memory gate remains open**: the 45 MP Full cases exceeded the configured 4 GiB in summed process RSS; physical footprint also slightly exceeded it. Renderer-pressure injection and safe low-budget rejection passed, but physical OS pressure and reduced/region-based RAW decoding remain unqualified. The [September 9 campaign](reports/preview-navigation-continuation-macos.json) remains a separate historical baseline.
+The goal is not to imitate a large editing suite feature by feature. It is to offer a focused photographic workspace where browsing is fast, comparison is deliberate and image presentation is treated as an engineering problem rather than a cosmetic detail.
 
-Every output still has **Preview** assurance. Qualified Standard/Reference modes, complete colour/display qualification, clean Windows installation testing and the general R0–R4 gates remain open.
+## Made for looking carefully
 
-## Features
+### Browse without friction
 
-- Open images and folders using dialogs, drag and drop, or `--open`.
-- Browse a thumbnail grid, filmstrip and metadata inspector; search and filter the catalog.
-- Fit, zoom, pan, view physical 1:1 and compare two images with synchronized views.
-- Choose Standard or Full preview quality, globally or per photo. These resolution choices are separate from assurance: both remain Preview.
-- Inspect decoder, colour and orientation provenance, source SHA-256, pixel values and a histogram labelled with the resident image stage.
-- Rate, reject, label and add keywords; undo within a session and export annotations as JSON.
-- Configure memory, GPU, CPU and disk-cache limits; pause background preparation or rebuild previews.
-- Switch between English and Italian from Menu → Language; English is the default.
+Open a photograph or an entire folder, then move through a thumbnail grid, filmstrip and focused viewer. Search and filters help narrow a library quickly, while the inspector keeps metadata, ratings, keywords and rendering information close to the image.
 
-Original photographs are read-only. Annotations are stored separately in SQLite, with verified backups. No account or image upload is required.
+### Inspect real detail
 
-## Interface language
+Fit view is useful for composition. Physical 1:1 is useful for truth. TrueRenderer maps source samples to physical display pixels when you need to judge focus, texture, noise and processing without an accidental resize obscuring the result. Zoom and pan remain connected to the image rather than feeling like a separate technical mode.
 
-TrueRenderer starts in **English**, including when upgrading settings that do not yet contain a language preference. Use **Menu → Language → Italiano** to switch to Italian, or **Menu → Lingua → English** to switch back. Language is also available in **Settings → General**. The change takes effect immediately and is saved for the next launch, without changing image selection, zoom, or unapplied performance settings.
+### Compare with intent
 
-Menus, preview controls, the inspector, preferences, help and application status messages support both languages. File names, paths, keywords and technical identifiers are preserved. Native file dialogs follow the operating system language; diagnostic details supplied by the OS or a decoder may retain their original language.
+Place two photographs side by side with synchronized navigation. This makes it easier to evaluate focus, exposure choices, RAW development and near duplicate frames without repeatedly switching context.
 
-## Workspace and preferences
+### Choose how a RAW file is interpreted
 
-### Browse and inspect
+RAW is not a finished image, and no single development is neutral. TrueRenderer can present different RAW engines as explicit choices instead of silently replacing one interpretation with another. Available configurations include Apple RAW on macOS, LibRaw bilinear, LibRaw AHD and the experimental TrueRenderer fp32 engine for supported cameras.
 
-The top bar groups file actions under **Open**, followed by view choices, a discreet indicator of the applied RAW engine, search, **Settings** and **Menu**. Folder name and image counts sit in the bottom status bar. At narrow widths, view choices and library filters move into menus.
+### Know what you are seeing
 
-![Thumbnail grid with library filters, a collapsible inspector and folder information in the bottom status bar](reports/toolbar-grid.png)
+The inspector can show decoder, colour and orientation provenance, source SHA 256, pixel values and a histogram labelled with the resident image stage. Standard and Full control preview resolution globally or for one photograph, while the interface keeps that choice distinct from the assurance level of the rendering pipeline.
 
-The inspector groups File, Rating, Keywords and Render provenance into collapsible sections. In the viewer, its duplicate image preview starts collapsed, leaving room for the histogram and metadata.
+### Keep ownership of the work
 
-### Viewer and preview quality
+Original files are read only. Ratings, rejection flags, labels and keywords are stored separately in a local SQLite library with verified backups, and annotations can be exported as JSON. There is no mandatory cloud library and no remote account standing between you and your archive.
 
-**Fit**, physical **1:1**, zoom and both quality selectors sit above the image, as shown in the opening screenshot. The **Preview** assurance badge remains visible in the bottom status bar.
+## Why the rendering path matters
 
-| Control | What it changes |
-|---|---|
-| **Global: Standard / Full** | Saves the default preview quality for all photos and clears session overrides. |
-| **This photo only: Standard / Full** | Overrides the current photo for this session and displays its effective quality. |
-| **Use global quality** | Removes the current photo's override; available inside the photo selector. |
-| **1:1** | Requests Full for the affected photo and maps source pixels to physical display pixels. The global setting stays unchanged. |
+TrueRenderer processes image data in extended linear Rec.2020 using 32 bit floating point precision and premultiplied alpha. Reduction uses a bandwidth guarded Lanczos3 filter, enlargement uses Mitchell filtering and physical 1:1 avoids filtering when source and display pixels align.
 
-Press **Esc** to close an open menu or quality selector while keeping the current view. With no popup open and the image focused, Esc returns to the grid.
+Those choices are visible because fidelity should be explainable. The application distinguishes the source file, decoder, RAW recipe, working representation, preview resolution and final display raster. CPU and GPU paths are checked against the same rendering rules, and cache entries are tied to the source and pipeline identity rather than treated as anonymous thumbnails.
 
-### Settings
+This does not mean that every photograph has one universally correct appearance. RAW development always includes interpretation, and display colour depends on the complete system. TrueRenderer is valuable precisely because it makes those boundaries clearer and gives future qualification work a measurable foundation.
 
-Preferences are organized into **General**, **Previews and RAW**, **Performance**, and **Cache and data**. **Revert changes**, **Close**, and **Apply and save** remain visible outside the scrolling content. Switching tabs or clicking Settings again preserves unapplied changes; changing global quality in the toolbar preserves unrelated preference drafts.
+## A photographic workspace, not a control panel
 
-![Preferences grouped by topic, with persistent footer actions](reports/toolbar-preferences.png)
+The interface keeps the image at the centre. Open, view, search and settings controls occupy the top bar; folder context and assurance remain visible below. The inspector is divided into collapsible sections so technical information is available without overwhelming the photograph.
 
-Language changes save immediately; inspector and filmstrip switches apply to the current session. Choose a RAW engine in **Previews and RAW**, then **Apply and save**. The toolbar shows the applied engine; CPU/GPU processing for the viewer is configured separately under **Performance**.
+![Thumbnail grid with library filters, collapsible inspector and folder information](reports/toolbar-grid.png)
 
-## Platforms and formats
+Fit, physical 1:1, zoom and quality controls remain above the image. A global quality choice sets the normal behaviour, while a per photo choice lets you request Full detail only where it matters. Returning to the global setting takes one action.
 
-| Platform | External decoding | Current scope |
-|---|---|---|
-| Windows x86-64 | Worker confined with LPAC and a Job Object | JPEG, PNG and TIFF through the portable bitmap decoder; RAW through LibRaw and the experimental Rust engine |
-| macOS | App bundle with two sandboxed XPC services | The verified September 9 baseline uses ImageIO/ColorSync for bitmaps and CIRAWFilter for RAW, with generated JPEG, PNG, TIFF, HEIC, WebP, GIF, BMP and DNG checks |
+Preferences are grouped by purpose: General, Previews and RAW, Performance, and Cache and data. Language changes take effect immediately. Rendering and performance changes remain reviewable until they are applied.
 
-On Windows, keep `tr-worker.exe` beside `truerenderer.exe`. External decoding requires the confined worker. The controlled pipe path retains its twelve-image analytic PNG allowlist. On macOS, external files require the XPC app bundle. See [Windows isolation](docs/adr/0009-isolamento-worker-windows.md) and [macOS isolation](docs/adr/0002-xpc-decoder-r0.md).
+![Preferences grouped by purpose with persistent actions](reports/toolbar-preferences.png)
 
-Format recognition does not guarantee support for every variant. Windows rejects unsupported bitmap colour declarations instead of claiming full ICC support. Decoder limits and supported subsets differ by platform; large images may also exceed the selected memory budget. AVIF, JPEG XL, EXR and PSD are not enabled. The [architecture](docs/TrueRenderer-Architettura.md) and [verification history](reports/VERIFICA.md) record the contracts and measured cases.
+The interface is available in English and Italian. TrueRenderer starts in English; the language can be changed from Menu or from General settings without losing the current selection, zoom or pending performance choices.
 
-### RAW engines
+## Native, local and deliberately contained
 
-In **Settings → Previews and RAW → RAW engine**, choose an engine and press **Apply and save** (**Impostazioni → Anteprime e RAW → Motore RAW → Applica e salva** in Italian). Windows offers LibRaw bilinear (default), LibRaw AHD and experimental TrueRenderer fp32. The macOS build configuration also offers Apple RAW (default); extended validation of the updated engine configuration remains open. Applying the setting refreshes previews while preserving selection and zoom, and cache identities distinguish the recipes.
+TrueRenderer targets macOS on Apple silicon and Windows on x86 64. The macOS application bundle uses two sandboxed XPC services for external decoding. The Windows build confines its worker with LPAC and a Job Object. Decoder failures are kept away from the library writer, and rendering work is bounded by configurable CPU, GPU, memory and cache limits.
 
-LibRaw 0.22.2 reads the RAW data. Bilinear and AHD development pass through a 16-bit integer RGB raster; the independent Rust demosaic develops the mosaic in fp32 without an integer RGB intermediate. The Rust engine currently accepts Nikon D750 and D40 Bayer NEFs and the project's synthetic Bayer DNG fixtures. Other cameras and variants are not implicitly supported.
+JPEG, PNG and TIFF are available through the portable bitmap path on Windows. The verified macOS path also covers common formats handled by the native platform services. RAW support depends on the selected engine and camera. Nikon D750 and D40 Bayer NEF files are supported by the experimental TrueRenderer engine alongside the project’s synthetic Bayer DNG fixtures.
 
-Earlier Windows campaigns developed 30 D750 and 22 D40 NEFs with all three engines, preserving the originals. These functional checks do not establish camera colour accuracy or superiority over AHD or Apple. The historical bilinear path can deliver an explicitly labelled embedded preview where supported; an explicit experimental engine is not silently replaced by another engine. See the [RAW engine design, recipes and results](docs/progetto-motori-raw.md).
+Format recognition is not a promise that every historical or unusual variant is supported. AVIF, JPEG XL, EXR and PSD are not currently enabled. The detailed format contracts and platform boundaries are documented in the [architecture](docs/TrueRenderer-Architettura.md).
 
-## Rendering and cache
+## Availability
 
-The working space is extended linear Rec.2020, fp32, with premultiplied alpha. Output is currently opaque sRGB8. Aligned physical 1:1 maps source samples to device pixels without filtering; reduction uses bandwidth-guarded Lanczos3, enlargement uses Mitchell, and alpha filtering uses nonnegative weights. CPU/GPU comparisons check rendering arithmetic; they do not certify ICC handling or a monitor. See the [sampling criteria](docs/adr/0003-campionamento-fisico-r0.md).
+TrueRenderer is currently a development preview, not a finished commercial release. The application is already usable for local browsing, comparison, annotation and image inspection, while release qualification continues across colour management, camera coverage, memory pressure, accessibility, packaging and additional hardware.
 
-Writable image folders can contain a `.truerenderer-cache/` directory with an ownership marker, locks, derived preview entries and temporary files. Cache records preserve fp32 bits and are keyed by source hash and pipeline/recipe identity. They contain no ratings, keywords or backups. Unavailable storage or a skipped write leaves rendering available in memory; full cache reuse under Windows lock contention remains unqualified.
+The public repository exists so the implementation and its engineering decisions can be inspected. TrueRenderer is proprietary software, not an open source project. Rights to the original project material are reserved by Antonio Dicorato. Use, modification and distribution require permission under [LICENSE](LICENSE), subject to applicable law, GitHub terms and third party licences.
 
-Standard preview quality currently derives levels up to 2048 pixels from a temporary native decode. Full retains the levels required by the view, including source detail at physical 1:1. These controls do not provide regional or gigapixel RAW decoding. Admission accounting and platform isolation limits are distinct; historical macOS RSS measurements and ad hoc signing do not establish release guarantees. Detailed settings, scheduling and remaining performance gates are in the [preview/cache specification](docs/progetto-anteprime-cache-prestazioni.md).
+## Build and run
 
-## Building and running
-
-Run commands from the repository root. The repository pins Rust **1.98.1** in [rust-toolchain.toml](rust-toolchain.toml); use [scripts/cargo-local.sh](scripts/cargo-local.sh), which selects the local `.tools/` installation when present. Python 3 is used by fixture and verification scripts. Fetch dependencies before using `--offline`.
-
-### Windows development build
-
-Requires an MSVC C++ build environment with the Windows SDK and a Bash shell, such as MSYS2. From PowerShell, with those tools available:
-
-```powershell
-bash scripts/cargo-local.sh fetch --locked
-bash scripts/cargo-local.sh build --workspace --locked --offline
-.\target\debug\truerenderer.exe
-# Or open a file:
-.\target\debug\truerenderer.exe --open "C:\Photos\image.jpg"
-```
-
-Basic source checks:
-
-```powershell
-bash scripts/cargo-local.sh fmt --all --check
-bash scripts/cargo-local.sh clippy --workspace --all-targets --locked --offline -- -D warnings
-bash scripts/cargo-local.sh test --workspace --locked --offline
-```
-
-The ordinary test command does not run ignored worker/native integrations. The [latest correction notes](docs/revisione-aggiuntiva-2026-09-14.md#correzioni) identify the additional Windows checks and their scope. [verify.sh](scripts/verify.sh) currently uses macOS executable paths and native checks; it is not a complete Windows verification command.
+The repository pins Rust 1.98.1 in [rust-toolchain.toml](rust-toolchain.toml). Run commands from the repository root and use [scripts/cargo-local.sh](scripts/cargo-local.sh), which selects the local toolchain when available. Python 3 is used by fixture and verification scripts.
 
 ### macOS development bundle
 
-Requires Xcode Command Line Tools, Python 3 and the pinned Rust toolchain. Generating the WebP fixture also requires `cwebp`. Native GUI checks require a desktop session.
+Xcode Command Line Tools are required. The complete local verification and bundle flow is:
 
 ```sh
 ./scripts/cargo-local.sh fetch --locked
@@ -138,41 +99,39 @@ python3 scripts/test-xpc-integration.py
 open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 ```
 
-`./scripts/verify.sh --gui` adds native presentation checks. After broker, decoder or bundle changes, test both XPC services on the newly built package. The September 15 cache correction passes the complete script on Apple M4/macOS 26.6.2: 106 ordinary Rust tests, 10 explicit integrations, fmt/Clippy, Python/IPC and numerical resampling checks. The hard-link cache regression and macOS unused-code warnings are resolved. Without `TR_RAW_SAMPLE`, the script explicitly skips two private-camera tests. See the [cache verification report](reports/cache-integrity-macos.json) for bundle checks and limits. The package uses an ad hoc signature and still emits LibRaw deployment-target linker warnings; notarization and minimum-OS compatibility remain unqualified.
+Use `./scripts/verify.sh --gui` to include native presentation checks. Changes to the broker, decoder or bundle should always be followed by the XPC integration test on the newly built application.
 
-To build and open the toolbar revision in a separate bundle:
+### Windows development build
 
-```sh
-./scripts/build-macos.sh dist/TrueRenderer-restyle.app
-python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-restyle.app
-open -n dist/TrueRenderer-restyle.app
+An MSVC C++ build environment, the Windows SDK and a Bash shell such as MSYS2 are required. From PowerShell:
+
+```powershell
+bash scripts/cargo-local.sh fetch --locked
+bash scripts/cargo-local.sh build --workspace --locked --offline
+.\target\debug\truerenderer.exe
+.\target\debug\truerenderer.exe --open "C:\Photos\image.jpg"
 ```
 
-If the updated bundle already exists locally, only the last command is needed. The existing launcher opens `dist/TrueRenderer.app`. Both bundles use the same default library, which allows one running instance: close the other app first, or pass a separate `--data` directory for a comparison session.
+Keep `tr-worker.exe` beside `truerenderer.exe`; external decoding requires the confined worker.
 
-The navigation probe runs CPU/GPU selections with isolated cold application caches, reopened disk caches and resident returns:
-
-```sh
-python3 scripts/test-navigation-surface.py --bundle dist/TrueRenderer-restyle.app --trials 3
-python3 scripts/test-navigation-surface.py --bundle dist/TrueRenderer-restyle.app --trials 3 --transitions
-```
-
-Build the current sources first. The probe creates its own corpus copies and libraries under `var/`. It verifies screenshot pixels and reports command-to-encoded-raster and command-to-readback times. Readback includes capture overhead; it does not timestamp physical display presentation. The default run validates the method and suppresses p95/p99 estimates. [Protocol and remaining gates](docs/progetto-anteprime-cache-prestazioni.md#121-protocollo-delle-misure).
-
-`--transitions` adds zoom, pan, Fit, photo quality changes and physical 1:1. It records image coverage during each UI redraw and rejects completely empty draws. Coverage can be partial while a new region is rendered; this is not a guarantee of full coverage or physical display continuity.
-
-## Local data and documentation
-
-Keep `var/library.sqlite` and `var/backups/`: they are durable user data, not disposable caches. Settings live in `var/settings.json`, including the interface language (`"language": "en"` or `"it"`). A custom `--data` directory stores its own settings. Private photographs, working reports, toolchains, build outputs and caches stay outside Git.
-
-Start with the [documentation index](docs/README.md), which distinguishes current specifications, historical reports and retained copies. The [development plan](PLAN.md) tracks work and gates; [avanzamento](docs/avanzamento.md) is the editable progress register. After changing that register or the integrated preview specification, run:
+### Source checks
 
 ```sh
-python3 scripts/sync-docs.py
+./scripts/cargo-local.sh fmt --all --check
+./scripts/cargo-local.sh clippy --workspace --all-targets --locked --offline -- -D warnings
+./scripts/cargo-local.sh test --workspace --locked --offline
 ```
 
-This updates managed sections in both architecture documents. Preserve the original v1.2 backup and user text outside those sections.
+The full macOS verification entry point is `./scripts/verify.sh`. Platform specific integration checks and the evidence behind technical claims are indexed in [reports/VERIFICA.md](reports/VERIFICA.md).
 
-## Dependencies and trademarks
+## Local data
 
-See [NOTICE.md](NOTICE.md) for dependency inventories, LibRaw sources/notices and trademarks. TrueRenderer is independent of the companies and projects named here; naming a format or camera does not imply affiliation, certification or universal compatibility.
+The library database and backups are durable user data. Keep `var/library.sqlite` and `var/backups/`; they are not disposable caches. Settings live in `var/settings.json`, unless a separate data directory is selected with `--data`.
+
+Writable image folders may contain a `.truerenderer-cache/` directory. It contains derived previews and cache bookkeeping, never ratings, keywords or library backups. If the cache is unavailable, rendering can continue in memory.
+
+## Documentation
+
+The [documentation index](docs/README.md) separates product specifications, architecture decisions, verification reports and retained historical material. The [architecture](docs/TrueRenderer-Architettura.md) explains the rendering model and safety boundaries. The [development plan](PLAN.md) and [progress register](docs/avanzamento.md) contain implementation status for contributors without turning this page into a changelog.
+
+Dependency rights, native component notices and trademarks are collected in [NOTICE.md](NOTICE.md). Naming a format, camera, company or project does not imply affiliation, certification or universal compatibility.

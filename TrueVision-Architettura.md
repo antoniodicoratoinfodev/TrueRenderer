@@ -5,11 +5,14 @@
 
 **Nome corrente: TrueRenderer.** TrueVision resta nei nomi storici delle architetture e del backup.
 
-### Stato corrente — 15 settembre 2026
+### Stato corrente — 16 settembre 2026
 
 Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubblicati in `67146e3`. Ultima suite Windows: **99 test ordinari + 8 integrazioni**, build debug/release, 18 casi sintetici per worker e controlli IPC/Python/ricampionamento. [Audit e correzioni gamma/orientamento](docs/revisione-aggiuntiva-2026-09-14.md#correzioni), [rapporto con hash](reports/gamma-orientation-fixes-windows.json). GUI e Nikon non ripetuti per questi ultimi fix.
 
 La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
+
+### README orientato al prodotto — revisione del 16 settembre 2026
+
 
 ### Navigatore filesystem commutabile — pianificazione del 15 settembre 2026
 

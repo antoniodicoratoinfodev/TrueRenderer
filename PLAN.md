@@ -1,8 +1,16 @@
 # TrueRenderer — piano di sviluppo
 
-Aggiornato: 15 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Architettura.md); matrice di implementazione: [avanzamento](docs/avanzamento.md); [indice documentale](docs/README.md).
+Aggiornato: 16 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Architettura.md); matrice di implementazione: [avanzamento](docs/avanzamento.md); [indice documentale](docs/README.md).
 
 Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Nuovo restyling locale Mac con prove UI/corpus/XPC; la campagna fotografica ampia resta quella del 9 settembre. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
+
+## Presentazione pubblica del prodotto — 16 settembre 2026
+
+- [x] Riscrivere il README come pagina di prodotto, aprendo con utilità fotografica, controllo del rendering, privacy e proprietà dei dati invece che con lo stato delle campagne.
+- [x] Spiegare il valore rispetto alle suite fotografiche costose e opache senza attribuire ai concorrenti difetti o risultati non misurati.
+- [x] Portare numeri, avanzamento e limiti dettagliati nei documenti tecnici già predisposti, conservando nel README una dichiarazione breve e corretta di anteprima di sviluppo.
+- [x] Conservare funzioni, piattaforme, confini dei formati, licenza, build, dati durevoli e collegamenti tecnici necessari.
+- [x] Verificare struttura, collegamenti locali e sincronizzare il registro nelle due architetture; nessuna modifica applicativa o nuova qualifica in questo incremento.
 
 ## Progetto di incremento — navigatore filesystem commutabile, 15 settembre 2026
 

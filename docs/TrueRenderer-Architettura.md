@@ -5,11 +5,19 @@
 
 **Nome corrente: TrueRenderer.** TrueVision resta nei nomi storici delle architetture e del backup.
 
-### Stato corrente — 15 settembre 2026
+### Stato corrente — 16 settembre 2026
 
 Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubblicati in `67146e3`. Ultima suite Windows: **99 test ordinari + 8 integrazioni**, build debug/release, 18 casi sintetici per worker e controlli IPC/Python/ricampionamento. [Audit e correzioni gamma/orientamento](revisione-aggiuntiva-2026-09-14.md#correzioni), [rapporto con hash](../reports/gamma-orientation-fixes-windows.json). GUI e Nikon non ripetuti per questi ultimi fix.
 
 La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](../reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
+
+### README orientato al prodotto — revisione del 16 settembre 2026
+
+**Implementato:** riscritto il README come presentazione di TrueRenderer per fotografi, archivisti e professionisti dell'immagine. L'apertura ora comunica utilità, controllo del rendering, ispezione 1:1, confronto, scelta esplicita del motore RAW, lavoro locale e originali in sola lettura. Il confronto con le suite costose è formulato sul valore verificabile di trasparenza, proprietà dei dati e assenza di cloud o abbonamento obbligatori, senza dichiarare una superiorità cromatica o commerciale non misurata.
+
+**Verificato:** conservati i confini effettivi di piattaforme, formati, motori RAW, isolamento, licenza proprietaria, dati durevoli e comandi di build. Screenshot e collegamenti locali controllati; il README non usa elenchi promozionali con trattini e separa la pagina di prodotto da piano, registro e rapporti.
+
+**Aperto e mancante:** questo incremento è soltanto documentale e non modifica applicazione, bundle, database o originali. TrueRenderer resta dichiarato anteprima di sviluppo; colore end to end, ampiezza delle fotocamere, memoria sotto pressione, accessibilità, pacchetti di distribuzione e gate R0–R4 rimangono aperti nei documenti tecnici. Nessuna nuova prova applicativa o affermazione di accuratezza comparativa è stata aggiunta.
 
 ### Navigatore filesystem commutabile — pianificazione del 15 settembre 2026
 
