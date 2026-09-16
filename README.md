@@ -2,11 +2,11 @@
 
 ## See the image. Understand the rendering.
 
-TrueRenderer is a native desktop application for browsing, inspecting and comparing photographs with a rendering path you can actually understand.
+TrueRenderer is a native desktop application for photographers, professional retouchers, archivists, imaging specialists, researchers and scientists who need to browse, inspect and compare images through a rendering path they can actually understand.
 
-It is built for photographers, archivists and image professionals who want to know what happens between an original file and the pixels shown on screen. Instead of hiding every decision behind a generic preview, TrueRenderer makes resolution, RAW development, colour handling and decoder provenance part of the experience.
+It is designed for photographic selection, critical review of retouched work, technical analysis and scientific visual inspection whenever it matters to know what happens between an original file and the pixels shown on screen. Instead of hiding every decision behind a generic preview, TrueRenderer makes resolution, RAW development, colour handling and decoder provenance part of the experience.
 
-Your photographs remain untouched. The library stays on your computer. No account, upload or subscription is required.
+Your original files remain untouched. The library stays on your computer. No account, upload or subscription is required.
 
 ![TrueRenderer viewer with RAW engine information, zoom controls and independent global and per photo quality selectors](reports/toolbar-viewer.png)
 

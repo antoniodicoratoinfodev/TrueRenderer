@@ -11,7 +11,6 @@ Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubbli
 
 La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
 
-### README orientato al prodotto — revisione del 16 settembre 2026
 
 
 ### Navigatore filesystem commutabile — pianificazione del 15 settembre 2026

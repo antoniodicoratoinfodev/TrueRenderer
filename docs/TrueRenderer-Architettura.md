@@ -11,9 +11,6 @@ Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubbli
 
 La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](../reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
 
-### README orientato al prodotto — revisione del 16 settembre 2026
-
-**Implementato:** riscritto il README come presentazione di TrueRenderer per fotografi, archivisti e professionisti dell'immagine. L'apertura ora comunica utilità, controllo del rendering, ispezione 1:1, confronto, scelta esplicita del motore RAW, lavoro locale e originali in sola lettura. Il confronto con le suite costose è formulato sul valore verificabile di trasparenza, proprietà dei dati e assenza di cloud o abbonamento obbligatori, senza dichiarare una superiorità cromatica o commerciale non misurata.
 
 **Verificato:** conservati i confini effettivi di piattaforme, formati, motori RAW, isolamento, licenza proprietaria, dati durevoli e comandi di build. Screenshot e collegamenti locali controllati; il README non usa elenchi promozionali con trattini e separa la pagina di prodotto da piano, registro e rapporti.
 
