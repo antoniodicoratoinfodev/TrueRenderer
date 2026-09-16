@@ -12,13 +12,6 @@ Your photographs remain untouched. The library stays on your computer. No accoun
 
 *TrueRenderer on macOS. The image shown is part of the generated test corpus.*
 
-## A serious alternative to expensive photo software
-
-Professional image applications can be costly, complex and surprisingly opaque about how a preview was produced. The price of a suite does not make its scaling choices, RAW interpretation or colour pipeline easier to inspect. Two programs can open the same file and show meaningfully different results, while giving the photographer very little information about why.
-
-TrueRenderer takes a different position. It does not ask you to trust a brand, a hidden pipeline or a convenient approximation. It gives you direct control over preview quality, exposes the decoder and RAW engine in use, preserves the identity of the source and provides a physical pixel view for close inspection.
-
-The goal is not to imitate a large editing suite feature by feature. It is to offer a focused photographic workspace where browsing is fast, comparison is deliberate and image presentation is treated as an engineering problem rather than a cosmetic detail.
 
 ## Made for looking carefully
 
