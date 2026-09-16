@@ -14,6 +14,7 @@ Revisione del 15 settembre 2026. Il codice Windows e le correzioni sono pubblica
 | [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md) | Fonte della specifica integrata, con requisiti ancora da qualificare |
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
 | [Restyling desktop](progetto-restyling.md) | Composizioni, stile, preferenze e verifica del layout bilingue |
+| [Navigatore filesystem commutabile](progetto-navigatore-filesystem.md) | Piano da implementare: schede Libreria/Esplora nello stesso pannello sinistro, file/cartelle, preferiti, fasi e verifiche |
 | [Verifiche](../reports/VERIFICA.md) | Cronologia delle campagne e rapporti con hash |
 | [Cache e suite Mac, 15 settembre](../reports/cache-integrity-macos.json) | Correzione hard link e verifica della base prima delle misure di navigazione |
 | [Probe della superficie, 15 settembre](../reports/navigation-surface-macos.json) | Selezioni CPU/GPU e cache distinte; readback verificato, qualifica evento→display aperta |

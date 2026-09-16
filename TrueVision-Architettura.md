@@ -11,6 +11,12 @@ Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubbli
 
 La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
 
+### Navigatore filesystem commutabile — pianificazione del 15 settembre 2026
+
+**Documentato:** [progetto del navigatore](docs/progetto-navigatore-filesystem.md), richiesto dal titolare per un'implementazione successiva. Un unico spazio sinistro con schede **Libreria / Esplora**: il pannello attuale conserva corpus, selezione rapida e filtri; il nuovo aggiunge albero di file/cartelle, preferiti, recenti e navigazione. Lo switch conserva contesto fotografico e stato di ciascuna scheda. Specificati moduli, scansioni limitate indipendenti dal writer, identità delle richieste, salvataggi, migrazioni, casi filesystem, budget, fasi N0–N7 e matrice di accettazione.
+
+**Verificato in questa sessione:** corrispondenza del piano con i punti d'ingresso del codice mediante lettura, collegamenti documentali e sincronizzazione. **Aperto e mancante:** intera implementazione e tutte le prove applicative/nativamente misurate del navigatore. Nessuna modifica a codice, bundle, database o originali; nessun gate R0–R4 chiuso e nessun cambiamento di priorità alle qualifiche già aperte.
+
 ### Immagini grandi, pressione e RAW Mac — verifiche del 15 settembre 2026
 
 **Implementato:** harness opt-in su input esterni isolati, registrazione di livello residente/coordinate native/crediti, pressione della sola policy renderer e ritagli RAW lineari privati. La campagna iniziale ha scoperto un crash dei tre motori LibRaw nel probe XPC (`Thread stack size exceeded`): i quattro oggetti nativi del bridge sono ora sullo heap con proprietà RAII, senza cambiare ricette o isolamento.

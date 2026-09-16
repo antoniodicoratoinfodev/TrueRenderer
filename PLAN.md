@@ -4,6 +4,17 @@ Aggiornato: 15 settembre 2026. Specifica: [architettura](docs/TrueRenderer-Archi
 
 Codice Windows/RAW e correzioni pubblicati in `67146e3`. Ultima suite Windows: 99 test ordinari + 8 integrazioni, [rapporto con hash](reports/gamma-orientation-fixes-windows.json). Nuovo restyling locale Mac con prove UI/corpus/XPC; la campagna fotografica ampia resta quella del 9 settembre. Le misure delle singole campagne restano nei [rapporti](reports/VERIFICA.md).
 
+## Progetto di incremento — navigatore filesystem commutabile, 15 settembre 2026
+
+Richiesta del titolare: pianificare un navigatore di file/cartelle a sinistra, **commutabile con il pannello già presente**, da implementare più avanti. Specifica: [progetto Esplora / Libreria](docs/progetto-navigatore-filesystem.md). Questo aggiornamento è solo documentale e non cambia l'ordine delle attività applicative già aperte.
+
+- [x] Esaminare codice e architettura e documentare layout, switch Libreria/Esplora, interazioni, concorrenza, persistenza, fasi e matrice di accettazione; nessuna implementazione applicativa in questa sessione.
+- [ ] N0: verificare contratti, baseline e spike nativi/accessibilità, includendo la conservazione del pannello attuale.
+- [ ] N1–N2: modello dell'albero, enumerazione asincrona limitata, coordinatore di navigazione e scansione progressiva separata dai salvataggi.
+- [ ] N3: pannelli Libreria/Esplora commutabili, file/cartelle, breadcrumb e cronologia, mouse/tastiera e layout IT/EN; switch senza reset di selezione, filtri, zoom o qualità.
+- [ ] N4–N5: preferiti durevoli, sessione, migrazione/backup, refresh, watcher, volumi e casi filesystem.
+- [ ] N6–N7: eseguire la matrice di accettazione, verificare bundle/XPC e piattaforme dichiarate, registrare risultati e limiti e sincronizzare i documenti.
+
 ## Prosecuzione — cache e verifica Mac, 15 settembre 2026
 
 - [x] Riesaminare i progetti attivi: il restyling e il bundle/corpus/XPC sono verificati; qualifica fotografica RAW, prestazioni integrate e gate R0–R4 restano aperti.
