@@ -50,7 +50,7 @@ LibRaw AHD è un termine di confronto indipendente: ricetta 16 bit Rec.2020, gam
 - [x] Verifica funzionale macOS/XPC sui 30 D750, transizioni RAW e cambio motore UI; nove confronti centrali registrati, senza verità colore assoluta.
 - [ ] Qualifica colore/display, altre camere e confronto esteso di rumore/moire.
 
-Stato effettivo, prove e prossima attività sono aggiornati in `docs/avanzamento.md` e `PLAN.md` durante l'esecuzione.
+Stato effettivo, prove e prossima attività sono aggiornati soltanto in `STATO.md` durante l'esecuzione.
 
 ## Risultati locali del 12 settembre
 

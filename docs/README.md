@@ -1,16 +1,14 @@
 # Documentazione di TrueRenderer
 
-Revisione del 15 settembre 2026. Il codice Windows e le correzioni sono pubblicati in `67146e3`; il restyling locale Mac aggiunge prove UI/corpus/XPC su una copia separata, mentre la matrice estesa dei motori resta aperta. I conteggi nei resoconti storici si riferiscono alle rispettive esecuzioni.
+Indice delle specifiche, delle decisioni e delle evidenze. Stato corrente e attività sono mantenuti soltanto in [STATO.md](../STATO.md).
 
 ## Documenti correnti
 
 | Documento | Uso |
 |---|---|
 | [README del progetto](../README.md) | Funzioni, piattaforme, build e limiti |
-| [PLAN](../PLAN.md) | Attività, dipendenze e gate aperti |
-| [Avanzamento](avanzamento.md) | Registro modificabile di implementazione e verifiche |
+| [Stato e piano](../STATO.md) | Punto di ripresa, attività, gate, matrice e registro degli incrementi |
 | [Architettura](TrueRenderer-Architettura.md) | Specifica; distinguere proposta e stato implementato |
-| [Ripresa del lavoro](ripresa-codex.md) | Punto di ripresa e vincoli delle sessioni |
 | [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md) | Fonte della specifica integrata, con requisiti ancora da qualificare |
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
 | [Restyling desktop](progetto-restyling.md) | Composizioni, stile, preferenze e verifica del layout bilingue |
@@ -58,16 +56,14 @@ Conservano problemi riprodotti, correzioni e limiti delle singole campagne. Per 
 | `correzioni-ricontrollo-generale.md` | [Revisione generale, correzioni](revisione-generale-2026-09-14.md#correzioni) |
 | `correzioni-gamma-orientamento.md` | [Revisione aggiuntiva, correzioni](revisione-aggiuntiva-2026-09-14.md#correzioni) |
 
-Eliminate dal registro e dal documento di ripresa le cronologie ripetute e le istruzioni di sessione superate. Le campagne restano nei rapporti di verifica; le riproduzioni negative e le correzioni sono ora nello stesso documento. PLAN conserva le caselle operative. I file originali delle versioni pubblicate restano recuperabili dalla storia Git.
+Il 17 settembre 2026 piano, avanzamento e ripresa sono stati accorpati in [STATO.md](../STATO.md), conservando attività, matrice dei requisiti, prove e limiti. I tre file precedenti sono rimossi; le versioni storiche restano in Git. Le architetture contengono un rimando stabile allo stato, senza copie del registro.
 
 ## Copie e supporti da mantenere
 
 - [TrueVision-Architettura nella radice](../TrueVision-Architettura.md): copia richiesta dal flusso del titolare e dal sincronizzatore; non eliminabile nel flusso attuale.
 - [Originale v1.2](TrueVision-Architettura.originale-v1.2.md): backup immutabile, da non allineare al codice corrente.
-- [AGENTS](../AGENTS.md): istruzioni operative. Aggiornare registro e fonti della specifica, poi eseguire `python3 scripts/sync-docs.py`, senza modificare manualmente le copie dei blocchi generati.
+- [AGENTS](../AGENTS.md): istruzioni operative. Aggiornare normalmente solo STATO.md. Eseguire `python3 scripts/sync-docs.py` quando cambiano le fonti della specifica anteprime, senza modificare manualmente i blocchi generati.
 - [Laboratorio XPC](../experiments/macos-xpc/README.md): esperimento iniziale, distinto dal bundle corrente.
 - [Fixture decoder](../crates/tr-worker/tests/fixtures/README.md): input sintetici delle regressioni.
 - [Modello di segnalazione](../.github/ISSUE_TEMPLATE/bug_report.md): supporto alle issue GitHub.
 - [NOTICE](../NOTICE.md), [LICENSE](../LICENSE), [README LibRaw](../third_party/libraw/README-TrueRenderer.md) e notice delle dipendenze: attribuzioni e informazioni da conservare.
-
-La revisione del 15 settembre riallinea i documenti di ripresa e progetto alle prove effettive del bundle Mac e distingue la prosecuzione cache/prestazioni dalla qualifica fotografica ancora aperta. Licenze, rapporti storici e backup originale sono conservati; i termini legali non sono stati riesaminati.

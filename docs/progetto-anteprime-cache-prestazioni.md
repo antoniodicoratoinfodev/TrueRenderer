@@ -4,9 +4,9 @@
 
 **Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni richiedono il bundle macOS XPC/App Sandbox secondo ADR 0004 oppure il worker Windows LPAC secondo ADR 0009; il percorso su pipe mantiene il corpus controllato. Dopo restyling e correzione cache, il primo probe comando→superficie del 15 settembre verifica selezioni e ritorni CPU/GPU, Standard/Full, con cache distinte (§12.1). Presentazione effettiva e qualifica evento→frame completa restano aperte.
 
-La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [PLAN.md](../PLAN.md), [avanzamento](avanzamento.md), [ADR 0006](adr/0006-anteprime-residenza-compute.md) e [verifiche](../reports/VERIFICA.md).
+La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [stato e piano](../STATO.md), [ADR 0006](adr/0006-anteprime-residenza-compute.md) e [verifiche](../reports/VERIFICA.md).
 
-La fonte rimane questo file, insieme ad ADR 0005–0006; `scripts/sync-docs.py` ne integra l'intero contenuto nell'architettura della radice e in quella sotto `docs/`, oltre al registro. Le future modifiche vanno sincronizzate insieme al piano. Il backup originale v1.2 rimane immutato.
+La fonte rimane questo file, insieme ad ADR 0005–0006; `scripts/sync-docs.py` ne integra l'intero contenuto nell'architettura della radice e in quella sotto `docs/`, con un rimando stabile a STATO.md. Sincronizzare solo quando cambiano queste fonti della specifica. Il backup originale v1.2 rimane immutato.
 
 ### Esito della revisione tecnica
 
@@ -474,7 +474,7 @@ Distinguere almeno: primo accesso senza cache applicativa; SSD popolato dopo ria
 
 ### 12.2 Gate funzionali e di memoria
 
-Le caselle di §12 riguardano il requisito completo nel perimetro concordato, inclusi scenari e piattaforme richiesti. Una casella aperta può avere già codice e prove parziali: il dettaglio implementato/verificato è in §13 e in `PLAN.md`.
+Le caselle di §12 riguardano il requisito completo nel perimetro concordato, inclusi scenari e piattaforme richiesti. Una casella aperta può avere già codice e prove parziali: il dettaglio implementato/verificato è in §13 e in `STATO.md`.
 
 - [ ] Una miniatura resta utilizzabile dopo l'espulsione della sorgente/piramide completa; la vista non ne richiede un nuovo decode senza bisogno di più dettaglio.
 - [ ] Entrambe le qualità, il cambio rapido, il confronto e l'override 1:1 rispettano il contratto di §2; nessun badge Standard/Riferimento abilitato dal selettore.
@@ -554,7 +554,7 @@ Il nucleo di budget della fase A è prerequisito alle allocazioni delle altre fa
 
 Durante l'implementazione usare `scripts/cargo-local.sh` per Rust e i controlli pertinenti di `scripts/verify.sh`; `--gui` aggiunge la prova nativa. Sul bundle macOS modificato eseguire anche `scripts/test-xpc-integration.py`, verifiche formati/campionamento/pacchetto e smoke di navigazione. Il backend Windows esterno richiede prima isolamento OS reale; non aggirare la allowlist su pipe per ottenere benchmark.
 
-Durante i futuri incrementi applicativi aggiornare [avanzamento](avanzamento.md), le caselle di questo documento e di [PLAN.md](../PLAN.md) e sincronizzare registro e appendice E con `python3 scripts/sync-docs.py`. Le caselle delle funzioni restano aperte fino a codice e prove effettivi. Conservare immutata [l'architettura originale v1.2](TrueVision-Architettura.originale-v1.2.md).
+Durante i futuri incrementi applicativi aggiornare soltanto [stato e piano](../STATO.md) per il tracciamento operativo. Le caselle di questo documento esprimono i criteri di accettazione della specifica: modificarle quando viene qualificato il relativo requisito o ne cambia il contratto, non per ogni prova parziale. In quel caso sincronizzare l'appendice E con `python3 scripts/sync-docs.py`. Conservare immutata [l'architettura originale v1.2](TrueVision-Architettura.originale-v1.2.md).
 
 ## 14. Decisioni iniziali e questioni da risolvere con misure
 

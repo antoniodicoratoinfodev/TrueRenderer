@@ -1,6 +1,6 @@
 # ADR 0007 — porta decoder, contratto di colore in ingresso e build Windows
 
-**Seguito dell'audit:** [ADR 0009](0009-isolamento-worker-windows.md) descrive il nuovo avvio LPAC Windows; stato delle correzioni bitmap e verifiche in [avanzamento](../avanzamento.md). Questo ADR conserva le decisioni e il perimetro del refactor iniziale.
+**Seguito dell'audit:** [ADR 0009](0009-isolamento-worker-windows.md) descrive il nuovo avvio LPAC Windows; stato delle correzioni bitmap e verifiche in [stato e piano](../../STATO.md). Questo ADR conserva le decisioni e il perimetro del refactor iniziale.
 
 **Nota del 13 settembre 2026:** questo ADR registra il refactor iniziale con gate esterno invariato. Il successivo port locale ha introdotto `serve_confined` e concesso gli esterni Windows; questo testo non costituisce l'autorizzazione o la qualifica di quell'estensione. L'[audit prima di main](../revisione-pre-main.md) ha riprodotto accesso filesystem residuo e controlli colore saltati dal decoder esterno: le proprietà descritte sotto non valgono automaticamente per tutti gli ingressi aggiunti dopo il refactor.
 
@@ -72,4 +72,4 @@ Il piano separato del 10–13 settembre è stato accorpato qui il 14 settembre. 
 - La cache Windows ha sbloccato i test desktop: nella prima prova scrisse 88 voci per circa 14 MB e la seconda apertura non ne riscrisse. È un risultato storico, non una garanzia di riuso sotto contesa nella build corrente.
 - Le dimensioni native, l'orientamento, la profondità dichiarata e la stabilità della ricetta sono confrontabili fra decoder. CIRAWFilter e LibRaw non sono riferimenti bit-per-bit reciproci; la soglia del renderer GPU/CPU non qualifica il confronto colorimetrico fra sviluppatori RAW.
 
-Stato e prove correnti sono nel [registro](../avanzamento.md). Restano da qualificare gestione ICC, matrice camere, adattamento alla pressione memoria Windows, percorsi lunghi e distribuzione/installazione pulita; la correzione del percorso eseguibile UTF-16 non qualifica da sola tutti questi casi.
+Stato e prove correnti sono nel [stato e piano](../../STATO.md). Restano da qualificare gestione ICC, matrice camere, adattamento alla pressione memoria Windows, percorsi lunghi e distribuzione/installazione pulita; la correzione del percorso eseguibile UTF-16 non qualifica da sola tutti questi casi.

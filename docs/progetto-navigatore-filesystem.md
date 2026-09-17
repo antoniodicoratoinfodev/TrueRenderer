@@ -502,10 +502,10 @@ Scelte aperte dopo N0: adattatori nativi esatti e minimi OS per volumi/watch/pla
 
 ## 13. Istruzioni per riprendere più avanti
 
-1. Rileggere `AGENTS.md`, `PLAN.md`, `docs/avanzamento.md`, questo documento e le sezioni pertinenti dell'architettura. Verificare le differenze di codice intervenute dal 15 settembre 2026.
+1. Rileggere `AGENTS.md`, `STATO.md`, questo documento e le sezioni pertinenti dell'architettura. Verificare le differenze di codice intervenute dal 15 settembre 2026.
 2. Confermare nel codice la mappa di §2 e registrare la baseline della build effettiva. Non trasformare le osservazioni di questa pianificazione in test già superati.
 3. Avviare N0 su corpus/dati sintetici isolati, poi seguire N1→N7; conservare gli originali e il bundle precedente.
-4. Usare le caselle in `PLAN.md` come tracciamento operativo e la matrice di §11 per gli esiti dettagliati. Segnare separatamente implementato, verificato, aperto e mancante.
-5. Aggiornare `docs/avanzamento.md` ed eseguire `python3 scripts/sync-docs.py`; il registro e il link al progetto vengono riportati nelle due architetture. Il testo completo del navigatore resta in questo documento fino a una futura integrazione esplicita.
+4. Usare le caselle in `STATO.md` come tracciamento operativo e la matrice di §11 per gli esiti dettagliati. Segnare separatamente implementato, verificato, aperto e mancante.
+5. Aggiornare `STATO.md`; le architetture rimandano stabilmente a quel file, senza incorporarne il registro. Il testo completo del navigatore resta in questo documento fino a una futura integrazione esplicita.
 
 **Consegna di questa sessione:** specifica e piano documentale. Nessuna modifica al codice applicativo, ai database, agli originali o al bundle; nessuna nuova prova applicativa attribuita al navigatore.

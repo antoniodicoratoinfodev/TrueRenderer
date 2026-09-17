@@ -1,6 +1,6 @@
 # TrueRenderer — verifica del prototipo R0
 
-Registro storico delle esecuzioni. Codice e correzioni pubblicati in `67146e3` il 14 settembre 2026; le note «nessun commit» fotografano il momento delle prove. Gli audit negativi restano conservati accanto alle correzioni successive. Ogni risultato vale per sorgenti e binari identificati dal proprio rapporto; la revisione dei Markdown non costituisce una nuova prova applicativa. Stato corrente in [avanzamento](../docs/avanzamento.md), navigazione nell'[indice](../docs/README.md).
+Registro storico delle esecuzioni. Codice e correzioni pubblicati in `67146e3` il 14 settembre 2026; le note «nessun commit» fotografano il momento delle prove. Gli audit negativi restano conservati accanto alle correzioni successive. Ogni risultato vale per sorgenti e binari identificati dal proprio rapporto; la revisione dei Markdown non costituisce una nuova prova applicativa. Stato corrente in [stato e piano](../STATO.md), navigazione nell'[indice](../docs/README.md).
 
 ## Immagini grandi, pressione e RAW Mac — 15 settembre 2026
 
@@ -171,7 +171,7 @@ Report: [RAW reali](preview-real-raw-before-phases-macos.json), [memoria](previe
 
 **Fallimento storico a 2 GiB, prima della correzione per fasi:** un NEF da 24 MP viene rifiutato correttamente dall’ammissione conservativa, prima di superare il budget. Il [report di fallimento funzionale](preview-real-raw-before-phases-failure-macos.json) conserva `passed: false`, originali invariati e zero crediti residui. Questa prova verifica il rifiuto sicuro, non il funzionamento del carico entro il budget predefinito. Serve ridurre/qualificare i temporanei o un percorso RAW ridotto/regionale; non abbassare artificialmente le stime.
 
-Restano aperti 1.000 RAW reali e matrice 12/24/45 MP, p95/p99 e A/B evento→frame, pressione fisica e memoria driver, reset/OOM reali, display e altri OS. Specifica e ADR sono integrati nell’appendice E delle due architetture; piano e registro aggiornati. Per riprendere: [consegna della sessione](../docs/ripresa-codex.md).
+Restano aperti 1.000 RAW reali e matrice 12/24/45 MP, p95/p99 e A/B evento→frame, pressione fisica e memoria driver, reset/OOM reali, display e altri OS. Specifica e ADR sono integrati nell’appendice E delle due architetture; piano e registro aggiornati. Per riprendere: [stato e piano](../STATO.md).
 
 ## Anteprime 0.1.5 — prove dell'8 settembre
 

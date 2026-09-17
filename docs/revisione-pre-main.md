@@ -8,7 +8,7 @@ Data: 13 settembre 2026. Richiesta del titolare: verificare con cura tutto l'inc
 
 **Esito dell'audit iniziale, prima delle correzioni: non promuovere ancora l'intero incremento a main.** La build e i casi Nikon provati funzionano; rimangono difetti riprodotti di isolamento, interpretazione dei bitmap e robustezza, oltre alla qualifica Mac mancante. Non serve dedurre da questi problemi che il demosaicer vada riscritto: diversi rilievi riguardano il port Windows precedente al selettore. Anche le modifiche nuove al selettore/classificazione vanno corrette.
 
-Durante l'audit iniziale il codice applicativo e quello vendorizzato sono rimasti invariati. I rilievi e il [riepilogo senza fotografie](../reports/pre-main-review-windows.json) sotto conservano quella baseline negativa. **Il titolare ha poi richiesto le correzioni:** il seguito è registrato nella sezione finale e in `docs/avanzamento.md`; non attribuire i vecchi risultati ai binari corretti.
+Durante l'audit iniziale il codice applicativo e quello vendorizzato sono rimasti invariati. I rilievi e il [riepilogo senza fotografie](../reports/pre-main-review-windows.json) sotto conservano quella baseline negativa. **Il titolare ha poi richiesto le correzioni:** il seguito è registrato nella sezione finale e in `STATO.md`; non attribuire i vecchi risultati ai binari corretti.
 
 ## Perimetro ed evidenze
 

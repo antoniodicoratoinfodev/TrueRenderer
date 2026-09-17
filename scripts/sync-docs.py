@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sincronizza registro e specifica anteprime nelle due architetture del progetto.
+"""Sincronizza rimando allo stato e specifica anteprime nelle due architetture.
 
 Conserva il testo utente fuori dai blocchi gestiti; non ricrea file sul Desktop.
 """
@@ -11,7 +11,12 @@ root = Path(__file__).resolve().parents[1]
 original = root / "TrueVision-Architettura.md"
 canonical = root / "docs/TrueRenderer-Architettura.md"
 begin, end = "<!-- TR_PROGRESS_START -->", "<!-- TR_PROGRESS_END -->"
-progress = (root / "docs/avanzamento.md").read_text(encoding="utf-8")
+progress = """## 0. Stato dello sviluppo
+
+Stato corrente, piano operativo, matrice dei requisiti e verifiche sono mantenuti
+in [STATO.md](STATO.md), unica fonte di avanzamento. Questa architettura conserva
+la specifica; il registro non viene duplicato qui.
+"""
 spec_begin, spec_end = "<!-- TR_PREVIEW_SPEC_START -->", "<!-- TR_PREVIEW_SPEC_END -->"
 
 
@@ -60,7 +65,7 @@ def replace_block(body, start, finish, content):
 
 
 for path in (original, canonical):
-    block = f"{begin}\n{relative_links(progress, root / 'docs/avanzamento.md', path)}\n{end}\n"
+    block = f"{begin}\n{relative_links(progress, root / 'STATO.md', path)}\n{end}\n"
     body = path.read_text(encoding="utf-8") if path.exists() else canonical.read_text(encoding="utf-8")
     if begin in body or end in body:
         body = replace_block(body, begin, end, block)
@@ -69,6 +74,7 @@ for path in (original, canonical):
         body = first + "\n\n" + block + rest
     body = replace_block(body, spec_begin, spec_end, preview_spec(path))
     # Path.write_text(newline=...) requires Python 3.10; macOS ships 3.9.
-    with path.open("w", encoding="utf-8", newline="\n") as output:
-        output.write(body)
-    print(path)
+    if not path.exists() or path.read_text(encoding="utf-8") != body:
+        with path.open("w", encoding="utf-8", newline="\n") as output:
+            output.write(body)
+        print(path)

@@ -125,6 +125,6 @@ Writable image folders may contain a `.truerenderer-cache/` directory. It contai
 
 ## Documentation
 
-The [documentation index](docs/README.md) separates product specifications, architecture decisions, verification reports and retained historical material. The [architecture](docs/TrueRenderer-Architettura.md) explains the rendering model and safety boundaries. The [development plan](PLAN.md) and [progress register](docs/avanzamento.md) contain implementation status for contributors without turning this page into a changelog.
+The [documentation index](docs/README.md) separates product specifications, architecture decisions, verification reports and retained historical material. The [architecture](docs/TrueRenderer-Architettura.md) explains the rendering model and safety boundaries. The [development status and plan](STATO.md) contains implementation status for contributors without turning this page into a changelog.
 
 Dependency rights, native component notices and trademarks are collected in [NOTICE.md](NOTICE.md). Naming a format, camera, company or project does not imply affiliation, certification or universal compatibility.
