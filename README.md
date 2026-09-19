@@ -10,7 +10,7 @@ Your original files remain untouched. The library stays on your computer. No acc
 
 ![TrueRenderer viewer with the compact Explorer tree, RAW engine information and preview quality selectors](reports/navigator-viewer.png)
 
-*TrueRenderer on macOS, with the IDE-style Explorer. Screenshots show the Italian and English interfaces using the generated test corpus.*
+*TrueRenderer on macOS. Screenshots show the Italian and English interfaces using the generated test corpus.*
 
 
 ## Made for looking carefully
