@@ -1,6 +1,6 @@
 # Motori RAW selezionabili — progetto sperimentale
 
-**Stato corrente, 15 settembre 2026:** incremento Windows pubblicato in `67146e3`, comprese le correzioni successive; 107 test Rust nella campagna [gamma/orientamento](revisione-aggiuntiva-2026-09-14.md#correzioni). Il bundle Mac con i motori collegati è stato costruito e verificato per UI/corpus/XPC nel [restyling](../reports/toolbar-macos.json). La campagna Mac D750 è ora verificata sotto; restano altre fotocamere, confronto fotografico esteso e qualifica colore. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
+**Stato corrente, 15 settembre 2026:** incremento Windows pubblicato in `67146e3`, comprese le correzioni successive; 107 test Rust nella campagna [gamma/orientamento](revisioni-windows-2026-09.md#gamma-orientamento-correzioni). Il bundle Mac con i motori collegati è stato costruito e verificato per UI/corpus/XPC nel [restyling](../reports/toolbar-macos.json). La campagna Mac D750 è ora verificata sotto; restano altre fotocamere, confronto fotografico esteso e qualifica colore. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
 
 Progetto avviato il 12 settembre 2026 su richiesta del titolare: motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. Anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.
 
@@ -8,11 +8,11 @@ Progetto avviato il 12 settembre 2026 su richiesta del titolare: motore proprio 
 
 Verificati 30 NEF D750 sui quattro motori nel bundle XPC: **120 sviluppi completi passati**, hash degli originali invariati. La prima prova ha scoperto un esaurimento dello stack nel probe LibRaw; gli oggetti del bridge sono ora sullo heap con gestione automatica della durata. Nove confronti centrali dei primi tre NEF risultano registrati, con geometrie Apple 6016×4016 e LibRaw/TrueRenderer 6032×4032 (o orientate). Le differenze tonali misurate includono esposizione, WB e scelte della ricetta; non sono un punteggio di fedeltà del motore.
 
-Ripetuti 32 Bayer sintetici: il metodo direzionale riduce MSE in 24 casi, quattro rampe sostanzialmente equivalenti e quattro trame a crominanze indipendenti peggiori. Restano target fotografato con riferimento noto, ΔE00/ICC, altre camere e corpus ampio di rumore/moire. [Protocollo e limiti](verifica-grandi-raw-macos.md). I paragrafi seguenti descrivono le campagne storiche quando indicano Mac come rinviato.
+Ripetuti 32 Bayer sintetici: il metodo direzionale riduce MSE in 24 casi, quattro rampe sostanzialmente equivalenti e quattro trame a crominanze indipendenti peggiori. Restano target fotografato con riferimento noto, ΔE00/ICC, altre camere e corpus ampio di rumore/moire. [Protocollo e limiti](verifiche-raw.md#grandi-raw-macos). I paragrafi seguenti descrivono le campagne storiche quando indicano Mac come rinviato.
 
 ## Contratto e progetto
 
-**Correzioni del 13 settembre:** i rilievi della [revisione prima di main](revisione-pre-main.md) sono stati corretti e verificati su Windows: anche i TIFF ordinari con miniatura vengono decodificati dall'immagine principale. Passati 89 test Rust, build debug/release, 156 sviluppi D750/D40 e cambio motore nella GUI; [rapporto](../reports/pre-main-fixes-windows.json). Il contratto resta limitato al perimetro provato. Il titolare ha rinviato Mac/XPC; il codice resta sperimentale e la promozione integrale richiede quella verifica e i restanti controlli di distribuzione.
+**Correzioni del 13 settembre:** i rilievi della [revisione prima di main](revisioni-windows-2026-09.md#pre-main) sono stati corretti e verificati su Windows: anche i TIFF ordinari con miniatura vengono decodificati dall'immagine principale. Passati 89 test Rust, build debug/release, 156 sviluppi D750/D40 e cambio motore nella GUI; [rapporto](../reports/pre-main-fixes-windows.json). Il contratto resta limitato al perimetro provato. Il titolare ha rinviato Mac/XPC; il codice resta sperimentale e la promozione integrale richiede quella verifica e i restanti controlli di distribuzione.
 
 - Default conservato: Apple CIRAWFilter su macOS, LibRaw bilineare su Windows.
 - Motori espliciti: Apple (solo macOS), LibRaw bilineare storico, LibRaw AHD, TrueRenderer direzionale fp32 sperimentale.
@@ -22,7 +22,7 @@ Ripetuti 32 Bayer sintetici: il metodo direzionale riduce MSE in 24 casi, quattr
 
 ## Motore sperimentale
 
-LibRaw **0.22.2**, aggiornata dopo l'audit del 13 settembre dalla precedente 0.21.1, identifica e decomprime il mosaico. Il contratto reale comprende Nikon D750 e D40 Bayer a tre colori; DNG Bayer sintetici TrueRenderer servono alla verifica. La D40 è stata aggiunta nella [revisione successiva](verifica-motori-d40.md): 22 NEF, 66 sviluppi completi passati sui tre motori, originali invariati. D40X, DNG convertiti, X-Trans, sRAW, pixel shift e altre fotocamere non sono ammessi implicitamente. Tutte le ricette includono la versione LibRaw; cambia anche l'impronta della cache legacy Windows, per evitare riuso di pixel della vecchia dipendenza.
+LibRaw **0.22.2**, aggiornata dopo l'audit del 13 settembre dalla precedente 0.21.1, identifica e decomprime il mosaico. Il contratto reale comprende Nikon D750 e D40 Bayer a tre colori; DNG Bayer sintetici TrueRenderer servono alla verifica. La D40 è stata aggiunta nella [revisione successiva](verifiche-raw.md#nikon-d40): 22 NEF, 66 sviluppi completi passati sui tre motori, originali invariati. D40X, DNG convertiti, X-Trans, sRAW, pixel shift e altre fotocamere non sono ammessi implicitamente. Tutte le ricette includono la versione LibRaw; cambia anche l'impronta della cache legacy Windows, per evitare riuso di pixel della vecchia dipendenza.
 
 Implementazione propria in Rust: interpolazione del verde secondo gradienti orizzontali/verticali con correzione della seconda differenza del colore campionato; interpolazione delle differenze R−G e B−G. Bordi riflessi con parità CFA conservata. Nessun sharpening, denoise, recupero ricostruttivo delle alte luci o curva creativa. Non si dichiara un algoritmo nuovo nella letteratura.
 

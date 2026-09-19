@@ -1,0 +1,101 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-19T16:47:12.168552+00:00",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64",
+  "commit": "187600b3027642cd5702fbae5a84e7b4e20ab65c",
+  "worktree": "local navigator implementation; see STATO.md",
+  "bundle": "dist/TrueRenderer-navigator-ide.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "c87f1a4de1345946aac80f3499bfc0690032ce1f4c1f5edd9ef9a6943fabe7ce",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a1d748cde2c486138600cd9a3a824c3e020ea38e430b85e271827ff9827f2d39",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "bbfb901ea13c5e0266c2d206c0a3a5b0da1515a2a2c72bfe9eb1050b6c58bec3"
+  },
+  "passed": true,
+  "ui": {
+    "gpu_verified": true,
+    "layouts": [
+      {
+        "case": 0,
+        "passed": true,
+        "tree_height": 592.5,
+        "viewport": [
+          1440,
+          891
+        ]
+      },
+      {
+        "case": 1,
+        "passed": true,
+        "tree_height": 381.5,
+        "viewport": [
+          1100,
+          720
+        ]
+      },
+      {
+        "case": 2,
+        "passed": true,
+        "tree_height": 381.5,
+        "viewport": [
+          1440,
+          891
+        ]
+      },
+      {
+        "case": 3,
+        "passed": true,
+        "tree_height": 64,
+        "viewport": [
+          550,
+          360
+        ]
+      },
+      {
+        "case": 4,
+        "passed": true,
+        "tree_height": 64,
+        "viewport": [
+          550,
+          360
+        ]
+      },
+      {
+        "case": 5,
+        "passed": true,
+        "tree_height": 64,
+        "viewport": [
+          550,
+          360
+        ]
+      }
+    ],
+    "passed": true,
+    "scope": "Native macOS generated corpus; Library/Explorer, grid/viewer, IT/EN, 1440x940, 1100x720, 550x360 and 200% UI. No screen-reader, Windows, cloud, removable-volume, NAS or statistical latency qualification.",
+    "screenshots": 6
+  },
+  "evidence": "var/filesystem-browser/native-ptlisk1c",
+  "not_qualified": [
+    "Windows native UI/filesystem",
+    "VoiceOver/NVDA",
+    "NAS blocked syscalls",
+    "cloud providers",
+    "removable-volume identity across remount",
+    "100-sample latency/low-memory campaign",
+    "macOS minimum deployment target: existing LibRaw link warnings"
+  ],
+  "checks": {
+    "ui_regressions": 13,
+    "clippy": "passed",
+    "release_build": "passed",
+    "xpc": "passed; two services, production fault injection rejected; full sandbox gate remains open",
+    "preferences_layouts": 12,
+    "visual_review": "Six navigator captures and published preferences capture inspected"
+  },
+  "public_screenshots": [
+    "reports/navigator-grid.png",
+    "reports/navigator-viewer.png",
+    "reports/navigator-preferences.png",
+    "reports/navigator-compact.png"
+  ]
+}

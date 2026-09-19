@@ -5559,7 +5559,7 @@ Accorpato dal primo piano Windows: la directory cache è mantenuta aperta senza 
 
 I payload consentono condivisione di cancellazione per mantenere utilizzabile un handle già aperto durante la raccolta. La contesa Windows `ERROR_LOCK_VIOLATION` viene normalizzata come condizione ritentabile. Identità del file e ChangeTime contribuiscono all'osservazione delle sorgenti; gli hit cache aggiornano il timestamp tramite handle con soli diritti attributi, proteggendo gli hard link.
 
-Riproduzioni e correzioni sono nella [revisione cache/TIFF/RAW](docs/revisione-generale-2026-09-14.md#correzioni). Una persistenza saltata sotto contesa resta documentata nella [revisione serale](docs/revisione-continuata-2026-09-13.md#correzioni): non è qualificato il riuso completo per ogni sequenza.
+Riproduzioni e correzioni sono nella [revisione cache/TIFF/RAW](docs/revisioni-windows-2026-09.md#generale-correzioni). Una persistenza saltata sotto contesa resta documentata nella [revisione serale](docs/revisioni-windows-2026-09.md#serale-correzioni): non è qualificato il riuso completo per ogni sequenza.
 
 ### ADR 0006 — anteprime autonome, ammissione e compute
 
@@ -5637,7 +5637,7 @@ Invalidazione, cambio compute, pressione, riduzione quota e necessità di ammiss
 
 Le transizioni su PNG 12/24/45 MP verificano livelli residenti Standard ridotti, recupero del livello zero e 1:1 esatto. Il decode iniziale resta completo. I livelli oltre capability GPU ricadono sulla CPU dichiarandolo; il writer può non conservare i Full troppo grandi. Con pressione renderer iniettata la riserva viene espulsa e la copertura può diventare parziale, ma la traccia termina con raster corretti.
 
-La quota di ammissione non è ancora un limite fisico qualificato: su 45 MP Full, con 4 GiB configurati, la somma RSS arriva a 4.816.601.088 byte e il footprint a 4.296.512.936 byte. I crediti rimangono entro quota; la somma RSS può contare pagine condivise più volte. Il superamento resta aperto, senza sottrarre processi o attribuire i picchi ai soli driver. A 1536 MiB le due tracce di pressione restano entro la quota campionata; a 512 MiB il decode RAW viene rifiutato esplicitamente e restituisce i crediti. [Protocollo](docs/verifica-grandi-raw-macos.md).
+La quota di ammissione non è ancora un limite fisico qualificato: su 45 MP Full, con 4 GiB configurati, la somma RSS arriva a 4.816.601.088 byte e il footprint a 4.296.512.936 byte. I crediti rimangono entro quota; la somma RSS può contare pagine condivise più volte. Il superamento resta aperto, senza sottrarre processi o attribuire i picchi ai soli driver. A 1536 MiB le due tracce di pressione restano entro la quota campionata; a 512 MiB il decode RAW viene rifiutato esplicitamente e restituisce i crediti. [Protocollo](docs/verifiche-raw.md#grandi-raw-macos).
 
 #### Qualifica aperta
 

@@ -6,6 +6,55 @@ use crate::{
 use tr_app::browser::{Browser, EntryFilter, Kind, ListingState};
 use tr_core::location::{Favorite, Location};
 
+fn entry_icon(painter: &egui::Painter, rect: egui::Rect, kind: Kind, expanded: bool) {
+    let color = match kind {
+        Kind::Directory | Kind::Package => egui::Color32::from_rgb(195, 170, 112),
+        Kind::Image => egui::Color32::from_rgb(125, 173, 159),
+        Kind::Link => egui::Color32::from_rgb(125, 166, 203),
+        _ => egui::Color32::from_gray(150),
+    };
+    let stroke = egui::Stroke::new(1., color);
+    let p = |x: f32, y: f32| rect.min + egui::vec2(x, y);
+    if matches!(kind, Kind::Directory | Kind::Package) {
+        painter.add(egui::Shape::closed_line(
+            vec![
+                p(1., 3.),
+                p(5., 3.),
+                p(7., 5.),
+                p(13., 5.),
+                p(13., 12.),
+                p(1., 12.),
+            ],
+            stroke,
+        ));
+        if expanded {
+            painter.add(egui::Shape::line(
+                vec![p(1., 12.), p(3., 7.), p(14., 7.), p(12., 12.)],
+                stroke,
+            ));
+        }
+    } else {
+        painter.add(egui::Shape::closed_line(
+            vec![p(3., 1.), p(9., 1.), p(12., 4.), p(12., 13.), p(3., 13.)],
+            stroke,
+        ));
+        painter.add(egui::Shape::line(
+            vec![p(9., 1.), p(9., 4.), p(12., 4.)],
+            stroke,
+        ));
+        if kind == Kind::Image {
+            painter.circle_filled(p(6., 6.), 1., color);
+            painter.add(egui::Shape::line(
+                vec![p(4., 11.), p(7., 8.), p(9., 10.), p(11., 8.)],
+                stroke,
+            ));
+        } else {
+            painter.line_segment([p(5., 7.), p(10., 7.)], stroke);
+            painter.line_segment([p(5., 10.), p(9., 10.)], stroke);
+        }
+    }
+}
+
 #[derive(Clone)]
 enum DragLocation {
     Favorite(String),
@@ -55,6 +104,8 @@ pub(super) struct Explorer {
     restored_expansions: bool,
     scroll_to_focus: bool,
     smoke_at: Instant,
+    tree_rect: egui::Rect,
+    smoke_layouts: Vec<serde_json::Value>,
 }
 impl Explorer {
     pub fn new(data: &std::path::Path) -> Self {
@@ -101,6 +152,8 @@ impl Explorer {
             restored_expansions: false,
             scroll_to_focus: false,
             smoke_at: Instant::now(),
+            tree_rect: egui::Rect::NOTHING,
+            smoke_layouts: vec![],
         }
     }
 }
@@ -167,7 +220,13 @@ impl TrueRenderer {
         ];
         let index = self.smoke_stage as usize / 2;
         if index >= configurations.len() {
-            let report = serde_json::json!({"passed":self.screenshots.iter().filter(|s| s.starts_with("filesystem-")).count()==6 && self.errors.is_empty(),"screenshots":6,"gpu_verified":self.gpu_passed,"scope":"Native macOS generated corpus; Library/Explorer, grid/viewer, IT/EN, 1440x940, 1100x720, 550x360 and 200% UI. No screen-reader, Windows, cloud, removable-volume, NAS or statistical latency qualification."});
+            let layout_ok = self.browser.smoke_layouts.len() == 6
+                && self
+                    .browser
+                    .smoke_layouts
+                    .iter()
+                    .all(|v| v["passed"] == true);
+            let report = serde_json::json!({"passed":layout_ok && self.screenshots.iter().filter(|s| s.starts_with("filesystem-")).count()==6 && self.errors.is_empty(),"screenshots":6,"layouts":self.browser.smoke_layouts,"gpu_verified":self.gpu_passed,"scope":"Native macOS generated corpus; Library/Explorer, grid/viewer, IT/EN, 1440x940, 1100x720, 550x360 and 200% UI. No screen-reader, Windows, cloud, removable-volume, NAS or statistical latency qualification."});
             std::fs::write(
                 self.root.join("reports/filesystem-ui.json"),
                 serde_json::to_vec_pretty(&report).unwrap(),
@@ -193,6 +252,14 @@ impl TrueRenderer {
             self.browser.smoke_at = Instant::now();
             self.smoke_stage += 1;
         } else if self.screenshots.contains(&name) {
+            let tree = self.browser.tree_rect;
+            let viewport = ctx.content_rect();
+            self.browser.smoke_layouts.push(serde_json::json!({
+                "case": index,
+                "viewport": [viewport.width(), viewport.height()],
+                "tree_height": tree.height(),
+                "passed": panel != PanelMode::Explorer || (tree.height() >= 48. && viewport.contains_rect(tree)),
+            }));
             self.smoke_stage += 1;
         } else if self.browser.smoke_at.elapsed() >= Duration::from_millis(800)
             && self.demand.iter().all(|key| self.cache.contains_key(key))
@@ -556,6 +623,18 @@ impl TrueRenderer {
     }
     pub(super) fn left_panel_contents(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
+        // Dense, flat sidebar chrome, independent of image and toolbar styling.
+        ui.spacing_mut().item_spacing = egui::vec2(6., 4.);
+        ui.spacing_mut().button_padding = egui::vec2(6., 3.);
+        ui.spacing_mut().interact_size.y = 22.;
+        {
+            let widget = &mut ui.visuals_mut().widgets.inactive;
+            widget.bg_stroke = egui::Stroke::NONE;
+            widget.corner_radius = 2.into();
+        }
+        ui.visuals_mut().selection.bg_fill = egui::Color32::from_rgb(43, 65, 83);
+        ui.visuals_mut().selection.stroke =
+            egui::Stroke::new(1., egui::Color32::from_rgb(100, 166, 215));
         ui.horizontal(|ui| {
             for (mode, title) in [
                 (PanelMode::Library, "Libreria"),
@@ -563,6 +642,12 @@ impl TrueRenderer {
             ] {
                 let response =
                     ui.selectable_label(self.browser.session.mode == mode, lang.text(title));
+                if self.browser.session.mode == mode {
+                    ui.painter().line_segment(
+                        [response.rect.left_bottom(), response.rect.right_bottom()],
+                        egui::Stroke::new(2., egui::Color32::from_rgb(100, 166, 215)),
+                    );
+                }
                 if response.clicked()
                     || (response.has_focus()
                         && ui.input(|i| {
@@ -602,9 +687,12 @@ impl TrueRenderer {
         egui::Window::new(lang.text("Navigazione"))
             .id(egui::Id::new("temporary-navigation"))
             .open(&mut open)
-            .default_width(300.)
-            .max_width((ctx.content_rect().width() - 32.).max(200.))
-            .max_height((ctx.content_rect().height() - 100.).max(120.))
+            .collapsible(false)
+            .fixed_pos(ctx.content_rect().min + egui::vec2(8., 8.))
+            .fixed_size(egui::vec2(
+                (ctx.content_rect().width() - 32.).clamp(200., 340.),
+                (ctx.content_rect().height() - 64.).max(220.),
+            ))
             .show(ctx, |ui| self.left_panel_contents(ui));
         if !open {
             self.browser.temporary = false;
@@ -705,127 +793,144 @@ impl TrueRenderer {
                 self.browser.scroll_to_focus = true;
             }
         });
-        egui::CollapsingHeader::new(lang.text("Preferiti"))
-            .id_salt("browser-favorites")
-            .default_open(true)
-            .show(ui, |ui| {
-                let add = ui.add_enabled(
-                    !self.browser.favorite_pending,
-                    egui::Button::new(lang.text("Aggiungi cartella corrente")),
-                );
-                if add.clicked() {
-                    self.pin(self.folder.clone());
-                }
-                if let Some(payload) = add.dnd_release_payload::<DragLocation>()
-                    && let DragLocation::Folder(path) = &*payload
-                {
-                    self.pin(path.clone());
-                }
-                let favorites = self.browser.favorites.clone();
-                for (index, favorite) in favorites.iter().enumerate() {
-                    let path = favorite.location.path();
-                    let response = ui.add_enabled(
-                        path.is_some(),
-                        egui::Button::new(&favorite.label)
-                            .frame(false)
-                            .sense(egui::Sense::click_and_drag()),
-                    );
-                    response.dnd_set_drag_payload(DragLocation::Favorite(favorite.id.clone()));
-                    if let Some(payload) = response.dnd_release_payload::<DragLocation>() {
-                        match &*payload {
-                            DragLocation::Favorite(id) => {
-                                self.favorite_edit(tr_store::FavoriteEdit::Move {
-                                    id: id.clone(),
-                                    index,
-                                })
-                            }
-                            DragLocation::Folder(path) => self.pin(path.clone()),
-                        }
-                    }
-                    if response.clicked()
-                        && let Some(path) = path.clone()
-                    {
-                        self.open_folder(path);
-                    }
-                    response.context_menu(|ui| {
-                        ui.add_enabled_ui(!self.browser.favorite_pending, |ui| {
-                            if ui.button(lang.text("Rinomina preferito")).clicked() {
-                                self.browser.rename =
-                                    Some((favorite.id.clone(), favorite.label.clone()));
-                                ui.close();
-                            }
-                            if ui
-                                .add_enabled(index > 0, egui::Button::new(lang.text("Sposta su")))
-                                .clicked()
-                            {
-                                self.favorite_edit(tr_store::FavoriteEdit::Move {
-                                    id: favorite.id.clone(),
-                                    index: index - 1,
-                                });
-                                ui.close();
-                            }
-                            if ui
-                                .add_enabled(
-                                    index + 1 < favorites.len(),
-                                    egui::Button::new(lang.text("Sposta giù")),
-                                )
-                                .clicked()
-                            {
-                                self.favorite_edit(tr_store::FavoriteEdit::Move {
-                                    id: favorite.id.clone(),
-                                    index: index + 1,
-                                });
-                                ui.close();
-                            }
-                            if ui.button(lang.text("Rimuovi preferito")).clicked() {
-                                self.favorite_edit(tr_store::FavoriteEdit::Remove(
-                                    favorite.id.clone(),
-                                ));
-                                ui.close();
-                            }
-                        });
+        // Keep the tree usable at the minimum window size and at high UI scale.
+        // Lists live in bounded popups instead of consuming the tree's viewport.
+        ui.horizontal(|ui| {
+            ui.menu_button(lang.text("Preferiti"), |ui| {
+                egui::ScrollArea::vertical()
+                    .max_height(240.)
+                    .show(ui, |ui| {
+                        self.favorite_contents(ui);
                     });
-                }
-                if let Some((id, mut label)) = self.browser.rename.clone() {
-                    ui.add(egui::TextEdit::singleline(&mut label).char_limit(256));
-                    self.browser.rename = Some((id.clone(), label.clone()));
-                    ui.horizontal(|ui| {
-                        if ui.button(lang.text("Salva")).clicked() {
-                            self.favorite_edit(tr_store::FavoriteEdit::Rename { id, label });
-                            self.browser.rename = None;
-                        }
-                        if ui.button(lang.text("Annulla")).clicked() {
-                            self.browser.rename = None;
-                        }
-                    });
-                }
             });
-        egui::CollapsingHeader::new(lang.text("Recenti"))
-            .id_salt("browser-recent")
-            .show(ui, |ui| {
-                for path in self
-                    .browser
-                    .session
-                    .recent
-                    .clone()
-                    .iter()
-                    .filter_map(Location::path)
-                {
+            ui.menu_button(lang.text("Recenti"), |ui| {
+                egui::ScrollArea::vertical()
+                    .max_height(240.)
+                    .show(ui, |ui| {
+                        self.recent_contents(ui);
+                    });
+            });
+        });
+        ui.add_space(4.);
+        ui.label(
+            egui::RichText::new(lang.text("Posizioni").to_uppercase())
+                .size(11.)
+                .strong()
+                .color(MUTED),
+        );
+        self.tree(ui);
+    }
+    fn favorite_contents(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        let add = ui.add_enabled(
+            !self.browser.favorite_pending,
+            egui::Button::new(lang.text("Aggiungi cartella corrente")),
+        );
+        if add.clicked() {
+            self.pin(self.folder.clone());
+        }
+        if let Some(payload) = add.dnd_release_payload::<DragLocation>()
+            && let DragLocation::Folder(path) = &*payload
+        {
+            self.pin(path.clone());
+        }
+        let favorites = self.browser.favorites.clone();
+        for (index, favorite) in favorites.iter().enumerate() {
+            let path = favorite.location.path();
+            let response = ui.add_enabled(
+                path.is_some(),
+                egui::Button::new(&favorite.label)
+                    .frame(false)
+                    .sense(egui::Sense::click_and_drag()),
+            );
+            response.dnd_set_drag_payload(DragLocation::Favorite(favorite.id.clone()));
+            if let Some(payload) = response.dnd_release_payload::<DragLocation>() {
+                match &*payload {
+                    DragLocation::Favorite(id) => {
+                        self.favorite_edit(tr_store::FavoriteEdit::Move {
+                            id: id.clone(),
+                            index,
+                        })
+                    }
+                    DragLocation::Folder(path) => self.pin(path.clone()),
+                }
+            }
+            if response.clicked()
+                && let Some(path) = path.clone()
+            {
+                self.open_folder(path);
+            }
+            response.context_menu(|ui| {
+                ui.add_enabled_ui(!self.browser.favorite_pending, |ui| {
+                    if ui.button(lang.text("Rinomina preferito")).clicked() {
+                        self.browser.rename = Some((favorite.id.clone(), favorite.label.clone()));
+                        ui.close();
+                    }
                     if ui
-                        .button(
-                            path.file_name()
-                                .unwrap_or(path.as_os_str())
-                                .to_string_lossy(),
-                        )
-                        .on_hover_text(path.display().to_string())
+                        .add_enabled(index > 0, egui::Button::new(lang.text("Sposta su")))
                         .clicked()
                     {
-                        self.open_folder(path);
+                        self.favorite_edit(tr_store::FavoriteEdit::Move {
+                            id: favorite.id.clone(),
+                            index: index - 1,
+                        });
+                        ui.close();
                     }
+                    if ui
+                        .add_enabled(
+                            index + 1 < favorites.len(),
+                            egui::Button::new(lang.text("Sposta giù")),
+                        )
+                        .clicked()
+                    {
+                        self.favorite_edit(tr_store::FavoriteEdit::Move {
+                            id: favorite.id.clone(),
+                            index: index + 1,
+                        });
+                        ui.close();
+                    }
+                    if ui.button(lang.text("Rimuovi preferito")).clicked() {
+                        self.favorite_edit(tr_store::FavoriteEdit::Remove(favorite.id.clone()));
+                        ui.close();
+                    }
+                });
+            });
+        }
+        if let Some((id, mut label)) = self.browser.rename.clone() {
+            ui.add(egui::TextEdit::singleline(&mut label).char_limit(256));
+            self.browser.rename = Some((id.clone(), label.clone()));
+            ui.horizontal(|ui| {
+                if ui.button(lang.text("Salva")).clicked() {
+                    self.favorite_edit(tr_store::FavoriteEdit::Rename { id, label });
+                    self.browser.rename = None;
+                }
+                if ui.button(lang.text("Annulla")).clicked() {
+                    self.browser.rename = None;
                 }
             });
-        ui.label(lang.text("Posizioni"));
-        self.tree(ui);
+        }
+    }
+    fn recent_contents(&mut self, ui: &mut egui::Ui) {
+        for path in self
+            .browser
+            .session
+            .recent
+            .clone()
+            .iter()
+            .filter_map(Location::path)
+        {
+            if ui
+                .button(
+                    path.file_name()
+                        .unwrap_or(path.as_os_str())
+                        .to_string_lossy(),
+                )
+                .on_hover_text(path.display().to_string())
+                .clicked()
+            {
+                self.open_folder(path);
+            }
+        }
     }
     fn activate_entry(&mut self, entry: &tr_app::browser::Entry, viewer: bool) {
         self.browser.model.selected = Some(entry.path.clone());
@@ -850,7 +955,8 @@ impl TrueRenderer {
     fn tree(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         let tree_id = egui::Id::new("filesystem-tree");
-        let height = ui.text_style_height(&egui::TextStyle::Body).max(18.) + 8.;
+        let height = ui.text_style_height(&egui::TextStyle::Body).max(18.) + 4.;
+        ui.spacing_mut().item_spacing.y = 0.;
         let count = self.browser.model.rows.len();
         let mut focus = self
             .browser
@@ -974,33 +1080,13 @@ impl TrueRenderer {
         let output = scroll.show_rows(ui, height, count, |ui, range| {
             for index in range {
                 let row = self.browser.model.rows[index].clone();
-                ui.push_id(&row.entry.path, |ui| {
+                ui.push_id((&row.entry.path, index), |ui| {
                     ui.horizontal(|ui| {
-                        ui.add_space((row.depth as f32 * 14.).min(84.));
                         let branch = self.browser.model.branches.get(&row.entry.path);
                         let expanded = branch.is_some_and(|b| b.expanded);
                         let state = branch
                             .map(|b| b.state.clone())
                             .unwrap_or(ListingState::Unloaded);
-                        if row.entry.kind == Kind::Directory {
-                            if ui
-                                .small_button(if expanded { "▾" } else { "▸" })
-                                .on_hover_text(lang.text("Espandi o comprimi"))
-                                .clicked()
-                            {
-                                self.toggle_branch(row.entry.path.clone());
-                            }
-                        } else {
-                            ui.add_space(16.);
-                        }
-                        let marker = match row.entry.kind {
-                            Kind::Directory => "",
-                            Kind::Image => "◇ ",
-                            Kind::Link => "↗ ",
-                            Kind::Package => "▣ ",
-                            Kind::Special => "! ",
-                            Kind::File => "· ",
-                        };
                         let current = row.entry.path == self.folder
                             || self
                                 .state
@@ -1008,34 +1094,116 @@ impl TrueRenderer {
                                 .is_some_and(|i| i.path == row.entry.path);
                         let selected =
                             self.browser.model.selected.as_ref() == Some(&row.entry.path);
-                        let response = ui.add_sized(
-                            [ui.available_width(), height],
-                            egui::Button::new(
-                                egui::RichText::new(format!(
-                                    "{marker}{}{}",
-                                    row.entry.name,
-                                    if state == ListingState::Loading {
-                                        " …"
-                                    } else if matches!(
-                                        state,
-                                        ListingState::Partial(_) | ListingState::Failed(_)
-                                    ) {
-                                        " !"
-                                    } else {
-                                        ""
-                                    }
-                                ))
-                                .color(if current {
-                                    TEXT
-                                } else {
-                                    MUTED
-                                }),
-                            )
-                            .selected(selected || current)
-                            .frame(false)
-                            .sense(egui::Sense::click_and_drag())
-                            .truncate(),
+                        let title = format!(
+                            "{}{}",
+                            row.entry.name,
+                            if state == ListingState::Loading {
+                                " …"
+                            } else if matches!(
+                                state,
+                                ListingState::Partial(_) | ListingState::Failed(_)
+                            ) {
+                                " !"
+                            } else {
+                                ""
+                            }
                         );
+                        let (rect, _) = ui.allocate_exact_size(
+                            egui::vec2(ui.available_width(), height),
+                            egui::Sense::hover(),
+                        );
+                        let indent = (row.depth as f32 * 14.).min(84.);
+                        let arrow_rect = egui::Rect::from_min_size(
+                            rect.min + egui::vec2(indent, 0.),
+                            egui::vec2(16., height),
+                        );
+                        let response = ui.interact(
+                            egui::Rect::from_min_max(
+                                egui::pos2(arrow_rect.right(), rect.top()),
+                                rect.max,
+                            ),
+                            ui.id().with("entry"),
+                            egui::Sense::click_and_drag(),
+                        );
+                        let active = selected
+                            || self
+                                .state
+                                .current_item()
+                                .is_some_and(|i| i.path == row.entry.path);
+                        if active || response.hovered() {
+                            ui.painter().rect_filled(
+                                rect,
+                                0.,
+                                if active {
+                                    egui::Color32::from_rgb(43, 65, 83)
+                                } else {
+                                    egui::Color32::from_gray(42)
+                                },
+                            );
+                        }
+                        if active {
+                            ui.painter().line_segment(
+                                [rect.left_top(), rect.left_bottom()],
+                                egui::Stroke::new(2., egui::Color32::from_rgb(100, 166, 215)),
+                            );
+                        }
+                        for level in 0..row.depth.min(6) {
+                            let x = rect.left() + level as f32 * 14. + 8.;
+                            ui.painter().line_segment(
+                                [egui::pos2(x, rect.top()), egui::pos2(x, rect.bottom())],
+                                egui::Stroke::new(1., egui::Color32::from_gray(48)),
+                            );
+                        }
+                        if row.entry.kind == Kind::Directory {
+                            let arrow = ui
+                                .interact(arrow_rect, ui.id().with("expand"), egui::Sense::click())
+                                .on_hover_text(lang.text("Espandi o comprimi"));
+                            arrow.widget_info(|| {
+                                egui::WidgetInfo::labeled(
+                                    egui::WidgetType::Button,
+                                    true,
+                                    lang.text("Espandi o comprimi"),
+                                )
+                            });
+                            if arrow.clicked() {
+                                self.toggle_branch(row.entry.path.clone());
+                            }
+                            let center = arrow_rect.center();
+                            let points = if expanded {
+                                vec![
+                                    center + egui::vec2(-3., -2.),
+                                    center + egui::vec2(0., 1.),
+                                    center + egui::vec2(3., -2.),
+                                ]
+                            } else {
+                                vec![
+                                    center + egui::vec2(-1., -3.),
+                                    center + egui::vec2(2., 0.),
+                                    center + egui::vec2(-1., 3.),
+                                ]
+                            };
+                            ui.painter()
+                                .add(egui::Shape::line(points, egui::Stroke::new(1.2, MUTED)));
+                        }
+                        let icon_rect = egui::Rect::from_center_size(
+                            egui::pos2(arrow_rect.right() + 9., rect.center().y),
+                            egui::vec2(14., 14.),
+                        );
+                        entry_icon(ui.painter(), icon_rect, row.entry.kind, expanded);
+                        let mut job = egui::text::LayoutJob::simple_singleline(
+                            title,
+                            egui::TextStyle::Body.resolve(ui.style()),
+                            if current { TEXT } else { MUTED },
+                        );
+                        job.wrap.max_width = (response.rect.width() - 26.).max(0.);
+                        job.wrap.max_rows = 1;
+                        job.wrap.break_anywhere = true;
+                        let galley = ui.fonts_mut(|fonts| fonts.layout_job(job));
+                        let position = egui::pos2(
+                            response.rect.left() + 24.,
+                            response.rect.center().y - galley.size().y / 2.,
+                        );
+                        ui.painter().galley(position, galley, TEXT);
                         if row.entry.kind == Kind::Directory {
                             response
                                 .dnd_set_drag_payload(DragLocation::Folder(row.entry.path.clone()));
@@ -1129,6 +1297,7 @@ impl TrueRenderer {
             }
         });
         self.browser.session.explorer_scroll = output.state.offset.y;
+        self.browser.tree_rect = output.inner_rect;
         let response = ui.interact(
             output.inner_rect,
             tree_id,
@@ -1170,7 +1339,7 @@ impl TrueRenderer {
                     if ui
                         .add_enabled(
                             self.browser.cursor.is_some_and(|c| c > 0),
-                            egui::Button::new("←"),
+                            egui::Button::new("<"),
                         )
                         .on_hover_text(lang.text("Indietro"))
                         .clicked()
@@ -1182,7 +1351,7 @@ impl TrueRenderer {
                             self.browser
                                 .cursor
                                 .is_some_and(|c| c + 1 < self.browser.history.len()),
-                            egui::Button::new("→"),
+                            egui::Button::new(">"),
                         )
                         .on_hover_text(lang.text("Avanti"))
                         .clicked()
@@ -1190,7 +1359,7 @@ impl TrueRenderer {
                         self.history_go(1);
                     }
                     if ui
-                        .add_enabled(self.folder.parent().is_some(), egui::Button::new("↑"))
+                        .add_enabled(self.folder.parent().is_some(), egui::Button::new("^"))
                         .on_hover_text(lang.text("Cartella superiore"))
                         .clicked()
                         && let Some(parent) = self.folder.parent()
@@ -1251,7 +1420,7 @@ impl TrueRenderer {
                             ui.label("›");
                         }
                         if ui
-                            .small_button("✎")
+                            .small_button("/")
                             .on_hover_text(lang.text("Inserisci un percorso"))
                             .clicked()
                         {

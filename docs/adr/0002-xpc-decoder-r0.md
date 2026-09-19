@@ -8,7 +8,7 @@ Le quote 32 MiB/8 Mi pixel, la sola allowlist e le misure sotto descrivono la 0.
 
 ## Correzione stack LibRaw — 15 settembre 2026
 
-La prova dei motori su D750 ha riprodotto `Thread stack size exceeded` nel probe LibRaw eseguito dal thread dispatch XPC. I quattro oggetti LibRaw locali del bridge sono ora posseduti sullo heap tramite `std::unique_ptr`: stessa durata ed eccezioni gestite, senza occupare lo stack limitato del thread. Passati i 120 sviluppi dei 30 NEF autorizzati sui quattro motori dopo la correzione. Non cambiano ricette, capability, entitlement o garanzie di rilascio. Protocolli e limiti nella [campagna immagini grandi/RAW](../verifica-grandi-raw-macos.md).
+La prova dei motori su D750 ha riprodotto `Thread stack size exceeded` nel probe LibRaw eseguito dal thread dispatch XPC. I quattro oggetti LibRaw locali del bridge sono ora posseduti sullo heap tramite `std::unique_ptr`: stessa durata ed eccezioni gestite, senza occupare lo stack limitato del thread. Passati i 120 sviluppi dei 30 NEF autorizzati sui quattro motori dopo la correzione. Non cambiano ricette, capability, entitlement o garanzie di rilascio. Protocolli e limiti nella [campagna immagini grandi/RAW](../verifiche-raw.md#grandi-raw-macos).
 
 ## Decisione
 

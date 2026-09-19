@@ -2,14 +2,20 @@
   "adapter": "Apple M4 · Metal",
   "application": "TrueRenderer",
   "compute": {
-    "cpu_frames": 56,
+    "cpu_frames": 52,
     "fallbacks": 0,
     "gpu_frames": 9,
-    "last_fallback": ""
+    "last_fallback": "",
+    "wide_frames": 1,
+    "wide_gpu_bytes": 7634304,
+    "wide_peak_frames": 1,
+    "wide_peak_gpu_bytes": 7634304,
+    "wide_peak_memory_bytes": 22902912,
+    "wide_reprojections": 0
   },
   "decode_errors": {},
-  "elapsed_seconds": 2.050151824951172,
-  "frames": 125,
+  "elapsed_seconds": 3.799532413482666,
+  "frames": 197,
   "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
   "images": 12,
   "passed": true,
@@ -18,21 +24,21 @@
   "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
   "scope": "native macOS R0 corpus smoke; not color/display/sandbox qualification",
   "screenshots": [
-    "08-grid-large",
-    "07-grid-small",
-    "05-radial-fit",
-    "03-compare",
-    "06-radial-37percent",
-    "01-grid",
     "02-preview",
-    "04-radial-1to1"
+    "04-radial-1to1",
+    "06-radial-37percent",
+    "07-grid-small",
+    "08-grid-large",
+    "05-radial-fit",
+    "01-grid",
+    "03-compare"
   ],
   "sqlite": "3.53.2",
-  "status": "Corpus pronto · 0 file non leggibili",
+  "status": "Cartella pronta · Anteprima",
   "surface": "Bgra8Unorm",
   "version": "0.1.5",
   "worker_pids": [],
   "worker_transports": [
-    "Cache disco · fp32 · Anteprima"
+    "Processo su pipe · corpus R0"
   ]
 }

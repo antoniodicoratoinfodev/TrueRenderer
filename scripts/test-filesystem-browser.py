@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", default="dist/TrueRenderer-navigator.app")
+    parser.add_argument("--report", default="reports/filesystem-browser-macos.json")
     args = parser.parse_args()
     bundle = (ROOT / args.bundle).resolve(strict=True)
     binary = bundle / "Contents/MacOS/TrueRenderer"
@@ -39,7 +40,7 @@ def main():
         "evidence": str(run.relative_to(ROOT)),
         "not_qualified": ["Windows native UI/filesystem", "VoiceOver/NVDA", "NAS blocked syscalls", "cloud providers", "removable-volume identity across remount", "100-sample latency/low-memory campaign"],
     }
-    target = ROOT / "reports/filesystem-browser-macos.json"
+    target = ROOT / args.report
     target.write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps(report, indent=2))
     if not report["passed"]:

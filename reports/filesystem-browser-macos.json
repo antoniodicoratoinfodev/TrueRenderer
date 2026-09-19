@@ -1,0 +1,119 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-19T16:19:56.894915+00:00",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64",
+  "commit": "187600b3027642cd5702fbae5a84e7b4e20ab65c",
+  "worktree": "local navigator implementation; see STATO.md",
+  "bundle": "dist/TrueRenderer-navigator.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "2e725d1ef180672ca0a114edf6f67faeb5ea60b0bbc379a7641415f4d77f2964",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a1d748cde2c486138600cd9a3a824c3e020ea38e430b85e271827ff9827f2d39",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "bbfb901ea13c5e0266c2d206c0a3a5b0da1515a2a2c72bfe9eb1050b6c58bec3"
+  },
+  "passed": true,
+  "ui": {
+    "gpu_verified": true,
+    "layouts": [
+      {
+        "case": 0,
+        "passed": true,
+        "tree_height": 536,
+        "viewport": [
+          1440,
+          891
+        ]
+      },
+      {
+        "case": 1,
+        "passed": true,
+        "tree_height": 325,
+        "viewport": [
+          1100,
+          720
+        ]
+      },
+      {
+        "case": 2,
+        "passed": true,
+        "tree_height": 325,
+        "viewport": [
+          1440,
+          891
+        ]
+      },
+      {
+        "case": 3,
+        "passed": true,
+        "tree_height": 64,
+        "viewport": [
+          550,
+          360
+        ]
+      },
+      {
+        "case": 4,
+        "passed": true,
+        "tree_height": 64,
+        "viewport": [
+          550,
+          360
+        ]
+      },
+      {
+        "case": 5,
+        "passed": true,
+        "tree_height": 64,
+        "viewport": [
+          550,
+          360
+        ]
+      }
+    ],
+    "passed": true,
+    "scope": "Native macOS generated corpus; Library/Explorer, grid/viewer, IT/EN, 1440x940, 1100x720, 550x360 and 200% UI. No screen-reader, Windows, cloud, removable-volume, NAS or statistical latency qualification.",
+    "screenshots": 6
+  },
+  "evidence": "var/filesystem-browser/native-tttzucpd",
+  "not_qualified": [
+    "Windows native UI/filesystem",
+    "VoiceOver/NVDA",
+    "NAS blocked syscalls",
+    "cloud providers",
+    "removable-volume identity across remount",
+    "100-sample latency/low-memory campaign",
+    "macOS minimum deployment target; LibRaw link warnings for objects built on macOS 27",
+    "native filesystem watchers and persistent volume identity are not implemented"
+  ],
+  "additional_checks": {
+    "workspace": {
+      "command": "scripts/verify.sh --gui",
+      "passed": true,
+      "ordinary_rust": 128,
+      "explicit_integrations": 10,
+      "private_camera_tests_skipped": 2,
+      "python_reporting_tests": 2,
+      "worker_protocol_checks": 6,
+      "resampling_cases": 24,
+      "native_rendering_screenshots": 8
+    },
+    "stress": {
+      "command": "scripts/cargo-local.sh test -p truerenderer hundred_thousand_entries -- --ignored",
+      "passed": true,
+      "synthetic_files": 100001,
+      "scope": "Explicit partial result at byte quota, bounded batches, terminal ordering, no cache/catalog, credits returned; not latency/RSS qualification."
+    },
+    "xpc": {
+      "command": "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-navigator.app --report-root var/filesystem-browser/native-tttzucpd",
+      "passed": true,
+      "production_fault_injection_rejected": true,
+      "evidence": "var/filesystem-browser/native-tttzucpd/reports",
+      "full_sandbox_gate_passed": false
+    },
+    "visual_review": {
+      "screenshots_inspected": 6,
+      "passed": true,
+      "scope": "Names, navigation controls and panel bounds; scrollable compact tree retains 64 logical points. Not screen-reader qualification."
+    }
+  }
+}

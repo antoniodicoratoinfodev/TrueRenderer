@@ -1,8 +1,8 @@
 # Navigatore di file e cartelle a sinistra — TrueRenderer
 
-Data: 15 settembre 2026. Revisione: 2, con commutazione richiesta dal titolare.
+Data della proposta: 15 settembre 2026. Revisione: 3, decisioni d'implementazione del 19 settembre.
 
-**Stato: pianificazione, da implementare in un incremento successivo.** Questo documento risponde alla richiesta di un navigatore laterale per file, cartelle e directory, con un'interazione familiare a chi usa Adobe Bridge o l'esploratore di un IDE. Le scelte sotto sono la proposta operativa; non descrivono funzioni già disponibili e non autorizzano a dichiarare superati i gate R0–R4.
+Specifica del navigatore laterale per file, cartelle e directory, con un'interazione familiare a chi usa Adobe Bridge o l'esploratore di un IDE. Requisiti e matrice di accettazione descrivono il risultato completo, non una dichiarazione di disponibilità: implementato, verificato e mancante sono tracciati soltanto in [STATO.md](../STATO.md#navigatore-filesystem--implementazione-del-19-settembre-2026). Nessuna chiusura implicita dei gate R0–R4.
 
 Il nome proposto nell'interfaccia è **Esplora** in italiano, **Explorer** in inglese. «Finder» descrive qui l'intento dell'utente; il pannello fa parte di TrueRenderer su entrambe le piattaforme previste.
 
@@ -474,7 +474,7 @@ Tutti i casi sotto sono **da implementare/eseguire**, non risultati della presen
 | L02 | Rete bloccata, due slot occupati, viewer e Save | UI e dati durevoli operativi; attesa dell'I/O dichiarata, niente crescita dei thread |
 | L03 | Navigazione/scroll con viewer CPU/GPU e memoria ridotta | Obiettivi misurati separatamente; nessun peggioramento nascosto di pipeline e budget |
 
-### 11.1 Come verificare l'implementazione futura
+### 11.1 Come verificare l'implementazione
 
 Unit test del reducer con eventi riordinati e clock controllato; enumeratore su fixture sintetiche e provider finto per errori/ritardi; integrazioni su filesystem reale per identità, link e permessi; catalogo con copie temporanee per migrazioni e annotazioni. Le prove simulate non qualificano cancellazione di syscall, volumi, cloud o screen reader.
 
@@ -500,7 +500,19 @@ Proposte di nuovi strumenti, da creare soltanto durante l'implementazione: gener
 
 Scelte aperte dopo N0: adattatori nativi esatti e minimi OS per volumi/watch/placeholder; gestione qualificata di alias/shortcut; eventuali limiti rilevati del toolkit per albero virtualizzato; valori finali di larghezza e budget sulla baseline. Ogni deviazione va motivata in questo documento e nel registro; modifiche ai contratti di sicurezza/durabilità richiedono una decisione architetturale esplicita.
 
-## 13. Istruzioni per riprendere più avanti
+### 12.1 Decisioni per la prima implementazione
+
+- Estetica richiesta dal titolare: albero denso ispirato agli explorer degli IDE, con righe di circa 22 punti, rientri di 14 punti e guide gerarchiche, chevron di espansione, icone vettoriali per cartelle/immagini/file e selezione rettangolare blu tenue nel solo pannello laterale. Controlli piatti, scheda attiva sottolineata e margini ridotti; i tooltip mantengono i nomi completi. Le icone sono disegnate dal frontend, indipendenti dai glifi del font.
+- Due slot I/O complessivi condivisi da risoluzione percorsi, listing e scansioni; coda di 64 lavori e canali di quattro risposte con invio cancellabile. I thread non sono attesi alla chiusura se una syscall resta bloccata; questo non equivale a cancellare la syscall né a garantire progresso quando entrambi gli slot sono occupati.
+- Riserva navigazione di 64 MiB nel budget applicativo: 40 MiB per le voci dell'albero, 20 MiB stimati per la scansione fotografica e margine per messaggi/metadati. Limite massimo 100.000 voci: la quota byte può interrompere prima, con risultato parziale esplicito. Listing fino a 256 voci/128 KiB stimati per batch; osservazioni fotografiche fino a 16, per dare precedenza ai salvataggi fra batch.
+- Fallback di aggiornamento mediante polling ogni 15 secondi quando la finestra è attiva, con rilettura della cartella corrente e al massimo 16 rami espansi, oltre al refresh manuale. Non sostituisce la futura integrazione watcher/identità volume. Le posizioni sono locator nativi senza conversione lossy; non sono bookmark di volume persistenti.
+- Preferiti transazionali nello schema libreria 2, migrazione da 1 preceduta da backup SQLite verificato; sessione UI separata, schema 1, massimo 2 MiB in lettura, scrittura atomica e conservazione del file corrotto/futuro prima di recuperarlo. Il ripristino delle espansioni è pigro, a partire dalle radici.
+- Preferiti e recenti in menu con scorrimento limitato, affinché l'albero conservi spazio nella finestra minima e al 200%. Espansione con controllo dedicato, attivazione sul nome, albero virtualizzato e allineamento a sinistra. La semantica AccessKit richiede comunque qualifica VoiceOver/NVDA.
+- Niente attraversamento automatico di symlink, reparse point, pacchetti, file speciali o placeholder riconosciuti. La classificazione dei pacchetti usa una policy conservativa per estensioni; alias/shortcut e provider cloud richiedono ancora adattatori e prove native. L'esplorazione non concede autorità aggiuntiva ai decoder.
+
+Queste scelte non abbassano i requisiti della matrice §11: watcher, identità persistente dei volumi, fairness per volume e qualifiche non eseguite restano lavoro aperto in STATO.md.
+
+## 13. Istruzioni per proseguire
 
 1. Rileggere `AGENTS.md`, `STATO.md`, questo documento e le sezioni pertinenti dell'architettura. Verificare le differenze di codice intervenute dal 15 settembre 2026.
 2. Confermare nel codice la mappa di §2 e registrare la baseline della build effettiva. Non trasformare le osservazioni di questa pianificazione in test già superati.
@@ -508,4 +520,4 @@ Scelte aperte dopo N0: adattatori nativi esatti e minimi OS per volumi/watch/pla
 4. Usare le caselle in `STATO.md` come tracciamento operativo e la matrice di §11 per gli esiti dettagliati. Segnare separatamente implementato, verificato, aperto e mancante.
 5. Aggiornare `STATO.md`; le architetture rimandano stabilmente a quel file, senza incorporarne il registro. Il testo completo del navigatore resta in questo documento fino a una futura integrazione esplicita.
 
-**Consegna di questa sessione:** specifica e piano documentale. Nessuna modifica al codice applicativo, ai database, agli originali o al bundle; nessuna nuova prova applicativa attribuita al navigatore.
+Le consegne e gli esiti delle sessioni sono registrati soltanto in [STATO.md](../STATO.md); i rapporti mantengono hash, perimetri e limiti delle singole campagne.

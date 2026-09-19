@@ -662,6 +662,58 @@ mod tests {
         assert_eq!(budget.usage().reserved, 0);
     }
     #[test]
+    #[ignore = "creates 100001 synthetic files; run explicitly for filesystem qualification"]
+    fn hundred_thousand_entries_stop_explicitly_at_memory_quota() {
+        let directory = tempfile::tempdir().unwrap();
+        for n in 0..=MAX_ENTRIES {
+            std::fs::File::create(directory.path().join(format!("image{n}.png"))).unwrap();
+        }
+        let budget = MemoryBudget::new(128 * 1024 * 1024);
+        let (fs, _) = Filesystem::start(
+            crate::wake::Wake::from(eframe::egui::Context::default()),
+            budget.clone(),
+        );
+        assert!(fs.client.list(directory.path().into(), 1, false));
+        let mut batches = 0;
+        loop {
+            assert!(budget.usage().reserved <= 64 * 1024 * 1024);
+            match fs.events.recv_timeout(Duration::from_secs(30)).unwrap() {
+                BrowserEvent::Listing {
+                    entries,
+                    result: None,
+                    ..
+                } => {
+                    assert!(entries.len() <= 256);
+                    batches += 1;
+                }
+                BrowserEvent::Listing {
+                    entries,
+                    result: Some(result),
+                    ..
+                } => {
+                    assert!(result.unwrap_err().contains("memoria"));
+                    assert!(!entries.is_empty() && entries.len() < MAX_ENTRIES);
+                    assert!(
+                        entries
+                            .windows(2)
+                            .all(|e| natural_cmp(&e[0].name, &e[1].name).is_le())
+                    );
+                    break;
+                }
+                _ => panic!(),
+            }
+        }
+        assert!(batches > 10);
+        assert!(!directory.path().join(".truerenderer-cache").exists());
+        assert!(!directory.path().join("library.sqlite").exists());
+        drop(fs);
+        let deadline = std::time::Instant::now() + Duration::from_secs(2);
+        while budget.usage().reserved > 0 && std::time::Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert_eq!(budget.usage().reserved, 0);
+    }
+    #[test]
     fn saturated_queue_and_cancel_remain_bounded() {
         let shared = Arc::new(Shared {
             queue: Mutex::new(VecDeque::new()),

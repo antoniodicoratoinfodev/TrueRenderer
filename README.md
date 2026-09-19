@@ -8,9 +8,9 @@ It is designed for photographic selection, critical review of retouched work, te
 
 Your original files remain untouched. The library stays on your computer. No account, upload or subscription is required.
 
-![TrueRenderer viewer with RAW engine information, zoom controls and independent global and per photo quality selectors](reports/toolbar-viewer.png)
+![TrueRenderer viewer with the compact Explorer tree, RAW engine information and preview quality selectors](reports/navigator-viewer.png)
 
-*TrueRenderer on macOS. The image shown is part of the generated test corpus.*
+*TrueRenderer on macOS, with the IDE-style Explorer. Screenshots show the Italian and English interfaces using the generated test corpus.*
 
 
 ## Made for looking carefully
@@ -18,6 +18,10 @@ Your original files remain untouched. The library stays on your computer. No acc
 ### Browse without friction
 
 Open a photograph or an entire folder, then move through a thumbnail grid, filmstrip and focused viewer. Search and filters help narrow a library quickly, while the inspector keeps metadata, ratings, keywords and rendering information close to the image.
+
+Switch the left panel between **Library** and **Explorer** without losing the current photo, filters or zoom. Explorer lists folders and files lazily, with breadcrumbs, back/forward history, favourites, recent locations and a local filename filter. Expanding a folder does not import or decode its images. Click its name to open it; double-click an image to enter the viewer. The Panel button also opens navigation in small windows.
+
+Use `Cmd/Ctrl+B` for the panel, `Cmd/Ctrl+Shift+E` for Explorer, `Cmd/Ctrl+L` to enter a path, `Cmd/Ctrl+[` / `]` for history and `F5` to refresh. Arrow keys navigate the focused tree; Enter activates and Space previews an image. The Show menu controls hidden files and recent-location recording. Automatic refresh currently uses bounded polling; native filesystem watchers and persistent removable-volume identity are not yet implemented. Native Windows and screen-reader qualification remain open.
 
 ### Inspect real detail
 
@@ -51,13 +55,15 @@ This does not mean that every photograph has one universally correct appearance.
 
 The interface keeps the image at the centre. Open, view, search and settings controls occupy the top bar; folder context and assurance remain visible below. The inspector is divided into collapsible sections so technical information is available without overwhelming the photograph.
 
-![Thumbnail grid with library filters, collapsible inspector and folder information](reports/toolbar-grid.png)
+![Thumbnail grid with the compact Explorer tree, file icons, hierarchy guides and full-row selection](reports/navigator-grid.png)
+
+Explorer uses compact rows, folder and image icons, hierarchy guides and a clear full-row selection. In smaller windows, the Panel button opens a temporary navigation panel: [compact layout](reports/navigator-compact.png).
 
 Fit, physical 1:1, zoom and quality controls remain above the image. A global quality choice sets the normal behaviour, while a per photo choice lets you request Full detail only where it matters. Returning to the global setting takes one action.
 
 Preferences are grouped by purpose: General, Previews and RAW, Performance, and Cache and data. Language changes take effect immediately. Rendering and performance changes remain reviewable until they are applied.
 
-![Preferences grouped by purpose with persistent actions](reports/toolbar-preferences.png)
+![Preferences grouped by purpose with persistent actions](reports/navigator-preferences.png)
 
 The interface is available in English and Italian. TrueRenderer starts in English; the language can be changed from Menu or from General settings without losing the current selection, zoom or pending performance choices.
 
@@ -94,6 +100,8 @@ open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 
 Use `./scripts/verify.sh --gui` to include native presentation checks. Changes to the broker, decoder or bundle should always be followed by the XPC integration test on the newly built application.
 
+The separately built navigator preview is `dist/TrueRenderer-navigator-ide.app`. Its isolated layout probe can be repeated with `python3 scripts/test-filesystem-browser.py --bundle dist/TrueRenderer-navigator-ide.app --report reports/navigator-ide-macos.json`; [results and limitations](reports/navigator-ide-macos.json) identify the tested binaries.
+
 ### Windows development build
 
 An MSVC C++ build environment, the Windows SDK and a Bash shell such as MSYS2 are required. From PowerShell:
@@ -120,6 +128,8 @@ The full macOS verification entry point is `./scripts/verify.sh`. Platform speci
 ## Local data
 
 The library database and backups are durable user data. Keep `var/library.sqlite` and `var/backups/`; they are not disposable caches. Settings live in `var/settings.json`, unless a separate data directory is selected with `--data`.
+
+Explorer favourites live in library schema 2, with a verified database backup before migration from schema 1; JSON exports include favourites. Older binaries must not open the migrated library: use a separate data directory and a restored pre-migration backup when reverting. Panel geometry, roots and recent locations live separately in `browser-state.json` in the data directory. Paths in that file and exported favourites may be private; do not publish them.
 
 Writable image folders may contain a `.truerenderer-cache/` directory. It contains derived previews and cache bookkeeping, never ratings, keywords or library backups. If the cache is unavailable, rendering can continue in memory.
 

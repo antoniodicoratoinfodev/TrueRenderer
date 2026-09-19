@@ -1478,7 +1478,11 @@ impl TrueRenderer {
         } else {
             192.0..=270.0
         })
-        .frame(style::panel())
+        .frame(if explorer {
+            egui::Frame::new().fill(style::PANEL).inner_margin(8)
+        } else {
+            style::panel()
+        })
         .show(ui, |ui| {
             self.left_panel_contents(ui);
         });

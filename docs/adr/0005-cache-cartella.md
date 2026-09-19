@@ -65,4 +65,4 @@ Accorpato dal primo piano Windows: la directory cache è mantenuta aperta senza 
 
 I payload consentono condivisione di cancellazione per mantenere utilizzabile un handle già aperto durante la raccolta. La contesa Windows `ERROR_LOCK_VIOLATION` viene normalizzata come condizione ritentabile. Identità del file e ChangeTime contribuiscono all'osservazione delle sorgenti; gli hit cache aggiornano il timestamp tramite handle con soli diritti attributi, proteggendo gli hard link.
 
-Riproduzioni e correzioni sono nella [revisione cache/TIFF/RAW](../revisione-generale-2026-09-14.md#correzioni). Una persistenza saltata sotto contesa resta documentata nella [revisione serale](../revisione-continuata-2026-09-13.md#correzioni): non è qualificato il riuso completo per ogni sequenza.
+Riproduzioni e correzioni sono nella [revisione cache/TIFF/RAW](../revisioni-windows-2026-09.md#generale-correzioni). Una persistenza saltata sotto contesa resta documentata nella [revisione serale](../revisioni-windows-2026-09.md#serale-correzioni): non è qualificato il riuso completo per ogni sequenza.

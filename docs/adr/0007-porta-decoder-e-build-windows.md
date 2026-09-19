@@ -2,7 +2,7 @@
 
 **Seguito dell'audit:** [ADR 0009](0009-isolamento-worker-windows.md) descrive il nuovo avvio LPAC Windows; stato delle correzioni bitmap e verifiche in [stato e piano](../../STATO.md). Questo ADR conserva le decisioni e il perimetro del refactor iniziale.
 
-**Nota del 13 settembre 2026:** questo ADR registra il refactor iniziale con gate esterno invariato. Il successivo port locale ha introdotto `serve_confined` e concesso gli esterni Windows; questo testo non costituisce l'autorizzazione o la qualifica di quell'estensione. L'[audit prima di main](../revisione-pre-main.md) ha riprodotto accesso filesystem residuo e controlli colore saltati dal decoder esterno: le proprietà descritte sotto non valgono automaticamente per tutti gli ingressi aggiunti dopo il refactor.
+**Nota del 13 settembre 2026:** questo ADR registra il refactor iniziale con gate esterno invariato. Il successivo port locale ha introdotto `serve_confined` e concesso gli esterni Windows; questo testo non costituisce l'autorizzazione o la qualifica di quell'estensione. L'[audit prima di main](../revisioni-windows-2026-09.md#pre-main) ha riprodotto accesso filesystem residuo e controlli colore saltati dal decoder esterno: le proprietà descritte sotto non valgono automaticamente per tutti gli ingressi aggiunti dopo il refactor.
 
 Data: 10 settembre 2026. Stato: refactor applicato; nessuna piattaforma nuova qualificata.
 
