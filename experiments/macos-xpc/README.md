@@ -63,10 +63,10 @@ fornisce anche una restrizione candidata per i figli. Il gate completo rimane **
 `full_sandbox_gate_passed` resta `false` in entrambi i report. I binari di sviluppo su pipe mantengono
 la propria allowlist. L’incremento 0.1.1 ha integrato due servizi XPC distinti nel bundle;
 dalla 0.1.3 il bundle macOS ammette immagini esterne come Anteprima secondo
-[ADR 0004](../../docs/adr/0004-formati-esterni-e-pubblicazione.md), mantenendo aperto il gate completo.
+[ADR 0004](../../docs/isolamento-decoder-e-formati.md#adr-0004), mantenendo aperto il gate completo.
 
 Il decoder senza percorsi, la copia privata, due PID distinti e le prove di timeout/memoria
-sono descritti in `docs/adr/0002-xpc-decoder-r0.md` e nei report `xpc-integration-macos.json`
+sono descritti in `docs/isolamento-decoder-e-formati.md#adr-0002` e nei report `xpc-integration-macos.json`
 e `xpc-memory-growth-macos.json`. Restano da qualificare il firmatario, l’API di terminazione,
 le quote end-to-end, gli handle residui, il corpus avversario esteso e Windows reale.
 Il limite processi non limita heap/mmap/thread e la sandbox conserva l’autorità sul proprio

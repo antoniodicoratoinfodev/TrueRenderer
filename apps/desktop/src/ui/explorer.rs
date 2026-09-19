@@ -556,8 +556,10 @@ impl TrueRenderer {
             && let Some(branch) = self.browser.model.branches.get_mut(&path)
             && matches!(branch.state, ListingState::Ready | ListingState::Loading)
         {
-            branch.expanded = true;
-            self.browser.model.rebuild();
+            if !branch.expanded {
+                branch.expanded = true;
+                self.browser.model.rebuild();
+            }
             return;
         }
         self.browser.model.evict_collapsed();
@@ -599,10 +601,13 @@ impl TrueRenderer {
             }
         }
         if mode == PanelMode::Explorer {
-            self.service.filesystem.client.locations();
             self.browser.model.add_root(self.folder.clone());
-            self.expand_branch(self.folder.clone(), false);
+            // Switching tabs reuses the tree, including deliberately collapsed branches.
+            if !self.browser.model.branches.contains_key(&self.folder) {
+                self.expand_branch(self.folder.clone(), false);
+            }
             if !self.browser.restored_expansions {
+                self.service.filesystem.client.locations();
                 self.browser.restored_expansions = true;
                 // Saved expansions are hints: activate only roots now, descendants
                 // remain lazy until their parent is explicitly explored.
@@ -623,6 +628,7 @@ impl TrueRenderer {
     }
     pub(super) fn left_panel_contents(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
+        let mut requested_mode = None;
         // Dense, flat sidebar chrome, independent of image and toolbar styling.
         ui.spacing_mut().item_spacing = egui::vec2(6., 4.);
         ui.spacing_mut().button_padding = egui::vec2(6., 3.);
@@ -662,7 +668,9 @@ impl TrueRenderer {
                     } else {
                         PanelMode::Library
                     };
-                    self.panel_mode(selected, false);
+                    if selected != self.browser.session.mode {
+                        requested_mode = Some(selected);
+                    }
                 }
             }
         });
@@ -676,6 +684,13 @@ impl TrueRenderer {
                 self.browser.session.library_scroll = response.state.offset.y;
             }
             PanelMode::Explorer => self.explorer_contents(ui),
+        }
+        if let Some(mode) = requested_mode {
+            self.panel_mode(mode, false);
+            // Resolve the new panel width before presenting this frame; otherwise
+            // the new body is briefly painted inside the old panel geometry.
+            ui.ctx()
+                .request_discard("navigation tab changed panel geometry");
         }
     }
     pub(super) fn temporary_panel(&mut self, ctx: &egui::Context) {
@@ -1322,7 +1337,11 @@ impl TrueRenderer {
     pub(super) fn location_bar(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         egui::Panel::top("location-bar")
-            .frame(style::panel())
+            .frame(
+                egui::Frame::new()
+                    .fill(style::PANEL)
+                    .inner_margin(egui::Margin::symmetric(16, 6)),
+            )
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     if ui
@@ -1541,6 +1560,131 @@ mod tests {
             app.poll_browser(ctx);
             assert!(Instant::now() < deadline);
             std::thread::sleep(Duration::from_millis(5));
+        }
+    }
+    #[test]
+    fn tab_clicks_keep_header_geometry_widths_and_cached_tree() {
+        fn draw(
+            app: &mut TrueRenderer,
+            ctx: &egui::Context,
+            events: Vec<egui::Event>,
+        ) -> (Vec<(String, egui::Rect)>, f32, f32) {
+            fn text(shape: &egui::Shape, result: &mut Vec<(String, egui::Rect)>) {
+                match shape {
+                    egui::Shape::Text(t) => result.push((
+                        t.galley.job.text.clone(),
+                        t.galley.rect.translate(t.pos.to_vec2()),
+                    )),
+                    egui::Shape::Vec(shapes) => {
+                        for shape in shapes {
+                            text(shape, result);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            let mut bar_height = 0.;
+            let mut panel_width = 0.;
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1440., 940.),
+                    )),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    let top = ui.available_rect_before_wrap().top();
+                    app.location_bar(ui);
+                    bar_height = ui.available_rect_before_wrap().top() - top;
+                    app.sidebar(ui);
+                    panel_width = ui.available_rect_before_wrap().left();
+                },
+            );
+            output.textures_delta.clear();
+            let mut labels = vec![];
+            for shape in output.shapes {
+                text(&shape.shape, &mut labels);
+            }
+            (labels, bar_height, panel_width)
+        }
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.panel_mode(PanelMode::Explorer, false);
+        wait_tree(&mut app, &ctx);
+        // A cached, deliberately collapsed folder must stay collapsed on tab return.
+        app.browser.model.collapse(&app.folder);
+        let rows = app.browser.model.rows.as_ptr();
+        for language in [Language::English, Language::Italian] {
+            app.set_language(language);
+            app.panel_mode(PanelMode::Library, false);
+            for _ in 0..3 {
+                draw(&mut app, &ctx, vec![]);
+            }
+            let (labels, height, library_width) = draw(&mut app, &ctx, vec![]);
+            assert!(height <= 42., "Location bar too tall: {height}");
+            let headers: Vec<_> = ["Libreria", "Esplora"]
+                .iter()
+                .map(|key| {
+                    labels
+                        .iter()
+                        .find(|(s, _)| s == language.text(key))
+                        .unwrap()
+                        .1
+                })
+                .collect();
+            for step in 0..8 {
+                let index = if step % 2 == 0 { 1 } else { 0 };
+                let pos = headers[index].center();
+                let mut frame = None;
+                for pressed in [true, false] {
+                    frame = Some(draw(
+                        &mut app,
+                        &ctx,
+                        vec![
+                            egui::Event::PointerMoved(pos),
+                            egui::Event::PointerButton {
+                                pos,
+                                button: egui::PointerButton::Primary,
+                                pressed,
+                                modifiers: Default::default(),
+                            },
+                        ],
+                    ));
+                }
+                let (labels, _, width) = frame.unwrap();
+                assert_eq!(
+                    app.browser.session.mode,
+                    if index == 1 {
+                        PanelMode::Explorer
+                    } else {
+                        PanelMode::Library
+                    }
+                );
+                for (i, key) in ["Libreria", "Esplora"].iter().enumerate() {
+                    let rect = labels
+                        .iter()
+                        .find(|(s, _)| s == language.text(key))
+                        .unwrap()
+                        .1;
+                    assert_eq!(rect, headers[i], "Header moved on actual tab click");
+                }
+                if index == 0 {
+                    assert_eq!(width, library_width);
+                } else {
+                    assert!(
+                        width > library_width + 20.,
+                        "Independent Explorer width lost"
+                    );
+                }
+                assert_eq!(
+                    app.browser.model.rows.as_ptr(),
+                    rows,
+                    "Switch rebuilt cached rows"
+                );
+                assert!(!app.browser.model.branches[&app.folder].expanded);
+            }
         }
     }
     #[test]

@@ -50,7 +50,7 @@ Riferimenti verificati mediante lettura del repository in questa sessione:
 | [Impostazioni](../apps/desktop/src/cache/settings.rs) | `settings.json`, schema 2 e rifiuto dei campi sconosciuti; include cache, motori e lingua | Evitare di inserirvi implicitamente uno stato arbitrario dell'albero o di interferire con le bozze di Settings |
 | [Piattaforma](../crates/tr-platform/src/lib.rs) | Filtro estensioni distinto dalla decodifica effettiva | La visibilità di un file non certifica che il formato o il modello RAW siano decodificabili |
 
-La specifica generale già prevede albero pigro, preferiti, breadcrumb e accessibilità: [architettura](TrueRenderer-Architettura.md), §§5.4–5.6, 13.1–13.3, 14.1–14.6 e 16.5–16.6. Il [restyling corrente](progetto-restyling.md) mantiene strumenti in alto e cartella/conteggi in basso: questo progetto ne estende la navigazione senza ripristinare un'intestazione dentro l'area fotografica.
+La specifica generale già prevede albero pigro, preferiti, breadcrumb e accessibilità: [architettura](TrueRenderer-Architettura.md), §§5.4–5.6, 13.1–13.3, 14.1–14.6 e 16.5–16.6. Il [restyling corrente](../STATO.md#restyling-concluso) mantiene strumenti in alto e cartella/conteggi in basso: questo progetto ne estende la navigazione senza ripristinare un'intestazione dentro l'area fotografica.
 
 ## 3. Composizione dell'interfaccia
 
@@ -379,9 +379,9 @@ La radice dati è quella già risolta da `--data`/applicazione. Non introdurre h
 
 L'enumeratore usa solo nomi e metadati filesystem minimi. I byte delle immagini entrano nel broker/decode esistente; nessun EXIF, RAW, thumbnail della shell o preview di file generico viene interpretato nel widget.
 
-Sul Mac gli esterni restano ammessi soltanto nel bundle con i **due servizi XPC/App Sandbox**, secondo [ADR 0002](adr/0002-xpc-decoder-r0.md) e [ADR 0004](adr/0004-formati-esterni-e-pubblicazione.md). Il binario Mac fuori bundle mantiene l'allowlist e non ottiene nuove capacità grazie al pannello. Un errore XPC non produce fallback non isolato.
+Sul Mac gli esterni restano ammessi soltanto nel bundle con i **due servizi XPC/App Sandbox**, secondo [ADR 0002](isolamento-decoder-e-formati.md#adr-0002) e [ADR 0004](isolamento-decoder-e-formati.md#adr-0004). Il binario Mac fuori bundle mantiene l'allowlist e non ottiene nuove capacità grazie al pannello. Un errore XPC non produce fallback non isolato.
 
-Il repository descrive inoltre il percorso Windows LPAC verificato in [ADR 0009](adr/0009-isolamento-worker-windows.md): conservarne i controlli di confinamento effettivi, senza dedurre autorizzazioni dal semplice uso delle pipe o dalla presenza di un'estensione. Il navigatore non estende alcuna matrice di formati o sicurezza.
+Il repository descrive inoltre il percorso Windows LPAC verificato in [ADR 0009](isolamento-decoder-e-formati.md#adr-0009): conservarne i controlli di confinamento effettivi, senza dedurre autorizzazioni dal semplice uso delle pipe o dalla presenza di un'estensione. Il navigatore non estende alcuna matrice di formati o sicurezza.
 
 La cache delle directory del tree contiene metadati di navigazione, distinta dalla cache fp32 delle immagini. Solo una cartella realmente attivata entra nel normale ciclo di manutenzione/anteprime. Thumbnail, viewer, filmstrip e confronto continuano a condividere pipeline, quote, revisioni e provenienza; il tree non richiede anteprime né alimenta prefetch per rami espansi.
 
@@ -502,6 +502,7 @@ Scelte aperte dopo N0: adattatori nativi esatti e minimi OS per volumi/watch/pla
 
 ### 12.1 Decisioni per la prima implementazione
 
+- Le schede Libreria/Esplora condividono posizione e margini dell'intestazione; soltanto la larghezza ricordata del pannello può variare. Lo switch conserva l'albero e i rami compressi e completa il nuovo layout prima di presentarlo. La barra percorso usa un padding verticale di 6 punti per allinearsi alla densità delle barre superiori.
 - Estetica richiesta dal titolare: albero denso ispirato agli explorer degli IDE, con righe di circa 22 punti, rientri di 14 punti e guide gerarchiche, chevron di espansione, icone vettoriali per cartelle/immagini/file e selezione rettangolare blu tenue nel solo pannello laterale. Controlli piatti, scheda attiva sottolineata e margini ridotti; i tooltip mantengono i nomi completi. Le icone sono disegnate dal frontend, indipendenti dai glifi del font.
 - Due slot I/O complessivi condivisi da risoluzione percorsi, listing e scansioni; coda di 64 lavori e canali di quattro risposte con invio cancellabile. I thread non sono attesi alla chiusura se una syscall resta bloccata; questo non equivale a cancellare la syscall né a garantire progresso quando entrambi gli slot sono occupati.
 - Riserva navigazione di 64 MiB nel budget applicativo: 40 MiB per le voci dell'albero, 20 MiB stimati per la scansione fotografica e margine per messaggi/metadati. Limite massimo 100.000 voci: la quota byte può interrompere prima, con risultato parziale esplicito. Listing fino a 256 voci/128 KiB stimati per batch; osservazioni fotografiche fino a 16, per dare precedenza ai salvataggi fra batch.

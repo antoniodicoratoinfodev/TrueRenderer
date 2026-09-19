@@ -33,13 +33,12 @@ def relative_links(body, source, target):
 
 def preview_spec(target):
     sections = [spec_begin, "### E. Specifica integrata — anteprime, cache e prestazioni\n",
-        "Questa appendice integra per intero la specifica revisionata e ADR 0005–0006. "
+        "Questa appendice integra per intero la specifica revisionata e le sezioni ADR 0003/0005/0006. "
         "Le sezioni numerate nei testi seguenti sono riferimenti interni ai rispettivi documenti. "
         "Stato applicato, prove e requisiti aperti restano distinti. "
-        "Fonte modificabile: i tre documenti in `docs/`; aggiornare con `scripts/sync-docs.py`.\n"]
-    for source in (root / "docs/progetto-anteprime-cache-prestazioni.md",
-                   root / "docs/adr/0005-cache-cartella.md",
-                   root / "docs/adr/0006-anteprime-residenza-compute.md"):
+        "Fonte unica modificabile: `docs/progetto-anteprime-cache-prestazioni.md`; "
+        "aggiornare con `scripts/sync-docs.py`.\n"]
+    for source in (root / "docs/progetto-anteprime-cache-prestazioni.md",):
         body = relative_links(source.read_text(encoding="utf-8"), source, target)
         # Shift headings outside fences; keep examples and diagrams intact.
         fenced = False

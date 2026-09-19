@@ -8,7 +8,7 @@ La regola `-text` in `.gitattributes` conserva anche i file upstream con CRLF: G
 
 ## Licenza scelta
 
-TrueRenderer usa questi file sotto **CDDL-1.0**, una delle due opzioni che LibRaw offre. Il testo è in `LICENSE.CDDL`; `LICENSE.LGPL` è conservato perché fa parte della distribuzione originale, non perché sia l'opzione scelta. Le ragioni della scelta e gli obblighi che ne derivano sono in [ADR 0008](../../docs/adr/0008-libraw-licenza-e-collegamento.md).
+TrueRenderer usa questi file sotto **CDDL-1.0**, una delle due opzioni che LibRaw offre. Il testo è in `LICENSE.CDDL`; `LICENSE.LGPL` è conservato perché fa parte della distribuzione originale, non perché sia l'opzione scelta. Le ragioni della scelta e gli obblighi che ne derivano sono in [ADR 0008](../../docs/progetto-motori-raw.md#adr-0008).
 
 ## Cosa è incluso e cosa no
 

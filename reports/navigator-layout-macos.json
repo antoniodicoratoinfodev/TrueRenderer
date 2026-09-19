@@ -1,0 +1,116 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-19T21:16:13.375498+00:00",
+  "platform": "macOS-27.0-arm64-arm-64bit",
+  "machine": "arm64",
+  "commit": "42ebdbdfd40739304d0269ee30b062f60c53d294",
+  "worktree": "local navigator implementation; see STATO.md",
+  "bundle": "dist/TrueRenderer-navigator-compact.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "4c018c845eac32e33ed5c28b10320c647e3846a661b09f4eac7e619b80df12c6",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a1d748cde2c486138600cd9a3a824c3e020ea38e430b85e271827ff9827f2d39",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "bbfb901ea13c5e0266c2d206c0a3a5b0da1515a2a2c72bfe9eb1050b6c58bec3"
+  },
+  "passed": true,
+  "ui": {
+    "gpu_verified": true,
+    "layouts": [
+      {
+        "case": 0,
+        "passed": true,
+        "tree_height": 612.5,
+        "viewport": [
+          1440.0,
+          891.0
+        ]
+      },
+      {
+        "case": 1,
+        "passed": true,
+        "tree_height": 401.5,
+        "viewport": [
+          1100.0,
+          720.0
+        ]
+      },
+      {
+        "case": 2,
+        "passed": true,
+        "tree_height": 401.5,
+        "viewport": [
+          1440.0,
+          891.0
+        ]
+      },
+      {
+        "case": 3,
+        "passed": true,
+        "tree_height": 64.0,
+        "viewport": [
+          550.0,
+          360.0
+        ]
+      },
+      {
+        "case": 4,
+        "passed": true,
+        "tree_height": 64.0,
+        "viewport": [
+          550.0,
+          360.0
+        ]
+      },
+      {
+        "case": 5,
+        "passed": true,
+        "tree_height": 64.0,
+        "viewport": [
+          550.0,
+          360.0
+        ]
+      }
+    ],
+    "passed": true,
+    "scope": "Native macOS generated corpus; Library/Explorer, grid/viewer, IT/EN, 1440x940, 1100x720, 550x360 and 200% UI. No screen-reader, Windows, cloud, removable-volume, NAS or statistical latency qualification.",
+    "screenshots": 6
+  },
+  "evidence": "var/filesystem-browser/native-7gwhd8qh",
+  "additional_checks": {
+    "rustfmt": "passed",
+    "desktop_clippy_all_targets_deny_warnings": "passed",
+    "workspace_release_build": "passed",
+    "ui_regression_tests_passed": 14,
+    "tab_switch_regression": {
+      "test": "tab_clicks_keep_header_geometry_widths_and_cached_tree",
+      "pointer_click_switches": 16,
+      "languages": ["en", "it"],
+      "stable_tab_rectangles": true,
+      "independent_panel_widths_preserved": true,
+      "cached_rows_not_rebuilt": true,
+      "collapsed_branch_preserved": true,
+      "location_bar_height_at_most_points": 42
+    },
+    "six_native_layouts_visually_reviewed": true,
+    "preferences_smoke": {"passed": true, "screenshots": 12},
+    "xpc_integration": {
+      "passed": true,
+      "same_bundle_binary_hashes": true,
+      "production_fault_injection_rejected": true,
+      "full_sandbox_gate_passed": false
+    }
+  },
+  "public_screenshots": [
+    "reports/navigator-grid.png",
+    "reports/navigator-viewer.png",
+    "reports/navigator-compact.png",
+    "reports/navigator-preferences.png"
+  ],
+  "not_qualified": [
+    "Windows native UI/filesystem",
+    "VoiceOver/NVDA",
+    "NAS blocked syscalls",
+    "cloud providers",
+    "removable-volume identity across remount",
+    "100-sample latency/low-memory campaign"
+  ]
+}

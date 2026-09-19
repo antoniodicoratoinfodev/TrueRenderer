@@ -9,7 +9,7 @@ Fonte unica per stato corrente, prossime attività, caselle operative e registro
 - [Matrice dei requisiti e budget](#matrice-dei-requisiti-e-budget)
 - [Registro delle verifiche e degli incrementi](#registro-delle-verifiche-e-degli-incrementi)
 
-Specifica: [architettura](docs/TrueRenderer-Architettura.md). Evidenze dettagliate: [rapporti](reports/VERIFICA.md). Decisioni e progetti: [indice documentale](docs/README.md). Vincoli di lavoro: [AGENTS.md](AGENTS.md).
+Specifica: [architettura](docs/TrueRenderer-Architettura.md). Evidenze dettagliate: [rapporti](STATO.md#registro-delle-verifiche-e-degli-incrementi). Decisioni e progetti: [indice documentale](docs/README.md). Vincoli di lavoro: [AGENTS.md](AGENTS.md).
 
 ## Regola di aggiornamento
 
@@ -19,7 +19,7 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
-Il nuovo bundle Mac del navigatore è `dist/TrueRenderer-navigator.app`, separato dal precedente `dist/TrueRenderer-restyle.app`: suite completa, sei layout Esplora/Libreria e due servizi XPC verificati il 19 settembre. [Rapporto e limiti](reports/filesystem-browser-macos.json). La precedente campagna fotografica comprende 120 sviluppi D750 sui quattro motori e PNG 12/24/45 MP: non è stata ripetuta né attribuita al nuovo bundle. [Rapporto fotografico](reports/large-pressure-raw-macos.json). Windows: ultima suite registrata di 99 test ordinari + 8 integrazioni, pubblicata in `67146e3`; GUI e Nikon non ripetuti per gli ultimi fix. [Rapporto](reports/gamma-orientation-fixes-windows.json).
+Il bundle Mac più recente è `dist/TrueRenderer-navigator-compact.app`: barra percorso compatta, schede Esplora/Libreria stabili, 14 regressioni UI, sei layout nativi, dodici catture preferenze e due servizi XPC verificati il 19 settembre. [Rapporto e limiti](reports/navigator-layout-macos.json). La suite completa precedente appartiene al bundle `dist/TrueRenderer-navigator.app`, conservato separatamente: [rapporto](reports/filesystem-browser-macos.json). La precedente campagna fotografica comprende 120 sviluppi D750 sui quattro motori e PNG 12/24/45 MP: non è stata ripetuta né attribuita al nuovo bundle. [Rapporto fotografico](reports/large-pressure-raw-macos.json). Windows: ultima suite registrata di 99 test ordinari + 8 integrazioni, pubblicata in `67146e3`; GUI e Nikon non ripetuti per gli ultimi fix. [Rapporto](reports/gamma-orientation-fixes-windows.json).
 
 **Priorità:** investigare il superamento della memoria sui 45 MP Full: somma RSS 4.816.601.088 byte e footprint 4.296.512.936 byte con 4 GiB configurati. Pressione fisica OS, decode RAW ridotto/regionale e qualifica fotografica estesa restano aperti. Nessun gate R0–R4 è chiuso; Standard/Piena sono qualità di anteprima, non assurance Standard/Riferimento.
 
@@ -40,12 +40,50 @@ Il prossimo incremento deve investigare il superamento memoria misurato su 45 MP
 - Qualifica: colore/display, confronto fra motori con ritagli allineati, corpus autorizzato esteso, pressione memoria e latenze evento→frame. Nessun gate R0–R4 chiuso; Standard/Piena restano qualità di anteprima, non assurance Standard/Riferimento.
 
 
+## Riordino documentale — 19 settembre 2026
+
+Ulteriore accorpamento richiesto: specifiche e decisioni riunite direttamente in `docs/`, senza `adr/`. Sette ADR incorporati per argomento: 0003/0005/0006 nel progetto anteprime, 0008 nel progetto RAW, 0002/0004/0009 in isolamento decoder e formati. Sei file in meno rispetto alla precedente struttura; testi e vincoli conservati con ancore numerate. Aggiornati rimandi, istruzioni e sincronizzatore; stato resta qui, report e notice nelle rispettive sedi tecniche. Nessuna modifica applicativa o nuova qualifica.
+
+Verificato questo accorpamento: contenuto integrale dei sette ADR conservato salvo livelli dei titoli e percorsi dei link; 290 collegamenti locali validi e seconda sincronizzazione senza modifiche. Originale v1.2 e LICENSE invariati; negli avvisi di licenza aggiornato solo il rimando. Nelle architetture aggiornate le appendici generate e il solo link LibRaw esterno al blocco. Le vecchie sedi restano recuperabili da Git.
+
+Su richiesta del titolare, aggiornamenti e lavori conclusi restano soltanto qui. Eliminati sei Markdown: ADR 0001 e 0007, progetto restyling, revisioni Windows, campagne RAW e registro separato delle verifiche. Sintesi sotto; testi completi recuperabili da Git, rapporti JSON e prove negative conservati. Gli ADR restanti descrivono contratti ancora attivi, non liste di attività concluse. Nessuna nuova prova applicativa in questo riordino; gate e limiti aperti invariati.
+
+Verifica documentale: 287 collegamenti locali validi, sincronizzazione delle appendici idempotente, testo delle architetture fuori dai blocchi gestiti invariato; originale v1.2, LICENSE e NOTICE invariati. Nessun rapporto JSON storico, fotografia, catalogo o backup eliminato.
+
+<a id="prototipo-e-port"></a>
+
+### Prototipo e port conclusi
+
+Realizzati il prototipo Rust/egui/wgpu con corpus controllato, catalogo SQLite e annotazioni durevoli, quindi la porta `Decoder` comune e il primo port Windows. Il worker singolo iniziale è superato dai due XPC Mac e dal confinamento LPAC Windows; backend e licenze restano negli ADR 0002/0004/0008/0009. Il contratto decoder ancora valido è conservato in ADR 0009; toolkit, ICC, porte WorkingSpace/TileProvider e qualifica multipiattaforma restano aperti.
+
+<a id="restyling-concluso"></a>
+
+### Restyling concluso
+
+Applicati stile neutro, strumenti in alto, cartella/conteggi in basso, griglia fotografica, ispettore richiudibile e quattro schede preferenze con bozze separate dall'applicazione. Il viewer distingue qualità globale e override di sessione per foto; il cambio globale li azzera. Pixel fotografici non alterati dalla selezione, nomi lunghi con tooltip, identificatori stabili fra lingue e badge Anteprima conservati. Verificati layout IT/EN, finestra minima/200%, bozze e rendering nel [rapporto toolbar](reports/toolbar-macos.json); navigatore e barra compatta nel [rapporto aggiornato](reports/navigator-layout-macos.json). Riproduzione: test `ui::`, `--restyle-smoke` con corpus/catalogo separati e suite XPC; accessibilità e display non qualificati.
+
+<a id="revisioni-windows-concluse"></a>
+
+### Revisioni Windows concluse
+
+Corretti isolamento LPAC/quote, LibRaw 0.22.2, parsing delle preview, classificazione TIFF/RAW, provenienza, hard link e invalidazione sorgenti; poi selezione/zoom nelle preferenze, PNG cICP/gamma, alpha/colorimetria TIFF, fallback RAW, timestamp cache e orientamento per IFD. Ultima campagna: 99 test ordinari + 8 integrazioni; non attribuita automaticamente ai binari successivi. Evidenze audit→correzione: [iniziale](reports/pre-main-review-windows.json) → [fix](reports/pre-main-fixes-windows.json), [serale](reports/review-continuation-windows.json) → [fix](reports/review-followup-fixes-windows.json), [generale](reports/recheck-windows-2026-09-14.json) → [fix](reports/general-review-fixes-windows.json), [gamma/IFD](reports/additional-review-windows.json) → [fix](reports/gamma-orientation-fixes-windows.json). Restano installazione pulita, persistenza sotto contesa (errore 33), diagnostica PNG malformata/conflittuale, conversioni TIFF/ICC e qualifica estesa.
+
+<a id="campagne-raw-concluse"></a>
+
+### Campagne RAW concluse
+
+Esteso il motore proprio al modello esatto D40 e corretto il cambio motore durante scansione: 66/66 sviluppi su 22 NEF a ISO 200 e regressione D750, senza ampliare implicitamente la matrice camere ([rapporto Windows](reports/raw-engines-d40-windows.json)). Su Mac: 120 sviluppi D750 sui quattro motori dopo il fix heap LibRaw/XPC, nove confronti centrali, 240 azioni PNG 12/24/45 MP, 20 sotto pressione renderer e 40 RAW ([rapporto](reports/large-pressure-raw-macos.json)). Ritagli allineati solo per traslazione intera ±16 pixel: Apple/AHD non sono riferimenti della scena. Rimane il superamento memoria 45 MP Full indicato in apertura; mancano pressione OS, decode RAW ridotto, colore misurato e p95/p99. Riproduzione: `scripts/test-large-navigation.py`, `scripts/compare-raw-patches.py` e `--verify-raw-engines`, esclusivamente con corpus autorizzato e dati separati.
+
 ## Piano operativo
 
 ## Navigatore filesystem — implementazione del 19 settembre 2026
 
 ### Revisione estetica richiesta: explorer in stile IDE
 
+- [x] Correggere l'allineamento delle schede: margine comune di 8 punti in Libreria/Esplora, conservando le larghezze indipendenti. Lo switch viene completato nello stesso frame prima della presentazione e riusa rami/righe caricati, senza ricostruzione o nuova richiesta posizioni a ogni ritorno; i rami compressi restano compressi.
+- [x] Ridurre il padding verticale della barra percorso da 16 a 6 punti. Regressione con clic reali nelle due lingue: coordinate dei tab identiche attraverso 16 switch, larghezze distinte conservate, nessuna ricostruzione delle righe e altezza barra entro 42 punti.
+- [x] Riesaminare i Markdown dopo gli accorpamenti precedenti: mantenere separati specifiche anteprime, motori RAW, navigatore e composizione desktop; ADR e rapporti descrivono decisioni/prove differenti. Anche il breve progetto restyling conserva regole di griglia/viewer/preferenze non proprie del navigatore. Nessun altro file eliminato in questa revisione; copie architettura, originale v1.2, istruzioni, laboratorio e notice mantengono il loro scopo.
+- [x] Verificare il bundle con barra compatta: fmt, Clippy desktop, build release, 14 regressioni UI, sei layout nativi IT/EN/compatti/200%, dodici catture preferenze e integrazione XPC passati. Aggiornate le quattro catture pubbliche `reports/navigator-*.png` e aperto `dist/TrueRenderer-navigator-compact.app` con dati di prova separati. [Rapporto con hash e limiti](reports/navigator-layout-macos.json); nessuna qualifica statistica di latenza o chiusura dei gate.
 - [x] Compattare righe e margini, aggiungere guide gerarchiche, chevron e icone vettoriali cartella/immagine/file; selezione blu a riga intera, scheda attiva sottolineata e controlli piatti.
 - [x] Verificare Clippy, 13 regressioni UI e sei layout nativi IT/EN, compatti e 200%. Bundle separato `dist/TrueRenderer-navigator-ide.app`; [rapporto](reports/navigator-ide-macos.json).
 - [x] Completare dodici catture preferenze e aggiornare le tre immagini del README, aggiungendo il rimando al layout compatto. Immagini `reports/navigator-*.png` su corpus sintetico; screenshot storici conservati. Verifica XPC sul nuovo bundle passata e app aggiornata aperta con dati di prova separati. Restano i limiti di qualifica già elencati sotto.
@@ -61,7 +99,7 @@ Richiesta corrente del titolare: implementare il [progetto Esplora](docs/progett
 - [x] Eseguire `scripts/verify.sh --gui`: fmt, Clippy workspace con warning negati, build debug, 128 test ordinari e 10 integrazioni esplicite passati; due test fotografici privati esclusi. Sei controlli IPC, due regressioni Python, 24 segnali di ricampionamento e prova della superficie con otto schermate passati.
 - [x] Costruire la release e il bundle separato, verificare sei layout nativi IT/EN, Libreria/Esplora, griglia/viewer e 200%, ispezionare tutte le catture e ripetere XPC sul medesimo hash. Controllo automatico dell'albero dentro il viewport: almeno 64 punti nella finestra 550×360. [Rapporto](reports/filesystem-browser-macos.json).
 - [x] Provare un listing di 100.001 file sintetici: arresto esplicito alla quota byte prima del limite numerico, batch limitati, ordine terminale, zero cache/catalogo e crediti restituiti dopo shutdown. Test `hundred_thousand_entries_stop_explicitly_at_memory_quota`, eseguito separatamente con `--ignored`; non è una campagna di latenza né una prova NAS.
-- [x] Accorpare sei Markdown in due, conservando integralmente i testi salvo titoli/ancore/link: quattro revisioni in [revisioni Windows](docs/revisioni-windows-2026-09.md), D40 e grandi RAW in [campagne RAW](docs/verifiche-raw.md). Quattro file in meno, originali recuperabili da Git. Aggiornati indice, README, rimandi e appendici tramite sincronizzatore; script di controllo link/ancore passato. Originale v1.2, LICENSE, notice e vendor invariati.
+- [x] Accorpare sei Markdown in due, conservando integralmente i testi salvo titoli/ancore/link: quattro revisioni in [revisioni Windows](STATO.md#revisioni-windows-concluse), D40 e grandi RAW in [campagne RAW](STATO.md#campagne-raw-concluse). Quattro file in meno, originali recuperabili da Git. Aggiornati indice, README, rimandi e appendici tramite sincronizzatore; script di controllo link/ancore passato. Originale v1.2, LICENSE, notice e vendor invariati.
 
 Correzioni emerse nelle prove: glifi assenti dal font, nomi centrati nell'albero e pannello compatto senza spazio utile. Controlli ASCII, testo allineato a sinistra, finestra limitata al viewport e menu Preferiti/Recenti scorrevoli correggono i sei layout osservati. Primo tentativo della suite interrotto dall'assenza delle fixture Metal; generate con lo script del progetto, quindi suite completata. Il test TIFF nativo richiede l'esecuzione fuori dal sandbox aggiuntivo del terminale. Il link XPC continua a segnalare oggetti LibRaw compilati per macOS 27 rispetto al target 13: questa campagna su macOS 27/M4 non qualifica il minimo OS né una firma di rilascio.
 
@@ -123,7 +161,7 @@ Richiesta storica del 15 settembre: pianificare un navigatore di file/cartelle a
 - [x] Rivedere il README dopo la consegna: schermate aggiornate di viewer, griglia e preferenze, spiegazione dei selettori e istruzioni per il bundle separato; controllare immagini e collegamenti locali.
 - [x] Completare la ripresa e la consegna: correggere Esc nei popup senza uscire dal viewer, verificare il bundle finale con UI/pixel/XPC, recuperare rapporto e screenshot mancanti e aprire l'app aggiornata.
 - [x] Revisione richiesta dal titolare: allineare barra e Settings, mostrare motore applicato, spostare strumenti in alto e cartella/conteggi in basso; selettori espliciti Globale e Solo questa foto Standard/Piena; sette regressioni UI con clic reali egui, screenshot e verifiche del bundle in [rapporto](reports/toolbar-macos.json).
-- [x] Definire composizioni per griglia, viewer e preferenze; [progetto](docs/progetto-restyling.md).
+- [x] Definire composizioni per griglia, viewer e preferenze; [progetto](STATO.md#restyling-concluso).
 - [x] Centralizzare stile e gerarchia visiva; compattare barra, navigazione, miniature e strumenti del viewer.
 - [x] Organizzare ispettore in sezioni richiudibili e preferenze in quattro schede con azioni fuori dall'area scorrevole.
 - [x] Verificare bozze, comandi, italiano/inglese e layout alle dimensioni ridotte/200%; 12 screenshot preferenze e 8 di rendering, 11 regioni entro la soglia di 1 livello sRGB8.
@@ -188,7 +226,7 @@ Si sviluppa una verticale per volta. Ogni consegna contiene codice compilabile, 
 - [x] Eseguire test di dominio/colore/IPC/persistenza, build, lint e smoke test grafico; salvare i risultati reali.
 - [x] Aggiornare lo stato finale e specificare il prossimo incremento senza dichiarare conclusa la v1.
 
-**Verifica dell’incremento conclusa:** avvio del bundle dal Finder passato dopo il consenso macOS al Desktop; passata anche una copia con bundle e corpus indipendenti. Dettagli in `reports/VERIFICA.md`.
+**Verifica dell’incremento conclusa:** avvio del bundle dal Finder passato dopo il consenso macOS al Desktop; passata anche una copia con bundle e corpus indipendenti. Dettagli in `STATO.md` (registro e collegamenti ai rapporti JSON).
 
 ## Incremento successivo — prova XPC macOS
 
@@ -217,7 +255,7 @@ Completata la verticale interna: broker macOS, decoder riutilizzabile e due serv
 - [ ] Estendere i test negativi a input ostili, descrittori residui, output concorrente e quota di risorse.
 - [ ] Completare la qualifica della verticale Windows e le prove di display/accessibilità prima di chiudere R0.
 
-Decisione e limiti in `docs/adr/0002-xpc-decoder-r0.md`; evidenze in `reports/VERIFICA.md`. Per completare il gate XPC sul Mac restano la suite avversaria del bootstrap/ciclo di vita e la qualifica estesa della memoria end-to-end; l’ordine dell’incremento locale corrente è indicato in apertura. Nella 0.1.1 i PNG esterni restavano esclusi; la modifica del perimetro nella 0.1.3 è registrata in ADR 0004. Il gate completo della sandbox rimane aperto.
+Decisione e limiti in `docs/isolamento-decoder-e-formati.md#adr-0002`; evidenze in `STATO.md` (registro e collegamenti ai rapporti JSON). Per completare il gate XPC sul Mac restano la suite avversaria del bootstrap/ciclo di vita e la qualifica estesa della memoria end-to-end; l’ordine dell’incremento locale corrente è indicato in apertura. Nella 0.1.1 i PNG esterni restavano esclusi; la modifica del perimetro nella 0.1.3 è registrata in ADR 0004. Il gate completo della sandbox rimane aperto.
 
 ## Incremento 0.1.2 — fedeltà del ricampionamento e documentazione
 
@@ -272,7 +310,7 @@ Richiesta del titolare del 7 settembre: cache e temporanei accanto alle immagini
 
 Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la navigazione con cache RAM/SSD, scelta fra Anteprima Standard e Piena, limiti di memoria configurabili e uso intenso di CPU/GPU durante il lavoro utile. Specifica dettagliata: [progetto di anteprime, cache e prestazioni](docs/progetto-anteprime-cache-prestazioni.md), revisione 2 pubblicata nel commit `a2db2ab`, ora revisione 5 integrata nell’appendice E dell’architettura.
 
-**Stato: implementazione 0.1.5 disponibile; qualifica integrata aperta.** Baseline 0.1.4 conservata in `reports/preview-baseline-macos.json`; decisioni applicate e limiti in [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md). Anteprima Standard/Piena rimane distinta dai badge di pipeline Standard/Riferimento. Nessun gate R0–R4 è chiuso da questo incremento.
+**Stato: implementazione 0.1.5 disponibile; qualifica integrata aperta.** Baseline 0.1.4 conservata in `reports/preview-baseline-macos.json`; decisioni applicate e limiti in [ADR 0006](docs/progetto-anteprime-cache-prestazioni.md#adr-0006). Anteprima Standard/Piena rimane distinta dai badge di pipeline Standard/Riferimento. Nessun gate R0–R4 è chiuso da questo incremento.
 
 - [x] A, modelli: qualità/richieste, migrazione compatibile, budget/lease, ammissione prima delle allocazioni, preferenze RAM/GPU/CPU e adattamento all'alimentazione.
 - [x] A, baseline locale: conservare misure della build 0.1.4 senza confondere il caricamento dell'intera piramide con le nuove miniature autonome.
@@ -301,9 +339,9 @@ Richiesta del titolare, 7 settembre 2026: progettare prima di implementare la na
 - [x] Integrare l’intero progetto e ADR 0005–0006 nell’appendice E delle architetture della radice e di `docs/`; correggere percorsi e sincronizzazione, preservando il testo utente e il backup originale.
 - [ ] Eliminare `docs/progetto-anteprime-cache-prestazioni.md` al completamento dell'intera richiesta, dopo aver trasferito risultati e decisioni nel registro. Il documento è conservato perché restano requisiti aperti.
 
-Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `reports/VERIFICA.md` e `STATO.md`.
+Le caselle separano il codice verificato dalla qualifica ancora necessaria; non modificano i criteri del progetto per far risultare conclusa una fase parziale. Evidenze aggiornate in `STATO.md` (registro e collegamenti ai rapporti JSON) e `STATO.md`.
 
-**Licenza LibRaw, verifica storica dell'8 settembre:** la nota e le fonti sono conservate in [ADR 0008](docs/adr/0008-libraw-licenza-e-collegamento.md) e §20.1 dell'architettura. La build di quella campagna non incorporava LibRaw; quella attuale collega LibRaw 0.22.2. Inventario, notice e obblighi dell'artefatto effettivamente distribuito restano da verificare prima del rilascio.
+**Licenza LibRaw, verifica storica dell'8 settembre:** la nota e le fonti sono conservate in [ADR 0008](docs/progetto-motori-raw.md#adr-0008) e §20.1 dell'architettura. La build di quella campagna non incorporava LibRaw; quella attuale collega LibRaw 0.22.2. Inventario, notice e obblighi dell'artefatto effettivamente distribuito restano da verificare prima del rilascio.
 
 ## Esperimento locale — motori RAW selezionabili (12 settembre 2026)
 
@@ -315,7 +353,7 @@ Richiesta del titolare: progettare ed eseguire la pipeline sperimentale, affianc
 - [x] Verificare segnali sintetici, regressioni e RAW D750 su Windows; registrare i risultati: 32 casi analitici e 90 sviluppi completi, originali invariati. Superiorità generale non dimostrata.
 - [x] Provare selettore e ritorno al motore precedente nella finestra; confrontare la superficie con CPU. Rimosso il secondo dithering egui: 558.144 pixel delle quattro regioni entro un livello sRGB8, dopo un primo esito negativo a due livelli.
 - [x] Aggiornare stato, licenze locali e ripresa; sincronizzare le architetture preservando testo esterno ai blocchi e backup originale.
-- [x] Revisione richiesta e D40: correggere scansione revocata dal cambio motore, aggiungere il modello esatto e verificare 66 sviluppi, UI/scansione e regressione D750. [Dettagli](docs/verifiche-raw.md#nikon-d40).
+- [x] Revisione richiesta e D40: correggere scansione revocata dal cambio motore, aggiungere il modello esatto e verificare 66 sviluppi, UI/scansione e regressione D750. [Dettagli](STATO.md#campagne-raw-concluse).
 - [ ] Qualificare build/bundle macOS e XPC, confronto Apple e fedeltà cromatica sul target.
 
 ## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
@@ -449,7 +487,7 @@ Accorpati piano, avanzamento e ripresa in questo file; conservati caselle, gate,
 
 ### Quadro registrato il 16 settembre 2026
 
-Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubblicati in `67146e3`. Ultima suite Windows: **99 test ordinari + 8 integrazioni**, build debug/release, 18 casi sintetici per worker e controlli IPC/Python/ricampionamento. [Audit e correzioni gamma/orientamento](docs/revisioni-windows-2026-09.md#gamma-orientamento-correzioni), [rapporto con hash](reports/gamma-orientation-fixes-windows.json). GUI e Nikon non ripetuti per questi ultimi fix.
+Incremento Windows/LPAC, LibRaw 0.22.2, motori selezionabili e correzioni pubblicati in `67146e3`. Ultima suite Windows: **99 test ordinari + 8 integrazioni**, build debug/release, 18 casi sintetici per worker e controlli IPC/Python/ricampionamento. [Audit e correzioni gamma/orientamento](STATO.md#revisioni-windows-concluse), [rapporto con hash](reports/gamma-orientation-fixes-windows.json). GUI e Nikon non ripetuti per questi ultimi fix.
 
 La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 NEF nel carico a 2 GiB e bundle/XPC installato verificato. [Rapporto della baseline](reports/preview-navigation-continuation-macos.json). Il restyling del 15 settembre aggiunge una copia release separata e prove UI/corpus/XPC, senza attribuire a quel binario la campagna fotografica storica o una qualifica estesa dei nuovi motori RAW.
 
@@ -475,7 +513,7 @@ La campagna fotografica Mac storica del 9 settembre comprende: 71 test Rust, 30 
 
 **Aperto:** nei quattro casi 45 MP Full, a 4 GiB configurati, la somma RSS supera quota: massimo **4.816.601.088 byte**, footprint **4.296.512.936 byte**. Crediti di ammissione entro quota; le somme possono contare pagine condivise più volte. Il superamento è conservato come evidenza negativa e il gate memoria fisica resta aperto. Non sono qualificati pressione fisica OS, decode RAW ridotto/regionale, driver, altre fotocamere, target colore/ΔE00/ICC o p95/p99. Standard riduce il livello residente dopo sviluppo completo; nessun gate R0–R4 chiuso.
 
-Passati fmt/Clippy workspace, build release, **75 test Rust** (46 desktop, 24 worker, 5 renderer), regressione Python dell’allineamento, firma e XPC; nove test ignorati in questa corsa. Il test TIFF nativo passa fuori dal sandbox aggiuntivo del terminale. Aggiornato `dist/TrueRenderer-restyle.app`, precedente in `var/large-pressure-raw/before.app`. README e protocollo aggiornati; fotografie e ritagli restano privati. [Rapporto con hash](reports/large-pressure-raw-macos.json), [protocollo](docs/verifiche-raw.md#grandi-raw-macos).
+Passati fmt/Clippy workspace, build release, **75 test Rust** (46 desktop, 24 worker, 5 renderer), regressione Python dell’allineamento, firma e XPC; nove test ignorati in questa corsa. Il test TIFF nativo passa fuori dal sandbox aggiuntivo del terminale. Aggiornato `dist/TrueRenderer-restyle.app`, precedente in `var/large-pressure-raw/before.app`. README e protocollo aggiornati; fotografie e ritagli restano privati. [Rapporto con hash](reports/large-pressure-raw-macos.json), [protocollo](STATO.md#campagne-raw-concluse).
 
 ### Prosecuzione — cache e verifica Mac, 15 settembre 2026
 
@@ -509,7 +547,7 @@ Ripresa della sessione completata: recuperate le evidenze della revisione della 
 
 Seconda revisione richiesta dal titolare: Open e Settings coerenti e allineati, indicatore discreto del motore RAW applicato, strumenti viewer nella barra superiore e cartella/conteggi nella barra inferiore, senza duplicati centrali. Selettore globale distinto dal selettore Standard/Piena della foto corrente, con ritorno alla qualità globale e mantenimento della regola di azzeramento degli override al cambio globale. Riattivare Settings non scarta la bozza già aperta; il selettore globale non sovrascrive altre preferenze in bozza. Sette regressioni UI passate, inclusi clic su Open/Menu/Settings, layout bilingue a tre dimensioni e qualità bidirezionale; suite desktop a 42 passati, 1 fallimento cache già noto, 6 ignorati. Nuovi screenshot e controlli del bundle nel [rapporto della revisione](reports/toolbar-macos.json). Aggiornato lo stesso `dist/TrueRenderer-restyle.app`, con prima iterazione recuperabile in `var/restyle/first-iteration.app`; l'app storica `dist/TrueRenderer.app` resta invariata.
 
-Implementati stile neutro centralizzato, barra Apri/viste/ricerca/menu, navigazione compatta, celle più leggere con nomi completi ed ellissi, ispettore a sezioni richiudibili e anteprima duplicata inizialmente chiusa nel viewer. Preferenze separate in Generale, Anteprime e RAW, Prestazioni, Cache e dati; corpo scorrevole e azioni di applicazione/chiusura fuori dallo scorrimento. Barra compatta e ispettore flottante nello spazio ridotto, senza sovrapporre l'ispettore alle preferenze; badge Anteprima permanente, stati vuoti con azioni, indicazione dell'override Piena per foto. Traduzioni e README aggiornati. [Composizioni e criteri](docs/progetto-restyling.md).
+Implementati stile neutro centralizzato, barra Apri/viste/ricerca/menu, navigazione compatta, celle più leggere con nomi completi ed ellissi, ispettore a sezioni richiudibili e anteprima duplicata inizialmente chiusa nel viewer. Preferenze separate in Generale, Anteprime e RAW, Prestazioni, Cache e dati; corpo scorrevole e azioni di applicazione/chiusura fuori dallo scorrimento. Barra compatta e ispettore flottante nello spazio ridotto, senza sovrapporre l'ispettore alle preferenze; badge Anteprima permanente, stati vuoti con azioni, indicazione dell'override Piena per foto. Traduzioni e README aggiornati. [Composizioni e criteri](STATO.md#restyling-concluso).
 
 Verificati fmt, Clippy desktop con warning negati, quattro regressioni UI (incluse bozze/selezione/zoom e quattro schede × due lingue × tre dimensioni), 4 test app/renderer, 6 integrazioni desktop con worker e 2 test Python. Suite desktop ordinaria: 39 passati, 6 ignorati, stesso fallimento cache Unix sugli hard link già riprodotto sul commit base nella campagna di localizzazione. Build release e firma ad hoc passate; prove native delle preferenze, campionamento e XPC registrate nel [rapporto con hash](reports/restyle-macos.json). Artefatti completi in `var/restyle/`; solo schermate del corpus generato pubblicabili nel README. Copia pronta in `dist/TrueRenderer-restyle.app`; bundle precedente, launcher, database e fotografie dell'utente non sostituiti.
 
@@ -523,11 +561,11 @@ Verificati build desktop/worker, fmt e Clippy desktop con warning negati, cinque
 
 ### Implementato e verificato nelle campagne Windows
 
-- LPAC senza capacità e Job Object; controlli filesystem e limiti descritti in [ADR 0009](docs/adr/0009-isolamento-worker-windows.md).
-- Bilineare, AHD e TrueRenderer fp32; campagne D750/D40, selezione durante scansione e cache per ricetta. [Progetto RAW](docs/progetto-motori-raw.md), [D40](docs/verifiche-raw.md#nikon-d40).
-- Correzioni iniziali di parsing, quote, bitmap, sorgenti, dipendenze e runtime: [audit prima di main](docs/revisioni-windows-2026-09.md#pre-main).
-- Selezione/zoom con Applica e salva, PNG cICP e alpha TIFF: [revisione serale e correzioni](docs/revisioni-windows-2026-09.md#serale-correzioni).
-- Tag TIFF non supportati, fallback RAW coerente e timestamp/hard link cache: [ricontrollo e correzioni](docs/revisioni-windows-2026-09.md#generale-correzioni).
-- Gamma PNG distinta da sRGB e orientamento per IFD: [ultima revisione](docs/revisioni-windows-2026-09.md#gamma-orientamento-correzioni); ricetta cache `bitmap-gamma-ifd-v5`.
+- LPAC senza capacità e Job Object; controlli filesystem e limiti descritti in [ADR 0009](docs/isolamento-decoder-e-formati.md#adr-0009).
+- Bilineare, AHD e TrueRenderer fp32; campagne D750/D40, selezione durante scansione e cache per ricetta. [Progetto RAW](docs/progetto-motori-raw.md), [D40](STATO.md#campagne-raw-concluse).
+- Correzioni iniziali di parsing, quote, bitmap, sorgenti, dipendenze e runtime: [audit prima di main](STATO.md#revisioni-windows-concluse).
+- Selezione/zoom con Applica e salva, PNG cICP e alpha TIFF: [revisione serale e correzioni](STATO.md#revisioni-windows-concluse).
+- Tag TIFF non supportati, fallback RAW coerente e timestamp/hard link cache: [ricontrollo e correzioni](STATO.md#revisioni-windows-concluse).
+- Gamma PNG distinta da sRGB e orientamento per IFD: [ultima revisione](STATO.md#revisioni-windows-concluse); ricetta cache `bitmap-gamma-ifd-v5`.
 
-I conteggi e gli hash di ogni campagna restano nei [rapporti di verifica](reports/VERIFICA.md). Le evidenze negative sono conservate insieme alle correzioni, senza attribuire vecchie misure ai nuovi binari.
+I conteggi e gli hash di ogni campagna restano nei [rapporti di verifica](STATO.md#registro-delle-verifiche-e-degli-incrementi). Le evidenze negative sono conservate insieme alle correzioni, senza attribuire vecchie misure ai nuovi binari.

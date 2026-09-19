@@ -100,7 +100,7 @@ open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 
 Use `./scripts/verify.sh --gui` to include native presentation checks. Changes to the broker, decoder or bundle should always be followed by the XPC integration test on the newly built application.
 
-The separately built navigator preview is `dist/TrueRenderer-navigator-ide.app`. Its isolated layout probe can be repeated with `python3 scripts/test-filesystem-browser.py --bundle dist/TrueRenderer-navigator-ide.app --report reports/navigator-ide-macos.json`; [results and limitations](reports/navigator-ide-macos.json) identify the tested binaries.
+The separately built navigator preview is `dist/TrueRenderer-navigator-compact.app`. Its isolated layout probe can be repeated with `python3 scripts/test-filesystem-browser.py --bundle dist/TrueRenderer-navigator-compact.app --report reports/navigator-layout-macos.json`; [results and limitations](reports/navigator-layout-macos.json) identify the tested binaries.
 
 ### Windows development build
 
@@ -123,7 +123,7 @@ Keep `tr-worker.exe` beside `truerenderer.exe`; external decoding requires the c
 ./scripts/cargo-local.sh test --workspace --locked --offline
 ```
 
-The full macOS verification entry point is `./scripts/verify.sh`. Platform specific integration checks and the evidence behind technical claims are indexed in [reports/VERIFICA.md](reports/VERIFICA.md).
+The full macOS verification entry point is `./scripts/verify.sh`. Platform specific integration checks and the evidence behind technical claims are indexed in [STATO.md](STATO.md#registro-delle-verifiche-e-degli-incrementi), the single development and verification log.
 
 ## Local data
 

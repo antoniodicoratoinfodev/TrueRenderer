@@ -4910,7 +4910,7 @@ reali sostituiranno le ipotesi ancora aperte.*
 ### E. Specifica integrata — anteprime, cache e prestazioni
 
 
-Questa appendice integra per intero la specifica revisionata e ADR 0005–0006. Le sezioni numerate nei testi seguenti sono riferimenti interni ai rispettivi documenti. Stato applicato, prove e requisiti aperti restano distinti. Fonte modificabile: i tre documenti in `docs/`; aggiornare con `scripts/sync-docs.py`.
+Questa appendice integra per intero la specifica revisionata e le sezioni ADR 0003/0005/0006. Le sezioni numerate nei testi seguenti sono riferimenti interni ai rispettivi documenti. Stato applicato, prove e requisiti aperti restano distinti. Fonte unica modificabile: `docs/progetto-anteprime-cache-prestazioni.md`; aggiornare con `scripts/sync-docs.py`.
 
 
 ### TrueRenderer — progetto di anteprime, cache e prestazioni
@@ -4919,9 +4919,9 @@ Questa appendice integra per intero la specifica revisionata e ADR 0005–0006. 
 
 **Stato: specifica applicata in parte e verificata per incrementi; qualifica integrata aperta.** Standard/Piena sono qualità dell'Anteprima, non i badge di pipeline Standard/Riferimento. R0–R4 restano aperti. Gli originali esterni richiedono il bundle macOS XPC/App Sandbox secondo ADR 0004 oppure il worker Windows LPAC secondo ADR 0009; il percorso su pipe mantiene il corpus controllato. Dopo restyling e correzione cache, il primo probe comando→superficie del 15 settembre verifica selezioni e ritorni CPU/GPU, Standard/Full, con cache distinte (§12.1). Presentazione effettiva e qualifica evento→frame completa restano aperte.
 
-La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [stato e piano](STATO.md), [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md) e [verifiche](reports/VERIFICA.md).
+La tabella §1 descrive esplicitamente la **baseline storica 0.1.4**, commit `0c3ee2cc3224e35f377497eb5105d04b68a48f63`, comprendente `2dad0b2` e `a901942`. Le prescrizioni successive sono il contratto di progetto; non ogni requisito o numero obiettivo è già qualificato. Stato corrente in [stato e piano](STATO.md), [ADR 0006](docs/progetto-anteprime-cache-prestazioni.md#adr-0006) e [verifiche](STATO.md#registro-delle-verifiche-e-degli-incrementi).
 
-La fonte rimane questo file, insieme ad ADR 0005–0006; `scripts/sync-docs.py` ne integra l'intero contenuto nell'architettura della radice e in quella sotto `docs/`, con un rimando stabile a STATO.md. Sincronizzare solo quando cambiano queste fonti della specifica. Il backup originale v1.2 rimane immutato.
+La fonte unica è questo file, comprese le sezioni ADR 0003, 0005 e 0006; `scripts/sync-docs.py` ne integra l'intero contenuto nell'architettura della radice e in quella sotto `docs/`, con un rimando stabile a STATO.md. Sincronizzare solo quando cambiano queste fonti della specifica. Il backup originale v1.2 rimane immutato.
 
 ##### Esito della revisione tecnica
 
@@ -4935,7 +4935,7 @@ La fonte rimane questo file, insieme ad ADR 0005–0006; `scripts/sync-docs.py` 
 | GPU | Viewer compute e presentazione diretta disponibili, piramide CPU e decoder Apple richiesto software. Un fallimento compute con device sano permette CPU; perdere il device di presentazione richiede la ricreazione della finestra. |
 | Sorgenti cambiate | Monitor fuori UI e writer SQLite, ogni 500 ms sui file richiesti/residenti; invalidazione delle copie interessate e dei risultati tardivi. Su Unix il token comprende device/inode/ctime oltre a size/mtime; resta best-effort, con SHA completo al nuovo caricamento. |
 | Riconoscimento RAW | Corretto un bug trovato sui NEF Nikon D750: ImageIO identificava TIFF/miniatura. Probe e decode cercano un decoder RAW effettivo per i contenitori TIFF; il fingerprint cache cambia. Il report esige provenienza RAW e dimensioni native. |
-| Prove | Corpus sintetico e A/B del solo renderer già presenti; 71 test Rust e suite installata passati; prove native su sorgenti cambiate, recupero GPU, cancellazione della navigazione e 30 RAW reali autorizzati. Report e limiti effettivi in `reports/VERIFICA.md`; nessuna equivalenza con 1.000 RAW o p95 evento→frame. |
+| Prove | Corpus sintetico e A/B del solo renderer già presenti; 71 test Rust e suite installata passati; prove native su sorgenti cambiate, recupero GPU, cancellazione della navigazione e 30 RAW reali autorizzati. Report e limiti effettivi in `STATO.md` (registro e collegamenti ai rapporti JSON); nessuna equivalenza con 1.000 RAW o p95 evento→frame. |
 
 #### 1. Decisione e confronto con il codice attuale
 
@@ -5490,29 +5490,82 @@ Durante i futuri incrementi applicativi aggiornare soltanto [stato e piano](STAT
 | Confronto concreto con 1.000 RAW | §§1, 10, 12; baseline, scenari freddi/caldi e misure per la stessa qualità |
 | Progetto salvato prima dell'implementazione | Questo documento; checklist autonoma §13 e gate §12 ancora aperti |
 
-Le fonti API collegate descrivono capacità e vincoli delle piattaforme; formule, valori iniziali e sequenza degli incrementi sono scelte progettuali di TrueRenderer. Il riferimento normativo rimane [l'architettura corrente](docs/TrueRenderer-Architettura.md), in particolare §§1.2, 2.3, 5.3–5.4, 7.6, 10–12 e 19, con le decisioni di [ADR 0003](docs/adr/0003-campionamento-fisico-r0.md), [ADR 0004](docs/adr/0004-formati-esterni-e-pubblicazione.md) e [ADR 0005](docs/adr/0005-cache-cartella.md), che aggiorna la scelta della cache accanto agli originali.
+Le fonti API collegate descrivono capacità e vincoli delle piattaforme; formule, valori iniziali e sequenza degli incrementi sono scelte progettuali di TrueRenderer. Il riferimento normativo rimane [l'architettura corrente](docs/TrueRenderer-Architettura.md), in particolare §§1.2, 2.3, 5.3–5.4, 7.6, 10–12 e 19, con le decisioni di [ADR 0003](docs/progetto-anteprime-cache-prestazioni.md#adr-0003), [ADR 0004](docs/isolamento-decoder-e-formati.md#adr-0004) e [ADR 0005](docs/progetto-anteprime-cache-prestazioni.md#adr-0005), che aggiorna la scelta della cache accanto agli originali.
 
-### ADR 0005 — cache lossless e temporanei accanto alle immagini
+<a id="adr-0003"></a>
+
+#### ADR 0003 — campionamento alla risoluzione fisica
+
+Data: 6 settembre 2026. Versione app: 0.1.2. Decisione per il prototipo Anteprima; promozione Standard/Riferimento subordinata a §§10 e 19.3.
+
+##### Raccordo con la 0.1.5 — 9 settembre 2026
+
+Le descrizioni di sorgente/piramide condivisa, quote fisse e attesa sullo sfondo documentano la 0.1.2. [ADR 0006](docs/progetto-anteprime-cache-prestazioni.md#adr-0006) mantiene il grafo del filtro ma usa livelli autonomi, budget con lease, compute GPU e riuso/riproiezione del frame durante il raffinamento. Istogramma e campionatore indicano ora il livello residente; 1:1 richiede il dettaglio nativo Full. La suite corrente confronta anche CPU/GPU e le fixture EXIF, entro il proprio perimetro; qualifica completa di transizioni, display e prestazioni ancora aperta. Risultati aggiornati in [VERIFICA](STATO.md#registro-delle-verifiche-e-degli-incrementi).
+
+##### Problema osservato
+
+Il corpus `04_Frequenze_radiali.png` mostrava falsi dettagli e moiré in Adatta e nella griglia della 0.1.1. Il viewer applicava nearest alla texture sorgente a scala arbitraria; le miniature passavano da una riduzione area a 320 pixel e poi da un ulteriore ridimensionamento nearest, anche su Retina. La miniatura laterale poteva inoltre cambiare sorgente quando arrivava la decodifica intera. Screenshot della vecchia finestra acquisito prima della modifica; nessun cambiamento al generatore o ai PNG del corpus per nascondere il problema.
+
+##### Decisione
+
+- Tutte le viste condividono la stessa sorgente completa e la stessa piramide CPU lineare Rec.2020 fp32 premoltiplicata. Le priorità di decodifica restano separate dal parametro di riduzione; la UI richiede LOD 0 anche per le miniature del corpus.
+- Le dimensioni e le due coordinate del rettangolo vengono arrotondate alla griglia dei pixel fisici. Il motore produce esattamente quel raster: la texture finale è presentata texel-per-pixel, senza un secondo ridimensionamento. Nearest in questo ultimo trasferimento non seleziona o scarta campioni a una scala diversa.
+- A 1:1 allineato, anche con crop/pan intero, si copiano i campioni LOD 0 senza filtro. In ingrandimento opaco si usa Mitchell-Netravali B=C=1/3. Non si attiva nearest automaticamente oltre 200%.
+- Per riduzioni opache si usa Lanczos3 con supporto adattato e piramide a passi non superiori a 2×. I livelli hanno dimensioni `ceil(n/2)`; origine al bordo pixel e centri a `n+0.5`, estensione costante ai bordi con pesi rinormalizzati. Il livello è il primo con rapporto residuo ≤2 su entrambi gli assi; i rapporti usano le dimensioni effettive, comprese quelle dispari. Il caso esatto 2× è equivalente al livello precomputato successivo. Warp anisotropi generici non sono qualificati.
+- **Variante esplicita rispetto al Lanczos3 iniziale della proposta:** il supporto usa `scale_eff = s * (1 + 0.1 * clamp(s-1, 0, 1))`, con kernel `sinc(x/scale_eff) * sinc(x/(3*scale_eff))`. Il margine di banda cresce continuamente da zero a scala unitaria al 10% nella decimazione 2×; non modifica le dimensioni dell'immagine. È parte della versione `cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1`, non un cambiamento silenzioso del filtro v1 qualificato.
+- Motivazione quantitativa: il Lanczos3 senza margine lasciava RMS 0,025793 nel caso sinusoidale 0,317 cicli/pixel, 768→320, oltre la soglia prefissata 0,02. La versione scelta passa i casi senza abbassare la soglia. Il filtro composto può altrimenti piegare alias già nel primo livello della piramide. Il margine attenua anche parte della banda di transizione: il compromesso è dichiarato e viene misurata separatamente la conservazione del contrasto nella banda passante.
+- Per immagini con trasparenza: area in riduzione e triangolo in ingrandimento, stessi pesi non negativi per RGB premoltiplicato e alpha. Non si applicano lobi negativi ad alpha e non si nasconde colore trasparente con un clamp incoerente. Le unità di memoria non vengono riscritte in gamma prima del filtro.
+- Un thread di presentazione prepara i raster fuori dalla UI. Coda e richieste coalescenti limitate a 64; risultati obsoleti ignorati, identificatori sorgente monotoni per evitare riuso degli indirizzi; cache texture 64 voci/128 MiB e cache sorgenti/piramidi 64 voci/384 MiB. Durante un ricalcolo si attende il raster corretto, mostrando temporaneamente lo sfondo. Non è ancora il raffinamento progressivo v1 né una quota di memoria globale.
+- In zoom elevato si calcola solo la regione visibile, evitando raster enormi fuori viewport. Restano la quota R0 di 8.388.608 pixel e un massimo di 16.384 per asse di presentazione. Le coordinate di filtro sono f64; lo stato pan/zoom egui è ancora f32 e non è qualificato per gigapixel.
+- Il campionatore è etichettato **Sorgente LOD 0**: i suoi valori non pretendono di essere quelli del pixel filtrato del viewport. L'istogramma è della sorgente composta in sRGB, non del riquadro ridimensionato.
+
+##### Prove e limiti
+
+Quattro test Rust aggiunti: lettura esatta e crop con RGB negativo/oltre 1, costanti e dimensioni 1×N/N×1/dispari, alternanza bianco-nero che produce circa 188 sRGB in riduzione, alpha nascosto e rifiuto quote/NaN. Le prove CLI confrontano 24 sinusoidi con riferimenti analitici: RMS ≤0,02 oltre 1,5× Nyquist di uscita; rapporto di contrasto 0,95–1,05 sotto 0,25× Nyquist. La banda intermedia è osservata senza dichiararla superata come gate. Il corpus radiale è verificato bit-per-bit a 1:1 e salvato a cinque scale con un modello del vecchio Adatta nearest per confronto.
+
+Lo smoke nativo esteso produce otto schermate. Il confronto dei pixel delle schermate con il raster CPU controlla griglia a tre dimensioni, preview laterale, filmstrip e viewer 1:1/Adatta/37%, con soglia di un livello per canale a 8 bit. Il metadato registra rettangolo fisico, origine, passo e dimensione di ogni regione radiale interamente visibile; non si confrontano aree intenzionalmente tagliate dal clip. `reports/sampling-presentation-macos.json` contiene i risultati effettivi, non dedotti dal solo valore Retina 2×.
+
+Questi controlli non esauriscono §19.3. Restano alias 2D/Siemens/isotropia, overshoot ai bordi, confronto piramide/direct e CPU/GPU, transizioni temporali, orientamento EXIF, tile/cuciture, altri display/DPI e costo p95. La variante Lanczos deve essere rivista o sostituita con un'alternativa (ad esempio Kaiser con parametri fissati) se la suite estesa non rispetta le soglie. Non si clampa RGB nel working per nascondere overshoot; il solo clipping è in uscita sRGB8, come nel prototipo precedente. Nessun badge Standard/Riferimento viene abilitato.
+
+Una riduzione non può conservare tutte le frequenze della sorgente: il filtro deve attenuare quelle non rappresentabili dai pixel disponibili. I cerchi centrali della zone plate fanno parte dell'immagine originale; l'obiettivo è evitare nuovi motivi spuri, non eliminare i cerchi o produrre ovunque grigio uniforme. Gli screenshot ingranditi/ridotti da un altro programma possono introdurre propri artefatti. Il confronto numerico riguarda la superficie dell'app: compositore, profilo monitor e pannello fisico restano prove separate.
+
+##### Riproduzione
+
+```sh
+./scripts/verify.sh
+./scripts/build-macos.sh
+./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-resampling
+open -n -W dist/TrueRenderer.app --args --sampling-smoke
+./dist/TrueRenderer.app/Contents/MacOS/TrueRenderer --verify-sampling-screenshots
+```
+
+Le prove del bundle richiedono la sessione nativa macOS; la libreria dello smoke è separata in `var/smoke`. Risultati in `reports/resampling-macos.json`, `reports/sampling-presentation-macos.json` e `reports/smoke-macos.json`.
+
+Fonti primarie per la teoria del campionamento: [PBRT, Sampling Theory](https://www.pbr-book.org/4ed/Sampling_and_Reconstruction/Sampling_Theory) e [Image Reconstruction](https://www.pbr-book.org/4ed/Sampling_and_Reconstruction/Image_Reconstruction). I coefficienti, la scelta del margine e le soglie sopra sono decisioni del progetto, non garanzie attribuite al libro.
+
+<a id="adr-0005"></a>
+
+#### ADR 0005 — cache lossless e temporanei accanto alle immagini
 
 Data: 7 settembre 2026. Documento storico del formato v1; aggiornamento di raccordo 8 settembre 2026. Stato: 0.1.4 verificata; primo incremento pubblicato (`2dad0b2`), ottimizzazioni successive qualificate e pubblicate (`a901942`).
 
-#### Raccordo con l'implementazione corrente
+##### Raccordo con l'implementazione corrente
 
-Questo ADR conserva decisioni e misure della 0.1.4. Nella 0.1.5 il percorso interattivo usa artefatti autonomi v2, lettura separata e writer asincrono: [ADR 0006](docs/adr/0006-anteprime-residenza-compute.md) estende formato, residenza, budget, concorrenza e compute. V1/v2 condividono directory riconosciuta, lock e quota per cartella. Il vecchio percorso full-frame è ancora usato dal relativo harness di regressione. Le frasi seguenti sul decode con scrittura sincrona si riferiscono alla baseline 0.1.4, non alla consegna interattiva attuale.
+Questo ADR conserva decisioni e misure della 0.1.4. Nella 0.1.5 il percorso interattivo usa artefatti autonomi v2, lettura separata e writer asincrono: [ADR 0006](docs/progetto-anteprime-cache-prestazioni.md#adr-0006) estende formato, residenza, budget, concorrenza e compute. V1/v2 condividono directory riconosciuta, lock e quota per cartella. Il vecchio percorso full-frame è ancora usato dal relativo harness di regressione. Le frasi seguenti sul decode con scrittura sincrona si riferiscono alla baseline 0.1.4, non alla consegna interattiva attuale.
 
 Il formato v1 `.tvc`, il formato di record v2 e il futuro container tiled/gigapixel sono tre contratti distinti. I checksum rilevano corruzioni, senza autenticare dati riscritti da un attaccante. Token di filesystem e qualità Piena non promuovono una cache ad assurance Standard/Riferimento.
 
-##### Raccordo hard link — 15 settembre 2026
+###### Raccordo hard link — 15 settembre 2026
 
 Il lettore corrente consente file regolari con più hard link per tollerare la condivisione temporanea dei client di sincronizzazione; i record restano soggetti a tutte le verifiche di contenuto. Questo non autorizza scritture, aggiornamenti di timestamp o rimozioni. Corretto il percorso che usava la sola leggibilità per sostituire una voce invalida: la rimozione ricontrolla ora tipo e numero di link sul file aperto, sia per v1 sia per record v2 e temporanei. Una destinazione condivisa invalida conserva entrambi i nomi e fa saltare la scrittura; una valida può ancora essere riusata in sola lettura.
 
 La verifica Mac copre byte/mtime, nomi conservati, descrittore e blocchi v2, link aggiunti dopo la scansione e ritorno alla raccolta ordinaria dopo la loro rimozione esterna. Non è una garanzia atomica contro ogni sostituzione o creazione di link da processi non cooperanti tra controllo e unlink. File protetti possono restare sul disco oltre la quota eliminabile; non si attribuisce la qualifica Windows ai soli test Mac. Le frasi storiche seguenti sul rifiuto degli hard link vanno lette insieme a questo contratto corrente.
 
-#### Scopo autorizzato
+##### Scopo autorizzato
 
 Il titolare richiede una cartella di cache/temporanei dentro ogni cartella aperta, impostazioni di limite e pulizia, README inglese e pubblicazione su GitHub prima di ulteriori ottimizzazioni. Questa richiesta anticipa esplicitamente la cache accanto alle foto che §11.4 collocava nel post-v1. Le fotografie rimangono in sola lettura; si scrive esclusivamente nella sottocartella derivata `.truerenderer-cache`. Annotazioni, backup e preferenze rimangono nel percorso dati dell'app.
 
-#### Formato e identità
+##### Formato e identità
 
 `entries/<sha256>.tvc` conserva un header JSON bounded, tutti i livelli già calcolati della piramide RGBA fp32 little-endian, l'istogramma e un checksum SHA-256 dell'header e dei campioni. È lossless rispetto ai bit prodotti dal decoder/piramide corrente. Non introduce compressione JPEG, quantizzazione fp16 né un nuovo filtro. Il working space è Rec.2020 lineare con alpha premoltiplicata, come il percorso in RAM. Il formato è un prototipo full-frame, non il container tiled/gigapixel v1.
 
@@ -5520,7 +5573,7 @@ La chiave viene derivata da una tupla JSON versionata con digest completo della 
 
 I file cache non sono considerati fidati: magic, header massimo 64 KiB, numero/dimensioni dei livelli, lunghezza esatta, campioni finiti, alpha, istogramma e checksum vengono verificati prima dell'uso. Un errore è un miss e attiva il decoder normale. Il worker su pipe continua ad ammettere solo il corpus; una cache non abilita gli esterni fuori dal bundle XPC. Un hit disco ha provenienza distinta `Cache disco · fp32 · Anteprima`; non abilita Standard/Riferimento. Il checksum rileva corruzioni, non autentica dati contro un attaccante che possa riscrivere interamente la cache.
 
-#### File, quote e pulizia
+##### File, quote e pulizia
 
 - `.truerenderer-cache/OWNER` identifica la directory eliminabile del progetto. Una directory omonima non riconosciuta viene lasciata intatta e la cache non è abilitata lì.
 - `entries/` contiene solo artefatti conclusi; `tmp/` contiene scritture parziali con nome derivato dalla chiave. Sono esclusi da Git anche dentro il corpus.
@@ -5533,7 +5586,7 @@ I file cache non sono considerati fidati: magic, header massimo 64 KiB, numero/d
 
 Errori di quota, lettura/scrittura, readonly, lock o filesystem non bloccano il salvataggio delle annotazioni: la manutenzione manuale gira fuori dal writer SQLite e dalla UI. La manutenzione automatica all'apertura gira in background. Il backend persistente è verificato su macOS; Windows è ancora da implementare/qualificare.
 
-#### Prestazioni e limiti
+##### Prestazioni e limiti
 
 L'hit evita decoder e ricostruzione della piramide/istogramma, ma deve leggere e validare i campioni. Il fp32 non compresso può essere molto più grande della fotografia compressa. Il prototipo mantiene i limiti sorgente (64 Mi pixel), RAM/cache di ADR 0004 e renderer fisico di ADR 0003; non chiude il budget globale o «mai viewport vuoto».
 
@@ -5547,25 +5600,27 @@ Sulle stesse fixture e sullo stesso Mac, la mediana di cinque riusi scende da 0,
 
 La scrittura resta nel thread di decodifica prima della consegna dell'immagine. Scrittura differita con coda bounded, cache compressa/tiled, scheduler globale e memorie sotto pressione restano ulteriori passi.
 
-#### Verifiche
+##### Verifiche
 
 Cinque test Rust mirati: round-trip bit esatti inclusi valori RGB negativi/>1 e alpha, invalidazione per contenuto/pipeline, corruzione/troncamento, cancellazione senza pubblicazione parziale, LRU/scadenza e temporanei abbandonati, quote/spazio, impostazioni persistenti, directory non riconosciute, symlink/hardlink e lock dei reader. Tre test aggiuntivi coprono vettori SHA-256 noti anche a confini di blocco, rifiuto di uno snapshot esterno su pipe e decodifica dei byte catturati dopo una modifica del file originale. Totale workspace: 40 test passati. Restano fuzzing, power-fault reale, filesystem remoti e altri OS.
 
-`--verify-cache` usa solo tre immagini generate del progetto: JPEG 12 MP, DNG Bayer e PNG 16 bit. Una corsa con cache applicativa fredda e cinque calde; confronta ogni bit di ogni livello e l'istogramma, verifica l'assenza di nuovi job decoder nei riusi e gli originali invariati. Il cache OS non viene svuotato: non è un benchmark p95. `--settings-smoke` acquisisce il pannello delle impostazioni. Esiti effettivi in `reports/cache-macos.json`, `reports/cache-settings-macos.json` e `reports/VERIFICA.md`.
+`--verify-cache` usa solo tre immagini generate del progetto: JPEG 12 MP, DNG Bayer e PNG 16 bit. Una corsa con cache applicativa fredda e cinque calde; confronta ogni bit di ogni livello e l'istogramma, verifica l'assenza di nuovi job decoder nei riusi e gli originali invariati. Il cache OS non viene svuotato: non è un benchmark p95. `--settings-smoke` acquisisce il pannello delle impostazioni. Esiti effettivi in `reports/cache-macos.json`, `reports/cache-settings-macos.json` e `STATO.md` (registro e collegamenti ai rapporti JSON).
 
-#### Raccordo Windows — 14 settembre 2026
+##### Raccordo Windows — 14 settembre 2026
 
 Accorpato dal primo piano Windows: la directory cache è mantenuta aperta senza condivisione di cancellazione; l'ultimo componente viene controllato per reparse point, i nomi escludono anche `:`, gli hard link sono rifiutati e la pubblicazione non sovrascrive destinazioni inattese. Gli antenati sopra la radice della cache non sono fissati come con le operazioni Unix relative al descrittore: il limite resta esplicito.
 
 I payload consentono condivisione di cancellazione per mantenere utilizzabile un handle già aperto durante la raccolta. La contesa Windows `ERROR_LOCK_VIOLATION` viene normalizzata come condizione ritentabile. Identità del file e ChangeTime contribuiscono all'osservazione delle sorgenti; gli hit cache aggiornano il timestamp tramite handle con soli diritti attributi, proteggendo gli hard link.
 
-Riproduzioni e correzioni sono nella [revisione cache/TIFF/RAW](docs/revisioni-windows-2026-09.md#generale-correzioni). Una persistenza saltata sotto contesa resta documentata nella [revisione serale](docs/revisioni-windows-2026-09.md#serale-correzioni): non è qualificato il riuso completo per ogni sequenza.
+Riproduzioni e correzioni sono nella [revisione cache/TIFF/RAW](STATO.md#revisioni-windows-concluse). Una persistenza saltata sotto contesa resta documentata nella [revisione serale](STATO.md#revisioni-windows-concluse): non è qualificato il riuso completo per ogni sequenza.
 
-### ADR 0006 — anteprime autonome, ammissione e compute
+<a id="adr-0006"></a>
+
+#### ADR 0006 — anteprime autonome, ammissione e compute
 
 Data: 8 settembre 2026. Stato: implementazione 0.1.5; qualifica integrata del progetto ancora aperta.
 
-#### Decisione
+##### Decisione
 
 Estendere ADR 0003–0005 con livelli lineari autonomi. La qualità dell'anteprima (`Standard`/`Full`) resta separata dall'assurance `Preview`; nessun badge della futura pipeline Standard/Riferimento viene abilitato. Nuove configurazioni partono da Standard; la migrazione riconosce impostazioni o libreria preesistenti prima di crearle e conserva Full e i limiti disco precedenti. Un file impostazioni danneggiato viene conservato e il recupero è segnalato.
 
@@ -5573,7 +5628,7 @@ Standard conserva un derivato fino a 2048 pixel di lato. Full conserva il sottoi
 
 `ImageLevels` possiede una coda di livelli senza riferimento alla sorgente più grande. Richieste compatibili contemporanee della stessa revisione condividono lo sviluppo; i derivati piccoli vengono staccati e le allocazioni uguali condivise. Coefficienti, coordinate f64, ordine degli accumuli e policy alpha restano quelli di ADR 0003. Rayon 1.11.0 fornisce un pool applicativo comune; il percorso arm64 usa NEON f64 senza FMA. Il limite sui thread applicativi non limita internamente i codec di sistema.
 
-#### Memoria e code
+##### Memoria e code
 
 Un budget condiviso ammette snapshot, letture, raster, scratch e presentazione prima delle allocazioni pesanti. Include un'allowance iniziale di 384 MiB per app, contesti persistenti e infrastruttura device, oltre agli incrementi dei job. È una stima da qualificare e non un tetto imposto dal kernel. Gli snapshot hanno anche un sottolimite di un terzo del budget; un writer opzionale trattiene al massimo 64 MiB di livelli e prenota scratch separatamente. Gli Arc dei campioni possiedono il lease; spostare il risultato fra code non duplica i crediti globali.
 
@@ -5583,13 +5638,13 @@ Su macOS una dispatch source osserva MEMORYPRESSURE. In Warn/Critical si sospend
 
 La riduzione dei limiti si applica alle nuove ammissioni, mentre i buffer già utilizzati dalla GPU mantengono i crediti fino al completamento. La UI distingue una riduzione in corso e segnala un'operazione che non entra in memoria. Il sistema non promette un picco RSS istantaneo uguale al valore del controllo.
 
-#### Persistenza
+##### Persistenza
 
 Stessa directory `.truerenderer-cache`, marker, lock, nomi gestiti e quota di ADR 0005. I record v2 hanno SHA-256, lunghezze esatte e payload fp32 lossless massimo di 4 MiB. Il descrittore viene pubblicato dopo i blocchi. Scritture e temporanei restano protetti dal lock esclusivo; la preparazione dei record è esterna al lock, acquisito per gruppi limitati a circa 4 MiB. Quote e presenza dei blocchi precedenti sono ricontrollate a ogni acquisizione; non si riusa una scansione dopo aver rilasciato il lock. Writer e GC cedono precedenza ai lettori locali in attesa con attesa limitata e cancellabile. Una seconda istanza può espellere un blocco prima della pubblicazione: il writer abbandona l'operazione opzionale, senza dichiararla completa.
 
 Il lettore verifica prima lo snapshot sorgente completo e poi i byte copiati dei record. `Busy`, `Missing`, `Invalid`, `Disabled` e limite memoria restano distinti; la contesa ha retry limitato a 200 ms. La scansione delle quote legge i metadati rispetto al descrittore della directory senza seguire link, evitando aperture dei payload; la pubblicazione aggiorna la scansione già protetta dallo stesso lock, senza ripeterla per le sole statistiche. V1 viene riusata solo con fingerprint esatto e prenotazione per la lettura completa. Non è prevista una conversione massiva delle cache di altre versioni. Il GC comprende v1/v2, orfani e temporanei e protegge il minimo recuperabile per miniature; il vecchio GC mantiene comunque sicurezza e quota, non la nuova preferenza di residenza.
 
-#### Compute e decoder
+##### Compute e decoder
 
 Il viewer usa coefficienti canonici CPU, due pass compute separabili e conversione/composizione SDR in WGSL. Pipeline e input compatibili sono riutilizzati; la texture finale viene registrata direttamente nel renderer egui, senza readback per frame. Input e scratch fuori capability o quota producono fallback CPU registrato. Automatico usa la GPU verificata per richieste sufficientemente grandi; il confronto numerico del renderer avviene prima dell'abilitazione. I report di performance distinguono questa elaborazione dal tempo evento-utente→presentazione.
 
@@ -5597,7 +5652,7 @@ Core Image riutilizza il contesto richiesto software con intermedi disabilitati.
 
 La preparazione e l'encoding compute avvengono sul worker, ma i submit alla coda condivisa avvengono esclusivamente sul thread UI. Un submit concorrente a `Surface::configure` causava un errore di validazione wgpu riprodotto durante gli avvii nativi. La correzione serializza anche il controllo iniziale GPU prima del loop della finestra. La cancellazione prima del submit libera subito il lavoro mai inviato; dopo il submit i lease rimangono fino alla callback di completamento. Lo shutdown attende la fine dell'encoder e il completamento GPU con timeout. La suite lifecycle ripete avvii e transizioni senza ritentare i fallimenti.
 
-#### Revisione applicativa dell'8–9 settembre 2026
+##### Revisione applicativa dell'8–9 settembre 2026
 
 **Invalidazione delle sorgenti residenti.** Un monitor separato dalla UI e dal writer SQLite osserva ogni 500 ms soltanto file richiesti e residenti. Su Unix il token comprende device/inode, size, mtime e ctime con nanosecondi; cancellazioni e file non disponibili hanno uno stato distinto. Una modifica invalida gli artefatti della foto e le relative presentazioni, incrementa l'epoca dei decode e scarta i risultati precedenti; il ripristino riabilita il caricamento. Annotazioni, selezione e override non vengono azzerati. Si rimuove la vecchia immagine con indicazione esplicita; non si mostra un frame della revisione precedente come corrente. La nuova lettura esegue sempre snapshot/SHA nel broker. Il polling rimane best-effort, non un watcher completo del catalogo né una revisione coerente sotto writer arbitrari; una syscall su volume remoto può ritardare l'osservazione.
 
@@ -5607,7 +5662,7 @@ La preparazione e l'encoding compute avvengono sul worker, ma i submit alla coda
 
 **Budget sui RAW reali, prima della continuazione.** Lo sviluppo nativo full-frame prenotava `64 × pixel + 128 MiB`, oltre a `2 × byte sorgente + 1 MiB` per snapshot e allowance base 384 MiB. Alcuni NEF da circa 24 MP non entravano quindi nel default di 2 GiB anche senza perdite di crediti; il rifiuto era esplicito e precedente al decode. La prima prova completa usava un budget manuale di test di 3 GiB, senza cambiare le preferenze dell’utente. I report storici `preview-*-before-phases-*.json` conservano questo esito; la correzione e la misura corrente sono descritte sotto.
 
-#### Continuazione della revisione: durata dei buffer e report
+##### Continuazione della revisione: durata dei buffer e report
 
 Il broker rilascia il proprio riferimento ai byte compressi appena terminato l'invio; il probe mantiene solo lo snapshot condiviso necessario al successivo decode. Nel worker `native::decode_backend` chiude già l'handle nativo prima di restituire il raster; `serve_with_policy` ora libera anche i byte compressi prima di trasferire il raster. Non cambia la ricetta, il formato fp32, il protocollo o la copia privata del broker.
 
@@ -5617,9 +5672,9 @@ I decode che richiedono più della metà del budget di lavoro disponibile dopo l
 
 I report RAW, memoria e regressioni native ora partono da `passed: false`; una prova interrotta resta incompleta e un errore non lascia un vecchio successo come risultato corrente. I fallimenti del carico invalidano anche la prova memoria, pur quando il picco misurato è basso. Il report memoria include exit code, timeout, campioni mancanti, dettaglio dei processi al picco e hash dei quattro binari provati. Ogni misura avvia una copia univoca del bundle: tutte le sue istanze XPC, incluse quelle in riciclo, sono conteggiate, mentre altre app già aperte da un diverso percorso non appartengono al carico. Questo corregge la contaminazione da un’altra istanza rilevata nella prova estesa; non elimina processi del carico per rientrare nella soglia. I percorsi fotografici e i dettagli delle eccezioni rimangono nei log locali.
 
-La prima prova isolata dopo la correzione per fasi passava a 2 GiB con 30 NEF Nikon D750: 60 coppie di miniature fredde/calde Standard/Piena bit-exact, 30 riaperture senza decode, tre esempi di dettaglio nativo e due richieste fredde simultanee. Footprint aggregato massimo 2.100.284.608 byte, RSS 2.066.481.152 byte, massimo tre processi; zero campioni incompleti, originali invariati e crediti di lavoro azzerati allo shutdown. Il massimo intervallo di campionamento è 355 ms: la misura non esclude picchi più brevi. Un limite di test di 512 MiB produce invece un rifiuto sicuro e report negativi. Riferimenti e identità dei binari in `reports/VERIFICA.md`.
+La prima prova isolata dopo la correzione per fasi passava a 2 GiB con 30 NEF Nikon D750: 60 coppie di miniature fredde/calde Standard/Piena bit-exact, 30 riaperture senza decode, tre esempi di dettaglio nativo e due richieste fredde simultanee. Footprint aggregato massimo 2.100.284.608 byte, RSS 2.066.481.152 byte, massimo tre processi; zero campioni incompleti, originali invariati e crediti di lavoro azzerati allo shutdown. Il massimo intervallo di campionamento è 355 ms: la misura non esclude picchi più brevi. Un limite di test di 512 MiB produce invece un rifiuto sicuro e report negativi. Riferimenti e identità dei binari in `STATO.md` (registro e collegamenti ai rapporti JSON).
 
-#### Continuazione navigazione del 9 settembre
+##### Continuazione navigazione del 9 settembre
 
 La revoca del dominio rimane distinta dall’abbandono di una vista. Snapshot/hash/cache e attesa dei crediti controllano anche la domanda corrente; un lavoro annullato non acquisisce nuova memoria neppure quando sarebbe disponibile. Prima e dopo le chiamate native si rivaluta se esistono ancora consumatori della sorgente; la cancellazione dovuta alla vista non termina il processo durante la chiamata. Rimangono attivi shutdown/revoca del dominio e gli arresti per timeout, errore di protocollo o quota memoria del broker. Il cambio qualità/edge della stessa sorgente mantiene il lavoro full-frame condivisibile. Questo criterio andrà ristretto alle capability effettive prima di introdurre un decoder Standard ridotto.
 
@@ -5627,19 +5682,19 @@ La cancellazione osservata resta valida fino alla chiusura del tentativo: un rit
 
 La suite della continuazione navigazione registra 71 test Rust e le verifiche native del bundle passate. L’ultima misura isolata sui 30 NEF a 2 GiB ha footprint massimo 2.018.970.672 byte e RSS 1.965.047.808 byte, 7.042 campioni completi e intervallo massimo 54,63 ms; originali invariati, zero decode alla riapertura e zero crediti residui. Questa prova è successiva a quella da 2.100.284.608 byte descritta sopra; non è un A/B. Codice e report sono inclusi in `10123b5`. [Riepilogo e identità dei binari](reports/preview-navigation-continuation-macos.json).
 
-#### Copertura provvisoria del viewer — 15 settembre 2026
+##### Copertura provvisoria del viewer — 15 settembre 2026
 
 Il presenter può conservare un frame più ampio per vista, foto, digest, motore e dimensioni sorgente, scegliendo durante il raffinamento quello con maggiore sovrapposizione geometrica. Il frame facoltativo mantiene i propri lease, senza nuove prenotazioni: massimo due complessivi, entro un quarto dei budget globale e GPU e nel limite di 64 frame. Non viene promosso a risultato esatto; il raster richiesto deve comunque essere calcolato.
 
 Invalidazione, cambio compute, pressione, riduzione quota e necessità di ammissione renderer/decoder possono eliminare questa riserva. I crediti ritirati restano contabilizzati fino al completamento previsto dalla coda. Se manca una rappresentazione ampia compatibile o la quota la espelle, la copertura può restare parziale; non si inventano pixel e non si garantisce continuità universale o un tetto RSS.
 
-#### Prova grandi immagini e riserva sotto pressione — 15 settembre 2026
+##### Prova grandi immagini e riserva sotto pressione — 15 settembre 2026
 
 Le transizioni su PNG 12/24/45 MP verificano livelli residenti Standard ridotti, recupero del livello zero e 1:1 esatto. Il decode iniziale resta completo. I livelli oltre capability GPU ricadono sulla CPU dichiarandolo; il writer può non conservare i Full troppo grandi. Con pressione renderer iniettata la riserva viene espulsa e la copertura può diventare parziale, ma la traccia termina con raster corretti.
 
-La quota di ammissione non è ancora un limite fisico qualificato: su 45 MP Full, con 4 GiB configurati, la somma RSS arriva a 4.816.601.088 byte e il footprint a 4.296.512.936 byte. I crediti rimangono entro quota; la somma RSS può contare pagine condivise più volte. Il superamento resta aperto, senza sottrarre processi o attribuire i picchi ai soli driver. A 1536 MiB le due tracce di pressione restano entro la quota campionata; a 512 MiB il decode RAW viene rifiutato esplicitamente e restituisce i crediti. [Protocollo](docs/verifiche-raw.md#grandi-raw-macos).
+La quota di ammissione non è ancora un limite fisico qualificato: su 45 MP Full, con 4 GiB configurati, la somma RSS arriva a 4.816.601.088 byte e il footprint a 4.296.512.936 byte. I crediti rimangono entro quota; la somma RSS può contare pagine condivise più volte. Il superamento resta aperto, senza sottrarre processi o attribuire i picchi ai soli driver. A 1536 MiB le due tracce di pressione restano entro la quota campionata; a 512 MiB il decode RAW viene rifiutato esplicitamente e restituisce i crediti. [Protocollo](STATO.md#campagne-raw-concluse).
 
-#### Qualifica aperta
+##### Qualifica aperta
 
 I report sotto `reports/preview-*` descrivono prove realmente eseguite, con soglie e scope. Restano il corpus autorizzato di 1000 RAW reali e sottoinsiemi 12/24/45 MP, la latenza evento→frame con p95/p99 e confronti indipendenti, la contabilità dei driver oltre l'attribuzione ai processi, pressione fisica/reset dei driver e la matrice di display/driver e altri target. Il corpus di 1000 Bayer distinti generati serve al catalogo e alle code e non sostituisce questi casi. R0–R4 restano aperti.
 <!-- TR_PREVIEW_SPEC_END -->
