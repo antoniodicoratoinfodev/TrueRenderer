@@ -15,6 +15,7 @@ use tr_core::{
     provider::ImageLevels,
 };
 
+mod explorer;
 pub(crate) mod navigation;
 mod preferences;
 mod style;
@@ -40,6 +41,7 @@ pub struct Startup {
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
+    browser: explorer::Explorer,
     navigation_probe: Option<navigation::Probe>,
     state: State,
     service: Service,
@@ -120,6 +122,7 @@ impl TrueRenderer {
         worker: PathBuf,
         startup: Startup,
     ) -> Self {
+        let root = root.canonicalize().unwrap_or(root);
         let Startup {
             navigation,
             smoke,
@@ -197,6 +200,7 @@ impl TrueRenderer {
         let folder = root.join("corpus");
         let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
+            browser: explorer::Explorer::new(&data),
             navigation_probe: navigation.then(navigation::Probe::new),
             state: State::default(),
             cache_settings: service.cache.settings(),
@@ -361,14 +365,7 @@ impl TrueRenderer {
             "pending":self.state.pending.len()})
     }
     fn open_path(&mut self, path: PathBuf) {
-        if path.is_dir() {
-            self.pending_selection = None;
-            self.open_folder(path);
-        } else if let Some(folder) = path.parent() {
-            let folder = folder.to_path_buf();
-            self.pending_selection = path.canonicalize().ok();
-            self.open_folder(folder);
-        }
+        self.navigate(path, Some(ViewMode::Preview));
     }
     fn request(&mut self, request: Request) -> bool {
         if self.service.high.try_send(request).is_err() {
@@ -379,6 +376,16 @@ impl TrueRenderer {
         }
     }
     fn open_folder(&mut self, folder: PathBuf) {
+        self.navigate(folder, None);
+    }
+    fn activate_folder(&mut self, folder: PathBuf) {
+        let targeted_hidden = self.pending_selection.as_ref().is_some_and(|path| {
+            path.file_name()
+                .is_some_and(|name| name.to_string_lossy().starts_with('.'))
+        });
+        self.request(Request::ScanHidden(
+            self.browser.model.show_hidden || targeted_hidden,
+        ));
         self.rebuild.clear();
         self.rebuild_total = 0;
         self.generation += 1;
@@ -406,11 +413,15 @@ impl TrueRenderer {
         self.folder = folder.clone();
         self.scanning = self.request(Request::Scan {
             folder,
-            generation: self.generation,
+            generation: self.browser.scan,
         });
+        self.browser.scan_running = self.scanning;
         self.status = "Lettura della cartella…".into();
     }
     fn command(&mut self, command: Command) {
+        if matches!(&command, Command::Select { .. } | Command::Move(_)) {
+            self.browser_user_selection();
+        }
         for effect in self.state.dispatch(command) {
             match effect {
                 Effect::Save {
@@ -751,15 +762,7 @@ impl TrueRenderer {
         self.source_monitor.watch(self.generation, vec![]);
         self.sample = None;
         self.errors.clear();
-        if self.scanning {
-            // Scan results carry this same generation. The old scan is revoked
-            // along with image work, so queue its replacement or expose failure
-            // instead of leaving the UI waiting for an obsolete result forever.
-            self.scanning = self.request(Request::Scan {
-                folder: self.folder.clone(),
-                generation: self.generation,
-            });
-        }
+        // Filesystem scan IDs are independent of decoder generations.
     }
     fn apply_settings(&mut self) {
         if self.cache_settings.raw_engine != self.service.cache.settings().raw_engine {
@@ -887,6 +890,7 @@ impl TrueRenderer {
         self.status = "Sorgenti cambiate: anteprime invalidate; annotazioni conservate".into();
     }
     fn poll(&mut self, ctx: &egui::Context) {
+        self.poll_browser(ctx);
         while let Ok((generation, changes)) = self.source_monitor.changes.try_recv() {
             if generation != self.generation {
                 continue;
@@ -939,6 +943,31 @@ impl TrueRenderer {
             .configure_compute(self.gpu_passed, settings.compute.code());
         while let Ok(event) = self.service.events.try_recv() {
             match event {
+                Event::BrowserSessionSaved(result) => match result {
+                    Ok(session) => self.browser.saved = session,
+                    Err(error) => self.status = format!("Browser session: {error}"),
+                },
+                Event::Favorites(result) => {
+                    self.browser.favorite_pending = false;
+                    match result {
+                        Ok(favorites) => self.browser.favorites = favorites,
+                        Err(error) => self.status = format!("Preferiti: {error}"),
+                    }
+                }
+                Event::ScanBatch { items, generation } => {
+                    if generation == self.browser.scan {
+                        self.state.reconcile(items, false);
+                        self.select_pending_photo();
+                    }
+                }
+                Event::ScanFailed { generation, error } => {
+                    if generation == self.browser.scan {
+                        self.browser.scan_running = false;
+                        self.scanning = self.browser.pending.is_some();
+                        self.status = format!("Elenco parziale o non disponibile: {error}");
+                        self.finish_browser_scan();
+                    }
+                }
                 Event::MemoryPressure => self.trim_images(true),
                 Event::DecodeDeferred {
                     id,
@@ -955,20 +984,13 @@ impl TrueRenderer {
                     folder,
                     generation,
                     note,
-                } if generation == self.generation => {
-                    self.state.replace_items(items);
-                    if let Some(path) = self.pending_selection.take()
-                        && let Some(item) = self.state.items.iter().find(|i| i.path == path)
-                    {
-                        self.command(Command::Select {
-                            id: item.id.clone(),
-                            extend: false,
-                        });
-                        self.state.view = ViewMode::Preview;
-                    }
+                } if generation == self.browser.scan => {
+                    self.state.reconcile(items, true);
                     self.folder = folder;
-                    self.scanning = false;
+                    self.browser.scan_running = false;
+                    self.scanning = self.browser.pending.is_some();
                     self.status = note;
+                    self.finish_browser_scan();
                 }
                 Event::Scanned { .. } => {}
                 Event::Image {
@@ -1105,6 +1127,9 @@ impl TrueRenderer {
         // Menus and quality selectors own keyboard input until they close.
         // In particular, Escape must not also leave the viewer behind a popup.
         if egui::Popup::is_any_open(ctx) {
+            return;
+        }
+        if self.browser_keyboard(ctx) {
             return;
         }
         if ctx.input(|i| i.modifiers.command && i.key_pressed(egui::Key::F)) {
@@ -1270,7 +1295,7 @@ impl TrueRenderer {
                             }
                         }
                         if ui.button(lang.text("Rileggi cartella")).clicked() {
-                            self.open_folder(self.folder.clone());
+                            self.refresh_folder();
                             ui.close();
                         }
                     });
@@ -1291,10 +1316,13 @@ impl TrueRenderer {
                             ui.menu_button(lang.text("Lingua"), |ui| {
                                 self.language_choices(ui);
                             });
-                            if compact {
-                                ui.menu_button(lang.text("Libreria e filtri"), |ui| {
-                                    self.navigation_contents(ui);
-                                });
+                            if ui.button(lang.text("Libreria e filtri")).clicked() {
+                                self.panel_mode(crate::browser_session::PanelMode::Library, true);
+                                ui.close();
+                            }
+                            if ui.button(lang.text("Esplora")).clicked() {
+                                self.panel_mode(crate::browser_session::PanelMode::Explorer, true);
+                                ui.close();
                             }
                             ui.checkbox(&mut self.show_inspector, lang.text("Mostra ispettore"));
                             ui.checkbox(
@@ -1432,17 +1460,33 @@ impl TrueRenderer {
     }
 
     fn sidebar(&mut self, ui: &mut egui::Ui) {
-        egui::Panel::left("navigation")
-            .default_size(208.)
-            .size_range(192.0..=270.0)
-            .frame(style::panel())
-            .show(ui, |ui| {
-                egui::ScrollArea::vertical()
-                    .id_salt("navigation-scroll")
-                    .show(ui, |ui| {
-                        self.navigation_contents(ui);
-                    });
-            });
+        let explorer = self.browser.session.mode == crate::browser_session::PanelMode::Explorer;
+        let width = if explorer {
+            self.browser.session.explorer_width
+        } else {
+            self.browser.session.library_width
+        };
+        let panel = egui::Panel::left(if explorer {
+            "navigation-explorer"
+        } else {
+            "navigation-library"
+        })
+        .default_size(width)
+        .resizable(true)
+        .size_range(if explorer {
+            200.0..=420.0
+        } else {
+            192.0..=270.0
+        })
+        .frame(style::panel())
+        .show(ui, |ui| {
+            self.left_panel_contents(ui);
+        });
+        if explorer {
+            self.browser.session.explorer_width = panel.response.rect.width().clamp(200., 420.);
+        } else {
+            self.browser.session.library_width = panel.response.rect.width().clamp(192., 270.);
+        }
     }
 
     fn navigation_contents(&mut self, ui: &mut egui::Ui) {
@@ -2754,6 +2798,10 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
     }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
+        if std::env::args().any(|arg| arg == "--filesystem-smoke") {
+            self.filesystem_smoke(ctx);
+            return;
+        }
         if self.navigation_probe.is_some() {
             return;
         }
@@ -2955,8 +3003,9 @@ impl eframe::App for TrueRenderer {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         self.toolbar(ui);
+        self.location_bar(ui);
         self.footer(ui);
-        if ui.available_width() >= 1000. {
+        if ui.available_width() >= 1000. && self.browser.session.visible {
             self.sidebar(ui);
         }
         if self.show_inspector && (!self.show_settings || ui.available_width() >= 700.) {
@@ -2965,7 +3014,7 @@ impl eframe::App for TrueRenderer {
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(CANVAS).inner_margin(16))
             .show(ui, |ui| {
-                if self.scanning {
+                if self.scanning && self.state.visible.is_empty() {
                     ui.label(lang.text("Lettura dei file…"));
                 } else if self.state.visible.is_empty() {
                     ui.add_space((ui.available_height() * 0.2).min(70.));
@@ -2998,6 +3047,7 @@ impl eframe::App for TrueRenderer {
                 }
             });
         self.help(&ctx);
+        self.temporary_panel(&ctx);
         self.settings_window(&ctx);
         self.trim_images(false);
         self.smoke_tick(&ctx);
@@ -3019,6 +3069,7 @@ impl eframe::App for TrueRenderer {
         }
     }
     fn on_exit(&mut self) {
+        self.persist_browser();
         let _ = self.service.high.try_send(Request::Shutdown);
     }
 }
@@ -3086,7 +3137,7 @@ fn human_bytes(bytes: u64) -> String {
 mod settings_regressions {
     use super::*;
 
-    fn app() -> (tempfile::TempDir, egui::Context, TrueRenderer) {
+    pub(super) fn app() -> (tempfile::TempDir, egui::Context, TrueRenderer) {
         let dir = tempfile::tempdir().unwrap();
         std::fs::create_dir(dir.path().join("corpus")).unwrap();
         std::fs::create_dir(dir.path().join("data")).unwrap();
@@ -3121,7 +3172,7 @@ mod settings_regressions {
         (dir, ctx, app)
     }
 
-    fn settle(app: &mut TrueRenderer, ctx: &egui::Context, scans: bool) {
+    pub(super) fn settle(app: &mut TrueRenderer, ctx: &egui::Context, scans: bool) {
         let deadline = Instant::now() + Duration::from_secs(10);
         loop {
             let mut output = ctx.run_ui(Default::default(), |ui| {

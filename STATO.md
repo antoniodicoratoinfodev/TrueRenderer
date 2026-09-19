@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 17 settembre 2026.
+Aggiornato: 19 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -41,6 +41,18 @@ Il prossimo incremento deve investigare il superamento memoria misurato su 45 MP
 
 
 ## Piano operativo
+
+## Navigatore filesystem — implementazione del 19 settembre 2026
+
+Richiesta corrente del titolare: implementare il [progetto Esplora](docs/progetto-navigatore-filesystem.md), quindi razionalizzare i Markdown conservando specifiche, decisioni ed evidenze. Il lavoro non chiude i gate R0–R4.
+
+- [x] Collegare schede Libreria/Esplora, albero pigro, aperture asincrone, breadcrumb, cronologia, tastiera, filtro nomi e modalità delle voci.
+- [x] Separare enumerazione e writer con due slot filesystem e code limitate; risultati progressivi e terminali identificati, scansione indipendente dalla generazione decoder, salvataggi conservati al cambio cartella.
+- [x] Aggiungere preferiti transazionali, migrazione libreria 1→2 con backup verificato, export e sessione versionata distinta dalle impostazioni.
+- [ ] Completare regressioni e verifica nativa del navigatore, layout, refresh, bundle separato e XPC; registrare esiti e limiti reali.
+- [ ] Valutare e accorpare i Markdown ridondanti, aggiornare riferimenti e controllare la conservazione dell'originale v1.2 e delle notice.
+
+Scelte da qualificare nella verifica: polling limitato delle posizioni attive come fallback ai watcher nativi, metadati senza attraversamento automatico di link/pacchetti/placeholder, 64 MiB prenotati nel budget applicativo per navigazione/listing. Prove Windows, VoiceOver/NVDA, rete bloccata e identità persistente dei volumi richiedono evidenze distinte; non dedurle dai test sintetici Mac.
 
 ## Progetto di incremento — navigatore filesystem commutabile, 15 settembre 2026
 
@@ -504,4 +516,3 @@ Verificati build desktop/worker, fmt e Clippy desktop con warning negati, cinque
 - Gamma PNG distinta da sRGB e orientamento per IFD: [ultima revisione](docs/revisione-aggiuntiva-2026-09-14.md#correzioni); ricetta cache `bitmap-gamma-ifd-v5`.
 
 I conteggi e gli hash di ogni campagna restano nei [rapporti di verifica](reports/VERIFICA.md). Le evidenze negative sono conservate insieme alle correzioni, senza attribuire vecchie misure ai nuovi binari.
-

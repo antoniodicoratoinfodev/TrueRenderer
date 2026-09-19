@@ -6,6 +6,7 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tr_core::Annotation;
+use tr_core::location::{Favorite, Location};
 use uuid::Uuid;
 
 pub struct Catalog {
@@ -17,6 +18,12 @@ pub struct StoredAsset {
     pub id: String,
     pub annotation: Annotation,
     pub revision: u64,
+}
+pub enum FavoriteEdit {
+    Add { location: Location, label: String },
+    Rename { id: String, label: String },
+    Move { id: String, index: usize },
+    Remove(String),
 }
 pub fn sqlite_version() -> &'static str {
     rusqlite::version()
@@ -59,12 +66,12 @@ impl Catalog {
         );
         std::fs::create_dir_all(root.join("backups"))?;
         let library = Connection::open(root.join("library.sqlite"))?;
-        configure(&library, true)?;
         let version: u32 = library.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         ensure!(
-            version <= 1,
+            version <= 2,
             "Libreria di una versione più recente: apertura interrotta"
         );
+        configure(&library, true)?;
         if version == 0 {
             let tables: u32 = library.query_row(
                 "SELECT count(*) FROM sqlite_master WHERE type='table'",
@@ -79,6 +86,22 @@ impl Catalog {
                 "BEGIN IMMEDIATE; {} COMMIT;",
                 include_str!("library.sql")
             ))?;
+        }
+        // A consistent verified v1 snapshot must exist before the migration.
+        if version <= 1 {
+            backup_connection(&library, root)?;
+            library.execute_batch(
+                "BEGIN IMMEDIATE;
+                CREATE TABLE browser_favorite (
+                    id TEXT PRIMARY KEY,
+                    label TEXT NOT NULL CHECK(length(label)<=256),
+                    location TEXT NOT NULL,
+                    position INTEGER NOT NULL,
+                    revision INTEGER NOT NULL CHECK(revision>=0)
+                );
+                PRAGMA user_version=2;
+                COMMIT;",
+            )?;
         }
         let index = Connection::open(root.join("index.sqlite"))?;
         configure(&index, false)?;
@@ -169,16 +192,88 @@ impl Catalog {
         Ok(next)
     }
     pub fn backup(&self) -> Result<PathBuf> {
-        let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-        let path = self
-            .root
-            .join("backups")
-            .join(format!("library-{stamp}-{}.sqlite", Uuid::new_v4()));
-        self.library.backup("main", &path, None)?;
-        let check = Connection::open_with_flags(&path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
-        let status: String = check.query_row("PRAGMA integrity_check", [], |r| r.get(0))?;
-        ensure!(status == "ok", "Backup non integro: {status}");
-        Ok(path)
+        backup_connection(&self.library, &self.root)
+    }
+    pub fn favorites(&self) -> Result<Vec<Favorite>> {
+        let mut stmt = self.library.prepare(
+            "SELECT id,label,location,revision FROM browser_favorite ORDER BY position,id",
+        )?;
+        let rows = stmt.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, i64>(3)?,
+            ))
+        })?;
+        let mut favorites = Vec::new();
+        for row in rows {
+            let (id, label, json, revision) = row?;
+            let location: Location = serde_json::from_str(&json)?;
+            location.validate()?;
+            favorites.push(Favorite {
+                id,
+                label,
+                location,
+                revision: revision.try_into()?,
+            });
+        }
+        ensure!(favorites.len() <= 200, "Favorite count limit");
+        Ok(favorites)
+    }
+    pub fn edit_favorite(&mut self, edit: FavoriteEdit) -> Result<Vec<Favorite>> {
+        let mut favorites = self.favorites()?;
+        match edit {
+            FavoriteEdit::Add { location, label } => {
+                location.validate()?;
+                ensure!(label.chars().count() <= 256, "Favorite label limit");
+                ensure!(favorites.len() < 200, "Favorite count limit (200)");
+                if favorites.iter().any(|f| f.location == location) {
+                    return Ok(favorites);
+                }
+                favorites.push(Favorite {
+                    id: Uuid::new_v4().to_string(),
+                    label,
+                    location,
+                    revision: 0,
+                });
+            }
+            FavoriteEdit::Rename { id, label } => {
+                ensure!(label.chars().count() <= 256, "Favorite label limit");
+                let f = favorites
+                    .iter_mut()
+                    .find(|f| f.id == id)
+                    .context("Favorite missing")?;
+                f.label = label;
+                f.revision += 1;
+            }
+            FavoriteEdit::Move { id, index } => {
+                let from = favorites
+                    .iter()
+                    .position(|f| f.id == id)
+                    .context("Favorite missing")?;
+                let mut f = favorites.remove(from);
+                f.revision += 1;
+                favorites.insert(index.min(favorites.len()), f);
+            }
+            FavoriteEdit::Remove(id) => favorites.retain(|f| f.id != id),
+        }
+        let tx = self.library.transaction()?;
+        tx.execute("DELETE FROM browser_favorite", [])?;
+        for (index, favorite) in favorites.iter().enumerate() {
+            tx.execute(
+                "INSERT INTO browser_favorite VALUES (?1,?2,?3,?4,?5)",
+                params![
+                    favorite.id,
+                    favorite.label,
+                    serde_json::to_string(&favorite.location)?,
+                    index as i64,
+                    i64::try_from(favorite.revision)?
+                ],
+            )?;
+        }
+        tx.commit()?;
+        Ok(favorites)
     }
     pub fn export_json(&self, path: &Path) -> Result<()> {
         use std::io::Write;
@@ -200,7 +295,7 @@ impl Catalog {
             assets.push(serde_json::json!({"id":id,"hash":hash,"path_hint":path,"annotation":serde_json::from_str::<Annotation>(&state)?,"revision":revision}));
         }
         let output = serde_json::to_vec_pretty(
-            &serde_json::json!({"application":"TrueRenderer","schema":1,"kind":"R0 library snapshot (not the v1 portable archive)","assets":assets}),
+            &serde_json::json!({"application":"TrueRenderer","schema":2,"kind":"R0 library snapshot (not the v1 portable archive)","assets":assets,"favorites":self.favorites()?}),
         )?;
         // A new export is never silently allowed to replace an existing file.
         let mut file = std::fs::OpenOptions::new()
@@ -225,9 +320,100 @@ impl Catalog {
     }
 }
 
+fn backup_connection(library: &Connection, root: &Path) -> Result<PathBuf> {
+    let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+    let path = root
+        .join("backups")
+        .join(format!("library-{stamp}-{}.sqlite", Uuid::new_v4()));
+    library.backup("main", &path, None)?;
+    let check = Connection::open_with_flags(&path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+    let status: String = check.query_row("PRAGMA integrity_check", [], |r| r.get(0))?;
+    ensure!(status == "ok", "Backup non integro: {status}");
+    Ok(path)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn migration_preserves_v1_backup_and_favorites_survive_export_restore() {
+        let dir = tempfile::tempdir().unwrap();
+        let v1 = Connection::open(dir.path().join("library.sqlite")).unwrap();
+        v1.execute_batch(include_str!("library.sql")).unwrap();
+        drop(v1);
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let backups: Vec<_> = std::fs::read_dir(dir.path().join("backups"))
+            .unwrap()
+            .map(|p| p.unwrap().path())
+            .filter(|path| path.extension().is_some_and(|e| e == "sqlite"))
+            .collect();
+        assert!(backups.iter().any(|p| {
+            Connection::open(p)
+                .unwrap()
+                .query_row("PRAGMA user_version", [], |r| r.get::<_, u32>(0))
+                .unwrap()
+                == 1
+        }));
+        let first = catalog
+            .edit_favorite(FavoriteEdit::Add {
+                location: Location::from_path(Path::new("/synthetic/first")),
+                label: "First".into(),
+            })
+            .unwrap()[0]
+            .clone();
+        catalog
+            .edit_favorite(FavoriteEdit::Add {
+                location: Location::from_path(Path::new("/synthetic/second")),
+                label: "Second".into(),
+            })
+            .unwrap();
+        catalog
+            .edit_favorite(FavoriteEdit::Rename {
+                id: first.id.clone(),
+                label: "Renamed".into(),
+            })
+            .unwrap();
+        let expected = catalog
+            .edit_favorite(FavoriteEdit::Move {
+                id: first.id,
+                index: 1,
+            })
+            .unwrap();
+        assert_eq!(expected[1].label, "Renamed");
+        assert!(
+            catalog
+                .edit_favorite(FavoriteEdit::Rename {
+                    id: expected[0].id.clone(),
+                    label: "x".repeat(257)
+                })
+                .is_err()
+        );
+        assert_eq!(catalog.favorites().unwrap(), expected);
+        let export = dir.path().join("export.json");
+        catalog.export_json(&export).unwrap();
+        let value: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(export).unwrap()).unwrap();
+        assert_eq!(value["favorites"].as_array().unwrap().len(), 2);
+        let backup = catalog.backup().unwrap();
+        drop(catalog);
+        let restore = tempfile::tempdir().unwrap();
+        std::fs::copy(backup, restore.path().join("library.sqlite")).unwrap();
+        assert_eq!(
+            Catalog::open(restore.path()).unwrap().favorites().unwrap(),
+            expected
+        );
+    }
+    #[test]
+    fn future_library_is_rejected_before_pragmas_or_migration() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("library.sqlite");
+        let connection = Connection::open(&path).unwrap();
+        connection.execute_batch("PRAGMA user_version=99; CREATE TABLE future_data(value TEXT); INSERT INTO future_data VALUES('keep');").unwrap();
+        drop(connection);
+        let before = std::fs::read(&path).unwrap();
+        assert!(Catalog::open(dir.path()).is_err());
+        assert_eq!(std::fs::read(&path).unwrap(), before);
+    }
     #[test]
     fn durable_state_survives_index_deletion_and_restore() {
         let dir = tempfile::tempdir().unwrap();

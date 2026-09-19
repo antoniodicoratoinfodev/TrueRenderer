@@ -13,7 +13,6 @@ use std::{
 };
 use tr_core::preview::PreviewRequest;
 use tr_core::{Annotation, Item};
-use tr_platform::CorpusPolicy;
 use tr_render::PreparedImage;
 use tr_store::Catalog;
 
@@ -27,6 +26,9 @@ pub enum Request {
         folder: PathBuf,
         generation: u64,
     },
+    ScanHidden(bool),
+    Favorite(tr_store::FavoriteEdit),
+    BrowserSession(crate::browser_session::Session),
     Save {
         id: String,
         expected: u64,
@@ -50,6 +52,16 @@ pub struct PreviewDecoded {
     pub worker_pid: Option<u32>,
 }
 pub enum Event {
+    BrowserSessionSaved(Result<crate::browser_session::Session, String>),
+    Favorites(Result<Vec<tr_core::location::Favorite>, String>),
+    ScanBatch {
+        items: Vec<Item>,
+        generation: u64,
+    },
+    ScanFailed {
+        generation: u64,
+        error: String,
+    },
     MemoryPressure,
     DecodeDeferred {
         id: String,
@@ -88,6 +100,7 @@ pub struct Service {
     pub generation: Arc<AtomicU64>,
     pub cache: Arc<crate::cache::Manager>,
     pub wake: crate::wake::Wake,
+    pub filesystem: crate::filesystem_browser::Filesystem,
     worker: Option<thread::JoinHandle<()>>,
 }
 
@@ -104,6 +117,9 @@ impl Service {
         let (high, high_rx) = mpsc::sync_channel(64);
         let (events_tx, events) = mpsc::sync_channel(16);
         let generation = Arc::new(AtomicU64::new(0));
+        let (filesystem, scans) =
+            crate::filesystem_browser::Filesystem::start(ctx.clone(), cache.memory.clone());
+        let fs = filesystem.client.clone();
         let worker_generation = generation.clone();
         let service_worker = thread::spawn(move || {
             let send = |event| {
@@ -125,12 +141,18 @@ impl Service {
                 ctx.clone(),
                 thread_cache.clone(),
             );
-            let policy = CorpusPolicy::default();
             let corpus = root
                 .join("corpus")
                 .canonicalize()
                 .unwrap_or_else(|_| root.join("corpus"));
             let mut undo_stack = VecDeque::<(String, Annotation, Annotation)>::new();
+            send(Event::Favorites(
+                catalog.favorites().map_err(|e| e.to_string()),
+            ));
+            let mut scan_id = 0;
+            let mut scan_folder = PathBuf::new();
+            let mut scan_items = Vec::new();
+            let mut hidden = false;
             let mut power_checked = std::time::Instant::now() - Duration::from_secs(10);
             loop {
                 if power_checked.elapsed() >= Duration::from_secs(5) {
@@ -143,12 +165,98 @@ impl Service {
                     }
                     ctx.request_repaint();
                 }
-                let request = match high_rx.recv_timeout(Duration::from_secs(1)) {
+                let request = match high_rx.recv_timeout(Duration::from_millis(5)) {
                     Ok(request) => request,
-                    Err(mpsc::RecvTimeoutError::Timeout) => continue,
+                    Err(mpsc::RecvTimeoutError::Timeout) => {
+                        // At most one small batch before checking durable work again.
+                        if let Ok(event) = scans.try_recv() {
+                            use crate::filesystem_browser::ScanEvent;
+                            match event {
+                                ScanEvent::Batch { id, observations } if id == scan_id => {
+                                    let mut items = Vec::new();
+                                    for observation in observations {
+                                        match catalog.observe(
+                                            &observation.path,
+                                            &observation.digest,
+                                            observation.bytes,
+                                        ) {
+                                            Ok(asset) => items.push(Item {
+                                                id: asset.id,
+                                                name: observation
+                                                    .path
+                                                    .file_name()
+                                                    .unwrap_or_default()
+                                                    .to_string_lossy()
+                                                    .into(),
+                                                path: observation.path,
+                                                bytes: observation.bytes,
+                                                digest: observation.digest,
+                                                observation: observation.observation,
+                                                approved: observation.approved,
+                                                annotation: asset.annotation,
+                                                revision: asset.revision,
+                                            }),
+                                            Err(error) => {
+                                                fs.cancel_scan();
+                                                send(Event::ScanFailed {
+                                                    generation: id,
+                                                    error: error.to_string(),
+                                                });
+                                                scan_id = 0;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if id == scan_id {
+                                        scan_items.extend(items.iter().cloned());
+                                        send(Event::ScanBatch {
+                                            items,
+                                            generation: id,
+                                        });
+                                    }
+                                }
+                                ScanEvent::Finished { id, result } if id == scan_id => {
+                                    scan_items.sort_unstable_by(|a, b| {
+                                        tr_app::browser::natural_cmp(&a.name, &b.name)
+                                            .then_with(|| a.path.cmp(&b.path))
+                                    });
+                                    match result {
+                                        Ok(()) => send(Event::Scanned {
+                                            items: std::mem::take(&mut scan_items),
+                                            folder: scan_folder.clone(),
+                                            generation: id,
+                                            note: if external || scan_folder == corpus {
+                                                "Cartella pronta · Anteprima".into()
+                                            } else {
+                                                "File esterni: aprire il bundle macOS con servizi XPC.".into()
+                                            },
+                                        }),
+                                        Err(error) => send(Event::ScanFailed {
+                                            generation: id,
+                                            error,
+                                        }),
+                                    }
+                                    scan_items.clear();
+                                }
+                                _ => {}
+                            }
+                        }
+                        continue;
+                    }
                     Err(mpsc::RecvTimeoutError::Disconnected) => break,
                 };
                 match request {
+                    Request::ScanHidden(value) => hidden = value,
+                    Request::Favorite(edit) => send(Event::Favorites(
+                        catalog.edit_favorite(edit).map_err(|e| e.to_string()),
+                    )),
+                    Request::BrowserSession(session) => {
+                        let result = session
+                            .save(&data)
+                            .map(|()| session)
+                            .map_err(|error| error.to_string());
+                        send(Event::BrowserSessionSaved(result));
+                    }
                     Request::ViewDemand {
                         wanted,
                         jobs,
@@ -176,112 +284,14 @@ impl Service {
                         }
                     }
                     Request::Scan { folder, generation } => {
-                        if generation != worker_generation.load(Ordering::Relaxed) {
-                            continue;
-                        }
-                        let result = (|| -> anyhow::Result<(Vec<Item>, String)> {
-                            let folder = folder.canonicalize()?;
-                            let controlled_folder = folder == corpus;
-                            let maintenance = thread_cache.clone();
-                            let cache_folder = folder.clone();
-                            thread::spawn(move || {
-                                if let Err(e) = maintenance.maintain(&cache_folder, false) {
-                                    maintenance
-                                        .note(format!("Cache non disponibile, uso RAM: {e:#}"));
-                                }
-                            });
-                            let mut paths = vec![];
-                            let mut errors = 0;
-                            for entry in std::fs::read_dir(&folder)? {
-                                if generation != worker_generation.load(Ordering::Relaxed) {
-                                    anyhow::bail!("Scansione sostituita");
-                                }
-                                let entry = match entry {
-                                    Ok(e) => e,
-                                    Err(_) => {
-                                        errors += 1;
-                                        continue;
-                                    }
-                                };
-                                if !entry.file_type()?.is_file()
-                                    || !tr_platform::supported_extension(&entry.path())
-                                {
-                                    continue;
-                                }
-                                paths.push(entry.path());
-                                anyhow::ensure!(
-                                    paths.len() <= 100_000,
-                                    "Limite R0: 100.000 file nella cartella"
-                                );
-                            }
-                            paths.sort_by_cached_key(|p| {
-                                p.file_name()
-                                    .unwrap_or_default()
-                                    .to_string_lossy()
-                                    .to_lowercase()
-                            });
-                            let mut items = vec![];
-                            for path in paths {
-                                if generation != worker_generation.load(Ordering::Relaxed) {
-                                    anyhow::bail!("Scansione sostituita");
-                                }
-                                let metadata = path.metadata()?;
-                                let (digest, approved) = if controlled_folder {
-                                    match tr_platform::snapshot(&path) {
-                                        Ok((_, hash)) => {
-                                            let approved = policy.approves(&hash);
-                                            (hash, approved)
-                                        }
-                                        Err(_) => {
-                                            errors += 1;
-                                            continue;
-                                        }
-                                    }
-                                } else {
-                                    // Listing stays cheap; decoder snapshots/hashes the exact private bytes on demand.
-                                    (
-                                        tr_platform::observation_token(&path, &metadata),
-                                        external
-                                            && metadata.len()
-                                                <= tr_core::protocol::MAX_SOURCE as u64,
-                                    )
-                                };
-                                let asset = catalog.observe(&path, &digest, metadata.len())?;
-                                items.push(Item {
-                                    id: asset.id,
-                                    path: path.clone(),
-                                    name: path
-                                        .file_name()
-                                        .unwrap_or_default()
-                                        .to_string_lossy()
-                                        .into(),
-                                    bytes: metadata.len(),
-                                    digest,
-                                    observation: tr_platform::observation_token(&path, &metadata),
-                                    approved,
-                                    annotation: asset.annotation,
-                                    revision: asset.revision,
-                                });
-                            }
-                            let note = if controlled_folder {
-                                format!("Corpus pronto · {errors} file non leggibili")
-                            } else {
-                                if external {
-                                    "Cartella pronta · Anteprima".into()
-                                } else {
-                                    "File esterni: aprire il bundle macOS con servizi XPC.".into()
-                                }
-                            };
-                            Ok((items, note))
-                        })();
-                        match result {
-                            Ok((items, note)) => send(Event::Scanned {
-                                items,
-                                folder,
+                        scan_id = generation;
+                        scan_folder = folder.clone();
+                        scan_items.clear();
+                        if !fs.scan(folder, generation, hidden, corpus.clone(), external) {
+                            send(Event::ScanFailed {
                                 generation,
-                                note,
-                            }),
-                            Err(error) => send(Event::Status(format!("Scansione: {error:#}"))),
+                                error: "Coda filesystem occupata".into(),
+                            });
                         }
                     }
                     Request::Save {
@@ -351,6 +361,7 @@ impl Service {
                         Err(e) => send(Event::Status(format!("Export non riuscito: {e:#}"))),
                     },
                     Request::Shutdown => {
+                        fs.stop();
                         drop(pool);
                         drop(catalog);
                         send(Event::Stopped);
@@ -360,6 +371,7 @@ impl Service {
             }
         });
         Self {
+            filesystem,
             cache,
             high,
             events,
@@ -475,10 +487,12 @@ mod tests {
                 generation: 1,
             })
             .unwrap();
-        let Event::Scanned { items, .. } =
-            service.events.recv_timeout(Duration::from_secs(5)).unwrap()
-        else {
-            panic!("scan failed")
+        let items = loop {
+            match service.events.recv_timeout(Duration::from_secs(5)).unwrap() {
+                Event::Scanned { items, .. } => break items,
+                Event::Favorites(_) | Event::ScanBatch { .. } => {}
+                _ => panic!("scan failed"),
+            }
         };
         let item = items[0].clone();
         service
@@ -545,13 +559,16 @@ mod tests {
                 generation: 1,
             })
             .unwrap();
-        let items = match service
-            .events
-            .recv_timeout(Duration::from_secs(10))
-            .unwrap()
-        {
-            Event::Scanned { items, .. } => items,
-            _ => panic!("expected completed scan"),
+        let items = loop {
+            match service
+                .events
+                .recv_timeout(Duration::from_secs(10))
+                .unwrap()
+            {
+                Event::Scanned { items, .. } => break items,
+                Event::Favorites(_) | Event::ScanBatch { .. } => {}
+                _ => panic!("expected completed scan"),
+            }
         };
         assert_eq!(items.len(), 12);
         assert!(items.iter().all(|i| i.approved));

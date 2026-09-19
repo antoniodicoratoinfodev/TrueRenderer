@@ -16,6 +16,55 @@ impl Language {
             return source;
         }
         match source {
+            "Esplora" => "Explorer",
+            "Navigazione" => "Navigation",
+            "Pannello" => "Panel",
+            "Preferiti" => "Favorites",
+            "Recenti" => "Recent",
+            "Posizioni" => "Locations",
+            "Indietro" => "Back",
+            "Avanti" => "Forward",
+            "Cartella superiore" => "Parent folder",
+            "Inserisci un percorso" => "Enter a location",
+            "Filtra nomi nei rami caricati" => "Filter names in loaded branches",
+            "Tutti i file" => "All files",
+            "Cartelle e immagini" => "Folders and images",
+            "Solo cartelle" => "Folders only",
+            "Mostra" => "Show",
+            "Mostra nascosti" => "Show hidden items",
+            "Svuota recenti" => "Clear recent locations",
+            "Memorizza recenti" => "Remember recent locations",
+            "Aggiungi posizione…" => "Add location…",
+            "Foto corrente" => "Current photo",
+            "Aggiungi cartella corrente" => "Add current folder",
+            "Rinomina preferito" => "Rename favorite",
+            "Sposta su" => "Move up",
+            "Sposta giù" => "Move down",
+            "Rimuovi preferito" => "Remove favorite",
+            "Salva" => "Save",
+            "Annulla" => "Cancel",
+            "Espandi o comprimi" => "Expand or collapse",
+            "Ramo non letto" => "Branch not loaded",
+            "Apri destinazione" => "Open location",
+            "Aggiungi ai preferiti" => "Add to favorites",
+            "Rileggi questo ramo" => "Refresh this branch",
+            "Copia percorso" => "Copy path",
+            "Mostra nel sistema" => "Reveal in Finder / File Explorer",
+            "Albero file e cartelle" => "Files and folders tree",
+            "Filtri sospesi per apertura diretta" => "Filters suspended for direct opening",
+            "Ripristina filtri" => "Restore filters",
+            "Filtri fotografici attivi" => "Photo filters active",
+            "Mostra filtri" => "Show filters",
+            "Apertura della posizione…" => "Opening location…",
+            "Rilettura della cartella…" => "Refreshing folder…",
+            "Anteprima non disponibile per questo tipo di file" => {
+                "Preview unavailable for this file type"
+            }
+            "Collegamento: usa Apri destinazione nel menu" => "Link: use Open location in the menu",
+            "Coda filesystem occupata" => "Filesystem queue busy",
+            "La foto richiesta non è disponibile nell'elenco" => {
+                "Requested photo is unavailable in this listing"
+            }
             "Globale" => "Global",
             "Qualità globale delle anteprime" => "Global preview quality",
             "Cambia tutte le foto e azzera le eccezioni di sessione." => {

@@ -1,4 +1,5 @@
 //! Deterministic UI state. Persistent edits only become visible after Commit.
+pub mod browser;
 pub mod scheduler;
 pub mod budget {
     pub use tr_core::budget::*;
@@ -19,6 +20,8 @@ pub struct State {
     pub rejected_only: bool,
     pub label_filter: Option<Label>,
     pub pending: BTreeSet<String>,
+    /// Explicit file opening temporarily bypasses filters without erasing them.
+    pub targeted: Option<String>,
 }
 pub enum Command {
     Select {
@@ -52,7 +55,7 @@ impl State {
         self.items = items;
         self.selected.clear();
         self.current = None;
-        self.pending.clear();
+        self.targeted = None;
         self.transform = ViewTransform::default();
         self.refilter();
         if let Some(&i) = self.visible.first() {
@@ -68,6 +71,9 @@ impl State {
             .iter()
             .enumerate()
             .filter(|(_, item)| {
+                if self.targeted.is_some() {
+                    return true;
+                }
                 let matches_text = query.is_empty()
                     || item.name.to_lowercase().contains(&query)
                     || item
@@ -103,6 +109,45 @@ impl State {
         {
             self.selected.insert(id.clone());
         }
+    }
+    /// Apply a progressive scan without resetting selection, edits or geometry.
+    pub fn reconcile(&mut self, items: Vec<Item>, complete: bool) {
+        if complete {
+            let previous = self.current.clone();
+            let mut old: std::collections::HashMap<_, _> = std::mem::take(&mut self.items)
+                .into_iter()
+                .map(|i| (i.id.clone(), i))
+                .collect();
+            self.items = items
+                .into_iter()
+                .map(|item| match old.remove(&item.id) {
+                    Some(newer) if newer.revision > item.revision => newer,
+                    _ => item,
+                })
+                .collect();
+            self.refilter();
+            if self.current != previous {
+                self.transform = ViewTransform::default();
+            }
+            return;
+        }
+        let mut by_id: std::collections::HashMap<_, _> = self
+            .items
+            .iter()
+            .enumerate()
+            .map(|(i, item)| (item.id.clone(), i))
+            .collect();
+        for item in items {
+            if let Some(&i) = by_id.get(&item.id) {
+                if item.revision >= self.items[i].revision {
+                    self.items[i] = item;
+                }
+            } else {
+                by_id.insert(item.id.clone(), self.items.len());
+                self.items.push(item);
+            }
+        }
+        self.refilter();
     }
     pub fn current_item(&self) -> Option<&Item> {
         self.current
@@ -235,5 +280,49 @@ mod tests {
         assert!(state.selected.is_empty());
         assert!(state.current.is_none());
         assert!(state.dispatch(Command::Rate(5)).is_empty());
+    }
+    #[test]
+    fn navigation_keeps_accepted_saves_and_commits_offscreen() {
+        let mut state = State::default();
+        state.replace_items(vec![item()]);
+        state.dispatch(Command::Rate(5));
+        state.replace_items(vec![]);
+        assert!(state.pending.contains("a"));
+        assert!(state.dispatch(Command::Undo).is_empty());
+        state.dispatch(Command::Commit {
+            id: "a".into(),
+            annotation: Annotation::default(),
+            revision: 1,
+        });
+        assert!(state.pending.is_empty());
+    }
+    #[test]
+    fn progressive_refresh_preserves_selection_and_newer_commits() {
+        let mut state = State::default();
+        state.replace_items(vec![item()]);
+        state.transform.zoom = Some(3.);
+        state.dispatch(Command::Commit {
+            id: "a".into(),
+            annotation: Annotation {
+                rating: 5,
+                ..Default::default()
+            },
+            revision: 1,
+        });
+        let mut other = item();
+        other.id = "b".into();
+        state.reconcile(vec![other.clone()], false);
+        assert_eq!(state.current.as_deref(), Some("a"));
+        state.reconcile(vec![other, item()], true);
+        assert_eq!(state.items[0].id, "b");
+        assert_eq!(state.items[1].annotation.rating, 5);
+        assert_eq!(state.transform.zoom, Some(3.));
+        state.query = "missing".into();
+        state.targeted = Some("a".into());
+        state.refilter();
+        assert_eq!(state.visible.len(), 2);
+        state.targeted = None;
+        state.refilter();
+        assert!(state.visible.is_empty());
     }
 }

@@ -126,7 +126,7 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
                 .with_title("TrueRenderer")
                 .with_app_id("it.truerenderer.prototype")
                 .with_inner_size([1440., 940.])
-                .with_min_inner_size([1100., 720.]),
+                .with_min_inner_size([550., 360.]),
             renderer: eframe::Renderer::Wgpu,
             // Image textures already contain the final quantized sRGB8 raster.
             // A second dither in egui perturbs the viewer's promised samples.

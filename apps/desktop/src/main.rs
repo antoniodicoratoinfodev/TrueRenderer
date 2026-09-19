@@ -1,5 +1,7 @@
+mod browser_session;
 mod cache;
 mod decode_pool;
+mod filesystem_browser;
 mod graphics;
 mod i18n;
 mod service;
@@ -70,11 +72,23 @@ fn run() -> Result<()> {
             || a == "--preview-performance-smoke"
     });
     let smoke = navigation
+        || args.iter().any(|a| a == "--filesystem-smoke")
         || source_smoke
         || settings_smoke
         || external_smoke
         || sampling_smoke
         || args.iter().any(|a| a == "--smoke-test");
+    if args.iter().any(|a| a == "--filesystem-smoke") {
+        anyhow::ensure!(
+            option("--data").is_some(),
+            "Filesystem smoke requires isolated --data"
+        );
+        std::fs::create_dir_all(root.join("reports"))?;
+        std::fs::write(
+            root.join("reports/filesystem-ui.json"),
+            br#"{"passed":false,"reason":"probe incomplete"}"#,
+        )?;
+    }
     let mut initial_open =
         option("--open").or_else(|| external_smoke.then(|| root.join("var/format-fixtures")));
     if source_smoke {
