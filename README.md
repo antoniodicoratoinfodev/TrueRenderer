@@ -21,6 +21,8 @@ Open a photograph or an entire folder, then move through a thumbnail grid, films
 
 Switch the left panel between **Library** and **Explorer** without losing the current photo, filters or zoom. Explorer lists folders and files lazily, with breadcrumbs, back/forward history, favourites, recent locations and a local filename filter. Expanding a folder does not import or decode its images. Click its name to open it; double-click an image to enter the viewer. The Panel button also opens navigation in small windows.
 
+The top bar shows folder thumbnail preparation as a percentage; click it for progress, errors, pause/resume and cancellation. Under **Settings → Previews and RAW → When opening a folder**, choose background loading (default) or a foreground popup until preparation finishes, then **Apply and save**. The popup can continue in background without changing the saved preference. File counting is indeterminate until scanning finishes; 100% means thumbnails processed, not full-resolution images retained in RAM. Background work may wait for active views or memory.
+
 Use `Cmd/Ctrl+B` for the panel, `Cmd/Ctrl+Shift+E` for Explorer, `Cmd/Ctrl+L` to enter a path, `Cmd/Ctrl+[` / `]` for history and `F5` to refresh. Arrow keys navigate the focused tree; Enter activates and Space previews an image. The Show menu controls hidden files and recent-location recording. Automatic refresh currently uses bounded polling; native filesystem watchers and persistent removable-volume identity are not yet implemented. Native Windows and screen-reader qualification remain open.
 
 ### Inspect real detail
@@ -38,6 +40,8 @@ RAW is not a finished image, and no single development is neutral. TrueRenderer 
 ### Know what you are seeing
 
 The inspector can show decoder, colour and orientation provenance, source SHA 256, pixel values and a histogram labelled with the resident image stage. Standard and Full control preview resolution globally or for one photograph, while the interface keeps that choice distinct from the assurance level of the rendering pipeline.
+
+If a thumbnail shows **Read error**, hover over it to see the underlying diagnostic. While visible thumbnails load, the viewer may temporarily show a smaller preview labelled as refining before restoring the requested full detail.
 
 ### Keep ownership of the work
 
@@ -100,7 +104,7 @@ open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 
 Use `./scripts/verify.sh --gui` to include native presentation checks. Changes to the broker, decoder or bundle should always be followed by the XPC integration test on the newly built application.
 
-The separately built navigator preview is `dist/TrueRenderer-navigator-compact.app`. Its isolated layout probe can be repeated with `python3 scripts/test-filesystem-browser.py --bundle dist/TrueRenderer-navigator-compact.app --report reports/navigator-layout-macos.json`; [results and limitations](reports/navigator-layout-macos.json) identify the tested binaries.
+The latest separately built local preview is `dist/TrueRenderer-loading.app`; [folder-loading checks and limitations](reports/folder-loading-macos.json) identify the tested binaries. The earlier D750 campaign belongs to `dist/TrueRenderer-d750.app`: [D750 checks](reports/d750-preview-memory-macos.json). The navigator layout probe belongs to `dist/TrueRenderer-navigator-compact.app`: [layout results](reports/navigator-layout-macos.json).
 
 ### Windows development build
 

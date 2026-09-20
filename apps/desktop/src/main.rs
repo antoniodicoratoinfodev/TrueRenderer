@@ -72,12 +72,24 @@ fn run() -> Result<()> {
             || a == "--preview-performance-smoke"
     });
     let smoke = navigation
+        || args.iter().any(|a| a == "--folder-loading-smoke")
         || args.iter().any(|a| a == "--filesystem-smoke")
         || source_smoke
         || settings_smoke
         || external_smoke
         || sampling_smoke
         || args.iter().any(|a| a == "--smoke-test");
+    if args.iter().any(|a| a == "--folder-loading-smoke") {
+        anyhow::ensure!(
+            option("--data").is_some(),
+            "Folder loading probe requires isolated --data"
+        );
+        std::fs::create_dir_all(root.join("reports"))?;
+        std::fs::write(
+            root.join("reports/folder-loading.json"),
+            br#"{"passed":false,"complete":false}"#,
+        )?;
+    }
     if args.iter().any(|a| a == "--filesystem-smoke") {
         anyhow::ensure!(
             option("--data").is_some(),
@@ -125,6 +137,9 @@ fn run() -> Result<()> {
             .transpose()?
             .unwrap_or(0);
         return verify_raw_engines::run(&root, &worker, &folder, limit);
+    }
+    if let Some(folder) = option("--verify-raw-previews") {
+        return ui::raw_previews::run(&root, &worker, &folder);
     }
     if args.iter().any(|a| a == "--verify-preview-navigation") {
         return verify_previews::navigation(&root, &worker);

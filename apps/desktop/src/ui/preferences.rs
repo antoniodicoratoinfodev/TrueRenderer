@@ -235,6 +235,20 @@ impl TrueRenderer {
 
         ui.add_space(24.);
         section(ui, lang.text("Preparazione in background"));
+        ui.label(lang.text("All'apertura della cartella"));
+        ui.selectable_value(
+            &mut self.cache_settings.folder_loading,
+            crate::cache::FolderLoading::Background,
+            lang.text("Carica le anteprime in background"),
+        );
+        ui.selectable_value(
+            &mut self.cache_settings.folder_loading,
+            crate::cache::FolderLoading::Foreground,
+            lang.text("Prepara prima la cartella con popup"),
+        );
+        ui.label(lang.text(
+            "La scelta si applica dopo Applica e salva. Il popup può continuare in background.",
+        ));
         ui.horizontal_wrapped(|ui| {
             ui.label(lang.text("Precaricamento"));
             ui.selectable_value(
@@ -265,27 +279,20 @@ impl TrueRenderer {
                 )
                 .clicked()
             {
-                self.rebuild = self
-                    .state
-                    .items
-                    .iter()
-                    .filter(|i| i.approved)
-                    .cloned()
-                    .collect();
-                self.rebuild_total = self.rebuild.len();
+                self.start_folder_preparation(true);
             }
             if !self.rebuild.is_empty() && ui.button(lang.text("Annulla preparazione")).clicked() {
-                self.rebuild.clear();
-                self.rebuild_total = 0;
+                self.cancel_folder_preparation();
             }
         });
         if self.rebuild_total > 0 {
+            let (done, total, _) = self.folder_progress();
             ui.label(localized_format!(
                 lang,
                 "Anteprime elaborate: {} / {}",
                 "Previews processed: {} / {}",
-                self.rebuild_total - self.rebuild.len(),
-                self.rebuild_total
+                done,
+                total
             ));
         }
     }

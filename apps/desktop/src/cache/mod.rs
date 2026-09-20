@@ -7,7 +7,7 @@ mod settings;
 use anyhow::{Result, ensure};
 use directory::Directory;
 use serde::{Deserialize, Serialize};
-pub use settings::{PerformanceProfile, Prefetch, Settings};
+pub use settings::{FolderLoading, PerformanceProfile, Prefetch, Settings};
 use sha2::{Digest, Sha256};
 use std::{
     fs::File,

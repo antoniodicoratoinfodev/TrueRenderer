@@ -41,7 +41,9 @@ struct Ready {
     source: SourceSnapshot,
     _snapshot: Lease,
     _snapshot_lane: Lease,
+    _snapshot_slot: Lease,
 }
+const MAX_SOURCE_SNAPSHOTS: u64 = 2;
 #[derive(Default)]
 struct Queues {
     lookup: VecDeque<Job>,
@@ -237,6 +239,10 @@ impl DecodePool {
             workers.push(thread::spawn(move || {
                 let broker = Broker::new(binary);
                 let snapshots = tr_core::budget::MemoryBudget::new(cache.memory.usage().limit / 3);
+                // Count snapshots across lookup, ready AND active/awaiting decode.
+                // Bounding only q.decode still let two decoder threads and the
+                // lookup lane pin five RAW copies, starving a 2 GiB grid.
+                let snapshot_slots = tr_core::budget::MemoryBudget::new(MAX_SOURCE_SNAPSHOTS);
                 loop {
                     let job = {
                         let mut q = queues.0.lock().unwrap();
@@ -281,19 +287,23 @@ impl DecodePool {
                             required <= snapshots.usage().limit,
                             "Snapshot oltre quota: aumentare la memoria complessiva"
                         );
-                        let Some(snapshot_lane) = snapshots.try_reserve(required) else {
-                            queues.0.lock().unwrap().pending.remove(&job.key());
-                            deliver(
-                                &events,
-                                Event::DecodeDeferred {
-                                    id: job.item.id.clone(),
-                                    request: job.request,
-                                    generation: job.generation,
-                                },
-                                &ctx,
-                                &stop,
-                            );
-                            return Ok(None);
+                        let (snapshot_lane, snapshot_slot) = loop {
+                            anyhow::ensure!(!cancelled(), "Richiesta sostituita");
+                            let q = queues.0.lock().unwrap();
+                            // A decoder can coalesce this consumer while lookup
+                            // waits. Do not remove it from pending or read it twice.
+                            if q.claimed.contains(&job.key()) || !q.pending.contains_key(&job.key())
+                            {
+                                return Ok(None);
+                            }
+                            drop(q);
+                            if let Some(leases) = snapshots
+                                .try_reserve(required)
+                                .zip(snapshot_slots.try_reserve(1))
+                            {
+                                break leases;
+                            }
+                            thread::sleep(Duration::from_millis(25));
                         };
                         let lease = reserve(
                             &cache,
@@ -366,6 +376,7 @@ impl DecodePool {
                             source,
                             _snapshot: lease,
                             _snapshot_lane: snapshot_lane,
+                            _snapshot_slot: snapshot_slot,
                         };
                         insert_ready(&mut q.decode, ready);
                         // Keep descriptors in the larger scheduling queue, not a
@@ -484,6 +495,7 @@ impl DecodePool {
                         source,
                         _snapshot,
                         _snapshot_lane,
+                        _snapshot_slot,
                     }) = ready
                     else {
                         let _ = broker.supervise_idle();
@@ -640,6 +652,7 @@ impl DecodePool {
                     .map_err(|e| format!("{e:#}"));
                     drop(_snapshot);
                     drop(_snapshot_lane);
+                    drop(_snapshot_slot);
                     let results = match result {
                         Ok(results) => results
                             .into_iter()
@@ -1096,6 +1109,41 @@ mod tests {
         assert_eq!(memory.usage().reserved, 0);
         assert!(decode_working_bytes(0, 10).is_err());
         assert!(decode_working_bytes(u32::MAX, u32::MAX).is_err());
+    }
+
+    #[test]
+    fn snapshots_in_active_and_ready_lanes_leave_room_for_a_d750_grid() {
+        use tr_core::budget::MemoryBudget;
+        const MIB: u64 = 1024 * 1024;
+        let memory = MemoryBudget::new(2048 * MIB);
+        let baseline = memory.try_reserve(384 * MIB).unwrap();
+        let visible = memory.try_reserve(160 * MIB).unwrap();
+        let slots = MemoryBudget::new(MAX_SOURCE_SNAPSHOTS);
+        let active = (
+            slots.try_reserve(1).unwrap(),
+            memory.try_reserve(64 * MIB).unwrap(),
+        );
+        let ready = (
+            slots.try_reserve(1).unwrap(),
+            memory.try_reserve(64 * MIB).unwrap(),
+        );
+        assert!(
+            slots.try_reserve(1).is_none(),
+            "Lookup must not read another source while both snapshots are retained"
+        );
+        // Moving out of the ready queue must not release the source slot.
+        let second_decoder_waiting = ready;
+        assert!(slots.try_reserve(1).is_none());
+        let working = memory
+            .try_reserve(decode_working_bytes(6032, 4032).unwrap())
+            .unwrap();
+        // The old two-active + two-ready + lookup policy starved this same grid.
+        assert!(memory.try_reserve(3 * 64 * MIB).is_none());
+        drop(active);
+        assert!(slots.try_reserve(1).is_some());
+        drop((second_decoder_waiting, working, visible, baseline));
+        assert_eq!(slots.usage().reserved, 0);
+        assert_eq!(memory.usage().reserved, 0);
     }
 
     #[test]

@@ -2,12 +2,12 @@
   "application": "TrueRenderer",
   "check": {
     "cases": 9,
-    "cpu_seconds": 0.009678708,
+    "cpu_seconds": 0.006640832999999999,
     "display_channels": 1593672,
     "display_failures": 0,
     "display_max_error": 1,
     "failures": 0,
-    "gpu_seconds": 0.026039167000000002,
+    "gpu_seconds": 0.018040543,
     "max_error": 0.00006103515625,
     "samples": 1593672,
     "worst_ratio": 0.7426846027374268

@@ -18,6 +18,13 @@ pub enum Prefetch {
     Extended,
 }
 
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
+pub enum FolderLoading {
+    #[default]
+    Background,
+    Foreground,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
 pub struct Settings {
@@ -38,6 +45,7 @@ pub struct Settings {
     pub adapt_on_battery: bool,
     pub cpu_threads: usize,
     pub prefetch: Prefetch,
+    pub folder_loading: FolderLoading,
     pub compute: tr_core::preview::ImageCompute,
 }
 impl Default for Settings {
@@ -59,6 +67,7 @@ impl Default for Settings {
             adapt_on_battery: true,
             cpu_threads: 0,
             prefetch: Prefetch::Automatic,
+            folder_loading: FolderLoading::Background,
             compute: tr_core::preview::ImageCompute::Automatic,
         }
     }

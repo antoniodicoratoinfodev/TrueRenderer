@@ -16,8 +16,10 @@ use tr_core::{
 };
 
 mod explorer;
+mod loading;
 pub(crate) mod navigation;
 mod preferences;
+pub(crate) mod raw_previews;
 mod style;
 use preferences::SettingsPage;
 use style::{AMBER, CANVAS, MUTED, PANEL, TEXT};
@@ -85,6 +87,7 @@ pub struct TrueRenderer {
     preparation_paused: bool,
     rebuild: VecDeque<Item>,
     rebuild_total: usize,
+    folder_load: loading::FolderLoad,
     cache_action: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
     show_inspector: bool,
     show_filmstrip: bool,
@@ -209,6 +212,7 @@ impl TrueRenderer {
             preparation_paused: false,
             rebuild: VecDeque::new(),
             rebuild_total: 0,
+            folder_load: loading::FolderLoad::default(),
             service,
             root,
             folder: folder.clone(),
@@ -388,6 +392,7 @@ impl TrueRenderer {
         ));
         self.rebuild.clear();
         self.rebuild_total = 0;
+        self.begin_folder_loading();
         self.generation += 1;
         self.service
             .generation
@@ -531,6 +536,9 @@ impl TrueRenderer {
         });
     }
     fn background_demand(&mut self, ctx: &egui::Context) {
+        if self.folder_preparation_demand(ctx) {
+            return;
+        }
         if self.foreground_demand != self.demand {
             let anchor = self
                 .state
@@ -549,7 +557,7 @@ impl TrueRenderer {
         let delay = Duration::from_millis(tr_app::scheduler::prefetch_delay_ms(
             self.recent_latencies.make_contiguous(),
         ));
-        if self.rebuild.is_empty() && self.navigation_changed.elapsed() < delay {
+        if self.navigation_changed.elapsed() < delay {
             if self.service.cache.settings().prefetch != crate::cache::Prefetch::Disabled {
                 ctx.request_repaint_after(delay.saturating_sub(self.navigation_changed.elapsed()));
             }
@@ -559,9 +567,6 @@ impl TrueRenderer {
             return;
         }
         let settings = self.service.cache.settings();
-        if !self.rebuild.is_empty() {
-            self.trim_images(true);
-        }
         let memory = self.service.cache.memory.usage();
         // Leave at least half the budget for immediate navigation; never feed a
         // background decode while visible dependencies are still outstanding.
@@ -574,12 +579,7 @@ impl TrueRenderer {
             return;
         }
         let mut candidates = Vec::new();
-        if !self.rebuild.is_empty() {
-            if let Some(item) = self.rebuild.front() {
-                candidates.push((item.clone(), 256));
-            }
-            ctx.request_repaint_after(Duration::from_millis(50));
-        } else {
+        {
             let primary: Vec<_> = self
                 .state
                 .visible
@@ -628,24 +628,20 @@ impl TrueRenderer {
         for (item, edge) in candidates {
             let key = self.image_key(&item, edge);
             self.demand.insert(key.clone());
-            let rebuild = self.rebuild.front().is_some_and(|i| i.id == item.id) && edge == 256;
             if self.pending_images.contains(&key)
                 || self
                     .demand_jobs
                     .iter()
                     .any(|j| j.item.id == item.id && j.request == key.1)
-                || (!rebuild
-                    && (self.cache.contains_key(&key)
-                        || self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))))
+                || self.cache.contains_key(&key)
+                || self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
             {
                 continue;
             }
             self.demand_jobs.push(crate::decode_pool::Job {
                 item,
                 request: key.1,
-                priority: if rebuild {
-                    PreviewPriority::Background
-                } else if self.state.view == ViewMode::Grid {
+                priority: if self.state.view == ViewMode::Grid {
                     PreviewPriority::AdjacentRows
                 } else {
                     PreviewPriority::NeighborPreview
@@ -765,10 +761,18 @@ impl TrueRenderer {
         // Filesystem scan IDs are independent of decoder generations.
     }
     fn apply_settings(&mut self) {
+        let old = self.service.cache.settings();
+        let restart = old.raw_engine != self.cache_settings.raw_engine
+            || old.quality != self.cache_settings.quality
+            || old.folder_loading != self.cache_settings.folder_loading;
         if self.cache_settings.raw_engine != self.service.cache.settings().raw_engine {
             self.invalidate_raw_engine();
         }
         self.service.cache.configure(self.cache_settings.clone());
+        if restart {
+            self.begin_folder_loading();
+            self.start_folder_preparation(true);
+        }
     }
     fn set_quality(&mut self, quality: PreviewQuality) {
         let mut settings = self.service.cache.settings();
@@ -781,6 +785,8 @@ impl TrueRenderer {
         // The toolbar changes only quality, not other unapplied preferences.
         self.cache_settings.quality = quality;
         self.service.cache.configure(settings.clone());
+        self.begin_folder_loading();
+        self.start_folder_preparation(true);
         let data = self.settings_data.clone();
         let (tx, rx) = std::sync::mpsc::sync_channel(1);
         self.cache_action = Some(rx);
@@ -962,6 +968,7 @@ impl TrueRenderer {
                 }
                 Event::ScanFailed { generation, error } => {
                     if generation == self.browser.scan {
+                        self.folder_scan_failed();
                         self.browser.scan_running = false;
                         self.scanning = self.browser.pending.is_some();
                         self.status = format!("Elenco parziale o non disponibile: {error}");
@@ -991,6 +998,7 @@ impl TrueRenderer {
                     self.scanning = self.browser.pending.is_some();
                     self.status = note;
                     self.finish_browser_scan();
+                    self.start_folder_preparation(false);
                 }
                 Event::Scanned { .. } => {}
                 Event::Image {
@@ -1014,8 +1022,11 @@ impl TrueRenderer {
                         }
                     }
                     self.pending_images.remove(&key);
-                    if request.edge == 256 && self.rebuild.front().is_some_and(|i| i.id == id) {
+                    if self.folder_load.request == Some(request)
+                        && self.rebuild.front().is_some_and(|i| i.id == id)
+                    {
                         self.rebuild.pop_front();
+                        self.folder_load.errors += usize::from(result.is_err());
                     }
                     match *result {
                         Ok(decoded) => {
@@ -1307,6 +1318,7 @@ impl TrueRenderer {
                         ui.add_space(8.);
                         self.view_choices(ui);
                     }
+                    self.folder_loading_button(ui, compact);
                     if !compact {
                         self.engine_indicator(ui);
                     }
@@ -1921,6 +1933,11 @@ impl TrueRenderer {
         let key = self.image_key(item, edge);
         let selected = self.state.selected.contains(&item.id);
         let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
+        let response = if let Some(error) = self.errors.get(&format!("{}:{:?}", item.id, key.1)) {
+            response.on_hover_text(error)
+        } else {
+            response
+        };
         self.image_focus_ids.insert(response.id);
         response.widget_info(|| {
             egui::WidgetInfo::selected(
@@ -2291,16 +2308,26 @@ impl TrueRenderer {
         } else {
             0
         };
-        self.ensure_image_priority(
-            item,
-            edge,
-            if self.cache.keys().any(|(id, _)| id == &item.id) {
-                PreviewPriority::Refinement
-            } else {
-                PreviewPriority::Immediate
-            },
-        );
         let key = self.image_key(item, edge);
+        if !self.cache.contains_key(&key) {
+            // A prior zoom/quality must not pin an oversized fallback while the
+            // replacement needs a full RAW working set. Smaller tails survive.
+            self.release_large_ancestors();
+        }
+        // Finish visible small derivatives before retaining a native pyramid.
+        // At 2 GiB a resident 24 MP pyramid plus the next full RAW development
+        // cannot coexist. Keep the existing small preview, explicitly refining.
+        if self.prepare_view_detail() {
+            self.ensure_image_priority(
+                item,
+                edge,
+                if self.cache.keys().any(|(id, _)| id == &item.id) {
+                    PreviewPriority::Refinement
+                } else {
+                    PreviewPriority::Immediate
+                },
+            );
+        }
         let fallback = self
             .cache
             .iter()
@@ -2677,6 +2704,38 @@ impl TrueRenderer {
         }
         ctx.request_repaint_after(Duration::from_millis(50));
     }
+    fn prepare_view_detail(&mut self) -> bool {
+        let pending = self.demand.iter().any(|key| {
+            key.1.maximum_level_edge() <= 2048
+                && !self.cache.contains_key(key)
+                && !self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
+        });
+        if pending {
+            self.release_large_ancestors();
+        }
+        !pending
+    }
+    fn release_large_ancestors(&mut self) {
+        let limit = self.service.cache.memory.usage().limit / 8;
+        let pinned = self
+            .cache
+            .iter()
+            .filter(|(key, _)| self.demand.contains(*key))
+            .map(|(_, c)| c.pyramid.id())
+            .collect::<HashSet<_>>();
+        let sources = self
+            .cache
+            .values()
+            .filter(|c| !pinned.contains(&c.pyramid.id()) && c.pyramid.byte_len() as u64 > limit)
+            .map(|c| c.pyramid.id())
+            .collect::<HashSet<_>>();
+        if !sources.is_empty() {
+            self.cache.retain(|_, c| !sources.contains(&c.pyramid.id()));
+            // Completed frames own output textures, not the CPU ancestor. Keep
+            // them for reprojection; the next paint replaces queued input jobs.
+            // Active work retains its lease until actual completion.
+        }
+    }
     fn raw_engines_smoke(&mut self, ctx: &egui::Context) {
         use tr_core::decoder::RawEngine;
         let mut engines: Vec<_> = RawEngine::choices().collect();
@@ -2713,7 +2772,7 @@ impl TrueRenderer {
             self.command(Command::Select { id, extend: false });
             self.state.transform.zoom = Some(1.0);
             self.state.view = ViewMode::Preview;
-            self.show_filmstrip = false;
+            self.show_filmstrip = std::env::args().any(|arg| arg == "--raw-engine-filmstrip");
             self.cache_settings.quality = PreviewQuality::Full;
             self.cache_settings.raw_engine = engines[0];
             self.start_cache_action(true);
@@ -2725,6 +2784,10 @@ impl TrueRenderer {
             && self.presenter.is_idle()
             && !self.demand.is_empty()
             && self.demand.iter().all(|key| self.cache.contains_key(key))
+            && self
+                .state
+                .current_item()
+                .is_some_and(|item| self.cache.contains_key(&self.image_key(item, 0)))
         {
             let engine = engines[stage - 1];
             let correct = self.demand.iter().all(|key| {
@@ -2798,6 +2861,10 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
     }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
+        if std::env::args().any(|a| a == "--folder-loading-smoke") {
+            self.folder_loading_smoke(ctx);
+            return;
+        }
         if std::env::args().any(|arg| arg == "--filesystem-smoke") {
             self.filesystem_smoke(ctx);
             return;
@@ -2992,7 +3059,9 @@ impl eframe::App for TrueRenderer {
         if !self.navigation_begin(&ctx) {
             return;
         }
-        self.keyboard(&ctx);
+        if !self.folder_loading_blocks() {
+            self.keyboard(&ctx);
+        }
         self.image_focus_ids.clear();
         if ctx.input(|i| i.viewport().close_requested()) && !self.state.pending.is_empty() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
@@ -3008,13 +3077,20 @@ impl eframe::App for TrueRenderer {
         if ui.available_width() >= 1000. && self.browser.session.visible {
             self.sidebar(ui);
         }
-        if self.show_inspector && (!self.show_settings || ui.available_width() >= 700.) {
+        if !self.folder_loading_blocks()
+            && self.show_inspector
+            && (!self.show_settings || ui.available_width() >= 700.)
+        {
             self.inspector(ui);
         }
         egui::CentralPanel::default()
             .frame(egui::Frame::new().fill(CANVAS).inner_margin(16))
             .show(ui, |ui| {
-                if self.scanning && self.state.visible.is_empty() {
+                if self.folder_loading_blocks() {
+                    ui.centered_and_justified(|ui| {
+                        ui.label(lang.text("Preparazione delle anteprime…"));
+                    });
+                } else if self.scanning && self.state.visible.is_empty() {
                     ui.label(lang.text("Lettura dei file…"));
                 } else if self.state.visible.is_empty() {
                     ui.add_space((ui.available_height() * 0.2).min(70.));
@@ -3053,6 +3129,7 @@ impl eframe::App for TrueRenderer {
         self.smoke_tick(&ctx);
         self.background_demand(&ctx);
         self.flush_demand();
+        self.folder_loading_popup(&ctx);
         self.navigation_capture(&ctx);
         if self.scanning || !self.pending_images.is_empty() || !self.state.pending.is_empty() {
             ctx.request_repaint_after(Duration::from_millis(50));
@@ -3191,6 +3268,84 @@ mod settings_regressions {
             assert!(Instant::now() < deadline, "Timed out: {}", app.status);
             std::thread::sleep(Duration::from_millis(10));
         }
+    }
+
+    #[test]
+    fn visible_thumbnails_release_large_ancestors_before_native_refinement() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        app.state.transform.zoom = Some(1.0);
+        let full = (item.id.clone(), PreviewRequest::full());
+        let thumb = (item.id.clone(), PreviewRequest { edge: 1, ..full.1 });
+        let make_image = |size| {
+            let pyramid = Arc::new(
+                ImageLevels::from_source(
+                    tr_core::color::LinearImage {
+                        width: size,
+                        height: size,
+                        pixels: vec![[0.2, 0.3, 0.4, 1.]; (size * size) as usize],
+                    },
+                    PreviewRequest::full(),
+                )
+                .unwrap(),
+            );
+            CachedImage {
+                digest: "test".into(),
+                info: RasterInfo {
+                    width: size,
+                    height: size,
+                    source_width: size,
+                    source_height: size,
+                    native_bits: 32,
+                    format: "test".into(),
+                    decoder: "test".into(),
+                    input_color: "linear Rec2020".into(),
+                    filter: "reference".into(),
+                    orientation: "applied".into(),
+                },
+                histogram: pyramid.source().histogram(),
+                pyramid,
+                touched: app.frame_number,
+                transport: "test",
+                worker_pid: None,
+            }
+        };
+        let large = make_image(4);
+        let small = make_image(1);
+        app.cache.insert(
+            (
+                item.id.clone(),
+                PreviewRequest {
+                    edge: 4096,
+                    ..full.1
+                },
+            ),
+            large.clone(),
+        );
+        app.cache.insert(full.clone(), large);
+        app.service.cache.memory.configure(2048); // Scaled headless residency test.
+        app.demand.insert(full.clone());
+        app.release_large_ancestors();
+        assert!(
+            app.cache.contains_key(&full),
+            "Keep the other demanded comparison pane"
+        );
+        app.demand.clear();
+        app.demand.insert(thumb.clone());
+        assert!(!app.prepare_view_detail());
+        assert!(!app.cache.contains_key(&full));
+        app.cache.insert(thumb.clone(), small);
+        assert!(app.prepare_view_detail());
+        assert!(app.cache.contains_key(&thumb));
+        assert_eq!(app.state.transform.zoom, Some(1.0));
+        app.cache.remove(&thumb);
+        app.errors
+            .insert(format!("{}:{:?}", thumb.0, thumb.1), "Invalid file".into());
+        assert!(
+            app.prepare_view_detail(),
+            "A genuinely invalid neighbour must not block detail forever"
+        );
     }
 
     #[test]

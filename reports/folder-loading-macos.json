@@ -1,0 +1,56 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-09-20",
+  "passed": true,
+  "complete": true,
+  "bundle": "dist/TrueRenderer-loading.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "bd1101c7a00c35209b663b7373baf73cb8bc1452772f9a7e9949537c75a7e110",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a1d748cde2c486138600cd9a3a824c3e020ea38e430b85e271827ff9827f2d39",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "bbfb901ea13c5e0266c2d206c0a3a5b0da1515a2a2c72bfe9eb1050b6c58bec3"
+  },
+  "platform": "macOS 27.0 arm64, Apple M4",
+  "changes": [
+    "Compact clickable percentage in the first toolbar; details popup with progress, errors, unsupported sources, pause/resume and cancellation.",
+    "Persisted Background/Foreground folder-loading preference, backward-compatible Background default. Foreground uses a modal and yields back automatically after successful preparation.",
+    "Indeterminate initial scan, one extra thumbnail request at a time, unchanged rescans do not restart, cancelled progress is retained, active demand survives its own memory reservation.",
+    "Thumbnail edge 512 with global quality/engine, cache reuse and memory admission; no additional decoder or weakening of isolation."
+  ],
+  "tests": {
+    "verify_sh_gui_passed": true,
+    "rust_ordinary_passed": 136,
+    "rust_explicit_integrations_passed": 11,
+    "private_camera_unit_tests_skipped": 2,
+    "new_loading_regressions": 5,
+    "ui_regressions_passed": 20,
+    "clippy_workspace_all_targets_warnings_denied": true,
+    "fmt": true,
+    "worker_protocol_checks": 6,
+    "resampling_signal_cases": 24,
+    "settings_native_it_en_small_window_200_percent_screenshots": 12,
+    "xpc_passed": true,
+    "xpc_generated_images_checked": 12,
+    "xpc_two_services_timeout_recovery_and_fault_build_rejection": true
+  },
+  "native_loading": {
+    "generated_corpus": {"processed": 12, "total": 12, "errors": 0, "foreground_and_background_passed": true},
+    "private_d750_final_bundle": {"processed": 30, "total": 30, "errors": 0, "foreground_and_background_passed": true, "quality": "Full", "engine": "Apple", "memory_mib": 2048, "language": "it", "saved_loading_preference": "Foreground"},
+    "private_d750_earlier_revision": {"processed": 30, "total": 30, "errors": 0, "foreground_and_background_passed": true, "quality": "Standard", "engine": "Apple", "host_sha256": "c4a8b18c538900be4db4f322bf60bb3bba9ad1ae8c95d7982be3773b43d02897"},
+    "private_copies_and_isolated_catalogues": true
+  },
+  "private_evidence": {
+    "generated_ui": "var/folder-loading-Qg37X7/reports/folder-loading.json",
+    "full_raw_ui": "var/folder-loading-Qg37X7/raw/reports/folder-loading.json",
+    "standard_raw_ui": "var/folder-loading-Qg37X7/raw/reports/folder-loading-standard.json",
+    "preferences": "var/folder-loading-Qg37X7/reports/restyle-ui.json",
+    "xpc": "var/folder-loading-Qg37X7/reports/xpc-qualification-macos.json"
+  },
+  "limits": [
+    "100% describes processed thumbnails, not all native images resident in RAM, GPU upload completion or guaranteed disk persistence. Errors/skips remain explicit.",
+    "Background work can wait for foreground demand or memory. Foreground mode releases the current CPU images and remains cancellable.",
+    "Existing trace probes keep their explicitly controlled demand; the new folder-loading native probe exercises automatic preparation separately.",
+    "No new colour, physical display, minimum-OS, physical-memory or release qualification; D750/45 MP physical-memory limits remain open.",
+    "Windows native GUI and other RAW engines were not rerun for this loading-control increment. Photographs and private screenshots remain under var/."
+  ]
+}

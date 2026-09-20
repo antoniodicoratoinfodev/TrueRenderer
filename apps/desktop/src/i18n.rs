@@ -16,6 +16,30 @@ impl Language {
             return source;
         }
         match source {
+            "Caricamento cartella" => "Folder loading",
+            "Conteggio file…" => "Counting files…",
+            "Cartella" => "Folder",
+            "Annullato" => "Cancelled",
+            "Preparazione delle anteprime…" => "Preparing previews…",
+            "Preparazione delle miniature, non del dettaglio 1:1." => {
+                "Preparing thumbnails, not full 1:1 detail."
+            }
+            "Preparazione annullata" => "Preparation cancelled",
+            "Lettura della cartella incompleta" => "Folder scan incomplete",
+            "In attesa delle viste attive o di memoria disponibile." => {
+                "Waiting for active views or available memory."
+            }
+            "Preparazione in pausa" => "Preparation paused",
+            "Continua in background" => "Continue in background",
+            "Completa in primo piano" => "Finish in foreground",
+            "Riprendi" => "Resume",
+            "Pausa" => "Pause",
+            "All'apertura della cartella" => "When opening a folder",
+            "Carica le anteprime in background" => "Load previews in background",
+            "Prepara prima la cartella con popup" => "Prepare the folder first with a popup",
+            "La scelta si applica dopo Applica e salva. Il popup può continuare in background." => {
+                "Takes effect after Apply and save. The popup can continue in background."
+            }
             "Esplora" => "Explorer",
             "Navigazione" => "Navigation",
             "Pannello" => "Panel",

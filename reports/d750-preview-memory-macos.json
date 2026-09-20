@@ -1,0 +1,114 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-09-20",
+  "complete": true,
+  "passed": true,
+  "passed_scope": "Functional preview, navigation and XPC regressions only; physical memory gate below is false.",
+  "bundle": "dist/TrueRenderer-d750.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "e932d4f279a175e237c402e877df0346d0be733f203c8772854974629f05f9de",
+    "Contents/MacOS/tr-worker": "c944a03110368c16fe635504f7f74cfd6f8a457af829df8e7d907542556c83bc",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a1d748cde2c486138600cd9a3a824c3e020ea38e430b85e271827ff9827f2d39",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "bbfb901ea13c5e0266c2d206c0a3a5b0da1515a2a2c72bfe9eb1050b6c58bec3"
+  },
+  "platform": "macOS 27.0 arm64, Apple M4",
+  "scope": "Authorized D750 RAW preview demand at 2 GiB. Private source paths, images, catalogues and detailed logs remain under var/.",
+  "baseline": {
+    "individual_full_developments_passed": 120,
+    "sources": 30,
+    "original_sha256_unchanged": true,
+    "concurrent_batches_failed": 6,
+    "concurrent_batches_total": 24,
+    "failures_by_engine": {"Apple": 3, "LibRawBilinear": 1, "LibRawAhd": 2, "TrueRenderer": 0},
+    "cause": "Compressed snapshots retained across ready and active decoder lanes exhausted admission headroom; UI labelled the resulting memory errors as Read error. Native 1:1 residency also prevented neighbouring cold thumbnail development."
+  },
+  "changes": [
+    "At most two compressed source snapshots across lookup, ready, active and waiting decoder lanes; cancellation and consumer coalescing remain active while waiting.",
+    "Visible small derivatives precede native viewer refinement. Missing replacement detail releases oversized, unrequested CPU ancestors; shared demanded images and completed presentation frames remain protected.",
+    "Read error thumbnails expose the actual diagnostic on hover.",
+    "Opt-in private grid-demand diagnostic and filmstrip extension of native engine smoke; two unit regressions and existing worker/coalescing integrations."
+  ],
+  "preview_matrix": {
+    "sources": 30,
+    "engines": ["Apple", "LibRawBilinear", "LibRawAhd", "TrueRenderer"],
+    "qualities": ["Full", "Standard"],
+    "memory_mib": 2048,
+    "batch_size": 12,
+    "inspector_edge": 1024,
+    "thumbnail_edge": 512,
+    "final_bundle_batches_passed": 24,
+    "final_bundle_source_quality_engine_combinations": 240,
+    "final_bundle_sources_unchanged": true,
+    "final_bundle_cache_state": "Previously populated; decode permitted on misses, no zero-decode claim.",
+    "cold_matrix_batches_passed": 24,
+    "cold_matrix_host_sha256": "8e70d4b715c3fd708c52a44c20e0011cc96950bc87aba4fe1dae1ae30df7ee04",
+    "cold_matrix_scope": "Same final decoder-pool code; earlier viewer revision. Headless demand paths, not GPU/display or physical-memory qualification."
+  },
+  "native_ui": {
+    "passed": true,
+    "filmstrip_visible": true,
+    "quality": "Full",
+    "zoom": 1.0,
+    "stages": ["Apple", "LibRawBilinear", "LibRawAhd", "TrueRenderer", "Apple"],
+    "selection_and_transform_preserved": true,
+    "scanned_sources": 30,
+    "viewport_pixel_checks_passed": 5,
+    "max_channel_error_u8": 0,
+    "pixel_scope": "Right quarter of captured main viewport versus CPU raster, not compositor or physical display."
+  },
+  "navigation": {
+    "passed": true,
+    "private_sources_per_engine": 2,
+    "engines_passed": 4,
+    "actions_passed": 40,
+    "actions": ["select", "select", "return", "zoom-300", "pan", "fit", "photo-standard", "photo-full", "physical-1to1", "fit-standard"],
+    "requested_compute": "Gpu; recorded CPU fallback allowed",
+    "physical_1to1_exact_cases": 4,
+    "max_channel_error_u8": 1,
+    "minimum_draw_coverage": 0.015087083913385868,
+    "continuity_scope": "Nonzero draw-command coverage per redraw; partial coverage exists, not uninterrupted full-screen or physical-display presentation.",
+    "maximum_admission_peak_bytes": 2144655162,
+    "originals_and_private_inputs_unchanged": true
+  },
+  "physical_memory": {
+    "gate_passed": false,
+    "configured_bytes": 2147483648,
+    "peak_sum_rss_bytes": 3332456448,
+    "peak_sum_footprint_bytes": 3646361728,
+    "all_four_navigation_cases_exceeded_configured_bytes": true,
+    "incomplete_samples": 0,
+    "maximum_sampling_gap_seconds": 0.05407987499999933,
+    "scope": "Sampled unique navigation bundle host plus its XPC processes, including native test readbacks; not all driver allocations or shorter peaks. Cause and production-only RSS isolation remain open."
+  },
+  "verification": {
+    "verify_sh_gui": true,
+    "rust_ordinary_passed": 131,
+    "rust_explicit_integrations_passed": 11,
+    "private_camera_unit_tests_skipped": 2,
+    "private_camera_alternative": "120 individual full developments through the isolated baseline bundle; final preview-demand and native navigation matrices above.",
+    "worker_protocol_checks": 6,
+    "resampling_signal_cases": 24,
+    "xpc_passed": true,
+    "xpc_distinct_services": 2,
+    "xpc_generated_images_checked": 12,
+    "xpc_timeout_recovery_and_other_service_survival": true,
+    "production_rejects_fault_injection": true,
+    "original_sha256_rechecked": true,
+    "docs_links_checked": 292,
+    "docs_link_failures": 0
+  },
+  "private_evidence": {
+    "cold_matrix": "var/d750-preview-il7lU5/final/raw-previews-cold-v1.json",
+    "final_matrix": "var/d750-preview-il7lU5/final/raw-previews.json",
+    "native_ui": "var/d750-preview-il7lU5/var/raw-engine-ui.json",
+    "native_pixels": "var/d750-preview-il7lU5/var/raw-engine-ui-pixels.json",
+    "navigation_and_memory": "var/large-navigation-cuz3o0cg/report.json",
+    "xpc": "var/d750-preview-il7lU5/final/reports/xpc-qualification-macos.json"
+  },
+  "limits": [
+    "Not a colour/display qualification, physical OS-pressure campaign, minimum-macOS qualification or release gate.",
+    "No R0-R4 gate closed; previous 45 MP Full memory overrun remains open.",
+    "Standard and Full are preview qualities, not assurance Standard or Reference."
+  ]
+}

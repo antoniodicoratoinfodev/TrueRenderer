@@ -249,7 +249,13 @@ impl TrueRenderer {
             || !self.errors.is_empty()
             || self.presenter.has_errors()
         {
-            self.navigation_finish(ctx, Some("Timeout or application/render error".into()));
+            self.navigation_finish(
+                ctx,
+                Some(format!(
+                    "Timeout or application/render error: {:?}",
+                    self.errors
+                )),
+            );
             return false;
         }
         if self.scanning || self.gpu_status == "Diagnostica GPU in corso…" {

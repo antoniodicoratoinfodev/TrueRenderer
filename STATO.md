@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 19 settembre 2026.
+Aggiornato: 20 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -19,9 +19,31 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
-Il bundle Mac più recente è `dist/TrueRenderer-navigator-compact.app`: barra percorso compatta, schede Esplora/Libreria stabili, 14 regressioni UI, sei layout nativi, dodici catture preferenze e due servizi XPC verificati il 19 settembre. [Rapporto e limiti](reports/navigator-layout-macos.json). La suite completa precedente appartiene al bundle `dist/TrueRenderer-navigator.app`, conservato separatamente: [rapporto](reports/filesystem-browser-macos.json). La precedente campagna fotografica comprende 120 sviluppi D750 sui quattro motori e PNG 12/24/45 MP: non è stata ripetuta né attribuita al nuovo bundle. [Rapporto fotografico](reports/large-pressure-raw-macos.json). Windows: ultima suite registrata di 99 test ordinari + 8 integrazioni, pubblicata in `67146e3`; GUI e Nikon non ripetuti per gli ultimi fix. [Rapporto](reports/gamma-orientation-fixes-windows.json).
+### Caricamento cartella e percentuale — 20 settembre
 
-**Priorità:** investigare il superamento della memoria sui 45 MP Full: somma RSS 4.816.601.088 byte e footprint 4.296.512.936 byte con 4 GiB configurati. Pressione fisica OS, decode RAW ridotto/regionale e qualifica fotografica estesa restano aperti. Nessun gate R0–R4 è chiuso; Standard/Piena sono qualità di anteprima, non assurance Standard/Riferimento.
+Implementati barra percentuale cliccabile nella riga superiore e popup con conteggi, errori/esclusioni, pausa/ripresa, annullamento e passaggio al background. Preferenza persistente in Anteprime e RAW: background predefinito oppure preparazione in primo piano con popup modale fino al termine. Scansione indeterminata prima del totale; contatore della cartella, non delle sole foto filtrate; annullamento non finge il 100%. Coda limitata a una richiesta aggiuntiva, riuso cache, attesa memoria esplicita, nessun riavvio su refresh identico. Restano invariati originali e vincoli decoder. Bundle `dist/TrueRenderer-loading.app`: cinque nuove regressioni, 20 test UI, suite completa 136 ordinari + 11 integrazioni, corpus nativo 12/12 e 30 copie D750 Piena/Apple in entrambe le modalità senza errori; Standard verificato sulla revisione precedente. Dodici catture impostazioni IT/EN/minima/200%, screenshot popup e due XPC passati. [Rapporto e limiti](reports/folder-loading-macos.json). Il 100% non certifica dettaglio nativo residente o persistenza SSD; nessun nuovo gate memoria/colore/rilascio, né ripetizione nativa Windows/altri motori in questo incremento.
+
+- [x] Implementare barra, popup, preferenza e contatori verificabili.
+- [x] Verificare migrazione impostazioni, clic, pausa, errori, annullamento e riletture.
+- [x] Completare bundle finale, screenshot e verifica XPC; registrare evidenze.
+
+### Errori anteprime D750 — verifica richiesta il 20 settembre
+
+Prosecuzione dei requisiti RAW, memoria e richieste concorrenti del progetto anteprime (§12) e del progetto motori RAW. I 30 originali D750 passano 120 sviluppi singoli sui quattro motori e conservano gli SHA-256 iniziali. Il messaggio segnalato «Read error» è l'etichetta generica degli errori delle miniature: riprodotto un rifiuto di memoria a 2 GiB in sei dei 24 gruppi della baseline, con Apple, LibRaw bilineare e AHD, non una corruzione dei RAW. Il limite riguardava soltanto la coda pronta e lasciava trattenere fino a cinque snapshot tra i thread; ora due lease complessivi coprono anche lettura e decoder attivi/in attesa, mantenendo cancellazione e coalescenza. Riprodotto e corretto anche il caso 1:1 + filmstrip: il viewer completa prima i derivati visibili e riprende poi il dettaglio nativo, rilasciando gli antenati troppo grandi. Tooltip sulle miniature con il vero errore.
+
+Bundle consegnabile: `dist/TrueRenderer-d750.app`. Passati 24 gruppi (30 foto × quattro motori × Standard/Piena) sia a cache fredda sulla revisione con lo stesso pool finale, sia riaprendo i derivati nel pacchetto definitivo; quest'ultimo passa anche cinque stadi nativi 1:1/filmstrip, cinque confronti pixel senza differenze, 40 transizioni foto/zoom/pan/qualità sui quattro motori e due XPC con recupero. La prova estesa aveva rilevato un ulteriore rifiuto nel cambio Piena→Standard dopo lo zoom: ora si rilasciano anche gli antenati obsoleti, proteggendo le identità condivise ancora richieste e i fotogrammi completati. Superati `scripts/verify.sh --gui` (131 test ordinari + 11 integrazioni, due test privati sostituiti dalla campagna isolata), due nuove regressioni, controlli protocollo/ricampionamento e 291 link documentali. [Rapporto, identità dei binari e limiti](reports/d750-preview-memory-macos.json).
+
+**Limite aperto distinto dagli errori corretti:** nella navigazione nativa D750 il picco aggregato è 3.332.456.448 byte RSS / 3.646.361.728 byte footprint con 2 GiB configurati; tutti i quattro casi superano il budget fisico, pur restando entro i crediti di ammissione. Misura comprende i readback della prova; isolare il costo del test da quello produttivo e correggere gli extra rimane da fare. Copertura durante transizioni non nulla ma talvolta parziale, non continuità universale. Nessuna preferenza, fotografia originale o database dell'utente modificato; gli SHA-256 originali sono ricontrollati, fotografie e report dettagliati restano in `var/`. Nessun gate di memoria fisica, colore o rilascio chiuso.
+
+- [x] Identificare i quattro motori Mac disponibili e verificare tutti i 30 originali senza modificarli.
+- [x] Riprodurre l'errore delle anteprime, correggere la causa e aggiungere regressioni.
+- [x] Verificare griglia/viewer su tutti i motori, bundle finale e XPC; registrare perimetro e limiti.
+
+### Bundle e priorità generali
+
+Il bundle Mac più recente è `dist/TrueRenderer-loading.app`, con le prove del caricamento indicate sopra; `dist/TrueRenderer-d750.app` conserva la precedente campagna sui quattro motori. Il precedente `dist/TrueRenderer-navigator-compact.app` conserva la campagna del 19 settembre: barra percorso compatta, schede Esplora/Libreria stabili, 14 regressioni UI, sei layout nativi, dodici catture preferenze e due servizi XPC. [Rapporto e limiti](reports/navigator-layout-macos.json). La campagna precedente del navigatore appartiene a `dist/TrueRenderer-navigator.app`, conservato separatamente: [rapporto](reports/filesystem-browser-macos.json). La campagna storica D750 e PNG 12/24/45 MP resta distinta dalle verifiche odierne: [rapporto fotografico](reports/large-pressure-raw-macos.json). Windows: ultima suite registrata di 99 test ordinari + 8 integrazioni, pubblicata in `67146e3`; GUI e Nikon non ripetuti per gli ultimi fix. [Rapporto](reports/gamma-orientation-fixes-windows.json).
+
+**Priorità:** investigare il superamento della memoria sui 45 MP Full (somma RSS 4.816.601.088 byte e footprint 4.296.512.936 byte con 4 GiB configurati) e quello D750 a 2 GiB appena registrato sopra. Pressione fisica OS, decode RAW ridotto/regionale e qualifica fotografica estesa restano aperti. Nessun gate R0–R4 è chiuso; Standard/Piena sono qualità di anteprima, non assurance Standard/Riferimento.
 
 Il prossimo incremento deve investigare il superamento memoria misurato su 45 MP Full e ampliare pressione OS, target colore e fotocamere. Fit, livelli residenti ridotti e transizioni sono verificati nei perimetri PNG 12/24/45 MP e D750 descritti sopra; decode RAW ridotto/regionale, presentazione effettiva e campagna statistica restano aperti. I gate che richiedono altri RAW, hardware o persone rimangono espliciti. Il seguente ordine riguarda invece la roadmap complessiva R0–R4.
 

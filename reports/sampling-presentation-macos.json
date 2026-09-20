@@ -12,9 +12,9 @@
       "passed": true,
       "rect_physical": [
         1836.0,
-        286.0,
+        246.0,
         2228.0,
-        547.0
+        507.0
       ],
       "screenshot": "01-grid",
       "size": [
@@ -60,9 +60,9 @@
       "passed": true,
       "rect_physical": [
         748.0,
-        496.0,
+        476.0,
         1948.0,
-        1296.0
+        1276.0
       ],
       "screenshot": "04-radial-1to1",
       "size": [
@@ -99,7 +99,7 @@
       ]
     },
     {
-      "differing_channels": 75,
+      "differing_channels": 103,
       "max_channel_error_u8": 1,
       "origin": [
         0.0,
@@ -107,19 +107,19 @@
       ],
       "passed": true,
       "rect_physical": [
-        502.0,
-        332.0,
-        2194.0,
+        472.0,
+        292.0,
+        2224.0,
         1460.0
       ],
       "screenshot": "05-radial-fit",
       "size": [
-        1692,
-        1128
+        1752,
+        1168
       ],
       "step": [
-        0.7092198581560284,
-        0.7092198581560284
+        0.684931506849315,
+        0.684931506849315
       ]
     },
     {
@@ -156,9 +156,9 @@
       "passed": true,
       "rect_physical": [
         1126.0,
-        748.0,
+        728.0,
         1570.0,
-        1044.0
+        1024.0
       ],
       "screenshot": "06-radial-37percent",
       "size": [
@@ -180,9 +180,9 @@
       "passed": true,
       "rect_physical": [
         2314.0,
-        390.0,
+        350.0,
         2848.0,
-        746.0
+        706.0
       ],
       "screenshot": "07-grid-small",
       "size": [
@@ -204,9 +204,9 @@
       "passed": true,
       "rect_physical": [
         1562.0,
-        277.0,
+        237.0,
         1863.0,
-        478.0
+        438.0
       ],
       "screenshot": "07-grid-small",
       "size": [
@@ -228,9 +228,9 @@
       "passed": true,
       "rect_physical": [
         2314.0,
-        390.0,
+        350.0,
         2848.0,
-        746.0
+        706.0
       ],
       "screenshot": "08-grid-large",
       "size": [
@@ -252,9 +252,9 @@
       "passed": true,
       "rect_physical": [
         468.0,
-        825.0,
+        785.0,
         1012.0,
-        1188.0
+        1148.0
       ],
       "screenshot": "08-grid-large",
       "size": [
