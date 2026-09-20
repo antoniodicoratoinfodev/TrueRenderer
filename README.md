@@ -2,9 +2,9 @@
 
 ## See the image. Understand the rendering.
 
-TrueRenderer is a native desktop application for photographers, retouchers, archivists and imaging professionals who want to browse, inspect and compare photographs with a rendering path they can understand.
+TrueRenderer is a native desktop application for photographers, retouchers, archivists, imaging specialists, researchers and scientists who need to browse, inspect and compare photographs and other still images through a rendering path they can understand.
 
-It brings the photograph, its technical context and the choices behind its appearance into one focused workspace. Originals stay untouched, the library stays on your computer, and no account, upload or subscription is required.
+It brings each image, its technical context and the choices behind its appearance into one focused workspace. Originals remain untouched, the library stays on your computer, and no account, upload or subscription is required.
 
 ![TrueRenderer viewer with the compact Explorer tree, RAW engine information and preview quality selectors](reports/navigator-viewer.png)
 
@@ -14,7 +14,7 @@ It brings the photograph, its technical context and the choices behind its appea
 
 ### Browse naturally
 
-Open a photograph or a folder, then move naturally between the thumbnail grid, filmstrip and focused viewer. Library and Explorer views, search, favourites and navigation history keep large collections easy to explore.
+Open an image or a folder, then move between the thumbnail grid, filmstrip and focused viewer. Library and Explorer views, search, favourites and navigation history keep large collections easy to explore.
 
 Folder preparation runs in the background with visible progress and controls to pause, resume or cancel.
 
@@ -24,7 +24,7 @@ Move from Fit view to physical 1:1 when you need to judge focus, texture, noise 
 
 ### Compare with intent
 
-Place two photographs side by side with synchronized navigation to compare focus, exposure, RAW development or near-duplicate frames.
+Place two images side by side with synchronized navigation to compare focus, exposure, RAW development or near-duplicate frames.
 
 ### Choose how RAW is interpreted
 
@@ -44,7 +44,7 @@ RAW files do not have one universally correct appearance, and display colour dep
 
 ## Designed around the photograph
 
-The interface keeps the photograph at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace.
+The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace.
 
 ![Thumbnail grid with the compact Explorer tree, file icons, hierarchy guides and full-row selection](reports/navigator-grid.png)
 
@@ -56,7 +56,7 @@ Preferences are grouped by purpose, and the interface is available in English an
 
 ## Local by design
 
-Original files are read only. Previews use a separate cache, while ratings, keywords and backups remain durable library data.
+Original files are read-only. Previews use a separate cache, while ratings, keywords and backups remain durable library data.
 
 External decoding is isolated in sandboxed XPC services on macOS and a confined worker on Windows. Decoder failures remain separated from the library writer.
 
