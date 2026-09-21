@@ -1,272 +1,272 @@
 {
   "cases": [
     {
-      "cpu_first_seconds": 0.090851083,
+      "cpu_first_seconds": 0.106221167,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003840291,
+      "cpu_reused_seconds": 0.003461542,
       "fixture": "orientation-1.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.007657333,
+      "metal_seconds": 0.0075065,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.0766985,
+      "cpu_first_seconds": 0.091417333,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.001192625,
+      "cpu_reused_seconds": 0.00119425,
       "fixture": "06-heic.heic",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.00128875,
+      "metal_seconds": 0.001367125,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.145888083,
+      "cpu_first_seconds": 0.122660375,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.058255333,
+      "cpu_reused_seconds": 0.071694959,
       "fixture": "12mp-jpeg.jpg",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.091045042,
+      "metal_seconds": 0.067380584,
       "size": [
         4000,
         3000
       ]
     },
     {
-      "cpu_first_seconds": 0.004082334,
+      "cpu_first_seconds": 0.003794584,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003829291,
+      "cpu_reused_seconds": 0.00347275,
       "fixture": "03-tiff.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003755791,
+      "metal_seconds": 0.003501917,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.004446541,
+      "cpu_first_seconds": 0.003801875,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003352875,
+      "cpu_reused_seconds": 0.003288041,
       "fixture": "orientation-7.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003691541,
+      "metal_seconds": 0.003468958,
       "size": [
         32,
         48
       ]
     },
     {
-      "cpu_first_seconds": 0.004198791,
+      "cpu_first_seconds": 0.003526708,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003457125,
+      "cpu_reused_seconds": 0.003183375,
       "fixture": "16bit.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.00391925,
+      "metal_seconds": 0.003585708,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.003308416,
+      "cpu_first_seconds": 0.002420417,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.000778958,
+      "cpu_reused_seconds": 0.000632084,
       "fixture": "08-webp.webp",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.000816291,
+      "metal_seconds": 0.00082875,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.003442125,
+      "cpu_first_seconds": 0.003267084,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003412958,
+      "cpu_reused_seconds": 0.003367042,
       "fixture": "orientation-6.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003616125,
+      "metal_seconds": 0.003429084,
       "size": [
         32,
         48
       ]
     },
     {
-      "cpu_first_seconds": 0.000853,
+      "cpu_first_seconds": 0.000985041,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.000555834,
+      "cpu_reused_seconds": 0.000498,
       "fixture": "16bit.png",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.00072375,
+      "metal_seconds": 0.000552291,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.003479,
+      "cpu_first_seconds": 0.00335525,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003097125,
+      "cpu_reused_seconds": 0.003108584,
       "fixture": "orientation-5.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.0034085,
+      "metal_seconds": 0.003258916,
       "size": [
         32,
         48
       ]
     },
     {
-      "cpu_first_seconds": 0.003883541,
+      "cpu_first_seconds": 0.003227416,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003414334,
+      "cpu_reused_seconds": 0.003150042,
       "fixture": "orientation-4.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003418417,
+      "metal_seconds": 0.003035875,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.003132458,
+      "cpu_first_seconds": 0.002042542,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.001232875,
+      "cpu_reused_seconds": 0.001003625,
       "fixture": "01-jpeg.jpg",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.001143917,
+      "metal_seconds": 0.00096175,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.00388725,
+      "cpu_first_seconds": 0.0036575,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003309542,
+      "cpu_reused_seconds": 0.003553208,
       "fixture": "orientation-8.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003250292,
+      "metal_seconds": 0.00339075,
       "size": [
         32,
         48
       ]
     },
     {
-      "cpu_first_seconds": 0.003291708,
+      "cpu_first_seconds": 0.003283959,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.003246,
+      "cpu_reused_seconds": 0.003227666,
       "fixture": "orientation-3.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003187541,
+      "metal_seconds": 0.003317958,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.15337425,
+      "cpu_first_seconds": 0.142415167,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.028533958,
+      "cpu_reused_seconds": 0.026264959,
       "fixture": "07-bayer.dng",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.031207792,
+      "metal_seconds": 0.026656125,
       "size": [
         1024,
         768
       ]
     },
     {
-      "cpu_first_seconds": 0.0012395,
+      "cpu_first_seconds": 0.001159416,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.000934459,
+      "cpu_reused_seconds": 0.002328875,
       "fixture": "02-png.png",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.000781792,
+      "metal_seconds": 0.000698,
       "size": [
         48,
         32
       ]
     },
     {
-      "cpu_first_seconds": 0.004269042,
+      "cpu_first_seconds": 0.003360625,
       "cpu_reuse_bit_exact": true,
-      "cpu_reused_seconds": 0.004081,
+      "cpu_reused_seconds": 0.003267125,
       "fixture": "orientation-2.tiff",
       "metal": {
         "failed_channels": 0,
         "maximum_absolute_error": 0.0,
         "passed": true
       },
-      "metal_seconds": 0.003870209,
+      "metal_seconds": 0.003213333,
       "size": [
         48,
         32

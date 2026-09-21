@@ -500,6 +500,7 @@ mod tests {
             .send(Request::ViewDemand {
                 wanted: vec![(item.id.clone(), PreviewRequest::full())],
                 jobs: vec![Job {
+                    resident: None,
                     item: item.clone(),
                     request: PreviewRequest::full(),
                     priority: tr_core::preview::PreviewPriority::Immediate,

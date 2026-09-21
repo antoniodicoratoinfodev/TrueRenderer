@@ -30,6 +30,9 @@ pub struct Job {
     pub request: PreviewRequest,
     pub priority: PreviewPriority,
     pub generation: u64,
+    /// Already validated resident levels, kept alive by their existing lease.
+    /// Derivation runs on the I/O lane, never in the UI or a native decoder.
+    pub resident: Option<PreviewDecoded>,
 }
 impl Job {
     fn key(&self) -> (String, PreviewRequest, u64) {
@@ -236,6 +239,7 @@ impl DecodePool {
             let ctx = ctx.clone();
             let cache = cache.clone();
             let binary = binary.clone();
+            let writer = writer.clone();
             workers.push(thread::spawn(move || {
                 let broker = Broker::new(binary);
                 let snapshots = tr_core::budget::MemoryBudget::new(cache.memory.usage().limit / 3);
@@ -252,7 +256,14 @@ impl DecodePool {
                         if stop.load(Ordering::Acquire) {
                             break;
                         }
-                        q.lookup.pop_front().unwrap()
+                        // Resident derivation needs no source snapshot or native
+                        // admission and must not wait behind a long RAW decode.
+                        let index = q
+                            .lookup
+                            .iter()
+                            .position(|job| job.resident.is_some())
+                            .unwrap_or(0);
+                        q.lookup.remove(index).unwrap()
                     };
                     if cache.under_pressure() && !job.priority.visible() {
                         queues.0.lock().unwrap().pending.remove(&job.key());
@@ -280,6 +291,33 @@ impl DecodePool {
                     let result = (|| -> anyhow::Result<Option<PreviewDecoded>> {
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
                         job.request.validate()?;
+                        if let Some(resident) = &job.resident {
+                            {
+                                let mut q = queues.0.lock().unwrap();
+                                if q.claimed.contains(&job.key())
+                                    || !q.pending.contains_key(&job.key())
+                                {
+                                    return Ok(None);
+                                }
+                                q.claimed.insert(job.key());
+                            }
+                            let image = &resident.prepared.image;
+                            let base = image.requested_base(job.request);
+                            let bytes = image.levels()[base..]
+                                .iter()
+                                .map(|level| level.pixels.len() as u64 * 16)
+                                .sum();
+                            let credits = reserve(&cache, bytes, &events, &ctx, &cancelled)?;
+                            let tail = Arc::new(image.detach(job.request, credits)?);
+                            let histogram = tail.source().histogram();
+                            return Ok(Some(PreviewDecoded {
+                                prepared: tr_render::PreparedPreview {
+                                    image: tail,
+                                    histogram,
+                                },
+                                ..resident.clone()
+                            }));
+                        }
                         let maximum = job.item.bytes.min(tr_core::protocol::MAX_SOURCE as u64);
                         let required = maximum.saturating_mul(2) + 1024 * 1024;
                         snapshots.configure(cache.memory.usage().limit / 3);
@@ -303,6 +341,12 @@ impl DecodePool {
                             {
                                 break leases;
                             }
+                            let mut q = queues.0.lock().unwrap();
+                            if q.lookup.iter().any(|other| other.resident.is_some()) {
+                                insert(&mut q.lookup, job.clone());
+                                return Ok(None);
+                            }
+                            drop(q);
                             thread::sleep(Duration::from_millis(25));
                         };
                         let lease = reserve(
@@ -406,7 +450,13 @@ impl DecodePool {
                     if matches!(result, Ok(None)) {
                         continue;
                     }
-                    queues.0.lock().unwrap().pending.remove(&job.key());
+                    {
+                        let mut q = queues.0.lock().unwrap();
+                        q.pending.remove(&job.key());
+                        if job.resident.is_some() {
+                            q.claimed.remove(&job.key());
+                        }
+                    }
                     if !revoked() && cancelled() {
                         // A quick return to this request must be retryable. Do
                         // not turn a cancelled lookup into a permanent UI error.
@@ -422,10 +472,15 @@ impl DecodePool {
                         );
                     } else if !revoked() {
                         let result = result.map(|v| v.unwrap()).map_err(|e| format!("{e:#}"));
+                        let persist = job
+                            .resident
+                            .is_some()
+                            .then(|| result.as_ref().ok().cloned())
+                            .flatten();
                         if !deliver(
                             &events,
                             Event::Image {
-                                id: job.item.id,
+                                id: job.item.id.clone(),
                                 request: job.request,
                                 generation: job.generation,
                                 result: Box::new(result),
@@ -434,6 +489,18 @@ impl DecodePool {
                             &stop,
                         ) {
                             break;
+                        }
+                        if let Some(decoded) = persist
+                            && let Some(folder) = job.item.path.parent()
+                        {
+                            writer.submit(
+                                folder.into(),
+                                decoded.digest,
+                                job.request,
+                                decoded.info,
+                                decoded.prepared,
+                                job.generation,
+                            );
                         }
                     }
                 }
@@ -565,12 +632,46 @@ impl DecodePool {
                         // Reserve the peak of phases, not their sum. Pixel data,
                         // native scratch allowance and fp32 precision are unchanged.
                         let mut lease = reserve(&cache, working_bytes, &events, &ctx, &cancelled)?;
-                        let decoded =
-                            broker.decode_snapshot_bounded(source, 0, pixels * 16, revoked)?;
+                        // Capture the finest current consumer before crossing IPC.
+                        // Later requests for more detail remain queued; a reduced
+                        // response can never satisfy a native-detail request.
+                        let maximum_edge = {
+                            let q = queues.0.lock().unwrap();
+                            q.pending
+                                .keys()
+                                .filter(|(id, request, g)| {
+                                    id == &job.item.id
+                                        && *g == job.generation
+                                        && request.raw_engine == job.request.raw_engine
+                                })
+                                .filter(|key| q.wanted.as_ref().is_none_or(|w| w.contains(*key)))
+                                .map(|(_, request, _)| request.maximum_level_edge())
+                                .max()
+                                .unwrap_or(job.request.maximum_level_edge())
+                        };
+                        let decoded = if maximum_edge >= info.width.max(info.height) {
+                            broker.decode_snapshot_bounded(source, 0, pixels * 16, revoked)?
+                        } else {
+                            let (size, _) = tr_core::protocol::mip_geometry(
+                                [info.width, info.height],
+                                maximum_edge,
+                            );
+                            broker.decode_reference_snapshot_bounded(
+                                source,
+                                maximum_edge,
+                                u64::from(size[0]) * u64::from(size[1]) * 16,
+                                cache.effective_threads(),
+                                revoked,
+                            )?
+                        };
+                        anyhow::ensure!(
+                            [decoded.info.source_width, decoded.info.source_height]
+                                == [info.width, info.height],
+                            "Dimensioni sorgente diverse dal probe di ammissione"
+                        );
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
-                        // All current backends produce full source samples. Group
-                        // compatible consumers before building the reference graph;
-                        // a Standard reduced decoder must not enter this branch.
+                        // Coalesce only consumers covered by the received part
+                        // of the reference graph. Finer requests stay queued.
                         let consumers = {
                             let mut q = queues.0.lock().unwrap();
                             let mut consumers: Vec<_> = q
@@ -580,8 +681,14 @@ impl DecodePool {
                                     id == &job.item.id
                                         && *g == job.generation
                                         && request.raw_engine == job.request.raw_engine
+                                        && tr_core::protocol::mip_geometry(
+                                            [info.width, info.height],
+                                            request.maximum_level_edge(),
+                                        )
+                                        .1 >= decoded.info.reference_mip.map_or(0, |m| m.base)
                                 })
                                 .filter(|key| q.wanted.as_ref().is_none_or(|w| w.contains(*key)))
+                                .filter(|key| !q.claimed.contains(*key))
                                 .map(|key| Job {
                                     request: key.1,
                                     priority: q.pending[key],
@@ -592,16 +699,9 @@ impl DecodePool {
                             for consumer in &consumers {
                                 q.claimed.insert(consumer.key());
                             }
-                            q.lookup.retain(|j| {
-                                j.item.id != job.item.id
-                                    || j.generation != job.generation
-                                    || j.request.raw_engine != job.request.raw_engine
-                            });
-                            q.decode.retain(|r| {
-                                r.job.item.id != job.item.id
-                                    || r.job.generation != job.generation
-                                    || r.job.request.raw_engine != job.request.raw_engine
-                            });
+                            let claimed: HashSet<_> = consumers.iter().map(Job::key).collect();
+                            q.lookup.retain(|j| !claimed.contains(&j.key()));
+                            q.decode.retain(|r| !claimed.contains(&r.job.key()));
                             consumers
                         };
                         cache.decoded(consumers.len(), broker.statistics());
@@ -610,7 +710,16 @@ impl DecodePool {
                             .map(|j| j.request)
                             .max_by_key(|r| r.maximum_level_edge())
                             .unwrap_or(job.request);
-                        let mut image = ImageLevels::from_source(decoded.raster, finest)?;
+                        let mut image = if let Some(mip) = decoded.info.reference_mip {
+                            ImageLevels::from_reference_mip(
+                                decoded.raster,
+                                [decoded.info.source_width, decoded.info.source_height],
+                                mip.base,
+                                mip.opaque,
+                            )?
+                        } else {
+                            ImageLevels::from_source(decoded.raster, finest)?
+                        };
                         image.attach_lease(lease.split(image.byte_len() as u64).unwrap());
                         let image = Arc::new(image);
                         let mut tails = std::collections::HashMap::new();
@@ -883,6 +992,7 @@ mod tests {
         let path = root.join("corpus/01_Studio_cromatico.png");
         let (bytes, digest) = tr_platform::snapshot(&path).unwrap();
         Job {
+            resident: None,
             item: Item {
                 id: id.into(),
                 name: "corpus".into(),
@@ -919,6 +1029,77 @@ mod tests {
         };
         assert!(!queues.wants_source(&old));
         assert!(queues.wants_source(&new));
+    }
+    #[test]
+    fn resident_thumbnail_needs_no_file_read_or_decoder_and_releases_credits() {
+        let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+            enabled: false,
+            ..Default::default()
+        }));
+        let mut job = navigation_job("resident");
+        job.item.path = PathBuf::from("nonexistent-resident-source");
+        job.request.edge = 32;
+        job.priority = PreviewPriority::SecondaryVisible;
+        let source = tr_core::color::LinearImage::new(
+            513,
+            257,
+            (0..513 * 257)
+                .map(|i| [-0.2, i as f32 / 20000., 1.2, 1.])
+                .collect(),
+        )
+        .unwrap();
+        let mut image = ImageLevels::from_source(source, PreviewRequest::full()).unwrap();
+        image.attach_lease(cache.memory.try_reserve(image.byte_len() as u64).unwrap());
+        let image = Arc::new(image);
+        let expected = image.levels()[image.requested_base(job.request)]
+            .pixels
+            .clone();
+        job.resident = Some(PreviewDecoded {
+            digest: "resident-digest".into(),
+            info: tr_core::protocol::RasterInfo {
+                reference_mip: None,
+                width: 513,
+                height: 257,
+                source_width: 513,
+                source_height: 257,
+                native_bits: 32,
+                format: "test".into(),
+                decoder: "test".into(),
+                input_color: "Rec2020".into(),
+                filter: "reference".into(),
+                orientation: "applied".into(),
+            },
+            prepared: tr_render::PreparedPreview {
+                image: image.clone(),
+                histogram: [[0; 256]; 3],
+            },
+            transport: "resident",
+            worker_pid: None,
+        });
+        let (tx, rx) = mpsc::sync_channel(8);
+        let pool = DecodePool::start(
+            PathBuf::from("nonexistent-worker"),
+            Arc::new(AtomicU64::new(1)),
+            tx,
+            egui::Context::default(),
+            cache.clone(),
+        );
+        assert!(pool.submit(job).is_ok());
+        let Event::Image { result, .. } = rx.recv_timeout(Duration::from_secs(5)).unwrap() else {
+            panic!("No resident result");
+        };
+        let result = result.unwrap();
+        assert_eq!(result.prepared.image.source().pixels, expected);
+        assert_eq!(
+            result.prepared.histogram,
+            result.prepared.image.source().histogram()
+        );
+        assert_eq!(cache.stats().decode_jobs, 0);
+        assert_ne!(result.prepared.image.id(), image.id());
+        drop(pool);
+        drop(result);
+        drop(image);
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
     }
 
     #[test]
@@ -1220,6 +1401,7 @@ mod tests {
         let mut jobs = Vec::new();
         for (id, priority) in priorities.into_iter().enumerate() {
             let job = Job {
+                resident: None,
                 item: Item {
                     id: id.to_string(),
                     name: id.to_string(),
@@ -1264,6 +1446,7 @@ mod tests {
             workers: Vec::new(),
         };
         let job = |n: usize| Job {
+            resident: None,
             item: Item {
                 id: n.to_string(),
                 name: n.to_string(),
@@ -1346,6 +1529,7 @@ mod tests {
             let mut q = pool.queues.0.lock().unwrap();
             for request in requests {
                 let job = Job {
+                    resident: None,
                     item: item.clone(),
                     request,
                     priority: PreviewPriority::Immediate,
@@ -1427,6 +1611,7 @@ mod tests {
         let (bytes, digest) = tr_platform::snapshot(&path).unwrap();
         assert!(
             pool.submit(Job {
+                resident: None,
                 item: Item {
                     id: "idle-domain-test".into(),
                     path,

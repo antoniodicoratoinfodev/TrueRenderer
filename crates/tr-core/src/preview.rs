@@ -39,6 +39,14 @@ pub enum Completeness {
     Complete,
 }
 
+/// Bounded physical-pixel buckets shared by thumbnail demand and disk lookup.
+/// Power-of-two rounding followed by the quality's 2x margin can retain an
+/// unnecessary ancestor (four times the pixels) in a large grid cell.
+pub const THUMBNAIL_EDGE_STEP: u32 = 128;
+pub fn thumbnail_edge(physical_edge: u32) -> u32 {
+    physical_edge.clamp(1, 4096).div_ceil(THUMBNAIL_EDGE_STEP) * THUMBNAIL_EDGE_STEP
+}
+
 /// `edge == 0` requests native detail; nonzero edges describe the physical cell.
 /// A full-quality thumbnail preserves the reference mip graph, not LOD 0 residency.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
@@ -89,5 +97,31 @@ impl PreviewPriority {
             self,
             Self::Immediate | Self::Refinement | Self::SecondaryVisible
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn thumbnail_buckets_bound_oversampling_without_losing_physical_detail() {
+        assert_eq!(thumbnail_edge(536), 640);
+        assert_eq!(thumbnail_edge(224), 256);
+        assert_eq!(thumbnail_edge(u32::MAX), 4096);
+        for physical in 1..=4096 {
+            let edge = thumbnail_edge(physical);
+            assert!(edge >= physical && edge - physical < THUMBNAIL_EDGE_STEP);
+            assert_eq!(edge % THUMBNAIL_EDGE_STEP, 0);
+        }
+        // D750: a 536px cell needs the 752px reference level, not 1504px.
+        let request = PreviewRequest {
+            edge: thumbnail_edge(536),
+            ..PreviewRequest::full()
+        };
+        assert_eq!(
+            crate::protocol::mip_geometry([6016, 4016], request.maximum_level_edge()),
+            ([752, 502], 3)
+        );
     }
 }

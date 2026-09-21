@@ -663,6 +663,7 @@ mod tests {
         ];
         let image = tr_core::color::LinearImage::new(3, 2, pixels).unwrap();
         let info = RasterInfo {
+            reference_mip: None,
             width: 3,
             height: 2,
             source_width: 3,

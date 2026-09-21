@@ -10,6 +10,8 @@ serde_json.workspace = true
 anyhow.workspace = true
 sha2.workspace = true
 rayon = "=1.11.0"
+# Already pinned through image/wgpu; safe byte views for private IPC buffers.
+bytemuck = "=1.25.2"
 
 # Unificata sull'intero grafo: abilita l'assembly di sha2 su ogni target
 # tranne MSVC, che non sa compilarne i sorgenti .S.

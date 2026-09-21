@@ -3073,6 +3073,7 @@ name = "tr-core"
 version = "0.1.5"
 dependencies = [
  "anyhow",
+ "bytemuck",
  "rayon",
  "serde",
  "serde_json",

@@ -165,6 +165,12 @@ Una porta `ImageProvider`/`TileProvider` espone le rappresentazioni disponibili 
 
 In Piena si producono soltanto i livelli finali necessari e gli intermedi richiesti dal medesimo grafo di filtri. Gli intermedi transitano con una durata limitata; generarli e scartarli non deve cambiare coefficienti, origine dei centri o gestione dei bordi rispetto al riferimento.
 
+La riduzione lungo il grafo canonico può avvenire nel decoder isolato prima del trasferimento, mediante l'intento `ReferenceMip` di §9. La sorgente viene comunque sviluppata integralmente con il motore scelto: questa ottimizzazione riduce trasferimenti e copie del raster, non introduce demosaic ridotto o anteprime incorporate. L'host continua la stessa catena dal livello ricevuto, conservando geometria sorgente e opacità originaria.
+
+Un livello residente più grande della richiesta può alimentare un derivato autonomo nella coda I/O, fuori dal thread UI, senza nuovo snapshot o sviluppo. Il derivato mantiene identità, motore e qualità del consumatore compatibile, possiede crediti propri e un istogramma del proprio livello; il riferimento al genitore dura soltanto fino alla copia. Le geometrie già equivalenti condividono direttamente la stessa rappresentazione. Invalidazione sorgente, cambio generazione e cancellazione si applicano anche a queste derivazioni.
+
+Le celle di griglia e filmstrip arrotondano il lato fisico verso l'alto in passi di 128 pixel, fino a 4096, prima del margine 2× previsto dalla qualità. Non arrotondare prima alla potenza di due: vicino alle soglie conserverebbe un antenato con quattro volte i pixel senza necessità per la cella. La ricerca SSD include questi 32 bucket e il dettaglio nativo, mantenendo anche la chiave esatta e le geometrie canoniche; non esplora l'intera cartella.
+
 Una miniatura Full persistente conserva il livello lineare necessario e la trasformata dalle coordinate sorgente. La texture finale alla dimensione fisica esatta può rimanere in RAM/GPU. Non reintrodurre una miniatura fissa da 320 pixel ulteriormente ingrandita dalla UI come risultato Full.
 
 ## 5. Budget unico, ammissione e liberazione
@@ -245,6 +251,8 @@ Il digest sorgente resta lo SHA-256 dell'intero contenuto, con l'accelerazione e
 Uno snapshot privato lega hash e decode agli stessi byte; non prova da solo che un file modificato durante la lettura rappresenti uno stato atomico dell'originale. Mantenere i controlli prima/dopo lettura e il contratto di revoca/revisione del broker. Checksum dell'artefatto significa rilevazione di corruzione, non autenticazione contro chi riscrive anche il checksum: Standard e Piena restano Anteprima.
 
 Tema, viewport e profilo monitor non entrano nella cache persistente lineare; entrano nelle chiavi di presentazione quando cambiano i pixel. Annotazioni e ordinamento non invalidano gli artefatti. Non dedurre compatibilità Full da una preview Standard. Il riuso v1 è consentito solo per una chiave/pipeline riconosciuta e dopo la validazione completa attuale, seguita eventualmente dall'estrazione dei derivati richiesti; se non entra nel budget o non è compatibile, è un miss. Le vecchie entry rimangono soggette alle quote/scadenza esistenti, senza migrazione obbligatoria di tutta la cartella.
+
+Per i record v2, dopo la chiave esatta si possono cercare un numero limitato di dimensioni canoniche più grandi, sempre con stesso digest verificato, motore e qualità. Il lettore valida l'intero descrittore e la sua geometria, ma ammette e legge soltanto i blocchi della coda mip richiesta, con i rispettivi checksum e controlli dei campioni. La mancanza di un blocco di un antenato non letto non invalida i livelli autonomi richiesti; una richiesta dell'antenato resta invece un miss sicuro. L'istogramma viene ricalcolato se cambia il primo livello residente. Non si enumerano tutte le voci della cartella e non si legge un raster completo per servire una miniatura.
 
 ### 6.3 Pubblicazione asincrona, quote e concorrenza
 
@@ -413,6 +421,10 @@ La risposta dichiara dimensioni sorgente e raster, scala, origine/trasformata de
 Host e servizi negoziano una versione/capability coerente. Un bundle vecchio non interpreta i nuovi messaggi; l'incompatibilità ha errore esplicito e non attiva un decoder nell'host. La policy di sicurezza dell'artefatto cache è distinta dal suo formato e non viene sostituita dal flag `Full`/`Standard`.
 
 Per backend full-frame, la prima ottimizzazione libera rapidamente sorgente/intermedi dopo aver prodotto i derivati richiesti. Un vero picco bounded per righe/tile richiede supporto del backend o spool qualificato e viene consegnato come passo successivo; non lo si deduce dalla granularità della cache.
+
+L'intento esplicito `ReferenceMip { cpu_threads }` sviluppa la sorgente nativa e restituisce un singolo livello del grafo TrueRenderer: lato massimo fino a 8.192, limite output in byte, indice mip, opacità della sorgente e versione del filtro. L'host verifica dimensioni esatte con dimezzamenti arrotondati verso l'alto, versione del grafo, quota e coerenza con il probe di ammissione; i campioni restano fp32 privati, finiti e con alpha valida. Il budget di lavoro continua a prenotare lo sviluppo full-frame. Il limite thread deriva dalle preferenze e dalle risorse correnti, con validazione anche nel worker. Un peer che non conosce l'intento lo rifiuta; nessun ripiego fuori sandbox.
+
+La dimensione trasferita è fissata dai consumatori presenti prima del decode. Un consumatore successivo può condividere soltanto un livello sufficiente alla propria geometria; una richiesta più fine resta in coda, anche se appartiene allo stesso asset. `FullSource` continua a richiedere la risoluzione nativa. Il trasferimento dei raster usa blocchi little-endian direttamente nei buffer privati inizializzati, con validazione completa prima dell'uso; non introduce mapping condivisi o una rinuncia alla copia privata di sicurezza.
 
 ## 10. Scenari e stati di errore da rendere espliciti
 

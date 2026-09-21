@@ -492,20 +492,23 @@ impl TrueRenderer {
             c.touched = self.frame_number;
             return;
         }
-        // Equivalent geometries can share an already resident tail. Do not pin
-        // larger ancestors merely to satisfy a thumbnail, or cross qualities.
+        // Equivalent geometries share immediately. Smaller independent tails
+        // are derived off the UI thread, with their own credits and histogram.
         let compatible = self
             .cache
             .iter()
-            .find(|((id, request), cached)| {
+            .filter(|((id, request), cached)| {
                 id == &item.id
                     && request.raw_engine == key.1.raw_engine
                     && request.quality == key.1.quality
                     && cached.pyramid.sufficient_for(key.1)
-                    && cached.pyramid.requested_base(key.1) == 0
             })
+            .min_by_key(|(_, cached)| cached.pyramid.byte_len())
             .map(|(_, cached)| cached.clone());
-        if let Some(mut cached) = compatible {
+        if let Some(mut cached) = compatible
+            .clone()
+            .filter(|cached| cached.pyramid.requested_base(key.1) == 0)
+        {
             cached.touched = self.frame_number;
             self.cache.insert(key, cached);
             return;
@@ -529,6 +532,16 @@ impl TrueRenderer {
             return;
         }
         self.demand_jobs.push(crate::decode_pool::Job {
+            resident: compatible.map(|cached| crate::service::PreviewDecoded {
+                digest: cached.digest,
+                info: cached.info,
+                prepared: tr_render::PreparedPreview {
+                    image: cached.pyramid,
+                    histogram: cached.histogram,
+                },
+                transport: cached.transport,
+                worker_pid: cached.worker_pid,
+            }),
             item: item.clone(),
             request: key.1,
             priority,
@@ -639,6 +652,7 @@ impl TrueRenderer {
                 continue;
             }
             self.demand_jobs.push(crate::decode_pool::Job {
+                resident: None,
                 item,
                 request: key.1,
                 priority: if self.state.view == ViewMode::Grid {
@@ -1694,7 +1708,7 @@ impl TrueRenderer {
 
         ui.add_space(12.);
         let edge = (ui.available_width() * ui.ctx().pixels_per_point()).ceil() as u32;
-        let edge = edge.next_power_of_two().min(4096);
+        let edge = tr_core::preview::thumbnail_edge(edge);
         self.ensure_image(&item, edge);
         let key = self.image_key(&item, edge);
         let info = self.cache.get(&key).map(|c| c.info.clone());
@@ -1702,7 +1716,8 @@ impl TrueRenderer {
             let mut preview = |ui: &mut egui::Ui| {
                 let size = Vec2::new(
                     ui.available_width(),
-                    ui.available_width() * cached.info.height as f32 / cached.info.width as f32,
+                    ui.available_width() * cached.info.source_height as f32
+                        / cached.info.source_width as f32,
                 );
                 let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
                 tr_render::presenter::fitted(
@@ -1928,7 +1943,7 @@ impl TrueRenderer {
     fn thumbnail(&mut self, ui: &mut egui::Ui, item: &Item, size: Vec2, show_name: bool) {
         let lang = self.cache_settings.language;
         let edge = ((size.x - 20.).max(1.) * ui.ctx().pixels_per_point()).ceil() as u32;
-        let edge = edge.next_power_of_two().min(4096);
+        let edge = tr_core::preview::thumbnail_edge(edge);
         self.ensure_image(item, edge);
         let key = self.image_key(item, edge);
         let selected = self.state.selected.contains(&item.id);
@@ -3271,6 +3286,23 @@ mod settings_regressions {
     }
 
     #[test]
+    fn large_retina_grid_requests_only_the_needed_thumbnail_bucket() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        app.state.view = ViewMode::Grid;
+        app.demand.clear();
+        ctx.set_pixels_per_point(2.);
+        let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
+            assert_eq!(ui.ctx().pixels_per_point(), 2.);
+            app.thumbnail(ui, &item, Vec2::new(288., 230.), true);
+        });
+        output.textures_delta.clear();
+        assert!(app.demand.contains(&app.image_key(&item, 640)));
+        assert!(!app.demand.contains(&app.image_key(&item, 1024)));
+    }
+
+    #[test]
     fn visible_thumbnails_release_large_ancestors_before_native_refinement() {
         let (_dir, ctx, mut app) = app();
         settle(&mut app, &ctx, true);
@@ -3293,6 +3325,7 @@ mod settings_regressions {
             CachedImage {
                 digest: "test".into(),
                 info: RasterInfo {
+                    reference_mip: None,
                     width: size,
                     height: size,
                     source_width: size,

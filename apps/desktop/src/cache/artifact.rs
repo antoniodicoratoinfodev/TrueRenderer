@@ -74,23 +74,40 @@ impl Manager {
         if !self.settings().enabled {
             return Lookup::Disabled;
         }
-        let key = self.preview_key(digest, request);
         let result = (|| -> Result<_> {
             let cache = Folder::open(folder, false, false)?;
-            let descriptor =
+            // Look up a bounded set of compatible representations. Only the
+            // requested mip tail is read, never the expensive ancestor pixels.
+            // Engine and quality are kept explicit, including Standard vs Full.
+            let mut candidate = None;
+            for edge in std::iter::once(request.edge).chain(
+                (tr_core::preview::THUMBNAIL_EDGE_STEP..=4096)
+                    .step_by(tr_core::preview::THUMBNAIL_EDGE_STEP as usize)
+                    .chain(std::iter::once(0))
+                    .filter(|edge| *edge != request.edge),
+            ) {
+                let stored = PreviewRequest { edge, ..request };
+                if stored.maximum_level_edge() < request.maximum_level_edge() {
+                    continue;
+                }
+                let key = self.preview_key(digest, stored);
                 match cache
                     .entries
                     .open_file(&format!("{key}.tvc"), false, false, false)
                 {
-                    Ok(file) => file,
+                    Ok(file) => {
+                        candidate = Some((file, stored, key));
+                        break;
+                    }
                     Err(e)
                         if e.downcast_ref::<std::io::Error>()
-                            .is_some_and(|e| e.kind() == std::io::ErrorKind::NotFound) =>
-                    {
-                        return self.legacy_preview(&cache, digest, request, budget, cancelled);
-                    }
+                            .is_some_and(|e| e.kind() == std::io::ErrorKind::NotFound) => {}
                     Err(e) => return Err(e),
-                };
+                }
+            }
+            let Some((descriptor, stored_request, key)) = candidate else {
+                return self.legacy_preview(&cache, digest, request, budget, cancelled);
+            };
             let bytes = read_record(&descriptor, HEADER_LIMIT, cancelled)?;
             ensure!(
                 descriptor
@@ -103,7 +120,7 @@ impl Manager {
             );
             let header: Descriptor = serde_json::from_slice(&bytes)?;
             ensure!(
-                header.key == key && header.digest == digest && header.request == request,
+                header.key == key && header.digest == digest && header.request == stored_request,
                 "Identità derivato incoerente"
             );
             protocol::validate_info(&header.info)?;
@@ -113,7 +130,7 @@ impl Manager {
             );
             let mut expected_size = [header.info.source_width, header.info.source_height];
             let mut expected_base = 0;
-            while expected_size[0].max(expected_size[1]) > request.maximum_level_edge() {
+            while expected_size[0].max(expected_size[1]) > stored_request.maximum_level_edge() {
                 expected_size = [expected_size[0].div_ceil(2), expected_size[1].div_ceil(2)];
                 expected_base += 1;
             }
@@ -121,6 +138,15 @@ impl Manager {
                 header.base == expected_base,
                 "Dettaglio cache insufficiente o livello non canonico per la richiesta"
             );
+            let (_, requested_base) = protocol::mip_geometry(
+                [header.info.source_width, header.info.source_height],
+                request.maximum_level_edge(),
+            );
+            ensure!(
+                requested_base >= header.base,
+                "Dettaglio cache insufficiente"
+            );
+            let skip = (requested_base - header.base) as usize;
             let mut size = [header.info.source_width, header.info.source_height];
             for _ in 0..header.base {
                 ensure!(size != [1, 1], "Livello derivato ridondante");
@@ -138,9 +164,11 @@ impl Manager {
                     "Catena ridondante"
                 );
                 let bytes = size[0] as u64 * size[1] as u64 * 16;
-                total = total
-                    .checked_add(bytes)
-                    .ok_or_else(|| anyhow::anyhow!("Dimensioni in overflow"))?;
+                if i >= skip {
+                    total = total
+                        .checked_add(bytes)
+                        .ok_or_else(|| anyhow::anyhow!("Dimensioni in overflow"))?;
+                }
                 blocks += (bytes as usize).div_ceil(BLOCK);
                 size = [size[0].div_ceil(2), size[1].div_ceil(2)];
             }
@@ -167,8 +195,14 @@ impl Manager {
             };
             let mut names = header.blocks.iter();
             let mut levels = Vec::new();
-            for [width, height] in &header.levels {
+            for (index, [width, height]) in header.levels.iter().enumerate() {
                 let count = *width as usize * *height as usize;
+                if index < skip {
+                    for _ in 0..(count * 16).div_ceil(BLOCK) {
+                        names.next();
+                    }
+                    continue;
+                }
                 let mut pixels = Vec::with_capacity(count);
                 while pixels.len() < count {
                     let name = names.next().unwrap();
@@ -201,7 +235,7 @@ impl Manager {
             }
             let mut image = ImageLevels::restore(
                 [header.info.source_width, header.info.source_height],
-                header.base,
+                requested_base,
                 header.opaque,
                 levels,
             )?;
@@ -214,10 +248,15 @@ impl Manager {
             }
             lease.shrink(total);
             image.attach_lease(lease);
-            let mut histogram = [[0; 256]; 3];
-            for (dest, src) in histogram.iter_mut().zip(header.histogram) {
-                dest.copy_from_slice(&src);
-            }
+            let histogram = if skip == 0 {
+                let mut histogram = [[0; 256]; 3];
+                for (dest, src) in histogram.iter_mut().zip(header.histogram) {
+                    dest.copy_from_slice(&src);
+                }
+                histogram
+            } else {
+                image.source().histogram()
+            };
             let _ = Directory::touch(&descriptor);
             Ok(Lookup::Hit(
                 header.info,
@@ -605,6 +644,7 @@ mod tests {
         let image = ImageLevels::from_pyramid(pyramid, request).unwrap();
         let histogram = image.source().histogram();
         let info = RasterInfo {
+            reference_mip: None,
             width: 513,
             height: 257,
             source_width: 513,
@@ -630,6 +670,89 @@ mod tests {
             free_mib: 0,
             ..Settings::default()
         })
+    }
+    #[test]
+    fn smaller_cache_request_reads_only_its_tail_and_keeps_quality_and_engine() {
+        let folder = tempfile::tempdir().unwrap();
+        let cache = manager();
+        let (info, _preview, mut request) = fixture();
+        // Include a non-power-of-two thumbnail bucket in compatible lookup.
+        request.edge = 384;
+        let source = LinearImage::new(
+            513,
+            257,
+            (0..513 * 257)
+                .map(|i| [-0.1, i as f32 / 731., 2., (i % 17) as f32 / 16.])
+                .collect(),
+        )
+        .unwrap();
+        let image = ImageLevels::from_source(source, request).unwrap();
+        let preview = PreparedPreview {
+            histogram: image.source().histogram(),
+            image: Arc::new(image),
+        };
+        cache
+            .store_preview(folder.path(), "tail", request, &info, &preview, &|| false)
+            .unwrap();
+        let smaller = PreviewRequest {
+            edge: 32,
+            ..request
+        };
+        let base = preview.image.requested_base(smaller);
+        let bytes: u64 = preview.image.levels()[base..]
+            .iter()
+            .map(|l| l.pixels.len() as u64 * 16)
+            .sum();
+        // Admission fits the small tail plus the bounded reader scratch, not
+        // the source graph. Delete an unused ancestor block to prove no read.
+        let budget = MemoryBudget::new(bytes + BLOCK as u64 + HEADER_LIMIT as u64);
+        let key = cache.preview_key("tail", request);
+        let directory = Folder::open(folder.path(), false, false).unwrap();
+        let file = directory
+            .entries
+            .open_file(&format!("{key}.tvc"), false, false, false)
+            .unwrap();
+        let header: Descriptor =
+            serde_json::from_slice(&read_record(&file, HEADER_LIMIT, &|| false).unwrap()).unwrap();
+        drop(file);
+        drop(directory);
+        std::fs::remove_file(
+            folder
+                .path()
+                .join(NAME)
+                .join("entries")
+                .join(format!("{}.tvc", header.blocks[0])),
+        )
+        .unwrap();
+        let Lookup::Hit(_, result) =
+            cache.load_preview(folder.path(), "tail", smaller, &budget, &|| false)
+        else {
+            panic!("Compatible tail must load independently");
+        };
+        assert_eq!(
+            result.image.source().pixels,
+            preview.image.levels()[base].pixels
+        );
+        assert_eq!(result.histogram, result.image.source().histogram());
+        assert_eq!(budget.usage().reserved, bytes);
+        drop(result);
+        assert_eq!(budget.usage().reserved, 0);
+        for incompatible in [
+            PreviewRequest {
+                quality: PreviewQuality::Standard,
+                ..smaller
+            },
+            PreviewRequest {
+                raw_engine: tr_core::decoder::RawEngine::TrueRenderer,
+                ..smaller
+            },
+        ] {
+            assert!(!matches!(
+                cache.load_preview(folder.path(), "tail", incompatible, &budget, &|| false),
+                Lookup::Hit(..)
+            ));
+        }
+        drop(preview);
     }
     #[test]
     fn linked_descriptors_and_blocks_can_be_read_but_not_replaced_or_collected() {

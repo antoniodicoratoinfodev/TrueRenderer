@@ -26,6 +26,25 @@ pub const CAPABILITIES: ProviderCapabilities = ProviderCapabilities {
     reduced_raw: false,
 };
 
+/// Produce exactly one canonical mip, releasing each ancestor immediately.
+pub fn reduce_reference_mip(
+    mut source: LinearImage,
+    maximum_edge: u32,
+) -> Result<(LinearImage, u32, bool)> {
+    ensure!(maximum_edge > 0, "Dimensione mip nulla");
+    let opaque = source.pixels.iter().all(|p| p[3] == 1.);
+    let (_, base) = crate::protocol::mip_geometry([source.width, source.height], maximum_edge);
+    for _ in 0..base {
+        let size = [source.width.div_ceil(2), source.height.div_ceil(2)];
+        source = crate::resample::filter(
+            &source,
+            Region::fitted([source.width, source.height], size),
+            opaque,
+        )?;
+    }
+    Ok((source, base, opaque))
+}
+
 pub struct ImageLevels {
     id: u64,
     source_size: [u32; 2],
@@ -38,20 +57,20 @@ pub struct ImageLevels {
 impl ImageLevels {
     /// Generate the same reference graph, dropping expensive ancestors as soon
     /// as the next level is complete. No reduced decode is claimed by this adapter.
-    pub fn from_source(mut source: LinearImage, request: PreviewRequest) -> Result<Self> {
+    pub fn from_source(source: LinearImage, request: PreviewRequest) -> Result<Self> {
         request.validate()?;
         let source_size = [source.width, source.height];
-        let opaque = source.pixels.iter().all(|p| p[3] == 1.);
-        let mut base = 0;
-        while source.width.max(source.height) > request.maximum_level_edge() {
-            let size = [source.width.div_ceil(2), source.height.div_ceil(2)];
-            source = crate::resample::filter(
-                &source,
-                Region::fitted([source.width, source.height], size),
-                opaque,
-            )?;
-            base += 1;
-        }
+        let (source, base, opaque) = reduce_reference_mip(source, request.maximum_level_edge())?;
+        Self::from_reference_mip(source, source_size, base, opaque)
+    }
+    /// Continue a validated reference graph without reinterpreting its origin
+    /// or inferring opacity from a possibly rounded reduced alpha channel.
+    pub fn from_reference_mip(
+        source: LinearImage,
+        source_size: [u32; 2],
+        base: u32,
+        opaque: bool,
+    ) -> Result<Self> {
         let mut levels = vec![source];
         while levels.last().is_some_and(|l| l.width > 1 || l.height > 1) {
             let source = levels.last().unwrap();
@@ -224,6 +243,73 @@ impl ImageLevels {
 mod tests {
     use super::*;
     use crate::preview::PreviewQuality;
+    #[test]
+    fn physical_thumbnail_buckets_render_the_same_pixels_as_the_full_graph() {
+        let size = [1537, 1025];
+        let source = LinearImage::new(
+            size[0],
+            size[1],
+            (0..size[0] * size[1])
+                .map(|i| [-0.2, (i % 773) as f32 / 731., 1.2, 1.])
+                .collect(),
+        )
+        .unwrap();
+        let reference = Pyramid::new(source.clone()).unwrap();
+        for width in [129, 257, 268, 384, 536] {
+            let region = Region::fitted(size, [width, width * size[1] / size[0]]);
+            let request = PreviewRequest {
+                edge: crate::preview::thumbnail_edge(width),
+                ..PreviewRequest::full()
+            };
+            let reduced = ImageLevels::from_source(source.clone(), request).unwrap();
+            assert_eq!(
+                reduced.render(region).unwrap().pixels,
+                reference.render(region).unwrap().pixels
+            );
+        }
+    }
+    #[test]
+    fn split_reference_graph_preserves_every_mip_including_alpha_and_odd_shapes() {
+        for [width, height] in [[513, 257], [1, 77], [73, 1], [66, 48]] {
+            for opaque in [true, false] {
+                let source = LinearImage::new(
+                    width,
+                    height,
+                    (0..width * height)
+                        .map(|i| {
+                            [
+                                i as f32 / 731. - 1.,
+                                0.4,
+                                2.,
+                                if opaque { 1. } else { (i % 17) as f32 / 16. },
+                            ]
+                        })
+                        .collect(),
+                )
+                .unwrap();
+                let reference = Pyramid::new(source.clone()).unwrap();
+                for edge in [1, 32, 128, 8192] {
+                    let (raster, base, is_opaque) =
+                        reduce_reference_mip(source.clone(), edge).unwrap();
+                    let actual =
+                        ImageLevels::from_reference_mip(raster, [width, height], base, is_opaque)
+                            .unwrap();
+                    assert_eq!(is_opaque, opaque);
+                    for (actual, expected) in actual
+                        .levels()
+                        .iter()
+                        .zip(&reference.levels()[base as usize..])
+                    {
+                        assert_eq!(
+                            [actual.width, actual.height],
+                            [expected.width, expected.height]
+                        );
+                        assert_eq!(actual.pixels, expected.pixels);
+                    }
+                }
+            }
+        }
+    }
     #[test]
     fn detached_full_thumbnail_matches_reference_after_source_is_dropped() {
         let source = LinearImage::new(

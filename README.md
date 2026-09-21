@@ -2,7 +2,7 @@
 
 ## See the image. Understand the rendering.
 
-TrueRenderer is a native desktop application for photographers, retouchers, archivists, imaging specialists, researchers and scientists who need to browse, inspect and compare photographs and other still images through a rendering path they can understand.
+TrueRenderer is a native desktop application for photographers, astrophotographers, retouchers, archivists, imaging specialists, astronomers, researchers and scientists who need to browse, inspect and compare photographs and other still images through a rendering path they can understand.
 
 It brings each image, its technical context and the choices behind its appearance into one focused workspace. Originals remain untouched, the library stays on your computer, and no account, upload or subscription is required.
 

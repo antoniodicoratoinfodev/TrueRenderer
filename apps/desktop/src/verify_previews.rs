@@ -24,6 +24,7 @@ fn request(
     let start = Instant::now();
     ensure!(
         pool.submit(Job {
+            resident: None,
             item: item.clone(),
             request,
             priority: tr_core::preview::PreviewPriority::Immediate,
@@ -258,6 +259,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
         std::fs::copy(&item.path, &path)?;
         item.path = path;
         pool.submit(Job {
+            resident: None,
             item,
             request: burst_request,
             priority: tr_core::preview::PreviewPriority::Immediate,

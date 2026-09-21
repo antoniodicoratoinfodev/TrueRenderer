@@ -266,7 +266,7 @@ struct Work {
     id: u64,
     bytes: Arc<Vec<u8>>,
     edge: u32,
-    probe: bool,
+    intent: protocol::DecodeIntent,
     maximum_output_bytes: u64,
     result: mpsc::SyncSender<Result<(RasterInfo, Option<LinearImage>)>>,
 }
@@ -482,13 +482,7 @@ impl Broker {
                             raw_engine: work.raw_engine,
                             source_len: work.bytes.len(),
                             max_edge: work.edge,
-                            intent: if work.probe {
-                                protocol::DecodeIntent::Probe
-                            } else if work.edge == 0 {
-                                protocol::DecodeIntent::FullSource
-                            } else {
-                                protocol::DecodeIntent::LegacyRaster
-                            },
+                            intent: work.intent,
                             maximum_output_bytes: work.maximum_output_bytes,
                         },
                     )?;
@@ -506,6 +500,22 @@ impl Broker {
                     ensure!(kind == protocol::RESPONSE, "Tipo di risposta IPC inatteso");
                     let info: RasterInfo = protocol::parse(&data)?;
                     protocol::validate_info(&info)?;
+                    if matches!(work.intent, protocol::DecodeIntent::ReferenceMip { .. }) {
+                        let (size, base) = protocol::mip_geometry(
+                            [info.source_width, info.source_height],
+                            work.edge,
+                        );
+                        ensure!(
+                            size == [info.width, info.height]
+                                && info.reference_mip.is_some_and(|m| m.base == base),
+                            "Il worker non ha restituito il livello di riferimento richiesto"
+                        );
+                    } else {
+                        ensure!(
+                            info.reference_mip.is_none(),
+                            "Livello di riferimento non richiesto"
+                        );
+                    }
                     if work.edge > 0 {
                         ensure!(
                             info.width.max(info.height) <= work.edge,
@@ -519,10 +529,10 @@ impl Broker {
                     }
                     ensure!(
                         info.width as u64 * info.height as u64 * 16 <= work.maximum_output_bytes
-                            || work.probe,
+                            || work.intent == protocol::DecodeIntent::Probe,
                         "Output oltre prenotazione"
                     );
-                    let raster = if work.probe {
+                    let raster = if work.intent == protocol::DecodeIntent::Probe {
                         None
                     } else {
                         Some(protocol::read_raster(&mut output, &info)?)
@@ -609,8 +619,37 @@ impl Broker {
         cancelled: impl Fn() -> bool,
     ) -> Result<Decoded> {
         let digest = source.digest.clone();
+        let intent = if edge == 0 {
+            protocol::DecodeIntent::FullSource
+        } else {
+            protocol::DecodeIntent::LegacyRaster
+        };
         let (info, raster) =
-            self.process_snapshot(source, edge, false, maximum_output_bytes, cancelled)?;
+            self.process_snapshot(source, edge, intent, maximum_output_bytes, cancelled)?;
+        Ok(Decoded {
+            info,
+            raster: raster.context("Pixel assenti")?,
+            digest,
+            transport: self.transport(),
+            worker_pid: self.statistics.worker_pid,
+        })
+    }
+    pub fn decode_reference_snapshot_bounded(
+        &mut self,
+        source: SourceSnapshot,
+        maximum_edge: u32,
+        maximum_output_bytes: u64,
+        cpu_threads: usize,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Decoded> {
+        let digest = source.digest.clone();
+        let (info, raster) = self.process_snapshot(
+            source,
+            maximum_edge,
+            protocol::DecodeIntent::ReferenceMip { cpu_threads },
+            maximum_output_bytes,
+            cancelled,
+        )?;
         Ok(Decoded {
             info,
             raster: raster.context("Pixel assenti")?,
@@ -625,14 +664,20 @@ impl Broker {
         cancelled: impl Fn() -> bool,
     ) -> Result<RasterInfo> {
         Ok(self
-            .process_snapshot(source.clone(), 0, true, 0, cancelled)?
+            .process_snapshot(
+                source.clone(),
+                0,
+                protocol::DecodeIntent::Probe,
+                0,
+                cancelled,
+            )?
             .0)
     }
     fn process_snapshot(
         &mut self,
         source: SourceSnapshot,
         edge: u32,
-        probe: bool,
+        intent: protocol::DecodeIntent,
         maximum_output_bytes: u64,
         cancelled: impl Fn() -> bool,
     ) -> Result<(RasterInfo, Option<LinearImage>)> {
@@ -655,7 +700,11 @@ impl Broker {
         } else {
             self.timeout
         };
-        ensure!(edge <= 2048, "Dimensione anteprima fuori quota");
+        let reference = matches!(intent, protocol::DecodeIntent::ReferenceMip { .. });
+        ensure!(
+            edge <= if reference { 8192 } else { 2048 },
+            "Dimensione anteprima fuori quota"
+        );
         let started = Instant::now();
         if self.process.as_ref().is_some_and(|p| p.jobs >= 32) {
             self.process.take();
@@ -675,7 +724,7 @@ impl Broker {
                 id: self.next_id,
                 bytes,
                 edge,
-                probe,
+                intent,
                 maximum_output_bytes,
                 result: tx,
             })
@@ -708,7 +757,7 @@ impl Broker {
                         self.statistics.forced_stops += 1;
                         return Err(error);
                     }
-                    if !probe {
+                    if intent != protocol::DecodeIntent::Probe {
                         self.statistics.completed_jobs += 1;
                     }
                     return Ok((info, raster));

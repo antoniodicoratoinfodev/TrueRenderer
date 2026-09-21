@@ -162,6 +162,7 @@ impl TrueRenderer {
                     .any(|j| j.item.id == item.id && j.request == request)
             {
                 self.demand_jobs.push(crate::decode_pool::Job {
+                    resident: None,
                     item,
                     request,
                     priority: if self.folder_load.foreground {

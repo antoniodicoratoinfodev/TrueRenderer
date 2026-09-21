@@ -63,6 +63,7 @@ fn decode(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, LinearImage)> {
         color::FILTER_VERSION
     };
     let info = RasterInfo {
+        reference_mip: None,
         width: reduced.width,
         height: reduced.height,
         source_width: width,
@@ -96,6 +97,7 @@ fn probe(bytes: &[u8]) -> Result<RasterInfo> {
         std::mem::swap(&mut width, &mut height);
     }
     let info = RasterInfo {
+        reference_mip: None,
         width,
         height,
         source_width: width,
@@ -340,6 +342,7 @@ fn portable_decode(
     };
 
     let mut info = RasterInfo {
+        reference_mip: None,
         width,
         height,
         source_width: width,
@@ -773,8 +776,11 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
         let (kind, id, data) = protocol::read_control(&mut input).context("Lettura richiesta")?;
         ensure!(kind == protocol::REQUEST, "Messaggio non richiesta");
         let request: DecodeRequest = protocol::parse(&data)?;
+        let reference = matches!(request.intent, protocol::DecodeIntent::ReferenceMip { .. });
         ensure!(
-            request.source_len > 0 && request.source_len <= MAX_SOURCE && request.max_edge <= 2048,
+            request.source_len > 0
+                && request.source_len <= MAX_SOURCE
+                && request.max_edge <= if reference { 8192 } else { 2048 },
             "Richiesta fuori quota"
         );
         let mut bytes = vec![0; request.source_len];
@@ -804,18 +810,45 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                 request.intent != protocol::DecodeIntent::FullSource || request.max_edge == 0,
                 "Intent Full con scala ridotta"
             );
-            // This backend requires a full frame even for legacy reductions.
+            if let protocol::DecodeIntent::ReferenceMip { cpu_threads } = request.intent {
+                ensure!(
+                    request.max_edge > 0 && (1..=256).contains(&cpu_threads),
+                    "Richiesta mip fuori quota"
+                );
+                tr_core::compute::configure(cpu_threads)?;
+            }
+            let output_size = if reference {
+                protocol::mip_geometry([metadata.width, metadata.height], request.max_edge).0
+            } else {
+                [metadata.width, metadata.height]
+            };
+            // Native development is still full-frame and bounded by MAX_PIXELS.
+            // Only its canonical mip crosses IPC on the new explicit intent.
             ensure!(
-                metadata.width as u64 * metadata.height as u64 * 16 <= request.maximum_output_bytes,
+                output_size[0] as u64 * output_size[1] as u64 * 16 <= request.maximum_output_bytes,
                 "Raster oltre prenotazione"
             );
-            let (mut info, color, raster) = decoder.decode(&bytes, request.max_edge)?;
+            let (mut info, color, mut raster) =
+                decoder.decode(&bytes, if reference { 0 } else { request.max_edge })?;
             info.input_color = color.provenance();
             ensure!(
                 [info.source_width, info.source_height]
                     == [metadata.source_width, metadata.source_height],
                 "Dimensioni diverse dal probe"
             );
+            if reference {
+                ensure!(
+                    [raster.width, raster.height] == [metadata.width, metadata.height],
+                    "Mip senza sorgente completa"
+                );
+                let (reduced, base, opaque) =
+                    tr_core::provider::reduce_reference_mip(raster, request.max_edge)?;
+                raster = reduced;
+                info.width = raster.width;
+                info.height = raster.height;
+                info.filter = tr_core::resample::VERSION.into();
+                info.reference_mip = Some(protocol::ReferenceMip { base, opaque });
+            }
             Ok((info, Some(raster)))
         })();
         // Native handles borrowing these bytes have already been closed. Do not
@@ -1599,5 +1632,51 @@ mod tests {
         assert_eq!((raster.width, raster.height), (300, 200));
         assert_eq!(info.filter, color::FILTER_VERSION);
         assert_eq!(raster.pixels[0][3], 0.0);
+    }
+    #[test]
+    fn reference_mip_transport_matches_full_graph_and_enforces_output_reservation() {
+        for bytes in [
+            include_bytes!("../../../corpus/05_Trasparenza.png").as_slice(),
+            include_bytes!("../../../corpus/04_Frequenze_radiali.png").as_slice(),
+        ] {
+            let (_, raster) = decode(bytes, 0).unwrap();
+            let reference = tr_core::resample::Pyramid::new(raster).unwrap();
+            let source = reference.source();
+            let (size, base) = protocol::mip_geometry([source.width, source.height], 128);
+            let maximum = u64::from(size[0]) * u64::from(size[1]) * 16;
+            for (id, output_bytes) in [(1, maximum), (2, maximum - 1)] {
+                let mut wire = vec![];
+                protocol::write_control(
+                    &mut wire,
+                    protocol::REQUEST,
+                    id,
+                    &DecodeRequest {
+                        raw_engine: RawEngine::default(),
+                        source_len: bytes.len(),
+                        max_edge: 128,
+                        intent: protocol::DecodeIntent::ReferenceMip { cpu_threads: 2 },
+                        maximum_output_bytes: output_bytes,
+                    },
+                )
+                .unwrap();
+                wire.extend_from_slice(bytes);
+                let mut output = vec![];
+                assert!(serve(&wire[..], &mut output).is_err()); // EOF after this request.
+                let mut reply = &output[..];
+                let (kind, received, payload) = protocol::read_control(&mut reply).unwrap();
+                assert_eq!(received, id);
+                if output_bytes < maximum {
+                    assert_eq!(kind, protocol::ERROR);
+                    assert!(reply.is_empty());
+                } else {
+                    assert_eq!(kind, protocol::RESPONSE);
+                    let info: RasterInfo = protocol::parse(&payload).unwrap();
+                    assert_eq!(info.reference_mip.unwrap().base, base);
+                    let actual = protocol::read_raster(&mut reply, &info).unwrap();
+                    assert_eq!(actual.pixels, reference.levels()[base as usize].pixels);
+                    assert!(reply.is_empty());
+                }
+            }
+        }
     }
 }
