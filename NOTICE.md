@@ -37,3 +37,17 @@ Names appearing in this repository and its documents include, without limitation
 Naming a format or a camera family does not certify that every variant is supported, and does not represent approval or qualification by the manufacturer. RAW decoding on macOS depends on the operating-system version and on the camera model. The color sample values in the generated corpus are illustrative synthetic data; they are not measurements of, and do not reproduce, any commercial reference chart.
 
 No trademark license is granted by this repository, by its `LICENSE` file, or by its public availability. The TrueRenderer name and the project's own marks are not licensed to third parties.
+## Local egui-wgpu integration
+
+The local egui-wgpu 0.36.1 copy retains its MIT OR Apache-2.0 licensing and
+upstream copyrights. See [the integration notice](third_party/egui-wgpu/README-TrueRenderer.md)
+and the accompanying license texts for provenance and modified files. The
+project's proprietary license does not replace those dependency licenses.
+
+## DNG
+
+This product includes DNG technology under license by Adobe.
+
+The DNG writer independently implements the specification; it does not include
+the Adobe DNG SDK. Developed linear DNG and RAW mosaic DNG are distinct
+operations. TrueRenderer's proprietary license is unchanged.

@@ -16,6 +16,87 @@ impl Language {
             return source;
         }
         match source {
+            "Per riaprire i DNG esportati scegliere LibRaw bilineare/AHD. Apple RAW e il motore mosaico TrueRenderer non sono compatibili con questi file." => {
+                "To reopen exported DNG files, select LibRaw bilinear/AHD. Apple RAW and the TrueRenderer mosaic engine are not compatible with these files."
+            }
+            "FITS · dati scientifici" => "FITS · scientific data",
+            "Prima immagine 2D idonea, sola lettura. Selezione di altri HDU, cubi, tabelle, compressione e WCS non disponibili." => {
+                "First eligible 2D image, read-only. Other HDU selection, cubes, tables, compression and WCS are unavailable."
+            }
+            "Istogramma scalare del piano nativo completo, prima dello stretch; min/max nelle unità dichiarate." => {
+                "Scalar histogram of the full native plane before stretch; min/max in declared units."
+            }
+            "Trasformata di vista (globale FITS)" => "View transform (global FITS)",
+            "Nero/bianco nella scala min–max normalizzata; non modifica i campioni. Piano costante → grigio medio, invalidi → sfondo." => {
+                "Black/white in the normalized min–max scale; does not change samples. Constant plane → middle gray, invalid → background."
+            }
+            "Nero" => "Black",
+            "Bianco" => "White",
+            "Reset · min/max lineare" => "Reset · linear min/max",
+            "Proxy fp32 e copertura separata; media sui validi, poi stretch. Calcolo FITS su CPU anche in modalità GPU; presentazione 8/10/16 float comune. Non fotometria." => {
+                "fp32 proxy and separate coverage; average valid values, then stretch. FITS processing uses CPU even in GPU mode; shared 8/10/16-float presentation. Not photometry."
+            }
+            "Campione nativo (lettura isolata su richiesta)" => {
+                "Native sample (isolated read on request)"
+            }
+            "Leggi valore originale" => "Read original value",
+            "Coordinate 0-based; asse 1 orizzontale, asse 2 verso il basso. Il campione proviene dai byte originali, non da mip/stretch. Valore fisico calcolato in f64 una sola volta; NaN/Inf/BLANK distinti." => {
+                "0-based coordinates; axis 1 horizontal, axis 2 downward. Sample comes from original bytes, not mip/stretch. Physical value calculated once in f64; NaN/Inf/BLANK distinguished."
+            }
+            "Esporta fotografie…" => "Export photos…",
+            "Esporta fotografie" => "Export photos",
+            "Nuovi file: nessun originale o export esistente viene sostituito." => {
+                "New files: originals and existing exports are never replaced."
+            }
+            "Qualità JPEG" => "JPEG quality",
+            "sRGB 8 bit, compressione con perdita. Trasparenza composta su bianco." => {
+                "8-bit sRGB, lossy compression. Transparency composited onto white."
+            }
+            "sRGB, alpha conservata. La compressione non cambia la qualità." => {
+                "sRGB, alpha preserved. Compression does not change quality."
+            }
+            "Veloce" => "Fast",
+            "Bilanciata" => "Balanced",
+            "Compatta" => "Compact",
+            "RGB Rec.2020 lineare già sviluppato, 16 bit interi. Non conserva negativi o valori oltre 1. Trasparenza non supportata." => {
+                "Developed linear Rec.2020 RGB, 16-bit integer. Does not preserve negatives or values above 1. No transparency."
+            }
+            "Riapertura: scegliere LibRaw bilineare/AHD. Apple RAW e motore mosaico TrueRenderer non supportano questo DNG lineare." => {
+                "To reopen, select LibRaw bilinear/AHD. Apple RAW and TrueRenderer mosaic engines do not support this linear DNG."
+            }
+            "sRGB ICC, 16 bit interi, alpha conservata; non compresso, clamp [0,1]." => {
+                "sRGB ICC, 16-bit integer, alpha preserved; uncompressed, clamp [0,1]."
+            }
+            "Rec.2020 lineare ICC, RGBA float32 con alpha associata. Conserva negativi e valori oltre 1 del render; non compresso. Non è un RAW sensore né un export FITS." => {
+                "Linear Rec.2020 ICC, float32 RGBA with associated alpha. Preserves negative and above-1 rendered values; uncompressed. Not sensor RAW or FITS export."
+            }
+            "Mosaico area attiva: Nikon D750/D40. Nessun demosaic, WB applicato o ridimensionamento." => {
+                "Active-area mosaic: Nikon D750/D40. No demosaic, applied WB or resize."
+            }
+            "Conserva campioni, CFA, nero/bianco, WB e orientamento; matrice D65 LibRaw. Non include margini ottici, MakerNotes, EXIF/GPS o NEF compresso: conservare l'originale. Altre camere vengono rifiutate." => {
+                "Preserves samples, CFA, black/white levels, WB and orientation; LibRaw D65 matrix. Excludes optical margins, MakerNotes, EXIF/GPS and compressed NEF: keep the original. Other cameras are rejected."
+            }
+            "Lato lungo (0 = originale)" => "Long edge (0 = original)",
+            "Cartella destinazione…" => "Destination folder…",
+            "Esporta selezione" => "Export selection",
+            "Annulla export" => "Cancel export",
+            "Annullato. I file già salvati restano nella destinazione." => {
+                "Cancelled. Files already saved remain in the destination."
+            }
+            "TIFF · Rec.2020 lineare float32" => "TIFF · linear Rec.2020 float32",
+            "DNG lineare · RGB sviluppato 16 bit" => "Linear DNG · developed 16-bit RGB",
+            "DNG RAW · mosaico area attiva originale" => "RAW DNG · original active-area mosaic",
+            "Precisione di presentazione SDR" => "SDR presentation precision",
+            "SDR 8 bit · compatibile" => "SDR 8-bit · compatible",
+            "SDR 10 bit · sperimentale" => "SDR 10-bit · experimental",
+            "SDR 16 float · sperimentale" => "SDR 16-float · experimental",
+            "Applicare e riavviare l'app. La coppia formato + sRGB deve essere supportata; altrimenti rimane SDR 8 bit. Non abilita HDR né certifica i bit del monitor." => {
+                "Apply and restart the app. The format + sRGB pair must be supported; otherwise SDR 8-bit remains. Does not enable HDR or certify display bit depth."
+            }
+            "16 float aumenta memoria di texture/superficie; precisione non uniforme, diversa da 16 bit interi. Working e cache restano fp32, anche con calcolo CPU." => {
+                "16-float uses more texture/surface memory; nonuniform precision differs from 16-bit integer. Working data and cache remain fp32, including CPU processing."
+            }
+            "Superficie effettiva e capacità" => "Effective surface and capabilities",
             "Caricamento cartella" => "Folder loading",
             "Conteggio file…" => "Counting files…",
             "Cartella" => "Folder",

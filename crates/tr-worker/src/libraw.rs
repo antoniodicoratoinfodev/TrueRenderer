@@ -102,6 +102,7 @@ fn describe(bytes: &[u8], engine: RawEngine) -> Result<Info> {
 
 fn provenance(info: &Info, filter: &str, engine: RawEngine) -> RasterInfo {
     RasterInfo {
+        scientific: None,
         reference_mip: None,
         width: info.width,
         height: info.height,
@@ -115,7 +116,11 @@ fn provenance(info: &Info, filter: &str, engine: RawEngine) -> RasterInfo {
         decoder: format!(
             "LibRaw {} · {} · {}",
             text(&info.version),
-            engine.recipe(),
+            if info.non_bayer == 2 {
+                "DNG lineare RGB · nessun demosaic"
+            } else {
+                engine.recipe()
+            },
             text(&info.camera)
         ),
         input_color: String::new(),
@@ -139,7 +144,7 @@ fn declared(info: &Info, engine: RawEngine) -> ColorSource {
 pub fn probe_with_engine(bytes: &[u8], engine: RawEngine) -> Result<(RasterInfo, ColorSource)> {
     let info = describe(bytes, engine)?;
     ensure!(
-        info.non_bayer == 0,
+        info.non_bayer == 0 || info.non_bayer == 2,
         "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
     );
     let mut raster = provenance(&info, "nessuno · probe", engine);
@@ -154,7 +159,7 @@ pub fn develop_with_engine(
     engine: RawEngine,
 ) -> Result<(RasterInfo, ColorSource, LinearImage)> {
     let probed = describe(bytes, engine)?;
-    if probed.non_bayer != 0 {
+    if probed.non_bayer != 0 && probed.non_bayer != 2 {
         bail!("CFA non Bayer: il demosaicing di questa ricetta non è qualificato");
     }
     let count = probed.width as usize * probed.height as usize * 3;

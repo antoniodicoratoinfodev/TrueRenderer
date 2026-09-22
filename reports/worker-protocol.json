@@ -24,6 +24,14 @@
     {
       "case": "decode_error_then_valid_job_same_process",
       "passed": true
+    },
+    {
+      "case": "external_export_rejected_on_pipe",
+      "passed": true
+    },
+    {
+      "case": "external_scientific_sample_rejected_on_pipe",
+      "passed": true
     }
   ]
 }

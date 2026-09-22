@@ -35,6 +35,9 @@ opt-level = 3
 lto = "thin"
 strip = "debuginfo"
 
+[patch.crates-io]
+egui-wgpu = { path = "third_party/egui-wgpu" }
+
 [profile.dev]
 opt-level = 1
 

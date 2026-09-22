@@ -16,6 +16,8 @@ use tr_core::{
 
 #[derive(Clone, Debug, PartialEq)]
 struct Key {
+    stretch: tr_core::science::Stretch,
+    high_precision: bool,
     source: u64,
     region: Region,
 }
@@ -28,6 +30,7 @@ struct Job {
 }
 enum Rendered {
     Cpu(Vec<u8>),
+    Cpu16(Vec<u8>),
     Gpu(crate::resident_compute::GpuFrame),
 }
 struct Completed {
@@ -53,6 +56,11 @@ struct Entry {
 }
 enum FrameTexture {
     Cpu(TextureHandle),
+    HighCpu {
+        id: egui::TextureId,
+        texture: eframe::wgpu::Texture,
+        state: eframe::egui_wgpu::RenderState,
+    },
     Gpu {
         id: egui::TextureId,
         frame: crate::resident_compute::GpuFrame,
@@ -60,22 +68,37 @@ enum FrameTexture {
     },
 }
 impl FrameTexture {
+    fn bytes(&self) -> usize {
+        let bpp = match self {
+            Self::Cpu(_) => 4,
+            Self::HighCpu { .. } => 8,
+            Self::Gpu { frame, .. } => {
+                if frame.texture.format() == eframe::wgpu::TextureFormat::Rgba16Float {
+                    8
+                } else {
+                    4
+                }
+            }
+        };
+        self.size()[0] * self.size()[1] * bpp
+    }
     fn id(&self) -> egui::TextureId {
         match self {
             Self::Cpu(t) => t.id(),
-            Self::Gpu { id, .. } => *id,
+            Self::Gpu { id, .. } | Self::HighCpu { id, .. } => *id,
         }
     }
     fn size(&self) -> [usize; 2] {
         match self {
             Self::Cpu(t) => t.size(),
+            Self::HighCpu { texture, .. } => [texture.width() as usize, texture.height() as usize],
             Self::Gpu { frame, .. } => frame.size.map(|v| v as usize),
         }
     }
 }
 impl Drop for FrameTexture {
     fn drop(&mut self) {
-        if let Self::Gpu { id, state, .. } = self {
+        if let Self::Gpu { id, state, .. } | Self::HighCpu { id, state, .. } = self {
             state.renderer.write().free_texture(id);
         }
     }
@@ -107,6 +130,8 @@ pub struct PaintCoverage {
     pub exact: bool,
 }
 pub struct Presenter {
+    stretch: tr_core::science::Stretch,
+    high_precision: bool,
     shared: Arc<(Mutex<Shared>, Condvar)>,
     worker: Option<JoinHandle<()>>,
     waiting: HashMap<String, Key>,
@@ -148,11 +173,23 @@ impl Presenter {
         let worker_gpu = render_state.clone();
         let worker_memory = memory.clone();
         let worker_gpu_memory = gpu_memory.clone();
+        let high_precision = render_state.as_ref().is_some_and(|s| {
+            matches!(
+                s.target_format,
+                eframe::wgpu::TextureFormat::Rgb10a2Unorm
+                    | eframe::wgpu::TextureFormat::Rgba16Float
+            )
+        });
         let worker = thread::spawn(move || {
             let mut filter = worker_gpu
                 .as_ref()
                 .filter(|r| r.device.limits().max_storage_buffers_per_shader_stage >= 7)
-                .map(|r| crate::resident_compute::GpuFilter::new(r.device.clone()));
+                .map(|r| {
+                    crate::resident_compute::GpuFilter::with_precision(
+                        r.device.clone(),
+                        high_precision,
+                    )
+                });
             loop {
                 let mut job = {
                     let (lock, ready) = &*worker_shared;
@@ -185,6 +222,7 @@ impl Presenter {
                 }
                 let mut fallback = None;
                 let gpu = if verified.load(Ordering::Acquire)
+                    && !job.image.scientific()
                     && choice != 1
                     && (choice == 2 || pixels >= 512 * 1024)
                     && let Some(filter) = &mut filter
@@ -211,11 +249,35 @@ impl Presenter {
                 } else {
                     job.image
                         .render(job.key.region)
-                        .map(|image| Rendered::Cpu(image.to_display()))
+                        .map(|mut image| {
+                            if job.image.scientific() {
+                                job.key.stretch.apply(&mut image);
+                            }
+                            if high_precision {
+                                Rendered::Cpu16(
+                                    image
+                                        .pixels
+                                        .iter()
+                                        .flat_map(|p| {
+                                            tr_core::color::display_float(*p, 119. / 255.)
+                                                .into_iter()
+                                                .flat_map(|v| {
+                                                    half::f16::from_f32(v).to_bits().to_le_bytes()
+                                                })
+                                        })
+                                        .collect(),
+                                )
+                            } else {
+                                Rendered::Cpu(image.to_display())
+                            }
+                        })
                         .map_err(|e| format!("{e:#}"))
                 };
-                job.lease
-                    .shrink(if result.is_ok() { pixels * 12 } else { 0 });
+                job.lease.shrink(if result.is_ok() {
+                    pixels * if high_precision { 24 } else { 12 }
+                } else {
+                    0
+                });
                 let lease = Arc::new(job.lease);
                 let gpu_lease = Arc::new(job.gpu_lease);
                 let mut state = worker_shared.0.lock().unwrap();
@@ -246,6 +308,8 @@ impl Presenter {
             }
         });
         Self {
+            stretch: Default::default(),
+            high_precision,
             shared,
             worker: Some(worker),
             waiting: HashMap::new(),
@@ -279,6 +343,12 @@ impl Presenter {
             stats.wide_peak_gpu_bytes,
         ] = self.wide_peak;
         stats
+    }
+    pub fn set_scientific_stretch(&mut self, stretch: tr_core::science::Stretch) {
+        if self.stretch != stretch {
+            self.stretch = stretch;
+            self.clear();
+        }
     }
     fn retire(&mut self, entry: Entry) {
         self.retired
@@ -399,6 +469,47 @@ impl Presenter {
                     self.errors.remove(&finished.lane);
                     let [w, h] = finished.key.region.size;
                     let texture = match rendered {
+                        Rendered::Cpu16(bytes) => {
+                            use eframe::wgpu;
+                            let state = self.render_state.as_ref().unwrap().clone();
+                            let texture = state.device.create_texture(&wgpu::TextureDescriptor {
+                                label: Some("TR CPU SDR fp16 presentation"),
+                                size: wgpu::Extent3d {
+                                    width: w,
+                                    height: h,
+                                    depth_or_array_layers: 1,
+                                },
+                                mip_level_count: 1,
+                                sample_count: 1,
+                                dimension: wgpu::TextureDimension::D2,
+                                format: wgpu::TextureFormat::Rgba16Float,
+                                usage: wgpu::TextureUsages::TEXTURE_BINDING
+                                    | wgpu::TextureUsages::COPY_DST,
+                                view_formats: &[],
+                            });
+                            state.queue.write_texture(
+                                texture.as_image_copy(),
+                                &bytes,
+                                wgpu::TexelCopyBufferLayout {
+                                    offset: 0,
+                                    bytes_per_row: Some(w * 8),
+                                    rows_per_image: None,
+                                },
+                                texture.size(),
+                            );
+                            let memory = finished.lease.clone();
+                            let gpu_memory = finished.gpu_lease.clone();
+                            state.queue.on_submitted_work_done(move || {
+                                drop(memory);
+                                drop(gpu_memory);
+                            });
+                            let id = state.renderer.write().register_native_texture(
+                                &state.device,
+                                &texture.create_view(&Default::default()),
+                                wgpu::FilterMode::Nearest,
+                            );
+                            FrameTexture::HighCpu { id, texture, state }
+                        }
                         Rendered::Cpu(rgba) => FrameTexture::Cpu(ctx.load_texture(
                             &finished.lane,
                             egui::ColorImage::from_rgba_unmultiplied(
@@ -452,7 +563,7 @@ impl Presenter {
                 .entries
                 .values()
                 .chain(self.wide.values())
-                .map(|e| e.texture.size()[0] * e.texture.size()[1] * 4)
+                .map(|e| e.texture.bytes())
                 .sum::<usize>()
                 > self.gpu_memory.usage().limit as usize
         {
@@ -559,6 +670,12 @@ impl Presenter {
         region: Region,
     ) {
         let key = Key {
+            stretch: if image.scientific() {
+                self.stretch
+            } else {
+                Default::default()
+            },
+            high_precision: self.high_precision,
             source: image.id(),
             region,
         };
@@ -637,8 +754,10 @@ impl Presenter {
         self.errors.remove(&lane);
         if self.waiting.get(&lane) != Some(&key) {
             let pixels = region.size[0] as u64 * region.size[1] as u64;
+            let display_bytes = pixels * if self.high_precision { 8 } else { 4 };
             let required = pixels * 80 + 4 * 1024 * 1024;
-            if required > self.memory.usage().limit || pixels * 4 > self.gpu_memory.usage().limit {
+            if required > self.memory.usage().limit || display_bytes > self.gpu_memory.usage().limit
+            {
                 self.errors.insert(
                     lane,
                     (key, "Vista oltre il limite di memoria configurato".into()),
@@ -656,7 +775,7 @@ impl Presenter {
                         .saturating_sub(self.memory.usage().reserved),
                 )
                 .max(
-                    (pixels * 4).saturating_sub(
+                    display_bytes.saturating_sub(
                         self.gpu_memory
                             .usage()
                             .limit
@@ -693,7 +812,7 @@ impl Presenter {
                         .request_repaint_after(std::time::Duration::from_millis(25));
                     return;
                 };
-                let Some(gpu_lease) = self.gpu_memory.try_reserve(pixels * 4) else {
+                let Some(gpu_lease) = self.gpu_memory.try_reserve(display_bytes) else {
                     ui.painter().text(
                         rect.center(),
                         egui::Align2::CENTER_CENTER,
@@ -814,7 +933,12 @@ mod tests {
     use super::*;
     fn fixture_entry(ctx: &egui::Context, p: &Presenter, source: u64, region: Region) -> Entry {
         Entry {
-            key: Key { source, region },
+            key: Key {
+                source,
+                region,
+                high_precision: false,
+                stretch: Default::default(),
+            },
             texture: FrameTexture::Cpu(ctx.load_texture(
                 "wide-fixture",
                 egui::ColorImage::filled([2, 2], Color32::WHITE),
@@ -994,6 +1118,8 @@ mod tests {
             "view".into(),
             Entry {
                 key: Key {
+                    stretch: Default::default(),
+                    high_precision: false,
                     source: image.id(),
                     region,
                 },

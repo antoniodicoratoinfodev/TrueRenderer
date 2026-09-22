@@ -28,6 +28,7 @@ pub enum FolderLoading {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[serde(default, deny_unknown_fields)]
 pub struct Settings {
+    pub presentation: tr_core::presentation::Precision,
     pub language: crate::i18n::Language,
     pub raw_engine: tr_core::decoder::RawEngine,
     pub schema: u32,
@@ -51,6 +52,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            presentation: Default::default(),
             language: crate::i18n::Language::default(),
             raw_engine: tr_core::decoder::RawEngine::default(),
             schema: 2,

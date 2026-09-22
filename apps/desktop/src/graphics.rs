@@ -121,7 +121,7 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
         let app_data = data.clone();
         let app_worker = worker.clone();
         let initial = startup.take();
-        let options = eframe::NativeOptions {
+        let mut options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_title("TrueRenderer")
                 .with_app_id("it.truerenderer.prototype")
@@ -133,6 +133,18 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
             dithering: false,
             run_and_return: true,
             ..Default::default()
+        };
+        let precision = crate::cache::Settings::load(&data)
+            .unwrap_or_default()
+            .presentation;
+        options.wgpu_options.surface.preferred_format = match precision {
+            tr_core::presentation::Precision::Compatible8 => None,
+            tr_core::presentation::Precision::Sdr10 => {
+                Some(eframe::wgpu::TextureFormat::Rgb10a2Unorm)
+            }
+            tr_core::presentation::Precision::Sdr16Float => {
+                Some(eframe::wgpu::TextureFormat::Rgba16Float)
+            }
         };
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             eframe::run_native(

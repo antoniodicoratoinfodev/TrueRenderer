@@ -97,6 +97,7 @@ pub enum Trust {
 /// substituting another one would change the meaning of its pixels.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ColorSource {
+    Scientific,
     /// The file states its colour space and this build applied it.
     Declared(String),
     /// RAW interpreted using a named recipe and decoder calibration. This is
@@ -120,6 +121,7 @@ impl ColorSource {
     /// is always visible in the text, never softened into a profile name.
     pub fn provenance(&self) -> String {
         match self {
+            Self::Scientific => "Dati scientifici; proxy di vista normalizzato, nessuna interpretazione RGB/ICC del dato".into(),
             Self::Declared(profile) => format!("{profile} · dichiarato dal file"),
             Self::Developed(recipe) => format!("{recipe} · sviluppo RAW"),
             Self::Assumed(reason) => format!("sRGB assunto · {reason}"),

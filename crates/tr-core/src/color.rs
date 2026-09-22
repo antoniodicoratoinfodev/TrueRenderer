@@ -58,14 +58,20 @@ pub fn from_encoded_srgb(rgba: Pixel) -> Pixel {
     ]
 }
 pub fn display_pixel(pixel: Pixel, background: f32) -> [u8; 4] {
+    let rgb = display_float(pixel, background);
+    let rgb = rgb.map(|v| (v * 255.0).round() as u8);
+    [rgb[0], rgb[1], rgb[2], 255]
+}
+/// SDR encoded sRGB, still floating point. Quantization belongs to the output.
+pub fn display_float(pixel: Pixel, background: f32) -> [f32; 4] {
     let bg = srgb_to_linear(background);
     let rgb = rec2020_to_linear_srgb([
         pixel[0] + bg * (1.0 - pixel[3]),
         pixel[1] + bg * (1.0 - pixel[3]),
         pixel[2] + bg * (1.0 - pixel[3]),
     ]);
-    let rgb = rgb.map(|v| (linear_to_srgb(v).clamp(0.0, 1.0) * 255.0).round() as u8);
-    [rgb[0], rgb[1], rgb[2], 255]
+    let rgb = rgb.map(|v| linear_to_srgb(v).clamp(0.0, 1.0));
+    [rgb[0], rgb[1], rgb[2], 1.]
 }
 
 #[derive(Debug, Clone)]

@@ -242,6 +242,9 @@ pub fn supported_extension(path: &Path) -> bool {
                 | "webp"
                 | "heic"
                 | "heif"
+                | "fits"
+                | "fit"
+                | "fts"
         )
     })
 }
@@ -268,7 +271,20 @@ struct Work {
     edge: u32,
     intent: protocol::DecodeIntent,
     maximum_output_bytes: u64,
-    result: mpsc::SyncSender<Result<(RasterInfo, Option<LinearImage>)>>,
+    result: mpsc::SyncSender<Result<WorkerOutput>>,
+}
+enum WorkerOutput {
+    ScientificSample(tr_core::science::Sample),
+    Raster(Box<RasterInfo>, Option<LinearImage>),
+    Export(tr_core::export::Info, Vec<u8>),
+}
+impl WorkerOutput {
+    fn raster(self) -> Result<(RasterInfo, Option<LinearImage>)> {
+        match self {
+            Self::Raster(info, raster) => Ok((*info, raster)),
+            _ => anyhow::bail!("Output non raster inatteso"),
+        }
+    }
 }
 enum Owner {
     /// The isolation outlives the child on purpose: dropping it terminates
@@ -498,6 +514,30 @@ impl Broker {
                         return Err(SourceRejected(protocol::parse::<String>(&data)?).into());
                     }
                     ensure!(kind == protocol::RESPONSE, "Tipo di risposta IPC inatteso");
+                    if let protocol::DecodeIntent::ScientificSample { x, y } = work.intent {
+                        let sample: tr_core::science::Sample = protocol::parse(&data)?;
+                        ensure!(
+                            sample.x == x
+                                && sample.y == y
+                                && sample.hdu < 256
+                                && sample.stored.is_none_or(f64::is_finite)
+                                && sample.physical.is_none_or(f64::is_finite)
+                                && ["valid", "BLANK", "NaN", "+Inf", "-Inf", "scaling overflow"]
+                                    .contains(&sample.validity.as_str())
+                                && (sample.validity == "valid") == sample.physical.is_some(),
+                            "Campione scientifico IPC incoerente"
+                        );
+                        return Ok(WorkerOutput::ScientificSample(sample));
+                    }
+                    if let protocol::DecodeIntent::Export(options) = work.intent {
+                        let info: tr_core::export::Info = protocol::parse(&data)?;
+                        info.validate(options, work.maximum_output_bytes)?;
+                        let mut bytes = vec![0; usize::try_from(info.bytes)?];
+                        for chunk in bytes.chunks_mut(64 * 1024) {
+                            output.read_exact(chunk)?;
+                        }
+                        return Ok(WorkerOutput::Export(info, bytes));
+                    }
                     let info: RasterInfo = protocol::parse(&data)?;
                     protocol::validate_info(&info)?;
                     if matches!(work.intent, protocol::DecodeIntent::ReferenceMip { .. }) {
@@ -537,7 +577,7 @@ impl Broker {
                     } else {
                         Some(protocol::read_raster(&mut output, &info)?)
                     };
-                    Ok((info, raster))
+                    Ok(WorkerOutput::Raster(Box::new(info), raster))
                 })();
                 let failed = result
                     .as_ref()
@@ -624,8 +664,9 @@ impl Broker {
         } else {
             protocol::DecodeIntent::LegacyRaster
         };
-        let (info, raster) =
-            self.process_snapshot(source, edge, intent, maximum_output_bytes, cancelled)?;
+        let (info, raster) = self
+            .process_snapshot(source, edge, intent, maximum_output_bytes, cancelled)?
+            .raster()?;
         Ok(Decoded {
             info,
             raster: raster.context("Pixel assenti")?,
@@ -643,13 +684,15 @@ impl Broker {
         cancelled: impl Fn() -> bool,
     ) -> Result<Decoded> {
         let digest = source.digest.clone();
-        let (info, raster) = self.process_snapshot(
-            source,
-            maximum_edge,
-            protocol::DecodeIntent::ReferenceMip { cpu_threads },
-            maximum_output_bytes,
-            cancelled,
-        )?;
+        let (info, raster) = self
+            .process_snapshot(
+                source,
+                maximum_edge,
+                protocol::DecodeIntent::ReferenceMip { cpu_threads },
+                maximum_output_bytes,
+                cancelled,
+            )?
+            .raster()?;
         Ok(Decoded {
             info,
             raster: raster.context("Pixel assenti")?,
@@ -671,7 +714,45 @@ impl Broker {
                 0,
                 cancelled,
             )?
+            .raster()?
             .0)
+    }
+    pub fn export_snapshot_bounded(
+        &mut self,
+        source: SourceSnapshot,
+        options: tr_core::export::Options,
+        maximum_output_bytes: u64,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<(tr_core::export::Info, Vec<u8>)> {
+        options.validate()?;
+        match self.process_snapshot(
+            source,
+            0,
+            protocol::DecodeIntent::Export(options),
+            maximum_output_bytes,
+            cancelled,
+        )? {
+            WorkerOutput::Export(info, bytes) => Ok((info, bytes)),
+            _ => anyhow::bail!("Output inatteso durante export"),
+        }
+    }
+    pub fn scientific_sample(
+        &mut self,
+        source: SourceSnapshot,
+        x: u32,
+        y: u32,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<tr_core::science::Sample> {
+        match self.process_snapshot(
+            source,
+            0,
+            protocol::DecodeIntent::ScientificSample { x, y },
+            0,
+            cancelled,
+        )? {
+            WorkerOutput::ScientificSample(sample) => Ok(sample),
+            _ => anyhow::bail!("Campione scientifico assente"),
+        }
     }
     fn process_snapshot(
         &mut self,
@@ -680,7 +761,7 @@ impl Broker {
         intent: protocol::DecodeIntent,
         maximum_output_bytes: u64,
         cancelled: impl Fn() -> bool,
-    ) -> Result<(RasterInfo, Option<LinearImage>)> {
+    ) -> Result<WorkerOutput> {
         ensure!(!cancelled(), "Decodifica annullata");
         let SourceSnapshot { bytes, digest } = source;
         let external = !self.policy.approves(&digest);
@@ -751,7 +832,7 @@ impl Broker {
                 bail!("Worker interrotto: timeout assoluto");
             }
             match rx.recv_timeout(remaining.min(Duration::from_millis(25))) {
-                Ok(Ok((info, raster))) => {
+                Ok(Ok(output)) => {
                     if let Err(error) = self.observe_memory() {
                         self.process.take();
                         self.statistics.forced_stops += 1;
@@ -760,7 +841,7 @@ impl Broker {
                     if intent != protocol::DecodeIntent::Probe {
                         self.statistics.completed_jobs += 1;
                     }
-                    return Ok((info, raster));
+                    return Ok(output);
                 }
                 Ok(Err(error)) => {
                     if error.downcast_ref::<SourceRejected>().is_none() {

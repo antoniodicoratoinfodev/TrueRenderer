@@ -4,11 +4,14 @@ pub mod compute;
 pub mod corpus;
 pub mod decoder;
 pub mod demosaic;
+pub mod export;
 pub mod location;
+pub mod presentation;
 pub mod preview;
 pub mod protocol;
 pub mod provider;
 pub mod resample;
+pub mod science;
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 

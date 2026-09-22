@@ -299,6 +299,27 @@ impl TrueRenderer {
 
     fn performance_preferences(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
+        section(ui, lang.text("Precisione di presentazione SDR"));
+        egui::ComboBox::from_id_salt("presentation-precision")
+            .selected_text(lang.text(self.cache_settings.presentation.label()))
+            .show_ui(ui, |ui| {
+                for precision in [
+                    tr_core::presentation::Precision::Compatible8,
+                    tr_core::presentation::Precision::Sdr10,
+                    tr_core::presentation::Precision::Sdr16Float,
+                ] {
+                    ui.selectable_value(
+                        &mut self.cache_settings.presentation,
+                        precision,
+                        lang.text(precision.label()),
+                    );
+                }
+            });
+        ui.label(lang.text("Applicare e riavviare l'app. La coppia formato + sRGB deve essere supportata; altrimenti rimane SDR 8 bit. Non abilita HDR né certifica i bit del monitor."));
+        ui.label(lang.text("16 float aumenta memoria di texture/superficie; precisione non uniforme, diversa da 16 bit interi. Working e cache restano fp32, anche con calcolo CPU."));
+        egui::CollapsingHeader::new(lang.text("Superficie effettiva e capacità")).show(ui, |ui| {
+            ui.label(&self.surface);
+        });
         section(ui, lang.text("Elaborazione"));
         ui.horizontal_wrapped(|ui| {
             ui.label(lang.text("Profilo prestazioni"));

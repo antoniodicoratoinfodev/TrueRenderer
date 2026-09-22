@@ -239,6 +239,7 @@ impl Manager {
                 header.opaque,
                 levels,
             )?;
+            image.set_scientific(header.info.scientific.is_some());
             ensure!(
                 image.source().width.max(image.source().height) <= request.maximum_level_edge(),
                 "Résolution derivato incoerente"
@@ -644,6 +645,7 @@ mod tests {
         let image = ImageLevels::from_pyramid(pyramid, request).unwrap();
         let histogram = image.source().histogram();
         let info = RasterInfo {
+            scientific: None,
             reference_mip: None,
             width: 513,
             height: 257,

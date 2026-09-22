@@ -47,7 +47,7 @@ dpi,0.1.2,Apache-2.0 AND MIT,d8b14ccef22fc6f5a8f4d7d768562a182c04ce9a3b3157b9139
 ecolor,0.36.1,MIT OR Apache-2.0,fc883f505d446814c0226bef4b64564b9adb9966fc00c88c57ce6d827dd152d6,https://github.com/emilk/egui
 eframe,0.36.1,MIT OR Apache-2.0,2afc0cbcdb6896b7bfb1dbbebaf7b9af9635ff38fd01e89bdd0174c1717b1857,https://github.com/emilk/egui/tree/main/crates/eframe
 egui,0.36.1,MIT OR Apache-2.0,c977ac91dfaa651633fd9722e4ce9ccb32cda4c748b89a5cb57e504036e37c13,https://github.com/emilk/egui
-egui-wgpu,0.36.1,MIT OR Apache-2.0,2fc362cc6bc8c1d7169c9cb0e7741ff1e03063681373d6e55cc3b25fd21213f3,https://github.com/emilk/egui/tree/main/crates/egui-wgpu
+egui-wgpu,0.36.1,MIT OR Apache-2.0,,https://github.com/emilk/egui/tree/main/crates/egui-wgpu
 egui-winit,0.36.1,MIT OR Apache-2.0,9327fc8edef2c57db9bcbcacc82c8a4b1e8cc64cd41a67db4419dcf643d88c83,https://github.com/emilk/egui/tree/main/crates/egui-winit
 egui_glow,0.36.1,MIT OR Apache-2.0,69b65e45f8d8d7c6d848b3ec41f642b54ad828033f1511d4b4c9adc09040166a,https://github.com/emilk/egui/tree/main/crates/egui_glow
 either,1.18.0,MIT OR Apache-2.0,252afb9ae5eaa683babdc6a068b3f5726eb19e05070c731f9b2a23a7c3e8ed34,https://github.com/rayon-rs/either

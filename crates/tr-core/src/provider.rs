@@ -46,6 +46,7 @@ pub fn reduce_reference_mip(
 }
 
 pub struct ImageLevels {
+    scientific: bool,
     id: u64,
     source_size: [u32; 2],
     base: u32,
@@ -55,6 +56,32 @@ pub struct ImageLevels {
     lease: Option<Arc<Lease>>,
 }
 impl ImageLevels {
+    pub fn scientific(&self) -> bool {
+        self.scientific
+    }
+    pub fn set_scientific(&mut self, scientific: bool) {
+        self.scientific = scientific;
+    }
+    pub fn from_scientific_mip(
+        source: LinearImage,
+        source_size: [u32; 2],
+        base: u32,
+    ) -> Result<Self> {
+        let mut levels = vec![source];
+        while levels.last().is_some_and(|l| l.width > 1 || l.height > 1) {
+            let source = levels.last().unwrap();
+            levels.push(crate::science::area(
+                source,
+                Region::fitted(
+                    [source.width, source.height],
+                    [source.width.div_ceil(2), source.height.div_ceil(2)],
+                ),
+            )?);
+        }
+        let mut image = Self::restore(source_size, base, false, levels)?;
+        image.scientific = true;
+        Ok(image)
+    }
     /// Generate the same reference graph, dropping expensive ancestors as soon
     /// as the next level is complete. No reduced decode is claimed by this adapter.
     pub fn from_source(source: LinearImage, request: PreviewRequest) -> Result<Self> {
@@ -128,6 +155,7 @@ impl ImageLevels {
             "Alpha opaca incoerente"
         );
         Ok(Self {
+            scientific: false,
             id: NEXT_ID.fetch_add(1, Ordering::Relaxed),
             source_size,
             base,
@@ -195,6 +223,7 @@ impl ImageLevels {
             self.levels[start..].to_vec(),
         )?;
         image.attach_lease(lease);
+        image.scientific = self.scientific;
         Ok(image)
     }
     pub fn supports(&self, region: Region) -> bool {
@@ -235,8 +264,30 @@ impl ImageLevels {
     }
     pub fn render(&self, region: Region) -> Result<LinearImage> {
         let (level, region, opaque) = self.render_input(region)?;
-        crate::resample::filter(level, region, opaque)
+        if self.scientific {
+            crate::science::area(level, region)
+        } else {
+            crate::resample::filter(level, region, opaque)
+        }
     }
+}
+pub fn reduce_scientific_mip(
+    mut source: LinearImage,
+    maximum_edge: u32,
+) -> Result<(LinearImage, u32, bool)> {
+    ensure!(maximum_edge > 0, "Lato scientifico nullo");
+    let mut base = 0;
+    while source.width.max(source.height) > maximum_edge {
+        source = crate::science::area(
+            &source,
+            Region::fitted(
+                [source.width, source.height],
+                [source.width.div_ceil(2), source.height.div_ceil(2)],
+            ),
+        )?;
+        base += 1;
+    }
+    Ok((source, base, false))
 }
 
 #[cfg(test)]

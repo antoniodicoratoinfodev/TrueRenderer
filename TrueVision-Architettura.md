@@ -293,6 +293,10 @@ misura li smentisce si modifica il budget o lo scope, non il risultato.
 
 ### 2.4 Formati richiesti
 
+Eccezione autorizzata alla roadmap post-v1: il contratto di export fotografico,
+precisione SDR opzionale e FITS 2D è in [ADR 0010](docs/esportazione-precisione-fits.md).
+Non estende automaticamente la matrice RAW qualificata o il supporto TIFF generico.
+
 Matrice completa in [appendice A](#a-matrice-dei-formati). La v1 copre solo:
 
 - **Obbligatori**: JPEG, PNG e TIFF/BigTIFF.

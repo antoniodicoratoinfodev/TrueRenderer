@@ -83,6 +83,7 @@ fn provenance(info: &Info) -> (RasterInfo, ColorSource) {
     ));
     (
         RasterInfo {
+            scientific: None,
             reference_mip: None,
             width,
             height,
@@ -107,6 +108,92 @@ fn provenance(info: &Info) -> (RasterInfo, ColorSource) {
 }
 pub fn probe(bytes: &[u8]) -> Result<(RasterInfo, ColorSource)> {
     Ok(provenance(&describe(bytes)?))
+}
+pub struct ExportMosaic {
+    pub width: u32,
+    pub height: u32,
+    pub orientation: u16,
+    pub cfa: [u8; 4],
+    pub black: [f32; 4],
+    pub white: u32,
+    pub neutral: [f32; 3],
+    pub matrix: [f32; 9],
+    pub camera: String,
+    pub samples: Vec<u16>,
+}
+pub fn export_mosaic(bytes: &[u8]) -> Result<ExportMosaic> {
+    unsafe extern "C" {
+        fn tr_mosaic_color_matrix(
+            bytes: *const u8,
+            len: usize,
+            matrix: *mut f32,
+            error: *mut c_char,
+            size: usize,
+        ) -> i32;
+    }
+    let mut info = describe(bytes)?;
+    let mut samples = vec![0u16; info.width as usize * info.height as usize];
+    let mut error = [0 as c_char; 512];
+    // SAFETY: bounded exclusive buffers; native side rechecks geometry and model.
+    let status = unsafe {
+        tr_mosaic_read(
+            bytes.as_ptr(),
+            bytes.len(),
+            samples.as_mut_ptr(),
+            samples.len(),
+            &mut info,
+            error.as_mut_ptr(),
+            error.len(),
+        )
+    };
+    ensure!(status == 0, "{}", text(&error));
+    let mut matrix = [0.; 9];
+    // SAFETY: the output holds exactly the 9 coefficients required by the ABI.
+    let status = unsafe {
+        tr_mosaic_color_matrix(
+            bytes.as_ptr(),
+            bytes.len(),
+            matrix.as_mut_ptr(),
+            error.as_mut_ptr(),
+            error.len(),
+        )
+    };
+    ensure!(status == 0, "Matrice camera DNG: {}", text(&error));
+    let m = matrix;
+    let determinant = m[0] * (m[4] * m[8] - m[5] * m[7]) - m[1] * (m[3] * m[8] - m[5] * m[6])
+        + m[2] * (m[3] * m[7] - m[4] * m[6]);
+    ensure!(
+        determinant.is_finite() && determinant.abs() > 1e-6,
+        "Matrice camera DNG assente o singolare"
+    );
+    let mut neutral = [0.; 3];
+    for phase in 0..4 {
+        let channel = info.cfa[phase] as usize;
+        let value = 1. / info.wb[phase];
+        ensure!(
+            neutral[channel] == 0. || (neutral[channel] - value).abs() < 1e-5,
+            "DNG RAW: verdi con WB differenti non supportati"
+        );
+        neutral[channel] = value;
+    }
+    Ok(ExportMosaic {
+        width: info.width,
+        height: info.height,
+        orientation: match info.flip {
+            0 => 1,
+            3 => 3,
+            5 => 8,
+            6 => 6,
+            _ => unreachable!(),
+        },
+        cfa: info.cfa.map(|v| v as u8),
+        black: info.black,
+        white: info.white as u32,
+        neutral,
+        matrix,
+        camera: text(&info.camera),
+        samples,
+    })
 }
 pub fn develop(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, ColorSource, LinearImage)> {
     let probed = describe(bytes)?;
@@ -166,6 +253,69 @@ pub fn develop(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, ColorSource, 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    #[ignore = "requires TR_RAW_SAMPLE pointing to an authorized read-only Nikon sample"]
+    fn real_raw_export_preserves_every_active_sample() {
+        let path = std::env::var_os("TR_RAW_SAMPLE").expect("TR_RAW_SAMPLE");
+        let bytes = std::fs::read(&path).unwrap();
+        let before = export_mosaic(&bytes).unwrap();
+        let (_, mut exported) = crate::export::raw(
+            &bytes,
+            tr_core::export::Options {
+                format: tr_core::export::Format::DngRaw,
+                ..Default::default()
+            },
+            tr_core::export::MAX_ENCODED,
+        )
+        .unwrap();
+        // Independent TIFF codec reads the uncompressed sample storage. Only
+        // the photometric tag of our private output copy changes for that reader.
+        let ifd = u32::from_le_bytes(exported[4..8].try_into().unwrap()) as usize;
+        let count = u16::from_le_bytes(exported[ifd..ifd + 2].try_into().unwrap()) as usize;
+        let entry = (0..count)
+            .map(|i| ifd + 2 + i * 12)
+            .find(|i| u16::from_le_bytes(exported[*i..*i + 2].try_into().unwrap()) == 262)
+            .unwrap();
+        exported[entry + 8..entry + 10].copy_from_slice(&1u16.to_le_bytes());
+        let mut reader = tiff::decoder::Decoder::new(std::io::Cursor::new(exported)).unwrap();
+        assert_eq!(reader.dimensions().unwrap(), (before.width, before.height));
+        let tiff::decoder::DecodingResult::U16(actual) = reader.read_image().unwrap() else {
+            panic!("expected u16")
+        };
+        assert_eq!(actual, before.samples);
+        assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    }
+    #[test]
+    fn raw_dng_roundtrip_preserves_active_sensor_samples() {
+        let mut bytes = fixture(1923, true, "Synthetic DNG", 6);
+        // Distinct samples catch phase shifts, crops and accidental processing;
+        // include below-black and above-white values as well.
+        let start = bytes.len() - 32 * 24 * 2;
+        for index in 0..32 * 24 {
+            bytes[start + index * 2..start + index * 2 + 2]
+                .copy_from_slice(&((index * 17) as u16).to_le_bytes());
+        }
+        let before = export_mosaic(&bytes).unwrap();
+        let (_, output) = crate::export::raw(
+            &bytes,
+            tr_core::export::Options {
+                format: tr_core::export::Format::DngRaw,
+                ..Default::default()
+            },
+            tr_core::export::MAX_ENCODED,
+        )
+        .unwrap();
+        let after = export_mosaic(&output).unwrap();
+        assert_eq!(before.samples, after.samples);
+        assert_eq!(before.cfa, after.cfa);
+        assert_eq!(before.black, after.black);
+        assert_eq!(before.white, after.white);
+        assert_eq!(before.orientation, after.orientation);
+        assert_eq!(before.neutral, after.neutral);
+        for (a, b) in before.matrix.iter().zip(after.matrix) {
+            assert!((a - b).abs() < 1e-5);
+        }
+    }
     /// Own minimal, uncompressed Bayer DNG. No downloaded/reference code or photo.
     fn fixture(value: u16, wb: bool, camera: &str, orientation: u16) -> Vec<u8> {
         let shorts = |v: &[u16]| v.iter().flat_map(|n| n.to_le_bytes()).collect::<Vec<_>>();

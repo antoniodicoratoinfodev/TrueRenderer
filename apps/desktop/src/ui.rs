@@ -16,10 +16,12 @@ use tr_core::{
 };
 
 mod explorer;
+mod export;
 mod loading;
 pub(crate) mod navigation;
 mod preferences;
 pub(crate) mod raw_previews;
+mod science;
 mod style;
 use preferences::SettingsPage;
 use style::{AMBER, CANVAS, MUTED, PANEL, TEXT};
@@ -43,6 +45,8 @@ pub struct Startup {
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
+    science: science::ScienceUi,
+    photo_export: export::ExportUi,
     browser: explorer::Explorer,
     navigation_probe: Option<navigation::Probe>,
     state: State,
@@ -146,7 +150,7 @@ impl TrueRenderer {
                         r.adapter.get_info().name,
                         r.adapter.get_info().backend
                     ),
-                    format!("{:?}", r.target_format),
+                    r.surface_diagnostics.clone(),
                 )
             })
             .unwrap_or(("GPU non disponibile".into(), "sconosciuta".into()));
@@ -203,6 +207,8 @@ impl TrueRenderer {
         let folder = root.join("corpus");
         let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
+            science: Default::default(),
+            photo_export: export::ExportUi::default(),
             browser: explorer::Explorer::new(&data),
             navigation_probe: navigation.then(navigation::Probe::new),
             state: State::default(),
@@ -321,7 +327,7 @@ impl TrueRenderer {
                 gpu.adapter.get_info().name,
                 gpu.adapter.get_info().backend
             );
-            self.surface = format!("{:?}", gpu.target_format);
+            self.surface = gpu.surface_diagnostics.clone();
             match tr_render::preview_compute::check(&gpu.device, &gpu.queue) {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
@@ -963,6 +969,8 @@ impl TrueRenderer {
             .configure_compute(self.gpu_passed, settings.compute.code());
         while let Ok(event) = self.service.events.try_recv() {
             match event {
+                Event::PhotoExport(result) => self.export_result(result),
+                Event::ScientificSample { id, result } => self.science_result(id, result),
                 Event::BrowserSessionSaved(result) => match result {
                     Ok(session) => self.browser.saved = session,
                     Err(error) => self.status = format!("Browser session: {error}"),
@@ -1459,6 +1467,11 @@ impl TrueRenderer {
 
     fn library_actions(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
+        if ui.button(lang.text("Esporta fotografie…")).clicked() {
+            self.photo_export.open = true;
+            ui.close();
+        }
+        ui.separator();
         if ui
             .add_enabled(
                 self.undo_available && self.state.pending.is_empty(),
@@ -1712,6 +1725,12 @@ impl TrueRenderer {
         self.ensure_image(&item, edge);
         let key = self.image_key(&item, edge);
         let info = self.cache.get(&key).map(|c| c.info.clone());
+        if let Some(info) = &info
+            && info.scientific.is_some()
+        {
+            self.science_inspector(ui, &item, info);
+            return;
+        }
         if let Some(cached) = self.cache.get(&key) {
             let mut preview = |ui: &mut egui::Ui| {
                 let size = Vec2::new(
@@ -1896,7 +1915,7 @@ impl TrueRenderer {
                 field(
                     ui,
                     lang.text("Uscita"),
-                    lang.text("sRGB 8 bit · clamp dichiarato"),
+                    "sRGB SDR · clamp [0,1] · precisione effettiva nelle preferenze",
                 );
                 field(ui, "Display", lang.text("Contratto da qualificare"));
                 if let Some(cached) = self.cache.get(&key) {
@@ -2467,7 +2486,11 @@ impl TrueRenderer {
                     ui.label(RichText::new(lang.text("Anteprima")).small().color(AMBER))
                         .on_hover_text(lang.message(&self.status));
                     if !compact {
-                        ui.label(RichText::new("sRGB > Rec.2020 > sRGB").small().color(MUTED));
+                        ui.label(
+                            RichText::new("fp32 working > SDR sRGB")
+                                .small()
+                                .color(MUTED),
+                        );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             self.thumbnail_size_control(ui);
                             ui.add(
@@ -2484,7 +2507,11 @@ impl TrueRenderer {
                 });
                 if compact {
                     ui.horizontal(|ui| {
-                        ui.label(RichText::new("sRGB > Rec.2020 > sRGB").small().color(MUTED));
+                        ui.label(
+                            RichText::new("fp32 working > SDR sRGB")
+                                .small()
+                                .color(MUTED),
+                        );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                             self.thumbnail_size_control(ui);
                         });
@@ -3140,6 +3167,7 @@ impl eframe::App for TrueRenderer {
         self.help(&ctx);
         self.temporary_panel(&ctx);
         self.settings_window(&ctx);
+        self.export_window(&ctx);
         self.trim_images(false);
         self.smoke_tick(&ctx);
         self.background_demand(&ctx);
@@ -3325,6 +3353,7 @@ mod settings_regressions {
             CachedImage {
                 digest: "test".into(),
                 info: RasterInfo {
+                    scientific: None,
                     reference_mip: None,
                     width: size,
                     height: size,

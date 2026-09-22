@@ -1,4 +1,6 @@
 mod container;
+mod export;
+mod fits;
 #[cfg(any(windows, target_os = "macos"))]
 mod libraw;
 #[cfg(windows)]
@@ -63,6 +65,7 @@ fn decode(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, LinearImage)> {
         color::FILTER_VERSION
     };
     let info = RasterInfo {
+        scientific: None,
         reference_mip: None,
         width: reduced.width,
         height: reduced.height,
@@ -97,6 +100,7 @@ fn probe(bytes: &[u8]) -> Result<RasterInfo> {
         std::mem::swap(&mut width, &mut height);
     }
     let info = RasterInfo {
+        scientific: None,
         reference_mip: None,
         width,
         height,
@@ -207,6 +211,30 @@ fn png_color_contract(bytes: &[u8]) -> Result<(ColorSource, Option<f32>)> {
 /// Portable implementation. Compiled into every build and the only one that
 /// exists off macOS, which is why it never accepts arbitrary sources.
 struct CorpusPng;
+struct FitsDecoder;
+impl Decoder for FitsDecoder {
+    fn name(&self) -> &'static str {
+        "FITS IMAGE v1"
+    }
+    fn probe(&self, bytes: &[u8]) -> Result<(RasterInfo, ColorSource)> {
+        Ok((fits::probe(bytes)?, ColorSource::Scientific))
+    }
+    fn decode(
+        &self,
+        bytes: &[u8],
+        max_edge: u32,
+    ) -> Result<(RasterInfo, ColorSource, LinearImage)> {
+        let (mut info, image) = fits::decode(bytes)?;
+        let image = if max_edge > 0 && image.width.max(image.height) > max_edge {
+            image.reduced(max_edge)
+        } else {
+            image
+        };
+        info.width = image.width;
+        info.height = image.height;
+        Ok((info, ColorSource::Scientific, image))
+    }
+}
 impl Decoder for CorpusPng {
     fn name(&self) -> &'static str {
         "corpus-png"
@@ -342,6 +370,7 @@ fn portable_decode(
     };
 
     let mut info = RasterInfo {
+        scientific: None,
         reference_mip: None,
         width,
         height,
@@ -785,20 +814,95 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
         );
         let mut bytes = vec![0; request.source_len];
         input.read_exact(&mut bytes)?;
+        if let protocol::DecodeIntent::ScientificSample { x, y } = request.intent {
+            let result = (|| -> Result<_> {
+                ensure!(
+                    policy.approves_bytes(&bytes) || external,
+                    "FITS esterno richiede isolamento OS"
+                );
+                ensure!(
+                    request.max_edge == 0 && request.maximum_output_bytes == 0,
+                    "Richiesta campione incoerente"
+                );
+                fits::sample(&bytes, x, y)
+            })();
+            match result {
+                Ok(sample) => {
+                    protocol::write_control(&mut output, protocol::RESPONSE, id, &sample)?
+                }
+                Err(error) => protocol::write_control(
+                    &mut output,
+                    protocol::ERROR,
+                    id,
+                    &format!("{error:#}").chars().take(2048).collect::<String>(),
+                )?,
+            }
+            continue;
+        }
+        if let protocol::DecodeIntent::Export(options) = request.intent {
+            let encoded = (|| -> Result<_> {
+                let controlled = policy.approves_bytes(&bytes);
+                ensure!(
+                    controlled || external,
+                    "Export esterno richiede isolamento OS"
+                );
+                ensure!(
+                    !fits::recognizes(&bytes),
+                    "Export fotografico FITS non disponibile: non convertire implicitamente dati scientifici in RGB"
+                );
+                options.validate()?;
+                ensure!(request.max_edge == 0, "Export richiede sviluppo nativo");
+                if options.format == tr_core::export::Format::DngRaw {
+                    #[cfg(any(windows, target_os = "macos"))]
+                    return export::raw(&bytes, options, request.maximum_output_bytes);
+                    #[cfg(not(any(windows, target_os = "macos")))]
+                    anyhow::bail!("Mosaico RAW non disponibile su questa piattaforma");
+                }
+                let decoder = select_engine(
+                    if controlled {
+                        Trust::Controlled
+                    } else {
+                        Trust::External
+                    },
+                    request.raw_engine,
+                )?;
+                let (_, _, raster) = decoder.decode(&bytes, 0)?;
+                export::render(raster, options, request.maximum_output_bytes)
+            })();
+            drop(bytes);
+            match encoded {
+                Ok((info, bytes)) => {
+                    protocol::write_control(&mut output, protocol::RESPONSE, id, &info)?;
+                    output.write_all(&bytes)?;
+                    output.flush()?;
+                }
+                Err(error) => protocol::write_control(
+                    &mut output,
+                    protocol::ERROR,
+                    id,
+                    &format!("{error:#}").chars().take(2048).collect::<String>(),
+                )?,
+            }
+            continue;
+        }
         let decoded = (|| -> Result<(RasterInfo, Option<LinearImage>)> {
             let controlled = policy.approves_bytes(&bytes);
             ensure!(
                 controlled || external,
                 "Sorgente rifiutata: non appartiene al corpus R0 compilato nel decoder"
             );
-            let decoder = select_engine(
-                if controlled {
-                    Trust::Controlled
-                } else {
-                    Trust::External
-                },
-                request.raw_engine,
-            )?;
+            let decoder = if fits::recognizes(&bytes) {
+                &FitsDecoder as &dyn Decoder
+            } else {
+                select_engine(
+                    if controlled {
+                        Trust::Controlled
+                    } else {
+                        Trust::External
+                    },
+                    request.raw_engine,
+                )?
+            };
             // The colour contract, not the decoder's own prose, is what the
             // render panel shows. An assumption stays visible as an assumption.
             let (mut metadata, color) = decoder.probe(&bytes)?;
@@ -841,12 +945,20 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                     [raster.width, raster.height] == [metadata.width, metadata.height],
                     "Mip senza sorgente completa"
                 );
-                let (reduced, base, opaque) =
-                    tr_core::provider::reduce_reference_mip(raster, request.max_edge)?;
+                let (reduced, base, opaque) = if info.scientific.is_some() {
+                    tr_core::provider::reduce_scientific_mip(raster, request.max_edge)?
+                } else {
+                    tr_core::provider::reduce_reference_mip(raster, request.max_edge)?
+                };
                 raster = reduced;
                 info.width = raster.width;
                 info.height = raster.height;
-                info.filter = tr_core::resample::VERSION.into();
+                info.filter = if info.scientific.is_some() {
+                    tr_core::science::FILTER
+                } else {
+                    tr_core::resample::VERSION
+                }
+                .into();
                 info.reference_mip = Some(protocol::ReferenceMip { base, opaque });
             }
             Ok((info, Some(raster)))

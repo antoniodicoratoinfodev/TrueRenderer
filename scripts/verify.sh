@@ -10,10 +10,11 @@ python3 scripts/test-preview-reporting.py
 if [ -n "${TR_RAW_SAMPLE:-}" ]; then
   TR_WORKER_BINARY="$TR_ROOT/target/debug/tr-worker" ./scripts/cargo-local.sh test --workspace --locked --offline -- --ignored
 else
-  printf '%s\n' 'TR_RAW_SAMPLE unset: skipping the two private-camera tests; generated fixtures and worker integrations still run.'
+  printf '%s\n' 'TR_RAW_SAMPLE unset: skipping the three private-camera tests; generated fixtures and worker integrations still run.'
   TR_WORKER_BINARY="$TR_ROOT/target/debug/tr-worker" ./scripts/cargo-local.sh test --workspace --locked --offline -- --ignored \
     --skip full_quality_delivers_the_source_at_its_own_resolution \
-    --skip real_containers_deliver_their_embedded_preview_and_declare_the_stage
+    --skip real_containers_deliver_their_embedded_preview_and_declare_the_stage \
+    --skip real_raw_export_preserves_every_active_sample
 fi
 python3 scripts/test-worker.py
 ./target/debug/truerenderer --verify-resampling

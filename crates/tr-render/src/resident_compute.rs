@@ -46,6 +46,7 @@ impl GpuFrame {
     }
 }
 pub struct GpuFilter {
+    format: wgpu::TextureFormat,
     device: wgpu::Device,
     layout: wgpu::BindGroupLayout,
     pipelines: [wgpu::ComputePipeline; 3],
@@ -54,6 +55,14 @@ pub struct GpuFilter {
 }
 impl GpuFilter {
     pub fn new(device: wgpu::Device) -> Self {
+        Self::with_precision(device, false)
+    }
+    pub fn with_precision(device: wgpu::Device, high: bool) -> Self {
+        let format = if high {
+            wgpu::TextureFormat::Rgba16Float
+        } else {
+            wgpu::TextureFormat::Rgba8Unorm
+        };
         let entries: Vec<_> = (0..9)
             .map(|binding| wgpu::BindGroupLayoutEntry {
                 binding,
@@ -61,7 +70,7 @@ impl GpuFilter {
                 ty: if binding == 8 {
                     wgpu::BindingType::StorageTexture {
                         access: wgpu::StorageTextureAccess::WriteOnly,
-                        format: wgpu::TextureFormat::Rgba8Unorm,
+                        format,
                         view_dimension: wgpu::TextureViewDimension::D2,
                     }
                 } else {
@@ -91,7 +100,13 @@ impl GpuFilter {
         });
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("TR viewer compute"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("preview_compute.wgsl").into()),
+            source: wgpu::ShaderSource::Wgsl(if high {
+                include_str!("preview_compute.wgsl")
+                    .replace("rgba8unorm", "rgba16float")
+                    .into()
+            } else {
+                include_str!("preview_compute.wgsl").into()
+            }),
         });
         let pipelines = ["horizontal_pass", "vertical_pass", "display_pass"].map(|entry| {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
@@ -104,6 +119,7 @@ impl GpuFilter {
             })
         });
         Self {
+            format,
             device,
             layout,
             pipelines,
@@ -153,7 +169,14 @@ impl GpuFilter {
             + (xr.len() + xt.len() + yr.len() + yt.len()) as u64
             + 32;
         ensure!(
-            working.bytes() >= scratch_bytes + output_bytes / 16 * 12,
+            working.bytes()
+                >= scratch_bytes
+                    + output_bytes / 16
+                        * if self.format == wgpu::TextureFormat::Rgba16Float {
+                            24
+                        } else {
+                            12
+                        },
             "Compute oltre prenotazione"
         );
         let key = (image.id(), level.width, level.height);
@@ -270,7 +293,7 @@ impl GpuFilter {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
+            format: self.format,
             usage: wgpu::TextureUsages::STORAGE_BINDING
                 | wgpu::TextureUsages::TEXTURE_BINDING
                 | wgpu::TextureUsages::COPY_SRC,

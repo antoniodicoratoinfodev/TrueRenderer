@@ -89,8 +89,13 @@ void describe(LibRaw &raw, TRRawInfo *info) {
     copy(info->color, sizeof(info->color), raw.imgdata.params.output_color == 8 ? "Rec.2020 primaries, linear, uint16" : "sRGB primaries, linear");
     // Anything other than a three or four colour Bayer mosaic needs a demosaic
     // this recipe has not qualified. X-Trans identifies itself this way.
-    info->non_bayer = raw.imgdata.idata.filters == 9 ||
-                      raw.imgdata.idata.filters == 0;
+    const auto &id = raw.imgdata.idata;
+    // Linear DNG is already developed RGB: there is no CFA to demosaic.
+    // Qualify only this writer's RGB contract, not arbitrary non-Bayer RAW.
+    const bool linear_dng = id.dng_version && id.filters == 0 && id.colors == 3 &&
+        !std::strcmp(id.make, "TrueRenderer") &&
+        !std::strcmp(id.model, "Linear Rec2020 v1");
+    info->non_bayer = linear_dng ? 2 : (id.filters == 9 || id.filters == 0);
 }
 
 /// Open from the granted bytes and identify. Shared by both entry points so
@@ -170,7 +175,7 @@ extern "C" int tr_libraw_develop(const uint8_t *bytes, size_t length, uint32_t v
         return 1;
     }
     describe(raw, info);
-    if (info->non_bayer) {
+    if (info->non_bayer == 1) {
         message(error, error_size,
                 "CFA non Bayer: il demosaicing di questa ricetta non e' qualificato");
         return 1;
@@ -300,6 +305,31 @@ extern "C" int tr_mosaic_probe(const uint8_t *bytes, size_t length,
     return mosaic_info(raw, info, error, size);
 } catch (const std::exception &e) { message(error, size, e.what()); return 1; }
   catch (...) { message(error, size, "Eccezione nel probe mosaico"); return 1; }
+
+extern "C" int tr_mosaic_color_matrix(const uint8_t *bytes, size_t length,
+    float *matrix, char *error, size_t size) try {
+    if (!bytes || !length || !matrix) return 1;
+    auto raw = std::make_unique<LibRaw>();
+    TRMosaicInfo info;
+    if (open_and_identify(*raw, bytes, length, error, size) ||
+        mosaic_info(*raw, &info, error, size)) return 1;
+    for (int y = 0; y < 3; ++y)
+        for (int x = 0; x < 3; ++x) {
+            float value;
+            if (raw->imgdata.idata.dng_version) {
+                const auto &calibration = raw->imgdata.color.dng_color[0];
+                if (calibration.illuminant != 21) {
+                    message(error, size, "DNG: calibrazione D65 originale assente"); return 1;
+                }
+                value = calibration.colormatrix[y][x];
+            } else {
+                value = raw->imgdata.color.cam_xyz[y][x];
+            }
+            if (!std::isfinite(value) || std::fabs(value) > 16.f) return 1;
+            matrix[y * 3 + x] = value;
+        }
+    return 0;
+} catch (...) { message(error, size, "Matrice DNG non disponibile"); return 1; }
 
 extern "C" int tr_mosaic_read(const uint8_t *bytes, size_t length,
     uint16_t *samples, size_t count, TRMosaicInfo *info, char *error, size_t size) try {

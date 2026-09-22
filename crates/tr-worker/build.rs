@@ -152,7 +152,7 @@ fn apple() {
     }
 }
 
-/// Windows adapter: LibRaw plus the shim that holds the recipe.
+/// Native adapter: LibRaw plus the shim that holds the recipe.
 fn libraw() {
     let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("../..");
     let shim = root.join("native/libraw");
@@ -168,6 +168,10 @@ fn libraw() {
         .include(&shim)
         .warnings(false)
         .extra_warnings(false);
+    if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
+        // Match the Objective-C adapter and bundle minimum, not the build SDK.
+        build.flag("-mmacosx-version-min=13.0");
+    }
     // Static linking. Without this the headers declare every symbol
     // `__declspec(dllimport)` and each definition clashes with its own
     // declaration, which MSVC reports as C4273.

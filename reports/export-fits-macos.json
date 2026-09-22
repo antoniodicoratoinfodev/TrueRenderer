@@ -1,0 +1,879 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-09-22T14:26:33.909651+00:00",
+  "bundle": "dist/TrueRenderer-export-final.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "bf008518067948b33fee393b1dc5bf465bd2f88f463430650b6dab6489c17318",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3448e24949bb0af85e058644636d8fa44cd5b3faf83d7e1effd2db8042323e4f",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "10d2c78528bdb985b373d77a5d7fb59aa19f38522538e3bfabec43d3c8805873"
+  },
+  "groups": [
+    {
+      "source_class": "generated gradient and FITS",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "format": "Jpeg",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 43779,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.163281709,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 3845,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.049220917,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 12933,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.053736334,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 4724051,
+            "clipped_channels": 0,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.754466791,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 9442658,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.709377625,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 3544287,
+            "clipped_channels": 0,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.051563791,
+          "passed": true
+        },
+        {
+          "format": "Jpeg",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 43779,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.051265375,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 3845,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.050395916,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 12933,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.057101042,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 4724051,
+            "clipped_channels": 0,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.697977208,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 9442658,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.723383625,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 3544287,
+            "clipped_channels": 0,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.049773333,
+          "passed": true
+        },
+        {
+          "format": "Jpeg",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 43779,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.049410833,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 3845,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.048725667,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 12933,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.056866584,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 4724051,
+            "clipped_channels": 0,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.695390875,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 9442658,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.721138209,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 3544287,
+            "clipped_channels": 0,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.051296625,
+          "passed": true
+        },
+        {
+          "format": "Jpeg",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 43779,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.053265208,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 3845,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.050632041,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 12933,
+            "clipped_channels": 0,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.058011792,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 4724051,
+            "clipped_channels": 0,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.692917,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 9442658,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.720697417,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 3544287,
+            "clipped_channels": 0,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 576,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.049249208,
+          "passed": true
+        },
+        {
+          "case": "FITS i32 scientific sample plus masked reference mip",
+          "slot": 0,
+          "sample": {
+            "hdu": 0,
+            "physical": 33554443.0,
+            "stored": 16777218.0,
+            "validity": "valid",
+            "x": 1,
+            "y": 0
+          },
+          "invalid_sample": {
+            "hdu": 0,
+            "physical": null,
+            "stored": -1.0,
+            "validity": "BLANK",
+            "x": 0,
+            "y": 0
+          },
+          "transport": "XPC / App Sandbox \u00b7 R0",
+          "passed": true
+        },
+        {
+          "case": "FITS i32 scientific sample plus masked reference mip",
+          "slot": 1,
+          "sample": {
+            "hdu": 0,
+            "physical": 33554443.0,
+            "stored": 16777218.0,
+            "validity": "valid",
+            "x": 1,
+            "y": 0
+          },
+          "invalid_sample": {
+            "hdu": 0,
+            "physical": null,
+            "stored": -1.0,
+            "validity": "BLANK",
+            "x": 0,
+            "y": 0
+          },
+          "transport": "XPC / App Sandbox \u00b7 R0",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "source_class": "authorized private Nikon D750 copy",
+      "source_unchanged": true,
+      "checks": [
+        {
+          "format": "Jpeg",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 251493,
+            "clipped_channels": 19860,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.09916825,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 1640850,
+            "clipped_channels": 19859,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.793446417,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 4307663,
+            "clipped_channels": 19859,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.928954584,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 5609651,
+            "clipped_channels": 19859,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.415799125,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 11212994,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.374334208,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 4208703,
+            "clipped_channels": 13935,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.697808958,
+          "passed": true
+        },
+        {
+          "format": "DngRaw",
+          "engine": "Apple",
+          "encoded": {
+            "bytes": 48643271,
+            "clipped_channels": 0,
+            "description": "Mosaico area attiva uint16 originale; CFA/nero/bianco/WB/orientamento; matrice D65 LibRaw; esclusi margini ottici, MakerNotes, EXIF/GPS e RAW compresso. Conservare l'originale.",
+            "format": "DngRaw",
+            "height": 4032,
+            "width": 6032
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 1.204257584,
+          "passed": true
+        },
+        {
+          "format": "Jpeg",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 202101,
+            "clipped_channels": 1747,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.702654833,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 1516443,
+            "clipped_channels": 1769,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.714053667,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 4225246,
+            "clipped_channels": 1769,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.878752125,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 5609651,
+            "clipped_channels": 1769,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.269591417,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 11212994,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.296259459,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "LibRawBilinear",
+          "encoded": {
+            "bytes": 4208703,
+            "clipped_channels": 0,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.614158375,
+          "passed": true
+        },
+        {
+          "format": "Jpeg",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 176232,
+            "clipped_channels": 3479,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.850145083,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 1414694,
+            "clipped_channels": 3479,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.982098167,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 4156335,
+            "clipped_channels": 3479,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.101614875,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 5609651,
+            "clipped_channels": 3479,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.4984362500000001,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 11212994,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.523236459,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "LibRawAhd",
+          "encoded": {
+            "bytes": 4208703,
+            "clipped_channels": 0,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.843598042,
+          "passed": true
+        },
+        {
+          "format": "Jpeg",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 208538,
+            "clipped_channels": 6200,
+            "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+            "format": "Jpeg",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.736928166,
+          "passed": true
+        },
+        {
+          "format": "Png8",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 1521231,
+            "clipped_channels": 6200,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png8",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.8217615,
+          "passed": true
+        },
+        {
+          "format": "Png16",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 4226428,
+            "clipped_channels": 6200,
+            "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+            "format": "Png16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 0.984194,
+          "passed": true
+        },
+        {
+          "format": "Tiff16",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 5609651,
+            "clipped_channels": 6200,
+            "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+            "format": "Tiff16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.38771525,
+          "passed": true
+        },
+        {
+          "format": "TiffFloat32",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 11212994,
+            "clipped_channels": 0,
+            "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+            "format": "TiffFloat32",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "Apple",
+          "readable": true,
+          "seconds": 1.402354625,
+          "passed": true
+        },
+        {
+          "format": "DngLinear16",
+          "engine": "TrueRenderer",
+          "encoded": {
+            "bytes": 4208703,
+            "clipped_channels": 5672,
+            "description": "DNG lineare RGB Rec.2020 D65 16 bit; gi\u00e0 sviluppato; non \u00e8 il mosaico RAW; clamp [0,1]; senza metadati privati",
+            "format": "DngLinear16",
+            "height": 684,
+            "width": 1024
+          },
+          "readback_engine": "LibRawAhd",
+          "readable": true,
+          "seconds": 0.723704333,
+          "passed": true
+        }
+      ]
+    }
+  ],
+  "unit_suite": {
+    "ordinary_passed": 160,
+    "integration_passed": 11,
+    "private_raw_exact_active_samples_passed": true,
+    "protocol_checks": 8,
+    "native_gui_smoke": true
+  },
+  "native_ui": [
+    "FITS native BLANK sample, scalar histogram and asinh control",
+    "JPEG and PNG16 export at native 1600x900, private synthetic library"
+  ],
+  "presentation_report": "presentation-precision-macos.json",
+  "xpc_report": "xpc-qualification-macos.json",
+  "negative_evidence": [
+    "Apple RAW rejects both generated DNG variants: metadata/dimensions unavailable. LibRaw bilinear/AHD required, disclosed in UI.",
+    "Original one-broker test recycled XPC at every controlled/external transition; split writer/reader slots avoid restart delays. Earlier interrupted reports remain private."
+  ],
+  "limits": [
+    "One D750 export source, not a new full camera qualification; preserve original NEF.",
+    "RAW DNG stores active-area samples, not optical margins, private metadata or original compressed container.",
+    "Roundtrip readability is not an independent colour/archival conformance certification.",
+    "FITS only first eligible 2D IMAGE, BITPIX 8/16/32/-32; no cubes, compression, HDU selection, 64-bit or scientific export.",
+    "SDR numerical surface readback, not physical display depth, HDR or multi-monitor qualification.",
+    "Windows and physical memory ceiling not qualified by this campaign; existing over-budget measurements remain open."
+  ]
+}

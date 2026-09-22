@@ -49,6 +49,8 @@ struct Ready {
 const MAX_SOURCE_SNAPSHOTS: u64 = 2;
 #[derive(Default)]
 struct Queues {
+    sample: Option<crate::photo_export::ScientificJob>,
+    export: Option<crate::photo_export::Job>,
     lookup: VecDeque<Job>,
     decode: VecDeque<Ready>,
     pending: HashMap<(String, PreviewRequest, u64), PreviewPriority>,
@@ -227,6 +229,7 @@ impl DecodePool {
         let queues = Arc::new((Mutex::new(Queues::default()), Condvar::new()));
         let stop = Arc::new(AtomicBool::new(false));
         let decode_admission = Arc::new(Mutex::new(()));
+        let snapshot_slots = tr_core::budget::MemoryBudget::new(MAX_SOURCE_SNAPSHOTS);
         let writer = Arc::new(Writer::start(cache.clone(), generation.clone()));
         let mut workers = Vec::new();
         // One independent source/hash/cache lane: it never waits behind a RAW
@@ -240,13 +243,13 @@ impl DecodePool {
             let cache = cache.clone();
             let binary = binary.clone();
             let writer = writer.clone();
+            let snapshot_slots = snapshot_slots.clone();
             workers.push(thread::spawn(move || {
                 let broker = Broker::new(binary);
                 let snapshots = tr_core::budget::MemoryBudget::new(cache.memory.usage().limit / 3);
                 // Count snapshots across lookup, ready AND active/awaiting decode.
                 // Bounding only q.decode still let two decoder threads and the
                 // lookup lane pin five RAW copies, starving a 2 GiB grid.
-                let snapshot_slots = tr_core::budget::MemoryBudget::new(MAX_SOURCE_SNAPSHOTS);
                 loop {
                     let job = {
                         let mut q = queues.0.lock().unwrap();
@@ -516,12 +519,142 @@ impl DecodePool {
             let binary = binary.clone();
             let writer = writer.clone();
             let decode_admission = decode_admission.clone();
+            let snapshot_slots = snapshot_slots.clone();
             workers.push(thread::spawn(move || {
                 let mut broker = Broker::with_slot(binary, slot);
                 let mut last_generation = None;
                 loop {
                     if stop.load(Ordering::Acquire) {
                         break;
+                    }
+                    let sample = if slot == 0 {
+                        queues.0.lock().unwrap().sample.take()
+                    } else {
+                        None
+                    };
+                    if let Some(job) = sample {
+                        let cancelled = || {
+                            stop.load(Ordering::Acquire)
+                                || job.generation != generation.load(Ordering::Acquire)
+                        };
+                        let result = (|| -> anyhow::Result<tr_core::science::Sample> {
+                            let _slot = snapshot_slots.try_reserve(1).ok_or_else(|| {
+                                anyhow::anyhow!("Snapshot occupati: riprovare il campionamento")
+                            })?;
+                            let length = job.item.bytes.min(tr_core::protocol::MAX_SOURCE as u64);
+                            let _memory = reserve(
+                                &cache,
+                                length * 2 + 16 * 1024 * 1024,
+                                &events,
+                                &ctx,
+                                &cancelled,
+                            )?;
+                            let source = broker.prepare_snapshot_bounded(
+                                &job.item.path,
+                                &job.item.digest,
+                                length,
+                                &cancelled,
+                            )?;
+                            broker.scientific_sample(source, job.x, job.y, cancelled)
+                        })()
+                        .map_err(|e| format!("{e:#}"));
+                        deliver(
+                            &events,
+                            Event::ScientificSample {
+                                id: job.item.id,
+                                result,
+                            },
+                            &ctx,
+                            &stop,
+                        );
+                        continue;
+                    }
+                    let export = if slot == 0 {
+                        queues.0.lock().unwrap().export.take()
+                    } else {
+                        None
+                    };
+                    if let Some(job) = export {
+                        let cancelled = || stop.load(Ordering::Acquire) || job.cancelled();
+                        let result = (|| -> anyhow::Result<crate::photo_export::Completed> {
+                            job.options.validate()?;
+                            let start = Instant::now();
+                            let _permit = loop {
+                                anyhow::ensure!(!cancelled(), "Esportazione annullata");
+                                match decode_admission.try_lock() {
+                                    Ok(permit) => break permit,
+                                    Err(std::sync::TryLockError::Poisoned(_)) => {
+                                        anyhow::bail!("Decoder interrotto")
+                                    }
+                                    Err(std::sync::TryLockError::WouldBlock) => {}
+                                }
+                                anyhow::ensure!(
+                                    start.elapsed() < Duration::from_secs(90),
+                                    "Decoder occupato: riprovare export"
+                                );
+                                thread::sleep(Duration::from_millis(25));
+                            };
+                            // Never wait holding admission while two queued previews
+                            // own the snapshot credits: they need this same lane.
+                            let _slot = snapshot_slots.try_reserve(1).ok_or_else(|| {
+                                anyhow::anyhow!(
+                                    "Anteprime ancora in lettura: attendere e riprovare export"
+                                )
+                            })?;
+                            let source_limit =
+                                job.item.bytes.min(tr_core::protocol::MAX_SOURCE as u64);
+                            let _source_lease =
+                                reserve(&cache, source_limit * 2, &events, &ctx, &cancelled)?;
+                            let source = broker.prepare_snapshot_bounded(
+                                &job.item.path,
+                                &job.item.digest,
+                                source_limit,
+                                &cancelled,
+                            )?;
+                            broker.set_raw_engine(job.engine);
+                            let probe_lease =
+                                reserve(&cache, 128 * 1024 * 1024, &events, &ctx, &cancelled)?;
+                            let metadata = broker.probe_snapshot(&source, cancelled)?;
+                            drop(probe_lease);
+                            let pixels =
+                                metadata.source_width as u64 * metadata.source_height as u64;
+                            let bytes_per_pixel = match job.options.format {
+                                tr_core::export::Format::DngRaw => 2,
+                                tr_core::export::Format::DngLinear16 => 6,
+                                tr_core::export::Format::Png8 => 5,
+                                tr_core::export::Format::Png16 => 9,
+                                tr_core::export::Format::Tiff16 => 8,
+                                tr_core::export::Format::TiffFloat32 => 16,
+                                tr_core::export::Format::Jpeg => 16,
+                            };
+                            let output_limit = (pixels * bytes_per_pixel + 1024 * 1024)
+                                .min(tr_core::export::MAX_ENCODED);
+                            // Native decoder handles are closed before encoding; output
+                            // transfer starts after the working raster has been freed.
+                            let peak = decode_working_bytes(
+                                metadata.source_width,
+                                metadata.source_height,
+                            )?
+                            .max(pixels * 20 + output_limit * 2);
+                            let _working = reserve(&cache, peak, &events, &ctx, &cancelled)?;
+                            let (info, bytes) = broker.export_snapshot_bounded(
+                                source,
+                                job.options,
+                                output_limit,
+                                cancelled,
+                            )?;
+                            let path = crate::photo_export::publish(
+                                &job.destination,
+                                &job.item.name,
+                                job.options.format,
+                                &bytes,
+                                cancelled,
+                            )?;
+                            Ok(crate::photo_export::Completed { path, info })
+                        })()
+                        .map_err(|e| format!("{e:#}"));
+                        deliver(&events, Event::PhotoExport(result), &ctx, &stop);
+                        continue;
                     }
                     let current = generation.load(Ordering::Acquire);
                     if last_generation.is_some_and(|g| g != current) {
@@ -710,7 +843,22 @@ impl DecodePool {
                             .map(|j| j.request)
                             .max_by_key(|r| r.maximum_level_edge())
                             .unwrap_or(job.request);
-                        let mut image = if let Some(mip) = decoded.info.reference_mip {
+                        let mut image = if decoded.info.scientific.is_some() {
+                            let (source, base) = if let Some(mip) = decoded.info.reference_mip {
+                                (decoded.raster, mip.base)
+                            } else {
+                                let (source, base, _) = tr_core::provider::reduce_scientific_mip(
+                                    decoded.raster,
+                                    finest.maximum_level_edge(),
+                                )?;
+                                (source, base)
+                            };
+                            ImageLevels::from_scientific_mip(
+                                source,
+                                [decoded.info.source_width, decoded.info.source_height],
+                                base,
+                            )?
+                        } else if let Some(mip) = decoded.info.reference_mip {
                             ImageLevels::from_reference_mip(
                                 decoded.raster,
                                 [decoded.info.source_width, decoded.info.source_height],
@@ -922,6 +1070,24 @@ impl DecodePool {
         self.queues.1.notify_all();
         Ok(())
     }
+    pub fn submit_export(&self, job: crate::photo_export::Job) -> bool {
+        let mut q = self.queues.0.lock().unwrap();
+        if q.export.is_some() || self.stop.load(Ordering::Acquire) {
+            return false;
+        }
+        q.export = Some(job);
+        self.queues.1.notify_all();
+        true
+    }
+    pub fn submit_sample(&self, job: crate::photo_export::ScientificJob) -> bool {
+        let mut q = self.queues.0.lock().unwrap();
+        if q.sample.is_some() || self.stop.load(Ordering::Acquire) {
+            return false;
+        }
+        q.sample = Some(job);
+        self.queues.1.notify_all();
+        true
+    }
 }
 impl Drop for DecodePool {
     fn drop(&mut self) {
@@ -1057,6 +1223,7 @@ mod tests {
         job.resident = Some(PreviewDecoded {
             digest: "resident-digest".into(),
             info: tr_core::protocol::RasterInfo {
+                scientific: None,
                 reference_mip: None,
                 width: 513,
                 height: 257,

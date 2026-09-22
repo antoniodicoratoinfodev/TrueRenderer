@@ -34,5 +34,15 @@ assert (magic,version,kind,request_id)==(b"TRIP",1,2,2)
 info=json.loads(output[cursor+20:cursor+20+size])
 assert len(output)-(cursor+20+size)==info["width"]*info["height"]*16
 results.append({"case":"decode_error_then_valid_job_same_process","passed":True})
+for name,intent in [
+    ("external_export_rejected_on_pipe", {"Export":{"format":"Png16","jpeg_quality":90,"compression":"Balanced","long_edge":0}}),
+    ("external_scientific_sample_rejected_on_pipe", {"ScientificSample":{"x":0,"y":0}}),
+]:
+    body=b"SIMPLE  =                    T"
+    output=run(packet(control={"source_len":len(body),"max_edge":0,"intent":intent,"maximum_output_bytes":0},body=body)).stdout
+    magic,version,kind,request_id,size=struct.unpack("<4sHHQI",output[:20])
+    assert kind==3 and len(output)==20+size, (name,output[:100])
+    assert "isolamento" in json.loads(output[20:]), output
+    results.append({"case":name,"passed":True})
 (root/"reports/worker-protocol.json").write_text(json.dumps({"passed":True,"cases":results},indent=2)+"\n")
 print(f"Worker protocol: {len(results)} checks passed")

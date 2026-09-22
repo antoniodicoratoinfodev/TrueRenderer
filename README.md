@@ -34,6 +34,37 @@ RAW development always involves interpretation. TrueRenderer makes that choice e
 
 Ratings, rejection flags, colour labels and keywords live in a local library, separate from the originals, with backups and JSON export.
 
+### Export photographs
+
+Select photos and choose **Menu → Export photos**. Export JPEG with adjustable
+quality, PNG 8/16-bit with lossless compression choices, TIFF 16-bit or linear
+float32, and two distinct DNG operations: developed linear RGB or sensor mosaic.
+Choose a destination and optional long-edge size; existing files are never replaced.
+Exports use native development, independent of thumbnail quality.
+
+PNG/TIFF 16-bit offer more output levels than JPEG but still clip to their output
+range. TIFF float32 preserves extended linear working values. Linear DNG is
+16-bit developed RGB. Reopen exported DNG files with LibRaw bilinear/AHD, not
+Apple RAW or the TrueRenderer mosaic engine. RAW DNG is limited to the active-area mosaic of
+Nikon D750/D40; it excludes optical margins and private camera metadata.
+**Keep the original NEF: neither DNG operation is an archival copy.**
+
+### Inspect scientific data
+
+Read-only FITS supports the first eligible 2D primary/IMAGE plane with BITPIX
+8, 16, 32 or −32, scaling, units and missing/nonfinite samples. The inspector
+provides a native-value sampler, full-plane histogram and linear/asinh display
+stretch. Cubes, compressed FITS, 64-bit samples, WCS and FITS export are excluded.
+The scientific resampling path currently uses CPU, even in GPU mode.
+
+Performance preferences also offer optional SDR10 and SDR16-float presentation
+after restart, with explicit fallback to compatible SDR8. This removes an 8-bit
+presentation bottleneck where supported; it does not enable HDR or certify the
+physical display's bit depth. Working data and caches remain fp32.
+
+See the [format and precision contract](docs/esportazione-precisione-fits.md)
+and [verified scope](STATO.md) before choosing a workflow.
+
 ## Rendering you can explain
 
 TrueRenderer shows the source, decoder, RAW recipe, working representation and preview resolution instead of hiding them behind a generic preview.

@@ -4,11 +4,14 @@ mod decode_pool;
 mod filesystem_browser;
 mod graphics;
 mod i18n;
+mod photo_export;
 mod service;
 mod source_monitor;
 mod ui;
 mod verify_cache;
+mod verify_exports;
 mod verify_formats;
+mod verify_precision;
 mod verify_previews;
 mod verify_raw_engines;
 mod verify_resampling;
@@ -157,6 +160,12 @@ fn run() -> Result<()> {
     }
     if args.iter().any(|a| a == "--verify-formats") {
         return verify_formats::run(&root, &worker);
+    }
+    if args.iter().any(|a| a == "--verify-exports") {
+        return verify_exports::run(&root, &worker, option("--export-source").as_deref());
+    }
+    if args.iter().any(|a| a == "--verify-precision") {
+        return verify_precision::run(&root);
     }
     if args.iter().any(|a| a == "--verify-sampling-screenshots") {
         return verify_resampling::screenshots(&root, &worker);

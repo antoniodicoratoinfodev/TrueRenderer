@@ -60,6 +60,9 @@ typedef struct {
     float black[4], white, wb[4], camera_to_srgb[9];
     char camera[128];
 } TRMosaicInfo;
+// XYZ -> reference camera calibration from LibRaw's pinned camera table.
+// Separate from the white-normalized matrix used by the rendering recipe.
+int tr_mosaic_color_matrix(const uint8_t *, size_t, float *, char *, size_t);
 int tr_mosaic_probe(const uint8_t *, size_t, TRMosaicInfo *, char *, size_t);
 int tr_mosaic_read(const uint8_t *, size_t, uint16_t *, size_t, TRMosaicInfo *, char *, size_t);
 

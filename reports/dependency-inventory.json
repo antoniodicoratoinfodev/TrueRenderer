@@ -4,7 +4,7 @@
   "target": "aarch64-apple-darwin",
   "scope": "Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval",
   "rust": "1.98.1",
-  "cargo_lock_sha256": "e397cd5c722325121ee3a7de06729efbd127374c6d41d7d69fe9da4105790fb9",
+  "cargo_lock_sha256": "791111480cd59492faf2ddfdef993633c4568ffe022b5b7af64eb95ea9a2e3be",
   "packages": [
     {
       "name": "accesskit",
@@ -783,10 +783,19 @@
       "name": "egui-wgpu",
       "version": "0.36.1",
       "license": "MIT OR Apache-2.0",
-      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "source": null,
       "repository": "https://github.com/emilk/egui/tree/main/crates/egui-wgpu",
-      "checksum_sha256": "2fc362cc6bc8c1d7169c9cb0e7741ff1e03063681373d6e55cc3b25fd21213f3",
-      "notices": []
+      "checksum_sha256": null,
+      "notices": [
+        {
+          "file": "reports/dependency-notices/egui-wgpu-0.36.1-LICENSE-APACHE",
+          "sha256": "8173d5c29b4f956d532781d2b86e4e30f83e6b7878dce18c919451d6ba707c90"
+        },
+        {
+          "file": "reports/dependency-notices/egui-wgpu-0.36.1-LICENSE-MIT",
+          "sha256": "95ca92f5f8ea5231f1580b3a2a799e8260af3114b900e1def5355a7f44bcf60c"
+        }
+      ]
     },
     {
       "name": "egui-winit",
@@ -3409,6 +3418,14 @@
           "sha256": "d201d14804d3bcd3b944147173175e4abfbd838b7c8069b6bd3452496bf13e6c"
         }
       ]
+    }
+  ],
+  "native_dependencies_outside_cargo": [
+    {
+      "name": "LibRaw",
+      "manifest": "third_party/libraw/manifest-truerenderer.json",
+      "manifest_sha256": "574b2913235ca6a6269cd82e6510bb75ed2787be24d64f07fde70ace9d90a18a",
+      "license": "CDDL-1.0"
     }
   ]
 }

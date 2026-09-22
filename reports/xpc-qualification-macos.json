@@ -2,12 +2,12 @@
   "application": "TrueRenderer",
   "version": "0.1.5",
   "passed": true,
-  "checked_at": "2026-09-09T12:48:52.726966+00:00",
-  "bundle": "dist/TrueRenderer.app",
+  "checked_at": "2026-09-22T14:22:31.677812+00:00",
+  "bundle": "dist/TrueRenderer-export-final.app",
   "binary_sha256": {
-    "Contents/MacOS/TrueRenderer": "d6d01624b6825369b42ab0124716cb897117f310eda3d83a815835afb968756f",
-    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "6bfe3fb86a0deacb11a02b0e3652d159207149bf2d42f5df9981408199548f18",
-    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "9f027573bff9c1ff78b5f6d01e9ae527cd294fdeb7d48d6da9496f15c0272346"
+    "Contents/MacOS/TrueRenderer": "bf008518067948b33fee393b1dc5bf465bd2f88f463430650b6dab6489c17318",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3448e24949bb0af85e058644636d8fa44cd5b3faf83d7e1effd2db8042323e4f",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "10d2c78528bdb985b373d77a5d7fb59aa19f38522538e3bfabec43d3c8805873"
   },
   "integration_report": "xpc-integration-macos.json",
   "production_rejects_fault_injection": true,

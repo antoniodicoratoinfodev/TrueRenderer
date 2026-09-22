@@ -37,6 +37,8 @@ pub enum Request {
     Undo,
     Backup,
     Export(PathBuf),
+    ExportPhoto(crate::photo_export::Job),
+    ScientificSample(crate::photo_export::ScientificJob),
     Shutdown,
 }
 pub struct PreparedDecoded {
@@ -52,6 +54,11 @@ pub struct PreviewDecoded {
     pub worker_pid: Option<u32>,
 }
 pub enum Event {
+    ScientificSample {
+        id: String,
+        result: Result<tr_core::science::Sample, String>,
+    },
+    PhotoExport(Result<crate::photo_export::Completed, String>),
     BrowserSessionSaved(Result<crate::browser_session::Session, String>),
     Favorites(Result<Vec<tr_core::location::Favorite>, String>),
     ScanBatch {
@@ -360,6 +367,20 @@ impl Service {
                         }
                         Err(e) => send(Event::Status(format!("Export non riuscito: {e:#}"))),
                     },
+                    Request::ExportPhoto(job) => {
+                        if !pool.submit_export(job) {
+                            send(Event::PhotoExport(Err("Coda export occupata".into())));
+                        }
+                    }
+                    Request::ScientificSample(job) => {
+                        let id = job.item.id.clone();
+                        if !pool.submit_sample(job) {
+                            send(Event::ScientificSample {
+                                id,
+                                result: Err("Coda campionatore occupata".into()),
+                            });
+                        }
+                    }
                     Request::Shutdown => {
                         fs.stop();
                         drop(pool);

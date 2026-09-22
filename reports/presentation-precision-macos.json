@@ -1,0 +1,162 @@
+{
+  "checks": [
+    {
+      "compute": "CPU",
+      "compute_statistics": {
+        "cpu_frames": 1,
+        "fallbacks": 0,
+        "gpu_frames": 0,
+        "last_fallback": "",
+        "wide_frames": 0,
+        "wide_gpu_bytes": 0,
+        "wide_peak_frames": 0,
+        "wide_peak_gpu_bytes": 0,
+        "wide_peak_memory_bytes": 0,
+        "wide_reprojections": 0
+      },
+      "diagnostics": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "format": "Bgra8Unorm",
+      "levels": 256,
+      "max_srgb_error": 0.0019594430923461914,
+      "native_readback_bytes": 4224000,
+      "passed": true,
+      "requested": "None",
+      "size": [
+        2200,
+        480
+      ]
+    },
+    {
+      "compute": "GPU",
+      "compute_statistics": {
+        "cpu_frames": 1,
+        "fallbacks": 0,
+        "gpu_frames": 1,
+        "last_fallback": "",
+        "wide_frames": 0,
+        "wide_gpu_bytes": 0,
+        "wide_peak_frames": 0,
+        "wide_peak_gpu_bytes": 0,
+        "wide_peak_memory_bytes": 0,
+        "wide_reprojections": 0
+      },
+      "diagnostics": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "format": "Bgra8Unorm",
+      "levels": 256,
+      "max_srgb_error": 0.0019594430923461914,
+      "native_readback_bytes": 5196800,
+      "passed": true,
+      "requested": "None",
+      "size": [
+        2320,
+        560
+      ]
+    },
+    {
+      "compute": "CPU",
+      "compute_statistics": {
+        "cpu_frames": 1,
+        "fallbacks": 0,
+        "gpu_frames": 0,
+        "last_fallback": "",
+        "wide_frames": 0,
+        "wide_gpu_bytes": 0,
+        "wide_peak_frames": 0,
+        "wide_peak_gpu_bytes": 0,
+        "wide_peak_memory_bytes": 0,
+        "wide_reprojections": 0
+      },
+      "diagnostics": "requested=Some(Rgb10a2Unorm); effective=Rgb10a2Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "format": "Rgb10a2Unorm",
+      "levels": 1024,
+      "max_srgb_error": 0.0007095932960510254,
+      "native_readback_bytes": 4224000,
+      "passed": true,
+      "requested": "Some(Rgb10a2Unorm)",
+      "size": [
+        2200,
+        480
+      ]
+    },
+    {
+      "compute": "GPU",
+      "compute_statistics": {
+        "cpu_frames": 1,
+        "fallbacks": 0,
+        "gpu_frames": 1,
+        "last_fallback": "",
+        "wide_frames": 0,
+        "wide_gpu_bytes": 0,
+        "wide_peak_frames": 0,
+        "wide_peak_gpu_bytes": 0,
+        "wide_peak_memory_bytes": 0,
+        "wide_reprojections": 0
+      },
+      "diagnostics": "requested=Some(Rgb10a2Unorm); effective=Rgb10a2Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "format": "Rgb10a2Unorm",
+      "levels": 1024,
+      "max_srgb_error": 0.0009464025497436523,
+      "native_readback_bytes": 5196800,
+      "passed": true,
+      "requested": "Some(Rgb10a2Unorm)",
+      "size": [
+        2320,
+        560
+      ]
+    },
+    {
+      "compute": "CPU",
+      "compute_statistics": {
+        "cpu_frames": 1,
+        "fallbacks": 0,
+        "gpu_frames": 0,
+        "last_fallback": "",
+        "wide_frames": 0,
+        "wide_gpu_bytes": 0,
+        "wide_peak_frames": 0,
+        "wide_peak_gpu_bytes": 0,
+        "wide_peak_memory_bytes": 0,
+        "wide_reprojections": 0
+      },
+      "diagnostics": "requested=Some(Rgba16Float); effective=Rgba16Float; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "format": "Rgba16Float",
+      "levels": 1024,
+      "max_srgb_error": 0.000244140625,
+      "native_readback_bytes": 8448000,
+      "passed": true,
+      "requested": "Some(Rgba16Float)",
+      "size": [
+        2200,
+        480
+      ]
+    },
+    {
+      "compute": "GPU",
+      "compute_statistics": {
+        "cpu_frames": 1,
+        "fallbacks": 0,
+        "gpu_frames": 1,
+        "last_fallback": "",
+        "wide_frames": 0,
+        "wide_gpu_bytes": 0,
+        "wide_peak_frames": 0,
+        "wide_peak_gpu_bytes": 0,
+        "wide_peak_memory_bytes": 0,
+        "wide_reprojections": 0
+      },
+      "diagnostics": "requested=Some(Rgba16Float); effective=Rgba16Float; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "format": "Rgba16Float",
+      "levels": 1024,
+      "max_srgb_error": 0.0004882216453552246,
+      "native_readback_bytes": 10393600,
+      "passed": true,
+      "requested": "Some(Rgba16Float)",
+      "size": [
+        2320,
+        560
+      ]
+    }
+  ],
+  "passed": true,
+  "scope": "Synthetic full-range grayscale and translucent-color ramps through production CPU/GPU presenter and egui native-format capture, SDR sRGB, resize between phases. No physical display/link-depth, HDR, multi-monitor, Windows or statistical performance qualification."
+}

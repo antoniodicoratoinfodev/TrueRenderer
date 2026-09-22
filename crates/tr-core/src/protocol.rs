@@ -17,6 +17,11 @@ pub enum DecodeIntent {
     LegacyRaster,
     Probe,
     FullSource,
+    Export(crate::export::Options),
+    ScientificSample {
+        x: u32,
+        y: u32,
+    },
     /// Full development followed by the canonical reference mip graph inside
     /// the isolated decoder. This is not reduced RAW development.
     ReferenceMip {
@@ -42,6 +47,8 @@ pub struct DecodeRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RasterInfo {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scientific: Option<Box<crate::science::Metadata>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reference_mip: Option<ReferenceMip>,
     pub width: u32,
@@ -111,6 +118,13 @@ pub fn parse<T: DeserializeOwned>(data: &[u8]) -> Result<T> {
     Ok(serde_json::from_slice(data)?)
 }
 pub fn validate_info(info: &RasterInfo) -> Result<usize> {
+    if let Some(science) = &info.scientific {
+        science.validate(info.source_width as u64 * info.source_height as u64)?;
+        ensure!(
+            info.format == "FITS" && info.filter == crate::science::FILTER,
+            "Contrat scientifique incohérent"
+        );
+    }
     for (w, h) in [
         (info.width, info.height),
         (info.source_width, info.source_height),
@@ -132,7 +146,9 @@ pub fn validate_info(info: &RasterInfo) -> Result<usize> {
             size = [size[0].div_ceil(2), size[1].div_ceil(2)];
         }
         ensure!(
-            size == [info.width, info.height] && info.filter == crate::resample::VERSION,
+            size == [info.width, info.height]
+                && (info.filter == crate::resample::VERSION
+                    || (info.scientific.is_some() && info.filter == crate::science::FILTER)),
             "Grafo o geometria mip IPC incoerente"
         );
     }
@@ -193,6 +209,7 @@ mod tests {
     use super::*;
     fn info(width: u32, height: u32) -> RasterInfo {
         RasterInfo {
+            scientific: None,
             reference_mip: None,
             width,
             height,

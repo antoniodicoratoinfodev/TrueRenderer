@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 21 settembre 2026.
+Aggiornato: 22 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -18,6 +18,22 @@ Per ogni incremento aggiornare qui implementato, verificato, aperto e mancante, 
 Le architetture rimandano a questo file e non ne incorporano il contenuto. `python3 scripts/sync-docs.py` aggiorna i rimandi e l'appendice della specifica anteprime: serve quando cambiano le sue fonti, non a ogni aggiornamento di stato. Il backup originale v1.2 resta immutato.
 
 ## Punto di ripresa
+
+### Richiesta corrente — alta precisione e FITS
+
+Commit e push delle ottimizzazioni RAW completati prima dell'analisi: `c15a8b3` su `origin/main`, identità remota verificata. Il titolare ha approvato l'implementazione del [piano alta precisione/FITS](#piano-alta-precisione-fits) e l'esportazione fotografica, specificando **DNG lineare e DNG RAW come operazioni distinte**. Contratto aggiornato in [ADR 0010](docs/esportazione-precisione-fits.md).
+
+Implementati export selezione da sviluppo nativo con motore congelato, destinazione no-clobber e annullamento: JPEG qualità 1–100, PNG 8/16 con tre compressioni lossless, TIFF16, TIFF float32 lineare esteso, DNG lineare16 e DNG mosaico separati. Il mosaico conserva l'area attiva Nikon D750/D40, non margini ottici, MakerNotes o il NEF originale. Entrambi i DNG si riaprono con LibRaw bilineare/AHD; Apple RAW li rifiuta e il motore mosaico TrueRenderer mantiene la propria allowlist. Limitazione esposta nella UI, nessuna sostituzione silenziosa del motore. Non sono copie archivistiche.
+
+Presentazione SDR8 predefinita e SDR10/SDR16F opt-in al riavvio: percorso CPU/GPU senza intermedio fotografico a 8 bit, coppia formato+sRGB esplicita, fallback compatibile e diagnostica. FITS in sola lettura: prima immagine 2D primary/IMAGE, BITPIX 8/16/32/−32, BSCALE/BZERO/BUNIT/BLANK, NaN/Inf distinti, istogramma nativo e campionatore f64 dai byte originali; proxy con copertura e stretch lineare/asinh. Ricampionamento scientifico CPU dichiarato. UI dei nuovi controlli IT/EN; descrizioni tecniche e alcuni esiti del worker restano italiani.
+
+- [x] Suite `scripts/verify.sh --gui`: 160 test ordinari, 11 integrazioni, Clippy, otto controlli protocollo, 24 segnali di ricampionamento e superficie nativa. Ulteriore prova privata D750: ogni campione attivo esportato identico, sorgente invariata. Test sintetici su alpha, oltre 256 livelli PNG16, float32 bit-exact, qualità/compressione, quote, collisioni/cancellazione, DNG/CFA/calibrazione e FITS ostili/scaling/HDU/invalidi.
+- [x] Probe della presentazione nel bundle finale: sei combinazioni 8/10/16F × CPU/GPU con resize e alpha; rampa 1.024 campioni → 256/1.024/1.024 livelli. [Dati numerici](reports/presentation-precision-macos.json). Non misura pannello, collegamento video o HDR.
+- [x] Due servizi XPC del bundle finale, recupero e rifiuto fault injection: [qualifica](reports/xpc-qualification-macos.json). Firma ad hoc e supervisione RSS non diventano garanzie di rilascio.
+- [x] UI nativa su libreria separata: FITS 64×32 con un BLANK, asinh e lettura campione originale; export JPEG e PNG16 1600×900 dal gradiente sintetico, destinazione privata, esito visibile. Evidenze in `var/export-ui-tnzv4q/`; nessuna preferenza o libreria personale usata.
+- [x] Consolidare il [rapporto export/FITS](reports/export-fits-macos.json): 51 controlli isolati (24 export del gradiente sui quattro motori + due slot FITS, 24 export D750 + un mosaico RAW), hash originali invariati e identità del bundle uguali al rapporto XPC. Riproduzione con `--verify-exports`, `--export-source` su copia autorizzata e `scripts/report-export-verification.py`. Collisione UI PNG verificata con suffisso `-1` e byte identici, file precedenti conservati. Licenze vendorizzate/inventario aggiornati, LICENSE e originale v1.2 immutati; link locali e diff controllati. Commit/push richiesti soltanto dopo queste verifiche.
+
+Bundle: `dist/TrueRenderer-export-final.app`. Restano aperti: memoria fisica già oltre budget, contabilità esatta delle swapchain/driver, campagne prestazionali statistiche, Windows nativo, device-loss/multi-monitor ad alta precisione, dither e display fisico/HDR. FITS64, cubi, compressione, selettore HDU, WCS, fotometria ed export FITS esclusi. Nessun gate R0–R4 chiuso; P1–P3 e F0–F2 completi della proposta originaria non sono dichiarati conclusi.
 
 ### Velocità RAW, griglia e filmstrip — 20–21 settembre
 
@@ -111,6 +127,121 @@ Corretti isolamento LPAC/quote, LibRaw 0.22.2, parsing delle preview, classifica
 Esteso il motore proprio al modello esatto D40 e corretto il cambio motore durante scansione: 66/66 sviluppi su 22 NEF a ISO 200 e regressione D750, senza ampliare implicitamente la matrice camere ([rapporto Windows](reports/raw-engines-d40-windows.json)). Su Mac: 120 sviluppi D750 sui quattro motori dopo il fix heap LibRaw/XPC, nove confronti centrali, 240 azioni PNG 12/24/45 MP, 20 sotto pressione renderer e 40 RAW ([rapporto](reports/large-pressure-raw-macos.json)). Ritagli allineati solo per traslazione intera ±16 pixel: Apple/AHD non sono riferimenti della scena. Rimane il superamento memoria 45 MP Full indicato in apertura; mancano pressione OS, decode RAW ridotto, colore misurato e p95/p99. Riproduzione: `scripts/test-large-navigation.py`, `scripts/compare-raw-patches.py` e `--verify-raw-engines`, esclusivamente con corpus autorizzato e dati separati.
 
 ## Piano operativo
+
+<a id="piano-alta-precisione-fits"></a>
+
+## Proposta originaria — uscita ad alta precisione e dati FITS, 21 settembre 2026
+
+Il testo seguente conserva il contesto dell'analisi iniziale; autorizzazioni e disponibilità correnti sono nel punto di ripresa sopra. Le scelte di questo incremento, incluso il parser FITS ristretto al posto del candidato CFITSIO e l'export approvato, sono definite in ADR 0010. La proposta estesa resta distinta dal sottoinsieme consegnato.
+
+Richiesta: valutare se serva superare l'uscita a 8 bit, studiare anche FITS e pianificare prima di implementare. Baseline applicativa: `c15a8b3`, già pubblicata. Letti architettura §§2.2/2.4, 6.3/6.4, 8.7/8.10 e 9, contratti anteprime e ADR formati; esaminati codice applicativo e dipendenze bloccate e consultate fonti primarie Apple, Microsoft e FITS/CFITSIO. Nessuna nuova prova del display fisico, build o qualifica di formato in questa analisi.
+
+### Conclusione e confini della proposta
+
+Non serve portare il **working** da 8 a 16 bit: è già Rec.2020 lineare esteso **fp32**. Serve valutare la rimozione della quantizzazione anticipata a 8 bit nel **presenter**. Il beneficio atteso riguarda sfumature e banding, non dettaglio, demosaic o velocità di comparsa dei RAW. Profondità, gamut e HDR sono tre proprietà diverse: aumentare i bit non amplia automaticamente gamut/dinamica e non recupera clipping già avvenuto nel decoder.
+
+| Ambito | Situazione verificata nel codice | Proposta |
+|---|---|---|
+| Sviluppo RAW, working, mip e cache | RGBA fp32; negativi e RGB oltre 1 ammessi. LibRaw consegna già un raster lineare a 16 bit interi, con limiti della propria ricetta | Conservare precisione, ricette e cache; nessuna conversione generale a fp16 o uint16 |
+| Presentazione CPU | `display_pixel()` → `Vec<u8>` → `egui::ColorImage` | Eliminare questo collo di bottiglia nel nuovo percorso ad alta precisione |
+| Presentazione GPU | `display_pass` converte/clampa in una texture `Rgba8Unorm` | Mantenere float fino all'ultimo passaggio verso la superficie scelta |
+| Finestra | Report nativo: `Bgra8Unorm`; egui sceglie preferenzialmente RGBA/BGRA8 | Negoziare coppia formato/spazio colore; SDR10 come candidato leggero, RGBA16F dove utile e verificato |
+| FITS e dati scientifici | Nessun decoder FITS; raster generico senza unità/maschera e con rifiuto NaN/Inf; istogramma della vista sRGB8 | Percorso scientifico distinto, non una nuova estensione associata al decoder fotografico |
+| Esportazione | Esiste export delle annotazioni, non un export fotografico dei pixel | TIFF/PNG16 solo con richiesta e progetto separati; non è necessario per migliorare il viewer |
+
+Riferimenti applicativi: [colore e raster](crates/tr-core/src/color.rs), [presenter CPU](crates/tr-render/src/presenter.rs), [compute GPU](crates/tr-render/src/preview_compute.wgsl), [risorse GPU](crates/tr-render/src/resident_compute.rs), [finestra](apps/desktop/src/graphics.rs), [ricette LibRaw](native/libraw/tr_libraw.cpp), [ultimo smoke](reports/smoke-macos.json).
+
+**16 bit interi non significa 16 bit float.** I primi offrono 65.536 codici uniformi nel dominio scelto; fp16 ha passo variabile ed è un formato adatto allo scambio grafico, non un sostituto senza perdita dei dati scientifici fp32/fp64. Esempio numerico riproducibile, senza dither: 4.096 grigi `sRGB = 0,45 + 0,10*i/4095`, arrotondati al quantizzatore, diventano 26 valori distinti a 8 bit, 104 a 10 bit, 705 convertendo prima in lineare e arrotondando a IEEE binary16, 4.096 in uint16. Calcolato con Python standard (`struct` formato `e` per binary16). Dimostra solo la quantizzazione su quella rampa, non quanti livelli vedrà il pannello né un miglioramento già ottenuto nell'app.
+
+Il solo cambio della superficie non basta: se riceve pixel già ridotti a 8 bit, le sfumature sono già perse. Viceversa, FITS/float possono essere visualizzati correttamente anche su un display SDR8 attraverso una trasformata di vista esplicita; non dipendono da un monitor HDR. Un TIFF float eventualmente aperto da ImageIO non costituisce oggi supporto scientifico qualificato e il solo tipo float non prova che i valori rappresentino luce lineare.
+
+### Vincoli reali dello stack
+
+Versioni ispezionate: `eframe`/`egui-wgpu` 0.36.1 e `wgpu`/`wgpu-hal` 30.0.1, già in `Cargo.lock`.
+
+- wgpu espone `SurfaceCapabilities::format_capabilities`, `SurfaceConfiguration::color_space` e `Surface::display_hdr_info()`. Il backend Metal configura `CAMetalLayer.colorspace`/EDR; DX12 configura `SetColorSpace1`. Non occorre presumere un aggiornamento di wgpu o scrivere subito un'integrazione Metal/DXGI parallela.
+- egui-wgpu sceglie il target in `preferred_framebuffer_format`; `SurfaceConfig` espone soltanto present mode/latenza. Occorre una piccola integrazione versionata per selezione formato/spazio e accesso diagnostico alla superficie, da stimare nel primo esperimento. Non modificare `.tools/cargo/registry`; una eventuale patch vendorizzata conserva versione, diff e licenze. Sostituire tutto il toolkit non è la prima scelta.
+- `Rgba16Float` con spazio `Auto` può risolversi in **scRGB lineare**: scriverci gli attuali valori gamma-sRGB cambierebbe la luminosità. La scelta deve essere esplicita. Metal pubblicizza anche fp16+sRGB; DX12 fp16 richiede il contratto extended-linear. Non estendere automaticamente una combinazione verificata su un OS all'altro.
+- Lo shader egui corrente assume texture/colore UI codificati sRGB; la scelta del fragment dipende da `is_srgb()` del formato, non dal nuovo contratto colore. Foto e chrome devono arrivare alla superficie con la codifica corretta, incluso blending/alpha e bianco UI. Non basta selezionare il fragment per una superficie sRGB per qualificare tutta la composizione lineare.
+- La cattura egui attuale accetta soltanto `Rgba8Unorm`/`Bgra8Unorm` e restituisce `ColorImage`. Per dimostrare più di 8 bit serve readback numerico nel formato nativo; un PNG8 non può essere la prova.
+- Capability della superficie, headroom corrente e profondità fisica sono dati distinti. Su Metal i bit del collegamento/pannello non sono riportati da questa API; lasciare «non osservati». La ricognizione `system_profiler` di questa sessione identifica M4 ma non fornisce una qualifica del display.
+
+Queste scelte rispettano il [contratto di presentazione esistente](docs/TrueRenderer-Architettura.md#870-contratto-di-presentazione) e la distinzione già prevista fra [uscita oltre 8 bit](docs/TrueRenderer-Architettura.md#8105-uscita-a-più-di-8-bit) e HDR post-v1. Riferimenti esterni: [Apple, spazi colore e formato Metal](https://developer.apple.com/documentation/metal/using-color-spaces-to-display-hdr-content), [Apple, capacità EDR corrente e potenziale](https://developer.apple.com/documentation/metal/determining-support-for-edr-values), [Microsoft, Advanced Color e scRGB](https://learn.microsoft.com/en-us/windows/win32/direct3darticles/high-dynamic-range). Le capacità dichiarate dalle API non provano la resa fisica.
+
+### Percorso P — presentazione ad alta precisione
+
+**P0 — esperimento controllato e decisione tecnica.**
+
+1. Generare rampe, gradienti scuri, colori saturi e bordi con alpha in fp32; baseline SDR8 attuale, SDR8 con dither finale, SDR10 e fp16. Non cambiare contemporaneamente demosaic, curva di resa e profondità.
+2. Aggiungere diagnostica di formato/spazio selezionati, coppie supportate, headroom e informazioni non disponibili. Provare configurazione, resize e ricreazione su Mac; Windows ha un gate nativo distinto. Nessuna attivazione automatica basata sul solo nome della GPU.
+3. Prototipare l'adattamento minimo egui e il readback 10-bit/fp16. Provare prima `Rgb10a2Unorm` + sRGB dove supportato: mantiene 4 byte/pixel. Confrontarlo con `Rgba16Float` e relativo contratto. L'esperimento sceglie il percorso, non una preferenza cosmetica «16 bit».
+4. Registrare errore numerico, livelli conservati, aspetto della UI, tempi e memoria. Se il percorso esteso non supera le verifiche, resta disattivato e si conserva il fallback dichiarato.
+
+**P1 — separare campioni e uscita, su CPU e GPU.**
+
+1. In `tr-core` introdurre un contratto di presentazione versionato: formato, primarie, transfer, dominio SDR/esteso, riferimento del bianco, policy di clipping e dither. Separare trasformata float e quantizzazione oggi unite in `display_pixel()`; conservare la funzione legacy per confronti e fallback.
+2. In `tr-render` mantenere il risultato del ricampionamento fp32 fino al passaggio di uscita. CPU: non transitare in `ColorImage` per le foto ad alta precisione. GPU: usare il risultato float già disponibile, evitando il passaggio obbligatorio in `rgba8unorm`. Preferire un pass di presentazione dedicato/callback che scriva direttamente la superficie; un intermedio fp16 è una scelta da misurare, con errore dichiarato, non la nuova precisione del working.
+3. Stessa via per griglia, filmstrip, ispettore, viewer e confronto; riguarda tutti e quattro i motori RAW, senza duplicare la logica nei decoder. Conservare campionamento fisico 1:1, clip, prioritizzazione e assenza di readback nel percorso interattivo.
+4. Aggiungere versione/identità del contratto alla chiave del presenter, alle risposte asincrone e ai frame conservati. Al cambio di superficie/scalatura colore invalidare solo i derivati dipendenti dall'uscita, non sviluppi RAW, mip e cache SSD lineare.
+
+**P2 — superficie, ripieghi, dither e memoria.**
+
+1. Esporre «Automatica», «SDR 8 bit compatibile» e modalità estese solo se qualificate. Mostrare separatamente richiesta ed effettiva, formato, spazio, dither e motivo del fallback. Il calcolo CPU deve poter alimentare l'uscita estesa: CPU/GPU di calcolo e formato di presentazione non sono la stessa preferenza.
+2. Percorso iniziale SDR: non cambiare il rendering delle alte luci o attivare tone mapping creativo. Un'uscita scRGB/fp16 richiede gestione coerente anche di UI e bianco SDR. P3/wide gamut ed EDR/HDR richiedono prove aggiuntive di colore/headroom; nessuna implicita promozione dal solo formato fp16.
+3. Valutare un solo dither finale, prima della quantizzazione intera a 8/10 bit, con seed e coordinate fisiche definiti. Non riattivare indiscriminatamente il dither egui dopo una texture già quantizzata. Verificare bias, rumore, stabilità e cuciture; i campioni del working restano indipendenti dal dither e il confronto diagnostico può disabilitarlo esplicitamente.
+4. Rimuovere le assunzioni `pixel * 4` dal budget del presenter. Contabilizzare texture, buffer float residenti, upload, swapchain, doppio/triplo buffering e risorse ritirate fino al completamento GPU. A 3840×2160 il solo payload RGBA8/RGBA16F/RGBA32F vale circa 31,6/63,3/126,6 MiB per buffer: fp16 raddoppia questo costo rispetto a RGBA8, non necessariamente l'intera RAM dell'app. Tre buffer fp16 aggiungono circa 94,9 MiB rispetto a tre RGBA8, senza contare overhead del driver.
+5. Misurare separatamente il superamento memoria RAW già aperto; non compensarlo aumentando la quota dichiarata. Introdurre l'uscita estesa inizialmente opt-in; il default automatico richiede margine verificato e nessuna nuova attesa/errore sistematico delle miniature.
+
+**P3 — accettazione e consegna separata.**
+
+- Riferimento CPU float indipendente, errore pre-quantizzazione e risultato nel dominio della superficie; rampe monotone, livelli oltre 256 verificati nel readback, alpha, negativi/fuori gamut, estremi, colore UI e test contro doppia codifica. Per UNORM confrontare anche i codici interi con tolleranza motivata dal quantizzatore; per fp16 errori assoluti/relativi e ULP nel dominio dichiarato, non una soglia sRGB8 riciclata.
+- Rami CPU/GPU, tutti i motori, griglia/filmstrip/viewer/confronto, 1:1/fit/pan/zoom, cambio qualità, resize/Retina, device loss, cambio display e fallback 8 bit. Baseline fotografica autorizzata D750 in copie private; cache e mip fp32 devono restare invariati a parità di ricetta. Non promettere pixel di presentazione identici quando cambia il quantizzatore o viene abilitato il dither.
+- Readback numerico distinto dagli screenshot illustrativi e dalla valutazione sul monitor. Confrontare latenza e memoria alle stesse condizioni; ripetere i casi, riportare dispersione e usare almeno 100 prove indipendenti se si dichiara un p95. Nessuna attestazione fisica basata soltanto sul readback.
+- Suite `scripts/verify.sh --gui`, bundle separato e controlli XPC del pacchetto. Registrare report, identità e limiti in questo stato; aggiornare specifica/ADR e sincronizzazione solo dopo l'approvazione del contratto. Gate R0–R4 e assurance restano distinti.
+
+### Percorso F — FITS e campioni scientifici, indipendente da P
+
+FITS è utile se il prodotto deve aprire acquisizioni/stack o immagini scientifiche; non serve per migliorare i NEF né per ottenere un'uscita a 16 bit. Il primo incremento proposto è un **viewer FITS in sola lettura**, non stacking, calibrazione, fotometria o esportazione scientifica. Richiede approvazione del nuovo perimetro, oggi assente dalla matrice dei formati.
+
+**F0 — modello dei dati prima del codec.**
+
+1. Separare un piano di campioni scientifici dal raster fotografico Rec.2020: tipo nativo, dimensioni/assi, unità dichiarate o ignote, scaling, maschera di validità, HDU e provenienza. Non assegnare sRGB, alpha o significato fotometrico per il solo fatto che il file contiene numeri. Anche un FITS può contenere dati già elaborati: non dichiararlo scene-linear senza evidenza.
+2. Conservare tipo/campione originale e applicare lo scaling una sola volta. I dati nativi per campionatore/statistiche non si ricavano da una miniatura o invertendo lo stretch. I32 oltre 24 bit significativi e F64 non passano silenziosamente in fp32; calcolare normalizzazione/scaling in precisione adeguata e dichiarare le conversioni della sola anteprima.
+3. NaN, infinito e valori mancanti richiedono classificazione/maschera e contatori; non allentare `LinearImage::new` accettando NaN in tutta la pipeline fotografica. Statistiche sui validi, stato esplicito per un piano senza campioni validi e gestione definita della copertura nel downsample. Nessuno zero sostitutivo viene presentato come dato originale.
+4. Istogramma scientifico separato da quello attuale a 256 bin della vista; min/max/percentili con unità e dicitura completa/campionata. Campionatore: valore memorizzato, valore scalato, validità e valore di vista. Coordinate/ordine degli assi e convenzione di visualizzazione documentati; nessuna soluzione WCS implicita.
+
+**F1 — decoder isolato e sottoinsieme esplicito.**
+
+1. Candidato: CFITSIO con versione/hash bloccati e shim ristretto, costruito per entrambi gli OS. Prima di adottarlo verificare licenze/notices del pacchetto effettivo, dipendenze e opzioni di build. Non promettere supporto completo perché la libreria legge più varianti della UI.
+2. Usare i byte della copia privata già concessa al worker; candidato `fits_open_memfile(..., READONLY, ..., mem_realloc = NULL)`. Niente URL, percorsi arbitrari, sintassi di filtri/espressioni, scritture o rete. Questa API evita la riallocazione del file in memoria, ma non limita da sola tutte le allocazioni interne: restano quote, controlli del broker e isolamento XPC/LPAC. Nessun fallback FITS nel processo UI o apertura esterna su pipe.
+3. MVP: `.fits`, `.fit`, `.fts`, firma verificata, immagini 2D non compresse nel primario o nelle estensioni IMAGE; elenco HDU limitato e HDU visualizzato esplicito. Tipi iniziali proposti `BITPIX` 8/16/32/-32, inclusa convenzione unsigned16; scaling `BSCALE`/`BZERO`, `BUNIT` e `BLANK` validati. Primario vuoto: individuare e dichiarare la prima immagine 2D idonea, senza spacciare un'altra estensione per il primario. 64/-64 rifiutati con motivo finché il percorso nativo/fp64 non è qualificato.
+4. Cubi, tabelle, compressione tiled/esterna, selezione di piani e composizione RGB sono incrementi successivi; un asse di lunghezza 3 non prova RGB. Niente debayer automatico né instradamento ai quattro motori fotografici. Mantengono invece valore i due motori di calcolo CPU/GPU della visualizzazione.
+5. Limiti proposti: mantenere sorgente ≤256 MiB e piano ≤67.108.864 pixel, ulteriormente ridotti dall'ammissione memoria; massimo 256 HDU e 1 MiB di header per HDU, con tetto totale header esplicito da fissare sul corpus. La quota sorgente precede l'apertura; una ricognizione strutturale limitata nel worker deve validare header e dimensioni prima della decodifica pesante. Controllare prodotti, offset, allineamenti e lunghezze con aritmetica checked; leggere a blocchi senza espandere il file in quattro canali float solo per il probe. Richieste IPC tipizzate e risposte/versioni rivalidate; firma falsa, input troncato, timeout e recupero sono prove obbligatorie.
+
+Lo standard definisce scaling, unità e campioni mancanti: [FITS 4.0, §§4.4/5/7](https://fits.gsfc.nasa.gov/standard40/fits_standard40aa-le.pdf). Il backend deve essere configurato e provato per non normalizzare implicitamente valori IEEE: [CFITSIO, valori speciali](https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node27.html). Riferimenti per la valutazione dello shim: [API memory-file](https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node65.html) e [condizioni della libreria](https://heasarc.gsfc.nasa.gov/docs/software/fitsio/c/c_user/node6.html).
+
+**F2 — trasformata di vista e anteprime.**
+
+1. Vista iniziale monocromatica; controlli nero/bianco e stretch lineare/asinh, reset e auto-stretch dichiarato, deterministico e stabile per HDU. Un FITS quasi nero nella vista lineare non è necessariamente decodificato male. Non riscrivere i campioni quando si muove un cursore.
+2. Definire prima l'ordine fra riduzione dei campioni e stretch: non commutano. Candidato per il viewer scientifico: mip scalari sui validi, copertura separata, poi stretch di visualizzazione; confrontare con riferimento e dichiarare che non è una misura fotometrica. Non riusare alla cieca un filtro fotografico a pesi negativi sulle maschere. Min/max e misure restano riferiti al dato nativo.
+3. Separare cache dei campioni/mip da cache della vista. Chiavi comprendono digest, HDU, piano, tipo/scaling, versione del filtro/maschera, stretch e contratto di presentazione solo negli artefatti che ne dipendono. Cambio stretch senza rileggere/decodificare tutto il FITS; griglia e viewer devono dichiarare la medesima interpretazione.
+4. Estendere corpus con fixture sintetiche indipendenti: unsigned16 con offset, negativi, F32 piccoli/grandi, BLANK, NaN/Inf, piani costanti/tutti invalidi, HDU multipli, endian, dimensioni ostili e file troncati. Confrontare i campioni con un riferimento indipendente dal wrapper, oltre alla GUI e alle prove di isolamento sul bundle finale. File astronomici reali solo se forniti/autorizzati; mai pubblicati automaticamente.
+
+### Esportazione e ordine raccomandato
+
+Un eventuale export TIFF/PNG16 parte dal working o dalla trasformata di vista scelta, mai da screenshot/`to_display()`. Deve dichiarare profilo, curva, alpha, scala, clipping e dither; un uint16 non conserva da solo negativi, valori estesi o campioni scientifici. Per preservare questi ultimi servirebbe un formato float e un contratto ulteriore, non «salva a 16 bit». Nuovi file, nessuna sovrascrittura degli originali. Questa funzione resta fuori dal primo intervento e post-v1 finché non viene approvata.
+
+Ordine proposto: **P0 → decisione su percorso e costi → P1/P2 → P3**. FITS può seguire come **F0 → F1 → F2**, senza attendere HDR o un monitor a più di 8 bit. Non accorpare entrambe le verticali in un unico cambiamento: hanno criteri di correttezza, licenze e rischi differenti. Per l'uso attuale D750, priorità al presenter e al contenimento memoria; per un uso astronomico effettivo, il percorso dati/stretch FITS può precedere l'attivazione della superficie estesa.
+
+- [x] Committare e pubblicare prima dell'analisi le ottimizzazioni RAW completate.
+- [x] Identificare i colli di precisione, verificare lo stack bloccato e preparare questa proposta. Verifica documentale: 297 collegamenti locali, zero errori; `git diff --check` passato. Solo `STATO.md` modificato dopo il commit; nessuna sincronizzazione delle specifiche necessaria.
+- [x] Approvare il primo incremento P0 e il suo criterio di scelta; autorizzato con la richiesta di implementazione/export.
+- [x] Eseguire il verticale P0 SDR senza dither e scegliere 10-bit/fp16 opt-in con fallback sulla base dei risultati; hardware fisico e prove ulteriori restano aperti.
+- [ ] Implementare e verificare P1–P3, con gate memoria e Mac/Windows distinti.
+- [x] Approvare il bisogno e il sottoinsieme FITS insieme al piano precedente.
+- [x] Implementare e verificare il sottoinsieme FITS 2D di ADR 0010 con corpus e isolamento; non l'intero F0–F2 proposto.
+- [x] Implementare export selezione, destinazione senza sovrascritture, qualità JPEG, PNG 8/16 e due DNG distinti; verificare campioni e metadati, annullamento del temporaneo e XPC. Interoperabilità DNG limitata a LibRaw, esplicitata sopra.
+- [ ] Valutare separatamente wide gamut/HDR, FITS64/compressione/cubi e altri formati float.
 
 ## Navigatore filesystem — implementazione del 19 settembre 2026
 
