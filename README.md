@@ -6,9 +6,9 @@ TrueRenderer is a native desktop application for photographers, astrophotographe
 
 It brings each image, its technical context and the choices behind its appearance into one focused workspace. Originals remain untouched, the library stays on your computer, and no account, upload or subscription is required.
 
-![TrueRenderer viewer with the compact Explorer tree, RAW engine information and preview quality selectors](reports/navigator-viewer.png)
+![TrueRenderer viewer with Explorer, preview quality selectors, filmstrip and image inspector](reports/readme-viewer.png)
 
-*TrueRenderer on macOS, shown with the generated test corpus.*
+*Current macOS build, shown with the generated test corpus. [Screenshot verification](reports/readme-screenshots-macos.json).*
 
 ## A clearer way to look
 
@@ -77,11 +77,11 @@ RAW files do not have one universally correct appearance, and display colour dep
 
 The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace.
 
-![Thumbnail grid with the compact Explorer tree, file icons, hierarchy guides and full-row selection](reports/navigator-grid.png)
+![Thumbnail grid with Explorer, file icons, hierarchy guides and full-row selection](reports/readme-grid.png)
 
-In smaller windows, navigation opens only when needed: [compact layout](reports/navigator-compact.png).
+In smaller windows, navigation opens only when needed: [compact layout](reports/readme-compact.png).
 
-![Preferences grouped by purpose with persistent actions](reports/navigator-preferences.png)
+![Performance preferences with SDR presentation precision and processing options](reports/readme-preferences.png)
 
 Preferences are grouped by purpose, and the interface is available in English and Italian.
 

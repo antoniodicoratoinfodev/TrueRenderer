@@ -1,0 +1,56 @@
+{
+  "application": "TrueRenderer",
+  "captured_at": "2026-09-22T15:58:13.696303+00:00",
+  "passed": true,
+  "bundle": "dist/TrueRenderer-memory-final.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "45dfaeee0f21fc4a3122da9bc5d0830a5e2366f319d86eb1a60ac4ff6f619bad",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "e420ea78977a66aff31753771840c03f2de28fc9595e6fbb3329acc7b0a9ecf5",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "17edba5fcba574e40913340df288944f516ac126a2b723b5185144865c3bc8e9"
+  },
+  "source": "12 generated corpus images, SHA-256 matched manifest; isolated local library",
+  "native_smokes": {
+    "filesystem": true,
+    "preferences": true,
+    "sampling": true
+  },
+  "screenshots": [
+    {
+      "file": "reports/readme-viewer.png",
+      "capture": "02-preview.png",
+      "pixels": [
+        2880,
+        1782
+      ],
+      "sha256": "2f7aa27e3567f7989bf66ef0a702281c932efca6d5515ceebea020f64c38d03c"
+    },
+    {
+      "file": "reports/readme-grid.png",
+      "capture": "filesystem-0.png",
+      "pixels": [
+        2880,
+        1782
+      ],
+      "sha256": "9a66be913f423a01136ff70a6f89d7e85a50193fba7146d5ffaeedbf36081392"
+    },
+    {
+      "file": "reports/readme-compact.png",
+      "capture": "filesystem-3.png",
+      "pixels": [
+        1100,
+        720
+      ],
+      "sha256": "863f086a39039e21bf409b960786ccfc99df71ae00975069dacf144497b67670"
+    },
+    {
+      "file": "reports/readme-preferences.png",
+      "capture": "restyle-02.png",
+      "pixels": [
+        2880,
+        1782
+      ],
+      "sha256": "4c3de41ba66429092c816f9383e9f4242c39b91380a84b0dba19a39a0c1fa529"
+    }
+  ],
+  "scope": "Native macOS screenshots of the current bundle for README; no private photographs, personal library, physical-display or Windows qualification."
+}
