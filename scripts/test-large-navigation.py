@@ -68,7 +68,11 @@ def main():
                                 while not stop.is_set():
                                     rss,foot,count=(ctypes.c_uint64() for _ in range(3));details=(ctypes.c_uint64*(128*4))()
                                     status=probe(str(bundle).encode(),ctypes.byref(rss),ctypes.byref(foot),ctypes.byref(count),details)
-                                    samples.append([time.monotonic(),rss.value,foot.value,count.value,status]);stop.wait(.025)
+                                    processes=[{'pid':details[i*4], 'rss_bytes':details[i*4+1],
+                                                'footprint_bytes':details[i*4+2],
+                                                'role':['host','decoder0','decoder1'][details[i*4+3]]}
+                                               for i in range(min(count.value,128))]
+                                    samples.append([time.monotonic(),rss.value,foot.value,count.value,status,processes]);stop.wait(.025)
                             thread=threading.Thread(target=sample);thread.start()
                             try:
                                 result=nav.run_probe(bundle,case_root,mode,quality,phase,True,False,args.memory_mib,folder,targets,args.pressure,engine,True,True)
@@ -90,6 +94,11 @@ def main():
                                 stop.set();thread.join()
                                 active=[s for s in samples if s[3]>0]
                                 row['memory']={'sample_count':len(active),'peak_rss':max((s[1] for s in active),default=0),'peak_footprint':max((s[2] for s in active),default=0),'maximum_processes':max((s[3] for s in active),default=0),'incomplete_samples':sum(s[4]!=0 for s in active),'maximum_gap_seconds':max((b[0]-a[0] for a,b in zip(samples,samples[1:])),default=0)}
+                                for metric,index in [('rss',1),('footprint',2)]:
+                                    peak=max(active,key=lambda s:s[index],default=None)
+                                    row['memory']['processes_at_peak_'+metric]=peak[5] if peak else []
+                                timeline=case_root/'reports'/f'{phase}-memory.json'
+                                timeline.write_text(json.dumps({'columns':['monotonic_seconds','rss_bytes','footprint_bytes','process_count','status','processes'],'samples':samples})+'\n')
                                 save()
                             assert row['memory']['sample_count'] > 0 and row['memory']['maximum_processes'] >= 2 and row['memory']['incomplete_samples'] == 0, 'Memory sampling incomplete'
                             row['memory']['within_requested_budget'] = max(row['memory']['peak_rss'], row['memory']['peak_footprint']) <= args.memory_mib * 1024**2

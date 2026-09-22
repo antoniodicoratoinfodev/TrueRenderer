@@ -253,17 +253,18 @@ fn axis(length: u32, count: u32, origin: f64, step: f64, opaque: bool) -> Vec<Ta
 }
 
 pub(crate) fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
-    filter_mode(source, region, opaque, true)
+    filter_mode(source, region, opaque, true, usize::MAX)
 }
 /// Scalar reference retained for equivalence and A/B measurements.
 pub fn filter_scalar(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
-    filter_mode(source, region, opaque, false)
+    filter_mode(source, region, opaque, false, usize::MAX)
 }
 fn filter_mode(
     source: &LinearImage,
     region: Region,
     opaque: bool,
     parallel: bool,
+    maximum_band_rows: usize,
 ) -> Result<LinearImage> {
     let [width, height] = region.size;
     let count = (width as usize).saturating_mul(height as usize);
@@ -296,76 +297,91 @@ fn filter_mode(
         region.step[1],
         opaque,
     );
-    let min_y = ys.iter().flatten().map(|(y, _)| *y).min().unwrap();
-    let max_y = ys.iter().flatten().map(|(y, _)| *y).max().unwrap();
-    let intermediate_count = (max_y - min_y + 1).saturating_mul(width as usize);
-    ensure!(
-        intermediate_count <= 2 * MAX_PIXELS + 65536,
-        "Intermedio del filtro fuori quota"
-    );
-    let mut horizontal = vec![[0.; 4]; intermediate_count];
-    let horizontal_row = |(row_index, row): (usize, &mut [[f32; 4]])| {
-        let y = min_y + row_index;
-        for (x, taps) in xs.iter().enumerate() {
-            let mut p = [0.0f64; 4];
-            for &(sx, weight) in taps {
-                let pixel = source.pixels[y * source.width as usize + sx];
-                if parallel {
-                    crate::compute::accumulate(&mut p, pixel, weight);
-                } else {
-                    for c in 0..4 {
-                        p[c] += pixel[c] as f64 * weight;
-                    }
-                }
-            }
-            row[x] = p.map(|v| v as f32);
-        }
-    };
-    if parallel && intermediate_count >= 32768 {
-        crate::compute::install(|| {
-            horizontal
-                .par_chunks_mut(width as usize)
-                .enumerate()
-                .for_each(horizontal_row)
-        });
+    // Cap horizontal scratch near 8 MiB instead of half a full-frame raster.
+    // At step <= 2 the opaque kernel needs fewer than 16 halo rows. Keep the
+    // scalar reference unbanded; band boundaries never change summation order.
+    let band_rows = if parallel {
+        ((512 * 1024 / width as usize).saturating_sub(16) / 2).max(1)
     } else {
-        horizontal
-            .chunks_mut(width as usize)
-            .enumerate()
-            .for_each(horizontal_row);
+        height as usize
     }
+    .min(maximum_band_rows.max(1));
     let mut pixels = vec![[0.; 4]; count];
-    let vertical_row = |(y, row): (usize, &mut [[f32; 4]])| {
-        for (x, out) in row.iter_mut().enumerate() {
-            let mut p = [0.0f64; 4];
-            for &(sy, weight) in &ys[y] {
-                let pixel = horizontal[(sy - min_y) * width as usize + x];
-                if parallel {
-                    crate::compute::accumulate(&mut p, pixel, weight);
-                } else {
-                    for c in 0..4 {
-                        p[c] += pixel[c] as f64 * weight;
+    let mut horizontal = Vec::new();
+    for (band, output) in pixels.chunks_mut(band_rows * width as usize).enumerate() {
+        let first_row = band * band_rows;
+        let band_ys = &ys[first_row..first_row + output.len() / width as usize];
+        let min_y = band_ys.iter().flatten().map(|(y, _)| *y).min().unwrap();
+        let max_y = band_ys.iter().flatten().map(|(y, _)| *y).max().unwrap();
+        let intermediate_count = (max_y - min_y + 1).saturating_mul(width as usize);
+        ensure!(
+            intermediate_count <= 2 * MAX_PIXELS + 65536,
+            "Intermedio del filtro fuori quota"
+        );
+        horizontal.reserve_exact(intermediate_count.saturating_sub(horizontal.len()));
+        horizontal.resize(intermediate_count, [0.; 4]);
+        let horizontal_row = |(row_index, row): (usize, &mut [[f32; 4]])| {
+            let y = min_y + row_index;
+            for (x, taps) in xs.iter().enumerate() {
+                let mut p = [0.0f64; 4];
+                for &(sx, weight) in taps {
+                    let pixel = source.pixels[y * source.width as usize + sx];
+                    if parallel {
+                        crate::compute::accumulate(&mut p, pixel, weight);
+                    } else {
+                        for c in 0..4 {
+                            p[c] += pixel[c] as f64 * weight;
+                        }
                     }
                 }
+                row[x] = p.map(|v| v as f32);
             }
-            if opaque {
-                p[3] = 1.;
-            }
-            *out = p.map(|v| v as f32);
-        }
-    };
-    if parallel && count >= 32768 {
-        crate::compute::install(|| {
-            pixels
-                .par_chunks_mut(width as usize)
+        };
+        if parallel && intermediate_count >= 32768 {
+            crate::compute::install(|| {
+                horizontal
+                    .par_chunks_mut(width as usize)
+                    .enumerate()
+                    .for_each(horizontal_row)
+            });
+        } else {
+            horizontal
+                .chunks_mut(width as usize)
                 .enumerate()
-                .for_each(vertical_row)
-        });
-    } else {
-        pixels
-            .chunks_mut(width as usize)
-            .enumerate()
-            .for_each(vertical_row);
+                .for_each(horizontal_row);
+        }
+        let vertical_row = |(y, row): (usize, &mut [[f32; 4]])| {
+            for (x, out) in row.iter_mut().enumerate() {
+                let mut p = [0.0f64; 4];
+                for &(sy, weight) in &band_ys[y] {
+                    let pixel = horizontal[(sy - min_y) * width as usize + x];
+                    if parallel {
+                        crate::compute::accumulate(&mut p, pixel, weight);
+                    } else {
+                        for c in 0..4 {
+                            p[c] += pixel[c] as f64 * weight;
+                        }
+                    }
+                }
+                if opaque {
+                    p[3] = 1.;
+                }
+                *out = p.map(|v| v as f32);
+            }
+        };
+        if parallel && output.len() >= 32768 {
+            crate::compute::install(|| {
+                output
+                    .par_chunks_mut(width as usize)
+                    .enumerate()
+                    .for_each(vertical_row)
+            });
+        } else {
+            output
+                .chunks_mut(width as usize)
+                .enumerate()
+                .for_each(vertical_row);
+        }
     }
     LinearImage::new(width, height, pixels)
 }
@@ -373,6 +389,43 @@ fn filter_mode(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn production_bands_preserve_every_bit_of_large_odd_mip_chain() {
+        // The first horizontal intermediate exceeds the production 8 MiB
+        // threshold. Compare all levels with the unbanded scalar reference,
+        // including extended RGB and nonuniform edges; cache keys stay valid.
+        let source = LinearImage::new(
+            2051,
+            1027,
+            (0..2051 * 1027)
+                .map(|i| {
+                    [
+                        (i % 257) as f32 / 31. - 2.,
+                        (i % 997) as f32 / 173.,
+                        (i % 19) as f32 / 23. - 0.3,
+                        1.,
+                    ]
+                })
+                .collect(),
+        )
+        .unwrap();
+        let mut expected = source.clone();
+        let actual = Pyramid::new(source).unwrap();
+        for level in &actual.levels()[1..] {
+            expected = filter_scalar(
+                &expected,
+                Region::fitted(
+                    [expected.width, expected.height],
+                    [level.width, level.height],
+                ),
+                true,
+            )
+            .unwrap();
+            for (a, b) in level.pixels.iter().zip(&expected.pixels) {
+                assert_eq!(a.map(f32::to_bits), b.map(f32::to_bits));
+            }
+        }
+    }
     #[test]
     fn parallel_simd_matches_scalar_on_odd_shapes_alpha_and_edges() {
         for opaque in [false, true] {
@@ -407,6 +460,12 @@ mod tests {
                 let scalar = filter_scalar(&source, region, opaque).unwrap();
                 let actual = filter(&source, region, opaque).unwrap();
                 assert_eq!(scalar.pixels, actual.pixels);
+                // Exercise seams, clamped boundaries, fractional crops and
+                // alpha with the independent full-intermediate scalar result.
+                for rows in [1, 3, 17] {
+                    let banded = filter_mode(&source, region, opaque, true, rows).unwrap();
+                    assert_eq!(scalar.pixels, banded.pixels, "band rows={rows}");
+                }
             }
         }
     }

@@ -13,6 +13,9 @@ rayon = "=1.11.0"
 # Already pinned through image/wgpu; safe byte views for private IPC buffers.
 bytemuck = "=1.25.2"
 
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "=0.2.189"
+
 # Unificata sull'intero grafo: abilita l'assembly di sha2 su ogni target
 # tranne MSVC, che non sa compilarne i sorgenti .S.
 [target.'cfg(not(target_env = "msvc"))'.dependencies]

@@ -163,36 +163,38 @@ void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
         return (__bridge_retained void *)result;
     } @catch (NSException *exception) { message(error,error_size,exception.reason); return NULL; } }
 }
-// Each XPC service owns these contexts until its bounded broker recycle. The
-// decoder processes one request at a time; CI does not retain image intermediates.
+// Large renders use a job-local context so native backing stores cannot outlive
+// the decode admission. Small images keep the inexpensive persistent pipelines.
+static CIContext *create_render_context(BOOL metal) {
+    CGColorSpaceRef working=CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearITUR_2020);
+    NSMutableDictionary *options=[@{kCIContextCacheIntermediates:@NO,
+        kCIContextWorkingFormat:@(kCIFormatRGBAf),
+        kCIContextWorkingColorSpace:(__bridge id)working,
+        kCIContextOutputPremultiplied:@YES} mutableCopy];
+    CIContext *context=nil;
+    if (metal) {
+        id<MTLDevice> device=MTLCreateSystemDefaultDevice();
+        if (device) context=[CIContext contextWithMTLDevice:device options:options];
+    } else {
+        options[kCIContextUseSoftwareRenderer]=@YES;
+        context=[CIContext contextWithOptions:options];
+    }
+    CFRelease(working);
+    return context;
+}
 static CIContext *render_context(BOOL metal) {
     static CIContext *softwareContext;
     static CIContext *metalContext;
     static dispatch_once_t softwareOnce, metalOnce;
-    void (^create)(void)=^{
-        CGColorSpaceRef working=CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearITUR_2020);
-        NSDictionary *options=@{kCIContextCacheIntermediates:@NO,
-            kCIContextWorkingFormat:@(kCIFormatRGBAf),
-            kCIContextWorkingColorSpace:(__bridge id)working,
-            kCIContextOutputPremultiplied:@YES};
-        if (metal) {
-            id<MTLDevice> device=MTLCreateSystemDefaultDevice();
-            if (device) metalContext=[CIContext contextWithMTLDevice:device options:options];
-        } else {
-            NSMutableDictionary *cpu=[options mutableCopy];
-            cpu[kCIContextUseSoftwareRenderer]=@YES;
-            softwareContext=[CIContext contextWithOptions:cpu];
-        }
-        CFRelease(working);
-    };
-    if (metal) dispatch_once(&metalOnce,create); else dispatch_once(&softwareOnce,create);
+    if (metal) dispatch_once(&metalOnce, ^{metalContext=create_render_context(YES);});
+    else dispatch_once(&softwareOnce, ^{softwareContext=create_render_context(NO);});
     return metal ? metalContext : softwareContext;
 }
 int tr_image_render_backend(void *handle, float *pixels, size_t count, uint32_t metal, char *error, size_t error_size) {
     @autoreleasepool { @try {
         TRImage *image=(__bridge TRImage *)handle;
         if (!image || !pixels || count != (size_t)image.width*image.height) return 1;
-        CIContext *context=render_context(metal != 0);
+        CIContext *context=count >= 12000000 ? create_render_context(metal != 0) : render_context(metal != 0);
         if (!context) { message(error,error_size,@"Backend Core Image non disponibile"); return 1; }
         CGColorSpaceRef working=CGColorSpaceCreateWithName(kCGColorSpaceExtendedLinearITUR_2020);
         [context render:image.image toBitmap:pixels rowBytes:(size_t)image.width*16

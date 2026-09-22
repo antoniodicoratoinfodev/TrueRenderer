@@ -1,9 +1,34 @@
+# Local builds, toolchain and private/durable application data.
 /target/
 /.tools/
 /var/
 /dist/
+/.codex/
+/.agents/
+
+# Credentials and local environment; sample configuration may be shared.
+.env
+.env.*
+!.env.example
+!.env.template
+*.key
+*.p12
+*.pfx
+
+# Local databases, raw diagnostics and editor/runtime leftovers.
 .DS_Store
 *.sqlite*
+*.db
+*.db-shm
+*.db-wal
+*.log
+/reports/bundle-stack.txt
+*.bak
+*.orig
+# Cargo's vendored package metadata is source, not an editor backup.
+!**/Cargo.toml.orig
+*.swp
+*~
 __pycache__/
 *.py[cod]
 

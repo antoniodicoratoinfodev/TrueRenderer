@@ -1,0 +1,998 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "checked_at": "2026-09-22T15:49:40.595324+00:00",
+  "passed": true,
+  "scope": "Final candidate functional regression and sampled memory on generated 45 MP and two authorized D750 copies; not the universal physical-memory or release gate.",
+  "baseline_commit": "d4e539b",
+  "bundle": "dist/TrueRenderer-memory-final.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "45dfaeee0f21fc4a3122da9bc5d0830a5e2366f319d86eb1a60ac4ff6f619bad",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "e420ea78977a66aff31753771840c03f2de28fc9595e6fbb3329acc7b0a9ecf5",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "17edba5fcba574e40913340df288944f516ac126a2b723b5185144865c3bc8e9"
+  },
+  "os": "macOS-27.0-arm64-arm-64bit",
+  "implementation": [
+    "CPU photographic resampling in bands with approximately 8 MiB horizontal scratch; unchanged summation order and pixel recipe.",
+    "macOS Rust allocations of at least 4 MiB, alignment at most 4096, use private anonymous mmap/munmap; System elsewhere. Native codec allocations remain independent.",
+    "Core Image renders of at least 12 million pixels use a job-local context with unchanged colour/backend options. Previous XPC reuse policy retained."
+  ],
+  "negative_baseline": {
+    "evidence": "var/large-navigation-2ktqz1xj/report.json",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "bf008518067948b33fee393b1dc5bf465bd2f88f463430650b6dab6489c17318",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3448e24949bb0af85e058644636d8fa44cd5b3faf83d7e1effd2db8042323e4f",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "10d2c78528bdb985b373d77a5d7fb59aa19f38522538e3bfabec43d3c8805873"
+    },
+    "case": "45 MP Full Apple CPU cold at 4 GiB",
+    "completed": false,
+    "reason": "XPC memory quota exceeded; decoder terminated",
+    "memory": {
+      "sample_count": 120,
+      "peak_rss": 3200565248,
+      "peak_footprint": 4298577848,
+      "maximum_processes": 3,
+      "incomplete_samples": 0,
+      "maximum_gap_seconds": 0.034139750000000024
+    },
+    "comparison_limit": "Aborted baseline is evidence of failure, not a matched complete-run percentage comparison."
+  },
+  "native_navigation": [
+    {
+      "source_class": "generated 45 MP PNG",
+      "evidence": "var/large-navigation-cs9dc744/report.json",
+      "budget_bytes": 4294967296,
+      "peak_rss_bytes": 3529080832,
+      "peak_footprint_bytes": 2354565800,
+      "all_sampled_peaks_within_budget": true,
+      "cases": [
+        {
+          "engine": "Apple",
+          "quality": "Full",
+          "mode": "Cpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 261,
+            "peak_rss": 3463561216,
+            "peak_footprint": 2354565800,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03967033300000011,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 938868736,
+                "footprint_bytes": 14894592,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 1413152768,
+                "footprint_bytes": 795084624,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 1111539712,
+                "footprint_bytes": 1236322104,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 1676378112,
+                "footprint_bytes": 1601587192,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 572358656,
+                "footprint_bytes": 13436128,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 614924288,
+                "footprint_bytes": 739542480,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "Apple",
+          "quality": "Full",
+          "mode": "Cpu",
+          "phase": "ssd",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 233,
+            "peak_rss": 3404365824,
+            "peak_footprint": 2327614144,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03761816699999976,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 1483358208,
+                "footprint_bytes": 741443456,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 574554112,
+                "footprint_bytes": 14042384,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 1346453504,
+                "footprint_bytes": 1468958664,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 1647525888,
+                "footprint_bytes": 1572046840,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 574554112,
+                "footprint_bytes": 14042384,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 619380736,
+                "footprint_bytes": 741524920,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "Apple",
+          "quality": "Full",
+          "mode": "Gpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 241,
+            "peak_rss": 3529080832,
+            "peak_footprint": 2329072200,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.04006716600000004,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 756449280,
+                "footprint_bytes": 14058864,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 1665613824,
+                "footprint_bytes": 795805688,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 1107017728,
+                "footprint_bytes": 1285687000,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 573947904,
+                "footprint_bytes": 13370616,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 1650704384,
+                "footprint_bytes": 1576912840,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 616644608,
+                "footprint_bytes": 738788744,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "Apple",
+          "quality": "Full",
+          "mode": "Gpu",
+          "phase": "ssd",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 223,
+            "peak_rss": 3279093760,
+            "peak_footprint": 2323911288,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03772229099999791,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 1298563072,
+                "footprint_bytes": 738608856,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 756416512,
+                "footprint_bytes": 14058864,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 1224114176,
+                "footprint_bytes": 1346291608,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 1462632448,
+                "footprint_bytes": 1569081144,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 756416512,
+                "footprint_bytes": 14058864,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 618905600,
+                "footprint_bytes": 740771280,
+                "role": "host"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "source_class": "two authorized Nikon D750 copies",
+      "evidence": "var/large-navigation-36ua6dsl/report.json",
+      "budget_bytes": 2147483648,
+      "peak_rss_bytes": 1875853312,
+      "peak_footprint_bytes": 2002455912,
+      "all_sampled_peaks_within_budget": true,
+      "cases": [
+        {
+          "engine": "Apple",
+          "quality": "Full",
+          "mode": "Cpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 445,
+            "peak_rss": 1442349056,
+            "peak_footprint": 1491406544,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03683129100000038,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 241844224,
+                "footprint_bytes": 33080352,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 625360896,
+                "footprint_bytes": 521717080,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 575143936,
+                "footprint_bytes": 699663728,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 633323520,
+                "footprint_bytes": 837223744,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 245104640,
+                "footprint_bytes": 33080400,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 513851392,
+                "footprint_bytes": 621102400,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "Apple",
+          "quality": "Full",
+          "mode": "Gpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 431,
+            "peak_rss": 1432715264,
+            "peak_footprint": 1650954032,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03330483399999906,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 246759424,
+                "footprint_bytes": 33735736,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 633257984,
+                "footprint_bytes": 837256608,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 552697856,
+                "footprint_bytes": 779961688,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 246759424,
+                "footprint_bytes": 33735736,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 633257984,
+                "footprint_bytes": 837256608,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 552697856,
+                "footprint_bytes": 779961688,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "LibRawBilinear",
+          "quality": "Full",
+          "mode": "Cpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 263,
+            "peak_rss": 1808269312,
+            "peak_footprint": 1910541672,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.033068499999998835,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 791461888,
+                "footprint_bytes": 784958568,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 402341888,
+                "footprint_bytes": 395641672,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 614465536,
+                "footprint_bytes": 729941432,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 791461888,
+                "footprint_bytes": 784958568,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 402341888,
+                "footprint_bytes": 395641672,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 614465536,
+                "footprint_bytes": 729941432,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "LibRawBilinear",
+          "quality": "Full",
+          "mode": "Gpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 311,
+            "peak_rss": 1818951680,
+            "peak_footprint": 1970687264,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.034079583999997,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 402358272,
+                "footprint_bytes": 395658056,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 791396352,
+                "footprint_bytes": 784893032,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 625197056,
+                "footprint_bytes": 731678112,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 791396352,
+                "footprint_bytes": 784893032,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 402030592,
+                "footprint_bytes": 395313968,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 583106560,
+                "footprint_bytes": 790480264,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "LibRawAhd",
+          "quality": "Full",
+          "mode": "Cpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 301,
+            "peak_rss": 1837318144,
+            "peak_footprint": 1946275176,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03221704099999556,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 409092096,
+                "footprint_bytes": 402359112,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 798572544,
+                "footprint_bytes": 792052864,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 629653504,
+                "footprint_bytes": 751863200,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 409092096,
+                "footprint_bytes": 402359112,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 798572544,
+                "footprint_bytes": 792052864,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 629653504,
+                "footprint_bytes": 751863200,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "LibRawAhd",
+          "quality": "Full",
+          "mode": "Gpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 347,
+            "peak_rss": 1875853312,
+            "peak_footprint": 2002455912,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03385795799999869,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 409452544,
+                "footprint_bytes": 402735968,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 798474240,
+                "footprint_bytes": 791954560,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 667926528,
+                "footprint_bytes": 774735312,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 409108480,
+                "footprint_bytes": 402391904,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 798523392,
+                "footprint_bytes": 792003712,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 600588288,
+                "footprint_bytes": 808060296,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "TrueRenderer",
+          "quality": "Full",
+          "mode": "Cpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 281,
+            "peak_rss": 1463566336,
+            "peak_footprint": 1572375576,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03545604199999275,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 645431296,
+                "footprint_bytes": 638845936,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 256000000,
+                "footprint_bytes": 249217744,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 562135040,
+                "footprint_bytes": 684311896,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 645431296,
+                "footprint_bytes": 638845936,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 256000000,
+                "footprint_bytes": 249217744,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 562135040,
+                "footprint_bytes": 684311896,
+                "role": "host"
+              }
+            ]
+          }
+        },
+        {
+          "engine": "TrueRenderer",
+          "quality": "Full",
+          "mode": "Gpu",
+          "phase": "cold",
+          "passed": true,
+          "actions_passed": 10,
+          "physical_1to1_exact": true,
+          "inputs_unchanged": true,
+          "memory": {
+            "sample_count": 329,
+            "peak_rss": 1538211840,
+            "peak_footprint": 1732316280,
+            "maximum_processes": 3,
+            "incomplete_samples": 0,
+            "maximum_gap_seconds": 0.03703845799999783,
+            "within_requested_budget": true,
+            "processes_at_peak_rss": [
+              {
+                "rss_bytes": 645414912,
+                "footprint_bytes": 638845960,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 255967232,
+                "footprint_bytes": 249184976,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 636829696,
+                "footprint_bytes": 844285344,
+                "role": "host"
+              }
+            ],
+            "processes_at_peak_footprint": [
+              {
+                "rss_bytes": 645414912,
+                "footprint_bytes": 638845960,
+                "role": "decoder1"
+              },
+              {
+                "rss_bytes": 255967232,
+                "footprint_bytes": 249184976,
+                "role": "decoder0"
+              },
+              {
+                "rss_bytes": 636829696,
+                "footprint_bytes": 844285344,
+                "role": "host"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "headless_d750_comparison": {
+    "source_count": 2,
+    "stages_per_binary": 24,
+    "identical_thumbnail_tail_digests": 48,
+    "before_evidence": "var/raw-performance-z64b2bi3/performance.json",
+    "after_evidence": "var/raw-performance-g5c1d2sx/performance.json",
+    "baseline_binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "bf008518067948b33fee393b1dc5bf465bd2f88f463430650b6dab6489c17318",
+      "Contents/MacOS/tr-worker": "fd00c975d99b7593f82a90be336e2c542e4b4fab81a6e35d1576947274d35cc6",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3448e24949bb0af85e058644636d8fa44cd5b3faf83d7e1effd2db8042323e4f",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "10d2c78528bdb985b373d77a5d7fb59aa19f38522538e3bfabec43d3c8805873"
+    },
+    "before_memory": {
+      "peak_sum_rss_bytes": 2579742720,
+      "peak_sum_footprint_bytes": 2555579920,
+      "incomplete_samples": 0,
+      "samples": 644,
+      "maximum_processes": 3,
+      "limit_bytes": 2147483648,
+      "scope": "Host and all its XPCs in this unique bundle; sampled at 50 ms. Process sums may count shared pages twice; no display readback.",
+      "within_configured_budget": false
+    },
+    "after_memory": {
+      "peak_sum_rss_bytes": 1595686912,
+      "peak_sum_footprint_bytes": 1570917232,
+      "incomplete_samples": 0,
+      "samples": 650,
+      "maximum_processes": 3,
+      "limit_bytes": 2147483648,
+      "scope": "Host and all its XPCs in this unique bundle; sampled at 50 ms. Process sums may count shared pages twice; no display readback.",
+      "within_configured_budget": true
+    },
+    "before_stage_seconds_sum": 37.21452149899999,
+    "after_stage_seconds_sum": 37.139119291,
+    "sources_unchanged": true,
+    "stages": [
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "phase": "grid",
+        "before_seconds": 3.7945550839999997,
+        "after_seconds": 3.829338583,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 1.7857126669999999,
+        "after_seconds": 1.874038125,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "phase": "grid_return",
+        "before_seconds": 5.791e-06,
+        "after_seconds": 7.833e-06,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "phase": "grid",
+        "before_seconds": 3.286320917,
+        "after_seconds": 3.392864666,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 0.018680083,
+        "after_seconds": 0.024052792,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "phase": "grid_return",
+        "before_seconds": 1.0042e-05,
+        "after_seconds": 5.625e-06,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "phase": "grid",
+        "before_seconds": 4.606989084,
+        "after_seconds": 4.623413459,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 0.889458166,
+        "after_seconds": 0.948930625,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "phase": "grid_return",
+        "before_seconds": 8.958e-06,
+        "after_seconds": 8.625e-06,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "phase": "grid",
+        "before_seconds": 1.42812475,
+        "after_seconds": 1.565361666,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 0.024060375,
+        "after_seconds": 0.017023083,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "phase": "grid_return",
+        "before_seconds": 1.0125e-05,
+        "after_seconds": 7.458e-06,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "phase": "grid",
+        "before_seconds": 7.983297333,
+        "after_seconds": 8.070263375,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 1.112322917,
+        "after_seconds": 1.142897417,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "phase": "grid_return",
+        "before_seconds": 9.792e-06,
+        "after_seconds": 7e-06,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "phase": "grid",
+        "before_seconds": 1.902739708,
+        "after_seconds": 1.9735473749999999,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 0.02409075,
+        "after_seconds": 0.018507,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "phase": "grid_return",
+        "before_seconds": 6.375e-06,
+        "after_seconds": 1.1083e-05,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "phase": "grid",
+        "before_seconds": 7.755151375,
+        "after_seconds": 6.845036625,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 0.957116041,
+        "after_seconds": 1.033069834,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "phase": "grid_return",
+        "before_seconds": 7.416e-06,
+        "after_seconds": 9.5e-06,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "phase": "grid",
+        "before_seconds": 1.626481625,
+        "after_seconds": 1.7582074589999999,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "phase": "viewer_filmstrip",
+        "before_seconds": 0.019355125,
+        "after_seconds": 0.0225025,
+        "identical_thumbnail_tail_digests": 2
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "phase": "grid_return",
+        "before_seconds": 7e-06,
+        "after_seconds": 7.583e-06,
+        "identical_thumbnail_tail_digests": 2
+      }
+    ],
+    "scope": "CPU artifact delivery via production UI demand, including source hash, cache verification, decode and filtering. OS cache not flushed; no display/compositor timing or statistical percentile qualification."
+  },
+  "validation": {
+    "ordinary_rust_passed": 163,
+    "integration_rust_passed": 11,
+    "private_camera_tests_skipped": 3,
+    "core_tests_passed": 34,
+    "new_regressions": [
+      "Every fp32 bit in a large odd mip chain matches the full-intermediate scalar reference.",
+      "Zeroed/aligned allocation, growth and shrink across mmap/System boundaries preserve initialized data.",
+      "Failed mapping preserves the old allocation."
+    ],
+    "format_clippy_workspace_build": true,
+    "worker_protocol_checks": 8,
+    "resampling_signals": 24,
+    "native_gui_and_surface_pixels": true,
+    "log": "var/memory-final-verification.log",
+    "export_fits": [
+      {
+        "source_class": "generated gradient and FITS",
+        "checks_passed": 26,
+        "source_unchanged": true,
+        "evidence": "var/memory-qualification-roqj1kth/var/export-fits-EP8BjE/report.json"
+      },
+      {
+        "source_class": "authorized D750 copy",
+        "checks_passed": 25,
+        "source_unchanged": true,
+        "evidence": "var/memory-qualification-roqj1kth/var/export-fits-eB4ynj/report.json"
+      }
+    ],
+    "xpc": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-09-22T15:46:49.689656+00:00",
+      "bundle": "dist/TrueRenderer-memory-final.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "45dfaeee0f21fc4a3122da9bc5d0830a5e2366f319d86eb1a60ac4ff6f619bad",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "e420ea78977a66aff31753771840c03f2de28fc9595e6fbb3329acc7b0a9ecf5",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "17edba5fcba574e40913340df288944f516ac126a2b723b5185144865c3bc8e9"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "source_copies_sha256_unchanged": true
+  },
+  "reproduction": [
+    "scripts/verify.sh --gui",
+    "scripts/build-macos.sh dist/TrueRenderer-memory-final.app",
+    "python3 scripts/test-large-navigation.py --bundle dist/TrueRenderer-memory-final.app --sizes 45 --qualities Full --modes Cpu,Gpu",
+    "python3 scripts/test-large-navigation.py --bundle dist/TrueRenderer-memory-final.app --raw-folder <authorized-private-D750-folder> --qualities Full --modes Cpu,Gpu --engines Apple,LibRawBilinear,LibRawAhd,TrueRenderer --memory-mib 2048",
+    "python3 scripts/test-raw-preview-performance.py --bundle <baseline-or-final-bundle> --raw-folder <authorized-private-D750-folder> --passes 1",
+    "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-memory-final.app --report-root <isolated-root-with-corpus>",
+    "dist/TrueRenderer-memory-final.app/Contents/MacOS/TrueRenderer --verify-exports --root <isolated-root-with-corpus> [--export-source <authorized-RAW-copy>]"
+  ],
+  "full_physical_memory_gate_passed": false,
+  "release_gate_passed": false,
+  "limits": [
+    "Only two D750 copies in this memory campaign; prior 30-source and other-camera reports do not certify this binary.",
+    "Native probes include GPU surface readback; headless comparison does not. RSS and footprint are separate process sums, can double-count shared pages and miss shorter peaks or driver allocations.",
+    "One sequential A/B pass without OS cache flushing or load control; similar aggregate stage times are not a statistical performance guarantee.",
+    "SSD phase is a reopening and may decode again; it is not proof of a complete persistent-cache hit.",
+    "No physical OS-pressure, calibrated colour target, display/compositor timestamps, Windows or wider camera qualification.",
+    "Anonymous mappings release Rust buffers on deallocation; they do not impose a hard kernel memory ceiling. Native codecs/drivers retain separate allocations.",
+    "No R0–R4 milestone, Standard/Reference assurance or full sandbox/release gate closed."
+  ]
+}

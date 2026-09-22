@@ -1,3 +1,5 @@
+#[cfg(target_os = "macos")]
+mod allocation;
 pub mod budget;
 pub mod color;
 pub mod compute;

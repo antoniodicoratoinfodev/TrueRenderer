@@ -4,7 +4,7 @@
   "target": "aarch64-apple-darwin",
   "scope": "Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval",
   "rust": "1.98.1",
-  "cargo_lock_sha256": "791111480cd59492faf2ddfdef993633c4568ffe022b5b7af64eb95ea9a2e3be",
+  "cargo_lock_sha256": "d27296dab3e4123906474cf7583ada3fd30463e1b50525d357a52ea9cf4833d6",
   "packages": [
     {
       "name": "accesskit",
