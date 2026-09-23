@@ -1,0 +1,767 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-09-23T20:36:35.278364+00:00",
+  "review_range": "aa8898c^..65634ad",
+  "reviewed_head": "65634ad13ad5a5682dead7e08ceaa2751a056134",
+  "reviewed_commits": [
+    "65634ad Implement initial photo development and update screenshots",
+    "b61f978 Refresh README screenshots from current macOS build",
+    "61849fa Reduce large-image memory and clean repository artifacts",
+    "d4e539b Add photo exports, SDR precision options and read-only FITS",
+    "c15a8b3 Improve RAW thumbnail and filmstrip rendering performance",
+    "10a0bc8 Refine README audience and wording",
+    "a9390db Simplify and sharpen README presentation",
+    "aa8898c Fix RAW preview memory admission and add folder loading progress"
+  ],
+  "scope": "Review of changed photo-editing/store/cache/export/FITS/memory/presentation/loading paths, documentation and screenshot provenance; targeted regressions and generated native fixtures. Not exhaustive verification of all code or hardware.",
+  "worktree": "Uncommitted review corrections; no commit or push performed by this audit",
+  "source_sha256": {
+    "apps/desktop/src/ui.rs": "c3c3e81ffae78eac8a299de6a153d737454e2edfc9387b8eddc65f96f432432d",
+    "apps/desktop/src/ui/editing.rs": "074d01c617b8914b13c039a716b326e590999ca2e0824fdfed4d82823453306b",
+    "crates/tr-store/src/lib.rs": "02cf52f1771bdf5e6b318d9973d6804c426ea98f930dd47e6236455f7d40558c"
+  },
+  "bundle": "dist/TrueRenderer-audit-v1.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "b6d238e731a78a146cd58f99d5bfd53fac9399147c1bd003772fb897ff2bb6e9",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b1ae85037db052a0773a6f6e1d4cc7c58b3d3487d49b5d8d6e4620a70039cfa9",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "7ace86f6e7e585717df128870fe9712188a85e793bd11643e15b7a012a6d7790"
+  },
+  "fixed_findings": [
+    {
+      "priority": "P1",
+      "issue": "201st consecutive undo publishes an unreadable history head",
+      "fix": "Reject undo at 200 before the update; can_undo reflects quota; reopening and redo remain usable",
+      "test": "undo_limit_never_publishes_an_unreadable_edit_head",
+      "reproduced_with_failing_test_before_fix": true
+    },
+    {
+      "priority": "P1",
+      "issue": "Single edited-view cache prevents both A/B photographs from converging",
+      "fix": "Keep at most two independent results with per-photo errors, LRU eviction and existing memory leases",
+      "test": "comparison_keeps_both_edited_previews_ready",
+      "reproduced_with_failing_test_before_fix": true
+    },
+    {
+      "priority": "P2",
+      "issue": "Viewer fallback can use a different RAW engine from the requested or stored recipe",
+      "fix": "Require matching RAW engine for fallback candidates",
+      "test": "viewer_fallback_never_uses_another_raw_engine",
+      "evidence": "Code inspection and regression on corrected implementation"
+    },
+    {
+      "priority": "P2",
+      "issue": "Edited opaque images are incorrectly tagged translucent and use different reduction filters",
+      "fix": "Preserve source opacity in edited viewer and thumbnail pyramids",
+      "test": "edited_preview_and_thumbnail_keep_reference_filters",
+      "evidence": "Code inspection and pixel-exact comparison of every mip for opaque and varying-alpha synthetic images"
+    },
+    {
+      "priority": "P2",
+      "issue": "In-flight quick preview can satisfy a later native-verification request indefinitely",
+      "fix": "Require matching base level as well as source and recipe for cached images and failures",
+      "test": "edited_preview_marks_reduced_work_and_can_converge_from_native_source",
+      "reproduced_with_failing_test_before_fix": true
+    }
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 175,
+    "ignored_integrations_run": 11,
+    "private_camera_tests_skipped": 3,
+    "reporting_script_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_signals": 24,
+    "fmt_clippy_build": true,
+    "native_surface_sampling": true,
+    "native_smoke": true
+  },
+  "xpc": {
+    "passed": true,
+    "corpus_images_checked": 12,
+    "two_distinct_processes": true,
+    "other_isolate_survived": true,
+    "same_pixels": true,
+    "suspended_worker_timeout_ms": 204,
+    "edited_export_checked_slots": 2,
+    "edited_export_native_match_slots": 2,
+    "edited_export_source_unchanged": true,
+    "full_sandbox_gate_passed": false
+  },
+  "production_rejects_fault_injection": true,
+  "exports_fits": {
+    "passed": true,
+    "source_unchanged": true,
+    "checks": [
+      {
+        "format": "Jpeg",
+        "engine": "Apple",
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.276781417,
+        "passed": true
+      },
+      {
+        "format": "Png8",
+        "engine": "Apple",
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.101421584,
+        "passed": true
+      },
+      {
+        "format": "Png16",
+        "engine": "Apple",
+        "encoded": {
+          "bytes": 12933,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.111177291,
+        "passed": true
+      },
+      {
+        "format": "Tiff16",
+        "engine": "Apple",
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.547451917,
+        "passed": true
+      },
+      {
+        "format": "TiffFloat32",
+        "engine": "Apple",
+        "encoded": {
+          "bytes": 9442658,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.420718458,
+        "passed": true
+      },
+      {
+        "format": "DngLinear16",
+        "engine": "Apple",
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readable": true,
+        "seconds": 0.098812625,
+        "passed": true
+      },
+      {
+        "format": "Jpeg",
+        "engine": "LibRawBilinear",
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.10627025,
+        "passed": true
+      },
+      {
+        "format": "Png8",
+        "engine": "LibRawBilinear",
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.099018667,
+        "passed": true
+      },
+      {
+        "format": "Png16",
+        "engine": "LibRawBilinear",
+        "encoded": {
+          "bytes": 12933,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.112961708,
+        "passed": true
+      },
+      {
+        "format": "Tiff16",
+        "engine": "LibRawBilinear",
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.349448208,
+        "passed": true
+      },
+      {
+        "format": "TiffFloat32",
+        "engine": "LibRawBilinear",
+        "encoded": {
+          "bytes": 9442658,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.400365666,
+        "passed": true
+      },
+      {
+        "format": "DngLinear16",
+        "engine": "LibRawBilinear",
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readable": true,
+        "seconds": 0.095880375,
+        "passed": true
+      },
+      {
+        "format": "Jpeg",
+        "engine": "LibRawAhd",
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.098928292,
+        "passed": true
+      },
+      {
+        "format": "Png8",
+        "engine": "LibRawAhd",
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.102702084,
+        "passed": true
+      },
+      {
+        "format": "Png16",
+        "engine": "LibRawAhd",
+        "encoded": {
+          "bytes": 12933,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.11213,
+        "passed": true
+      },
+      {
+        "format": "Tiff16",
+        "engine": "LibRawAhd",
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.3525005,
+        "passed": true
+      },
+      {
+        "format": "TiffFloat32",
+        "engine": "LibRawAhd",
+        "encoded": {
+          "bytes": 9442658,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.3951255,
+        "passed": true
+      },
+      {
+        "format": "DngLinear16",
+        "engine": "LibRawAhd",
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readable": true,
+        "seconds": 0.095254083,
+        "passed": true
+      },
+      {
+        "format": "Jpeg",
+        "engine": "TrueRenderer",
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.1007385,
+        "passed": true
+      },
+      {
+        "format": "Png8",
+        "engine": "TrueRenderer",
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.09653725,
+        "passed": true
+      },
+      {
+        "format": "Png16",
+        "engine": "TrueRenderer",
+        "encoded": {
+          "bytes": 12933,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 0.110225042,
+        "passed": true
+      },
+      {
+        "format": "Tiff16",
+        "engine": "TrueRenderer",
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.357082333,
+        "passed": true
+      },
+      {
+        "format": "TiffFloat32",
+        "engine": "TrueRenderer",
+        "encoded": {
+          "bytes": 9442658,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "Apple",
+        "readable": true,
+        "seconds": 1.402035916,
+        "passed": true
+      },
+      {
+        "format": "DngLinear16",
+        "engine": "TrueRenderer",
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readable": true,
+        "seconds": 0.095372458,
+        "passed": true
+      },
+      {
+        "case": "FITS i32 scientific sample plus masked reference mip",
+        "slot": 0,
+        "sample": {
+          "hdu": 0,
+          "physical": 33554443.0,
+          "stored": 16777218.0,
+          "validity": "valid",
+          "x": 1,
+          "y": 0
+        },
+        "invalid_sample": {
+          "hdu": 0,
+          "physical": null,
+          "stored": -1.0,
+          "validity": "BLANK",
+          "x": 0,
+          "y": 0
+        },
+        "transport": "XPC / App Sandbox · R0",
+        "passed": true
+      },
+      {
+        "case": "FITS i32 scientific sample plus masked reference mip",
+        "slot": 1,
+        "sample": {
+          "hdu": 0,
+          "physical": 33554443.0,
+          "stored": 16777218.0,
+          "validity": "valid",
+          "x": 1,
+          "y": 0
+        },
+        "invalid_sample": {
+          "hdu": 0,
+          "physical": null,
+          "stored": -1.0,
+          "validity": "BLANK",
+          "x": 0,
+          "y": 0
+        },
+        "transport": "XPC / App Sandbox · R0",
+        "passed": true
+      }
+    ]
+  },
+  "sdr_precision": {
+    "passed": true,
+    "checks": [
+      {
+        "compute": "CPU",
+        "format": "Bgra8Unorm",
+        "levels": 256,
+        "max_srgb_error": 0.0019594430923461914,
+        "passed": true
+      },
+      {
+        "compute": "GPU",
+        "format": "Bgra8Unorm",
+        "levels": 256,
+        "max_srgb_error": 0.0019594430923461914,
+        "passed": true
+      },
+      {
+        "compute": "CPU",
+        "format": "Rgb10a2Unorm",
+        "levels": 1024,
+        "max_srgb_error": 0.0007095932960510254,
+        "passed": true
+      },
+      {
+        "compute": "GPU",
+        "format": "Rgb10a2Unorm",
+        "levels": 1024,
+        "max_srgb_error": 0.0009464025497436523,
+        "passed": true
+      },
+      {
+        "compute": "CPU",
+        "format": "Rgba16Float",
+        "levels": 1024,
+        "max_srgb_error": 0.000244140625,
+        "passed": true
+      },
+      {
+        "compute": "GPU",
+        "format": "Rgba16Float",
+        "levels": 1024,
+        "max_srgb_error": 0.0004882216453552246,
+        "passed": true
+      }
+    ]
+  },
+  "native_ui": {
+    "development": {
+      "application": "TrueRenderer",
+      "fixture": "02_Paesaggio_analitico.png",
+      "passed": true,
+      "recipe": {
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.75,
+        "highlights": 0.0,
+        "process_version": 1,
+        "raw_engine": "Apple",
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 25.0,
+        "tint": -8.0,
+        "whites": 0.0
+      },
+      "saved_generation": 1,
+      "scope": "Native macOS UI with generated PNG and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB, physical display or Windows qualification.",
+      "screenshots": [
+        "develop-viewer.png",
+        "develop-grid.png"
+      ],
+      "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+      "source_unchanged": true,
+      "version": "0.1.5"
+    },
+    "filesystem": {
+      "gpu_verified": true,
+      "layouts": [
+        {
+          "case": 0,
+          "passed": true,
+          "tree_height": 612.5,
+          "viewport": [
+            1440.0,
+            891.0
+          ]
+        },
+        {
+          "case": 1,
+          "passed": true,
+          "tree_height": 401.5,
+          "viewport": [
+            1100.0,
+            720.0
+          ]
+        },
+        {
+          "case": 2,
+          "passed": true,
+          "tree_height": 401.5,
+          "viewport": [
+            1440.0,
+            891.0
+          ]
+        },
+        {
+          "case": 3,
+          "passed": true,
+          "tree_height": 64.0,
+          "viewport": [
+            550.0,
+            360.0
+          ]
+        },
+        {
+          "case": 4,
+          "passed": true,
+          "tree_height": 64.0,
+          "viewport": [
+            550.0,
+            360.0
+          ]
+        },
+        {
+          "case": 5,
+          "passed": true,
+          "tree_height": 64.0,
+          "viewport": [
+            550.0,
+            360.0
+          ]
+        }
+      ],
+      "passed": true,
+      "scope": "Native macOS generated corpus; Library/Explorer, grid/viewer, IT/EN, 1440x940, 1100x720, 550x360 and 200% UI. No screen-reader, Windows, cloud, removable-volume, NAS or statistical latency qualification.",
+      "screenshots": 6
+    },
+    "preferences": {
+      "passed": true,
+      "scope": "Four preferences tabs in English/Italian, minimum window and 200% UI zoom on synthetic corpus. Not full accessibility/display qualification.",
+      "screenshots": [
+        "restyle-02",
+        "restyle-03",
+        "restyle-09",
+        "restyle-04",
+        "restyle-06",
+        "restyle-00",
+        "restyle-08",
+        "restyle-01",
+        "restyle-05",
+        "restyle-07",
+        "restyle-10",
+        "restyle-11"
+      ]
+    },
+    "folder_loading": {
+      "complete": true,
+      "errors": 0,
+      "foreground_and_background": true,
+      "passed": true,
+      "processed": 12,
+      "scope": "Isolated native folder loading: modal, background detail popup and completion. Thumbnail readiness, not native full-resolution residency or guaranteed disk persistence.",
+      "screenshots": [
+        "folder-loading-complete",
+        "folder-loading-foreground",
+        "folder-loading-background"
+      ],
+      "total": 12
+    }
+  },
+  "native_commands": [
+    {
+      "case": "xpc",
+      "passed": true,
+      "seconds": 22.508783458
+    },
+    {
+      "case": "exports",
+      "passed": true,
+      "seconds": 13.211708791
+    },
+    {
+      "case": "precision",
+      "passed": true,
+      "seconds": 2.7985435419999973
+    },
+    {
+      "case": "develop",
+      "passed": true,
+      "seconds": 2.854382375
+    },
+    {
+      "case": "filesystem",
+      "passed": true,
+      "seconds": 5.834829374999998
+    },
+    {
+      "case": "preferences",
+      "passed": true,
+      "seconds": 4.225327542000002
+    },
+    {
+      "case": "loading",
+      "passed": true,
+      "seconds": 1.7059705419999958
+    }
+  ],
+  "documentation": {
+    "local_links_checked_before_report": 332,
+    "broken_links": 0,
+    "published_screenshot_hashes_verified": 4,
+    "historical_reports_preserved": true,
+    "local_links_checked_after_report": 333
+  },
+  "new_screenshots_visually_inspected": [
+    "develop-viewer.png",
+    "develop-grid.png",
+    "filesystem-3.png",
+    "restyle-02.png"
+  ],
+  "evidence_root": "var/recent-commits-audit",
+  "reproduce": [
+    "scripts/verify.sh --gui",
+    "scripts/build-macos.sh dist/TrueRenderer-audit-v1.app",
+    "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-audit-v1.app --report-root <isolated-root-with-corpus-and-reports>",
+    "dist/TrueRenderer-audit-v1.app/Contents/MacOS/TrueRenderer <flag> --root <isolated-root> --data <separate-data-per-case>; flags: --verify-exports, --verify-precision, --develop-smoke, --filesystem-smoke, --restyle-smoke, --folder-loading-smoke"
+  ],
+  "limits": [
+    "No personal library, backups or photographs modified; already damaged personal undo heads are not automatically repaired.",
+    "A/B readiness and in-flight final-verification regression are automated UI-state tests, not a newly captured native A/B interaction campaign.",
+    "Native edited export parity covers one generated PNG and one recipe in both slots, not extended RAW or resized-output parity. Export resize uses area integration and needs its own future output preview/qualification.",
+    "Library JSON exports annotations and favorites, not photographic recipes/history; SQLite backups include them. Portable recipes remain future work.",
+    "No new private-camera, large edited RAW memory/p95, physical display, Windows, multi-monitor or accessibility qualification.",
+    "Relative RGB picker remains single-pixel; no new native click test, RAW WB/Auto or robust neighborhood sampling.",
+    "SF0-SF2/SF10 and R0-R4 gates remain open."
+  ]
+}

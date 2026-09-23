@@ -19,7 +19,13 @@ impl EditEntry {
     }
 }
 
-type PreviewOutcome = (String, u64, EditRecipe, Result<Arc<ImageLevels>, String>);
+type PreviewOutcome = (
+    String,
+    u64,
+    u32,
+    EditRecipe,
+    Result<Arc<ImageLevels>, String>,
+);
 type ThumbnailOutcome = (
     String,
     String,
@@ -34,15 +40,21 @@ struct ThumbnailPreview {
     histogram: [[u32; 256]; 3],
     touched: u64,
 }
+struct EditPreview {
+    source: u64,
+    recipe: EditRecipe,
+    image: Arc<ImageLevels>,
+    touched: u64,
+}
 pub(super) struct EditingUi {
     pub entries: HashMap<String, EditEntry>,
     pub show_original: bool,
     pub verify_final: Option<String>,
-    pub preview: Option<(String, u64, EditRecipe, Arc<ImageLevels>)>,
+    previews: HashMap<String, EditPreview>,
     inflight: Option<(String, u64, EditRecipe)>,
     tx: std::sync::mpsc::Sender<PreviewOutcome>,
     rx: std::sync::mpsc::Receiver<PreviewOutcome>,
-    pub preview_error: Option<String>,
+    preview_errors: HashMap<String, (u64, u32, EditRecipe, String)>,
     pub picker_error: Option<(String, String)>,
     smoke_ready_at: Option<Instant>,
     thumbnails: HashMap<u64, ThumbnailPreview>,
@@ -59,11 +71,11 @@ impl Default for EditingUi {
             entries: HashMap::new(),
             show_original: false,
             verify_final: None,
-            preview: None,
+            previews: HashMap::new(),
             inflight: None,
             tx,
             rx,
-            preview_error: None,
+            preview_errors: HashMap::new(),
             picker_error: None,
             smoke_ready_at: None,
             thumbnails: HashMap::new(),
@@ -135,17 +147,11 @@ impl TrueRenderer {
                 if !saved {
                     self.commit_edit(&item.id);
                 }
-                let rendered = self
-                    .editing
-                    .preview
-                    .as_ref()
-                    .is_some_and(|(id, source, _, _)| {
-                        id == &item.id
-                            && self
-                                .cache
-                                .values()
-                                .any(|cached| cached.pyramid.id() == *source)
-                    });
+                let rendered = self.editing.previews.get(&item.id).is_some_and(|preview| {
+                    self.cache
+                        .values()
+                        .any(|cached| cached.pyramid.id() == preview.source)
+                });
                 if saved && rendered {
                     self.editing.smoke_ready_at.get_or_insert_with(Instant::now);
                 } else {
@@ -215,10 +221,21 @@ impl TrueRenderer {
         }
     }
     pub(super) fn clear_edit_preview(&mut self) {
-        if let Some((_, _, _, image)) = self.editing.preview.take() {
+        let sources = self
+            .editing
+            .previews
+            .drain()
+            .map(|(_, preview)| preview.image.id())
+            .collect();
+        self.presenter.invalidate_sources(&sources);
+        self.editing.preview_errors.clear();
+    }
+    fn clear_edit_preview_for(&mut self, id: &str) {
+        if let Some(preview) = self.editing.previews.remove(id) {
             self.presenter
-                .invalidate_sources(&HashSet::from([image.id()]));
+                .invalidate_sources(&HashSet::from([preview.image.id()]));
         }
+        self.editing.preview_errors.remove(id);
     }
     pub(super) fn clear_edit_thumbnails(&mut self, id: &str) {
         self.editing
@@ -240,14 +257,19 @@ impl TrueRenderer {
     }
     pub(super) fn prune_edit_previews(&mut self, pressure: bool) {
         let live: HashSet<_> = self.cache.values().map(|c| c.pyramid.id()).collect();
-        if self
+        let stale: Vec<_> = self
             .editing
-            .preview
-            .as_ref()
-            .is_some_and(|(_, source, _, _)| pressure || !live.contains(source))
-        {
-            self.clear_edit_preview();
+            .previews
+            .iter()
+            .filter(|(_, preview)| pressure || !live.contains(&preview.source))
+            .map(|(id, _)| id.clone())
+            .collect();
+        for id in stale {
+            self.clear_edit_preview_for(&id);
         }
+        self.editing
+            .preview_errors
+            .retain(|_, (source, _, _, _)| !pressure && live.contains(source));
         let stale: Vec<_> = self
             .editing
             .thumbnails
@@ -602,20 +624,39 @@ impl TrueRenderer {
             });
     }
     pub(super) fn poll_edit_preview(&mut self) {
-        while let Ok((id, source, recipe, result)) = self.editing.rx.try_recv() {
+        while let Ok((id, source, base, recipe, result)) = self.editing.rx.try_recv() {
             self.editing.inflight = None;
+            if self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe) {
+                continue;
+            }
             match result {
                 Ok(image) => {
-                    if self.state.current_item().is_some_and(|item| item.id == id)
-                        && self.editing.entries.get(&id).and_then(|e| e.draft.as_ref())
-                            == Some(&recipe)
+                    self.clear_edit_preview_for(&id);
+                    if self.editing.previews.len() >= 2
+                        && let Some(oldest) = self
+                            .editing
+                            .previews
+                            .iter()
+                            .min_by_key(|(_, p)| p.touched)
+                            .map(|(id, _)| id.clone())
                     {
-                        self.clear_edit_preview();
-                        self.editing.preview = Some((id, source, recipe, image));
+                        self.clear_edit_preview_for(&oldest);
                     }
-                    self.editing.preview_error = None;
+                    self.editing.previews.insert(
+                        id,
+                        EditPreview {
+                            source,
+                            recipe,
+                            image,
+                            touched: self.frame_number,
+                        },
+                    );
                 }
-                Err(error) => self.editing.preview_error = Some(error),
+                Err(error) => {
+                    self.editing
+                        .preview_errors
+                        .insert(id, (source, base, recipe, error));
+                }
             }
         }
         while let Ok((id, digest, source, recipe, result)) = self.editing.thumbnail_rx.try_recv() {
@@ -726,7 +767,8 @@ impl TrueRenderer {
                     let result = (|| -> anyhow::Result<_> {
                         let mut raster = neutral.levels()[index].clone();
                         recipe.apply(&mut raster)?;
-                        let mut image = ImageLevels::from_reference_mip(raster, size, base, false)?;
+                        let mut image =
+                            ImageLevels::from_reference_mip(raster, size, base, neutral.opaque())?;
                         image.attach_lease(lease);
                         let histogram = image.source().histogram();
                         Ok((Arc::new(image), histogram))
@@ -755,51 +797,73 @@ impl TrueRenderer {
             return Some(neutral);
         }
         let source = neutral.id();
-        if let Some((ready_id, ready_source, ready_recipe, image)) = &self.editing.preview
-            && ready_id == id
-            && *ready_source == source
-            && *ready_recipe == recipe
+        let index = if self.editing.verify_final.as_deref() == Some(id) && neutral.base_level() == 0
         {
-            return Some(image.clone());
+            0
+        } else {
+            neutral
+                .levels()
+                .iter()
+                .position(|l| l.width.max(l.height) <= 1024)
+                .unwrap_or(neutral.levels().len() - 1)
+        };
+        let base = neutral.base_level() + index as u32;
+        if let Some(ready) = self.editing.previews.get_mut(id)
+            && ready.source == source
+            && ready.recipe == recipe
+            && ready.image.base_level() == base
+        {
+            ready.touched = self.frame_number;
+            return Some(ready.image.clone());
         }
-        self.clear_edit_preview();
+        if self.editing.preview_errors.get(id).is_some_and(
+            |(failed_source, failed_base, failed_recipe, _)| {
+                *failed_source == source && *failed_base == base && *failed_recipe == recipe
+            },
+        ) {
+            return None;
+        }
+        self.clear_edit_preview_for(id);
         if self.editing.inflight.is_none() {
-            let index =
-                if self.editing.verify_final.as_deref() == Some(id) && neutral.base_level() == 0 {
-                    0
-                } else {
-                    neutral
-                        .levels()
-                        .iter()
-                        .position(|l| l.width.max(l.height) <= 1024)
-                        .unwrap_or(neutral.levels().len() - 1)
-                };
             let level = &neutral.levels()[index];
             let bytes = level.pixels.len() as u64 * 16 * 3;
             if let Some(lease) = self.service.cache.memory.try_reserve(bytes) {
                 let tx = self.editing.tx.clone();
                 let wake = self.service.wake.clone();
                 let id = id.to_owned();
-                let base = neutral.base_level() + index as u32;
                 let size = neutral.source_size();
                 self.editing.inflight = Some((id.clone(), source, recipe.clone()));
                 std::thread::spawn(move || {
                     let result = (|| -> anyhow::Result<Arc<ImageLevels>> {
                         let mut raster = neutral.levels()[index].clone();
                         recipe.apply(&mut raster)?;
-                        let mut image = ImageLevels::from_reference_mip(raster, size, base, false)?;
+                        let mut image =
+                            ImageLevels::from_reference_mip(raster, size, base, neutral.opaque())?;
                         image.attach_lease(lease);
                         Ok(Arc::new(image))
                     })()
                     .map_err(|e| format!("{e:#}"));
-                    let _ = tx.send((id, source, recipe, result));
+                    let _ = tx.send((id, source, base, recipe, result));
                     wake.request_repaint();
                 });
             } else {
-                self.editing.preview_error =
-                    Some("Memoria insufficiente per l'anteprima modificata".into());
+                self.editing.preview_errors.insert(
+                    id.into(),
+                    (
+                        0,
+                        base,
+                        recipe,
+                        "Memoria insufficiente per l'anteprima modificata".into(),
+                    ),
+                );
             }
         }
         None
+    }
+    pub(super) fn edited_preview_error(&self, id: &str) -> Option<&str> {
+        self.editing
+            .preview_errors
+            .get(id)
+            .map(|(_, _, _, error)| error.as_str())
     }
 }

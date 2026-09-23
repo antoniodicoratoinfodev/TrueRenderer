@@ -488,6 +488,19 @@ impl TrueRenderer {
     fn image_key(&self, item: &Item, edge: u32) -> (String, PreviewRequest) {
         (item.id.clone(), self.preview_request(item, edge))
     }
+    fn viewer_fallback_key(
+        &self,
+        item: &Item,
+        request: PreviewRequest,
+    ) -> Option<(String, PreviewRequest)> {
+        self.cache
+            .iter()
+            .filter(|((id, cached_request), _)| {
+                id == &item.id && cached_request.raw_engine == request.raw_engine
+            })
+            .max_by_key(|(_, cached)| cached.pyramid.source().width)
+            .map(|(key, _)| key.clone())
+    }
     fn ensure_image(&mut self, item: &Item, edge: u32) {
         self.ensure_image_priority(
             item,
@@ -2522,12 +2535,7 @@ impl TrueRenderer {
                 },
             );
         }
-        let fallback = self
-            .cache
-            .iter()
-            .filter(|((id, _), _)| id == &item.id)
-            .max_by_key(|(_, c)| c.pyramid.source().width)
-            .map(|(key, _)| key.clone());
+        let fallback = self.viewer_fallback_key(item, key.1);
         let completeness = if self.cache.contains_key(&key) {
             tr_core::preview::Completeness::Complete
         } else {
@@ -2596,7 +2604,7 @@ impl TrueRenderer {
                     ui.label(lang.text("Anteprima modificata provvisoria · export nativo"));
                 }
             }
-            if let Some(error) = &self.editing.preview_error {
+            if let Some(error) = self.edited_preview_error(&item.id) {
                 ui.colored_label(AMBER, error);
             }
             let sample_from_current_render =
@@ -3524,6 +3532,192 @@ mod settings_regressions {
     }
 
     #[test]
+    fn edited_preview_and_thumbnail_keep_reference_filters() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        app.state.current = Some(item.id.clone());
+        app.editing.verify_final = Some(item.id.clone());
+        let mut recipe = tr_core::editing::EditRecipe::neutral(app.cache_settings.raw_engine);
+        recipe.exposure_ev = 0.75;
+        app.editing.entries.insert(
+            item.id.clone(),
+            editing::EditEntry {
+                loaded: Some(tr_store::LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: "filters".into(),
+                    generation: 1,
+                    revision: 1,
+                    recipe: recipe.clone(),
+                    can_undo: true,
+                    can_redo: false,
+                }),
+                draft: Some(recipe.clone()),
+                ..Default::default()
+            },
+        );
+        for opaque in [true, false] {
+            let raster = tr_core::color::LinearImage::new(
+                65,
+                33,
+                (0..65 * 33)
+                    .map(|i| {
+                        let alpha = if opaque { 1. } else { (i % 7) as f32 / 6. };
+                        [
+                            ((i % 11) as f32 / 13.) * alpha,
+                            0.3 * alpha,
+                            ((i % 17) as f32 / 19.) * alpha,
+                            alpha,
+                        ]
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            let source =
+                Arc::new(ImageLevels::from_source(raster.clone(), PreviewRequest::full()).unwrap());
+            let mut modified = raster;
+            recipe.apply(&mut modified).unwrap();
+            let reference = ImageLevels::from_source(modified, PreviewRequest::full()).unwrap();
+            let deadline = Instant::now() + Duration::from_secs(2);
+            loop {
+                app.poll_edit_preview();
+                let view = app.edited_preview(&item.id, "filters", source.clone());
+                let thumb = app.edited_thumbnail(&item.id, "filters", source.clone());
+                if let (Some(view), Some(thumb)) = (view, thumb) {
+                    for actual in [view, thumb] {
+                        for (a, b) in actual.levels().iter().zip(reference.levels()) {
+                            assert_eq!(a.pixels, b.pixels, "Changed filter for opaque={opaque}");
+                        }
+                        assert_eq!(actual.opaque(), reference.opaque());
+                    }
+                    break;
+                }
+                assert!(Instant::now() < deadline);
+                std::thread::sleep(Duration::from_millis(5));
+            }
+        }
+    }
+    #[test]
+    fn viewer_fallback_never_uses_another_raw_engine() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        let engines: Vec<_> = tr_core::decoder::RawEngine::choices().collect();
+        let request = PreviewRequest {
+            raw_engine: engines[0],
+            ..PreviewRequest::full()
+        };
+        let other = PreviewRequest {
+            raw_engine: engines[1],
+            ..request
+        };
+        let pyramid = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(2, 1, vec![[0.2, 0.3, 0.4, 1.]; 2]).unwrap(),
+                request,
+            )
+            .unwrap(),
+        );
+        let cached = CachedImage {
+            digest: item.digest.clone(),
+            info: RasterInfo {
+                scientific: None,
+                reference_mip: None,
+                width: 2,
+                height: 1,
+                source_width: 2,
+                source_height: 1,
+                native_bits: 32,
+                format: "test".into(),
+                decoder: "test".into(),
+                input_color: "Rec2020".into(),
+                filter: "reference".into(),
+                orientation: "applied".into(),
+            },
+            histogram: pyramid.source().histogram(),
+            pyramid,
+            touched: 0,
+            transport: "test",
+            worker_pid: None,
+        };
+        app.cache.insert((item.id.clone(), other), cached.clone());
+        assert!(app.viewer_fallback_key(&item, request).is_none());
+        let compatible = PreviewRequest {
+            edge: 512,
+            ..request
+        };
+        app.cache.insert((item.id.clone(), compatible), cached);
+        assert_eq!(
+            app.viewer_fallback_key(&item, request),
+            Some((item.id.clone(), compatible))
+        );
+    }
+    #[test]
+    fn comparison_keeps_both_edited_previews_ready() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let items = app.state.items[..2].to_vec();
+        app.state.current = Some(items[0].id.clone());
+        app.state.view = ViewMode::Compare;
+        let sources: Vec<_> = [0.2, 0.3]
+            .into_iter()
+            .map(|value| {
+                Arc::new(
+                    ImageLevels::from_source(
+                        tr_core::color::LinearImage::new(
+                            16,
+                            8,
+                            vec![[value, value, value, 1.]; 128],
+                        )
+                        .unwrap(),
+                        PreviewRequest::full(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect();
+        for item in &items {
+            let mut recipe = tr_core::editing::EditRecipe::neutral(app.cache_settings.raw_engine);
+            recipe.exposure_ev = 1.;
+            app.editing.entries.insert(
+                item.id.clone(),
+                editing::EditEntry {
+                    loaded: Some(tr_store::LoadedEdit {
+                        asset_id: item.id.clone(),
+                        source_digest: "comparison".into(),
+                        generation: 1,
+                        revision: 1,
+                        recipe: recipe.clone(),
+                        can_undo: true,
+                        can_redo: false,
+                    }),
+                    draft: Some(recipe),
+                    ..Default::default()
+                },
+            );
+        }
+        let deadline = Instant::now() + Duration::from_secs(2);
+        loop {
+            app.poll_edit_preview();
+            let a = app.edited_preview(&items[0].id, "comparison", sources[0].clone());
+            let b = app.edited_preview(&items[1].id, "comparison", sources[1].clone());
+            if let (Some(a), Some(b)) = (a, b) {
+                assert_eq!(a.source().pixels[0], [0.4, 0.4, 0.4, 1.]);
+                assert_eq!(b.source().pixels[0], [0.6, 0.6, 0.6, 1.]);
+                assert!(
+                    app.edited_preview(&items[0].id, "comparison", sources[0].clone())
+                        .is_some()
+                );
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "Both comparison edits must converge and stay ready"
+            );
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    }
+    #[test]
     fn edited_preview_marks_reduced_work_and_can_converge_from_native_source() {
         let (_dir, ctx, mut app) = app();
         settle(&mut app, &ctx, true);
@@ -3580,6 +3774,16 @@ mod settings_regressions {
         let final_image = wait(&mut app);
         assert_eq!(final_image.base_level(), 0);
         assert_eq!(final_image.source().pixels[0], [0.5, 0.25, 1., 1.]);
+        // Request native verification while the quick result is still queued.
+        app.editing.verify_final = None;
+        app.clear_edit_preview();
+        assert!(
+            app.edited_preview(&item.id, "synthetic", source.clone())
+                .is_none()
+        );
+        app.editing.verify_final = Some(item.id.clone());
+        app.clear_edit_preview();
+        assert_eq!(wait(&mut app).base_level(), 0);
     }
 
     #[test]

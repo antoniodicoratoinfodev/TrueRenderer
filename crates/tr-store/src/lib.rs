@@ -259,7 +259,7 @@ impl Catalog {
                 generation: generation.try_into()?,
                 revision: cursor.try_into()?,
                 recipe,
-                can_undo: parent.is_some(),
+                can_undo: parent.is_some() && redo.len() < 200,
                 can_redo: !redo.is_empty(),
             })
         } else {
@@ -337,17 +337,22 @@ impl Catalog {
         )?;
         let mut stack: Vec<u64> = serde_json::from_str(&redo)?;
         ensure!(stack.len() <= 200, "Cronologia fotografica fuori quota");
-        let target =
-            if undo {
-                let parent: Option<i64> = self.library.query_row(
+        let target = if undo {
+            ensure!(
+                stack.len() < 200,
+                "Limite di 200 annullamenti raggiunto; ripetere una modifica prima di proseguire"
+            );
+            let parent: Option<i64> = self.library.query_row(
                 "SELECT parent_revision FROM photo_edit_revision WHERE asset_id=?1 AND revision=?2",
-                params![id,cursor], |r| r.get(0))?;
-                let parent = parent.context("Nessuna modifica da annullare")?;
-                stack.push(cursor.try_into()?);
-                parent
-            } else {
-                i64::try_from(stack.pop().context("Nessuna modifica da ripetere")?)?
-            };
+                params![id, cursor],
+                |r| r.get(0),
+            )?;
+            let parent = parent.context("Nessuna modifica da annullare")?;
+            stack.push(cursor.try_into()?);
+            parent
+        } else {
+            i64::try_from(stack.pop().context("Nessuna modifica da ripetere")?)?
+        };
         redo = serde_json::to_string(&stack)?;
         let changed = self.library.execute("UPDATE photo_edit_head SET generation=generation+1,cursor=?1,redo=?2 WHERE asset_id=?3 AND generation=?4",
             params![target,redo,id,i64::try_from(expected_generation)?])?;
@@ -498,6 +503,40 @@ fn backup_connection(library: &Connection, root: &Path) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn undo_limit_never_publishes_an_unreadable_edit_head() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(Path::new("/synthetic/history.png"), "history", 4)
+            .unwrap();
+        let engine = RawEngine::default();
+        let mut saved = catalog.load_edit(&item.id, engine).unwrap();
+        for n in 0..201 {
+            let mut recipe = saved.recipe.clone();
+            recipe.exposure_ev = (n % 2 + 1) as f32;
+            saved = catalog
+                .save_edit(&item.id, saved.generation, &recipe)
+                .unwrap();
+        }
+        for _ in 0..200 {
+            saved = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+        }
+        assert!(catalog.step_edit(&item.id, saved.generation, true).is_err());
+        drop(catalog);
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let reopened = catalog.load_edit(&item.id, engine).unwrap();
+        assert_eq!(reopened.generation, saved.generation);
+        assert_eq!(reopened.recipe, saved.recipe);
+        assert!(!reopened.can_undo);
+        assert!(reopened.can_redo);
+        assert!(
+            catalog
+                .step_edit(&item.id, reopened.generation, false)
+                .unwrap()
+                .can_undo
+        );
+    }
     #[test]
     fn photo_edits_survive_reopen_backup_and_history_branch() {
         let dir = tempfile::tempdir().unwrap();
