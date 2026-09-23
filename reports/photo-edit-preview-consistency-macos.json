@@ -1,0 +1,45 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "increment": "edited grid, filmstrip and inspector preview; native PNG16 comparison",
+  "checked_at": "2026-09-23T18:29:00.310891+00:00",
+  "bundle": "dist/TrueRenderer-develop-v6.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "c119019e1cf5fb79fc881dbf82db557b3dc18a451851aaf3888c0abc3a815ede",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "07e9307698ce3be77bf171298e1cd98c512551e914b4227f135f8bf32775a791",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "f571b080d6b77fcebee8bac7d0cbdc6cf48ec391cea6365c30db3cb72659e08e"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 170,
+    "ignored_integration_tests_run": 11,
+    "private_camera_tests_skipped": 3,
+    "worker_protocol_checks": 8,
+    "resampling_signals": 24,
+    "fmt_clippy_workspace_build": true,
+    "native_sampling_smoke": true,
+    "edited_thumbnail_cases": 2,
+    "edited_histogram_matches_preview": true,
+    "edited_thumbnail_draft_invalidation": true
+  },
+  "xpc_integration": {
+    "command": "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-develop-v6.app --report-root var/photo-edit-preview-consistency",
+    "passed": true,
+    "corpus_images_checked": 12,
+    "two_distinct_processes": true,
+    "timeout_and_recovery": true,
+    "other_isolate_survived": true,
+    "edited_png16_export_checked_slots": 2,
+    "native_raster_vs_edited_png16_quantized_exact_slots": 2,
+    "edited_export_source_unchanged": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false
+  },
+  "limits": [
+    "The pixel-exact native/export comparison uses one synthetic PNG and one edit recipe, not the extended RAW and photographic corpus.",
+    "Grid, filmstrip and inspector apply the process after reducing to a mip of at most 512 pixels; these previews and their histogram are provisional.",
+    "No native interaction campaign on the Develop panel at compact/200% layout, and no memory or p95 qualification on large edited RAW files.",
+    "SF0-SF10 and R0-R4 gates remain open."
+  ]
+}

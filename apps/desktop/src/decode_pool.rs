@@ -611,6 +611,10 @@ impl DecodePool {
                                 source_limit,
                                 &cancelled,
                             )?;
+                            anyhow::ensure!(
+                                source.digest() == job.source_digest,
+                                "Sorgente diversa dalla ricetta fotografica congelata"
+                            );
                             broker.set_raw_engine(job.engine);
                             let probe_lease =
                                 reserve(&cache, 128 * 1024 * 1024, &events, &ctx, &cancelled)?;
@@ -637,9 +641,10 @@ impl DecodePool {
                             )?
                             .max(pixels * 20 + output_limit * 2);
                             let _working = reserve(&cache, peak, &events, &ctx, &cancelled)?;
-                            let (info, bytes) = broker.export_snapshot_bounded(
+                            let (info, bytes) = broker.export_edited_snapshot_bounded(
                                 source,
                                 job.options,
+                                job.recipe.clone(),
                                 output_limit,
                                 cancelled,
                             )?;

@@ -1,37 +1,42 @@
 {
   "application": "TrueRenderer",
-  "captured_at": "2026-09-22T15:58:13.696303+00:00",
+  "captured_at": "2026-09-23T18:56:12.853952+00:00",
   "passed": true,
-  "bundle": "dist/TrueRenderer-memory-final.app",
+  "bundle": "dist/TrueRenderer-develop-v7.app",
   "binary_sha256": {
-    "Contents/MacOS/TrueRenderer": "45dfaeee0f21fc4a3122da9bc5d0830a5e2366f319d86eb1a60ac4ff6f619bad",
-    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "e420ea78977a66aff31753771840c03f2de28fc9595e6fbb3329acc7b0a9ecf5",
-    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "17edba5fcba574e40913340df288944f516ac126a2b723b5185144865c3bc8e9"
+    "Contents/MacOS/TrueRenderer": "739bc4b5f7110b53bc105ea796980e3634f13f86a51b64ba8f6d1f1024cb4cdf",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b1ae85037db052a0773a6f6e1d4cc7c58b3d3487d49b5d8d6e4620a70039cfa9",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "7ace86f6e7e585717df128870fe9712188a85e793bd11643e15b7a012a6d7790"
   },
-  "source": "12 generated corpus images, SHA-256 matched manifest; isolated local library",
+  "source": "12 generated corpus images; isolated local libraries; original fixture digest unchanged",
   "native_smokes": {
+    "develop": true,
     "filesystem": true,
-    "preferences": true,
-    "sampling": true
+    "preferences": true
+  },
+  "edited_recipe": {
+    "exposure_ev": 0.75,
+    "temperature_rgb": 25.0,
+    "tint_rgb": -8.0
   },
   "screenshots": [
     {
       "file": "reports/readme-viewer.png",
-      "capture": "02-preview.png",
+      "capture": "develop-viewer.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "2f7aa27e3567f7989bf66ef0a702281c932efca6d5515ceebea020f64c38d03c"
+      "sha256": "3b7ea851d4b69e2ff0129b04e3248f1e80fbad9dae8eff55c251348659ca61e6"
     },
     {
       "file": "reports/readme-grid.png",
-      "capture": "filesystem-0.png",
+      "capture": "develop-grid.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "9a66be913f423a01136ff70a6f89d7e85a50193fba7146d5ffaeedbf36081392"
+      "sha256": "1b4ed142ccd9317446356a5262327a730fa7907a3d3912f7d5377cc82ed5093c"
     },
     {
       "file": "reports/readme-compact.png",
@@ -40,7 +45,7 @@
         1100,
         720
       ],
-      "sha256": "863f086a39039e21bf409b960786ccfc99df71ae00975069dacf144497b67670"
+      "sha256": "404d510fa80047985d64d25c0e75ceca523e486bcfd05fa7d4512576adc739b2"
     },
     {
       "file": "reports/readme-preferences.png",
@@ -49,8 +54,8 @@
         2880,
         1782
       ],
-      "sha256": "4c3de41ba66429092c816f9383e9f4242c39b91380a84b0dba19a39a0c1fa529"
+      "sha256": "f1ac4122e37e685b74fbc66afa0ab0fcbb94b199572dc2666454f87811853432"
     }
   ],
-  "scope": "Native macOS screenshots of the current bundle for README; no private photographs, personal library, physical-display or Windows qualification."
+  "scope": "Native macOS screenshots from the qualified development bundle and generated corpus. Viewer and grid show a saved relative RGB edit. No RAW white-balance, physical-display, Windows, or full accessibility qualification."
 }

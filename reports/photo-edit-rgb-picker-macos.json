@@ -1,0 +1,52 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "increment": "relative RGB single-pixel neutral picker and native UI screenshots",
+  "checked_at": "2026-09-23T18:56:12.854377+00:00",
+  "bundle": "dist/TrueRenderer-develop-v7.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "739bc4b5f7110b53bc105ea796980e3634f13f86a51b64ba8f6d1f1024cb4cdf",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b1ae85037db052a0773a6f6e1d4cc7c58b3d3487d49b5d8d6e4620a70039cfa9",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "7ace86f6e7e585717df128870fe9712188a85e793bd11643e15b7a012a6d7790"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 171,
+    "ignored_integration_tests_run": 11,
+    "private_camera_tests_skipped": 3,
+    "worker_protocol_checks": 8,
+    "resampling_signals": 24,
+    "fmt_clippy_workspace_build": true,
+    "native_sampling_smoke": true,
+    "neutral_picker_core_test": "editing::tests::rendered_rgb_neutral_picker_is_reversible_and_rejects_bad_samples"
+  },
+  "xpc_integration": {
+    "command": "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-develop-v7.app --report-root var/photo-edit-picker-qualification",
+    "passed": true,
+    "corpus_images_checked": 12,
+    "two_distinct_processes": true,
+    "timeout_and_recovery": true,
+    "edited_png16_export_checked_slots": 2,
+    "native_raster_vs_edited_png16_quantized_exact_slots": 2,
+    "edited_export_source_unchanged": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false
+  },
+  "native_ui": {
+    "develop_viewer_and_grid": true,
+    "saved_generation": 1,
+    "source_unchanged": true,
+    "filesystem_layouts": 6,
+    "filesystem_passed": true,
+    "preferences_passed": true,
+    "screenshots_report": "reports/readme-screenshots-macos.json"
+  },
+  "limits": [
+    "The neutral picker algorithm is unit-tested; the native smoke displays its control but does not click it.",
+    "The picker uses one native pixel and relative RGB gains; robust 5x5/11x11 sampling, RAW white balance, and Auto remain open.",
+    "The exact native/export comparison uses one synthetic PNG and one edit recipe, not extended RAW or photographic corpora.",
+    "Grid, filmstrip, and inspector previews use reduced mips and their histogram is provisional.",
+    "No physical display, Windows, large edited RAW memory/p95, or SF0-SF10/R0-R4 gate qualification."
+  ]
+}

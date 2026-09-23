@@ -16,6 +16,68 @@ impl Language {
             return source;
         }
         match source {
+            "Sviluppo" => "Develop",
+            "Caricamento ricetta…" => "Loading edit recipe…",
+            "Riprova salvataggio" => "Retry save",
+            "Annulla sviluppo" => "Undo edit",
+            "Ripeti sviluppo" => "Redo edit",
+            "Prima/Dopo" => "Before/After",
+            "Prima" => "Before",
+            "Modificata" => "Edited",
+            "In calcolo" => "Rendering",
+            "Errore" => "Error",
+            "Verifica resa finale" => "Verify final rendering",
+            "Resa finale alla risoluzione nativa" => "Final rendering at native resolution",
+            "Ricetta salvata nella libreria" => "Recipe saved in library",
+            "Modifiche in corso" => "Editing in progress",
+            "Luce" => "Light",
+            "Esposizione" => "Exposure",
+            "Luminosità" => "Brightness",
+            "Contrasto" => "Contrast",
+            "Alte luci" => "Highlights",
+            "Ombre" => "Shadows",
+            "Bianchi" => "Whites",
+            "Neri" => "Blacks",
+            "Curva tonale" => "Tone curve",
+            "Mezzitoni curva" => "Curve midtones",
+            "Colore del render · correzione RGB relativa" => {
+                "Rendered color · relative RGB correction"
+            }
+            "Temperatura RGB" => "RGB warmth",
+            "Tinta RGB" => "RGB tint",
+            "Saturazione" => "Saturation",
+            "La correzione RGB non cambia il WB RAW del decoder." => {
+                "RGB correction does not change the decoder's RAW white balance."
+            }
+            "Azzera correzione RGB" => "Reset RGB correction",
+            "Neutralizza campione RGB" => "Neutralize RGB sample",
+            "Verifica la resa finale e campiona la vista modificata." => {
+                "Verify final rendering and sample the edited view."
+            }
+            "Sviluppo originale" => "Original development",
+            "Vista modificata provvisoria; export alla risoluzione nativa." => {
+                "Provisional edited view; export at native resolution."
+            }
+            "Prima · sviluppo originale" => "Before · original development",
+            "Calcolo regolazioni · originale provvisorio" => {
+                "Calculating edits · original shown provisionally"
+            }
+            "Anteprima modificata provvisoria · export nativo" => {
+                "Provisional edited preview · native export"
+            }
+            "Motore salvato per foto · clamp nei formati interi, nessun dither" => {
+                "Saved engine per photo · integer formats clamp, no dither"
+            }
+            "Motore salvato nella ricetta della foto." => "Engine saved in this photo's recipe.",
+            "Attendere il caricamento o salvataggio delle ricette selezionate." => {
+                "Wait for selected recipes to load or save."
+            }
+            "DNG lineare: sviluppo tecnico senza regolazioni fotografiche; usare JPEG, PNG o TIFF per la resa modificata." => {
+                "Linear DNG: technical development without photographic edits; use JPEG, PNG, or TIFF for the edited result."
+            }
+            "DNG RAW conserva il mosaico: le regolazioni fotografiche non vengono applicate." => {
+                "RAW DNG preserves the mosaic; photographic edits are not applied."
+            }
             "Per riaprire i DNG esportati scegliere LibRaw bilineare/AHD. Apple RAW e il motore mosaico TrueRenderer non sono compatibili con questi file." => {
                 "To reopen exported DNG files, select LibRaw bilinear/AHD. Apple RAW and the TrueRenderer mosaic engine are not compatible with these files."
             }

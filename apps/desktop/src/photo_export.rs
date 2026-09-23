@@ -12,6 +12,8 @@ pub struct Job {
     pub item: tr_core::Item,
     pub options: tr_core::export::Options,
     pub engine: tr_core::decoder::RawEngine,
+    pub source_digest: String,
+    pub recipe: Option<tr_core::editing::EditRecipe>,
     pub destination: PathBuf,
     pub cancel: Arc<AtomicBool>,
 }

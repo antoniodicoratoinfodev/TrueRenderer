@@ -4,6 +4,10 @@ use std::{
     path::Path,
     time::{Duration, Instant},
 };
+use tr_core::{
+    editing::EditRecipe,
+    export::{Format, MAX_ENCODED, Options},
+};
 use tr_platform::Broker;
 
 pub fn run_growth(root: &Path, binary: &Path) -> Result<()> {
@@ -126,13 +130,81 @@ pub fn run(root: &Path, binary: &Path) -> Result<()> {
         second.decode(&path, &digest, 320)?;
         checked += 1;
     }
+    let second_statistics = second.statistics().clone();
+    drop(second);
+    drop(recovered);
+    let edit_options = Options {
+        format: Format::Png16,
+        ..Options::default()
+    };
+    let mut edit_recipe = EditRecipe::neutral(tr_core::decoder::RawEngine::default());
+    edit_recipe.exposure_ev = 1.;
+    edit_recipe.temperature = 25.;
+    edit_recipe.tint = -8.;
+    for slot in 0..2 {
+        let mut broker = Broker::with_slot(binary.into(), slot);
+        let source = broker.prepare_snapshot(&path, &digest, || false)?;
+        let (_, original) =
+            broker.export_snapshot_bounded(source.clone(), edit_options, MAX_ENCODED, || false)?;
+        let (_, edited) = broker.export_edited_snapshot_bounded(
+            source,
+            edit_options,
+            Some(edit_recipe.clone()),
+            MAX_ENCODED,
+            || false,
+        )?;
+        let before = image::load_from_memory(&original)?.to_rgba16();
+        let after = image::load_from_memory(&edited)?.to_rgba16();
+        ensure!(
+            before.dimensions() == after.dimensions(),
+            "Export modificato XPC: dimensioni diverse"
+        );
+        let mut changed = false;
+        for (a, b) in before.pixels().zip(after.pixels()) {
+            ensure!(a.0[3] == b.0[3], "Export modificato XPC: alpha alterato");
+            changed |= (0..3).any(|c| b.0[c] > a.0[c]);
+        }
+        ensure!(
+            changed,
+            "Export modificato XPC: esposizione assente nello slot {slot}"
+        );
+        let mut native_view = broker.decode(&path, &digest, 0)?.raster;
+        edit_recipe.apply(&mut native_view)?;
+        ensure!(
+            (native_view.width, native_view.height) == after.dimensions(),
+            "Vista nativa ed export hanno dimensioni diverse nello slot {slot}"
+        );
+        for (index, (working, encoded)) in native_view.pixels.iter().zip(after.pixels()).enumerate()
+        {
+            let alpha = working[3];
+            let straight = if alpha > 0. {
+                [working[0] / alpha, working[1] / alpha, working[2] / alpha]
+            } else {
+                [0.; 3]
+            };
+            let rgb = tr_core::color::rec2020_to_linear_srgb(straight)
+                .map(tr_core::color::linear_to_srgb);
+            let expected = [rgb[0], rgb[1], rgb[2], alpha]
+                .map(|value| (value.clamp(0., 1.) * 65535.).round() as u16);
+            ensure!(
+                encoded.0 == expected,
+                "Vista nativa ed export PNG16 diversi nello slot {slot}, pixel {index}"
+            );
+        }
+    }
+    let (_, after_edit) = tr_platform::snapshot(&path)?;
+    ensure!(
+        after_edit == digest,
+        "Sorgente modificata dalla prova fotografica XPC"
+    );
     let report = serde_json::json!({
         "application":"TrueRenderer", "version":env!("CARGO_PKG_VERSION"), "passed":true,
         "scope":"integrated XPC R0 corpus, two processes, timeout and memory supervision; full sandbox/release gate open",
         "first_pid":first_pid,"second_pid":second_pid,"recovered_pid":recovered_pid,
         "two_distinct_processes":true,"same_pixels":true,"suspended_worker_timeout_ms":timeout_ms,
+        "edited_export_checked_slots":2,"edited_export_native_match_slots":2,"edited_export_source_unchanged":true,
         "other_isolate_survived":true,"corpus_images_checked":checked,
-        "first_before_stop":first_stopped,"memory_before_stop":memory_stopped,"second":second.statistics(),
+        "first_before_stop":first_stopped,"memory_before_stop":memory_stopped,"second":second_statistics,
         "elapsed_seconds":started.elapsed().as_secs_f64(),"memory_limit_is_hard_kernel_cap":false,
         "lifecycle_api":"Mach task/audit token + dynamically resolved libproc SPI; no PID-only signal",
         "full_sandbox_gate_passed":false

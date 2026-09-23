@@ -7,14 +7,13 @@ pub(super) struct ExportUi {
     pub open: bool,
     options: Options,
     destination: Option<PathBuf>,
-    remaining: VecDeque<Item>,
+    remaining: VecDeque<(Item, tr_store::LoadedEdit)>,
     total: usize,
     completed: usize,
     succeeded: usize,
     active: bool,
     current: String,
     cancel: Arc<AtomicBool>,
-    engine: tr_core::decoder::RawEngine,
     messages: Vec<String>,
 }
 impl TrueRenderer {
@@ -48,7 +47,7 @@ impl TrueRenderer {
         if state.active || state.cancel.load(Ordering::Acquire) {
             return;
         }
-        let Some(item) = state.remaining.pop_front() else {
+        let Some((item, edit)) = state.remaining.pop_front() else {
             return;
         };
         state.current = item.name.clone();
@@ -56,7 +55,9 @@ impl TrueRenderer {
         let job = crate::photo_export::Job {
             item,
             options: state.options,
-            engine: state.engine,
+            engine: edit.recipe.raw_engine,
+            source_digest: edit.source_digest,
+            recipe: Some(edit.recipe),
             destination: state.destination.clone().unwrap(),
             cancel: state.cancel.clone(),
         };
@@ -80,6 +81,39 @@ impl TrueRenderer {
             .filter(|item| self.state.selected.contains(&item.id))
             .cloned()
             .collect();
+        for item in &selected {
+            self.ensure_edit_loaded(item);
+        }
+        let ready = selected.iter().all(|item| {
+            self.editing.entries.get(&item.id).is_some_and(|entry| {
+                entry.loaded.is_some()
+                    && !entry.pending
+                    && entry
+                        .draft
+                        .as_ref()
+                        .zip(entry.loaded.as_ref())
+                        .is_some_and(|(draft, saved)| draft == &saved.recipe)
+            })
+        });
+        let frozen: VecDeque<_> = if ready {
+            selected
+                .iter()
+                .filter_map(|item| {
+                    self.editing
+                        .entries
+                        .get(&item.id)
+                        .and_then(|entry| entry.loaded.clone())
+                        .map(|mut edit| {
+                            if edit.generation == 0 {
+                                edit.recipe.raw_engine = self.cache_settings.raw_engine;
+                            }
+                            (item.clone(), edit)
+                        })
+                })
+                .collect()
+        } else {
+            VecDeque::new()
+        };
         let state = &mut self.photo_export;
         let mut open = true;
         let mut start = false;
@@ -103,12 +137,13 @@ impl TrueRenderer {
                                 ui.selectable_value(&mut state.options.compression, value, lang.text(label));
                             }});
                         }
-                        Format::DngLinear16 => { ui.label(lang.text("RGB Rec.2020 lineare già sviluppato, 16 bit interi. Non conserva negativi o valori oltre 1. Trasparenza non supportata.")); ui.colored_label(AMBER, lang.text("Riapertura: scegliere LibRaw bilineare/AHD. Apple RAW e motore mosaico TrueRenderer non supportano questo DNG lineare.")); }
+                        Format::DngLinear16 => { ui.label(lang.text("RGB Rec.2020 lineare già sviluppato, 16 bit interi. Non conserva negativi o valori oltre 1. Trasparenza non supportata.")); ui.colored_label(AMBER, lang.text("DNG lineare: sviluppo tecnico senza regolazioni fotografiche; usare JPEG, PNG o TIFF per la resa modificata.")); ui.colored_label(AMBER, lang.text("Riapertura: scegliere LibRaw bilineare/AHD. Apple RAW e motore mosaico TrueRenderer non supportano questo DNG lineare.")); }
                         Format::Tiff16 => {ui.label(lang.text("sRGB ICC, 16 bit interi, alpha conservata; non compresso, clamp [0,1]."));}
                         Format::TiffFloat32 => {ui.label(lang.text("Rec.2020 lineare ICC, RGBA float32 con alpha associata. Conserva negativi e valori oltre 1 del render; non compresso. Non è un RAW sensore né un export FITS."));}
                         Format::DngRaw => {
                             state.options.long_edge = 0;
                             ui.colored_label(AMBER, lang.text("Mosaico area attiva: Nikon D750/D40. Nessun demosaic, WB applicato o ridimensionamento."));
+                            ui.label(lang.text("DNG RAW conserva il mosaico: le regolazioni fotografiche non vengono applicate."));
                             ui.label(lang.text("Conserva campioni, CFA, nero/bianco, WB e orientamento; matrice D65 LibRaw. Non include margini ottici, MakerNotes, EXIF/GPS o NEF compresso: conservare l'originale. Altre camere vengono rifiutate."));
                             ui.colored_label(AMBER, lang.text("Per riaprire i DNG esportati scegliere LibRaw bilineare/AHD. Apple RAW e il motore mosaico TrueRenderer non sono compatibili con questi file."));
                         }
@@ -118,13 +153,14 @@ impl TrueRenderer {
                             ui.label(lang.text("Lato lungo (0 = originale)"));
                             ui.add(egui::DragValue::new(&mut state.options.long_edge).range(0..=16384));
                         });
-                        ui.label(localized_format!(lang, "Motore: {:?} · clamp nei formati interi, nessun dither", "Engine: {:?} · integer formats clamp, no dither", self.cache_settings.raw_engine));
+                        ui.label(lang.text("Motore salvato per foto · clamp nei formati interi, nessun dither"));
                     }
                     ui.horizontal(|ui| {
                         if ui.button(lang.text("Cartella destinazione…")).clicked() && let Some(folder) = rfd::FileDialog::new().pick_folder() { state.destination = Some(folder); }
                         if let Some(folder) = &state.destination { ui.label(folder.display().to_string()); }
                     });
-                    start = ui.add_enabled(!selected.is_empty() && selected.len() <= 1000 && state.destination.is_some(), egui::Button::new(lang.text("Esporta selezione"))).clicked();
+                    if !ready {ui.label(lang.text("Attendere il caricamento o salvataggio delle ricette selezionate."));}
+                    start = ui.add_enabled(ready && !selected.is_empty() && selected.len() <= 1000 && state.destination.is_some(), egui::Button::new(lang.text("Esporta selezione"))).clicked();
                 });
                 if state.total > 0 {
                     ui.separator();
@@ -139,13 +175,12 @@ impl TrueRenderer {
             });
         state.open = open;
         if start {
-            state.remaining = selected.into();
+            state.remaining = frozen;
             state.total = state.remaining.len();
             state.completed = 0;
             state.succeeded = 0;
             state.messages.clear();
             state.cancel = Arc::new(AtomicBool::new(false));
-            state.engine = self.cache_settings.raw_engine;
             // Reduce avoidable resident pressure before full-resolution export.
             self.trim_images(true);
             self.export_next();

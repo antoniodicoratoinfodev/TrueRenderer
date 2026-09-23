@@ -6,6 +6,7 @@ pub mod compute;
 pub mod corpus;
 pub mod decoder;
 pub mod demosaic;
+pub mod editing;
 pub mod export;
 pub mod location;
 pub mod presentation;

@@ -805,6 +805,17 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
         let (kind, id, data) = protocol::read_control(&mut input).context("Lettura richiesta")?;
         ensure!(kind == protocol::REQUEST, "Messaggio non richiesta");
         let request: DecodeRequest = protocol::parse(&data)?;
+        ensure!(
+            request.edit.is_none() || matches!(request.intent, protocol::DecodeIntent::Export(_)),
+            "Ricetta fotografica ammessa solo nell'export"
+        );
+        if let Some(recipe) = &request.edit {
+            recipe.validate()?;
+            ensure!(
+                recipe.raw_engine == request.raw_engine,
+                "Motore RAW della ricetta incoerente"
+            );
+        }
         let reference = matches!(request.intent, protocol::DecodeIntent::ReferenceMip { .. });
         ensure!(
             request.source_len > 0
@@ -866,7 +877,12 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                     },
                     request.raw_engine,
                 )?;
-                let (_, _, raster) = decoder.decode(&bytes, 0)?;
+                let (_, _, mut raster) = decoder.decode(&bytes, 0)?;
+                if options.format != tr_core::export::Format::DngLinear16
+                    && let Some(recipe) = &request.edit
+                {
+                    recipe.apply(&mut raster)?;
+                }
                 export::render(raster, options, request.maximum_output_bytes)
             })();
             drop(bytes);
@@ -1660,6 +1676,7 @@ mod tests {
                 source_len: arbitrary.len(),
                 max_edge: 0,
                 intent: protocol::DecodeIntent::Probe,
+                edit: None,
                 maximum_output_bytes: MAX_PIXELS as u64 * 16,
             },
         )
@@ -1690,6 +1707,7 @@ mod tests {
                     source_len: source.len(),
                     max_edge: 300,
                     intent: protocol::DecodeIntent::LegacyRaster,
+                    edit: None,
                     maximum_output_bytes: MAX_PIXELS as u64 * 16,
                 },
             )
@@ -1712,6 +1730,54 @@ mod tests {
         let image = protocol::read_raster(&mut reader, &info).unwrap();
         assert_eq!((image.width, image.height), (300, 200));
         assert!(reader.is_empty());
+    }
+    #[test]
+    fn export_transport_applies_frozen_edit_without_changing_alpha() {
+        let source = include_bytes!("../../../corpus/05_Trasparenza.png");
+        let options = tr_core::export::Options {
+            format: tr_core::export::Format::Png16,
+            ..Default::default()
+        };
+        let mut recipe = tr_core::editing::EditRecipe::neutral(RawEngine::default());
+        recipe.exposure_ev = 1.;
+        let mut requests = vec![];
+        for (id, edit) in [(1, None), (2, Some(recipe))] {
+            protocol::write_control(
+                &mut requests,
+                protocol::REQUEST,
+                id,
+                &DecodeRequest {
+                    raw_engine: RawEngine::default(),
+                    source_len: source.len(),
+                    max_edge: 0,
+                    intent: protocol::DecodeIntent::Export(options),
+                    edit,
+                    maximum_output_bytes: 16 * 1024 * 1024,
+                },
+            )
+            .unwrap();
+            requests.extend_from_slice(source);
+        }
+        let mut responses = vec![];
+        assert!(serve(requests.as_slice(), &mut responses).is_err()); // EOF after two jobs.
+        let mut reader = responses.as_slice();
+        let mut images = vec![];
+        for id in [1, 2] {
+            let (kind, received, control) = protocol::read_control(&mut reader).unwrap();
+            assert_eq!((kind, received), (protocol::RESPONSE, id));
+            let info: tr_core::export::Info = protocol::parse(&control).unwrap();
+            let (encoded, tail) = reader.split_at(info.bytes as usize);
+            images.push(image::load_from_memory(encoded).unwrap().to_rgba16());
+            reader = tail;
+        }
+        assert!(reader.is_empty());
+        assert_eq!(images[0].dimensions(), images[1].dimensions());
+        let mut changed = false;
+        for (before, after) in images[0].pixels().zip(images[1].pixels()) {
+            assert_eq!(before.0[3], after.0[3]);
+            changed |= (0..3).any(|c| after.0[c] > before.0[c]);
+        }
+        assert!(changed, "esposizione non applicata ai pixel esportati");
     }
     #[test]
     fn native_sixteen_bit_samples_are_not_reduced_to_eight() {
@@ -1767,6 +1833,7 @@ mod tests {
                         source_len: bytes.len(),
                         max_edge: 128,
                         intent: protocol::DecodeIntent::ReferenceMip { cpu_threads: 2 },
+                        edit: None,
                         maximum_output_bytes: output_bytes,
                     },
                 )

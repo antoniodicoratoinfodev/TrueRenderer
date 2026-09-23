@@ -6,6 +6,8 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tr_core::Annotation;
+use tr_core::decoder::RawEngine;
+use tr_core::editing::EditRecipe;
 use tr_core::location::{Favorite, Location};
 use uuid::Uuid;
 
@@ -18,6 +20,16 @@ pub struct StoredAsset {
     pub id: String,
     pub annotation: Annotation,
     pub revision: u64,
+}
+#[derive(Debug, Clone)]
+pub struct LoadedEdit {
+    pub asset_id: String,
+    pub source_digest: String,
+    pub generation: u64,
+    pub revision: u64,
+    pub recipe: EditRecipe,
+    pub can_undo: bool,
+    pub can_redo: bool,
 }
 pub enum FavoriteEdit {
     Add { location: Location, label: String },
@@ -68,7 +80,7 @@ impl Catalog {
         let library = Connection::open(root.join("library.sqlite"))?;
         let version: u32 = library.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         ensure!(
-            version <= 2,
+            version <= 3,
             "Libreria di una versione più recente: apertura interrotta"
         );
         configure(&library, true)?;
@@ -100,6 +112,31 @@ impl Catalog {
                     revision INTEGER NOT NULL CHECK(revision>=0)
                 );
                 PRAGMA user_version=2;
+                COMMIT;",
+            )?;
+        }
+        if version <= 2 {
+            backup_connection(&library, root)?;
+            library.execute_batch(
+                "BEGIN IMMEDIATE;
+                CREATE TABLE photo_edit_head (
+                    asset_id TEXT PRIMARY KEY REFERENCES asset(id),
+                    source_digest TEXT NOT NULL,
+                    generation INTEGER NOT NULL CHECK(generation>=0),
+                    cursor INTEGER NOT NULL CHECK(cursor>=0),
+                    next_revision INTEGER NOT NULL CHECK(next_revision>=1),
+                    redo TEXT NOT NULL CHECK(length(redo)<=16384)
+                );
+                CREATE TABLE photo_edit_revision (
+                    asset_id TEXT NOT NULL REFERENCES asset(id),
+                    revision INTEGER NOT NULL CHECK(revision>=0),
+                    parent_revision INTEGER,
+                    source_digest TEXT NOT NULL,
+                    recipe TEXT NOT NULL CHECK(length(recipe)<=1048576),
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY(asset_id,revision)
+                );
+                PRAGMA user_version=3;
                 COMMIT;",
             )?;
         }
@@ -193,6 +230,132 @@ impl Catalog {
     }
     pub fn backup(&self) -> Result<PathBuf> {
         backup_connection(&self.library, &self.root)
+    }
+    /// The asset identity is checked independently of any derived index entry.
+    pub fn load_edit(&self, id: &str, initial_engine: RawEngine) -> Result<LoadedEdit> {
+        let digest: String =
+            self.library
+                .query_row("SELECT content_hash FROM asset WHERE id=?1", [id], |r| {
+                    r.get(0)
+                })?;
+        let head: Option<(i64,i64,String,String)> = self.library.query_row(
+            "SELECT generation,cursor,redo,source_digest FROM photo_edit_head WHERE asset_id=?1",
+            [id], |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?))).optional()?;
+        if let Some((generation, cursor, redo, source_digest)) = head {
+            ensure!(
+                digest == source_digest,
+                "Ricetta associata a una sorgente diversa"
+            );
+            let (json,parent): (String,Option<i64>) = self.library.query_row(
+                "SELECT recipe,parent_revision FROM photo_edit_revision WHERE asset_id=?1 AND revision=?2",
+                params![id,cursor], |r| Ok((r.get(0)?,r.get(1)?)))?;
+            let recipe: EditRecipe = serde_json::from_str(&json)?;
+            recipe.validate()?;
+            let redo: Vec<u64> = serde_json::from_str(&redo)?;
+            ensure!(redo.len() <= 200, "Cronologia fotografica fuori quota");
+            Ok(LoadedEdit {
+                asset_id: id.into(),
+                source_digest,
+                generation: generation.try_into()?,
+                revision: cursor.try_into()?,
+                recipe,
+                can_undo: parent.is_some(),
+                can_redo: !redo.is_empty(),
+            })
+        } else {
+            Ok(LoadedEdit {
+                asset_id: id.into(),
+                source_digest: digest,
+                generation: 0,
+                revision: 0,
+                recipe: EditRecipe::neutral(initial_engine),
+                can_undo: false,
+                can_redo: false,
+            })
+        }
+    }
+    pub fn save_edit(
+        &mut self,
+        id: &str,
+        expected_generation: u64,
+        recipe: &EditRecipe,
+    ) -> Result<LoadedEdit> {
+        recipe.validate()?;
+        let before = self.load_edit(id, recipe.raw_engine)?;
+        ensure!(
+            before.generation == expected_generation,
+            "Conflitto: ricetta fotografica aggiornata altrove"
+        );
+        let next_generation = before
+            .generation
+            .checked_add(1)
+            .context("Generazione esaurita")?;
+        let tx = self.library.transaction()?;
+        let next_revision: i64 = tx
+            .query_row(
+                "SELECT next_revision FROM photo_edit_head WHERE asset_id=?1",
+                [id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .unwrap_or(1);
+        let digest = &before.source_digest;
+        if before.generation == 0 {
+            tx.execute("INSERT INTO photo_edit_revision(asset_id,revision,parent_revision,source_digest,recipe) VALUES (?1,0,NULL,?2,?3)",
+                params![id,digest,serde_json::to_string(&EditRecipe::neutral(recipe.raw_engine))?])?;
+            tx.execute(
+                "INSERT INTO photo_edit_head VALUES (?1,?2,0,0,1,'[]')",
+                params![id, digest],
+            )?;
+        }
+        tx.execute("INSERT INTO photo_edit_revision(asset_id,revision,parent_revision,source_digest,recipe) VALUES (?1,?2,?3,?4,?5)",
+            params![id,next_revision,i64::try_from(before.revision)?,digest,serde_json::to_string(recipe)?])?;
+        let changed = tx.execute("UPDATE photo_edit_head SET generation=?1,cursor=?2,next_revision=?3,redo='[]' WHERE asset_id=?4 AND generation=?5 AND source_digest=?6",
+            params![i64::try_from(next_generation)?,next_revision,next_revision+1,id,i64::try_from(expected_generation)?,digest])?;
+        ensure!(
+            changed == 1,
+            "Conflitto: ricetta fotografica aggiornata altrove"
+        );
+        tx.commit()?;
+        self.load_edit(id, recipe.raw_engine)
+    }
+    pub fn step_edit(
+        &mut self,
+        id: &str,
+        expected_generation: u64,
+        undo: bool,
+    ) -> Result<LoadedEdit> {
+        let before = self.load_edit(id, RawEngine::default())?;
+        ensure!(
+            before.generation == expected_generation,
+            "Conflitto: cronologia fotografica aggiornata altrove"
+        );
+        let (mut redo, cursor): (String, i64) = self.library.query_row(
+            "SELECT redo,cursor FROM photo_edit_head WHERE asset_id=?1",
+            [id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )?;
+        let mut stack: Vec<u64> = serde_json::from_str(&redo)?;
+        ensure!(stack.len() <= 200, "Cronologia fotografica fuori quota");
+        let target =
+            if undo {
+                let parent: Option<i64> = self.library.query_row(
+                "SELECT parent_revision FROM photo_edit_revision WHERE asset_id=?1 AND revision=?2",
+                params![id,cursor], |r| r.get(0))?;
+                let parent = parent.context("Nessuna modifica da annullare")?;
+                stack.push(cursor.try_into()?);
+                parent
+            } else {
+                i64::try_from(stack.pop().context("Nessuna modifica da ripetere")?)?
+            };
+        redo = serde_json::to_string(&stack)?;
+        let changed = self.library.execute("UPDATE photo_edit_head SET generation=generation+1,cursor=?1,redo=?2 WHERE asset_id=?3 AND generation=?4",
+            params![target,redo,id,i64::try_from(expected_generation)?])?;
+        ensure!(
+            changed == 1,
+            "Conflitto: cronologia fotografica aggiornata altrove"
+        );
+        self.load_edit(id, before.recipe.raw_engine)
     }
     pub fn favorites(&self) -> Result<Vec<Favorite>> {
         let mut stmt = self.library.prepare(
@@ -335,6 +498,61 @@ fn backup_connection(library: &Connection, root: &Path) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn photo_edits_survive_reopen_backup_and_history_branch() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(Path::new("/synthetic/photo.png"), "source-a", 4)
+            .unwrap();
+        let engine = RawEngine::default();
+        let mut recipe = EditRecipe::neutral(engine);
+        recipe.exposure_ev = 1.;
+        let first = catalog.save_edit(&item.id, 0, &recipe).unwrap();
+        assert_eq!(first.revision, 1);
+        recipe.exposure_ev = 2.;
+        let second = catalog
+            .save_edit(&item.id, first.generation, &recipe)
+            .unwrap();
+        assert_eq!(second.revision, 2);
+        let undone = catalog
+            .step_edit(&item.id, second.generation, true)
+            .unwrap();
+        assert_eq!(undone.recipe.exposure_ev, 1.);
+        assert!(undone.can_redo);
+        let backup = catalog.backup().unwrap();
+        drop(catalog);
+        let restored = tempfile::tempdir().unwrap();
+        std::fs::copy(backup, restored.path().join("library.sqlite")).unwrap();
+        let mut catalog = Catalog::open(restored.path()).unwrap();
+        let reopened = catalog.load_edit(&item.id, engine).unwrap();
+        assert_eq!(reopened.recipe, undone.recipe);
+        let redone = catalog
+            .step_edit(&item.id, reopened.generation, false)
+            .unwrap();
+        assert_eq!(redone.recipe.exposure_ev, 2.);
+        let undo_again = catalog
+            .step_edit(&item.id, redone.generation, true)
+            .unwrap();
+        recipe.exposure_ev = -1.;
+        let branch = catalog
+            .save_edit(&item.id, undo_again.generation, &recipe)
+            .unwrap();
+        assert!(!branch.can_redo);
+        assert!(
+            catalog
+                .save_edit(&item.id, undo_again.generation, &recipe)
+                .is_err()
+        );
+        assert_eq!(
+            catalog
+                .load_edit(&item.id, engine)
+                .unwrap()
+                .recipe
+                .exposure_ev,
+            -1.
+        );
+    }
     #[test]
     fn migration_preserves_v1_backup_and_favorites_survive_export_restore() {
         let dir = tempfile::tempdir().unwrap();

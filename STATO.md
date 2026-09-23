@@ -1,11 +1,12 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 22 settembre 2026.
+Aggiornato: 23 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
 - [Punto di ripresa](#punto-di-ripresa)
 - [Piano operativo](#piano-operativo)
+- [Sviluppo fotografico: regolazioni e correzioni ottiche](#piano-sviluppo-fotografico)
 - [Matrice dei requisiti e budget](#matrice-dei-requisiti-e-budget)
 - [Registro delle verifiche e degli incrementi](#registro-delle-verifiche-e-degli-incrementi)
 
@@ -19,7 +20,18 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
-### Incremento corrente — memoria delle immagini grandi
+### Sviluppo fotografico — prima verticale avviata il 23 settembre
+
+Il titolare ha autorizzato l'implementazione del [piano SF0–SF10](#piano-sviluppo-fotografico) descritto nella [specifica e ADR 0011](docs/progetto-sviluppo-fotografico.md). Questa consegna avvia SF0–SF2, senza dichiarare conclusa alcuna fase: i rispettivi gate completi e R0–R4 restano aperti.
+
+- **Implementato:** ricetta fotografica schema/processo 1 con identità, esposizione, luminosità, contrasto, alte luci, ombre, bianchi, neri, punto intermedio della curva tonale, temperatura/tinta **relative RGB** e saturazione. Il primo contagocce neutralizza un pixel RGB nativo opaco e non tagliato, limita la correzione a ±100 e salva l'azione nella cronologia; non modifica il WB RAW. Pannello Sviluppo IT/EN, bozza durante il gesto, Prima/Dopo, verifica esplicita dalla risoluzione nativa, cronologia durevole undo/redo e migrazione `library.sqlite` 2→3 con backup verificato. Il motore RAW è congelato per foto alla prima revisione. L'export JPEG/PNG/TIFF applica la ricetta nativa congelata per foto, legata al digest della sorgente; DNG lineare/RAW conservano i rispettivi contratti tecnici. La preview rapida del viewer da mip ≤1024 px è dichiarata provvisoria; griglia, filmstrip e anteprima dell'ispettore applicano la ricetta su mip ≤512 px con cache asincrona a crediti di memoria, badge Prima/Modificata/In calcolo/Errore e istogramma della stessa anteprima modificata. Il calcolo nativo può rifiutare la richiesta sotto quota memoria.
+- **Verificato:** ricette identità, alpha/EV/rampe/validazione, neutralizzazione RGB reversibile e rifiuto dei campioni invalidi, cronologia e ripristino da backup su libreria sintetica; due miniature indipendenti, invalidazione della bozza, istogramma della vista modificata e export PNG16 con alpha invariata. `scripts/verify.sh --gui` passato fuori dal sandbox del terminale: 171 test ordinari, 11 integrazioni, fmt/Clippy/build, otto controlli protocollo, 24 segnali e smoke nativo. Sul bundle `dist/TrueRenderer-develop-v7.app` passati due XPC, timeout/recupero, rifiuto fault injection e confronto **pixel per pixel esatto** fra sviluppo nativo ed export PNG16 con esposizione e correzione RGB in entrambi gli slot su una fixture sintetica, con sorgente invariata; [rapporto e identità](reports/photo-edit-rgb-picker-macos.json). Dal medesimo bundle passati gli smoke nativi Sviluppo/griglia, navigazione compatta e Preferenze, con le [quattro schermate del README](reports/readme-screenshots-macos.json). Le [verifiche v6](reports/photo-edit-preview-consistency-macos.json) e [v4](reports/photo-edit-increment-macos.json) restano storiche. Le tre prove su fotocamere private restano escluse dalla suite standard. I risultati non qualificano il display fisico o una resa fotografica equivalente ad altri software.
+- **Aperto:** confronto numerico finale vista/export su corpus esteso e RAW, interazione nativa del contagocce e del pannello su finestra compatta/200%, media robusta 5×5/11×11 e incertezza dei campioni, memoria e p95 con RAW grandi, differenze fra motori, qualità fotografica dei controlli, gestione di una sorgente offline o sostituita durante una bozza. L'istogramma dell'ispettore misura il mip modificato, non l'export nativo. Nessun gate SF0–SF2 completato.
+- **Mancante:** WB RAW qualificato e Auto, vividezza/profili/colore avanzato, ottica e prospettiva, Texture/Chiarezza/Foschia, nitidezza/rumore, maschere/ritocco, preset/versioni/batch, GPU dei nodi, Windows nativo e qualificazione SF10. Nessun file personale, `var/library.sqlite`, `var/backups`, originale v1.2 o licenze modificati in questa consegna.
+
+<a id="incremento-corrente--memoria-delle-immagini-grandi"></a>
+
+### Incremento precedente — memoria delle immagini grandi
 
 Richiesta del titolare: proseguire dalle attività aperte. Priorità scelta: investigare il superamento fisico 45 MP/Piena e D750, senza modificare precisione, originali o limiti manuali. Baseline `d4e539b`, già pubblicata.
 
@@ -86,7 +98,7 @@ Bundle consegnabile: `dist/TrueRenderer-d750.app`. Passati 24 gruppi (30 foto ×
 
 ### Bundle e priorità generali
 
-Il bundle Mac corrente è `dist/TrueRenderer-memory-final.app`, qualificato nel [perimetro sopra](#incremento-corrente--memoria-delle-immagini-grandi). I percorsi seguenti identificano le campagne storiche dei bundle ora rimossi: `dist/TrueRenderer-export-final.app` per export/FITS e precisione SDR; `dist/TrueRenderer-performance.app` conserva le prove RAW/griglia/filmstrip indicate sopra; `dist/TrueRenderer-loading.app` e `dist/TrueRenderer-d750.app` conservano le precedenti campagne del caricamento e dei quattro motori. Il precedente `dist/TrueRenderer-navigator-compact.app` conserva la campagna del 19 settembre: barra percorso compatta, schede Esplora/Libreria stabili, 14 regressioni UI, sei layout nativi, dodici catture preferenze e due servizi XPC. [Rapporto e limiti](reports/navigator-layout-macos.json). La campagna precedente del navigatore appartiene a `dist/TrueRenderer-navigator.app`, documentata separatamente: [rapporto](reports/filesystem-browser-macos.json). La campagna storica D750 e PNG 12/24/45 MP resta distinta dalle verifiche odierne: [rapporto fotografico](reports/large-pressure-raw-macos.json). Windows: ultima suite registrata di 99 test ordinari + 8 integrazioni, pubblicata in `67146e3`; GUI e Nikon non ripetuti per gli ultimi fix. [Rapporto](reports/gamma-orientation-fixes-windows.json).
+Il bundle Mac dell'incremento memoria è `dist/TrueRenderer-memory-final.app`, qualificato nel [perimetro sopra](#incremento-corrente--memoria-delle-immagini-grandi). Il bundle di questa nuova verticale è indicato nel punto di ripresa. I percorsi seguenti identificano le campagne storiche dei bundle ora rimossi: `dist/TrueRenderer-export-final.app` per export/FITS e precisione SDR; `dist/TrueRenderer-performance.app` conserva le prove RAW/griglia/filmstrip indicate sopra; `dist/TrueRenderer-loading.app` e `dist/TrueRenderer-d750.app` conservano le precedenti campagne del caricamento e dei quattro motori. Il precedente `dist/TrueRenderer-navigator-compact.app` conserva la campagna del 19 settembre: barra percorso compatta, schede Esplora/Libreria stabili, 14 regressioni UI, sei layout nativi, dodici catture preferenze e due servizi XPC. [Rapporto e limiti](reports/navigator-layout-macos.json). La campagna precedente del navigatore appartiene a `dist/TrueRenderer-navigator.app`, documentata separatamente: [rapporto](reports/filesystem-browser-macos.json). La campagna storica D750 e PNG 12/24/45 MP resta distinta dalle verifiche odierne: [rapporto fotografico](reports/large-pressure-raw-macos.json). Windows: ultima suite registrata di 99 test ordinari + 8 integrazioni, pubblicata in `67146e3`; GUI e Nikon non ripetuti per gli ultimi fix. [Rapporto](reports/gamma-orientation-fixes-windows.json).
 
 **Priorità:** ampliare la qualifica memoria a cartelle estese, altre fotocamere e pressione fisica OS dopo la correzione misurata sopra. Decode RAW ridotto/regionale e qualifica fotografica estesa restano aperti. Nessun gate R0–R4 è chiuso; Standard/Piena sono qualità di anteprima, non assurance Standard/Riferimento.
 
@@ -104,6 +116,7 @@ Il prossimo incremento deve ampliare pressione OS, target colore e fotocamere. F
 - Dopo la correzione Fit, estendere a RAW ridotti/pressione e individuare la presentazione effettiva prima della campagna p95/p99. Il readback attuale include il costo della cattura.
 - RAW Mac: i 30 D750 sui quattro motori e nove ritagli centrali allineati sono verificati; servono altre fotocamere, target colore misurato, rumore/moire e ICC. Usare originali autorizzati in sola lettura e cataloghi separati.
 - Windows: installazione pulita, contesa writer/cache e diagnostica PNG malformata o conflittuale.
+- Sviluppo fotografico futuro: partire da SF0 del [piano dedicato](#piano-sviluppo-fotografico), poi regolazioni globali e WB; ottica, filtri locali, maschere e automazioni seguono le dipendenze dichiarate. La progettazione non sostituisce le qualifiche del viewer già aperte.
 - Qualifica: colore/display, confronto fra motori con ritagli allineati, corpus autorizzato esteso, pressione memoria e latenze evento→frame. Nessun gate R0–R4 chiuso; Standard/Piena restano qualità di anteprima, non assurance Standard/Riferimento.
 
 
@@ -142,6 +155,46 @@ Corretti isolamento LPAC/quote, LibRaw 0.22.2, parsing delle preview, classifica
 Esteso il motore proprio al modello esatto D40 e corretto il cambio motore durante scansione: 66/66 sviluppi su 22 NEF a ISO 200 e regressione D750, senza ampliare implicitamente la matrice camere ([rapporto Windows](reports/raw-engines-d40-windows.json)). Su Mac: 120 sviluppi D750 sui quattro motori dopo il fix heap LibRaw/XPC, nove confronti centrali, 240 azioni PNG 12/24/45 MP, 20 sotto pressione renderer e 40 RAW ([rapporto](reports/large-pressure-raw-macos.json)). Ritagli allineati solo per traslazione intera ±16 pixel: Apple/AHD non sono riferimenti della scena. Rimane il superamento memoria 45 MP Full indicato in apertura; mancano pressione OS, decode RAW ridotto, colore misurato e p95/p99. Riproduzione: `scripts/test-large-navigation.py`, `scripts/compare-raw-patches.py` e `--verify-raw-engines`, esclusivamente con corpus autorizzato e dati separati.
 
 ## Piano operativo
+
+<a id="piano-sviluppo-fotografico"></a>
+
+## Progetto di incremento — sviluppo fotografico, 23 settembre 2026
+
+Richiesta: progettare tutte le principali regolazioni fotografiche, confrontare gli altri programmi e conservare qui il lavoro futuro. **Progettato:** insieme dei controlli, valori neutri e scale iniziali, interazione, grafo di calcolo, capacità dei motori RAW, correzioni ottiche, dati durevoli, prestazioni, esportazione e criteri di accettazione. Contratto completo e fonti primarie nella [specifica sviluppo fotografico / ADR 0011](docs/progetto-sviluppo-fotografico.md). Le scale proposte sono TrueRenderer, non una promessa di equivalenza con i numeri di Lightroom.
+
+**Baseline della sessione di progettazione iniziale:** lettura dei contratti dell'architettura, del codice di colore/decoder/anteprime/export e della persistenza; consultazione della documentazione ufficiale dei prodotti; 327 collegamenti locali validi e diff senza errori di whitespace. Allora nessun controllo fotografico era stato implementato e nessuna campagna dell'editing era stata eseguita. Lo stato successivo è nel punto di ripresa sopra; le caselle SF0–SF10 indicano ancora i gate non conclusi.
+
+### Controlli da consegnare
+
+| Area | Contenuto del progetto |
+|---|---|
+| Luce | Esposizione EV, luminosità dei mezzitoni, contrasto/pivot, alte luci, ombre, bianchi, neri, recupero RAW distinto dalla compressione tonale, Auto reversibile. |
+| WB e profili | Come scattato, temperatura/tinta, contagocce, preset e Auto; WB nativo quando qualificato, correzione relativa RGB distinta; profilo tecnico e look creativo separati. |
+| Curve e colore | Curve a punti/parametriche, livelli, saturazione, vividezza, mixer HSL, colore selettivo, grading di ombre/mezzitoni/luci, bianco e nero, profili/LUT qualificati. |
+| Presenza e dettaglio | Texture, chiarezza, rimozione foschia, nitidezza con raggio/dettaglio/mascheratura, rumore luminanza/cromatico, moiré; nitidezza d'uscita separata. |
+| Ottica | Distorsione a barilotto/cuscinetto e a baffo, profili/metadati/manuale, CA laterale, defringe viola/verde, vignettatura ottica; stato delle correzioni già applicate e nessuna duplicazione automatica. |
+| Geometria | Crop e rapporti, rotazione/specchio/raddrizzamento, prospettiva manuale/guidata/Auto, scala/offset e ritaglio all'area valida. |
+| Maschere e ritocco | Pennello/gomma, gradienti, intervalli colore/luminanza, combinazioni, regolazioni locali, polvere, clone/correttivo e occhi rossi. Selezioni automatiche e modelli in estensione successiva. |
+| Effetti e flusso | Vignetta creativa, grana, Prima/Dopo, cronologia/undo/redo, snapshot, versioni virtuali, preset e copia/batch selettivi. |
+| Salvataggio ed export | Ricetta per foto nella libreria durevole, stesso grafo in vista/export, dipendenze versionate, backup/restore; DNG RAW e DNG lineare mantengono contratti distinti dalle immagini con editing applicato. |
+
+### Ordine di realizzazione e gate
+
+Una verticale per volta, con copia applicativa separata e catalogo di prova. L'ordine indica dipendenze di questo ampliamento; non chiude R0–R4 né attribuisce una data di rilascio. Prima consegna utilizzabile: SF0–SF2 con regolazioni globali reversibili e export coerente. Ottica e filtri successivi entrano solo con i rispettivi confronti numerici/fotografici.
+
+- [ ] **SF0 — fondamenta:** fissare schema/processo, ricetta identità, capacità/provenienza per motore e grafo CPU comune a vista/export; introdurre revisioni, asset durevoli, migrazione/backup e undo minimo. Gate: identità rispetto alla baseline, round-trip della ricetta, crash/restore e nessuna perdita dopo pulizia cache; nessun risultato tardivo applicato a foto/revisione errata.
+- [ ] **SF1 — luce e curve di base:** pannello Sviluppo IT/EN, esposizione/luminosità/contrasto, luci/ombre/bianchi/neri, curve e clipping; bozza durante il gesto, salvataggio alla conclusione, Prima/Dopo e export della revisione congelata. Gate: rampe/campioni/alpha, CPU a piena risoluzione contro export lossless e zero variazioni degli originali.
+- [ ] **SF2 — WB e colore iniziale:** selezione come scattato/personalizzata/contagocce, adapter per WB nativo qualificato, correzione RGB relativa, saturazione/vividezza e Auto con parametri congelati. Gate: neutri e calibrazioni note, niente Kelvin inventati o clipping celato; capacità provate separatamente per Apple, bilineare, AHD e TrueRenderer.
+- [ ] **SF3 — geometria e ottica manuale:** crop/rotazioni/prospettiva guidata, distorsione e vignettatura manuali, CA laterale nello stadio corretto e defringe distinto; metadati su correzioni già eseguite. Gate: griglie/flat-field/canali disallineati, area valida, coordinate delle selezioni e assenza di doppia correzione.
+- [ ] **SF4 — profili ottici e automatismi:** decidere integrazione Lensfun/dati incorporati, versione/licenze/database, matching e profili manuali; quantità separate per distorsione/CA/vignettatura, aggiornamento volontario delle vecchie ricette. Gate: matrice corpo/ottica/focale/apertura, identificazioni ambigue e dati mancanti, riproduzione con vecchio profilo, licenze e parser confinato.
+- [ ] **SF5 — presenza e dettaglio:** scegliere/versionare filtri Texture, Chiarezza, Foschia, denoise e nitidezza, con dimensioni native/halo e previsione finale. Gate: aloni/rumore/alias, tile contro frame completo, confronto 1:1 e fit contro export; misure memoria su D750 e 12/24/45 MP.
+- [ ] **SF6 — colore avanzato ed effetti:** mixer HSL, campioni selettivi, grading, monocromia, curve RGB, profili creativi, grana/vignetta; DCP/ICC/LUT solo con il gate del rispettivo formato. Gate: dominio esteso, neutri/incarnati/saturi, nessun clamp implicito, seed stabile e dipendenze riproducibili.
+- [ ] **SF7 — maschere e ritocco:** pennelli, gradienti, intervalli, combinazioni e regolazioni locali; clone/correttivo/polvere/occhi rossi. Gate: coordinate dopo trasformazioni, ordine e sovrapposizioni, nessuna cucitura/ciclo, durabilità delle pennellate e limiti di risorse.
+- [ ] **SF8 — organizzazione e batch:** UI di snapshot/versioni virtuali, preset, copia selettiva, applicazione a più foto e default facoltativi per fotocamera; import/export ricetta. Gate: batch misto/cancellato, undo raggruppato, nessun profilo ottico copiato implicitamente fra obiettivi. XMP solo dopo round-trip, merge e scrittura sicura già previsti dall'architettura.
+- [ ] **SF9 — accelerazione e destinazioni colore:** qualificare ogni nodo GPU contro CPU; pianificazione/riuso/invalidazione e misure p95; nitidezza d'uscita, ICC aggiuntivi/soft proof quando qualificati. Gate: tolleranze per nodo e output, driver/device-loss/fallback, budget fisici e distinzione output/display. Nessuna conversione del progetto in HDR/EDR implicita.
+- [ ] **SF10 — qualifica della verticale:** suite completa, GUI Mac/Windows, XPC sul bundle, backup/restore, corpus ostile e fotografico autorizzato, ricette storiche, display/accessibilità ed export su tutti i motori pertinenti. Pubblicare una matrice precisa delle capacità e dei limiti; nessuna funzione marcata disponibile sulla base del solo pannello UI.
+
+Modelli locali per selezione soggetto/cielo/persone, denoise avanzato e profondità sono una successiva estensione con asset/versione/licenza e fallback manuale. HDR merge, panorami, focus stacking, rimozione generativa, tethering e stampa completa richiedono progetti propri e non bloccano le regolazioni richieste. I dettagli tecnici e le soglie iniziali sono nella [matrice di accettazione](docs/progetto-sviluppo-fotografico.md#matrice-di-accettazione); gli esiti futuri si registrano soltanto qui.
 
 <a id="piano-alta-precisione-fits"></a>
 
@@ -607,6 +660,8 @@ La firma/distribuzione richiede credenziali e decisioni del titolare, non dispon
 ## Post-v1
 
 Linux, Windows arm64, HDR/EDR, AVIF/JXL/EXR/PSD, Android, soft proof, conversione/export pixel, scrittura incorporata, confronto oltre due foto e demosaic proprio: ciascuno richiede ADR, prova di bisogno e gate specifico.
+
+L'ampliamento di sviluppo fotografico richiesto il 23 settembre ha ora un [piano dedicato SF0–SF10](#piano-sviluppo-fotografico) e ADR 0011. La lista storica sopra non ne costituisce un divieto: distingue lo scope originario del viewer dalle estensioni richieste e qualificate separatamente, come già per export/FITS.
 
 ## Stime e aggiornamento
 

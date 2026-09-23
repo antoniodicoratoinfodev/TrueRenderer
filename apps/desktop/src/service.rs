@@ -34,6 +34,20 @@ pub enum Request {
         expected: u64,
         annotation: Annotation,
     },
+    LoadEdit {
+        id: String,
+        engine: tr_core::decoder::RawEngine,
+    },
+    SaveEdit {
+        id: String,
+        expected_generation: u64,
+        recipe: tr_core::editing::EditRecipe,
+    },
+    StepEdit {
+        id: String,
+        expected_generation: u64,
+        undo: bool,
+    },
     Undo,
     Backup,
     Export(PathBuf),
@@ -59,6 +73,10 @@ pub enum Event {
         result: Result<tr_core::science::Sample, String>,
     },
     PhotoExport(Result<crate::photo_export::Completed, String>),
+    Edit {
+        id: String,
+        result: Result<tr_store::LoadedEdit, String>,
+    },
     BrowserSessionSaved(Result<crate::browser_session::Session, String>),
     Favorites(Result<Vec<tr_core::location::Favorite>, String>),
     ScanBatch {
@@ -329,6 +347,30 @@ impl Service {
                                 error: format!("{error:#}"),
                             }),
                         }
+                    }
+                    Request::LoadEdit { id, engine } => {
+                        let result = catalog.load_edit(&id, engine).map_err(|e| format!("{e:#}"));
+                        send(Event::Edit { id, result });
+                    }
+                    Request::SaveEdit {
+                        id,
+                        expected_generation,
+                        recipe,
+                    } => {
+                        let result = catalog
+                            .save_edit(&id, expected_generation, &recipe)
+                            .map_err(|e| format!("{e:#}"));
+                        send(Event::Edit { id, result });
+                    }
+                    Request::StepEdit {
+                        id,
+                        expected_generation,
+                        undo,
+                    } => {
+                        let result = catalog
+                            .step_edit(&id, expected_generation, undo)
+                            .map_err(|e| format!("{e:#}"));
+                        send(Event::Edit { id, result });
                     }
                     Request::Undo => {
                         if let Some((id, before, after)) = undo_stack.back().cloned() {

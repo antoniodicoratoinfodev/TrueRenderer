@@ -270,6 +270,7 @@ struct Work {
     bytes: Arc<Vec<u8>>,
     edge: u32,
     intent: protocol::DecodeIntent,
+    edit: Option<tr_core::editing::EditRecipe>,
     maximum_output_bytes: u64,
     result: mpsc::SyncSender<Result<WorkerOutput>>,
 }
@@ -499,6 +500,7 @@ impl Broker {
                             source_len: work.bytes.len(),
                             max_edge: work.edge,
                             intent: work.intent,
+                            edit: work.edit,
                             maximum_output_bytes: work.maximum_output_bytes,
                         },
                     )?;
@@ -665,7 +667,7 @@ impl Broker {
             protocol::DecodeIntent::LegacyRaster
         };
         let (info, raster) = self
-            .process_snapshot(source, edge, intent, maximum_output_bytes, cancelled)?
+            .process_snapshot(source, edge, intent, None, maximum_output_bytes, cancelled)?
             .raster()?;
         Ok(Decoded {
             info,
@@ -689,6 +691,7 @@ impl Broker {
                 source,
                 maximum_edge,
                 protocol::DecodeIntent::ReferenceMip { cpu_threads },
+                None,
                 maximum_output_bytes,
                 cancelled,
             )?
@@ -711,6 +714,7 @@ impl Broker {
                 source.clone(),
                 0,
                 protocol::DecodeIntent::Probe,
+                None,
                 0,
                 cancelled,
             )?
@@ -724,11 +728,25 @@ impl Broker {
         maximum_output_bytes: u64,
         cancelled: impl Fn() -> bool,
     ) -> Result<(tr_core::export::Info, Vec<u8>)> {
+        self.export_edited_snapshot_bounded(source, options, None, maximum_output_bytes, cancelled)
+    }
+    pub fn export_edited_snapshot_bounded(
+        &mut self,
+        source: SourceSnapshot,
+        options: tr_core::export::Options,
+        edit: Option<tr_core::editing::EditRecipe>,
+        maximum_output_bytes: u64,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<(tr_core::export::Info, Vec<u8>)> {
         options.validate()?;
+        if let Some(recipe) = &edit {
+            recipe.validate()?;
+        }
         match self.process_snapshot(
             source,
             0,
             protocol::DecodeIntent::Export(options),
+            edit,
             maximum_output_bytes,
             cancelled,
         )? {
@@ -747,6 +765,7 @@ impl Broker {
             source,
             0,
             protocol::DecodeIntent::ScientificSample { x, y },
+            None,
             0,
             cancelled,
         )? {
@@ -759,6 +778,7 @@ impl Broker {
         source: SourceSnapshot,
         edge: u32,
         intent: protocol::DecodeIntent,
+        edit: Option<tr_core::editing::EditRecipe>,
         maximum_output_bytes: u64,
         cancelled: impl Fn() -> bool,
     ) -> Result<WorkerOutput> {
@@ -806,6 +826,7 @@ impl Broker {
                 bytes,
                 edge,
                 intent,
+                edit,
                 maximum_output_bytes,
                 result: tx,
             })

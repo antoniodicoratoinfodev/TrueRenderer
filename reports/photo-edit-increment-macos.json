@@ -1,0 +1,41 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "increment": "photographic development, first vertical slice",
+  "checked_at": "2026-09-23T18:10:11.779152+00:00",
+  "bundle": "dist/TrueRenderer-develop-v4.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "f85e1fd50ec627b11c0e831d97582481878111732293e5875db0c07f999d3969",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "07e9307698ce3be77bf171298e1cd98c512551e914b4227f135f8bf32775a791",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "f571b080d6b77fcebee8bac7d0cbdc6cf48ec391cea6365c30db3cb72659e08e"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 169,
+    "ignored_integration_tests_run": 11,
+    "private_camera_tests_skipped": 3,
+    "worker_protocol_checks": 8,
+    "resampling_signals": 24,
+    "fmt_clippy_workspace_build": true,
+    "native_sampling_smoke": true
+  },
+  "xpc_integration": {
+    "command": "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer-develop-v4.app --report-root var/photo-edit-qualification",
+    "passed": true,
+    "corpus_images_checked": 12,
+    "two_distinct_processes": true,
+    "timeout_and_recovery": true,
+    "other_isolate_survived": true,
+    "edited_png16_export_checked_slots": 2,
+    "edited_export_source_unchanged": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false
+  },
+  "limits": [
+    "No SF0-SF10 or R0-R4 gate is certified by this increment.",
+    "Fast edited view can start from a reduced mip; native-resolution verification is explicit.",
+    "Grid and filmstrip do not yet apply the edit recipe; inspector histogram reports the unedited source.",
+    "No extended RAW camera, memory, performance, display, Windows, or photographic-quality qualification."
+  ]
+}

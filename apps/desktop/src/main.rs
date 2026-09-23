@@ -74,11 +74,19 @@ fn run() -> Result<()> {
             || a == "--preview-gpu-smoke"
             || a == "--preview-performance-smoke"
     });
+    let develop_smoke = args.iter().any(|a| a == "--develop-smoke");
+    if develop_smoke {
+        anyhow::ensure!(
+            option("--root").is_some() && option("--data").is_some(),
+            "Develop smoke requires an isolated --root and --data"
+        );
+    }
     let smoke = navigation
         || args.iter().any(|a| a == "--folder-loading-smoke")
         || args.iter().any(|a| a == "--filesystem-smoke")
         || source_smoke
         || settings_smoke
+        || develop_smoke
         || external_smoke
         || sampling_smoke
         || args.iter().any(|a| a == "--smoke-test");

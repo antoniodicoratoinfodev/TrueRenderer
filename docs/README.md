@@ -12,6 +12,7 @@ Indice delle specifiche, delle decisioni e delle evidenze. Stato corrente e atti
 | [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md) | Fonte della specifica integrata, con requisiti ancora da qualificare |
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
 | [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md) | ADR 0010: formati di uscita, DNG distinti, superficie e dati scientifici |
+| [Sviluppo fotografico non distruttivo](progetto-sviluppo-fotografico.md) | Progetto dei controlli e ADR 0011: luce/WB/colore, dettaglio, ottica, maschere, ricette e parità vista/export; attività in STATO.md |
 | [Navigatore filesystem commutabile](progetto-navigatore-filesystem.md) | Requisiti, decisioni, schede Libreria/Esplora, preferiti e matrice di accettazione; avanzamento in STATO.md |
 | [Verifica nativa navigatore](../reports/filesystem-browser-macos.json) | Layout IT/EN, finestra compatta e 200%; hash e limiti della campagna Mac |
 | [Navigatore stile IDE](../reports/navigator-ide-macos.json) | Revisione estetica, schermate aggiornate, regressioni UI e bundle Mac |
@@ -29,6 +30,7 @@ Specifiche e decisioni risiedono tutte direttamente in questa cartella, senza so
 - [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md): campionamento fisico (0003), cache per cartella (0005), residenza e compute (0006).
 - [Motori RAW](progetto-motori-raw.md): ricette e limiti, licenza e integrazione LibRaw (0008).
 - [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md): tre percorsi distinti (0010).
+- [Sviluppo fotografico non distruttivo](progetto-sviluppo-fotografico.md): ricetta reversibile condivisa da vista ed export, controlli e correzioni ottiche della futura estensione (0011).
 - [Isolamento decoder e formati](isolamento-decoder-e-formati.md): XPC macOS (0002), file esterni e pubblicazione (0004), LPAC Windows (0009).
 
 ## Lavori conclusi e verifiche

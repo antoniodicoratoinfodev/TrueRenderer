@@ -32,7 +32,7 @@ fn default_output_bytes() -> u64 {
     MAX_PIXELS as u64 * 16
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DecodeRequest {
     #[serde(default)]
@@ -41,6 +41,8 @@ pub struct DecodeRequest {
     pub max_edge: u32,
     #[serde(default)]
     pub intent: DecodeIntent,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub edit: Option<crate::editing::EditRecipe>,
     #[serde(default = "default_output_bytes")]
     pub maximum_output_bytes: u64,
 }
@@ -273,7 +275,7 @@ mod tests {
         for engine in crate::decoder::RawEngine::choices() {
             let request = DecodeRequest {
                 raw_engine: engine,
-                ..legacy
+                ..legacy.clone()
             };
             let wire = serde_json::to_vec(&request).unwrap();
             assert_eq!(parse::<DecodeRequest>(&wire).unwrap().raw_engine, engine);
@@ -304,6 +306,7 @@ mod tests {
                 source_len: 32,
                 max_edge: 320,
                 intent: DecodeIntent::LegacyRaster,
+                edit: None,
                 maximum_output_bytes: default_output_bytes(),
             },
         )

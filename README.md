@@ -6,9 +6,9 @@ TrueRenderer is a native desktop application for photographers, astrophotographe
 
 It brings each image, its technical context and the choices behind its appearance into one focused workspace. Originals remain untouched, the library stays on your computer, and no account, upload or subscription is required.
 
-![TrueRenderer viewer with Explorer, preview quality selectors, filmstrip and image inspector](reports/readme-viewer.png)
+![TrueRenderer viewer with the Develop controls, edited photograph and filmstrip](reports/readme-viewer.png)
 
-*Current macOS build, shown with the generated test corpus. [Screenshot verification](reports/readme-screenshots-macos.json).*
+*Current macOS development build, shown with the generated test corpus and an editable recipe. [Screenshot verification](reports/readme-screenshots-macos.json).*
 
 ## A clearer way to look
 
@@ -30,6 +30,25 @@ Place two images side by side with synchronized navigation to compare focus, exp
 
 RAW development always involves interpretation. TrueRenderer makes that choice explicit with Apple RAW on macOS, LibRaw bilinear, LibRaw AHD and the experimental TrueRenderer fp32 engine for supported cameras.
 
+### Develop a photograph
+
+The viewer's **Develop** section now has reversible exposure, brightness, contrast,
+highlights, shadows, whites, blacks, a basic tone curve, relative RGB warmth/tint
+and saturation. Edits are saved as versioned recipes in the local library;
+**Undo**, **Redo** and **Before/After** leave the original file untouched.
+To neutralize a colour cast, choose **Verify final rendering**, hover over an opaque,
+unclipped pixel that should be neutral, then use **Neutralize RGB sample**. This
+adjusts relative RGB warmth/tint; it does not change the camera's RAW white balance.
+The current picker uses one pixel and requires zero saturation in the edit recipe.
+The quick edited view is provisional. **Verify final rendering** computes from
+native resolution when the configured memory budget permits it.
+Grid and filmstrip thumbnails reflect saved or in-progress edits. The inspector
+histogram follows its edited thumbnail preview and labels the preview level.
+
+The remaining tools in the [photographic development plan](STATO.md#piano-sviluppo-fotografico),
+including native RAW white balance, optics, spatial detail filters, masks,
+retouching and presets, are still in development.
+
 ### Keep the work yours
 
 Ratings, rejection flags, colour labels and keywords live in a local library, separate from the originals, with backups and JSON export.
@@ -41,6 +60,9 @@ quality, PNG 8/16-bit with lossless compression choices, TIFF 16-bit or linear
 float32, and two distinct DNG operations: developed linear RGB or sensor mosaic.
 Choose a destination and optional long-edge size; existing files are never replaced.
 Exports use native development, independent of thumbnail quality.
+JPEG, PNG and TIFF exports apply each photo's saved edit recipe. The recipe and
+RAW engine are frozen when a batch starts. Linear DNG retains technical RGB
+development, while RAW DNG retains the mosaic; neither bakes in creative edits.
 
 PNG/TIFF 16-bit offer more output levels than JPEG but still clip to their output
 range. TIFF float32 preserves extended linear working values. Linear DNG is
@@ -77,7 +99,7 @@ RAW files do not have one universally correct appearance, and display colour dep
 
 The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace.
 
-![Thumbnail grid with Explorer, file icons, hierarchy guides and full-row selection](reports/readme-grid.png)
+![Thumbnail grid with Explorer, file icons and a saved edit indicator](reports/readme-grid.png)
 
 In smaller windows, navigation opens only when needed: [compact layout](reports/readme-compact.png).
 

@@ -15,6 +15,7 @@ use tr_core::{
     provider::ImageLevels,
 };
 
+mod editing;
 mod explorer;
 mod export;
 mod loading;
@@ -45,6 +46,7 @@ pub struct Startup {
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
+    editing: editing::EditingUi,
     science: science::ScienceUi,
     photo_export: export::ExportUi,
     browser: explorer::Explorer,
@@ -100,6 +102,9 @@ pub struct TrueRenderer {
     surface: String,
     frame_number: u64,
     sample: Option<tr_render::Sample>,
+    sample_item_id: Option<String>,
+    sample_level: Option<u32>,
+    sample_from_current_render: bool,
     smoke: bool,
     sampling_smoke: bool,
     external_smoke: bool,
@@ -207,6 +212,7 @@ impl TrueRenderer {
         let folder = root.join("corpus");
         let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
+            editing: Default::default(),
             science: Default::default(),
             photo_export: export::ExportUi::default(),
             browser: explorer::Explorer::new(&data),
@@ -258,6 +264,9 @@ impl TrueRenderer {
             surface,
             frame_number: 0,
             sample: None,
+            sample_item_id: None,
+            sample_level: None,
+            sample_from_current_render: false,
             smoke,
             sampling_smoke,
             external_smoke,
@@ -389,6 +398,7 @@ impl TrueRenderer {
         self.navigate(folder, None);
     }
     fn activate_folder(&mut self, folder: PathBuf) {
+        self.commit_all_edits();
         let targeted_hidden = self.pending_selection.as_ref().is_some_and(|path| {
             path.file_name()
                 .is_some_and(|name| name.to_string_lossy().starts_with('.'))
@@ -462,7 +472,15 @@ impl TrueRenderer {
     }
     fn preview_request(&self, item: &Item, edge: u32) -> PreviewRequest {
         PreviewRequest {
-            raw_engine: self.service.cache.settings().raw_engine,
+            raw_engine: self
+                .editing
+                .entries
+                .get(&item.id)
+                .and_then(|entry| entry.loaded.as_ref())
+                .filter(|saved| saved.generation > 0)
+                .map_or(self.service.cache.settings().raw_engine, |saved| {
+                    saved.recipe.raw_engine
+                }),
             quality: self.quality(item),
             edge,
         }
@@ -756,6 +774,7 @@ impl TrueRenderer {
                 break;
             }
         }
+        self.prune_edit_previews(pressure);
     }
     /// Revoke old work and presentation while preserving the catalogue and selection.
     fn invalidate_raw_engine(&mut self) {
@@ -764,6 +783,7 @@ impl TrueRenderer {
             .generation
             .store(self.generation, Ordering::Release);
         self.cache.clear();
+        self.prune_edit_previews(true);
         self.presenter.clear();
         self.pending_images.clear();
         self.demand.clear();
@@ -777,6 +797,9 @@ impl TrueRenderer {
         self.watched_sources.clear();
         self.source_monitor.watch(self.generation, vec![]);
         self.sample = None;
+        self.sample_item_id = None;
+        self.sample_level = None;
+        self.sample_from_current_render = false;
         self.errors.clear();
         // Filesystem scan IDs are independent of decoder generations.
     }
@@ -876,6 +899,9 @@ impl TrueRenderer {
         self.errors
             .retain(|key, _| !changed.iter().any(|id| key.starts_with(&format!("{id}:"))));
         self.sample = None;
+        self.sample_item_id = None;
+        self.sample_level = None;
+        self.sample_from_current_render = false;
         for change in changes {
             let Some(item) = self
                 .state
@@ -916,6 +942,7 @@ impl TrueRenderer {
         self.status = "Sorgenti cambiate: anteprime invalidate; annotazioni conservate".into();
     }
     fn poll(&mut self, ctx: &egui::Context) {
+        self.poll_edit_preview();
         self.poll_browser(ctx);
         while let Ok((generation, changes)) = self.source_monitor.changes.try_recv() {
             if generation != self.generation {
@@ -969,6 +996,7 @@ impl TrueRenderer {
             .configure_compute(self.gpu_passed, settings.compute.code());
         while let Ok(event) = self.service.events.try_recv() {
             match event {
+                Event::Edit { id, result } => self.edit_result(id, result),
                 Event::PhotoExport(result) => self.export_result(result),
                 Event::ScientificSample { id, result } => self.science_result(id, result),
                 Event::BrowserSessionSaved(result) => match result {
@@ -1103,11 +1131,19 @@ impl TrueRenderer {
                 Event::Stopped => {}
             }
         }
-        if let Some(item) = self.state.current_item()
-            && item.id != self.keyword_id
+        if let Some(id) = self.state.current_item().map(|item| item.id.clone())
+            && id != self.keyword_id
         {
-            self.keyword_id = item.id.clone();
-            self.keyword_text = item.annotation.keywords.join(", ");
+            let previous = self.keyword_id.clone();
+            self.commit_edit(&previous);
+            self.keyword_id = id;
+            self.keyword_text = self
+                .state
+                .current_item()
+                .unwrap()
+                .annotation
+                .keywords
+                .join(", ");
         }
         if self.smoke {
             let screenshots = ctx.input(|i| {
@@ -1401,15 +1437,23 @@ impl TrueRenderer {
     fn engine_indicator(&self, ui: &mut egui::Ui) {
         let settings = self.service.cache.settings();
         let lang = self.cache_settings.language;
-        let name = match settings.raw_engine {
+        let saved = self
+            .state
+            .current_item()
+            .and_then(|item| self.editing.entries.get(&item.id))
+            .and_then(|entry| entry.loaded.as_ref())
+            .filter(|edit| edit.generation > 0);
+        let engine = saved.map_or(settings.raw_engine, |edit| edit.recipe.raw_engine);
+        let name = match engine {
             tr_core::decoder::RawEngine::Apple => "Apple RAW",
             tr_core::decoder::RawEngine::LibRawBilinear => "LibRaw bilinear",
             tr_core::decoder::RawEngine::LibRawAhd => "LibRaw AHD",
             tr_core::decoder::RawEngine::TrueRenderer => "TrueRenderer fp32",
         };
         ui.add_sized([150., 28.], egui::Label::new(RichText::new(format!("RAW: {name}")).small().color(MUTED)).truncate())
-            .on_hover_text(format!("{}: {}\n{}", lang.text("Motore RAW"), lang.text(settings.raw_engine.label()),
-                lang.text("Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni.")));
+            .on_hover_text(format!("{}: {}\n{}", lang.text("Motore RAW"), lang.text(engine.label()),
+                if saved.is_some() {lang.text("Motore salvato nella ricetta della foto.")}
+                else {lang.text("Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni.")}));
     }
 
     fn search_box(&mut self, ui: &mut egui::Ui, width: f32) {
@@ -1688,9 +1732,14 @@ impl TrueRenderer {
                 .size_range(260.0..=360.0)
                 .frame(style::panel())
                 .show(ui, |ui| {
-                    egui::ScrollArea::vertical()
-                        .id_salt("inspector-scroll")
-                        .show(ui, |ui| self.inspector_contents(ui));
+                    let mut scroll = egui::ScrollArea::vertical().id_salt("inspector-scroll");
+                    if self.smoke
+                        && self.state.view != ViewMode::Grid
+                        && std::env::args().any(|arg| arg == "--develop-smoke")
+                    {
+                        scroll = scroll.vertical_scroll_offset(230.);
+                    }
+                    scroll.show(ui, |ui| self.inspector_contents(ui));
                 });
         }
     }
@@ -1701,6 +1750,7 @@ impl TrueRenderer {
             ui.label(RichText::new(lang.text("Seleziona un'immagine")).color(MUTED));
             return;
         };
+        self.ensure_edit_loaded(&item);
         ui.add_space(12.);
         ui.label(RichText::new(&item.name).strong());
         ui.label(
@@ -1731,19 +1781,44 @@ impl TrueRenderer {
             self.science_inspector(ui, &item, info);
             return;
         }
-        if let Some(cached) = self.cache.get(&key) {
+        if let Some((source, digest, source_histogram, cached_info)) =
+            self.cache.get(&key).map(|c| {
+                (
+                    c.pyramid.clone(),
+                    c.digest.clone(),
+                    c.histogram,
+                    c.info.clone(),
+                )
+            })
+        {
+            let edited = self
+                .editing
+                .entries
+                .get(&item.id)
+                .and_then(|entry| entry.draft.as_ref())
+                .is_some_and(|recipe| !recipe.is_neutral());
+            let shown = self
+                .edited_thumbnail(&item.id, &digest, source.clone())
+                .unwrap_or_else(|| source.clone());
+            let rendered_edit = shown.id() != source.id();
+            let histogram = if rendered_edit {
+                self.edited_thumbnail_histogram(source.id())
+                    .unwrap_or(source_histogram)
+            } else {
+                source_histogram
+            };
             let mut preview = |ui: &mut egui::Ui| {
                 let size = Vec2::new(
                     ui.available_width(),
-                    ui.available_width() * cached.info.source_height as f32
-                        / cached.info.source_width as f32,
+                    ui.available_width() * cached_info.source_height as f32
+                        / cached_info.source_width as f32,
                 );
                 let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
                 tr_render::presenter::fitted(
                     &mut self.presenter,
                     ui,
                     format!("inspector:{}", item.id),
-                    &cached.pyramid,
+                    &shown,
                     rect,
                 );
                 ui.add_space(12.);
@@ -1756,17 +1831,47 @@ impl TrueRenderer {
                     .default_open(false)
                     .show(ui, preview);
             }
-            tr_render::histogram(ui, &cached.histogram);
+            tr_render::histogram(ui, &histogram);
+            if let Some(error) = self.edited_thumbnail_error(source.id()) {
+                ui.colored_label(AMBER, format!("Sviluppo: {error}"));
+            }
             ui.label(
-                RichText::new(localized_format!(
-                    lang,
-                    "Istogramma del livello {} · uscita sRGB composita",
-                    "Level {} histogram · composited sRGB output",
-                    cached.pyramid.base_level()
-                ))
+                RichText::new(if edited && self.editing.show_original {
+                    localized_format!(
+                        lang,
+                        "Istogramma dello sviluppo originale · livello {}",
+                        "Original development histogram · level {}",
+                        source.base_level()
+                    )
+                } else if edited && rendered_edit {
+                    localized_format!(
+                        lang,
+                        "Istogramma dell'anteprima modificata · livello {}",
+                        "Edited preview histogram · level {}",
+                        shown.base_level()
+                    )
+                } else if edited {
+                    localized_format!(
+                        lang,
+                        "Istogramma della sorgente · modifica in calcolo · livello {}",
+                        "Source histogram · edit computing · level {}",
+                        source.base_level()
+                    )
+                } else {
+                    localized_format!(
+                        lang,
+                        "Istogramma del livello {} · uscita sRGB composita",
+                        "Level {} histogram · composited sRGB output",
+                        source.base_level()
+                    )
+                })
                 .small()
                 .color(MUTED),
             );
+        }
+        ui.add_space(12.);
+        if self.state.view != ViewMode::Grid {
+            self.editing_controls(ui, &item);
         }
         ui.add_space(12.);
         egui::CollapsingHeader::new(lang.text("File"))
@@ -1944,7 +2049,9 @@ impl TrueRenderer {
                         .color(MUTED),
                 );
             });
-        if let Some(sample) = &self.sample {
+        if let Some(sample) = &self.sample
+            && self.sample_item_id.as_deref() == Some(item.id.as_str())
+        {
             ui.add_space(12.);
             section(ui, lang.text("CAMPIONE DEL VIEWPORT"));
             ui.label(RichText::new(&self.sample_source).small().color(MUTED));
@@ -1963,6 +2070,7 @@ impl TrueRenderer {
         let lang = self.cache_settings.language;
         let edge = ((size.x - 20.).max(1.) * ui.ctx().pixels_per_point()).ceil() as u32;
         let edge = tr_core::preview::thumbnail_edge(edge);
+        self.ensure_edit_loaded(item);
         self.ensure_image(item, edge);
         let key = self.image_key(item, edge);
         let selected = self.state.selected.contains(&item.id);
@@ -1981,7 +2089,7 @@ impl TrueRenderer {
                 &item.name,
             )
         });
-        let painter = ui.painter();
+        let painter = ui.painter().clone();
         painter.rect_filled(
             rect,
             5,
@@ -2006,14 +2114,60 @@ impl TrueRenderer {
             rect.min + Vec2::splat(10.),
             egui::pos2(rect.right() - 10., rect.bottom() - bottom),
         );
-        if let Some(cache) = self.cache.get(&key) {
+        let mut edit_error = None;
+        if let Some((source, digest)) = self
+            .cache
+            .get(&key)
+            .map(|cache| (cache.pyramid.clone(), cache.digest.clone()))
+        {
+            let has_edit = self
+                .editing
+                .entries
+                .get(&item.id)
+                .and_then(|entry| entry.draft.as_ref())
+                .is_some_and(|recipe| !recipe.is_neutral());
+            let shown = if source.scientific() {
+                Some(source.clone())
+            } else {
+                self.edited_thumbnail(&item.id, &digest, source.clone())
+            };
+            edit_error = self.edited_thumbnail_error(source.id()).map(str::to_owned);
+            let rendered_edit = shown
+                .as_ref()
+                .is_some_and(|image| image.id() != source.id());
             tr_render::presenter::fitted(
                 &mut self.presenter,
                 ui,
                 format!("thumbnail:{}:{show_name}", item.id),
-                &cache.pyramid,
+                &shown.unwrap_or(source),
                 area,
             );
+            if has_edit {
+                let label = if edit_error.is_some() {
+                    lang.text("Errore")
+                } else if self.editing.show_original {
+                    lang.text("Prima")
+                } else if rendered_edit {
+                    lang.text("Modificata")
+                } else {
+                    lang.text("In calcolo")
+                };
+                let badge = egui::Rect::from_min_size(
+                    area.min + Vec2::splat(4.),
+                    Vec2::new(
+                        (label.chars().count() as f32 * 6.5 + 12.).min(area.width()),
+                        19.,
+                    ),
+                );
+                painter.rect_filled(badge, 3., Color32::from_black_alpha(190));
+                painter.text(
+                    badge.center(),
+                    egui::Align2::CENTER_CENTER,
+                    label,
+                    egui::FontId::proportional(11.),
+                    Color32::WHITE,
+                );
+            }
         } else {
             let text = if self
                 .errors
@@ -2087,23 +2241,27 @@ impl TrueRenderer {
         if response.double_clicked() {
             self.command(Command::SetView(ViewMode::Preview));
         }
-        response.on_hover_text(
-            self.errors
-                .get(&format!("{}:{:?}", item.id, key.1))
-                .cloned()
-                .unwrap_or_else(|| {
-                    format!(
-                        "{}\n{} · {}",
-                        item.name,
-                        human_bytes(item.bytes),
-                        if item.approved {
-                            lang.text("Anteprima disponibile · dettagli del decoder in Ispezione")
-                        } else {
-                            lang.text("Decoder non disponibile o file oltre quota")
-                        }
-                    )
-                }),
-        );
+        let tooltip = self
+            .errors
+            .get(&format!("{}:{:?}", item.id, key.1))
+            .cloned()
+            .unwrap_or_else(|| {
+                format!(
+                    "{}\n{} · {}",
+                    item.name,
+                    human_bytes(item.bytes),
+                    if item.approved {
+                        lang.text("Anteprima disponibile · dettagli del decoder in Ispezione")
+                    } else {
+                        lang.text("Decoder non disponibile o file oltre quota")
+                    }
+                )
+            });
+        response.on_hover_text(if let Some(error) = edit_error {
+            format!("{tooltip}\nSviluppo: {error}")
+        } else {
+            tooltip
+        });
     }
     fn grid(&mut self, ui: &mut egui::Ui) {
         let columns = ((ui.available_width() + 12.) / (self.cell_size + 12.))
@@ -2337,7 +2495,9 @@ impl TrueRenderer {
         .ceil()
         .clamp(1., 4096.) as u32;
         self.viewer_prefetch_edge = self.viewer_prefetch_edge.max(fitted_edge);
-        let edge = if self.state.transform.zoom.is_none() {
+        let edge = if self.state.transform.zoom.is_none()
+            && self.editing.verify_final.as_deref() != Some(item.id.as_str())
+        {
             fitted_edge
         } else {
             0
@@ -2381,7 +2541,18 @@ impl TrueRenderer {
         if let Some(c) = selected.as_ref().and_then(|key| self.cache.get_mut(key)) {
             c.touched = self.frame_number;
         }
-        if let Some(c) = selected.as_ref().and_then(|key| self.cache.get(key)) {
+        if let Some((source, digest, base, source_size)) = selected
+            .as_ref()
+            .and_then(|key| self.cache.get(key))
+            .map(|c| {
+                (
+                    c.pyramid.clone(),
+                    c.digest.clone(),
+                    c.pyramid.base_level(),
+                    c.pyramid.source_size(),
+                )
+            })
+        {
             if completeness == tr_core::preview::Completeness::Refining {
                 ui.label(
                     if self.state.transform.zoom == Some(1.)
@@ -2393,27 +2564,56 @@ impl TrueRenderer {
                     },
                 );
             } else {
-                if key.1.quality == PreviewQuality::Standard && c.pyramid.base_level() > 0 {
+                if key.1.quality == PreviewQuality::Standard && base > 0 {
                     ui.label(localized_format!(
                         lang,
                         "Dettaglio limitato a {} × {} pixel",
                         "Detail limited to {} × {} pixels",
-                        c.pyramid.source().width,
-                        c.pyramid.source().height
+                        source.source().width,
+                        source.source().height
                     ));
                 }
             }
+            let image = if source.scientific() {
+                Some(source.clone())
+            } else {
+                self.edited_preview(&item.id, &digest, source.clone())
+            };
+            let edited = self
+                .editing
+                .entries
+                .get(&item.id)
+                .and_then(|e| e.draft.as_ref())
+                .is_some_and(|r| !r.is_neutral());
+            if edited {
+                if self.editing.show_original {
+                    ui.label(lang.text("Prima · sviluppo originale"));
+                } else if image.is_none() {
+                    ui.label(lang.text("Calcolo regolazioni · originale provvisorio"));
+                } else if image.as_ref().is_some_and(|image| image.base_level() == 0) {
+                    ui.label(lang.text("Resa finale alla risoluzione nativa"));
+                } else {
+                    ui.label(lang.text("Anteprima modificata provvisoria · export nativo"));
+                }
+            }
+            if let Some(error) = &self.editing.preview_error {
+                ui.colored_label(AMBER, error);
+            }
+            let sample_from_current_render =
+                !source.scientific() && !self.editing.show_original && image.is_some();
+            let image = image.unwrap_or(source);
             let lane = format!(
-                "view:{id}:{}:{}:{:?}:{:?}",
+                "view:{id}:{}:{}:{:?}:{:?}:{}",
                 item.id,
-                c.digest,
-                self.cache_settings.raw_engine,
-                c.pyramid.source_size()
+                digest,
+                key.1.raw_engine,
+                source_size,
+                image.id()
             );
             let (response, sample) = tr_render::viewport(
                 ui,
                 &mut self.presenter,
-                &c.pyramid,
+                &image,
                 &mut self.state.transform,
                 &lane,
             );
@@ -2423,10 +2623,13 @@ impl TrueRenderer {
                     lang,
                     "Livello {} · {}",
                     "Level {} · {}",
-                    c.pyramid.base_level(),
+                    image.base_level(),
                     item.name
                 );
                 self.sample = sample;
+                self.sample_item_id = Some(item.id.clone());
+                self.sample_level = Some(image.base_level());
+                self.sample_from_current_render = sample_from_current_render;
             }
         } else {
             egui::Frame::new().fill(Color32::from_gray(119)).show(ui,|ui|{
@@ -2917,6 +3120,10 @@ impl TrueRenderer {
         if !self.smoke {
             return;
         }
+        if std::env::args().any(|arg| arg == "--develop-smoke") {
+            self.develop_smoke(ctx);
+            return;
+        }
         if std::env::args().any(|arg| arg == "--source-change-smoke") {
             self.source_change_smoke(ctx);
             return;
@@ -3105,12 +3312,15 @@ impl eframe::App for TrueRenderer {
             self.keyboard(&ctx);
         }
         self.image_focus_ids.clear();
-        if ctx.input(|i| i.viewport().close_requested()) && !self.state.pending.is_empty() {
+        if ctx.input(|i| i.viewport().close_requested())
+            && (!self.state.pending.is_empty() || self.edits_have_pending())
+        {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.closing = true;
-            self.status = "Attendo il salvataggio delle annotazioni prima di chiudere…".into();
+            self.commit_all_edits();
+            self.status = "Attendo il salvataggio delle modifiche prima di chiudere…".into();
         }
-        if self.closing && self.state.pending.is_empty() {
+        if self.closing && self.state.pending.is_empty() && !self.edits_have_pending() {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         self.toolbar(ui);
@@ -3311,6 +3521,172 @@ mod settings_regressions {
             assert!(Instant::now() < deadline, "Timed out: {}", app.status);
             std::thread::sleep(Duration::from_millis(10));
         }
+    }
+
+    #[test]
+    fn edited_preview_marks_reduced_work_and_can_converge_from_native_source() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        app.state.current = Some(item.id.clone());
+        let mut recipe = tr_core::editing::EditRecipe::neutral(app.cache_settings.raw_engine);
+        recipe.exposure_ev = 1.;
+        app.editing.entries.insert(
+            item.id.clone(),
+            editing::EditEntry {
+                loaded: Some(tr_store::LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: "synthetic".into(),
+                    generation: 1,
+                    revision: 1,
+                    recipe: recipe.clone(),
+                    can_undo: true,
+                    can_redo: false,
+                }),
+                draft: Some(recipe),
+                ..Default::default()
+            },
+        );
+        let source = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage {
+                    width: 2048,
+                    height: 1,
+                    pixels: vec![[0.25, 0.125, 0.5, 1.]; 2048],
+                },
+                PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let wait = |app: &mut TrueRenderer| {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            loop {
+                app.poll_edit_preview();
+                if let Some(image) = app.edited_preview(&item.id, "synthetic", source.clone()) {
+                    return image;
+                }
+                assert!(
+                    Instant::now() < deadline,
+                    "anteprima modificata non disponibile"
+                );
+                std::thread::sleep(Duration::from_millis(5));
+            }
+        };
+        let quick = wait(&mut app);
+        assert_eq!(quick.base_level(), 1);
+        assert_eq!(quick.source().pixels[0][0], 0.5);
+        app.editing.verify_final = Some(item.id.clone());
+        app.clear_edit_preview();
+        let final_image = wait(&mut app);
+        assert_eq!(final_image.base_level(), 0);
+        assert_eq!(final_image.source().pixels[0], [0.5, 0.25, 1., 1.]);
+    }
+
+    #[test]
+    fn visible_thumbnails_use_independent_bounded_edit_results() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let items = app.state.items[..2].to_vec();
+        let sources: Vec<_> = [0.2, 0.3]
+            .into_iter()
+            .map(|red| {
+                Arc::new(
+                    ImageLevels::from_source(
+                        tr_core::color::LinearImage {
+                            width: 128,
+                            height: 128,
+                            pixels: vec![[red, 0.1, 0.05, 1.]; 128 * 128],
+                        },
+                        PreviewRequest::full(),
+                    )
+                    .unwrap(),
+                )
+            })
+            .collect();
+        for item in &items {
+            let mut recipe = tr_core::editing::EditRecipe::neutral(app.cache_settings.raw_engine);
+            recipe.exposure_ev = 1.;
+            app.editing.entries.insert(
+                item.id.clone(),
+                editing::EditEntry {
+                    loaded: Some(tr_store::LoadedEdit {
+                        asset_id: item.id.clone(),
+                        source_digest: "synthetic".into(),
+                        generation: 1,
+                        revision: 1,
+                        recipe: recipe.clone(),
+                        can_undo: true,
+                        can_redo: false,
+                    }),
+                    draft: Some(recipe),
+                    ..Default::default()
+                },
+            );
+        }
+        let deadline = Instant::now() + Duration::from_secs(5);
+        let rendered = loop {
+            for (item, source) in items.iter().zip(&sources) {
+                app.edited_thumbnail(&item.id, "synthetic", source.clone());
+            }
+            std::thread::sleep(Duration::from_millis(5));
+            app.poll_edit_preview();
+            let ready: Option<Vec<_>> = items
+                .iter()
+                .zip(&sources)
+                .map(|(item, source)| app.edited_thumbnail(&item.id, "synthetic", source.clone()))
+                .collect();
+            if let Some(ready) = ready {
+                break ready;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "miniature modificate non disponibili"
+            );
+        };
+        for (source, image) in sources.iter().zip(&rendered) {
+            assert_eq!(
+                image.source().pixels[0][0],
+                source.source().pixels[0][0] * 2.
+            );
+            assert_eq!(
+                image.source().histogram(),
+                app.edited_thumbnail_histogram(source.id()).unwrap()
+            );
+            assert_eq!(source.source().pixels[0][3], image.source().pixels[0][3]);
+        }
+        let first = &items[0].id;
+        app.editing
+            .entries
+            .get_mut(first)
+            .unwrap()
+            .draft
+            .as_mut()
+            .unwrap()
+            .exposure_ev = 2.;
+        app.clear_edit_thumbnails(first);
+        let deadline = Instant::now() + Duration::from_secs(5);
+        loop {
+            app.poll_edit_preview();
+            if let Some(image) = app.edited_thumbnail(first, "synthetic", sources[0].clone()) {
+                assert_eq!(
+                    image.source().pixels[0][0],
+                    sources[0].source().pixels[0][0] * 4.
+                );
+                break;
+            }
+            assert!(
+                Instant::now() < deadline,
+                "miniatura aggiornata non disponibile"
+            );
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert_eq!(
+            app.edited_thumbnail(&items[1].id, "synthetic", sources[1].clone())
+                .unwrap()
+                .source()
+                .pixels[0][0],
+            sources[1].source().pixels[0][0] * 2.
+        );
     }
 
     #[test]

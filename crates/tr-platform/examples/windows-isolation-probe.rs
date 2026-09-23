@@ -164,6 +164,7 @@ fn main() -> anyhow::Result<()> {
             source_len: bytes.len(),
             max_edge: 32,
             intent: tr_core::protocol::DecodeIntent::Probe,
+            edit: None,
             maximum_output_bytes: 1024 * 1024,
         };
         let sent =
