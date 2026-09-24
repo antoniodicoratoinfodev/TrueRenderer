@@ -23,9 +23,11 @@ type PreviewOutcome = (
     String,
     u64,
     u32,
+    bool,
     EditRecipe,
     Result<Arc<ImageLevels>, String>,
 );
+type ProofCapture = (Vec<u8>, [u32; 2], [f32; 4], &'static str);
 type ThumbnailOutcome = (
     String,
     String,
@@ -42,6 +44,7 @@ struct ThumbnailPreview {
 }
 struct EditPreview {
     source: u64,
+    proof: bool,
     recipe: EditRecipe,
     image: Arc<ImageLevels>,
     touched: u64,
@@ -50,18 +53,48 @@ pub(super) struct EditingUi {
     pub entries: HashMap<String, EditEntry>,
     pub show_original: bool,
     pub verify_final: Option<String>,
+    pub output_proof: bool,
     previews: HashMap<String, EditPreview>,
     inflight: Option<(String, u64, EditRecipe)>,
     tx: std::sync::mpsc::Sender<PreviewOutcome>,
     rx: std::sync::mpsc::Receiver<PreviewOutcome>,
-    preview_errors: HashMap<String, (u64, u32, EditRecipe, String)>,
+    preview_errors: HashMap<String, PreviewFailure>,
     pub picker_error: Option<(String, String)>,
     smoke_ready_at: Option<Instant>,
+    smoke_proof_capture: Option<ProofCapture>,
+    smoke_proof_result: Option<serde_json::Value>,
+    smoke_source_digest: Option<String>,
+    smoke_export_started: bool,
+    smoke_export_result: Option<serde_json::Value>,
     thumbnails: HashMap<u64, ThumbnailPreview>,
     thumbnail_inflight: HashSet<u64>,
     thumbnail_errors: HashMap<u64, (String, EditRecipe, String)>,
     thumbnail_tx: std::sync::mpsc::Sender<ThumbnailOutcome>,
     thumbnail_rx: std::sync::mpsc::Receiver<ThumbnailOutcome>,
+}
+struct PreviewFailure {
+    source: u64,
+    base: u32,
+    proof: bool,
+    recipe: EditRecipe,
+    message: String,
+}
+// The neutral input already owns its lease. Reserve the new canonical pyramid
+// plus filtering scratch, including transient old/new horizontal allocations
+// and conservative axis-table overhead. No native decoder runs in this stage.
+fn preview_working_bytes(mut width: u32, mut height: u32) -> u64 {
+    let mut retained = u64::from(width) * u64::from(height) * 16;
+    let mut peak = retained;
+    while width > 1 || height > 1 {
+        let (next_width, next_height) = (width.div_ceil(2), height.div_ceil(2));
+        let next = u64::from(next_width) * u64::from(next_height) * 16;
+        let horizontal = u64::from(next_width) * u64::from(height) * 16;
+        let axes = (u64::from(next_width) + u64::from(next_height)) * 512;
+        peak = peak.max(retained + next + 2 * horizontal + axes);
+        retained += next;
+        (width, height) = (next_width, next_height);
+    }
+    peak + 64 * 1024
 }
 impl Default for EditingUi {
     fn default() -> Self {
@@ -71,6 +104,7 @@ impl Default for EditingUi {
             entries: HashMap::new(),
             show_original: false,
             verify_final: None,
+            output_proof: false,
             previews: HashMap::new(),
             inflight: None,
             tx,
@@ -78,6 +112,11 @@ impl Default for EditingUi {
             preview_errors: HashMap::new(),
             picker_error: None,
             smoke_ready_at: None,
+            smoke_proof_capture: None,
+            smoke_proof_result: None,
+            smoke_source_digest: None,
+            smoke_export_started: false,
+            smoke_export_result: None,
             thumbnails: HashMap::new(),
             thumbnail_inflight: HashSet::new(),
             thumbnail_errors: HashMap::new(),
@@ -87,15 +126,79 @@ impl Default for EditingUi {
     }
 }
 impl TrueRenderer {
+    pub(super) fn output_proof_for(&self, id: &str) -> bool {
+        self.editing.output_proof && self.editing.verify_final.as_deref() == Some(id)
+    }
+    fn edit_source_matches(&self, id: &str, recorded: &str, digest: &str, source: u64) -> bool {
+        if recorded == digest {
+            return true;
+        }
+        // External scans record an observation token. The accepted cache result
+        // belongs to that request's source epoch and contains its verified hash.
+        // A source change invalidates the cache and advances the epoch first.
+        recorded.starts_with("unverified:")
+            && self
+                .state
+                .items
+                .iter()
+                .any(|item| item.id == id && item.digest == recorded)
+            && self.cache.iter().any(|((photo, _), cached)| {
+                photo == id && cached.digest == digest && cached.pyramid.id() == source
+            })
+    }
+    pub(super) fn request_final_preview(&mut self, id: &str, proof: bool) {
+        self.editing.verify_final = Some(id.into());
+        self.editing.output_proof = proof;
+        self.editing.show_original = false;
+        self.quality_overrides
+            .insert(id.into(), PreviewQuality::Full);
+        self.sample = None;
+        self.sample_from_current_render = false;
+        self.clear_edit_preview();
+    }
     pub(super) fn develop_smoke(&mut self, ctx: &egui::Context) {
+        let proof_smoke = std::env::args().any(|arg| arg == "--output-proof-smoke");
+        let args: Vec<_> = std::env::args().collect();
+        let opened = args
+            .iter()
+            .position(|a| a == "--open")
+            .and_then(|i| args.get(i + 1))
+            .and_then(|p| std::fs::canonicalize(p).ok());
         ctx.request_repaint_after(Duration::from_millis(50));
         let timed_out = self.started.elapsed() > Duration::from_secs(90) || self.fatal;
         let target = self
             .state
             .items
             .iter()
-            .find(|item| item.name == "02_Paesaggio_analitico.png")
+            .find(|item| {
+                opened
+                    .as_ref()
+                    .map_or(item.name == "02_Paesaggio_analitico.png", |p| {
+                        &item.path == p
+                    })
+            })
             .cloned();
+        if self.frame_number.is_multiple_of(30) || timed_out {
+            let memory = self.service.cache.memory.usage();
+            let diagnostic = serde_json::json!({
+                "stage":self.smoke_stage,"scanning":self.scanning,"items":self.state.items.len(),
+                "target_found":target.is_some(),"status":self.status,"errors":self.errors,
+                "verify_final":self.editing.verify_final,"output_proof":self.editing.output_proof,
+                "cache":self.cache.iter().map(|((id,request),c)|serde_json::json!({"id":id,"request":format!("{request:?}"),"source":c.pyramid.id(),"base":c.pyramid.base_level(),"size":c.pyramid.source_size(),"digest":c.digest})).collect::<Vec<_>>(),
+                "demand":self.demand.iter().map(|k|format!("{k:?}")).collect::<Vec<_>>(),
+                "pending":self.pending_images.iter().map(|k|format!("{k:?}")).collect::<Vec<_>>(),
+                "edits":self.editing.entries.iter().map(|(id,e)|serde_json::json!({"id":id,"digest":e.loaded.as_ref().map(|e|&e.source_digest),"pending":e.pending,"loading":e.loading,"dirty":e.dirty(),"error":e.error})).collect::<Vec<_>>(),
+                "memory":{"limit":memory.limit,"reserved":memory.reserved,"peak":memory.peak,"rejected":memory.rejected},
+                "inflight":self.editing.inflight,"presenter_idle":self.presenter.is_idle(),"presenter_errors":self.presenter.has_errors(),
+                "previews":self.editing.previews.iter().map(|(id,p)|serde_json::json!({"id":id,"source":p.source,"image":p.image.id(),"proof":p.proof,"base":p.image.base_level(),"size":p.image.source_size()})).collect::<Vec<_>>(),
+                "preview_errors":self.editing.preview_errors.values().map(|p|p.message.as_str()).collect::<Vec<_>>(),
+                "captures":self.presenter.captures().iter().map(|c|serde_json::json!({"source":c.source,"compute":c.compute,"size":c.region.size,"rect":format!("{:?}",c.rect),"clip":format!("{:?}",c.clip),"fully_visible":c.clip.contains_rect(c.rect)})).collect::<Vec<_>>()
+            });
+            let _ = std::fs::write(
+                self.root.join("reports/develop-progress.json"),
+                serde_json::to_vec_pretty(&diagnostic).unwrap(),
+            );
+        }
         if timed_out {
             let _ = std::fs::write(
                 self.root.join("reports/develop-ui.json"),
@@ -109,6 +212,9 @@ impl TrueRenderer {
         };
         match self.smoke_stage {
             0 if !self.scanning => {
+                self.editing.smoke_source_digest = tr_platform::snapshot(&item.path)
+                    .ok()
+                    .map(|(_, digest)| digest);
                 self.set_language(Language::Italian);
                 self.show_inspector = true;
                 self.state.view = ViewMode::Preview;
@@ -132,6 +238,9 @@ impl TrueRenderer {
                         entry.draft = Some(recipe);
                         self.commit_edit(&item.id);
                     }
+                    if proof_smoke {
+                        self.request_final_preview(&item.id, true);
+                    }
                     self.smoke_stage = 2;
                 }
             }
@@ -148,9 +257,11 @@ impl TrueRenderer {
                     self.commit_edit(&item.id);
                 }
                 let rendered = self.editing.previews.get(&item.id).is_some_and(|preview| {
-                    self.cache
-                        .values()
-                        .any(|cached| cached.pyramid.id() == preview.source)
+                    (!proof_smoke || (preview.proof && preview.image.base_level() == 0))
+                        && self
+                            .cache
+                            .values()
+                            .any(|cached| cached.pyramid.id() == preview.source)
                 });
                 if saved && rendered {
                     self.editing.smoke_ready_at.get_or_insert_with(Instant::now);
@@ -165,11 +276,56 @@ impl TrueRenderer {
                         .is_some_and(|start| start.elapsed() > Duration::from_secs(1))
                     && self.presenter.is_idle()
                 {
+                    if proof_smoke {
+                        let image = &self.editing.previews[&item.id].image;
+                        let Some(capture) = self
+                            .presenter
+                            .captures()
+                            .iter()
+                            .find(|c| c.source == image.id() && c.clip.contains_rect(c.rect))
+                        else {
+                            return;
+                        };
+                        let Ok(reference) = image.render(capture.region) else {
+                            return;
+                        };
+                        let ppp = ctx.pixels_per_point();
+                        self.editing.smoke_proof_capture = Some((
+                            reference.to_display(),
+                            capture.region.size,
+                            [
+                                capture.rect.min.x * ppp,
+                                capture.rect.min.y * ppp,
+                                capture.rect.max.x * ppp,
+                                capture.rect.max.y * ppp,
+                            ],
+                            capture.compute,
+                        ));
+                    }
                     self.smoke_stage = 3;
                     self.capture_screenshot(ctx, "develop-viewer");
                 }
             }
             3 if self.screenshots.contains("develop-viewer") => {
+                if let Some((expected, size, rect, compute)) =
+                    self.editing.smoke_proof_capture.take()
+                {
+                    let result = (|| -> anyhow::Result<_> {
+                        let screen =
+                            image::open(self.root.join("reports/develop-viewer.png"))?.to_rgba8();
+                        let screen = egui::ColorImage::from_rgba_unmultiplied(
+                            [screen.width() as usize, screen.height() as usize],
+                            screen.as_raw(),
+                        );
+                        navigation::compare(&screen, &expected, size, rect)
+                    })();
+                    self.editing.smoke_proof_result = Some(match result {
+                        Ok((maximum, differing)) => {
+                            serde_json::json!({"passed":maximum<=1,"maximum_error_u8":maximum,"differing_channels":differing,"size":size,"compute":compute})
+                        }
+                        Err(error) => serde_json::json!({"passed":false,"error":error.to_string()}),
+                    });
+                }
                 self.state.view = ViewMode::Grid;
                 self.editing.smoke_ready_at = Some(Instant::now());
                 self.smoke_stage = 4;
@@ -192,24 +348,60 @@ impl TrueRenderer {
                 }
             }
             5 if self.screenshots.contains("develop-grid") => {
+                let export_smoke = proof_smoke && args.iter().any(|a| a == "--proof-export");
+                if export_smoke && !self.editing.smoke_export_started {
+                    let destination = self.root.join("var/develop-export");
+                    if let Err(error) = std::fs::create_dir_all(&destination) {
+                        self.editing.smoke_export_result =
+                            Some(serde_json::json!({"passed":false,"error":error.to_string()}));
+                    } else if let Some(edit) = self
+                        .editing
+                        .entries
+                        .get(&item.id)
+                        .and_then(|e| e.loaded.as_ref())
+                    {
+                        let job = crate::photo_export::Job {
+                            item: item.clone(),
+                            options: tr_core::export::Options {
+                                format: tr_core::export::Format::Png16,
+                                ..Default::default()
+                            },
+                            engine: edit.recipe.raw_engine,
+                            source_digest: edit.source_digest.clone(),
+                            recipe: Some(edit.recipe.clone()),
+                            destination,
+                            cancel: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                        };
+                        if !self.request(Request::ExportPhoto(job)) {
+                            return;
+                        }
+                    }
+                    self.editing.smoke_export_started = true;
+                }
+                if export_smoke && self.editing.smoke_export_result.is_none() {
+                    return;
+                }
                 let edit = self
                     .editing
                     .entries
                     .get(&item.id)
                     .and_then(|entry| entry.loaded.as_ref());
-                let unchanged = tr_platform::snapshot(&item.path)
-                    .is_ok_and(|(_, digest)| digest == item.digest);
+                let unchanged = tr_platform::snapshot(&item.path).is_ok_and(|(_, digest)| {
+                    self.editing.smoke_source_digest.as_ref() == Some(&digest)
+                });
                 let report = serde_json::json!({
                     "application":"TrueRenderer",
                     "version":env!("CARGO_PKG_VERSION"),
-                    "passed":edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal,
+                    "passed":edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!proof_smoke || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
+                    "output_proof_surface":self.editing.smoke_proof_result,
+                    "export":self.editing.smoke_export_result,
                     "fixture":item.name,
-                    "source_digest":item.digest,
+                    "source_digest":self.editing.smoke_source_digest,
                     "recipe":edit.map(|saved| &saved.recipe),
                     "saved_generation":edit.map(|saved| saved.generation),
                     "source_unchanged":unchanged,
                     "screenshots":["develop-viewer.png","develop-grid.png"],
-                    "scope":"Native macOS UI with generated PNG and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB, physical display or Windows qualification."
+                    "scope":"Native macOS UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB, physical display or Windows qualification."
                 });
                 let _ = std::fs::write(
                     self.root.join("reports/develop-ui.json"),
@@ -218,6 +410,19 @@ impl TrueRenderer {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
             _ => {}
+        }
+    }
+    pub(super) fn record_develop_export(
+        &mut self,
+        result: &Result<crate::photo_export::Completed, String>,
+    ) {
+        if self.editing.smoke_export_started {
+            self.editing.smoke_export_result = Some(match result {
+                Ok(done) => {
+                    serde_json::json!({"passed":true,"size":[done.info.width,done.info.height],"file":done.path.file_name().unwrap_or_default().to_string_lossy()})
+                }
+                Err(error) => serde_json::json!({"passed":false,"error":error}),
+            });
         }
     }
     pub(super) fn clear_edit_preview(&mut self) {
@@ -269,7 +474,7 @@ impl TrueRenderer {
         }
         self.editing
             .preview_errors
-            .retain(|_, (source, _, _, _)| !pressure && live.contains(source));
+            .retain(|_, error| !pressure && live.contains(&error.source));
         let stale: Vec<_> = self
             .editing
             .thumbnails
@@ -458,10 +663,15 @@ impl TrueRenderer {
                     }
                 });
                 if ui.button(lang.text("Verifica resa finale")).clicked() {
-                    self.editing.verify_final = Some(item.id.clone());
-                    self.quality_overrides
-                        .insert(item.id.clone(), PreviewQuality::Full);
-                    self.clear_edit_preview();
+                    self.request_final_preview(&item.id, true);
+                }
+                ui.label(lang.text("PNG/TIFF16 · sRGB · dimensioni native"));
+                if self.output_proof_for(&item.id)
+                    && ui
+                        .button(lang.text("Torna al render esteso fp32"))
+                        .clicked()
+                {
+                    self.request_final_preview(&item.id, false);
                 }
                 ui.add_enabled_ui(!pending, |ui| {
                     ui.label(RichText::new(lang.text("Luce")).strong());
@@ -527,6 +737,7 @@ impl TrueRenderer {
                     let sample = if self.sample_item_id.as_deref() == Some(item.id.as_str())
                         && self.sample_level == Some(0)
                         && self.sample_from_current_render
+                        && !self.output_proof_for(&item.id)
                     {
                         self.sample
                             .as_ref()
@@ -543,7 +754,9 @@ impl TrueRenderer {
                             y
                         ));
                     }
-                    if self.sample_item_id.as_deref() == Some(item.id.as_str())
+                    if self.output_proof_for(&item.id) {
+                        ui.label(lang.text("Per il contagocce torna al render esteso fp32."));
+                    } else if self.sample_item_id.as_deref() == Some(item.id.as_str())
                         && (self.sample_level != Some(0) || !self.sample_from_current_render)
                     {
                         ui.label(
@@ -593,7 +806,9 @@ impl TrueRenderer {
                     }
                 });
                 if changed {
-                    self.editing.verify_final = None;
+                    if !self.output_proof_for(&item.id) {
+                        self.editing.verify_final = None;
+                    }
                     self.editing.picker_error = None;
                     self.editing.entries.get_mut(&item.id).unwrap().draft = Some(draft);
                     self.sample = None;
@@ -615,18 +830,24 @@ impl TrueRenderer {
                     "Ricetta salvata nella libreria"
                 }));
                 ui.label(
-                    RichText::new(
-                        lang.text("Vista modificata provvisoria; export alla risoluzione nativa."),
-                    )
+                    RichText::new(lang.text(if self.output_proof_for(&item.id) {
+                        "Anteprima export sRGB16 · PNG/TIFF · dimensioni native"
+                    } else if self.editing.verify_final.as_deref() == Some(&item.id) {
+                        "Resa finale alla risoluzione nativa"
+                    } else {
+                        "Vista modificata provvisoria; export alla risoluzione nativa."
+                    }))
                     .small()
                     .color(MUTED),
                 );
             });
     }
     pub(super) fn poll_edit_preview(&mut self) {
-        while let Ok((id, source, base, recipe, result)) = self.editing.rx.try_recv() {
+        while let Ok((id, source, base, proof, recipe, result)) = self.editing.rx.try_recv() {
             self.editing.inflight = None;
-            if self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe) {
+            if self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe)
+                || self.output_proof_for(&id) != proof
+            {
                 continue;
             }
             match result {
@@ -646,6 +867,7 @@ impl TrueRenderer {
                         id,
                         EditPreview {
                             source,
+                            proof,
                             recipe,
                             image,
                             touched: self.frame_number,
@@ -653,20 +875,25 @@ impl TrueRenderer {
                     );
                 }
                 Err(error) => {
-                    self.editing
-                        .preview_errors
-                        .insert(id, (source, base, recipe, error));
+                    self.editing.preview_errors.insert(
+                        id,
+                        PreviewFailure {
+                            source,
+                            base,
+                            proof,
+                            recipe,
+                            message: error,
+                        },
+                    );
                 }
             }
         }
         while let Ok((id, digest, source, recipe, result)) = self.editing.thumbnail_rx.try_recv() {
             self.editing.thumbnail_inflight.remove(&source);
             let current = self.editing.entries.get(&id).is_some_and(|entry| {
-                entry
-                    .loaded
-                    .as_ref()
-                    .is_some_and(|saved| saved.source_digest == digest)
-                    && entry.draft.as_ref() == Some(&recipe)
+                entry.loaded.as_ref().is_some_and(|saved| {
+                    self.edit_source_matches(&id, &saved.source_digest, &digest, source)
+                }) && entry.draft.as_ref() == Some(&recipe)
             });
             if !current {
                 continue;
@@ -722,7 +949,7 @@ impl TrueRenderer {
     ) -> Option<Arc<ImageLevels>> {
         let entry = self.editing.entries.get(id)?;
         let saved = entry.loaded.as_ref()?;
-        if saved.source_digest != digest {
+        if !self.edit_source_matches(id, &saved.source_digest, digest, neutral.id()) {
             return None;
         }
         let recipe = entry.draft.as_ref().unwrap_or(&saved.recipe).clone();
@@ -754,8 +981,9 @@ impl TrueRenderer {
                 .iter()
                 .position(|level| level.width.max(level.height) <= 512)
                 .unwrap_or(neutral.levels().len() - 1);
-            let bytes = neutral.levels()[index].pixels.len() as u64 * 16 * 3;
-            if let Some(lease) = self.service.cache.memory.try_reserve(bytes) {
+            let level = &neutral.levels()[index];
+            let bytes = preview_working_bytes(level.width, level.height);
+            if let Some(mut lease) = self.service.cache.memory.try_reserve(bytes) {
                 let tx = self.editing.thumbnail_tx.clone();
                 let wake = self.service.wake.clone();
                 let id = id.to_owned();
@@ -769,6 +997,7 @@ impl TrueRenderer {
                         recipe.apply(&mut raster)?;
                         let mut image =
                             ImageLevels::from_reference_mip(raster, size, base, neutral.opaque())?;
+                        lease.shrink(image.byte_len() as u64);
                         image.attach_lease(lease);
                         let histogram = image.source().histogram();
                         Ok((Arc::new(image), histogram))
@@ -789,12 +1018,16 @@ impl TrueRenderer {
     ) -> Option<Arc<ImageLevels>> {
         let entry = self.editing.entries.get(id)?;
         let saved = entry.loaded.as_ref()?;
-        if saved.source_digest != digest {
+        if !self.edit_source_matches(id, &saved.source_digest, digest, neutral.id()) {
             return None;
         }
         let recipe = entry.draft.as_ref().unwrap_or(&saved.recipe).clone();
-        if recipe.is_neutral() || self.editing.show_original {
+        let proof = self.output_proof_for(id);
+        if (recipe.is_neutral() && !proof) || self.editing.show_original {
             return Some(neutral);
+        }
+        if proof && neutral.base_level() != 0 {
+            return None; // A reduced source cannot simulate output before filtering.
         }
         let source = neutral.id();
         let index = if self.editing.verify_final.as_deref() == Some(id) && neutral.base_level() == 0
@@ -810,24 +1043,26 @@ impl TrueRenderer {
         let base = neutral.base_level() + index as u32;
         if let Some(ready) = self.editing.previews.get_mut(id)
             && ready.source == source
+            && ready.proof == proof
             && ready.recipe == recipe
             && ready.image.base_level() == base
         {
             ready.touched = self.frame_number;
             return Some(ready.image.clone());
         }
-        if self.editing.preview_errors.get(id).is_some_and(
-            |(failed_source, failed_base, failed_recipe, _)| {
-                *failed_source == source && *failed_base == base && *failed_recipe == recipe
-            },
-        ) {
+        if self.editing.preview_errors.get(id).is_some_and(|failure| {
+            failure.source == source
+                && failure.base == base
+                && failure.proof == proof
+                && failure.recipe == recipe
+        }) {
             return None;
         }
         self.clear_edit_preview_for(id);
         if self.editing.inflight.is_none() {
             let level = &neutral.levels()[index];
-            let bytes = level.pixels.len() as u64 * 16 * 3;
-            if let Some(lease) = self.service.cache.memory.try_reserve(bytes) {
+            let bytes = preview_working_bytes(level.width, level.height);
+            if let Some(mut lease) = self.service.cache.memory.try_reserve(bytes) {
                 let tx = self.editing.tx.clone();
                 let wake = self.service.wake.clone();
                 let id = id.to_owned();
@@ -837,24 +1072,35 @@ impl TrueRenderer {
                     let result = (|| -> anyhow::Result<Arc<ImageLevels>> {
                         let mut raster = neutral.levels()[index].clone();
                         recipe.apply(&mut raster)?;
+                        if proof {
+                            tr_core::export::proof_srgb16(&mut raster);
+                        }
+                        let opaque = if proof {
+                            raster.pixels.iter().all(|p| p[3] == 1.)
+                        } else {
+                            neutral.opaque()
+                        };
                         let mut image =
-                            ImageLevels::from_reference_mip(raster, size, base, neutral.opaque())?;
+                            ImageLevels::from_reference_mip(raster, size, base, opaque)?;
+                        // Filtering scratch is gone; only resident pixels remain.
+                        lease.shrink(image.byte_len() as u64);
                         image.attach_lease(lease);
                         Ok(Arc::new(image))
                     })()
                     .map_err(|e| format!("{e:#}"));
-                    let _ = tx.send((id, source, base, recipe, result));
+                    let _ = tx.send((id, source, base, proof, recipe, result));
                     wake.request_repaint();
                 });
             } else {
                 self.editing.preview_errors.insert(
                     id.into(),
-                    (
-                        0,
+                    PreviewFailure {
+                        source: 0,
                         base,
+                        proof,
                         recipe,
-                        "Memoria insufficiente per l'anteprima modificata".into(),
-                    ),
+                        message: "Memoria insufficiente per l'anteprima modificata".into(),
+                    },
                 );
             }
         }
@@ -864,6 +1110,6 @@ impl TrueRenderer {
         self.editing
             .preview_errors
             .get(id)
-            .map(|(_, _, _, error)| error.as_str())
+            .map(|failure| failure.message.as_str())
     }
 }

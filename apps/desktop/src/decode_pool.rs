@@ -612,7 +612,7 @@ impl DecodePool {
                                 &cancelled,
                             )?;
                             anyhow::ensure!(
-                                source.digest() == job.source_digest,
+                                source.matches_recipe_source(&job.source_digest),
                                 "Sorgente diversa dalla ricetta fotografica congelata"
                             );
                             broker.set_raw_engine(job.engine);

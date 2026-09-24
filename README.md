@@ -36,12 +36,17 @@ The viewer's **Develop** section now has reversible exposure, brightness, contra
 highlights, shadows, whites, blacks, a basic tone curve, relative RGB warmth/tint
 and saturation. Edits are saved as versioned recipes in the local library;
 **Undo**, **Redo** and **Before/After** leave the original file untouched.
-To neutralize a colour cast, choose **Verify final rendering**, hover over an opaque,
-unclipped pixel that should be neutral, then use **Neutralize RGB sample**. This
-adjusts relative RGB warmth/tint; it does not change the camera's RAW white balance.
+To neutralize a colour cast, choose **Verify final rendering**, then
+**Return to extended fp32 render**. Hover over an opaque, unclipped pixel that
+should be neutral and use **Neutralize RGB sample**. This adjusts relative RGB
+warmth/tint; it does not change the camera's RAW white balance.
 The current picker uses one pixel and requires zero saturation in the edit recipe.
-The quick edited view is provisional. **Verify final rendering** computes from
-native resolution when the configured memory budget permits it.
+The quick edited view is provisional. **Verify final rendering** builds an
+**sRGB16 export preview** from native resolution when the memory budget permits
+it. It simulates native-size PNG/TIFF16 conversion before reducing the image,
+so fitted views follow the exported file. Edits retain extended fp32 working
+values. Choose **Return to extended fp32 render** for working-space inspection
+and the RGB picker. JPEG compression and resized exports need separate checks.
 Grid and filmstrip thumbnails reflect saved or in-progress edits. The inspector
 histogram follows its edited thumbnail preview and labels the preview level.
 

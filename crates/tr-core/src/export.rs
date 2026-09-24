@@ -3,6 +3,32 @@ use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 
 pub const MAX_ENCODED: u64 = 512 * 1024 * 1024;
+
+/// Canonical sRGB integer output, shared by PNG/TIFF encoding and output proof.
+/// The input remains extended, linear, premultiplied Rec.2020.
+pub fn srgb16(pixel: crate::color::Pixel) -> ([u16; 4], u64) {
+    let alpha = pixel[3];
+    let straight = if alpha > 0. {
+        [pixel[0] / alpha, pixel[1] / alpha, pixel[2] / alpha]
+    } else {
+        [0.; 3]
+    };
+    let rgb = crate::color::rec2020_to_linear_srgb(straight).map(crate::color::linear_to_srgb);
+    let clipped = rgb.iter().filter(|v| !(0. ..=1.).contains(*v)).count() as u64;
+    (
+        [rgb[0], rgb[1], rgb[2], alpha].map(|v| (v.clamp(0., 1.) * 65535.).round() as u16),
+        clipped,
+    )
+}
+
+/// Project a private render copy to the native PNG/TIFF16 output before mips.
+/// No 8-bit intermediate and no change to the retained extended working image.
+pub fn proof_srgb16(image: &mut crate::color::LinearImage) {
+    for pixel in &mut image.pixels {
+        let (encoded, _) = srgb16(*pixel);
+        *pixel = crate::color::from_encoded_srgb(encoded.map(|v| v as f32 / 65535.));
+    }
+}
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Format {
     #[default]

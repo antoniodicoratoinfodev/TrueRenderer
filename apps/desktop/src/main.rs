@@ -11,6 +11,7 @@ mod ui;
 mod verify_cache;
 mod verify_exports;
 mod verify_formats;
+mod verify_photo_export;
 mod verify_precision;
 mod verify_previews;
 mod verify_raw_engines;
@@ -74,7 +75,9 @@ fn run() -> Result<()> {
             || a == "--preview-gpu-smoke"
             || a == "--preview-performance-smoke"
     });
-    let develop_smoke = args.iter().any(|a| a == "--develop-smoke");
+    let develop_smoke = args
+        .iter()
+        .any(|a| a == "--develop-smoke" || a == "--output-proof-smoke");
     if develop_smoke {
         anyhow::ensure!(
             option("--root").is_some() && option("--data").is_some(),
@@ -171,6 +174,16 @@ fn run() -> Result<()> {
     }
     if args.iter().any(|a| a == "--verify-exports") {
         return verify_exports::run(&root, &worker, option("--export-source").as_deref());
+    }
+    if let Some(source) = option("--verify-photo-export-parity") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "Photo parity requires an isolated --root"
+        );
+        return verify_photo_export::run(&root, &worker, &source);
+    }
+    if let Some(folder) = option("--verify-png-projection") {
+        return verify_photo_export::projection(&folder);
     }
     if args.iter().any(|a| a == "--verify-precision") {
         return verify_precision::run(&root);

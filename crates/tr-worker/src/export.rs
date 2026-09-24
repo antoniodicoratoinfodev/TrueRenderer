@@ -38,16 +38,6 @@ impl Seek for Bounded {
         Ok(next)
     }
 }
-fn encoded(pixel: color::Pixel) -> [f32; 4] {
-    let alpha = pixel[3];
-    let rgb = if alpha > 0. {
-        [pixel[0] / alpha, pixel[1] / alpha, pixel[2] / alpha]
-    } else {
-        [0.; 3]
-    };
-    let rgb = color::rec2020_to_linear_srgb(rgb).map(color::linear_to_srgb);
-    [rgb[0], rgb[1], rgb[2], alpha]
-}
 fn u16_sample(v: f32, clipped: &mut u64) -> u16 {
     if !(0. ..=1.).contains(&v) {
         *clipped += 1;
@@ -77,11 +67,78 @@ fn profile(linear: bool) -> Result<Vec<u8>> {
     };
     profile.cicp = None; // Matrix/TRC RGB profile, not a video range/matrix declaration.
     profile.rendering_intent = moxcms::RenderingIntent::RelativeColorimetric;
+    profile.white_point = moxcms::Xyzd {
+        x: 0.9642,
+        y: 1.,
+        z: 0.8249,
+    };
+    profile.media_white_point = Some(profile.white_point);
     if linear {
         profile.red_trc = Some(moxcms::ToneReprCurve::Parametric(vec![1.]));
         profile.green_trc = profile.red_trc.clone();
         profile.blue_trc = profile.red_trc.clone();
-        profile.description = None;
+        // Derive both colorants and chad from the same BT.2020 D65 white.
+        // The profile describes linear working samples, not the BT.2020 OETF.
+        let white = moxcms::XyY {
+            x: 0.3127,
+            y: 0.3290,
+            yb: 1.,
+        }
+        .to_xyzd();
+        let primaries = moxcms::ColorPrimaries::BT_2020;
+        let [r, g, b] = [primaries.red, primaries.green, primaries.blue].map(|p| p.to_xyzd());
+        let native = moxcms::ColorProfile::rgb_to_xyz_d(
+            moxcms::Matrix3d {
+                v: [[r.x, g.x, b.x], [r.y, g.y, b.y], [r.z, g.z, b.z]],
+            },
+            white,
+        );
+        let chad = moxcms::adaption_matrix_d(white.to_xyz(), profile.white_point.to_xyz());
+        let pcs = chad.mat_mul_const(native).v;
+        [
+            profile.red_colorant,
+            profile.green_colorant,
+            profile.blue_colorant,
+        ] = [0, 1, 2].map(|c| moxcms::Xyzd {
+            x: pcs[0][c],
+            y: pcs[1][c],
+            z: pcs[2][c],
+        });
+        profile.chromatic_adaptation = Some(chad);
+        profile.description = Some(moxcms::ProfileText::Localizable(vec![
+            moxcms::LocalizableString::new(
+                "en".into(),
+                "US".into(),
+                "TrueRenderer Linear Rec.2020 D65".into(),
+            ),
+        ]));
+    } else {
+        // ICC sRGB.pdf §B.2: PCS D50 colorants and D65 -> D50 adaptation.
+        // moxcms 0.8.1 defaults use a temperature-derived white and put the
+        // Bradford cone matrix itself in chad, which is not this adaptation.
+        // Keep the analytic sRGB TRC and the encoded image samples unchanged.
+        profile.red_colorant = moxcms::Xyzd {
+            x: 0.436030342570117,
+            y: 0.222438466210245,
+            z: 0.013897440074263,
+        };
+        profile.green_colorant = moxcms::Xyzd {
+            x: 0.385101860087134,
+            y: 0.716942745571917,
+            z: 0.097076381494207,
+        };
+        profile.blue_colorant = moxcms::Xyzd {
+            x: 0.143067806654203,
+            y: 0.060618777416563,
+            z: 0.713926257896652,
+        };
+        profile.chromatic_adaptation = Some(moxcms::Matrix3d {
+            v: [
+                [1.047844353856414, 0.022898981050086, -0.050206647741605],
+                [0.029549007606644, 0.990508028941971, -0.017074711360960],
+                [-0.009250984365223, 0.015072338237051, 0.751717835079977],
+            ],
+        });
     }
     Ok(profile.encode()?)
 }
@@ -180,16 +237,9 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             for pixels in image.pixels.chunks(image.width as usize) {
                 row.clear();
                 for pixel in pixels {
-                    for (channel, value) in encoded(*pixel).into_iter().enumerate() {
-                        let mut alpha_clipped = 0;
-                        let v = u16_sample(
-                            value,
-                            if channel < 3 {
-                                &mut clipped
-                            } else {
-                                &mut alpha_clipped
-                            },
-                        );
+                    let (values, count) = tr_core::export::srgb16(*pixel);
+                    clipped += count;
+                    for v in values {
                         if sixteen {
                             row.extend_from_slice(&v.to_be_bytes());
                         } else {
@@ -216,13 +266,9 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             for pixels in image.pixels.chunks(image.width as usize) {
                 row.clear();
                 for pixel in pixels {
-                    for (c, v) in encoded(*pixel).into_iter().enumerate() {
-                        let mut ignored = 0;
-                        row.push(u16_sample(
-                            v,
-                            if c == 3 { &mut ignored } else { &mut clipped },
-                        ));
-                    }
+                    let (values, count) = tr_core::export::srgb16(*pixel);
+                    clipped += count;
+                    row.extend_from_slice(&values);
                 }
                 output.write_strip(&row)?;
             }
@@ -352,6 +398,194 @@ pub fn raw(source: &[u8], options: Options, limit: u64) -> Result<(Info, Vec<u8>
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn srgb_icc_adapts_d65_to_pcs_d50_and_neutral_primaries() {
+        let p = moxcms::ColorProfile::new_from_slice(&profile(false).unwrap()).unwrap();
+        let d50 = [0.9642, 1., 0.8249];
+        let w = p.media_white_point.unwrap();
+        let sum = [
+            p.red_colorant.x + p.green_colorant.x + p.blue_colorant.x,
+            p.red_colorant.y + p.green_colorant.y + p.blue_colorant.y,
+            p.red_colorant.z + p.green_colorant.z + p.blue_colorant.z,
+        ];
+        // The published ICC matrix uses the rounded XYZ D65 [0.9505, 1, 1.089].
+        let d65 = [0.9505, 1., 1.089];
+        let chad = p.chromatic_adaptation.unwrap();
+        for c in 0..3 {
+            assert!((sum[c] - d50[c]).abs() < 3. / 65536.);
+            assert!(([w.x, w.y, w.z][c] - d50[c]).abs() < 1. / 65536.);
+            let adapted: f64 = chad.v[c].iter().zip(d65).map(|(a, b)| a * b).sum();
+            assert!((adapted - d50[c]).abs() < 3. / 65536.);
+        }
+        assert!(p.cicp.is_none());
+    }
+    #[test]
+    fn linear_rec2020_icc_white_and_adaptation_are_consistent() {
+        let p = moxcms::ColorProfile::new_from_slice(&profile(true).unwrap()).unwrap();
+        let white = p.media_white_point.unwrap();
+        let d50 = [0.9642, 1., 0.8249];
+        let d65 = [0.3127 / 0.329, 1., 0.3583 / 0.329];
+        let chad = p.chromatic_adaptation.unwrap();
+        let primaries = [p.red_colorant, p.green_colorant, p.blue_colorant];
+        let sum = [
+            primaries.iter().map(|v| v.x).sum::<f64>(),
+            primaries.iter().map(|v| v.y).sum::<f64>(),
+            primaries.iter().map(|v| v.z).sum::<f64>(),
+        ];
+        for c in 0..3 {
+            assert!(([white.x, white.y, white.z][c] - d50[c]).abs() < 1. / 65536.);
+            assert!((sum[c] - d50[c]).abs() < 3. / 65536.);
+            let adapted: f64 = chad.v[c].iter().zip(d65).map(|(a, b)| a * b).sum();
+            assert!((adapted - d50[c]).abs() < 3. / 65536.);
+        }
+        let native = chad.inverse().mat_mul_const(p.rgb_to_xyz_matrix()).v;
+        for (c, xy) in [[0.708, 0.292], [0.170, 0.797], [0.131, 0.046]]
+            .iter()
+            .enumerate()
+        {
+            let sum: f64 = native.iter().map(|row| row[c]).sum();
+            assert!((native[0][c] / sum - xy[0]).abs() < 0.0001);
+            assert!((native[1][c] / sum - xy[1]).abs() < 0.0001);
+        }
+        assert!(p.cicp.is_none());
+    }
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "Requires macOS ImageIO/ColorSync; generated fixture only"]
+    fn float_tiff_native_readback_preserves_color_and_alpha() {
+        let source = LinearImage::new(
+            4,
+            2,
+            vec![
+                [0.1, 0.2, 0.3, 1.],
+                [1., 0., 0., 1.],
+                [0., 1., 0., 1.],
+                [0., 0., 1., 1.],
+                [0.04, 0.08, 0.12, 0.4],
+                [-0.125, 0.25, 2.5, 1.],
+                [1e-8, 0.5, 1.5, 1.],
+                [0.; 4],
+            ],
+        )
+        .unwrap();
+        let (_, bytes) = render(
+            source.clone(),
+            Options {
+                format: Format::TiffFloat32,
+                ..Options::default()
+            },
+            MAX_ENCODED,
+        )
+        .unwrap();
+        let (_, actual) = crate::native::decode(&bytes, 0).unwrap();
+        assert_eq!((actual.width, actual.height), (source.width, source.height));
+        for (index, (a, b)) in actual.pixels.iter().zip(&source.pixels).enumerate() {
+            for c in 0..4 {
+                assert!(
+                    (a[c] - b[c]).abs() <= 0.0002 * (1. + b[c].abs()),
+                    "sample {index}, channel {c}: {} versus {}",
+                    a[c],
+                    b[c]
+                );
+            }
+        }
+    }
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "Requires macOS ImageIO/ColorSync; generated fixture only"]
+    fn integer_output_proof_native_readback_with_transparency() {
+        for format in [Format::Png16, Format::Tiff16] {
+            let source = LinearImage::new(
+                257,
+                5,
+                [0., 1. / 65535., 0.3, 0.999999, 1.]
+                    .into_iter()
+                    .flat_map(|alpha| {
+                        (0..257).map(move |x| {
+                            color::from_encoded_srgb([
+                                x as f32 / 256.,
+                                1. - x as f32 / 256.,
+                                0.25,
+                                alpha,
+                            ])
+                        })
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            let (_, bytes) = render(
+                source.clone(),
+                Options {
+                    format,
+                    ..Options::default()
+                },
+                MAX_ENCODED,
+            )
+            .unwrap();
+            let (_, actual) = crate::native::decode(&bytes, 0).unwrap();
+            let mut expected = source;
+            tr_core::export::proof_srgb16(&mut expected);
+            for (a, b) in actual.pixels.iter().zip(&expected.pixels) {
+                assert!((a[3] - b[3]).abs() <= 1. / 65535.);
+                for (a, b) in color::display_pixel(*a, 119. / 255.)
+                    .into_iter()
+                    .zip(color::display_pixel(*b, 119. / 255.))
+                {
+                    assert!(a.abs_diff(b) <= 1, "{format:?}: {a} versus {b}");
+                }
+            }
+        }
+    }
+    #[test]
+    fn output_proof_matches_decoded_srgb16_mips_with_clipping_and_alpha() {
+        use tr_core::{preview::PreviewRequest, provider::ImageLevels};
+        for alpha in [0., 0.3, 0.999999, 1.] {
+            let source = LinearImage::new(
+                65,
+                33,
+                (0..65 * 33)
+                    .map(|i| {
+                        [
+                            if i % 2 == 0 { 2. * alpha } else { -0.1 * alpha },
+                            (i % 13) as f32 / 13. * alpha,
+                            0.2 * alpha,
+                            alpha,
+                        ]
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            for format in [Format::Png16, Format::Tiff16] {
+                let (_, bytes) = render(
+                    source.clone(),
+                    Options {
+                        format,
+                        ..Options::default()
+                    },
+                    MAX_ENCODED,
+                )
+                .unwrap();
+                let decoded = image::load_from_memory(&bytes).unwrap().to_rgba16();
+                let pixels = decoded
+                    .pixels()
+                    .map(|p| color::from_encoded_srgb(p.0.map(|v| v as f32 / 65535.)))
+                    .collect();
+                let reopened = ImageLevels::from_source(
+                    LinearImage::new(65, 33, pixels).unwrap(),
+                    PreviewRequest::full(),
+                )
+                .unwrap();
+                let mut projected = source.clone();
+                tr_core::export::proof_srgb16(&mut projected);
+                let proof = ImageLevels::from_source(projected, PreviewRequest::full()).unwrap();
+                assert_eq!(proof.opaque(), reopened.opaque());
+                for (a, b) in proof.levels().iter().zip(reopened.levels()) {
+                    assert_eq!(a.pixels, b.pixels);
+                }
+                assert_eq!(source.pixels[0][0], 2. * alpha);
+            }
+        }
+    }
     #[cfg(any(windows, target_os = "macos"))]
     #[test]
     fn linear_dng_interoperates_with_libraw_without_demosaic() {

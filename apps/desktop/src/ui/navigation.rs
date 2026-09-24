@@ -93,7 +93,7 @@ impl Probe {
     }
 }
 
-fn compare(
+pub(super) fn compare(
     screen: &egui::ColorImage,
     expected: &[u8],
     size: [u32; 2],

@@ -15,6 +15,29 @@ Sviluppa la sorgente nativa nel decoder isolato; non salva miniature o screensho
 Il lato lungo facoltativo riduce il render, senza ingrandirlo. Zero conserva le
 dimensioni native. La qualità Standard/Piena della vista non modifica l'export.
 
+«Verifica resa finale» mostra la proiezione sRGB16 del PNG/TIFF16 nativo prima
+del ricampionamento del viewer. Trasformata, clamp e quantizzazione sono comuni
+all'encoder; il working fp32 esteso rimane disponibile nella vista di sviluppo.
+È una prova d'uscita del formato, distinta dalla calibrazione del monitor o
+dalla fedeltà cromatica della fotocamera. Per JPEG, resize export, TIFF float32 e
+DNG si mantengono i contratti specifici sotto: non sono simulati da questa prova.
+
+Il profilo sRGB incorporato in JPEG/TIFF16 usa coloranti PCS D50, bianco D50 e
+tag `chad` D65→D50 coerenti con la [descrizione ICC di sRGB, §B.2](https://registry.color.org/rgb-registry/files/sRGB.pdf).
+La curva sRGB resta analitica. I default del generatore ICC non costituiscono da
+soli il contratto: la regressione verifica i tag serializzati e la campagna nativa
+verifica il file riaperto. Questa correzione non cambia i campioni RGB codificati.
+
+Per il TIFF float32, primarie e bianco D65 provengono dalla
+[definizione Rec.2020](https://registry.color.org/rgb-registry/bt2020), con TRC
+lineare. Coloranti e `chad` usano la stessa trasformazione Bradford D65→PCS D50;
+il bianco del profilo segue il [contratto ICC D50](https://www.color.org/whyd50/).
+Il profilo è denominato «TrueRenderer Linear Rec.2020 D65». Il colorante rosso
+adattato contiene Z negativo: si conserva la colorimetria, senza ritaglio dei tag.
+Come indicato da ICC per Rec.2020, questo richiede una verifica dei lettori:
+non implica interoperabilità universale dei CMM. I campioni TIFF restano fp32
+lineari estesi, indipendentemente dai limiti della trasformata del lettore.
+
 | Operazione | Dati e colore | Alpha e perdita |
 |---|---|---|
 | JPEG | sRGB ICC, 8 bit, qualità 1–100 | con perdita; bianco composto in lineare |

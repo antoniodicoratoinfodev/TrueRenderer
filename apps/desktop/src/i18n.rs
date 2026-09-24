@@ -27,6 +27,17 @@ impl Language {
             "In calcolo" => "Rendering",
             "Errore" => "Error",
             "Verifica resa finale" => "Verify final rendering",
+            "PNG/TIFF16 · sRGB · dimensioni native" => "PNG/TIFF16 · sRGB · native dimensions",
+            "Torna al render esteso fp32" => "Return to extended fp32 render",
+            "Anteprima export sRGB16 · PNG/TIFF · dimensioni native" => {
+                "sRGB16 export preview · PNG/TIFF · native dimensions"
+            }
+            "Preparazione anteprima export dalla sorgente nativa…" => {
+                "Preparing export preview from the native source…"
+            }
+            "Per il contagocce torna al render esteso fp32." => {
+                "Return to the extended fp32 render to use the picker."
+            }
             "Resa finale alla risoluzione nativa" => "Final rendering at native resolution",
             "Ricetta salvata nella libreria" => "Recipe saved in library",
             "Modifiche in corso" => "Editing in progress",

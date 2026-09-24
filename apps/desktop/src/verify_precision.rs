@@ -14,7 +14,7 @@ use tr_core::{
 };
 
 fn pattern() -> LinearImage {
-    LinearImage::new(
+    let mut image = LinearImage::new(
         1024,
         64,
         (0..64)
@@ -23,14 +23,26 @@ fn pattern() -> LinearImage {
                     let v = x as f32 / 1023.;
                     if y < 32 {
                         color::from_encoded_srgb([v, v, v, 1.])
-                    } else {
+                    } else if y < 48 {
                         color::from_encoded_srgb([v, 1. - v, 0.3, 0.5])
+                    } else {
+                        let alpha = if x % 3 == 0 { 0.3 } else { 1. };
+                        [
+                            if x % 2 == 0 { 2. * alpha } else { -0.1 * alpha },
+                            0.3 * alpha,
+                            v * alpha,
+                            alpha,
+                        ]
                     }
                 })
             })
             .collect(),
     )
-    .unwrap()
+    .unwrap();
+    if std::env::args().any(|arg| arg == "--proof-precision") {
+        tr_core::export::proof_srgb16(&mut image);
+    }
+    image
 }
 fn native_value(format: wgpu::TextureFormat, bytes: &[u8], channel: usize) -> (f32, u32) {
     match format {
@@ -65,6 +77,7 @@ struct Probe {
     results: Arc<Mutex<Vec<serde_json::Value>>>,
     diagnostics: String,
     requested: String,
+    requested_format: Option<wgpu::TextureFormat>,
     started: Instant,
     phase: u8,
     requested_capture: bool,
@@ -74,35 +87,49 @@ impl eframe::App for Probe {
     fn ui(&mut self, ui: &mut egui::Ui, _: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
         self.presenter.poll(&ctx);
+        self.presenter.begin_capture();
         ui.label(format!(
             "TrueRenderer · SDR precision probe · {} · {}",
             self.requested,
-            if self.phase == 0 { "CPU" } else { "GPU" }
+            if self.phase.is_multiple_of(2) {
+                "CPU"
+            } else {
+                "GPU"
+            }
         ));
         let ppp = ctx.pixels_per_point();
         let origin = ui.cursor().min;
         let origin = egui::pos2((origin.x * ppp).ceil() / ppp, (origin.y * ppp).ceil() / ppp);
-        self.rect = egui::Rect::from_min_size(origin, egui::vec2(1024. / ppp, 64. / ppp));
-        self.presenter.paint(
-            ui,
-            "precision".into(),
-            &self.image,
-            self.rect,
+        let region = if self.phase < 2 {
             Region {
                 size: [1024, 64],
                 origin: [0., 0.],
                 step: [1., 1.],
-            },
+            }
+        } else {
+            Region::fitted([1024, 64], [513, 33])
+        };
+        self.rect = egui::Rect::from_min_size(
+            origin,
+            egui::vec2(region.size[0] as f32 / ppp, region.size[1] as f32 / ppp),
         );
+        self.presenter
+            .paint(ui, "precision".into(), &self.image, self.rect, region);
         let stats = self.presenter.statistics();
-        if !self.requested_capture
-            && (if self.phase == 0 {
-                stats.cpu_frames > 0
-            } else {
-                stats.gpu_frames > 0
-            })
-            && self.started.elapsed() > Duration::from_millis(300)
-        {
+        let compute = if self.phase.is_multiple_of(2) {
+            "CPU"
+        } else {
+            "GPU"
+        };
+        let ready = self.presenter.is_idle()
+            && self.presenter.captures().iter().any(|c| {
+                c.source == self.image.id()
+                    && c.compute == compute
+                    && c.region == region
+                    && c.rect == self.rect
+                    && c.clip.contains_rect(c.rect)
+            });
+        if !self.requested_capture && ready && self.started.elapsed() > Duration::from_millis(300) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(Default::default()));
             self.requested_capture = true;
         }
@@ -114,20 +141,23 @@ impl eframe::App for Probe {
             };
             let mut levels = std::collections::BTreeSet::new();
             let mut max_error = 0f32;
-            let source = pattern();
-            for y in [16usize, 48] {
-                for x in 0..1024usize {
+            let source = self.image.render(region).expect("Reference presentation");
+            for y in 0..region.size[1] as usize {
+                for x in 0..region.size[0] as usize {
                     let at = (((self.rect.min.y * ppp).round() as usize + y)
                         * capture.size[0] as usize
                         + (self.rect.min.x * ppp).round() as usize
                         + x)
                         * bpp;
-                    let expected = color::display_float(source.pixels[y * 1024 + x], 119. / 255.);
+                    let expected = color::display_float(
+                        source.pixels[y * region.size[0] as usize + x],
+                        119. / 255.,
+                    );
                     for (channel, expected) in expected[..3].iter().enumerate() {
                         let (value, code) =
                             native_value(capture.format, &capture.bytes[at..at + bpp], channel);
                         max_error = max_error.max((value - expected).abs());
-                        if channel == 1 && y == 16 {
+                        if channel == 1 && y == 8 {
                             levels.insert(code);
                         }
                     }
@@ -137,13 +167,23 @@ impl eframe::App for Probe {
                 capture.format,
                 wgpu::TextureFormat::Rgb10a2Unorm | wgpu::TextureFormat::Rgba16Float
             );
-            let passed = levels.len() >= if high { 800 } else { 250 }
+            let requested_reached = self.requested_format.is_none_or(|f| f == capture.format);
+            let passed = requested_reached
+                && levels.len()
+                    >= if self.phase >= 2 {
+                        200
+                    } else if high {
+                        800
+                    } else {
+                        250
+                    }
                 && max_error <= if high { 0.0011 } else { 0.004 };
-            self.results.lock().unwrap().push(serde_json::json!({"requested":self.requested,"compute":if self.phase==0 {"CPU"} else {"GPU"},"format":format!("{:?}",capture.format),"levels":levels.len(),"max_srgb_error":max_error,"passed":passed,"diagnostics":self.diagnostics,"size":capture.size,"native_readback_bytes":capture.bytes.len(),"compute_statistics":stats}));
-            if self.phase == 0 {
-                self.phase = 1;
+            self.results.lock().unwrap().push(serde_json::json!({"requested":self.requested,"requested_format_reached":requested_reached,"compute":if self.phase.is_multiple_of(2) {"CPU"} else {"GPU"},"format":format!("{:?}",capture.format),"resampled":self.phase>=2,"render_size":region.size,"levels":levels.len(),"max_srgb_error":max_error,"passed":passed,"diagnostics":self.diagnostics,"size":capture.size,"native_readback_bytes":capture.bytes.len(),"compute_statistics":stats}));
+            if self.phase < 3 {
+                self.phase += 1;
                 self.presenter.clear();
-                self.presenter.configure_compute(true, 2);
+                self.presenter
+                    .configure_compute(true, if self.phase.is_multiple_of(2) { 1 } else { 2 });
                 self.started = Instant::now();
                 self.requested_capture = false;
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(1160., 280.)));
@@ -196,6 +236,7 @@ pub fn run(root: &Path) -> Result<()> {
                         .surface_diagnostics
                         .clone(),
                     requested: format!("{requested:?}"),
+                    requested_format: requested,
                     started: Instant::now(),
                     phase: 0,
                     requested_capture: false,
@@ -207,11 +248,11 @@ pub fn run(root: &Path) -> Result<()> {
     }
     eframe::egui_wgpu::capture::enable_native_capture(false);
     let checks = results.lock().unwrap();
-    let passed = checks.len() == 6 && checks.iter().all(|c| c["passed"] == true);
+    let passed = checks.len() == 12 && checks.iter().all(|c| c["passed"] == true);
     std::fs::write(
         root.join("reports/presentation-precision-macos.json"),
         serde_json::to_vec_pretty(
-            &serde_json::json!({"passed":passed,"checks":*checks,"scope":"Synthetic full-range grayscale and translucent-color ramps through production CPU/GPU presenter and egui native-format capture, SDR sRGB, resize between phases. No physical display/link-depth, HDR, multi-monitor, Windows or statistical performance qualification."}),
+            &serde_json::json!({"passed":passed,"checks":*checks,"srgb16_output_proof":std::env::args().any(|arg| arg == "--proof-precision"),"scope":"All pixels of generated grayscale/translucent ramps and extended/clipped alternating colors through production CPU/GPU presenter, at aligned 1:1 and nonintegral fit; native-format capture, SDR sRGB. Requested high-precision format must be reached. No physical display/link-depth, HDR, multi-monitor, Windows or statistical performance qualification."}),
         )?,
     )?;
     ensure!(

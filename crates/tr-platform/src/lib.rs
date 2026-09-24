@@ -92,6 +92,7 @@ fn snapshot_bounded(
 pub struct SourceSnapshot {
     bytes: Arc<Vec<u8>>,
     digest: String,
+    requested_identity: String,
 }
 impl SourceSnapshot {
     pub fn digest(&self) -> &str {
@@ -99,6 +100,12 @@ impl SourceSnapshot {
     }
     pub fn byte_len(&self) -> u64 {
         self.bytes.len() as u64
+    }
+    /// Match a recipe only after the broker has validated the requested digest
+    /// or observation token against these exact private bytes. A scan token is
+    /// not a SHA-256 and is never compared directly with one.
+    pub fn matches_recipe_source(&self, recorded: &str) -> bool {
+        recorded == self.digest || recorded == self.requested_identity
     }
 }
 /// Cheap evidence that a source has not been swapped underneath a render.
@@ -643,6 +650,7 @@ impl Broker {
         Ok(SourceSnapshot {
             bytes: Arc::new(bytes),
             digest,
+            requested_identity: expected_digest.into(),
         })
     }
     pub fn decode_snapshot_cancellable(
@@ -783,7 +791,7 @@ impl Broker {
         cancelled: impl Fn() -> bool,
     ) -> Result<WorkerOutput> {
         ensure!(!cancelled(), "Decodifica annullata");
-        let SourceSnapshot { bytes, digest } = source;
+        let SourceSnapshot { bytes, digest, .. } = source;
         let external = !self.policy.approves(&digest);
         // A snapshot may have been prepared by another broker. Recheck this transport's gate.
         ensure!(
@@ -956,6 +964,43 @@ mod tests {
                 assert_eq!(format!("{:x}", hash.finalize()), expected);
             }
         }
+    }
+    #[test]
+    fn recipe_source_matches_only_the_identity_validated_for_the_snapshot() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("source.bin");
+        std::fs::write(&path, b"original").unwrap();
+        let token = observation_token(&path, &path.metadata().unwrap());
+        let mut broker = Broker::new("/not/a/worker".into());
+        broker.external_transport = true;
+        let source = broker.prepare_snapshot(&path, &token, || false).unwrap();
+        assert!(source.matches_recipe_source(&token));
+        assert!(source.matches_recipe_source(source.digest()));
+        assert!(!source.matches_recipe_source("unverified:another-source"));
+        assert!(!source.matches_recipe_source(&"0".repeat(64)));
+        let by_hash = broker
+            .prepare_snapshot(&path, source.digest(), || false)
+            .unwrap();
+        assert!(
+            !by_hash.matches_recipe_source(&token),
+            "No unchecked observation alias"
+        );
+        let replacement = dir.path().join("replacement.bin");
+        std::fs::write(&replacement, b"replaced").unwrap();
+        std::fs::rename(&replacement, &path).unwrap();
+        assert!(broker.prepare_snapshot(&path, &token, || false).is_err());
+        assert!(
+            broker
+                .prepare_snapshot(&path, source.digest(), || false)
+                .is_err()
+        );
+        assert!(
+            source.matches_recipe_source(&token),
+            "Already frozen bytes remain immutable"
+        );
+        broker.external_transport = false;
+        let token = observation_token(&path, &path.metadata().unwrap());
+        assert!(broker.prepare_snapshot(&path, &token, || false).is_err());
     }
     #[test]
     /// A snapshot prepared by a permitted transport carries no permission with
