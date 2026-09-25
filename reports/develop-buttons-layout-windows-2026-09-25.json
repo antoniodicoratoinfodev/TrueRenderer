@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-25",
+  "change": "Development actions wrap onto another row when the inspector cannot fit all three buttons.",
+  "binary_sha256": "3951177ceabe7ad4208ef12e059489b916e7cf088348e1365a71ef3030037d24",
+  "fmt": true,
+  "workspace_build": true,
+  "visual_layout": {
+    "italian": true,
+    "english": true,
+    "window": [
+      1440,
+      940
+    ]
+  },
+  "italian_develop_smoke": {
+    "application": "TrueRenderer",
+    "export": {
+      "file": "02_Paesaggio_analitico-export.png",
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "fixture": "02_Paesaggio_analitico.png",
+    "output_proof_surface": {
+      "compute": "CPU",
+      "differing_channels": 0,
+      "maximum_error_u8": 0,
+      "passed": true,
+      "size": [
+        844,
+        563
+      ]
+    },
+    "passed": true,
+    "platform": "windows",
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "LibRawBilinear",
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 1,
+    "scope": "Native UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "english_smoke": true,
+  "supplementary_surface": {
+    "passed": false,
+    "failed_checks": [
+      {
+        "differing_channels": 36648,
+        "max_channel_error_u8": 199,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": false,
+        "rect_physical": [
+          706.0,
+          382.0,
+          1008.0,
+          584.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          302,
+          202
+        ],
+        "step": [
+          3.9735099337748343,
+          3.96039603960396
+        ]
+      }
+    ],
+    "cause_observed": "08-grid-large capture has a hover tooltip from the landscape tile overlapping the radial comparison region; capture interference retained, no threshold relaxed."
+  },
+  "artifacts": "var/develop-buttons-2026-09-25",
+  "scope": "One-line layout fix; native generated corpus, Italian output proof/export and visual Italian/English checks. No new RAW or codec qualification."
+}

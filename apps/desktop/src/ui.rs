@@ -111,6 +111,7 @@ pub struct TrueRenderer {
     pending_selection: Option<PathBuf>,
     started: Instant,
     smoke_stage: u8,
+    smoke_layout: Option<(u8, String, Instant)>,
     screenshots: HashSet<String>,
     fatal: bool,
     closing: bool,
@@ -273,6 +274,7 @@ impl TrueRenderer {
             pending_selection: None,
             started: Instant::now(),
             smoke_stage: 0,
+            smoke_layout: None,
             raw_engine_smoke_results: vec![],
             raw_engine_smoke_ready_at: None,
             raw_engine_smoke_capture_pending: false,
@@ -1751,6 +1753,9 @@ impl TrueRenderer {
                 .size_range(260.0..=360.0)
                 .frame(style::panel())
                 .show(ui, |ui| {
+                    // Reserve a gutter: a floating scrollbar paints over image
+                    // pixels and makes the inspector preview depend on hover.
+                    ui.style_mut().spacing.scroll.floating = false;
                     let mut scroll = egui::ScrollArea::vertical().id_salt("inspector-scroll");
                     if self.smoke
                         && self.state.view != ViewMode::Grid
@@ -3198,8 +3203,36 @@ impl TrueRenderer {
             || self.demand.iter().any(|key| !self.cache.contains_key(key)))
             && elapsed < 55.
         {
+            self.smoke_layout = None;
             ctx.request_repaint_after(Duration::from_millis(25));
             return;
+        }
+        // Screenshot delivery is asynchronous. Let panel/scrollbar layout settle
+        // before recording geometry, so it describes the captured frame too.
+        if [0, 2, 4, 6, 8, 10, 12, 14].contains(&self.smoke_stage) && elapsed < 55. {
+            let geometry = self
+                .presenter
+                .captures()
+                .iter()
+                .map(|c| format!("{}:{:?}:{:?}:{:?};", c.source, c.rect, c.clip, c.region))
+                .collect::<String>();
+            if !self
+                .smoke_layout
+                .as_ref()
+                .is_some_and(|(stage, previous, _)| {
+                    *stage == self.smoke_stage && previous == &geometry
+                })
+            {
+                self.smoke_layout = Some((self.smoke_stage, geometry, Instant::now()));
+            }
+            if self
+                .smoke_layout
+                .as_ref()
+                .is_some_and(|(_, _, since)| since.elapsed() < Duration::from_millis(250))
+            {
+                ctx.request_repaint_after(Duration::from_millis(25));
+                return;
+            }
         }
         if self.smoke_stage == 0
             && !self.scanning
@@ -3309,9 +3342,10 @@ impl TrueRenderer {
             || elapsed > 55.
             || self.fatal
         {
-            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==(if self.sampling_smoke {15} else {5})&&self.screenshots.len()==(if self.sampling_smoke {8} else {3})&&!self.fatal&&self.errors.is_empty()&&!self.presenter.has_errors()&&self.gpu_passed,"sampling":tr_core::resample::VERSION,"presentation_errors":self.presenter.has_errors(),"pixels_per_point":ctx.pixels_per_point(),"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"compute":self.presenter.statistics(),"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native macOS R0 corpus smoke; not color/display/sandbox qualification"});
+            let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":self.smoke_stage==(if self.sampling_smoke {15} else {5})&&self.screenshots.len()==(if self.sampling_smoke {8} else {3})&&!self.fatal&&self.errors.is_empty()&&!self.presenter.has_errors()&&self.gpu_passed,"sampling":tr_core::resample::VERSION,"presentation_errors":self.presenter.has_errors(),"pixels_per_point":ctx.pixels_per_point(),"adapter":self.adapter,"surface":self.surface,"gpu":self.gpu_status,"compute":self.presenter.statistics(),"sqlite":tr_store::sqlite_version(),"worker_pids":self.cache.values().filter_map(|c| c.worker_pid).collect::<std::collections::BTreeSet<_>>(),"worker_transports":self.cache.values().map(|c| c.transport).collect::<std::collections::BTreeSet<_>>(),"frames":self.frame_number,"elapsed_seconds":elapsed,"images":self.state.items.len(),"screenshots":self.screenshots,"decode_errors":self.errors,"status":self.status,"scope":"native R0 corpus smoke; not color/display/sandbox qualification"});
             let _ = std::fs::write(
-                self.root.join("reports/smoke-macos.json"),
+                self.root
+                    .join(format!("reports/smoke-{}.json", std::env::consts::OS)),
                 serde_json::to_vec_pretty(&report).unwrap(),
             );
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);

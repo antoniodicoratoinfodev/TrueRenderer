@@ -214,3 +214,33 @@ Fonti primarie: [Microsoft: avvio AppContainer e LPAC](https://learn.microsoft.c
 `tr_core::decoder::Decoder` espone `name`, `probe` e `decode`; identità e provenienza devono essere coerenti con ricetta e cache. I raster condividono lo spazio lineare Rec.2020 fp32 premoltiplicato. `Trust::Controlled` richiede il digest nel corpus compilato; soltanto il trasporto isolato può concedere `External`, senza fallback al decoder del corpus. La provenienza distingue colore dichiarato e applicato, spazio assunto e sole primarie assunte: dichiarazioni non supportate devono essere rifiutate, non ignorate. Le regole PNG iniziali del port sono superate dalle correzioni gamma/cICP registrate in STATO.md.
 
 Le allocazioni passate a `UpdateProcThreadAttribute` (Job e lista degli handle) restano vive fino alla creazione del processo: l'API conserva puntatori. Il percorso eseguibile usa UTF-16 senza conversioni lossy. CIRAWFilter e LibRaw non sono riferimenti bit-exact reciproci; la tolleranza GPU/CPU non qualifica il confronto fra sviluppatori RAW. Restano da qualificare ICC, percorsi lunghi, pressione memoria e installazione pulita.
+
+### Ingresso ICC Windows: perimetro matrice/TRC
+
+Il worker Windows applica profili RGB ICC v2/v4 a matrice/TRC con PCS XYZ mediante
+Little CMS 2.19 collegato staticamente (`lcms2` 6.2.0, `lcms2-sys` 4.0.7).
+L'ingresso usa colorimetrico relativo senza BPC, campioni fp32 e destinazione
+Rec.2020/D65 lineare, senza ottimizzazione a LUT. Il CMM resta nel processo LPAC;
+il broker riceve raster e provenienza, senza nuove autorità sui file.
+
+Il profilo è limitato a 4 MiB e 1.024 tag, con verifica di header, limiti,
+duplicati e sovrapposizioni. Sono escluse LUT A2B/B2A/D2B/B2D, cICP interno,
+Gray/CMYK, DeviceLink e PCS Lab: nessun ripiego sulla matrice di un profilo
+che dichiara una LUT prioritaria. In JPEG, i segmenti ICC APP2 devono essere
+completi, univoci e coerenti; il raster nativo deve avere tre componenti.
+Un errore del tag ICC TIFF resta distinto dall'assenza. In PNG iCCP insieme
+a sRGB/cICP viene rifiutato come ambiguo; gAMA/cHRM subordinati non sostituiscono
+il profilo applicato.
+
+L'alpha associata TIFF è rimossa nel dominio sorgente prima della trasformata;
+l'alpha non passa attraverso il CMM e il working viene premoltiplicato una sola
+volta. Alpha zero produce RGB zero. Campioni negativi o oltre uno sono ammessi
+soltanto con TRC analitiche esattamente identità; curve non lineari o campionate
+richiedono il dominio [0,1] e segnalano un errore anziché tagliare i valori.
+Il TIFF float lineare esportato dall'app usa questo percorso esteso.
+
+La ricetta bitmap Windows `bitmap-icc-lcms219-rgb-matrix-relative-v6`, insieme
+al digest del contenuto che include il profilo, distingue le nuove cache.
+Il percorso macOS e la sua ricetta restano separati. Questo sottoinsieme non
+chiude R1, la qualifica universale ICC o la gestione del profilo del display;
+stato e campagne numeriche sono registrati soltanto in [STATO.md](../STATO.md).

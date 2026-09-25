@@ -120,6 +120,13 @@ External decoding is isolated in sandboxed XPC services on macOS and a confined 
 
 TrueRenderer targets Apple silicon Macs and x86-64 Windows PCs. JPEG, PNG and TIFF use its portable path; native macOS services and a growing set of camera profiles extend format support.
 
+On Windows, the portable decoder applies embedded RGB matrix/TRC ICC v2/v4
+profiles through Little CMS, including the profiles in the app's JPEG and TIFF
+exports. Linear TIFF float preserves extended values and transparency. LUT,
+Gray/CMYK and conflicting or malformed profiles remain unsupported and produce
+an explicit error; this is not universal ICC compatibility. PNG exports also use
+the supported sRGB path.
+
 ## Availability
 
 TrueRenderer is currently a development preview available from source. Follow the verified scope, open work and latest test results in [STATO.md](STATO.md).
@@ -143,13 +150,24 @@ open -n dist/TrueRenderer.app --args --open "/path/to/image.jpg"
 
 ### Windows
 
-With MSVC, the Windows SDK and a Bash shell such as MSYS2 installed:
+Install Rust 1.98.1 (with rustfmt and Clippy), Visual Studio Build Tools with the
+Desktop development with C++ workload and Windows SDK, Python 3, and Git for Windows.
+The PowerShell helper uses Git Bash and the same local-toolchain wrapper as macOS;
+Rust installed under `.tools/cargo` and `.tools/rustup` takes precedence over the system installation.
 
 ```powershell
-bash scripts/cargo-local.sh fetch --locked
-bash scripts/cargo-local.sh build --workspace --locked --offline
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-windows.ps1 fetch --locked
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-windows.ps1 verify --gui
 .\target\debug\truerenderer.exe --open "C:\Photos\image.jpg"
 ```
+
+`verify` builds the workspace and runs formatting, Clippy, tests, worker protocol
+and numerical checks. `--gui` also opens the native app for an automated surface
+test. Each run saves reports and generated screenshots under a new `var/verify-*`
+directory, using a separate test library. Private camera tests require `TR_RAW_SAMPLE`.
+From Git Bash, use `./scripts/cargo-local.sh` and `./scripts/verify.sh` directly.
+The execution policy option applies only to that PowerShell process; it does not
+change the computer's policy.
 
 ## Documentation
 

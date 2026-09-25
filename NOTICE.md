@@ -14,6 +14,13 @@ The Windows/RAW increment published in commit `67146e3` on 14 September 2026 sta
 
 The preview pipeline added Rayon 1.11.0 with the resolved rayon-core and Crossbeam dependencies listed in the lockfile. Their MIT/Apache notice files are included in the dependency inventory. Apple Metal is an operating-system framework used for viewer compute and explicit decoder experiments, not a bundled third-party library.
 
+Windows ICC input statically links Little CMS 2.19 from `lcms2-sys` 4.0.7 through
+`lcms2` 6.2.0. The [updated Windows inventory](reports/dependency-inventory-windows-icc.json)
+records the locked packages and collected notices, including the native library's
+[MIT copyright and license](reports/dependency-inventory-windows-icc-notices/lcms2-sys-4.0.7-vendor-LICENSE).
+Regenerate this target with `python scripts/dependency-inventory.py --target x86_64-pc-windows-msvc --stem dependency-inventory-windows-icc`.
+Historical inventories retain their original scope.
+
 The later authorized camera checks use private copies of 30 Nikon D750 NEFs. The published RAW reports contain numerical verification results; those photographs and their working copies are not included in the repository. Generated corpus/format fixtures and the camera dataset are separate test inputs.
 
 ## Trademarks

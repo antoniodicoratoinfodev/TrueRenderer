@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 24 settembre 2026.
+Aggiornato: 25 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -19,6 +19,43 @@ Per ogni incremento aggiornare qui implementato, verificato, aperto e mancante, 
 Le architetture rimandano a questo file e non ne incorporano il contenuto. `python3 scripts/sync-docs.py` aggiorna i rimandi e l'appendice della specifica anteprime: serve quando cambiano le sue fonti, non a ogni aggiornamento di stato. Il backup originale v1.2 resta immutato.
 
 ## Punto di ripresa
+
+### Verifica viewer/export Windows — 25 settembre
+
+Richiesta del titolare: riassumere le modifiche non committate e verificare app, immagini visualizzate ed export su tutti i motori disponibili. Usato un NEF D750 autorizzato dalla cartella Download; fotografie, copie, librerie ed export restano in `var/`, originali invariati.
+
+- [x] Suite sul codice corrente: fmt, Clippy workspace senza warning, build, **190 test Rust ordinari + 9 aggiuntivi**, due test Python, otto controlli protocollo, 24 segnali e superficie nativa RTX 3060/Vulkan passati. Il wrapper PowerShell esterno ha restituito 1 classificando stderr nativo come errore; la suite `set -eu` ha raggiunto il proprio marcatore finale positivo e i rapporti sono passati. Evidenze in `var/verify-avGx1KC4/` e log separato; non attribuito quel codice al risultato dei test.
+- [x] D750 su **Bilineare, AHD e TrueRenderer × neutra/modificata × PNG16/TIFF16**: 12 casi, **291.852.288 pixel / 1.167.409.152 canali RGBA**, zero differenze nei codici esportati. Riapertura isolata e anteprima d'uscita entro **1/255** a 1:1 e nei 24 fit 1400/600. Il render esteso resta distinto dalla prova d'uscita: nei fit modificati scarti fino a 117/255, coerenti con il diverso ordine di proiezione sRGB e filtraggio; non dichiarata parità dell'anteprima provvisoria. **19/19** controlli di esportazione/riapertura formati passati; questa campagna non include le fixture FITS.
+- [x] Prova UI iniziale con calcolo CPU: superficie esatta sui tre motori, sviluppo salvato e griglia; export bilineare passato, AHD/TrueRenderer rifiutati perché le anteprime occupavano ancora gli slot. Corretto soltanto il probe affinché attenda richieste immagini e miniature modificate prima dell'export; nessuna modifica al renderer o all'encoder. Build, fmt, Clippy desktop su tutti i target e 75 test desktop passati dopo la correzione.
+- [x] Ripetizione sul binario aggiornato con una copia della fotografia isolata e GPU forzata: tre motori, superficie 859×574 entro 1/255, sviluppo/griglia ed export PNG16 6032×4032 passati. Un tentativo sulla cartella di 30 RAW durante compilazioni concorrenti è scaduto a 180 s; ripetizione bilineare sulla cartella completa senza compilazioni passata, nessun rifiuto di memoria. Il timeout resta conservato, senza dedurne una causa certa o una qualifica prestazionale. Hash dell'originale e della copia invariati.
+- [x] Corretto il taglio di «Prima/Dopo» nel pannello Sviluppo: le tre azioni vanno a capo quando la larghezza disponibile non basta. Build workspace e fmt passati; catture native 1440×940 controllate in italiano (pulsante intero sulla seconda riga) e inglese (tre pulsanti sulla stessa riga). Prova italiana di sviluppo, superficie d'uscita ed export passata. Nel controllo aggiuntivo inglese un tooltip sovrapposto al segnale radiale ha fatto fallire il confronto di `08-grid-large`: interferenza visibile nella cattura conservata, senza alterare le soglie. [Rapporto della correzione](reports/develop-buttons-layout-windows-2026-09-25.json); evidenze separate in `var/develop-buttons-2026-09-25/`. Nessuna modifica alla pipeline fotografica.
+
+[Rapporto numerico con hash distinti prima/dopo la sola correzione del probe](reports/windows-viewer-export-parity-2026-09-25.json). Evidenze private in `var/parity-2026-09-25-t4sv70va/`, `var/parity-ui-isolated-2026-09-25/` e `var/parity-folder-final-2026-09-25/`; negativi iniziali conservati. Controllate visivamente griglia/viewer/confronto sintetici e catture della fotografia. Nessun nuovo test Apple/macOS/XPC, nessuna qualifica del monitor fisico o universale dei RAW/ICC; JPEG verificato per riapertura, non per identità dopo compressione. Nessun gate SF/R0–R4 chiuso.
+
+### Correzione ICC Windows — 24 settembre
+
+Seguito alla richiesta «sistema»: risolvere la riapertura JPEG/TIFF rimasta negativa nella campagna Windows precedente, conservando il contratto colore e il confinamento del decoder.
+
+- [x] Riprodurre il rifiuto con un test fallente; applicare ICC RGB v2/v4 matrice/TRC tramite Little CMS 2.19 statico nel worker Windows, relativo senza BPC verso Rec.2020/D65 fp32. Versionare la ricetta bitmap Windows per distinguere le cache. Profilo dichiarato nell'ispettore; nessuna rimozione dei metadati o assunzione sRGB sostitutiva.
+- [x] Distinguere ICC TIFF illeggibile da assente e controllare i segmenti JPEG APP2 completi/univoci prima di accettare il profilo. Limiti 4 MiB/1.024 tag; rifiuto esplicito di LUT, Gray/CMYK, DeviceLink, profili malformati e conflitti PNG. Alpha associata rimossa prima della trasformata e riapplicata nel working; valori estesi ammessi soltanto con TRC analitiche identità.
+- [x] Regressioni worker: **51 test passati**, due integrazioni separate. Otto profili generati (quattro spazi × ICC v2/v4), **39.304 pixel** confrontati con lettura indipendente di matrici/curve e trasformata analitica entro 0,00025 assoluto; test JPEG/TIFF16/TIFF float, alpha zero/quasi zero/parziale, dominio esteso e metadati corrotti. Aggiornati README, contratto ADR 0009 e inventario Windows con licenza nativa Little CMS; storico conservato.
+- [x] Suite finale `scripts/dev-windows.ps1 verify --gui`: **190 test Rust ordinari e 9 aggiuntivi**, due test Python, fmt, Clippy senza warning, build workspace, otto controlli protocollo e 24 segnali. Prova grafica RTX 3060/Vulkan e confronto superficie passati. LPAC/Job conserva i rifiuti di lettura/scrittura privata e secondo processo; Winsock 10107 resta soltanto la misura osservata, non una qualifica esaustiva della rete.
+- [x] Campagna export/FITS sui binari finali: **20/20 controlli passati**, comprese le nove riaperture JPEG/TIFF prima negative. JPEG, TIFF16 e TIFF float riaperti anche nella UI con librerie distinte: sviluppo salvato, prova d'uscita confrontata col raster CPU, griglia ed export PNG16 completati; digest della sorgente selezionata verificato e invariato. [Rapporto numerico e hash dei binari](reports/windows-icc-verification-2026-09-24.json); dati sintetici isolati in `var/windows-icc-5rysclvq/`, suite in `var/verify-heqS927h/`. Build utilizzabile in `target/debug/truerenderer.exe` con `tr-worker.exe` accanto.
+
+Restano fuori dal perimetro ICC LUT/Gray/CMYK, gestione monitor e qualifica colore universale, corpus RAW privato, NVDA, installatore firmato e nuova prova macOS/XPC. Nessun gate SF/R0–R4 chiuso; originali e dati durevoli esclusi dalle prove.
+
+### Verifica e ambiente Windows — 24 settembre
+
+Richiesta del titolare: verificare l'app su Windows e completare l'ambiente di sviluppo.
+
+- [x] Installare Rust 1.98.1 MSVC, rustfmt e Clippy nelle cartelle locali ignorate `.tools/cargo` e `.tools/rustup`; scaricare le dipendenze di `Cargo.lock`. Completata l'installazione interrotta di Visual Studio Build Tools 2026 (18.10.12217.157), MSVC 14.51.36231 e Windows SDK 10.0.26100.0; nessun riavvio richiesto. Git Bash e Python 3.14 già presenti.
+- [x] Build nativa debug del workspace e Clippy su tutti i target con warning negati. Corretto l'errore Windows dei test `Location` aggiungendo la verifica UTF-16 dei percorsi distinti con identica visualizzazione lossy.
+- [x] Aggiungere `scripts/dev-windows.ps1`, che richiama `scripts/cargo-local.sh` tramite Git Bash con ambiente completo. Adattare `verify.sh` a Python funzionante (escludendo gli alias Store), suffisso `.exe` e percorsi nativi del worker; ogni campagna usa una nuova radice `var/verify-*`, senza sovrascrivere rapporti storici o libreria personale. Rapporti di campionamento/superficie identificati per OS.
+- [x] Riprodurre due problemi intermittenti nella campagna grafica: barra flottante dell'ispettore sovrapposta al bordo dell'anteprima e coordinate registrate prima della stabilizzazione del layout iniziale. Riservato spazio alla barra; il probe attende geometria invariata per 250 ms, senza allargare la soglia di un livello su 255. Evidenze negative conservate nelle rispettive radici di verifica.
+- [x] Suite finale `scripts/dev-windows.ps1 verify --gui`: **183 test ordinari e 9 prove aggiuntive**, fmt, Clippy, build, otto controlli protocollo e 24 segnali; codice di uscita zero. Superficie su **NVIDIA RTX 3060/Vulkan**, SDR Bgra8Unorm: suite e tre ripetizioni mirate senza differenze nei canali confrontati. Schermate sintetiche controllate visivamente. Sviluppo salvato, griglia, anteprima d'uscita 871×581 esatta rispetto al raster CPU ed export PNG16 1440×960 completati sul binario finale, sorgente invariata.
+- [x] Probe LPAC/Job: lettura/scrittura della sentinella e scrittura accanto al codice negate, secondo processo negato, lettura codice consentita, Winsock non inizializzato (10107); non una qualifica esaustiva di rete. Campagna codec su tre motori: **11/20 controlli passati**, PNG8/16 e DNG lineare riaperti, due prove FITS passate; **9/20 negativi** su riapertura JPEG/TIFF16/TIFF float32 per ICC incorporato, deliberatamente rifiutato dal decoder portabile in attesa della qualifica colore R1. Nessuna rimozione del profilo o fallback silenzioso. Isolamento/codec provati prima delle sole correzioni finali UI/probe; hash distinti conservati. [Rapporto numerico, risultati negativi e identità dei binari](reports/windows-verification-2026-09-24.json).
+
+Restano ICC Windows, corpus RAW privato (tre test esclusi), calibrazione/display fisico, NVDA, installatore firmato e qualifica completa delle piattaforme; nessun gate SF/R0–R4 chiuso e nessuna nuova prova macOS. Build disponibile in `target/debug/truerenderer.exe`, worker accanto; ambiente e dati delle prove ignorati da Git. Originali, dati durevoli, licenze e architettura originale immutati.
 
 ### Revisione di anteprima d'uscita e colore — 24 settembre
 

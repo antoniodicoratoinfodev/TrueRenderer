@@ -14,7 +14,11 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 /// Input interpretation changes must invalidate persisted bitmap pixels.
-pub const BITMAP_RECIPE: &str = "bitmap-gamma-ifd-v5";
+pub const BITMAP_RECIPE: &str = if cfg!(windows) {
+    "bitmap-icc-lcms219-rgb-matrix-relative-v6"
+} else {
+    "bitmap-gamma-ifd-v5"
+};
 
 /// RAW development identity. It belongs to each job, never to mutable worker
 /// globals: a probe, decode and cache write must describe the same recipe.

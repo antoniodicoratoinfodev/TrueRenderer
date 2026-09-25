@@ -113,13 +113,13 @@ pub fn run(root: &Path, worker: &Path) -> Result<()> {
     }
     let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"sampling":VERSION,"passed":passed,"exact_1to1":exact_1to1,"source_digest":digest,"source_dimensions":[source.width,source.height],"transport":broker.transport(),"signal_cases":signals,"radial_renders":renders,"thresholds":{"stopband_rms_max":0.02,"passband_contrast_ratio":[0.95,1.05],"boundary_exclusion_output_pixels":12},"scope":"CPU subset: sine rejection/preservation, exact source pixels, unchanged radial corpus. Not a full orientation, tile, isotropy, temporal LOD, display or ICC qualification. Legacy PNGs model nearest Adatta; they are not captured UI screenshots."});
     std::fs::write(
-        root.join("reports/resampling-macos.json"),
+        root.join(format!("reports/resampling-{}.json", std::env::consts::OS)),
         serde_json::to_vec_pretty(&report)?,
     )?;
     println!("Sampling: passed={passed}; 24 signal cases; exact 1:1={exact_1to1}");
     ensure!(
         passed,
-        "Qualifica campionamento fallita: vedere reports/resampling-macos.json"
+        "Qualifica campionamento fallita: vedere reports/resampling-<sistema>.json"
     );
     Ok(())
 }
@@ -185,13 +185,16 @@ pub fn screenshots(root: &Path, worker: &Path) -> Result<()> {
     }
     let report = serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"sampling":VERSION,"passed":passed,"channel_error_threshold_u8":1,"checks":checks,"scope":"Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification."});
     std::fs::write(
-        root.join("reports/sampling-presentation-macos.json"),
+        root.join(format!(
+            "reports/sampling-presentation-{}.json",
+            std::env::consts::OS
+        )),
         serde_json::to_vec_pretty(&report)?,
     )?;
     println!("Native surface sampling: passed={passed}");
     ensure!(
         passed,
-        "Pixel della superficie diversi dal raster: vedere sampling-presentation-macos.json"
+        "Pixel della superficie diversi dal raster: vedere sampling-presentation-<sistema>.json"
     );
     Ok(())
 }

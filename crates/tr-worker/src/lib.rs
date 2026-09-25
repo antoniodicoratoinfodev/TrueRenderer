@@ -1,6 +1,8 @@
 mod container;
 mod export;
 mod fits;
+#[cfg(windows)]
+mod icc;
 #[cfg(any(windows, target_os = "macos"))]
 mod libraw;
 #[cfg(windows)]
@@ -139,6 +141,13 @@ fn png_color_source(bytes: &[u8]) -> Result<ColorSource> {
 // The optional exponent applies only to a lone supported gAMA declaration;
 // sRGB/cICP retain their exact piecewise transfer. Primaries stay separate.
 fn png_color_contract(bytes: &[u8]) -> Result<(ColorSource, Option<f32>)> {
+    png_color_contract_with_icc(bytes, false)
+}
+
+fn png_color_contract_with_icc(
+    bytes: &[u8],
+    applied_icc: bool,
+) -> Result<(ColorSource, Option<f32>)> {
     let mut decoder = png::Decoder::new(Cursor::new(bytes));
     decoder.set_limits(png::Limits {
         bytes: 4 * 1024 * 1024,
@@ -177,6 +186,13 @@ fn png_color_contract(bytes: &[u8]) -> Result<(ColorSource, Option<f32>)> {
             "cICP sRGB in conflitto con gAMA/cHRM"
         );
         return Ok((ColorSource::Declared("sRGB · cICP".into()), None));
+    }
+    if applied_icc {
+        ensure!(
+            info.icc_profile.is_some() && info.srgb.is_none(),
+            "PNG: iCCP mancante o in conflitto con sRGB"
+        );
+        return Ok((ColorSource::Declared("ICC RGB".into()), None));
     }
     ensure!(
         info.icc_profile.is_none(),
@@ -254,9 +270,24 @@ impl Decoder for CorpusPng {
     }
 }
 
-/// Resolve the primary TIFF image's stored alpha semantics before colour conversion.
+/// Extract ICC with errors distinct from profile absence.
 #[cfg(any(windows, test))]
-fn tiff_associated_alpha(bytes: &[u8], has_alpha: bool) -> Result<bool> {
+fn tiff_icc_profile(bytes: &[u8]) -> Result<Option<Vec<u8>>> {
+    // image's TIFF icc_profile() maps every tag-reading error to None. In
+    // particular a small raster can give its reader too little tag memory.
+    // Read the profile with its own bounded budget; malformed is not absent.
+    let mut limits = tiff::decoder::Limits::default();
+    limits.ifd_value_size = 4 * 1024 * 1024;
+    limits.decoding_buffer_size = 4 * 1024 * 1024;
+    let mut decoder = tiff::decoder::Decoder::new(Cursor::new(bytes))?.with_limits(limits);
+    decoder
+        .find_tag(tiff::tags::Tag::IccProfile)?
+        .map(|value| value.into_u8_vec().map_err(Into::into))
+        .transpose()
+}
+
+#[cfg(any(windows, test))]
+fn tiff_associated_alpha(bytes: &[u8], has_alpha: bool, applied_icc: bool) -> Result<bool> {
     // Reuse the exact TIFF reader used by image, including BigTIFF/endian
     // support and bounded IFD values. No raster is allocated by this query.
     let mut limits = tiff::decoder::Limits::default();
@@ -265,6 +296,12 @@ fn tiff_associated_alpha(bytes: &[u8], has_alpha: bool) -> Result<bool> {
     // TIFF 6.0 section 20: absence of ICC does not imply absence of a
     // declared transfer/primaries. Until this adapter can apply these tags,
     // refuse them before any sRGB assumption (also for partial descriptions).
+    if applied_icc {
+        ensure!(
+            decoder.get_tag_u32(tiff::tags::Tag::PhotometricInterpretation)? == 2,
+            "TIFF ICC: richiesti campioni RGB nativi"
+        );
+    }
     for (number, name) in [
         (301, "TransferFunction"),
         (318, "WhitePoint"),
@@ -273,9 +310,10 @@ fn tiff_associated_alpha(bytes: &[u8], has_alpha: bool) -> Result<bool> {
         (532, "ReferenceBlackWhite"),
     ] {
         ensure!(
-            decoder
-                .find_tag(tiff::tags::Tag::from_u16_exhaustive(number))?
-                .is_none(),
+            applied_icc
+                || decoder
+                    .find_tag(tiff::tags::Tag::from_u16_exhaustive(number))?
+                    .is_none(),
             "Colorimetria TIFF {name}: trasformazione non supportata; nessun ripiego sRGB"
         );
     }
@@ -326,20 +364,48 @@ fn portable_decode(
         (width as u64 * height as u64) <= MAX_PIXELS as u64,
         "Limite: 64 Mi pixel per immagine"
     );
-    // Same rule as the PNG path: a declared space this build cannot apply is
-    // refused, never quietly rendered as sRGB.
+    let profile = if format == image::ImageFormat::Tiff {
+        tiff_icc_profile(payload)?
+    } else {
+        decoder.icc_profile()?
+    };
+    #[cfg(windows)]
+    let profile = if format == image::ImageFormat::Jpeg {
+        icc::jpeg_profile(payload)?
+    } else {
+        profile
+    };
+    #[cfg(windows)]
+    let icc = profile.as_deref().map(icc::Input::new).transpose()?;
+    #[cfg(not(windows))]
     ensure!(
-        decoder.icc_profile()?.is_none(),
+        profile.is_none(),
         "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1"
     );
+    let applied_icc = profile.is_some();
+    #[cfg(windows)]
+    if applied_icc {
+        ensure!(
+            matches!(
+                decoder.color_type(),
+                image::ColorType::Rgb8
+                    | image::ColorType::Rgba8
+                    | image::ColorType::Rgb16
+                    | image::ColorType::Rgba16
+                    | image::ColorType::Rgb32F
+                    | image::ColorType::Rgba32F
+            ),
+            "ICC RGB incompatibile con i canali del raster"
+        );
+    }
     let associated_alpha = if format == image::ImageFormat::Tiff {
-        tiff_associated_alpha(payload, decoder.color_type().has_alpha())?
+        tiff_associated_alpha(payload, decoder.color_type().has_alpha(), applied_icc)?
     } else {
         false
     };
     let embedded = decoder.orientation()?;
     let (color, gamma_exponent) = if format == image::ImageFormat::Png {
-        png_color_contract(payload)?
+        png_color_contract_with_icc(payload, applied_icc)?
     } else {
         (
             ColorSource::Assumed(if container_stage {
@@ -349,6 +415,12 @@ fn portable_decode(
             }),
             None,
         )
+    };
+    #[cfg(windows)]
+    let color = if applied_icc {
+        ColorSource::Declared(icc::DESCRIPTION.into())
+    } else {
+        color
     };
     // `format` is capped at 32 bytes by the protocol, so it carries the stage
     // as a label and `decoder` carries the sentence that explains it.
@@ -410,43 +482,50 @@ fn portable_decode(
     image.apply_orientation(orientation);
     let (width, height) = (image.width(), image.height());
     let samples = image.to_rgba32f();
-    let working = LinearImage::new(
-        width,
-        height,
-        samples
-            .pixels()
-            .map(|p| {
-                let mut rgba = p.0;
-                if associated_alpha {
-                    // TIFF associates the stored colour samples. Undo that
-                    // before the nonlinear input transfer, then premultiply
-                    // exactly once in linear working space. Hidden RGB at zero
-                    // alpha has no contribution, and must never divide by zero.
-                    if rgba[3] == 0.0 {
-                        return [0.0; 4];
-                    }
-                    for channel in 0..3 {
-                        rgba[channel] /= rgba[3];
-                    }
+    let pixels: Vec<_> = samples
+        .pixels()
+        .map(|p| {
+            let mut rgba = p.0;
+            if associated_alpha {
+                // TIFF associates the stored colour samples. Undo that
+                // before the nonlinear input transfer, then premultiply
+                // exactly once in linear working space. Hidden RGB at zero
+                // alpha has no contribution, and must never divide by zero.
+                if rgba[3] == 0.0 {
+                    return [0.0; 4];
                 }
-                if let Some(exponent) = gamma_exponent {
-                    let linear = color::linear_srgb_to_rec2020([
-                        rgba[0].powf(exponent),
-                        rgba[1].powf(exponent),
-                        rgba[2].powf(exponent),
-                    ]);
-                    [
-                        linear[0] * rgba[3],
-                        linear[1] * rgba[3],
-                        linear[2] * rgba[3],
-                        rgba[3],
-                    ]
-                } else {
-                    color::from_encoded_srgb(rgba)
+                for channel in 0..3 {
+                    rgba[channel] /= rgba[3];
                 }
-            })
-            .collect(),
-    )?;
+            }
+            if applied_icc {
+                rgba
+            } else if let Some(exponent) = gamma_exponent {
+                let linear = color::linear_srgb_to_rec2020([
+                    rgba[0].powf(exponent),
+                    rgba[1].powf(exponent),
+                    rgba[2].powf(exponent),
+                ]);
+                [
+                    linear[0] * rgba[3],
+                    linear[1] * rgba[3],
+                    linear[2] * rgba[3],
+                    rgba[3],
+                ]
+            } else {
+                color::from_encoded_srgb(rgba)
+            }
+        })
+        .collect();
+    #[cfg(windows)]
+    let pixels = {
+        let mut pixels = pixels;
+        if let Some(icc) = icc {
+            icc.apply(&mut pixels)?;
+        }
+        pixels
+    };
+    let working = LinearImage::new(width, height, pixels)?;
     let reduced = if max_edge == 0 || width.max(height) <= max_edge {
         working
     } else {

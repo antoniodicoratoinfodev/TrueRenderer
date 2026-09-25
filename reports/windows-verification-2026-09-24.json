@@ -1,0 +1,2886 @@
+{
+  "date": "2026-09-24",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "version": "0.1.5",
+  "scope": "Native Windows x86-64 debug build on this PC; generated corpus only. No full platform, camera, ICC or physical display qualification.",
+  "environment": {
+    "rust": "1.98.1-x86_64-pc-windows-msvc",
+    "python": "3.14.7",
+    "visual_studio_build_tools": "18.10.12217.157",
+    "msvc": "14.51.36231",
+    "windows_sdk": "10.0.26100.0",
+    "reboot_required": false
+  },
+  "suite": {
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-windows.ps1 verify --gui",
+    "ordinary_tests": 183,
+    "additional_tests": 9,
+    "private_camera_tests_not_run": 3,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "fmt": true,
+    "clippy_all_targets_warnings_denied": true,
+    "workspace_build": true,
+    "completed": true,
+    "artifacts": "var/verify-CLVDrtvw"
+  },
+  "native_smoke": {
+    "adapter": "NVIDIA GeForce RTX 3060 · Vulkan",
+    "application": "TrueRenderer",
+    "compute": {
+      "cpu_frames": 72,
+      "fallbacks": 0,
+      "gpu_frames": 2,
+      "last_fallback": "",
+      "wide_frames": 1,
+      "wide_gpu_bytes": 2114640,
+      "wide_peak_frames": 1,
+      "wide_peak_gpu_bytes": 2114640,
+      "wide_peak_memory_bytes": 6343920,
+      "wide_reprojections": 0
+    },
+    "decode_errors": {},
+    "elapsed_seconds": 5.458219528198242,
+    "frames": 309,
+    "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
+    "images": 12,
+    "passed": true,
+    "pixels_per_point": 1.0,
+    "presentation_errors": false,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "native R0 corpus smoke; not color/display/sandbox qualification",
+    "screenshots": [
+      "07-grid-small",
+      "01-grid",
+      "06-radial-37percent",
+      "04-radial-1to1",
+      "03-compare",
+      "08-grid-large",
+      "02-preview",
+      "05-radial-fit"
+    ],
+    "sqlite": "3.53.2",
+    "status": "Cartella pronta · Anteprima",
+    "surface": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgba8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgba8Unorm, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB) }])",
+    "version": "0.1.5",
+    "worker_pids": [],
+    "worker_transports": [
+      "Cache disco · fp32 · Anteprima",
+      "LPAC senza capacità + Job Object · pipe"
+    ]
+  },
+  "surface_comparison": {
+    "application": "TrueRenderer",
+    "channel_error_threshold_u8": 1,
+    "checks": [
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          908.0,
+          124.0,
+          1100.0,
+          252.0
+        ],
+        "screenshot": "01-grid",
+        "size": [
+          192,
+          128
+        ],
+        "step": [
+          6.25,
+          6.25
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          178.0,
+          83.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          146.0,
+          1068.0,
+          779.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          844,
+          633
+        ],
+        "step": [
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          181.0,
+          1068.0,
+          744.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          844,
+          563
+        ],
+        "step": [
+          1.4201183431952662,
+          1.4209591474245116
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          400.0,
+          992.0,
+          494.0,
+          1055.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          79.0,
+          429.0,
+          523.0,
+          725.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          444,
+          296
+        ],
+        "step": [
+          2.702702702702702,
+          2.702702702702702
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          616.0,
+          211.0,
+          942.0,
+          428.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          326,
+          217
+        ],
+        "step": [
+          3.6809815950920246,
+          3.686635944700461
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          28.0,
+          322.0,
+          186.0,
+          427.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          158,
+          105
+        ],
+        "step": [
+          7.594936708860759,
+          7.619047619047619
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          616.0,
+          211.0,
+          942.0,
+          428.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          326,
+          217
+        ],
+        "step": [
+          3.6809815950920246,
+          3.686635944700461
+        ]
+      }
+    ],
+    "passed": true,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+    "version": "0.1.5"
+  },
+  "resampling": {
+    "passed": true,
+    "exact_1to1": true
+  },
+  "isolation": {
+    "confined": {
+      "all_application_packages": {
+        "member": 0,
+        "ok": 1
+      },
+      "appcontainer": {
+        "error": null,
+        "ok": 1,
+        "value": 1
+      },
+      "capabilities": {
+        "bytes": 8,
+        "count": 0,
+        "ok": 1
+      },
+      "child_spawn_denied": true,
+      "code_read": true,
+      "job": {
+        "active": 1,
+        "flags": 9992,
+        "job_memory": 402653184,
+        "ok": 1,
+        "process_memory": 402653184
+      },
+      "lpac": {
+        "error": 87,
+        "ok": 0,
+        "value": 0
+      },
+      "lpac_native": {
+        "status": -1073741821,
+        "value": 0
+      },
+      "lpac_verified": true,
+      "network_error": 10107,
+      "read_error": 5,
+      "runtime_write_error": 5,
+      "winsock_init_error": 10107,
+      "write_error": 5
+    },
+    "control": {
+      "network_error": 0,
+      "read_error": 0,
+      "winsock_init_error": 0,
+      "write_error": 0
+    }
+  },
+  "develop_and_png16_export": {
+    "application": "TrueRenderer",
+    "export": {
+      "file": "02_Paesaggio_analitico-export.png",
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "fixture": "02_Paesaggio_analitico.png",
+    "output_proof_surface": {
+      "compute": "CPU",
+      "differing_channels": 0,
+      "maximum_error_u8": 0,
+      "passed": true,
+      "size": [
+        871,
+        581
+      ]
+    },
+    "passed": true,
+    "platform": "windows",
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "LibRawBilinear",
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 1,
+    "scope": "Native UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "export_roundtrip": {
+    "checks": [
+      {
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawBilinear",
+        "format": "Jpeg",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.6226239
+      },
+      {
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawBilinear",
+        "format": "Png8",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "image 0.25.10 · Png · bitmap-gamma-ifd-v5",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "Png",
+          "height": 576,
+          "input_color": "sRGB · dichiarato dal file",
+          "native_bits": 8,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawBilinear",
+        "readback_error": null,
+        "seconds": 0.2140514
+      },
+      {
+        "encoded": {
+          "bytes": 12961,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawBilinear",
+        "format": "Png16",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "image 0.25.10 · Png · bitmap-gamma-ifd-v5",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "Png",
+          "height": 576,
+          "input_color": "sRGB · dichiarato dal file",
+          "native_bits": 16,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawBilinear",
+        "readback_error": null,
+        "seconds": 0.226136
+      },
+      {
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawBilinear",
+        "format": "Tiff16",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.222363
+      },
+      {
+        "encoded": {
+          "bytes": 9442762,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawBilinear",
+        "format": "TiffFloat32",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.2518404
+      },
+      {
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawBilinear",
+        "format": "DngLinear16",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "LibRaw 0.22.2-Release · DNG lineare RGB · nessun demosaic · TrueRenderer Linear Rec2020 v1",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "RAW",
+          "height": 576,
+          "input_color": "Rec.2020 primaries, linear, uint16; LibRaw-0.22.2-TR-ahd-rec2020-v1 · sviluppo RAW",
+          "native_bits": 16,
+          "orientation": "Applicato da LibRaw una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readback_error": null,
+        "seconds": 0.2080903
+      },
+      {
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawAhd",
+        "format": "Jpeg",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.1878454
+      },
+      {
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawAhd",
+        "format": "Png8",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "image 0.25.10 · Png · bitmap-gamma-ifd-v5",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "Png",
+          "height": 576,
+          "input_color": "sRGB · dichiarato dal file",
+          "native_bits": 8,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawBilinear",
+        "readback_error": null,
+        "seconds": 0.2042893
+      },
+      {
+        "encoded": {
+          "bytes": 12961,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawAhd",
+        "format": "Png16",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "image 0.25.10 · Png · bitmap-gamma-ifd-v5",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "Png",
+          "height": 576,
+          "input_color": "sRGB · dichiarato dal file",
+          "native_bits": 16,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawBilinear",
+        "readback_error": null,
+        "seconds": 0.2240984
+      },
+      {
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawAhd",
+        "format": "Tiff16",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.2247936
+      },
+      {
+        "encoded": {
+          "bytes": 9442762,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawAhd",
+        "format": "TiffFloat32",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.2501191
+      },
+      {
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "LibRawAhd",
+        "format": "DngLinear16",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "LibRaw 0.22.2-Release · DNG lineare RGB · nessun demosaic · TrueRenderer Linear Rec2020 v1",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "RAW",
+          "height": 576,
+          "input_color": "Rec.2020 primaries, linear, uint16; LibRaw-0.22.2-TR-ahd-rec2020-v1 · sviluppo RAW",
+          "native_bits": 16,
+          "orientation": "Applicato da LibRaw una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readback_error": null,
+        "seconds": 0.2206134
+      },
+      {
+        "encoded": {
+          "bytes": 43779,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; JPEG 8 bit; alpha composto su bianco lineare; metadati privati non copiati",
+          "format": "Jpeg",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "TrueRenderer",
+        "format": "Jpeg",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.1844713
+      },
+      {
+        "encoded": {
+          "bytes": 3845,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png8",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "TrueRenderer",
+        "format": "Png8",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "image 0.25.10 · Png · bitmap-gamma-ifd-v5",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "Png",
+          "height": 576,
+          "input_color": "sRGB · dichiarato dal file",
+          "native_bits": 8,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawBilinear",
+        "readback_error": null,
+        "seconds": 0.2033372
+      },
+      {
+        "encoded": {
+          "bytes": 12961,
+          "clipped_channels": 0,
+          "description": "sRGB IEC 61966-2-1; alpha non associata; compressione senza perdita; gamut/estremi ritagliati",
+          "format": "Png16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "TrueRenderer",
+        "format": "Png16",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "image 0.25.10 · Png · bitmap-gamma-ifd-v5",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "Png",
+          "height": 576,
+          "input_color": "sRGB · dichiarato dal file",
+          "native_bits": 16,
+          "orientation": "NoTransforms · applicato una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawBilinear",
+        "readback_error": null,
+        "seconds": 0.2255438
+      },
+      {
+        "encoded": {
+          "bytes": 4724051,
+          "clipped_channels": 0,
+          "description": "TIFF sRGB ICC 16 bit; alpha non associata; non compresso; clamp [0,1]",
+          "format": "Tiff16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "TrueRenderer",
+        "format": "Tiff16",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.2214946
+      },
+      {
+        "encoded": {
+          "bytes": 9442762,
+          "clipped_channels": 0,
+          "description": "TIFF Rec.2020 lineare ICC float32; alpha associata; negativi/oltre 1 conservati; non compresso; non RAW sensore",
+          "format": "TiffFloat32",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "TrueRenderer",
+        "format": "TiffFloat32",
+        "passed": false,
+        "readable": false,
+        "readback": null,
+        "readback_engine": "LibRawBilinear",
+        "readback_error": "Profilo ICC incorporato: trasformazione Little CMS ancora da qualificare in R1",
+        "seconds": 0.2519724
+      },
+      {
+        "encoded": {
+          "bytes": 3544287,
+          "clipped_channels": 0,
+          "description": "DNG lineare RGB Rec.2020 D65 16 bit; già sviluppato; non è il mosaico RAW; clamp [0,1]; senza metadati privati",
+          "format": "DngLinear16",
+          "height": 576,
+          "width": 1024
+        },
+        "engine": "TrueRenderer",
+        "format": "DngLinear16",
+        "passed": true,
+        "readable": true,
+        "readback": {
+          "decoder": "LibRaw 0.22.2-Release · DNG lineare RGB · nessun demosaic · TrueRenderer Linear Rec2020 v1",
+          "filter": "nessuno (campioni LOD 0)",
+          "format": "RAW",
+          "height": 576,
+          "input_color": "Rec.2020 primaries, linear, uint16; LibRaw-0.22.2-TR-ahd-rec2020-v1 · sviluppo RAW",
+          "native_bits": 16,
+          "orientation": "Applicato da LibRaw una volta",
+          "source_height": 576,
+          "source_width": 1024,
+          "width": 1024
+        },
+        "readback_engine": "LibRawAhd",
+        "readback_error": null,
+        "seconds": 0.218795
+      },
+      {
+        "case": "FITS i32 scientific sample plus masked reference mip",
+        "info": {
+          "decoder": "TrueRenderer FITS IMAGE subset v1",
+          "filter": "fits-valid-area-v1",
+          "format": "FITS",
+          "height": 8,
+          "input_color": "Dati scientifici; proxy di vista normalizzato, nessuna interpretazione RGB/ICC del dato",
+          "native_bits": 32,
+          "orientation": "Asse 1 orizzontale; asse 2 verso il basso; coordinate 0-based; nessuna WCS",
+          "reference_mip": {
+            "base": 2,
+            "opaque": false
+          },
+          "scientific": {
+            "bitpix": 32,
+            "bscale": 2.0,
+            "bzero": 7.0,
+            "hdu": 0,
+            "histogram": [
+              5,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              5
+            ],
+            "invalid": 1,
+            "maximum": 33558535.0,
+            "minimum": 33554443.0,
+            "unit": "ADU",
+            "valid": 2047
+          },
+          "source_height": 32,
+          "source_width": 64,
+          "width": 16
+        },
+        "invalid_sample": {
+          "hdu": 0,
+          "physical": null,
+          "stored": -1.0,
+          "validity": "BLANK",
+          "x": 0,
+          "y": 0
+        },
+        "passed": true,
+        "sample": {
+          "hdu": 0,
+          "physical": 33554443.0,
+          "stored": 16777218.0,
+          "validity": "valid",
+          "x": 1,
+          "y": 0
+        },
+        "slot": 0,
+        "transport": "LPAC senza capacità + Job Object · pipe"
+      },
+      {
+        "case": "FITS i32 scientific sample plus masked reference mip",
+        "info": {
+          "decoder": "TrueRenderer FITS IMAGE subset v1",
+          "filter": "fits-valid-area-v1",
+          "format": "FITS",
+          "height": 8,
+          "input_color": "Dati scientifici; proxy di vista normalizzato, nessuna interpretazione RGB/ICC del dato",
+          "native_bits": 32,
+          "orientation": "Asse 1 orizzontale; asse 2 verso il basso; coordinate 0-based; nessuna WCS",
+          "reference_mip": {
+            "base": 2,
+            "opaque": false
+          },
+          "scientific": {
+            "bitpix": 32,
+            "bscale": 2.0,
+            "bzero": 7.0,
+            "hdu": 0,
+            "histogram": [
+              5,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              9,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              8,
+              5
+            ],
+            "invalid": 1,
+            "maximum": 33558535.0,
+            "minimum": 33554443.0,
+            "unit": "ADU",
+            "valid": 2047
+          },
+          "source_height": 32,
+          "source_width": 64,
+          "width": 16
+        },
+        "invalid_sample": {
+          "hdu": 0,
+          "physical": null,
+          "stored": -1.0,
+          "validity": "BLANK",
+          "x": 0,
+          "y": 0
+        },
+        "passed": true,
+        "sample": {
+          "hdu": 0,
+          "physical": 33554443.0,
+          "stored": 16777218.0,
+          "validity": "valid",
+          "x": 1,
+          "y": 0
+        },
+        "slot": 1,
+        "transport": "LPAC senza capacità + Job Object · pipe"
+      }
+    ],
+    "passed": false,
+    "scope": "Codec roundtrip readability through isolated production decoder; no physical display/colour fidelity or general DNG archival qualification. Sources and generated exports private.",
+    "source_unchanged": true
+  },
+  "supplemental_commands": [
+    {
+      "name": "isolation",
+      "exit_code": 0,
+      "seconds": 30.237615000000233
+    },
+    {
+      "name": "output-proof",
+      "exit_code": 0,
+      "seconds": 4.981008700000075
+    },
+    {
+      "name": "exports",
+      "exit_code": 1,
+      "seconds": 4.948678700000073
+    }
+  ],
+  "supplemental_binary_sha256": {
+    "truerenderer.exe": "5af404cbb8c5f744e3611827022435dce482474120f68627f3810037f6c6c303",
+    "tr-worker.exe": "778a44f80be458295bee5e41c95dd206678b4d3e104a6a4b190e4e121e126a21"
+  },
+  "supplemental_scope": "Isolation and extended codec campaign precede the inspector scrollbar and smoke-layout stabilization corrections; development/PNG16 and surface are rerun on final binaries.",
+  "surface_repeats": [
+    {
+      "application": "TrueRenderer",
+      "channel_error_threshold_u8": 1,
+      "checks": [
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            908.0,
+            124.0,
+            1100.0,
+            252.0
+          ],
+          "screenshot": "01-grid",
+          "size": [
+            192,
+            128
+          ],
+          "step": [
+            6.25,
+            6.25
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "04-radial-1to1",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            178.0,
+            83.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            224.0,
+            146.0,
+            1068.0,
+            779.0
+          ],
+          "screenshot": "04-radial-1to1",
+          "size": [
+            844,
+            633
+          ],
+          "step": [
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "05-radial-fit",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            224.0,
+            181.0,
+            1068.0,
+            744.0
+          ],
+          "screenshot": "05-radial-fit",
+          "size": [
+            844,
+            563
+          ],
+          "step": [
+            1.4201183431952662,
+            1.4209591474245116
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "06-radial-37percent",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            424.0,
+            315.0,
+            868.0,
+            611.0
+          ],
+          "screenshot": "06-radial-37percent",
+          "size": [
+            444,
+            296
+          ],
+          "step": [
+            2.702702702702702,
+            2.702702702702702
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            1097.0,
+            175.0,
+            1410.0,
+            384.0
+          ],
+          "screenshot": "07-grid-small",
+          "size": [
+            313,
+            209
+          ],
+          "step": [
+            3.8338658146964857,
+            3.827751196172249
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            745.0,
+            123.0,
+            883.0,
+            215.0
+          ],
+          "screenshot": "07-grid-small",
+          "size": [
+            138,
+            92
+          ],
+          "step": [
+            8.695652173913043,
+            8.695652173913043
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            1097.0,
+            175.0,
+            1410.0,
+            384.0
+          ],
+          "screenshot": "08-grid-large",
+          "size": [
+            313,
+            209
+          ],
+          "step": [
+            3.8338658146964857,
+            3.827751196172249
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            706.0,
+            382.0,
+            1008.0,
+            584.0
+          ],
+          "screenshot": "08-grid-large",
+          "size": [
+            302,
+            202
+          ],
+          "step": [
+            3.9735099337748343,
+            3.96039603960396
+          ]
+        }
+      ],
+      "passed": true,
+      "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+      "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+      "version": "0.1.5"
+    },
+    {
+      "application": "TrueRenderer",
+      "channel_error_threshold_u8": 1,
+      "checks": [
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            908.0,
+            124.0,
+            1100.0,
+            252.0
+          ],
+          "screenshot": "01-grid",
+          "size": [
+            192,
+            128
+          ],
+          "step": [
+            6.25,
+            6.25
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "04-radial-1to1",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            178.0,
+            83.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            224.0,
+            146.0,
+            1068.0,
+            779.0
+          ],
+          "screenshot": "04-radial-1to1",
+          "size": [
+            844,
+            633
+          ],
+          "step": [
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "05-radial-fit",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            224.0,
+            181.0,
+            1068.0,
+            744.0
+          ],
+          "screenshot": "05-radial-fit",
+          "size": [
+            844,
+            563
+          ],
+          "step": [
+            1.4201183431952662,
+            1.4209591474245116
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "06-radial-37percent",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            424.0,
+            315.0,
+            868.0,
+            611.0
+          ],
+          "screenshot": "06-radial-37percent",
+          "size": [
+            444,
+            296
+          ],
+          "step": [
+            2.702702702702702,
+            2.702702702702702
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            1097.0,
+            175.0,
+            1410.0,
+            384.0
+          ],
+          "screenshot": "07-grid-small",
+          "size": [
+            313,
+            209
+          ],
+          "step": [
+            3.8338658146964857,
+            3.827751196172249
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            745.0,
+            123.0,
+            883.0,
+            215.0
+          ],
+          "screenshot": "07-grid-small",
+          "size": [
+            138,
+            92
+          ],
+          "step": [
+            8.695652173913043,
+            8.695652173913043
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            1097.0,
+            175.0,
+            1410.0,
+            384.0
+          ],
+          "screenshot": "08-grid-large",
+          "size": [
+            313,
+            209
+          ],
+          "step": [
+            3.8338658146964857,
+            3.827751196172249
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            706.0,
+            382.0,
+            1008.0,
+            584.0
+          ],
+          "screenshot": "08-grid-large",
+          "size": [
+            302,
+            202
+          ],
+          "step": [
+            3.9735099337748343,
+            3.96039603960396
+          ]
+        }
+      ],
+      "passed": true,
+      "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+      "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+      "version": "0.1.5"
+    },
+    {
+      "application": "TrueRenderer",
+      "channel_error_threshold_u8": 1,
+      "checks": [
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            908.0,
+            124.0,
+            1100.0,
+            252.0
+          ],
+          "screenshot": "01-grid",
+          "size": [
+            192,
+            128
+          ],
+          "step": [
+            6.25,
+            6.25
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "04-radial-1to1",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            178.0,
+            83.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            224.0,
+            146.0,
+            1068.0,
+            779.0
+          ],
+          "screenshot": "04-radial-1to1",
+          "size": [
+            844,
+            633
+          ],
+          "step": [
+            1.0,
+            1.0
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "05-radial-fit",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            224.0,
+            181.0,
+            1068.0,
+            744.0
+          ],
+          "screenshot": "05-radial-fit",
+          "size": [
+            844,
+            563
+          ],
+          "step": [
+            1.4201183431952662,
+            1.4209591474245116
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            608.0,
+            800.0,
+            702.0,
+            863.0
+          ],
+          "screenshot": "06-radial-37percent",
+          "size": [
+            94,
+            63
+          ],
+          "step": [
+            12.76595744680851,
+            12.698412698412698
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            424.0,
+            315.0,
+            868.0,
+            611.0
+          ],
+          "screenshot": "06-radial-37percent",
+          "size": [
+            444,
+            296
+          ],
+          "step": [
+            2.702702702702702,
+            2.702702702702702
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            1097.0,
+            175.0,
+            1410.0,
+            384.0
+          ],
+          "screenshot": "07-grid-small",
+          "size": [
+            313,
+            209
+          ],
+          "step": [
+            3.8338658146964857,
+            3.827751196172249
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            745.0,
+            123.0,
+            883.0,
+            215.0
+          ],
+          "screenshot": "07-grid-small",
+          "size": [
+            138,
+            92
+          ],
+          "step": [
+            8.695652173913043,
+            8.695652173913043
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            1097.0,
+            175.0,
+            1410.0,
+            384.0
+          ],
+          "screenshot": "08-grid-large",
+          "size": [
+            313,
+            209
+          ],
+          "step": [
+            3.8338658146964857,
+            3.827751196172249
+          ]
+        },
+        {
+          "differing_channels": 0,
+          "max_channel_error_u8": 0,
+          "origin": [
+            0.0,
+            0.0
+          ],
+          "passed": true,
+          "rect_physical": [
+            706.0,
+            382.0,
+            1008.0,
+            584.0
+          ],
+          "screenshot": "08-grid-large",
+          "size": [
+            302,
+            202
+          ],
+          "step": [
+            3.9735099337748343,
+            3.96039603960396
+          ]
+        }
+      ],
+      "passed": true,
+      "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+      "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+      "version": "0.1.5"
+    }
+  ],
+  "pre_fix_surface_failure": {
+    "application": "TrueRenderer",
+    "channel_error_threshold_u8": 1,
+    "checks": [
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          916.0,
+          123.0,
+          1112.0,
+          253.0
+        ],
+        "screenshot": "01-grid",
+        "size": [
+          196,
+          130
+        ],
+        "step": [
+          6.122448979591836,
+          6.153846153846154
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          175.0,
+          83.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          146.0,
+          1073.0,
+          779.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          849,
+          633
+        ],
+        "step": [
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          180.0,
+          1073.0,
+          746.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          849,
+          566
+        ],
+        "step": [
+          1.413427561837456,
+          1.413427561837456
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          427.0,
+          315.0,
+          871.0,
+          611.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          444,
+          296
+        ],
+        "step": [
+          2.702702702702702,
+          2.702702702702702
+        ]
+      },
+      {
+        "differing_channels": 1260,
+        "max_channel_error_u8": 27,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": false,
+        "rect_physical": [
+          1106.0,
+          175.0,
+          1424.0,
+          387.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          318,
+          212
+        ],
+        "step": [
+          3.7735849056603774,
+          3.7735849056603774
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          751.0,
+          122.0,
+          891.0,
+          215.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          140,
+          93
+        ],
+        "step": [
+          8.571428571428571,
+          8.602150537634408
+        ]
+      },
+      {
+        "differing_channels": 1260,
+        "max_channel_error_u8": 27,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": false,
+        "rect_physical": [
+          1106.0,
+          175.0,
+          1424.0,
+          387.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          318,
+          212
+        ],
+        "step": [
+          3.7735849056603774,
+          3.7735849056603774
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          713.0,
+          382.0,
+          1015.0,
+          584.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          302,
+          202
+        ],
+        "step": [
+          3.9735099337748343,
+          3.96039603960396
+        ]
+      }
+    ],
+    "passed": false,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+    "version": "0.1.5"
+  },
+  "pre_stabilization_surface_failure": {
+    "application": "TrueRenderer",
+    "channel_error_threshold_u8": 1,
+    "checks": [
+      {
+        "differing_channels": 23246,
+        "max_channel_error_u8": 231,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": false,
+        "rect_physical": [
+          907.0,
+          124.0,
+          1100.0,
+          252.0
+        ],
+        "screenshot": "01-grid",
+        "size": [
+          193,
+          128
+        ],
+        "step": [
+          6.217616580310881,
+          6.25
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          178.0,
+          83.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          146.0,
+          1068.0,
+          779.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          844,
+          633
+        ],
+        "step": [
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          181.0,
+          1068.0,
+          744.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          844,
+          563
+        ],
+        "step": [
+          1.4201183431952662,
+          1.4209591474245116
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          424.0,
+          315.0,
+          868.0,
+          611.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          444,
+          296
+        ],
+        "step": [
+          2.702702702702702,
+          2.702702702702702
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          1097.0,
+          175.0,
+          1410.0,
+          384.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          313,
+          209
+        ],
+        "step": [
+          3.8338658146964857,
+          3.827751196172249
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          745.0,
+          123.0,
+          883.0,
+          215.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          138,
+          92
+        ],
+        "step": [
+          8.695652173913043,
+          8.695652173913043
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          1097.0,
+          175.0,
+          1410.0,
+          384.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          313,
+          209
+        ],
+        "step": [
+          3.8338658146964857,
+          3.827751196172249
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          706.0,
+          382.0,
+          1008.0,
+          584.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          302,
+          202
+        ],
+        "step": [
+          3.9735099337748343,
+          3.96039603960396
+        ]
+      }
+    ],
+    "passed": false,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+    "version": "0.1.5"
+  },
+  "binary_sha256": {
+    "truerenderer.exe": "93075efacef234a0b4b562cd734fda72d9c157ed007ce3c76dec85657f38b77a",
+    "tr-worker.exe": "778a44f80be458295bee5e41c95dd206678b4d3e104a6a4b190e4e121e126a21"
+  },
+  "limits": [
+    "JPEG/TIFF carrying embedded ICC profiles remain rejected by the portable decoder pending R1 colour qualification; no profile stripping or colour fallback added.",
+    "No authorized private RAW camera corpus used.",
+    "No macOS rerun, signed release installer, NVDA, physical monitor calibration or R0-R4/SF gate closure."
+  ],
+  "initial_failures_fixed": [
+    "Incomplete MSVC installation and missing Rust toolchain.",
+    "Microsoft Store python3 alias mistaken for a working interpreter.",
+    "Clippy unused test import on Windows: added UTF-16 identity regression.",
+    "Verification paths and historical report names were macOS-specific.",
+    "Intermittent inspector scrollbar overlay: reserve a gutter instead of painting over preview pixels.",
+    "Initial layout could change between geometry recording and screenshot delivery: wait for geometry to remain unchanged for 250 ms; acceptance threshold remains 1/255."
+  ],
+  "reproduction": {
+    "suite": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-windows.ps1 verify --gui",
+    "isolation": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-windows.ps1 run --locked --offline -p tr-platform --example windows-isolation-probe",
+    "fixture_root": "Create a fresh root under var/, copy corpus/ into it and create its var/ and reports/ directories. Use only generated fixtures for these commands.",
+    "development": "target/debug/truerenderer.exe --root <fixture-root> --data <fixture-root>/var/develop --output-proof-smoke --proof-export; inspect reports/develop-ui.json passed, not only process exit code",
+    "extended_codecs": "target/debug/truerenderer.exe --root <fixture-root> --verify-exports; expected current result is exit 1 with 9 embedded-ICC readback failures in var/export-fits-*/report.json",
+    "surface_repeat": "For each fresh fixture root: target/debug/truerenderer.exe --root <fixture-root> --sampling-smoke then --root <fixture-root> --verify-sampling-screenshots; require both JSON verdicts passed"
+  }
+}

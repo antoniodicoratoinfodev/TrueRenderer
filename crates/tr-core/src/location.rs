@@ -89,6 +89,22 @@ pub struct Favorite {
 mod tests {
     use super::*;
     #[test]
+    #[cfg(windows)]
+    fn unpaired_utf16_round_trips_without_display_collisions() {
+        use std::os::windows::ffi::OsStringExt;
+        let a = PathBuf::from(std::ffi::OsString::from_wide(&[67, 58, 92, 0xd800]));
+        let b = PathBuf::from(std::ffi::OsString::from_wide(&[67, 58, 92, 0xd801]));
+        assert_eq!(a.to_string_lossy(), b.to_string_lossy());
+        let location = Location::from_path(&a);
+        assert_ne!(location, Location::from_path(&b));
+        assert_eq!(
+            serde_json::from_slice::<Location>(&serde_json::to_vec(&location).unwrap())
+                .unwrap()
+                .path(),
+            Some(a)
+        );
+    }
+    #[test]
     #[cfg(unix)]
     fn invalid_utf8_round_trips_without_display_collisions() {
         use std::os::unix::ffi::OsStringExt;

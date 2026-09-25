@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Adversarial framing tests against the actual separate decoder executable."""
 from pathlib import Path
-import json, struct, subprocess, time
+import argparse, json, struct, subprocess, sys, time
 
 root = Path(__file__).resolve().parents[1]
-worker = root / "target/debug/tr-worker"
+worker = root / ("target/debug/tr-worker.exe" if sys.platform == "win32" else "target/debug/tr-worker")
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--report", type=Path, default=root / "reports/worker-protocol.json")
+args = parser.parse_args()
 def packet(kind=1, request_id=1, control=None, body=b"", version=1, length=None):
     payload=json.dumps(control if control is not None else {"source_len":len(body),"max_edge":320}).encode()
     return struct.pack("<4sHHQI",b"TRIP",version,kind,request_id,len(payload) if length is None else length)+payload+body
@@ -44,5 +47,6 @@ for name,intent in [
     assert kind==3 and len(output)==20+size, (name,output[:100])
     assert "isolamento" in json.loads(output[20:]), output
     results.append({"case":name,"passed":True})
-(root/"reports/worker-protocol.json").write_text(json.dumps({"passed":True,"cases":results},indent=2)+"\n")
+args.report.parent.mkdir(parents=True, exist_ok=True)
+args.report.write_text(json.dumps({"passed":True,"cases":results},indent=2)+"\n")
 print(f"Worker protocol: {len(results)} checks passed")

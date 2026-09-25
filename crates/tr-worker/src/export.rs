@@ -398,6 +398,62 @@ pub fn raw(source: &[u8], options: Options, limit: u64) -> Result<(Info, Vec<u8>
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(windows)]
+    #[test]
+    fn windows_icc_exports_reopen_with_float_range_and_alpha() {
+        let source = LinearImage::new(
+            6,
+            1,
+            vec![
+                [0.1, 0.2, 0.3, 1.],
+                [1., 0., 0., 1.],
+                [0.04, 0.08, 0.12, 0.4],
+                [-0.125, 0.25, 2.5, 1.],
+                [1e-8, 0.5, 1.5, 1.],
+                [0.; 4],
+            ],
+        )
+        .unwrap();
+        for format in [Format::Jpeg, Format::Tiff16, Format::TiffFloat32] {
+            let (_, bytes) = render(
+                source.clone(),
+                Options {
+                    format,
+                    ..Options::default()
+                },
+                MAX_ENCODED,
+            )
+            .unwrap();
+            let (probe, declared, _) = crate::portable_decode(&bytes, 0, false).unwrap();
+            assert!(
+                matches!(declared, tr_core::decoder::ColorSource::Declared(_)),
+                "{format:?}: {declared:?}"
+            );
+            let (info, _, actual) = crate::portable_decode(&bytes, 0, true).unwrap();
+            assert_eq!(probe.input_color, info.input_color);
+            let actual = actual.unwrap();
+            let expected = if format == Format::TiffFloat32 {
+                source.pixels.clone()
+            } else {
+                // Independent container read, before ICC interpretation, including
+                // JPEG's actual lossy samples rather than the pre-encoded source.
+                image::load_from_memory(&bytes)
+                    .unwrap()
+                    .to_rgba32f()
+                    .pixels()
+                    .map(|p| color::from_encoded_srgb(p.0))
+                    .collect()
+            };
+            for (a, b) in actual.pixels.iter().zip(expected) {
+                for c in 0..4 {
+                    assert!(
+                        (a[c] - b[c]).abs() <= 0.0002 * (1. + b[c].abs()),
+                        "{format:?}: {a:?} != {b:?}"
+                    );
+                }
+            }
+        }
+    }
     #[test]
     fn srgb_icc_adapts_d65_to_pcs_d50_and_neutral_primaries() {
         let p = moxcms::ColorProfile::new_from_slice(&profile(false).unwrap()).unwrap();

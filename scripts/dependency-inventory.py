@@ -9,7 +9,7 @@ parser.add_argument("--target", default="aarch64-apple-darwin")
 parser.add_argument("--stem", default="dependency-inventory")
 args=parser.parse_args()
 assert re.fullmatch(r"[a-z0-9-]+", args.stem), "Output stem must be a plain name"
-cargo=(["C:/msys64/usr/bin/bash.exe", "scripts/cargo-local.sh"] if os.name == "nt" else [str(root/"scripts/cargo-local.sh")])
+cargo=(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(root/"scripts/dev-windows.ps1")] if os.name == "nt" else [str(root/"scripts/cargo-local.sh")])
 output=subprocess.run(cargo+["metadata","--format-version","1","--locked","--offline","--filter-platform",args.target],cwd=root,capture_output=True,text=True,encoding="utf8",check=True)
 metadata=json.loads(output.stdout)
 resolved={node["id"] for node in metadata["resolve"]["nodes"]}
@@ -30,11 +30,25 @@ for package in sorted(metadata["packages"],key=lambda p:p["name"]):
     record["checksum_sha256"]=checksums.get((package["name"],package["version"]))
     record["notices"]=[]
     folder=Path(package["manifest_path"]).parent
-    for path in sorted(folder.iterdir()):
+    notice_paths=list(folder.iterdir())
+    if package["name"] == "lcms2-sys":
+        # The static feature builds the bundled C library, whose copyright
+        # notice is separate from the Rust bindings' top-level license.
+        notice_paths.append(folder/"vendor/LICENSE")
+    for path in sorted(notice_paths):
         if path.is_file() and (path.name.upper().startswith("LICENSE") or path.name.upper().startswith("LICENCE") or path.name.upper().startswith("COPYING") or path.name.upper().startswith("NOTICE")):
             data=path.read_bytes()
-            destination=notices/(package["name"]+"-"+package["version"]+"-"+path.name)
-            destination.write_bytes(data)
+            suffix=path.relative_to(folder).as_posix().replace("/", "-")
+            destination=notices/(package["name"]+"-"+package["version"]+"-"+suffix)
+            # Reuse identical historical notice texts without rewriting them.
+            existing=next((root/"reports"/directory/destination.name for directory in
+                ["dependency-notices", "dependency-inventory-windows-notices"]
+                if (root/"reports"/directory/destination.name).is_file()
+                and (root/"reports"/directory/destination.name).read_bytes() == data), None)
+            if existing is not None:
+                destination=existing
+            else:
+                destination.write_bytes(data)
             record["notices"].append({"file":destination.relative_to(root).as_posix(),"sha256":hashlib.sha256(data).hexdigest()})
     packages.append(record)
 app_version=next(package["version"] for package in metadata["packages"] if package["name"] == "truerenderer")

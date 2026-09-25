@@ -350,6 +350,14 @@ impl TrueRenderer {
             5 if self.screenshots.contains("develop-grid") => {
                 let export_smoke = proof_smoke && args.iter().any(|a| a == "--proof-export");
                 if export_smoke && !self.editing.smoke_export_started {
+                    // Entering the grid starts new preview reads. Their snapshot
+                    // slots must drain before this one-shot export probe starts.
+                    if !self.pending_images.is_empty()
+                        || self.editing.inflight.is_some()
+                        || !self.editing.thumbnail_inflight.is_empty()
+                    {
+                        return;
+                    }
                     let destination = self.root.join("var/develop-export");
                     if let Err(error) = std::fs::create_dir_all(&destination) {
                         self.editing.smoke_export_result =
@@ -401,7 +409,8 @@ impl TrueRenderer {
                     "saved_generation":edit.map(|saved| saved.generation),
                     "source_unchanged":unchanged,
                     "screenshots":["develop-viewer.png","develop-grid.png"],
-                    "scope":"Native macOS UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB, physical display or Windows qualification."
+                    "platform":std::env::consts::OS,
+                    "scope":"Native UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB or physical display qualification."
                 });
                 let _ = std::fs::write(
                     self.root.join("reports/develop-ui.json"),
@@ -635,7 +644,7 @@ impl TrueRenderer {
                 let can_redo = saved.can_redo;
                 let mut changed = false;
                 let mut commit = false;
-                ui.horizontal(|ui| {
+                ui.horizontal_wrapped(|ui| {
                     if ui
                         .add_enabled(
                             can_undo && !pending,
