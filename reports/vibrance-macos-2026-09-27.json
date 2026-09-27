@@ -1,0 +1,110 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-27",
+  "passed": true,
+  "scope": "Process 2 vibrance and optional warm-hue protection, preserving process 1 recipes. Synthetic macOS campaign.",
+  "bundle": "dist/TrueRenderer-vibrance-2026-09-27.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "bb08c62615c2833728321ba0d6e694529f34c6cfd49e06a38db0dd7be13d51a9",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "92a32966a2e11796cf5a824ff85d16c3263f9671e6ba7370643194357d5b6e8f",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "1d19d6521c6fd53c4e9975eb6ffbf5b998fce9f5da3daeda25b131f46e409762"
+  },
+  "suite": {
+    "command": "scripts/verify.sh --gui",
+    "exit_code": 0,
+    "ordinary_rust": 194,
+    "additional_rust": 13,
+    "private_raw_skipped": 3,
+    "python": 2,
+    "protocol": 8,
+    "resampling_signals": 24,
+    "native_surface": true,
+    "fmt_clippy_build": true,
+    "artifacts": "var/verify-IOcrrVIG"
+  },
+  "regressions": [
+    "Process 1 JSON and pixels preserved; version 1 refuses non-neutral new parameters.",
+    "Analytical vibrance reference, luminance/alpha, warm protection, negatives/grays/black, bounds and picker refusal.",
+    "Backup/reopen/undo/redo across process versions.",
+    "PNG16 every channel exact against developed recipe with vibrance on LibRaw bilinear/AHD and TrueRenderer."
+  ],
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-09-27T17:17:36.375400+00:00",
+    "bundle": "dist/TrueRenderer-vibrance-2026-09-27.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "bb08c62615c2833728321ba0d6e694529f34c6cfd49e06a38db0dd7be13d51a9",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "92a32966a2e11796cf5a824ff85d16c3263f9671e6ba7370643194357d5b6e8f",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "1d19d6521c6fd53c4e9975eb6ffbf5b998fce9f5da3daeda25b131f46e409762"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "native_ui": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "02_Paesaggio_analitico-export.png",
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "fixture": "02_Paesaggio_analitico.png",
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 1,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1683,
+        1122
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": false,
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 2,
+      "protect_warm": true,
+      "raw_engine": "Apple",
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "vibrance": 65.0,
+      "whites": 0.0
+    },
+    "saved_generation": 1,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "artifacts": "var/vibrance-xx7cenxw",
+  "visual_review": "Viewer screenshot inspected; new controls are below the captured scroll position. No manual slider interaction qualified.",
+  "limitations": [
+    "Warm hue mask is not semantic skin detection.",
+    "No photographic quality qualification on extended camera/skin corpus.",
+    "Compact/200% UI and Windows native not verified.",
+    "No SF or R gates closed."
+  ]
+}

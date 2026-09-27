@@ -17,6 +17,14 @@ impl Language {
         }
         match source {
             "Sviluppo" => "Develop",
+            "Vividezza" => "Vibrance",
+            "Proteggi toni caldi" => "Protect warm tones",
+            "Vividezza: processo 2 · protezione indicativa, non rileva la pelle" => {
+                "Vibrance: process 2 · approximate protection, not skin detection"
+            }
+            "Azzerare saturazione e vividezza prima del contagocce RGB" => {
+                "Reset saturation and vibrance before RGB picking"
+            }
             "WB Apple personalizzato" => "Custom Apple WB",
             "Personalizzato" => "Custom",
             "Tungsteno · 3200 K" => "Tungsten · 3200 K",

@@ -20,6 +20,15 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Vividezza e protezione dei toni caldi — 27 settembre
+
+- [x] **Implementato:** Vividezza −100…100 e Proteggi toni caldi opzionale, UI IT/EN, stesso percorso per viewer/miniature/export. Pesa maggiormente i colori poco saturi; protezione cromatica esplicitamente indicativa, senza riconoscimento della pelle. Contratto numerico nella specifica fotografica, nessun clamp del working o modifica dell'alpha.
+- [x] **Compatibilità:** adesione al processo 2 solo usando i nuovi controlli; vecchie ricette/processo 1 e pixel invariati. Nuovi parametri fuori scala o incompatibili col processo 1 rifiutati. Ricetta e cronologia conservano i numeri; backup/riapertura/undo/redo verificati fra processi. Auto RGB e contagocce richiedono saturazione e vividezza zero.
+- [x] **Verificato:** `scripts/verify.sh --gui`, **194 test ordinari + 13 integrazioni**, due test Python, otto controlli protocollo, 24 segnali, superficie nativa, fmt/Clippy/build. Riferimento analitico, luminanza/alpha, protezione, negativi/grigi/nero e compatibilità coperti; PNG16 esatto campione per campione sui tre motori LibRaw/TrueRenderer con vividezza attiva. Bundle `dist/TrueRenderer-vibrance-2026-09-27.app`, due XPC e recupero timeout passati. Smoke sintetico con vividezza 65/protezione attiva: ricetta processo 2 salvata, viewer/griglia ed export 1440×960 riusciti; superficie entro 1/255 (un canale differente), sorgente invariata. Cattura viewer controllata visivamente.
+- [ ] **Aperto:** prova manuale dei nuovi cursori e dei preset Apple, compatto/200%, Windows, corpus fotografico/toni pelle e qualifica estesa. Restano Auto WB nativo, contagocce RAW, preset calibrati per motori a guadagni sensore e strumenti successivi SF. Tre test RAW privati esclusi; nessun gate SF/R chiuso.
+
+[Rapporto vividezza](reports/vibrance-macos-2026-09-27.json). Evidenze isolate in `var/verify-IOcrrVIG/` e `var/vibrance-xx7cenxw/`; rapporto compute storico ripristinato. Originali e libreria personale non usati nelle prove.
+
 ### Preset WB Apple e consegna — 27 settembre
 
 - [x] **Implementato:** selettore Come scattato, Tungsteno 3200 K, Luce diurna 5500 K, Nuvoloso 6500 K e Ombra 7500 K, tinta 0. Punti di partenza esplicitamente indicativi e regolabili, risolti nei parametri numerici della ricetta e nella cronologia ordinaria. Nome ricavato dalla coppia corrente, altrimenti Personalizzato; traduzioni IT/EN, README e contratto SF2 aggiornati. Nessun Kelvin inventato per i tre motori a guadagni sensore.

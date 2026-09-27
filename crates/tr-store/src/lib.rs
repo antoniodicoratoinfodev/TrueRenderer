@@ -555,6 +555,9 @@ mod tests {
         let first = catalog.save_edit(&item.id, 0, &recipe).unwrap();
         assert_eq!(first.revision, 1);
         recipe.exposure_ev = 2.;
+        recipe.process_version = 2;
+        recipe.vibrance = 65.;
+        recipe.protect_warm = true;
         recipe.raw_wb = tr_core::decoder::RawWhiteBalance {
             red: 800,
             blue: 1500,
@@ -581,6 +584,9 @@ mod tests {
             .step_edit(&item.id, reopened.generation, false)
             .unwrap();
         assert_eq!(redone.recipe.exposure_ev, 2.);
+        assert_eq!(redone.recipe.vibrance, 65.);
+        assert!(redone.recipe.protect_warm);
+        assert_eq!(redone.recipe.process_version, 2);
         assert_eq!(redone.recipe.raw_wb.red, 800);
         let undo_again = catalog
             .step_edit(&item.id, redone.generation, true)

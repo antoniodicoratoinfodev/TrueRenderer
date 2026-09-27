@@ -251,6 +251,11 @@ impl TrueRenderer {
                 {
                     let mut recipe = saved.recipe.clone();
                     recipe.exposure_ev = 0.75;
+                    if args.iter().any(|a| a == "--vibrance-smoke") {
+                        recipe.process_version = 2;
+                        recipe.vibrance = 65.;
+                        recipe.protect_warm = true;
+                    }
                     recipe.temperature = 25.;
                     recipe.tint = -8.;
                     if args.iter().any(|a| a == "--raw-wb-smoke") {
@@ -968,6 +973,22 @@ impl TrueRenderer {
                         commit |=
                             response.drag_stopped() || (response.changed() && !response.dragged());
                     }
+                    let response = ui.add(
+                        egui::Slider::new(&mut draft.vibrance, -100. ..=100.)
+                            .text(lang.text("Vividezza")),
+                    );
+                    let protection =
+                        ui.checkbox(&mut draft.protect_warm, lang.text("Proteggi toni caldi"));
+                    if response.changed() || protection.changed() {
+                        draft.process_version = 2;
+                        changed = true;
+                    }
+                    commit |= response.drag_stopped()
+                        || (response.changed() && !response.dragged())
+                        || protection.changed();
+                    ui.small(lang.text(
+                        "Vividezza: processo 2 · protezione indicativa, non rileva la pelle",
+                    ));
                     ui.label(
                         RichText::new(
                             lang.text("La correzione RGB non cambia il WB RAW del decoder."),

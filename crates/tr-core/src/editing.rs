@@ -117,6 +117,10 @@ pub struct EditRecipe {
     pub temperature: f32,
     pub tint: f32,
     pub saturation: f32,
+    #[serde(default, skip_serializing_if = "is_zero")]
+    pub vibrance: f32,
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub protect_warm: bool,
     pub curve: Vec<CurvePoint>,
 }
 
@@ -137,6 +141,8 @@ impl EditRecipe {
             temperature: 0.,
             tint: 0.,
             saturation: 0.,
+            vibrance: 0.,
+            protect_warm: false,
             curve: vec![],
         }
     }
@@ -144,13 +150,17 @@ impl EditRecipe {
     pub fn is_neutral(&self) -> bool {
         let mut neutral = Self::neutral(self.raw_engine);
         neutral.curve = self.curve.clone();
+        neutral.process_version = self.process_version;
+        neutral.protect_warm = self.protect_warm;
         self == &neutral && self.curve.iter().all(|p| p.x == p.y)
     }
 
     pub fn validate(&self) -> Result<()> {
         self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
-            self.schema_version == SCHEMA_VERSION && self.process_version == PROCESS_VERSION,
+            self.schema_version == SCHEMA_VERSION
+                && matches!(self.process_version, 1 | 2)
+                && (self.process_version == 2 || (self.vibrance == 0. && !self.protect_warm)),
             "Versione della ricetta fotografica non eseguibile"
         );
         ensure!(
@@ -167,6 +177,7 @@ impl EditRecipe {
             ("Temperatura RGB", self.temperature),
             ("Tinta RGB", self.tint),
             ("Saturazione", self.saturation),
+            ("Vividezza", self.vibrance),
         ] {
             ensure!(
                 value.is_finite() && (-100. ..=100.).contains(&value),
@@ -280,8 +291,8 @@ impl EditRecipe {
     /// Freeze the existing relative RGB controls; do not request decode-time Auto.
     pub fn auto_rgb(&mut self, image: &LinearImage) -> Result<()> {
         ensure!(
-            self.saturation == 0.,
-            "Azzerare la saturazione prima del contagocce RGB"
+            self.saturation == 0. && self.vibrance == 0.,
+            "Azzerare saturazione e vividezza prima del contagocce RGB"
         );
         let samples = self.analysis_samples(image)?;
         let mut ratios = [Vec::new(), Vec::new()];
@@ -312,8 +323,8 @@ impl EditRecipe {
     pub fn neutralize_render_sample(&mut self, pixel: Pixel) -> Result<()> {
         self.validate()?;
         ensure!(
-            self.saturation == 0.,
-            "Azzerare la saturazione prima del contagocce RGB"
+            self.saturation == 0. && self.vibrance == 0.,
+            "Azzerare saturazione e vividezza prima del contagocce RGB"
         );
         let [r, g, b] = picker_rgb(pixel)?;
         let temperature = self.temperature - 100. * (r / b).ln() / 0.36;
@@ -341,6 +352,7 @@ impl EditRecipe {
             && self.whites == 0.
             && self.blacks == 0.
             && self.saturation == 0.
+            && self.vibrance == 0.
             && self.curve.is_empty()
         {
             let factor = self.exposure_ev.exp2();
@@ -401,8 +413,41 @@ impl EditRecipe {
                 *value = y + (*value - y) * saturation;
             }
         }
+        if self.vibrance != 0. && rgb.iter().all(|v| *v >= 0. && v.is_finite()) {
+            let max = rgb.into_iter().fold(0_f32, f32::max);
+            let min = rgb.into_iter().fold(f32::INFINITY, f32::min);
+            let chroma = max - min;
+            if max > 1e-8 && chroma > 0. {
+                let saturation = chroma / max;
+                let mut weight = (1. - saturation).powi(2);
+                if self.protect_warm {
+                    // Triangular hue mask 0..70 degrees, peak at 35. This is
+                    // a warm-colour heuristic, never semantic skin detection.
+                    let hue = if max == rgb[0] {
+                        ((rgb[1] - rgb[2]) / chroma).rem_euclid(6.)
+                    } else if max == rgb[1] {
+                        (rgb[2] - rgb[0]) / chroma + 2.
+                    } else {
+                        (rgb[0] - rgb[1]) / chroma + 4.
+                    } * 60.;
+                    weight *= 1. - 0.75 * (1. - (hue - 35.).abs() / 35.).max(0.);
+                }
+                let factor = 1. + self.vibrance / 100. * weight;
+                let y = luminance(rgb);
+                for value in &mut rgb {
+                    *value = y + (*value - y) * factor;
+                }
+            }
+        }
         [rgb[0] * alpha, rgb[1] * alpha, rgb[2] * alpha, alpha]
     }
+}
+
+fn is_zero(value: &f32) -> bool {
+    *value == 0.
+}
+fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 fn curve(x: f32, points: &[CurvePoint]) -> f32 {
@@ -423,6 +468,62 @@ fn curve(x: f32, points: &[CurvePoint]) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn vibrance_versioning_preserves_old_pixels_and_rejects_implicit_upgrade() {
+        let mut old = EditRecipe::neutral(RawEngine::default());
+        old.exposure_ev = 0.7;
+        old.saturation = 12.;
+        let json = serde_json::to_string(&old).unwrap();
+        assert!(!json.contains("vibrance") && !json.contains("protect_warm"));
+        let mut upgraded: EditRecipe = serde_json::from_str(&json).unwrap();
+        upgraded.process_version = 2;
+        for pixel in [[-0.2, 0.3, 1.8, 1.], [0.1, 0.2, 0.3, 0.5], [0.; 4]] {
+            assert_eq!(old.apply_pixel(pixel), upgraded.apply_pixel(pixel));
+        }
+        old.vibrance = 50.;
+        assert!(old.validate().is_err());
+        upgraded.vibrance = f32::NAN;
+        assert!(upgraded.validate().is_err());
+    }
+
+    #[test]
+    fn vibrance_preserves_luminance_alpha_and_protects_warm_hues() {
+        let mut recipe = EditRecipe::neutral(RawEngine::default());
+        recipe.process_version = 2;
+        recipe.vibrance = 100.;
+        let pixel = [0.4, 0.3, 0.2, 1.];
+        let result = recipe.apply_pixel(pixel);
+        // saturation=.5; weight=.25; factor=1.25.
+        let y = 0.2627 * pixel[0] + 0.6780 * pixel[1] + 0.0593 * pixel[2];
+        for c in 0..3 {
+            assert!((result[c] - (y + (pixel[c] - y) * 1.25)).abs() < 1e-6);
+        }
+        let new_y = 0.2627 * result[0] + 0.6780 * result[1] + 0.0593 * result[2];
+        assert!((new_y - y).abs() < 1e-6);
+        for alpha in [0.01, 0.5, 1.] {
+            let out =
+                recipe.apply_pixel([pixel[0] * alpha, pixel[1] * alpha, pixel[2] * alpha, alpha]);
+            assert_eq!(out[3], alpha);
+            for c in 0..3 {
+                assert!((out[c] / alpha - result[c]).abs() < 1e-6);
+            }
+        }
+        recipe.protect_warm = true;
+        let protected = recipe.apply_pixel(pixel);
+        assert!((protected[0] - y).abs() < (result[0] - y).abs());
+        recipe.vibrance = -100.;
+        let reduced = recipe.apply_pixel(pixel);
+        assert!((reduced[0] - y).abs() < (pixel[0] - y).abs());
+        for pixel in [[0.4; 4], [1., 0., 0., 1.], [-0.2, 0.3, 1.5, 1.], [0.; 4]] {
+            assert_eq!(recipe.apply_pixel(pixel), pixel);
+        }
+        assert!(
+            recipe
+                .neutralize_render_sample([0.4, 0.4, 0.4, 1.])
+                .is_err()
+        );
+    }
+
     #[test]
     fn area_picker_recovers_cast_despite_brightness_noise_and_outliers() {
         for side in [5, 11] {

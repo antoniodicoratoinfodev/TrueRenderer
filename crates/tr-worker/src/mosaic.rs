@@ -449,6 +449,9 @@ mod tests {
             let mut recipe = tr_core::editing::EditRecipe::neutral(engine);
             recipe.raw_wb = wb;
             recipe.exposure_ev = 0.25;
+            recipe.process_version = 2;
+            recipe.vibrance = 65.;
+            recipe.protect_warm = true;
             recipe.apply(&mut working).unwrap();
             let mut input = vec![];
             protocol::write_control(

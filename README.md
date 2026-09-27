@@ -34,7 +34,10 @@ RAW development always involves interpretation. TrueRenderer makes that choice e
 
 The viewer's **Develop** section now has reversible exposure, brightness, contrast,
 highlights, shadows, whites, blacks, a basic tone curve, relative RGB warmth/tint
-and saturation. Edits are saved as versioned recipes in the local library;
+and saturation. **Vibrance** selectively adjusts less saturated colours; optional
+**Protect warm tones** reduces its effect on warm hues without identifying skin.
+Using these controls opts that revision into photographic process 2; existing
+recipes retain their previous rendering. Edits are saved as versioned recipes in the local library;
 **Undo**, **Redo** and **Before/After** leave the original file untouched.
 **RAW white balance** now offers as-shot/reset and native controls: Apple RAW
 uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
@@ -49,7 +52,7 @@ values and support Undo; changing the sliders shows Custom when appropriate.
 **Auto exposure** suggests a conservative exposure; **Auto RGB · grey world**
 assumes an average neutral scene and adjusts the relative RGB controls. Choose
 **Load native for Auto** when needed. Both actions save their resolved values and
-support Undo; Auto RGB requires zero saturation and does not change native RAW WB.
+support Undo; Auto RGB requires zero saturation and vibrance and does not change native RAW WB.
 
 To neutralize a colour cast, choose **Verify final rendering**, then
 **Return to extended fp32 render**. Hover over an opaque, unclipped pixel that
