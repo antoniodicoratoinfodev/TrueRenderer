@@ -36,11 +36,30 @@ The viewer's **Develop** section now has reversible exposure, brightness, contra
 highlights, shadows, whites, blacks, a basic tone curve, relative RGB warmth/tint
 and saturation. Edits are saved as versioned recipes in the local library;
 **Undo**, **Redo** and **Before/After** leave the original file untouched.
+**RAW white balance** now offers as-shot/reset and native controls: Apple RAW
+uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
+gains relative to as-shot, before demosaicing. These gains are not Kelvin. The
+controls appear for a decoded RAW and are stored with the photograph's engine.
+
+Apple RAW also offers adjustable Tungsten (3200 K), Daylight (5500 K), Cloudy
+(6500 K) and Shade (7500 K) presets, all with tint zero, plus As-shot. These are
+starting points, not measurements of scene lighting. Presets save numerical WB
+values and support Undo; changing the sliders shows Custom when appropriate.
+
+**Auto exposure** suggests a conservative exposure; **Auto RGB · grey world**
+assumes an average neutral scene and adjusts the relative RGB controls. Choose
+**Load native for Auto** when needed. Both actions save their resolved values and
+support Undo; Auto RGB requires zero saturation and does not change native RAW WB.
+
 To neutralize a colour cast, choose **Verify final rendering**, then
 **Return to extended fp32 render**. Hover over an opaque, unclipped pixel that
 should be neutral and use **Neutralize RGB sample**. This adjusts relative RGB
 warmth/tint; it does not change the camera's RAW white balance.
-The current picker uses one pixel and requires zero saturation in the edit recipe.
+Choose **Picker area**: 1×1, 5×5 (default) or 11×11 native pixels. Area sampling
+reduces the influence of isolated outliers and rejects mixed-colour regions,
+incomplete areas at image edges and areas with too few usable pixels. The panel
+shows valid pixels and chromatic spread. The picker requires zero saturation
+in the edit recipe.
 The quick edited view is provisional. **Verify final rendering** builds an
 **sRGB16 export preview** from native resolution when the memory budget permits
 it. It simulates native-size PNG/TIFF16 conversion before reducing the image,
@@ -51,7 +70,7 @@ Grid and filmstrip thumbnails reflect saved or in-progress edits. The inspector
 histogram follows its edited thumbnail preview and labels the preview level.
 
 The remaining tools in the [photographic development plan](STATO.md#piano-sviluppo-fotografico),
-including native RAW white balance, optics, spatial detail filters, masks,
+including automatic native RAW white balance, optics, spatial detail filters, masks,
 retouching and presets, are still in development.
 
 ### Keep the work yours

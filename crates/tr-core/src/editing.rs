@@ -10,6 +10,84 @@ use serde::{Deserialize, Serialize};
 pub const SCHEMA_VERSION: u32 = 1;
 pub const PROCESS_VERSION: u32 = 1;
 
+/// Bounded picker estimate, not a camera-WB or statistical confidence estimate.
+#[derive(Clone, Debug)]
+pub struct RgbAreaSample {
+    pub working: Pixel,
+    pub valid: usize,
+    pub total: usize,
+    pub chroma_spread: f32,
+}
+
+/// Estimate chromaticity using 20%-trimmed means of log(R/G), log(B/G).
+/// Brightness variation does not weight the estimate. Reject incomplete areas,
+/// too many unusable pixels and chromatically heterogeneous regions.
+pub fn sample_rgb_area(image: &LinearImage, x: u32, y: u32, side: u32) -> Result<RgbAreaSample> {
+    ensure!(matches!(side, 5 | 11), "Area RGB non supportata");
+    let radius = side / 2;
+    ensure!(
+        x >= radius
+            && y >= radius
+            && x.checked_add(radius).is_some_and(|v| v < image.width)
+            && y.checked_add(radius).is_some_and(|v| v < image.height),
+        "Area RGB incompleta al bordo: campionare più all'interno"
+    );
+    let total = (side * side) as usize;
+    let mut ratios = [Vec::with_capacity(total), Vec::with_capacity(total)];
+    for row in y - radius..=y + radius {
+        for col in x - radius..=x + radius {
+            let pixel = image.pixels[row as usize * image.width as usize + col as usize];
+            if let Ok([r, g, b]) = picker_rgb(pixel) {
+                ratios[0].push((r / g).ln());
+                ratios[1].push((b / g).ln());
+            }
+        }
+    }
+    let valid = ratios[0].len();
+    ensure!(
+        valid * 5 >= total * 4,
+        "Area RGB: meno dell'80% di pixel validi"
+    );
+    let mut means = [0.; 2];
+    let mut chroma_spread = 0_f32;
+    for (values, mean) in ratios.iter_mut().zip(&mut means) {
+        values.sort_by(f32::total_cmp);
+        let tail = valid / 10;
+        chroma_spread = chroma_spread.max(values[valid - 1 - tail] - values[tail]);
+        let trim = valid / 5;
+        *mean = values[trim..valid - trim].iter().sum::<f32>() / (valid - 2 * trim) as f32;
+    }
+    ensure!(
+        chroma_spread <= 0.08,
+        "Area RGB cromaticamente disomogenea: scegliere una zona uniforme"
+    );
+    // An equivalent opaque pixel carries only the estimated chromaticity into
+    // the existing gain solver; it is not reported as a measured linear mean.
+    let rgb = [means[0].exp(), 1., means[1].exp()];
+    let scale = 0.5 / rgb.into_iter().fold(1_f32, f32::max);
+    Ok(RgbAreaSample {
+        working: [rgb[0] * scale, scale, rgb[2] * scale, 1.],
+        valid,
+        total,
+        chroma_spread,
+    })
+}
+
+fn picker_rgb(pixel: Pixel) -> Result<[f32; 3]> {
+    let alpha = pixel[3];
+    ensure!(
+        alpha.is_finite() && (0.95..=1.).contains(&alpha),
+        "Campione RGB non opaco"
+    );
+    let rgb = [pixel[0] / alpha, pixel[1] / alpha, pixel[2] / alpha];
+    ensure!(
+        rgb.into_iter()
+            .all(|v| v.is_finite() && (0.02..0.95).contains(&v)),
+        "Campione RGB troppo scuro, saturo o fuori dominio"
+    );
+    Ok(rgb)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CurvePoint {
@@ -20,6 +98,11 @@ pub struct CurvePoint {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditRecipe {
+    #[serde(
+        default,
+        skip_serializing_if = "crate::decoder::RawWhiteBalance::is_as_shot"
+    )]
+    pub raw_wb: crate::decoder::RawWhiteBalance,
     pub schema_version: u32,
     pub process_version: u32,
     pub raw_engine: RawEngine,
@@ -40,6 +123,7 @@ pub struct EditRecipe {
 impl EditRecipe {
     pub fn neutral(raw_engine: RawEngine) -> Self {
         Self {
+            raw_wb: Default::default(),
             schema_version: SCHEMA_VERSION,
             process_version: PROCESS_VERSION,
             raw_engine,
@@ -64,6 +148,7 @@ impl EditRecipe {
     }
 
     pub fn validate(&self) -> Result<()> {
+        self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
             self.schema_version == SCHEMA_VERSION && self.process_version == PROCESS_VERSION,
             "Versione della ricetta fotografica non eseguibile"
@@ -141,6 +226,87 @@ impl EditRecipe {
         self.transform_pixel(pixel)
     }
 
+    /// Fixed native-frame grid, at most 4096 samples, independent of viewport.
+    /// Call only with the source developed under this recipe's RAW WB.
+    fn analysis_samples(&self, image: &LinearImage) -> Result<Vec<Pixel>> {
+        self.validate()?;
+        let mut samples = Vec::with_capacity(4096);
+        let nx = image.width.min(64);
+        let ny = image.height.min(64);
+        for j in 0..ny {
+            for i in 0..nx {
+                let x = ((2 * i as u64 + 1) * image.width as u64 / (2 * nx as u64)) as usize;
+                let y = ((2 * j as u64 + 1) * image.height as u64 / (2 * ny as u64)) as usize;
+                samples.push(self.apply_pixel(image.pixels[y * image.width as usize + x]));
+            }
+        }
+        Ok(samples)
+    }
+
+    /// Conservative exposure suggestion: median -> 0.18, capped by p99 -> 0.9.
+    /// Freeze only the resolved EV; preserve every other control.
+    pub fn auto_exposure(&mut self, image: &LinearImage) -> Result<()> {
+        let samples = self.analysis_samples(image)?;
+        let mut luminances: Vec<f32> = samples
+            .iter()
+            .filter_map(|p| {
+                if !(0.95..=1.).contains(&p[3]) {
+                    return None;
+                }
+                let rgb = [p[0] / p[3], p[1] / p[3], p[2] / p[3]];
+                if !rgb.iter().all(|v| v.is_finite() && *v >= 0.) {
+                    return None;
+                }
+                let y = 0.2627 * rgb[0] + 0.6780 * rgb[1] + 0.0593 * rgb[2];
+                (y > 1e-6).then_some(y)
+            })
+            .collect();
+        ensure!(
+            luminances.len() >= 16 && luminances.len() * 4 >= samples.len(),
+            "Auto: campioni validi insufficienti"
+        );
+        luminances.sort_by(f32::total_cmp);
+        let median = luminances[luminances.len() / 2];
+        let high = luminances[(luminances.len() - 1) * 99 / 100];
+        let delta = (0.18 / median)
+            .log2()
+            .min((0.9 / high).log2())
+            .clamp(-3., 3.);
+        self.exposure_ev = (self.exposure_ev + delta).clamp(-10., 10.);
+        Ok(())
+    }
+
+    /// Grey-world RGB estimate, not a camera/illuminant recognition algorithm.
+    /// Freeze the existing relative RGB controls; do not request decode-time Auto.
+    pub fn auto_rgb(&mut self, image: &LinearImage) -> Result<()> {
+        ensure!(
+            self.saturation == 0.,
+            "Azzerare la saturazione prima del contagocce RGB"
+        );
+        let samples = self.analysis_samples(image)?;
+        let mut ratios = [Vec::new(), Vec::new()];
+        for p in &samples {
+            if let Ok([r, g, b]) = picker_rgb(*p) {
+                ratios[0].push((r / g).ln());
+                ratios[1].push((b / g).ln());
+            }
+        }
+        let n = ratios[0].len();
+        ensure!(
+            n >= 16 && n * 4 >= samples.len(),
+            "Auto: campioni validi insufficienti"
+        );
+        let mut mean = [0.; 2];
+        for (values, m) in ratios.iter_mut().zip(&mut mean) {
+            values.sort_by(f32::total_cmp);
+            let trim = n / 5;
+            *m = values[trim..n - trim].iter().sum::<f32>() / (n - 2 * trim) as f32;
+        }
+        let rgb = [mean[0].exp(), 1., mean[1].exp()];
+        let scale = 0.5 / rgb.into_iter().fold(1_f32, f32::max);
+        self.neutralize_render_sample([rgb[0] * scale, scale, rgb[2] * scale, 1.])
+    }
+
     /// Choose relative RGB gains from a rendered, premultiplied pixel. This is
     /// not camera white balance: it cannot recover clipped source channels.
     pub fn neutralize_render_sample(&mut self, pixel: Pixel) -> Result<()> {
@@ -149,18 +315,7 @@ impl EditRecipe {
             self.saturation == 0.,
             "Azzerare la saturazione prima del contagocce RGB"
         );
-        let alpha = pixel[3];
-        ensure!(
-            alpha.is_finite() && (0.95..=1.).contains(&alpha),
-            "Campione RGB non opaco"
-        );
-        let [r, g, b] = [pixel[0] / alpha, pixel[1] / alpha, pixel[2] / alpha];
-        ensure!(
-            [r, g, b]
-                .into_iter()
-                .all(|v| v.is_finite() && (0.02..0.95).contains(&v)),
-            "Campione RGB troppo scuro, saturo o fuori dominio"
-        );
+        let [r, g, b] = picker_rgb(pixel)?;
         let temperature = self.temperature - 100. * (r / b).ln() / 0.36;
         let tint = self.tint + 100. * (g / (r * b).sqrt()).ln() / 0.21;
         ensure!(
@@ -268,6 +423,137 @@ fn curve(x: f32, points: &[CurvePoint]) -> f32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn area_picker_recovers_cast_despite_brightness_noise_and_outliers() {
+        for side in [5, 11] {
+            let mut recipe = EditRecipe::neutral(RawEngine::default());
+            recipe.temperature = 24.;
+            recipe.tint = -15.;
+            let mut pixels: Vec<_> = (0..side * side)
+                .map(|i| {
+                    let value = 0.2 + (i % 7) as f32 * 0.06;
+                    let alpha = if i % 2 == 0 { 0.96 } else { 1. };
+                    recipe.apply_pixel([value * alpha, value * alpha, value * alpha, alpha])
+                })
+                .collect();
+            // One valid colour outlier and one invalid clipped pixel.
+            pixels[0] = [0.8, 0.1, 0.2, 1.];
+            pixels[1] = [1., 1., 1., 1.];
+            let image = LinearImage::new(side, side, pixels).unwrap();
+            let original = image.pixels.clone();
+            let area = sample_rgb_area(&image, side / 2, side / 2, side).unwrap();
+            assert_eq!(area.valid, (side * side - 1) as usize);
+            assert!(area.chroma_spread < 1e-5);
+            recipe.neutralize_render_sample(area.working).unwrap();
+            assert!(recipe.temperature.abs() < 1e-3);
+            assert!(recipe.tint.abs() < 1e-3);
+            assert_eq!(image.pixels, original);
+        }
+    }
+
+    #[test]
+    fn area_picker_rejects_edges_invalid_pixels_and_mixed_colours() {
+        let mut image = LinearImage::new(11, 11, vec![[0.4, 0.4, 0.4, 1.]; 121]).unwrap();
+        for (x, y, side) in [
+            (0, 5, 5),
+            (5, 0, 5),
+            (10, 5, 5),
+            (5, 10, 5),
+            (u32::MAX, 5, 11),
+            (5, u32::MAX, 11),
+            (5, 5, 3),
+        ] {
+            assert!(sample_rgb_area(&image, x, y, side).is_err());
+        }
+        for bad in [
+            [0.; 4],
+            [0.2, 0.2, 0.2, 0.5],
+            [0.01, 0.1, 0.1, 1.],
+            [1., 0.2, 0.2, 1.],
+            [f32::NAN, 0.2, 0.2, 1.],
+        ] {
+            image.pixels[..25].fill(bad);
+            assert!(sample_rgb_area(&image, 5, 5, 11).is_err());
+        }
+        image.pixels.fill([0.4, 0.4, 0.4, 1.]);
+        image.pixels[..60].fill([0.5, 0.3, 0.4, 1.]);
+        assert!(sample_rgb_area(&image, 5, 5, 11).is_err());
+        image.pixels.fill([0.4, 0.4, 0.4, 1.]);
+        image.pixels[..24].fill([0.; 4]);
+        assert_eq!(sample_rgb_area(&image, 5, 5, 11).unwrap().valid, 97);
+    }
+
+    #[test]
+    fn auto_actions_freeze_parameters_and_preserve_other_controls() {
+        let image = LinearImage::new(64, 64, vec![[0.09, 0.09, 0.09, 1.]; 4096]).unwrap();
+        let mut r = EditRecipe::neutral(RawEngine::TrueRenderer);
+        r.auto_exposure(&image).unwrap();
+        assert!((r.exposure_ev - 1.).abs() < 1e-5);
+        r.auto_exposure(&image).unwrap();
+        assert!((r.exposure_ev - 1.).abs() < 1e-5);
+        r.temperature = 24.;
+        r.tint = -15.;
+        r.auto_rgb(&image).unwrap();
+        assert!(r.temperature.abs() < 0.001 && r.tint.abs() < 0.001);
+        assert_eq!(r.exposure_ev, 1.);
+        let wire = serde_json::to_vec(&r).unwrap();
+        let restored: EditRecipe = serde_json::from_slice(&wire).unwrap();
+        assert_eq!(restored, r);
+        assert_eq!(image.pixels[0], [0.09, 0.09, 0.09, 1.]);
+    }
+    #[test]
+    fn auto_refuses_invalid_samples_and_limits_exposure() {
+        let mut r = EditRecipe::neutral(RawEngine::TrueRenderer);
+        for p in [[0.; 4], [0.1, 0.1, 0.1, 0.5], [-1., -1., -1., 1.]] {
+            let image = LinearImage::new(8, 8, vec![p; 64]).unwrap();
+            assert!(r.auto_exposure(&image).is_err());
+            assert!(r.auto_rgb(&image).is_err());
+            assert!(r.is_neutral());
+        }
+        let image = LinearImage::new(8, 8, vec![[0.0001, 0.0001, 0.0001, 1.]; 64]).unwrap();
+        r.auto_exposure(&image).unwrap();
+        assert_eq!(r.exposure_ev, 3.);
+        r.saturation = 1.;
+        let before = r.clone();
+        assert!(r.auto_rgb(&image).is_err());
+        assert_eq!(r, before);
+        let mut pixels = vec![[0.05, 0.05, 0.05, 1.]; 4096];
+        pixels[..100].fill([0.9, 0.9, 0.9, 1.]);
+        let bright = LinearImage::new(64, 64, pixels).unwrap();
+        r = EditRecipe::neutral(RawEngine::TrueRenderer);
+        r.auto_exposure(&bright).unwrap();
+        assert!(r.exposure_ev.abs() < 1e-5);
+    }
+    #[test]
+    fn raw_wb_is_serialized_validated_and_not_applied_again_to_working_rgb() {
+        let mut r = EditRecipe::neutral(RawEngine::TrueRenderer);
+        let old = serde_json::to_string(&r).unwrap();
+        assert!(!old.contains("raw_wb"));
+        r.raw_wb = crate::decoder::RawWhiteBalance {
+            red: 1800,
+            blue: 800,
+            ..Default::default()
+        };
+        let pixel = [-0.1, 0.2, 1.5, 0.5];
+        assert_eq!(r.apply_pixel(pixel), pixel);
+        r.validate().unwrap();
+        assert_eq!(
+            serde_json::from_str::<EditRecipe>(&serde_json::to_string(&r).unwrap()).unwrap(),
+            r
+        );
+        assert!(
+            serde_json::from_str::<EditRecipe>(&old)
+                .unwrap()
+                .raw_wb
+                .is_as_shot()
+        );
+        r.raw_wb.red = 0;
+        assert!(r.validate().is_err());
+        r.raw_wb.red = 1800;
+        r.raw_engine = RawEngine::Apple;
+        assert!(r.validate().is_err());
+    }
+
     #[test]
     fn identity_exposure_alpha_and_signed_values() {
         let mut image =

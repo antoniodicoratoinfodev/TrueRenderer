@@ -70,6 +70,63 @@ impl RawEngine {
     }
 }
 
+/// Native WB: Apple temperature/tint, or relative sensor gains before demosaic.
+/// Integers make request/cache identity exact; 1000 means a sensor gain of one.
+/// Apple temperature zero selects as-shot, otherwise it is expressed in kelvin.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct RawWhiteBalance {
+    pub red: u16,
+    pub blue: u16,
+    #[serde(default)]
+    pub apple_temperature: u16,
+    #[serde(default)]
+    pub apple_tint: i16,
+}
+impl Default for RawWhiteBalance {
+    fn default() -> Self {
+        Self {
+            red: 1000,
+            blue: 1000,
+            apple_temperature: 0,
+            apple_tint: 0,
+        }
+    }
+}
+impl RawWhiteBalance {
+    pub fn is_as_shot(&self) -> bool {
+        *self == Self::default()
+    }
+    pub fn validate(self) -> Result<()> {
+        anyhow::ensure!(
+            (250..=4000).contains(&self.red) && (250..=4000).contains(&self.blue),
+            "Guadagni WB RAW fuori scala"
+        );
+        anyhow::ensure!(
+            (self.apple_temperature == 0 && self.apple_tint == 0)
+                || ((2000..=50000).contains(&self.apple_temperature)
+                    && (-150..=150).contains(&self.apple_tint)),
+            "Temperatura/tinta Apple RAW fuori scala"
+        );
+        Ok(())
+    }
+    pub fn validate_for(self, engine: RawEngine) -> Result<()> {
+        self.validate()?;
+        anyhow::ensure!(
+            if engine == RawEngine::Apple {
+                self.red == 1000 && self.blue == 1000
+            } else {
+                self.apple_temperature == 0 && self.apple_tint == 0
+            },
+            "Parametri WB RAW incompatibili con il motore"
+        );
+        Ok(())
+    }
+    pub fn gains(self) -> [f32; 3] {
+        [self.red as f32 / 1000., 1., self.blue as f32 / 1000.]
+    }
+}
+
 /// Historical platform recipe, retained for old cache compatibility and shim
 /// regression checks. New jobs use `RawEngine::recipe` as their identity.
 pub const RECIPE: &str = if cfg!(windows) {
@@ -149,4 +206,52 @@ pub trait Decoder: Send + Sync {
     /// error naming it. Falling back to sRGB is not an acceptable recovery.
     fn decode(&self, bytes: &[u8], max_edge: u32)
     -> Result<(RasterInfo, ColorSource, LinearImage)>;
+}
+
+#[cfg(test)]
+mod wb_tests {
+    use super::*;
+    #[test]
+    fn white_balance_capabilities_and_bounds_are_engine_specific() {
+        let apple = RawWhiteBalance {
+            apple_temperature: 4500,
+            apple_tint: 12,
+            ..Default::default()
+        };
+        apple.validate_for(RawEngine::Apple).unwrap();
+        assert!(apple.validate_for(RawEngine::TrueRenderer).is_err());
+        for temperature in [1, 1999, 50001] {
+            assert!(
+                RawWhiteBalance {
+                    apple_temperature: temperature,
+                    ..apple
+                }
+                .validate()
+                .is_err()
+            );
+        }
+        for tint in [-151, 151] {
+            assert!(
+                RawWhiteBalance {
+                    apple_tint: tint,
+                    ..apple
+                }
+                .validate()
+                .is_err()
+            );
+        }
+        assert!(
+            RawWhiteBalance { red: 1500, ..apple }
+                .validate_for(RawEngine::Apple)
+                .is_err()
+        );
+        assert!(
+            RawWhiteBalance {
+                apple_temperature: 0,
+                ..apple
+            }
+            .validate()
+            .is_err()
+        );
+    }
 }

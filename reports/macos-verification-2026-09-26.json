@@ -1,0 +1,30 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-26T00:32:13.736000+00:00",
+  "commit": "bdb03278b68b47d6a3483484940d6ddfefefe52c",
+  "passed": true,
+  "profile": "debug",
+  "suite_command": "scripts/verify.sh --gui",
+  "suite_exit_code": 0,
+  "rust_ordinary_passed": 182,
+  "rust_additional_passed": 13,
+  "python_tests_passed": 2,
+  "protocol_checks_passed": 8,
+  "sampling_signal_cases": 24,
+  "native_surface_passed": true,
+  "native_regions_checked": 11,
+  "native_max_channel_error_u8": 1,
+  "xpc_passed": true,
+  "xpc_fault_injection_passed": true,
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "70439c5d6097f2c4fd528cdbb9d4b2f5bccf1c2b0b35b38fe23fe21d5a7ec85b",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1d817c2f469e5df16bd50ca63a67e6bb4d2cc9fe8aa5408f95987c631cb20a8e",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "4581f25167b401074ed484c095a4ea517c85dccdd74595d620acc6d3194045e6"
+  },
+  "evidence_root": "var/verify-VWRmtwDI/reports",
+  "logs_root": "var/verification-2026-09-26",
+  "excluded": [
+    "three private-camera tests: TR_RAW_SAMPLE unavailable"
+  ],
+  "scope": "macOS local debug verification; no release qualification or R0-R4 gate closure"
+}

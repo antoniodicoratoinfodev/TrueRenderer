@@ -767,6 +767,74 @@ impl Decoder for EngineDecoder {
     }
 }
 
+struct WhiteBalanced<'a> {
+    base: &'a dyn Decoder,
+    engine: RawEngine,
+    wb: tr_core::decoder::RawWhiteBalance,
+}
+impl Decoder for WhiteBalanced<'_> {
+    fn name(&self) -> &'static str {
+        self.base.name()
+    }
+    fn probe(&self, bytes: &[u8]) -> Result<(RasterInfo, ColorSource)> {
+        self.wb.validate_for(self.engine)?;
+        let (mut info, mut color) = self.base.probe(bytes)?;
+        if !self.wb.is_as_shot() {
+            ensure!(
+                info.format == "RAW",
+                "WB RAW personalizzato richiede un motore LibRaw/TrueRenderer e un mosaico supportato"
+            );
+            let note = if self.engine == RawEngine::Apple {
+                format!(
+                    "WB Apple {} K, tinta {}",
+                    self.wb.apple_temperature, self.wb.apple_tint
+                )
+            } else {
+                format!(
+                    "WB sensore relativo as-shot R {:.3}, G 1, B {:.3}",
+                    self.wb.gains()[0],
+                    self.wb.gains()[2]
+                )
+            };
+            color = ColorSource::Developed(format!("{}; {note}", color.provenance()));
+            info.input_color = color.provenance();
+        }
+        Ok((info, color))
+    }
+    fn decode(
+        &self,
+        bytes: &[u8],
+        max_edge: u32,
+    ) -> Result<(RasterInfo, ColorSource, LinearImage)> {
+        if self.wb.is_as_shot() {
+            return self.base.decode(bytes, max_edge);
+        }
+        let (_, color) = self.probe(bytes)?;
+        #[cfg(target_os = "macos")]
+        if self.engine == RawEngine::Apple {
+            let (info, image) = native::decode_with_wb(bytes, max_edge, self.wb)?;
+            let color = apple_color_source(&info.input_color);
+            return Ok((info, color, image));
+        }
+
+        #[cfg(any(windows, target_os = "macos"))]
+        {
+            let (mut info, _, image) = if self.engine == RawEngine::TrueRenderer {
+                mosaic::develop_with_wb(bytes, max_edge, self.wb)?
+            } else {
+                libraw::develop_with_wb(bytes, max_edge, self.engine, self.wb)?
+            };
+            info.input_color = color.provenance();
+            Ok((info, color, image))
+        }
+        #[cfg(not(any(windows, target_os = "macos")))]
+        {
+            let _ = color;
+            anyhow::bail!("WB RAW non disponibile su questa piattaforma")
+        }
+    }
+}
+
 pub fn serve<R: Read, W: Write>(input: R, output: W) -> Result<()> {
     serve_with_policy(input, output, false)
 }
@@ -891,10 +959,11 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
         if let Some(recipe) = &request.edit {
             recipe.validate()?;
             ensure!(
-                recipe.raw_engine == request.raw_engine,
+                recipe.raw_engine == request.raw_engine && recipe.raw_wb == request.raw_wb,
                 "Motore RAW della ricetta incoerente"
             );
         }
+        request.raw_wb.validate()?;
         let reference = matches!(request.intent, protocol::DecodeIntent::ReferenceMip { .. });
         ensure!(
             request.source_len > 0
@@ -956,6 +1025,16 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                     },
                     request.raw_engine,
                 )?;
+                let wb = if options.format == tr_core::export::Format::DngLinear16 {
+                    Default::default()
+                } else {
+                    request.raw_wb
+                };
+                let decoder = WhiteBalanced {
+                    base: decoder,
+                    engine: request.raw_engine,
+                    wb,
+                };
                 let (_, _, mut raster) = decoder.decode(&bytes, 0)?;
                 if options.format != tr_core::export::Format::DngLinear16
                     && let Some(recipe) = &request.edit
@@ -997,6 +1076,11 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                     },
                     request.raw_engine,
                 )?
+            };
+            let decoder = WhiteBalanced {
+                base: decoder,
+                engine: request.raw_engine,
+                wb: request.raw_wb,
             };
             // The colour contract, not the decoder's own prose, is what the
             // render panel shows. An assumption stays visible as an assumption.
@@ -1751,6 +1835,7 @@ mod tests {
             protocol::REQUEST,
             7,
             &DecodeRequest {
+                raw_wb: Default::default(),
                 raw_engine: Default::default(),
                 source_len: arbitrary.len(),
                 max_edge: 0,
@@ -1782,6 +1867,7 @@ mod tests {
                 protocol::REQUEST,
                 id,
                 &DecodeRequest {
+                    raw_wb: Default::default(),
                     raw_engine: Default::default(),
                     source_len: source.len(),
                     max_edge: 300,
@@ -1826,6 +1912,7 @@ mod tests {
                 protocol::REQUEST,
                 id,
                 &DecodeRequest {
+                    raw_wb: Default::default(),
                     raw_engine: RawEngine::default(),
                     source_len: source.len(),
                     max_edge: 0,
@@ -1908,6 +1995,7 @@ mod tests {
                     protocol::REQUEST,
                     id,
                     &DecodeRequest {
+                        raw_wb: Default::default(),
                         raw_engine: RawEngine::default(),
                         source_len: bytes.len(),
                         max_edge: 128,

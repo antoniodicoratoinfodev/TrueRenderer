@@ -48,7 +48,7 @@ int tr_libraw_probe(const uint8_t *bytes, size_t length, uint32_t variant, TRRaw
 /// `samples` must hold `width * height * 3` values of 16 bits. The caller sizes
 /// it from a previous `tr_libraw_probe` on the same bytes; a mismatch is
 /// refused rather than truncated.
-int tr_libraw_develop(const uint8_t *bytes, size_t length, uint32_t variant, uint16_t *samples,
+int tr_libraw_develop_wb(const uint8_t *bytes, size_t length, uint32_t variant, float red, float blue, uint16_t *samples,
                       size_t count, TRRawInfo *info, char *error,
                       size_t error_size);
 

@@ -52,6 +52,11 @@ pub fn thumbnail_edge(physical_edge: u32) -> u32 {
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PreviewRequest {
+    #[serde(
+        default,
+        skip_serializing_if = "crate::decoder::RawWhiteBalance::is_as_shot"
+    )]
+    pub raw_wb: crate::decoder::RawWhiteBalance,
     #[serde(default)]
     pub raw_engine: crate::decoder::RawEngine,
     pub quality: PreviewQuality,
@@ -60,12 +65,14 @@ pub struct PreviewRequest {
 impl PreviewRequest {
     pub fn full() -> Self {
         Self {
+            raw_wb: Default::default(),
             raw_engine: crate::decoder::RawEngine::default(),
             quality: PreviewQuality::Full,
             edge: 0,
         }
     }
     pub fn validate(self) -> anyhow::Result<()> {
+        self.raw_wb.validate_for(self.raw_engine)?;
         anyhow::ensure!(self.edge <= 4096, "Dimensione anteprima fuori quota");
         Ok(())
     }

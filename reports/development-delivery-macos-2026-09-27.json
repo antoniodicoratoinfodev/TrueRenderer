@@ -1,0 +1,121 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-27",
+  "passed": true,
+  "scope": "Final delivery of robust RGB picker, native manual RAW WB, frozen Auto exposure/RGB and Apple illuminant presets. Synthetic macOS verification only.",
+  "bundle": "dist/TrueRenderer-development-2026-09-27.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "f5da5242390dc40f74d737c8cfc32ad64a689d9a84d82224b9913516fd395600",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "adcec707b2a5b8b6e4621fb5361aa5e843c0ecded918b3c65dc36aff6c708c90",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b6473fa8a820a8c59c92732979ff4af73071ccb6f469b0ad81e0b77d99f68172"
+  },
+  "full_suite": {
+    "command": "scripts/verify.sh --gui",
+    "exit_code": 0,
+    "ordinary_rust_passed": 192,
+    "additional_rust_passed": 13,
+    "private_raw_skipped": 3,
+    "python_passed": 2,
+    "protocol_checks": 8,
+    "resampling_signals": 24,
+    "exact_1_to_1": true,
+    "native_surface_passed": true,
+    "fmt_clippy_build_passed": true,
+    "artifacts": "var/verify-bA3gtqH1"
+  },
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-09-27T16:59:52.979131+00:00",
+    "bundle": "dist/TrueRenderer-development-2026-09-27.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "f5da5242390dc40f74d737c8cfc32ad64a689d9a84d82224b9913516fd395600",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "adcec707b2a5b8b6e4621fb5361aa5e843c0ecded918b3c65dc36aff6c708c90",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b6473fa8a820a8c59c92732979ff4af73071ccb6f469b0ad81e0b77d99f68172"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "native_apple_develop_export": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "07-bayer-export.png",
+      "passed": true,
+      "size": [
+        1024,
+        768
+      ]
+    },
+    "fixture": "07-bayer.dng",
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 39,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1400,
+        1050
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": true,
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "Apple",
+      "raw_wb": {
+        "apple_temperature": 4500,
+        "apple_tint": 12,
+        "blue": 1000,
+        "red": 1000
+      },
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 1,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "presets": {
+    "Apple": {
+      "Tungsten": 3200,
+      "Daylight": 5500,
+      "Cloudy": 6500,
+      "Shade": 7500
+    },
+    "tint": 0,
+    "as_shot_reset": true,
+    "meaning": "Adjustable starting points; no measurement of scene illuminant. Values saved as ordinary native WB parameters.",
+    "visual_review": "Final native screenshot inspected: Custom label, temperature/tint and explanation visible.",
+    "interactive_selection": "Not verified: computer-use app selection timed out twice; bundle identifier ambiguous among local development bundles."
+  },
+  "artifacts": "var/delivery-p0m93g36",
+  "limitations": [
+    "Native Auto WB and RAW eyedropper remain open.",
+    "No Kelvin presets for sensor-gain engines without calibrated conversion.",
+    "No new Windows, compact/200%, private camera corpus, physical display or memory pressure qualification.",
+    "No SF0-SF2 or R0-R4 gates closed; ad hoc signature and XPC checks are not release certification."
+  ]
+}

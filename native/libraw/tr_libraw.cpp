@@ -159,8 +159,8 @@ extern "C" int tr_libraw_probe(const uint8_t *bytes, size_t length, uint32_t var
 } catch (const std::exception &e) { message(error, error_size, e.what()); return 1; }
   catch (...) { message(error, error_size, "Eccezione nel probe LibRaw"); return 1; }
 
-extern "C" int tr_libraw_develop(const uint8_t *bytes, size_t length, uint32_t variant,
-                                 uint16_t *samples, size_t count,
+extern "C" int tr_libraw_develop_wb(const uint8_t *bytes, size_t length, uint32_t variant,
+                                 float red, float blue, uint16_t *samples, size_t count,
                                  TRRawInfo *info, char *error,
                                  size_t error_size) try {
     if (!bytes || !length || !samples || !info || variant > 1) {
@@ -192,6 +192,20 @@ extern "C" int tr_libraw_develop(const uint8_t *bytes, size_t length, uint32_t v
                 return 1;
             }
         }
+    }
+    if (!std::isfinite(red) || !std::isfinite(blue) || red < 0.25f || red > 4.f || blue < 0.25f || blue > 4.f) {
+        message(error, error_size, "Guadagni WB RAW fuori scala"); return 1;
+    }
+    if (red != 1.f || blue != 1.f) {
+        if (info->non_bayer != 0) { message(error, error_size, "WB RAW richiede Bayer"); return 1; }
+        for (int c = 0; c < 4; ++c) {
+            float wb = raw.imgdata.color.cam_mul[c];
+            if (c == 3 && wb == 0) wb = raw.imgdata.color.cam_mul[1];
+            if (!std::isfinite(wb) || wb <= 0) { message(error, error_size, "WB as-shot assente: nessun fallback"); return 1; }
+            raw.imgdata.params.user_mul[c] = wb * (c == 0 ? red : c == 2 ? blue : 1.f);
+        }
+        raw.imgdata.params.use_camera_wb = 0;
+        raw.imgdata.params.use_auto_wb = 0;
     }
     status = raw.dcraw_process();
     if (status != LIBRAW_SUCCESS) {

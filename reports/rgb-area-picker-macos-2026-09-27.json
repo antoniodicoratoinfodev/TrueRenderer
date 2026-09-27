@@ -1,0 +1,113 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-27",
+  "increment": "Robust relative RGB picker, native 5x5 and 11x11 areas",
+  "bundle": "dist/TrueRenderer-picker-2026-09-27.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "9fd3243912ef72eedefbf0df92e126b0f374c44b51f3b6d6619d2386db228c44",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7ffde939437b87dddd6f9ca7c94dba83e99a690400cf76bac32927343fa29c37",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "996c9b553ad103129ba18467189c99e800c1d2abb1232399af8d9a9a4326616f"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "rust_ordinary": 185,
+    "rust_additional": 13,
+    "private_raw_tests_skipped": 3,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "sampling_signals": 24,
+    "exact_one_to_one": true,
+    "native_surface_passed": true,
+    "fmt_clippy_build": true,
+    "artifacts": "var/verify-Ej04Zqwa"
+  },
+  "new_regressions": [
+    "Robust chromaticity with varying brightness, partial alpha, isolated outlier and clipped pixel; both area sizes; source untouched",
+    "Invalid coordinates, incomplete border, unsupported size, nonfinite/dark/clipped/transparent samples, mixed colours and valid-pixel threshold",
+    "UI captures native current render only; reduced/noncurrent render discards previous area estimates"
+  ],
+  "xpc": {
+    "passed": true,
+    "two_services": true,
+    "timeout_recovery": true,
+    "production_rejects_fault_injection": true,
+    "memory_growth_repeated": false
+  },
+  "native_develop_smoke": {
+    "application": "TrueRenderer",
+    "export": null,
+    "fixture": "02_Paesaggio_analitico.png",
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 1,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1683,
+        1122
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "Apple",
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 1,
+    "scope": "Native UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "interactive_check": {
+    "language": "it",
+    "fixture": "06_Scala_neutra.png",
+    "areas_observed": [
+      {
+        "side": 5,
+        "valid": 25,
+        "total": 25
+      },
+      {
+        "side": 11,
+        "valid": 121,
+        "total": 121
+      }
+    ],
+    "accepted_neutral_sample": true,
+    "saved_recipe_observed": true,
+    "undo_restored_zero_temperature_tint": true,
+    "out_of_range_correction_rejected_on_landscape": true,
+    "screenshots_reviewed_in_session": true,
+    "scope": "Native ordinary window; not a compact/200% or Windows qualification"
+  },
+  "corpus_unchanged": true,
+  "evidence_root": "var/picker-2026-09-27-kuqvq98t",
+  "initial_attempts": [
+    "Terminal sandbox suite failed on the existing native TIFF test because Core Image was unavailable; full native suite then passed",
+    "First develop smoke invocation omitted --data and was rejected before running; corrected invocation passed"
+  ],
+  "limits": [
+    "No statistical confidence claim: chromatic spread is an initial rejection policy",
+    "No new private RAW corpus, physical display, OS memory pressure or Windows campaign",
+    "No SF0-SF2 or R0-R4 gate closed",
+    "Native development smoke checks saved edits and output-proof surface; export field is null, no additional export campaign claimed"
+  ]
+}

@@ -196,6 +196,14 @@ pub fn export_mosaic(bytes: &[u8]) -> Result<ExportMosaic> {
     })
 }
 pub fn develop(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, ColorSource, LinearImage)> {
+    develop_with_wb(bytes, max_edge, Default::default())
+}
+pub fn develop_with_wb(
+    bytes: &[u8],
+    max_edge: u32,
+    wb: tr_core::decoder::RawWhiteBalance,
+) -> Result<(RasterInfo, ColorSource, LinearImage)> {
+    wb.validate_for(RawEngine::TrueRenderer)?;
     let probed = describe(bytes)?;
     let mut samples = vec![0u16; probed.width as usize * probed.height as usize];
     let mut info = Info::default();
@@ -217,6 +225,9 @@ pub fn develop(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, ColorSource, 
         (info.width, info.height, info.flip) == (probed.width, probed.height, probed.flip),
         "Geometria mosaico cambiata dopo unpack"
     );
+    for phase in 0..4 {
+        info.wb[phase] *= wb.gains()[info.cfa[phase] as usize];
+    }
     // Re-read calibration after unpack: camera decoders may refine black/white levels.
     let mosaic: Vec<f32> = samples
         .iter()
@@ -397,6 +408,98 @@ mod tests {
             bytes.extend(value.to_le_bytes());
         }
         bytes
+    }
+
+    #[test]
+    fn custom_raw_wb_precedes_demosaic_and_export_on_all_three_engines() {
+        use crate::WhiteBalanced;
+        use tr_core::decoder::Decoder;
+        use tr_core::{
+            decoder::{RawWhiteBalance, Trust},
+            protocol::{self, DecodeIntent, DecodeRequest},
+        };
+        let bytes = fixture(1512, true, "Synthetic DNG", 1);
+        let before = bytes.clone();
+        let wb = RawWhiteBalance {
+            red: 1500,
+            blue: 750,
+            ..Default::default()
+        };
+        let info = describe(&bytes).unwrap();
+        let camera = wb.gains().map(|v| v * (1512. - 512.) / (4095. - 512.));
+        let srgb =
+            std::array::from_fn(|row| (0..3).map(|c| info.matrix[row * 3 + c] * camera[c]).sum());
+        let expected = tr_core::color::linear_srgb_to_rec2020(srgb);
+        let (_, _, own) = develop_with_wb(&bytes, 0, wb).unwrap();
+        for p in &own.pixels {
+            for c in 0..3 {
+                assert!((p[c] - expected[c]).abs() < 2e-5);
+            }
+        }
+        for engine in [
+            RawEngine::LibRawBilinear,
+            RawEngine::LibRawAhd,
+            RawEngine::TrueRenderer,
+        ] {
+            let base = crate::select_engine(Trust::External, engine).unwrap();
+            let decoder = WhiteBalanced { base, engine, wb };
+            let (_, _, mut working) = decoder.decode(&bytes, 0).unwrap();
+            let (_, _, neutral) = base.decode(&bytes, 0).unwrap();
+            assert_ne!(working.pixels, neutral.pixels);
+            let mut recipe = tr_core::editing::EditRecipe::neutral(engine);
+            recipe.raw_wb = wb;
+            recipe.exposure_ev = 0.25;
+            recipe.apply(&mut working).unwrap();
+            let mut input = vec![];
+            protocol::write_control(
+                &mut input,
+                protocol::REQUEST,
+                1,
+                &DecodeRequest {
+                    raw_engine: engine,
+                    raw_wb: wb,
+                    source_len: bytes.len(),
+                    max_edge: 0,
+                    intent: DecodeIntent::Export(tr_core::export::Options {
+                        format: tr_core::export::Format::Png16,
+                        ..Default::default()
+                    }),
+                    edit: Some(recipe),
+                    maximum_output_bytes: 1024 * 1024,
+                },
+            )
+            .unwrap();
+            input.extend(&bytes);
+            let mut output = vec![];
+            assert!(crate::serve_with_policy(input.as_slice(), &mut output, true).is_err());
+            let mut reader = output.as_slice();
+            let (kind, _, control) = protocol::read_control(&mut reader).unwrap();
+            assert_eq!(
+                kind,
+                protocol::RESPONSE,
+                "{}",
+                String::from_utf8_lossy(&control)
+            );
+            let meta: tr_core::export::Info = protocol::parse(&control).unwrap();
+            let decoded = image::load_from_memory(&reader[..meta.bytes as usize])
+                .unwrap()
+                .to_rgba16();
+            for (pixel, expected) in decoded.pixels().zip(&working.pixels) {
+                assert_eq!(pixel.0, tr_core::export::srgb16(*expected).0);
+            }
+        }
+        assert_eq!(bytes, before);
+        let bitmap = include_bytes!("../../../corpus/01_Studio_cromatico.png");
+        let base = crate::select_engine(Trust::Controlled, RawEngine::TrueRenderer).unwrap();
+        assert!(
+            WhiteBalanced {
+                base,
+                engine: RawEngine::TrueRenderer,
+                wb
+            }
+            .decode(bitmap, 0)
+            .is_err()
+        );
     }
 
     #[test]

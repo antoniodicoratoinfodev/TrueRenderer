@@ -17,6 +17,32 @@ impl Language {
         }
         match source {
             "Sviluppo" => "Develop",
+            "WB Apple personalizzato" => "Custom Apple WB",
+            "Personalizzato" => "Custom",
+            "Tungsteno · 3200 K" => "Tungsten · 3200 K",
+            "Luce diurna · 5500 K" => "Daylight · 5500 K",
+            "Nuvoloso · 6500 K" => "Cloudy · 6500 K",
+            "Ombra · 7500 K" => "Shade · 7500 K",
+            "Preset indicativi · tinta 0 · regolabili" => {
+                "Suggested presets · tint 0 · adjustable"
+            }
+            "Temperatura" => "Temperature",
+            "Tinta RAW" => "RAW tint",
+            "Bilanciamento del bianco RAW" => "RAW white balance",
+            "Guadagni sensore relativi a come scattato · prima del demosaic" => {
+                "Sensor gains relative to as-shot · before demosaicing"
+            }
+            "Rosso RAW" => "RAW red",
+            "Blu RAW" => "RAW blue",
+            "WB RAW come scattato" => "As-shot RAW WB",
+            "Carica nativo per Auto" => "Load native for Auto",
+            "Auto esposizione" => "Auto exposure",
+            "Auto RGB · grigio medio" => "Auto RGB · grey world",
+            "Auto RGB assume una scena mediamente neutra; non cambia il WB RAW." => {
+                "Auto RGB assumes an average neutral scene; it does not change RAW WB."
+            }
+            "Auto: campioni validi insufficienti" => "Auto: insufficient valid samples",
+
             "Caricamento ricetta…" => "Loading edit recipe…",
             "Riprova salvataggio" => "Retry save",
             "Annulla sviluppo" => "Undo edit",
@@ -62,6 +88,25 @@ impl Language {
             }
             "Azzera correzione RGB" => "Reset RGB correction",
             "Neutralizza campione RGB" => "Neutralize RGB sample",
+            "Area contagocce" => "Picker area",
+            "Area RGB non supportata" => "Unsupported RGB area",
+            "Area RGB incompleta al bordo: campionare più all'interno" => {
+                "Incomplete RGB area at the edge: sample further inside"
+            }
+            "Area RGB: meno dell'80% di pixel validi" => "RGB area: fewer than 80% valid pixels",
+            "Area RGB cromaticamente disomogenea: scegliere una zona uniforme" => {
+                "RGB area has mixed colours: choose a uniform region"
+            }
+            "Campione RGB non opaco" => "RGB sample is not opaque",
+            "Campione RGB troppo scuro, saturo o fuori dominio" => {
+                "RGB sample is too dark, clipped or out of range"
+            }
+            "Correzione RGB richiesta oltre scala" => {
+                "Required RGB correction exceeds the allowed range"
+            }
+            "Azzerare la saturazione prima del contagocce RGB" => {
+                "Reset saturation before using the RGB picker"
+            }
             "Verifica la resa finale e campiona la vista modificata." => {
                 "Verify final rendering and sample the edited view."
             }

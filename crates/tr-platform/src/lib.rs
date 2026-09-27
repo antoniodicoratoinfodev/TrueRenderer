@@ -273,6 +273,7 @@ impl std::fmt::Display for SourceRejected {
 impl std::error::Error for SourceRejected {}
 struct Work {
     raw_engine: tr_core::decoder::RawEngine,
+    raw_wb: tr_core::decoder::RawWhiteBalance,
     id: u64,
     bytes: Arc<Vec<u8>>,
     edge: u32,
@@ -327,6 +328,7 @@ pub struct BrokerStatistics {
 }
 pub struct Broker {
     raw_engine: tr_core::decoder::RawEngine,
+    raw_wb: tr_core::decoder::RawWhiteBalance,
     binary: PathBuf,
     process: Option<Process>,
     next_id: u64,
@@ -363,6 +365,7 @@ impl Broker {
             });
         Self {
             raw_engine: Default::default(),
+            raw_wb: Default::default(),
             external_transport: bundled_xpc || cfg!(windows),
             binary,
             process: None,
@@ -394,6 +397,9 @@ impl Broker {
     }
     pub fn set_raw_engine(&mut self, engine: tr_core::decoder::RawEngine) {
         self.raw_engine = engine;
+    }
+    pub fn set_raw_white_balance(&mut self, wb: tr_core::decoder::RawWhiteBalance) {
+        self.raw_wb = wb;
     }
     pub fn statistics(&self) -> &BrokerStatistics {
         &self.statistics
@@ -503,6 +509,7 @@ impl Broker {
                         protocol::REQUEST,
                         work.id,
                         &DecodeRequest {
+                            raw_wb: work.raw_wb,
                             raw_engine: work.raw_engine,
                             source_len: work.bytes.len(),
                             max_edge: work.edge,
@@ -830,6 +837,7 @@ impl Broker {
             .work
             .send(Work {
                 raw_engine: self.raw_engine,
+                raw_wb: edit.as_ref().map_or(self.raw_wb, |r| r.raw_wb),
                 id: self.next_id,
                 bytes,
                 edge,

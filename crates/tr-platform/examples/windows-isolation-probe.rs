@@ -160,6 +160,7 @@ fn main() -> anyhow::Result<()> {
         let (mut send, mut receive) = worker.take_pipes()?;
         let bytes = include_bytes!("../../../corpus/05_Trasparenza.png");
         let request = tr_core::protocol::DecodeRequest {
+            raw_wb: Default::default(),
             raw_engine: Default::default(),
             source_len: bytes.len(),
             max_edge: 32,

@@ -72,6 +72,7 @@ impl Queues {
                 id == &job.item.id
                     && *generation == job.generation
                     && request.raw_engine == job.request.raw_engine
+                    && request.raw_wb == job.request.raw_wb
             })
         })
     }
@@ -616,6 +617,7 @@ impl DecodePool {
                                 "Sorgente diversa dalla ricetta fotografica congelata"
                             );
                             broker.set_raw_engine(job.engine);
+                            broker.set_raw_white_balance(Default::default());
                             let probe_lease =
                                 reserve(&cache, 128 * 1024 * 1024, &events, &ctx, &cancelled)?;
                             let metadata = broker.probe_snapshot(&source, cancelled)?;
@@ -752,6 +754,7 @@ impl DecodePool {
                         // call. View changes cancel at boundaries, retaining all
                         // leases until the actual probe/decode has completed.
                         broker.set_raw_engine(job.request.raw_engine);
+                        broker.set_raw_white_balance(job.request.raw_wb);
                         let info = broker.probe_snapshot(&source, revoked)?;
                         drop(probe_lease);
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
@@ -781,6 +784,7 @@ impl DecodePool {
                                     id == &job.item.id
                                         && *g == job.generation
                                         && request.raw_engine == job.request.raw_engine
+                                        && request.raw_wb == job.request.raw_wb
                                 })
                                 .filter(|key| q.wanted.as_ref().is_none_or(|w| w.contains(*key)))
                                 .map(|(_, request, _)| request.maximum_level_edge())
@@ -819,6 +823,7 @@ impl DecodePool {
                                     id == &job.item.id
                                         && *g == job.generation
                                         && request.raw_engine == job.request.raw_engine
+                                        && request.raw_wb == job.request.raw_wb
                                         && tr_core::protocol::mip_geometry(
                                             [info.width, info.height],
                                             request.maximum_level_edge(),
@@ -929,6 +934,7 @@ impl DecodePool {
                                     id == &job.item.id
                                         && *g == job.generation
                                         && request.raw_engine == job.request.raw_engine
+                                        && request.raw_wb == job.request.raw_wb
                                 })
                                 .map(|(_, request, _)| Job {
                                     request: *request,
@@ -1176,6 +1182,7 @@ mod tests {
                 revision: 0,
             },
             request: PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: tr_core::preview::PreviewQuality::Full,
                 edge: 128,
@@ -1386,6 +1393,7 @@ mod tests {
         };
         next.priority = PreviewPriority::Immediate;
         next.request = PreviewRequest {
+            raw_wb: Default::default(),
             raw_engine: tr_core::decoder::RawEngine::default(),
             quality: tr_core::preview::PreviewQuality::Standard,
             edge: 64,
@@ -1524,6 +1532,7 @@ mod tests {
                 .skip(1)
                 .filter_map(|level| {
                     let request = PreviewRequest {
+                        raw_wb: Default::default(),
                         raw_engine: tr_core::decoder::RawEngine::default(),
                         quality: tr_core::preview::PreviewQuality::Full,
                         edge: level.width.max(level.height).div_ceil(2),
@@ -1686,11 +1695,13 @@ mod tests {
         let requests = [
             PreviewRequest::full(),
             PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: tr_core::preview::PreviewQuality::Standard,
                 edge: 0,
             },
             PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: tr_core::preview::PreviewQuality::Full,
                 edge: 64,
@@ -1796,6 +1807,7 @@ mod tests {
                     revision: 0,
                 },
                 request: PreviewRequest {
+                    raw_wb: Default::default(),
                     raw_engine: tr_core::decoder::RawEngine::default(),
                     quality: tr_core::preview::PreviewQuality::Full,
                     edge: 320

@@ -302,7 +302,9 @@ impl Manager {
         budget: &MemoryBudget,
         cancelled: &impl Fn() -> bool,
     ) -> Result<Lookup> {
-        if request.raw_engine != tr_core::decoder::RawEngine::default() {
+        if request.raw_engine != tr_core::decoder::RawEngine::default()
+            || !request.raw_wb.is_as_shot()
+        {
             return Ok(Lookup::Missing);
         }
         // Reuse only the exact recognized pipeline fingerprint. Older app/OS
@@ -638,6 +640,7 @@ mod tests {
         .unwrap();
         let pyramid = Pyramid::new(source).unwrap();
         let request = PreviewRequest {
+            raw_wb: Default::default(),
             raw_engine: tr_core::decoder::RawEngine::default(),
             quality: PreviewQuality::Full,
             edge: 100,
@@ -882,6 +885,28 @@ mod tests {
                 &|| false
             ),
             Lookup::Hit(..)
+        ));
+        let changed_wb = PreviewRequest {
+            raw_wb: tr_core::decoder::RawWhiteBalance {
+                red: 1500,
+                blue: 800,
+                ..Default::default()
+            },
+            ..request
+        };
+        assert_ne!(
+            original_key,
+            cache.preview_key("engine-fixture", changed_wb)
+        );
+        assert!(matches!(
+            cache.load_preview(
+                folder.path(),
+                "engine-fixture",
+                changed_wb,
+                &cache.memory,
+                &|| false
+            ),
+            Lookup::Missing
         ));
         for engine in [RawEngine::LibRawAhd, RawEngine::TrueRenderer] {
             let changed = PreviewRequest {

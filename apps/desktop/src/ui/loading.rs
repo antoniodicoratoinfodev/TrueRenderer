@@ -39,6 +39,7 @@ impl TrueRenderer {
         }
         let settings = self.service.cache.settings();
         let request = PreviewRequest {
+            raw_wb: Default::default(),
             raw_engine: settings.raw_engine,
             quality: settings.quality,
             edge: 512,

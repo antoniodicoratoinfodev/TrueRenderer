@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 25 settembre 2026.
+Aggiornato: 27 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -19,6 +19,48 @@ Per ogni incremento aggiornare qui implementato, verificato, aperto e mancante, 
 Le architetture rimandano a questo file e non ne incorporano il contenuto. `python3 scripts/sync-docs.py` aggiorna i rimandi e l'appendice della specifica anteprime: serve quando cambiano le sue fonti, non a ogni aggiornamento di stato. Il backup originale v1.2 resta immutato.
 
 ## Punto di ripresa
+
+### Preset WB Apple e consegna — 27 settembre
+
+- [x] **Implementato:** selettore Come scattato, Tungsteno 3200 K, Luce diurna 5500 K, Nuvoloso 6500 K e Ombra 7500 K, tinta 0. Punti di partenza esplicitamente indicativi e regolabili, risolti nei parametri numerici della ricetta e nella cronologia ordinaria. Nome ricavato dalla coppia corrente, altrimenti Personalizzato; traduzioni IT/EN, README e contratto SF2 aggiornati. Nessun Kelvin inventato per i tre motori a guadagni sensore.
+- [x] **Verificato sul codice finale:** `scripts/verify.sh --gui` passato: **192 test ordinari + 13 integrazioni**, due test Python, otto controlli protocollo, 24 segnali con 1:1 esatto, superficie nativa, fmt/Clippy/build. Nuovo bundle `dist/TrueRenderer-development-2026-09-27.app`, due XPC/firma ad hoc/timeout-recupero/rifiuto fault injection passati. Smoke Apple RAW sintetico con ricetta salvata, WB osservato, viewer/griglia, export PNG16 e sorgente invariata; superficie entro 1/255 (39 canali differenti). Cattura finale controllata visivamente: selettore Personalizzato e controlli visibili.
+- [ ] **Aperto:** selezione interattiva dei nuovi preset non verificata: due timeout dello strumento UI, identificatore bundle ambiguo fra copie di sviluppo. Restano Auto WB nativo/illuminante, contagocce RAW, preset calibrati per LibRaw/TrueRenderer, vividezza, corpus fotografico esteso, controllo compatto/200% e Windows nativo del nuovo incremento. Tre test RAW privati esclusi; nessun gate SF/R chiuso.
+
+[Rapporto della consegna](reports/development-delivery-macos-2026-09-27.json), evidenze isolate in `var/verify-bA3gtqH1/` e `var/delivery-p0m93g36/`. Rapporto compute storico ripristinato dopo aver conservato la nuova misura nella campagna. Le prove precedenti sui quattro motori restano riferite ai rispettivi hash.
+
+### WB RAW nativo e Auto — 27 settembre
+
+Prosecuzione richiesta dal titolare sulle funzioni aperte WB/Auto. Il precedente editor curve proposto non è stato avviato: priorità data al WB e agli automatismi.
+
+- [x] **WB RAW manuale, percorso completo:** Apple RAW con temperatura 2000–50000 K e tinta −150…150 tramite CIRAWFilter; Bilineare, AHD e TrueRenderer con guadagni sensore R/B 0,250–4,000 relativi al WB as-shot, applicati prima del demosaic. Come scattato/reset, ricetta durevole, undo/redo, Prima/Dopo, viewer/griglia/filmstrip ed export. Nessun Kelvin attribuito ai guadagni LibRaw. Bitmap, parametri fuori dominio e modelli WB incompatibili sono rifiutati; nessun cambio automatico di motore.
+- [x] **Auto esposizione e Auto RGB:** analisi limitata a 4096 campioni su griglia della sorgente nativa, indipendente dal viewport; proposta EV conservativa e stima RGB grigio medio con code troncate. Parametri risolti salvati nella cronologia, nessun ricalcolo automatico alla riapertura. Caricamento nativo esplicito quando necessario, alpha/dominio/campioni insufficienti e correzioni oltre scala verificati. Auto RGB dichiara l'ipotesi di scena mediamente neutra e non modifica il WB del sensore.
+- [x] **Identità e durabilità:** WB incluso in richieste IPC, chiavi RAM/SSD, equivalenza e riuso dei lavori; nessun fallback da un WB diverso. Ricette precedenti leggibili come Come scattato, campo neutro omesso, versioni vecchie rifiutano i nuovi parametri anziché ignorarli. Nessuna migrazione del database. Regressioni su backup/riapertura/undo/redo, bozza distinta dal salvato e Prima/Dopo. DNG RAW/lineare mantengono lo sviluppo tecnico as-shot.
+- [x] **Verifiche:** suite nativa `scripts/verify.sh --gui`: **192 test ordinari + 13 integrazioni**, due test Python, otto controlli protocollo, 24 segnali e superficie nativa passati. Nell'ultima revisione corretta la provenienza del WB Apple perché riporti il render effettivo, non il solo probe: ripetuti Clippy workspace, build e tutti i test worker. Successiva sola abbreviazione dell'etichetta Temperatura per evitare il taglio nel pannello: build e nuova campagna sul bundle finale. Sul DNG sintetico, TrueRenderer contro riferimento analitico del mosaico entro 0,00002 e PNG16 dei tre motori LibRaw/TrueRenderer identico campione per campione al render sviluppato; sorgente invariata.
+- [x] **Bundle finale:** `dist/TrueRenderer-wb-auto-final.app` debug, firma ad hoc e due XPC con timeout/recupero/rifiuto fault injection passati. Cinque smoke con librerie separate: quattro motori sul Bayer sintetico con WB personalizzato osservato e un caso Auto sulla scala neutra. Ricette salvate, viewer/griglia ed export PNG16 riusciti; superficie della prova d’uscita entro 1/255 sui quattro RAW (39/59/53/40 canali differenti per Apple/Bilineare/AHD/TrueRenderer), esatta nel caso Auto. Controllate visivamente le catture Apple, etichetta Temperatura interamente visibile. Originali sintetici invariati.
+- [ ] **Qualifiche e funzioni ancora mancanti:** Auto WB nativo/illuminante e preset, contagocce nativo RAW, corpus fotografico/target colore esteso, controllo manuale compatto/200%, Windows nativo del nuovo incremento, vividezza e ulteriori strumenti SF. Non equivalgono agli Auto RGB/esposizione appena completati. Tre test RAW privati esclusi dalla suite; nessun gate SF0–SF2 o R0–R4 chiuso.
+
+Bundle separato e risultati della campagna finale sono registrati nel [rapporto WB/Auto](reports/raw-wb-auto-macos-2026-09-27.json). Contratti aggiornati nella specifica SF2, istruzioni nel README. Originali, libreria personale, backup durevoli e copie applicative precedenti non usati come dati di prova. Evidenze in `var/verify-BAtuYHTm/` e `var/raw-wb-auto-lnoq8x3_/`; rapporto compute storico ripristinato dopo aver conservato il nuovo nella campagna.
+
+### Contagocce RGB robusto — 27 settembre
+
+Esaminati stato, roadmap e contratti: proseguita la verticale SF2 con un incremento utilizzabile senza richiedere nuove fotografie o hardware. Le qualifiche estese di memoria, fotocamere, colore/display e accessibilità restano priorità aperte.
+
+- [x] **Implementato:** selettore 1×1 / 5×5 (predefinito) / 11×11 nel pannello Sviluppo, sul render esteso a risoluzione nativa. Stima robusta della cromaticità con medie troncate dei rapporti logaritmici, almeno 80% di pixel validi e rifiuto delle aree cromaticamente disomogenee o incomplete al bordo. Conteggio e dispersione visibili, messaggi IT/EN, stessi guadagni RGB e cronologia; nessuna migrazione della ricetta né modifica al WB RAW. Contratto delle soglie nella specifica SF2; README aggiornato.
+- [x] **Verificato:** tre nuove regressioni su valori anomali, luminosità/alpha, bordi/dominio/eterogeneità e cattura riservata al render nativo corrente. `scripts/verify.sh --gui` nativo: **185 test ordinari + 13 aggiuntivi**, due test Python, otto controlli protocollo, 24 segnali con 1:1 esatto, superficie grafica, fmt/Clippy/build passati. Il primo tentativo nel sandbox del terminale non disponeva di Core Image per il test TIFF; esito conservato e suite completa ripetuta fuori da quel sandbox.
+- [x] **Bundle separato:** `dist/TrueRenderer-picker-2026-09-27.app` (debug), firma ad hoc, due XPC, timeout/recupero e rifiuto della fault injection verificati. Smoke Sviluppo/griglia e ricetta salvata sul corpus sintetico, superficie della prova d'uscita entro 1/255 (un canale differente). Controllo interattivo italiano: 25/25 e 121/121 campioni, rifiuto della correzione oltre scala, neutralizzazione della scala grigia salvata e Annulla con ritorno a temperatura/tinta zero. Originali del corpus invariati; dati di prova isolati.
+- [ ] **Aperto/mancante:** qualifica fotografica delle soglie e dell'incertezza, prova interattiva compatta/200% e Windows, WB RAW e Auto, vividezza e ulteriori controlli SF. Tre test RAW privati esclusi perché `TR_RAW_SAMPLE` non disponibile. Nessun gate SF0–SF2 o R0–R4 chiuso; nessuna nuova campagna export, pressione fisica o certificazione del display.
+
+[Rapporto con hash e limiti](reports/rgb-area-picker-macos-2026-09-27.json). Evidenze in `var/verify-Ej04Zqwa/` e `var/picker-2026-09-27-kuqvq98t/`; rapporto compute storico ripristinato dopo aver conservato il nuovo nella campagna. Le modifiche preesistenti allo stato e il rapporto del 26 settembre sono conservati.
+
+### Verifica macOS dopo allineamento GitHub — 26 settembre
+
+Codice allineato a `origin/main`, commit `bdb0327`, senza modifiche applicative. Richiesta del titolare: completare i test rimasti dopo la verifica breve.
+
+- [x] `scripts/verify.sh --gui`: fmt, Clippy workspace senza warning, build debug, **182 test ordinari e 13 aggiuntivi**, due test Python, otto controlli protocollo, 24 segnali con 1:1 esatto e confronto della superficie nativa passati. Cattura del viewer Fit controllata visivamente.
+- [x] Bundle debug separati sotto `var/verification-2026-09-26/`: firma ad hoc verificata, due servizi XPC, timeout/recupero, rifiuto della fault injection nel bundle ordinario e prova memoria nel bundle diagnostico passati. La supervisione resta distinta da un tetto rigido alla memoria e dalla qualifica di rilascio.
+- [ ] Tre test su fotografie RAW private esclusi: `TR_RAW_SAMPLE` non disponibile. Nessun gate SF/R0–R4 chiuso.
+
+[Riepilogo e hash dei binari](reports/macos-verification-2026-09-26.json). Evidenze in `var/verify-VWRmtwDI/reports/`, log in `var/verification-2026-09-26/`; il rapporto compute scritto dalla suite è conservato nella nuova campagna e la versione storica ripristinata. Bundle distribuiti e libreria personale non sostituiti.
 
 ### Verifica viewer/export Windows — 25 settembre
 

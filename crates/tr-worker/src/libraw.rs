@@ -51,10 +51,12 @@ unsafe extern "C" {
         error: *mut c_char,
         error_size: usize,
     ) -> i32;
-    fn tr_libraw_develop(
+    fn tr_libraw_develop_wb(
         bytes: *const u8,
         length: usize,
         variant: u32,
+        red: f32,
+        blue: f32,
         samples: *mut u16,
         count: usize,
         info: *mut Info,
@@ -158,7 +160,20 @@ pub fn develop_with_engine(
     max_edge: u32,
     engine: RawEngine,
 ) -> Result<(RasterInfo, ColorSource, LinearImage)> {
+    develop_with_wb(bytes, max_edge, engine, Default::default())
+}
+pub fn develop_with_wb(
+    bytes: &[u8],
+    max_edge: u32,
+    engine: RawEngine,
+    wb: tr_core::decoder::RawWhiteBalance,
+) -> Result<(RasterInfo, ColorSource, LinearImage)> {
+    wb.validate_for(engine)?;
     let probed = describe(bytes, engine)?;
+    ensure!(
+        wb.is_as_shot() || probed.non_bayer == 0,
+        "WB RAW richiede un mosaico Bayer"
+    );
     if probed.non_bayer != 0 && probed.non_bayer != 2 {
         bail!("CFA non Bayer: il demosaicing di questa ricetta non è qualificato");
     }
@@ -169,10 +184,12 @@ pub fn develop_with_engine(
     // SAFETY: `samples` is sized from the probe of the same bytes, and the shim
     // refuses rather than truncates if its own result disagrees.
     let status = unsafe {
-        tr_libraw_develop(
+        tr_libraw_develop_wb(
             bytes.as_ptr(),
             bytes.len(),
             u32::from(engine == RawEngine::LibRawAhd),
+            wb.gains()[0],
+            wb.gains()[2],
             samples.as_mut_ptr(),
             count,
             &mut info,

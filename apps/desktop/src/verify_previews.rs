@@ -158,6 +158,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
     for (index, item) in items.iter().enumerate() {
         for quality in [PreviewQuality::Standard, PreviewQuality::Full] {
             let requested = PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality,
                 edge: 256,
@@ -248,6 +249,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
     std::fs::create_dir(&burst_folder)?;
     let (pool, events) = start_pool();
     let burst_request = PreviewRequest {
+        raw_wb: Default::default(),
         raw_engine: tr_core::decoder::RawEngine::default(),
         quality: PreviewQuality::Full,
         edge: 256,
@@ -307,6 +309,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
             &events,
             item,
             PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: PreviewQuality::Standard,
                 edge: 256,
@@ -325,6 +328,7 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
     for item in items.iter().take(3) {
         for requested in [
             PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality: PreviewQuality::Standard,
                 edge: 2048,
@@ -410,6 +414,7 @@ pub fn run(root: &Path, worker: &Path) -> Result<()> {
         drop(bytes);
         for quality in [PreviewQuality::Full, PreviewQuality::Standard] {
             let requested = PreviewRequest {
+                raw_wb: Default::default(),
                 raw_engine: tr_core::decoder::RawEngine::default(),
                 quality,
                 edge: 256,
@@ -531,6 +536,7 @@ pub fn navigation(root: &Path, worker: &Path) -> Result<()> {
     };
     let (pool, events) = start_pool();
     let requested = PreviewRequest {
+        raw_wb: Default::default(),
         raw_engine: tr_core::decoder::RawEngine::default(),
         quality: PreviewQuality::Full,
         edge: 256,

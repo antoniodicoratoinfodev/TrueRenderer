@@ -1,5 +1,5 @@
 use super::*;
-use tr_core::editing::{CurvePoint, EditRecipe};
+use tr_core::editing::{CurvePoint, EditRecipe, RgbAreaSample, sample_rgb_area};
 use tr_store::LoadedEdit;
 
 #[derive(Default)]
@@ -60,6 +60,8 @@ pub(super) struct EditingUi {
     rx: std::sync::mpsc::Receiver<PreviewOutcome>,
     preview_errors: HashMap<String, PreviewFailure>,
     pub picker_error: Option<(String, String)>,
+    pub picker_side: u32,
+    pub picker_areas: [Option<Result<RgbAreaSample, String>>; 2],
     smoke_ready_at: Option<Instant>,
     smoke_proof_capture: Option<ProofCapture>,
     smoke_proof_result: Option<serde_json::Value>,
@@ -111,6 +113,8 @@ impl Default for EditingUi {
             rx,
             preview_errors: HashMap::new(),
             picker_error: None,
+            picker_side: 5,
+            picker_areas: [None, None],
             smoke_ready_at: None,
             smoke_proof_capture: None,
             smoke_proof_result: None,
@@ -126,6 +130,21 @@ impl Default for EditingUi {
     }
 }
 impl TrueRenderer {
+    pub(super) fn capture_picker_areas(
+        &mut self,
+        image: &ImageLevels,
+        x: u32,
+        y: u32,
+        current: bool,
+    ) {
+        self.editing.picker_areas = [5, 11].map(|side| {
+            (current && image.base_level() == 0).then(|| {
+                sample_rgb_area(image.source(), x, y, side).map_err(|error| error.to_string())
+            })
+        });
+        self.editing.picker_error = None;
+    }
+
     pub(super) fn output_proof_for(&self, id: &str) -> bool {
         self.editing.output_proof && self.editing.verify_final.as_deref() == Some(id)
     }
@@ -234,6 +253,43 @@ impl TrueRenderer {
                     recipe.exposure_ev = 0.75;
                     recipe.temperature = 25.;
                     recipe.tint = -8.;
+                    if args.iter().any(|a| a == "--raw-wb-smoke") {
+                        recipe.raw_wb = if recipe.raw_engine == tr_core::decoder::RawEngine::Apple {
+                            tr_core::decoder::RawWhiteBalance {
+                                apple_temperature: 4500,
+                                apple_tint: 12,
+                                ..Default::default()
+                            }
+                        } else {
+                            tr_core::decoder::RawWhiteBalance {
+                                red: 1500,
+                                blue: 750,
+                                ..Default::default()
+                            }
+                        };
+                    }
+
+                    if args.iter().any(|a| a == "--auto-smoke") {
+                        let source = self
+                            .cache
+                            .iter()
+                            .find(|((id, _), cached)| {
+                                id == &item.id && cached.pyramid.base_level() == 0
+                            })
+                            .map(|(_, cached)| cached.pyramid.clone());
+                        let Some(source) = source else {
+                            self.request_final_preview(&item.id, false);
+                            return;
+                        };
+                        if let Err(error) = recipe
+                            .auto_exposure(source.source())
+                            .and_then(|()| recipe.auto_rgb(source.source()))
+                        {
+                            self.status = error.to_string();
+                            self.fatal = true;
+                            return;
+                        }
+                    }
                     if recipe != saved.recipe {
                         entry.draft = Some(recipe);
                         self.commit_edit(&item.id);
@@ -397,10 +453,20 @@ impl TrueRenderer {
                 let unchanged = tr_platform::snapshot(&item.path).is_ok_and(|(_, digest)| {
                     self.editing.smoke_source_digest.as_ref() == Some(&digest)
                 });
+                let wb_observed = edit.is_some_and(|saved| {
+                    self.cache.iter().any(|((id, request), cached)| {
+                        id == &item.id
+                            && request.raw_wb == saved.recipe.raw_wb
+                            && cached.info.format == "RAW"
+                            && cached.info.input_color.contains("WB")
+                    })
+                });
                 let report = serde_json::json!({
                     "application":"TrueRenderer",
                     "version":env!("CARGO_PKG_VERSION"),
-                    "passed":edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!proof_smoke || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
+                    "passed":(!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!proof_smoke || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
+                    "raw_wb_observed":wb_observed,
+                    "auto_actions":args.iter().any(|a|a=="--auto-smoke"),
                     "output_proof_surface":self.editing.smoke_proof_result,
                     "export":self.editing.smoke_export_result,
                     "fixture":item.name,
@@ -410,7 +476,7 @@ impl TrueRenderer {
                     "source_unchanged":unchanged,
                     "screenshots":["develop-viewer.png","develop-grid.png"],
                     "platform":std::env::consts::OS,
-                    "scope":"Native UI with generated PNG, or explicit --open source, and isolated library; saved exposure and relative RGB correction, edited viewer/grid. No RAW WB or physical display qualification."
+                    "scope":"Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification."
                 });
                 let _ = std::fs::write(
                     self.root.join("reports/develop-ui.json"),
@@ -683,6 +749,114 @@ impl TrueRenderer {
                     self.request_final_preview(&item.id, false);
                 }
                 ui.add_enabled_ui(!pending, |ui| {
+                    let engine = self.preview_request(item, 0).raw_engine;
+                    let is_raw = self.cache.iter().any(|((id, request), cached)| {
+                        id == &item.id
+                            && request.raw_engine == engine
+                            && cached.info.format == "RAW"
+                    });
+                    if is_raw {
+                        ui.label(RichText::new(lang.text("Bilanciamento del bianco RAW")).strong());
+                        if engine == tr_core::decoder::RawEngine::Apple {
+                            // Presets resolve to the same durable native parameters as sliders.
+                            // Names describe starting points, not measured scene illuminants.
+                            let presets = [
+                                ("WB RAW come scattato", 0),
+                                ("Tungsteno · 3200 K", 3200),
+                                ("Luce diurna · 5500 K", 5500),
+                                ("Nuvoloso · 6500 K", 6500),
+                                ("Ombra · 7500 K", 7500),
+                            ];
+                            let selected = presets
+                                .iter()
+                                .find(|(_, kelvin)| {
+                                    draft.raw_wb.apple_temperature == *kelvin
+                                        && draft.raw_wb.apple_tint == 0
+                                })
+                                .map_or("Personalizzato", |(label, _)| *label);
+                            egui::ComboBox::from_id_salt("apple-wb-preset")
+                                .selected_text(lang.text(selected))
+                                .show_ui(ui, |ui| {
+                                    for (label, kelvin) in presets {
+                                        if ui
+                                            .selectable_label(selected == label, lang.text(label))
+                                            .clicked()
+                                        {
+                                            let wb = tr_core::decoder::RawWhiteBalance {
+                                                apple_temperature: kelvin,
+                                                ..Default::default()
+                                            };
+                                            if draft.raw_wb != wb {
+                                                draft.raw_wb = wb;
+                                                changed = true;
+                                                commit = true;
+                                            }
+                                        }
+                                    }
+                                });
+                            ui.small(lang.text("Preset indicativi · tinta 0 · regolabili"));
+                            let mut custom = draft.raw_wb.apple_temperature != 0;
+                            if ui
+                                .checkbox(&mut custom, lang.text("WB Apple personalizzato"))
+                                .changed()
+                            {
+                                draft.raw_wb = Default::default();
+                                if custom {
+                                    draft.raw_wb.apple_temperature = 6500;
+                                }
+                                changed = true;
+                                commit = true;
+                            }
+                            if custom {
+                                let temperature = ui.add(
+                                    egui::Slider::new(
+                                        &mut draft.raw_wb.apple_temperature,
+                                        2000..=50000,
+                                    )
+                                    .text(lang.text("Temperatura"))
+                                    .suffix(" K"),
+                                );
+                                let tint = ui.add(
+                                    egui::Slider::new(&mut draft.raw_wb.apple_tint, -150..=150)
+                                        .text(lang.text("Tinta RAW")),
+                                );
+                                for response in [temperature, tint] {
+                                    changed |= response.changed();
+                                    commit |= response.drag_stopped()
+                                        || (response.changed() && !response.dragged());
+                                }
+                            } else {
+                                ui.label(lang.text("WB RAW come scattato"));
+                            }
+                        } else {
+                            ui.label(lang.text(
+                                "Guadagni sensore relativi a come scattato · prima del demosaic",
+                            ));
+                            for (label, value) in [
+                                ("Rosso RAW", &mut draft.raw_wb.red),
+                                ("Blu RAW", &mut draft.raw_wb.blue),
+                            ] {
+                                let mut gain = f32::from(*value) / 1000.;
+                                let response = ui.add(
+                                    egui::Slider::new(&mut gain, 0.25..=4.)
+                                        .step_by(0.001)
+                                        .text(lang.text(label))
+                                        .suffix(" ×"),
+                                );
+                                if response.changed() {
+                                    *value = (gain * 1000.).round() as u16;
+                                    changed = true;
+                                }
+                                commit |= response.drag_stopped()
+                                    || (response.changed() && !response.dragged());
+                            }
+                            if ui.button(lang.text("WB RAW come scattato")).clicked() {
+                                draft.raw_wb = Default::default();
+                                changed = true;
+                                commit = true;
+                            }
+                        }
+                    }
                     ui.label(RichText::new(lang.text("Luce")).strong());
                     for (label, value, min, max, suffix) in [
                         ("Esposizione", &mut draft.exposure_ev, -10., 10., " EV"),
@@ -702,6 +876,64 @@ impl TrueRenderer {
                         commit |=
                             response.drag_stopped() || (response.changed() && !response.dragged());
                     }
+                    let request = self.preview_request(item, 0);
+                    let auto_source = (!changed && !self.editing.show_original)
+                        .then(|| {
+                            self.cache
+                                .iter()
+                                .find(|((id, r), cached)| {
+                                    id == &item.id
+                                        && r.raw_engine == request.raw_engine
+                                        && r.raw_wb == draft.raw_wb
+                                        && cached.pyramid.base_level() == 0
+                                })
+                                .map(|(_, c)| c.pyramid.clone())
+                        })
+                        .flatten();
+                    ui.horizontal_wrapped(|ui| {
+                        if auto_source.is_none()
+                            && ui.button(lang.text("Carica nativo per Auto")).clicked()
+                        {
+                            self.request_final_preview(&item.id, false);
+                        }
+                        for (label, rgb) in [
+                            ("Auto esposizione", false),
+                            ("Auto RGB · grigio medio", true),
+                        ] {
+                            if ui
+                                .add_enabled(
+                                    auto_source.is_some(),
+                                    egui::Button::new(lang.text(label)),
+                                )
+                                .clicked()
+                            {
+                                let source = auto_source.as_ref().unwrap().source();
+                                let result = if rgb {
+                                    draft.auto_rgb(source)
+                                } else {
+                                    draft.auto_exposure(source)
+                                };
+                                match result {
+                                    Ok(()) => {
+                                        changed = true;
+                                        commit = true;
+                                        self.editing.picker_error = None;
+                                    }
+                                    Err(error) => {
+                                        self.editing.picker_error =
+                                            Some((item.id.clone(), error.to_string()));
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    ui.label(
+                        RichText::new(lang.text(
+                            "Auto RGB assume una scena mediamente neutra; non cambia il WB RAW.",
+                        ))
+                        .small()
+                        .color(MUTED),
+                    );
                     ui.label(RichText::new(lang.text("Curva tonale")).strong());
                     let mut mid = draft.curve.get(1).map_or(0.5, |p| p.y);
                     let response = ui.add(
@@ -743,7 +975,23 @@ impl TrueRenderer {
                         .small()
                         .color(MUTED),
                     );
-                    let sample = if self.sample_item_id.as_deref() == Some(item.id.as_str())
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(lang.text("Area contagocce"));
+                        for side in [1, 5, 11] {
+                            if ui
+                                .selectable_value(
+                                    &mut self.editing.picker_side,
+                                    side,
+                                    format!("{side}×{side}"),
+                                )
+                                .changed()
+                            {
+                                self.editing.picker_error = None;
+                            }
+                        }
+                    });
+                    let sample = if !changed
+                        && self.sample_item_id.as_deref() == Some(item.id.as_str())
                         && self.sample_level == Some(0)
                         && self.sample_from_current_render
                         && !self.output_proof_for(&item.id)
@@ -754,6 +1002,38 @@ impl TrueRenderer {
                     } else {
                         None
                     };
+                    let area = match self.editing.picker_side {
+                        5 => self.editing.picker_areas[0].as_ref(),
+                        11 => self.editing.picker_areas[1].as_ref(),
+                        _ => None,
+                    };
+                    let picker_pixel = sample.and_then(|(pixel, _, _)| {
+                        if self.editing.picker_side == 1 {
+                            Some(pixel)
+                        } else {
+                            area.and_then(|result| result.as_ref().ok())
+                                .map(|s| s.working)
+                        }
+                    });
+                    if sample.is_some()
+                        && let Some(area) = area
+                    {
+                        match area {
+                            Ok(area) => {
+                                ui.label(localized_format!(
+                                    lang,
+                                    "Pixel validi: {}/{} · dispersione cromatica: {:.3}",
+                                    "Valid pixels: {}/{} · chromatic spread: {:.3}",
+                                    area.valid,
+                                    area.total,
+                                    area.chroma_spread
+                                ));
+                            }
+                            Err(error) => {
+                                ui.colored_label(AMBER, lang.text(error));
+                            }
+                        }
+                    }
                     if let Some((_, x, y)) = sample {
                         ui.label(localized_format!(
                             lang,
@@ -781,11 +1061,11 @@ impl TrueRenderer {
                         }
                         if ui
                             .add_enabled(
-                                sample.is_some(),
+                                picker_pixel.is_some(),
                                 egui::Button::new(lang.text("Neutralizza campione RGB")),
                             )
                             .clicked()
-                            && let Some((pixel, _, _)) = sample
+                            && let Some(pixel) = picker_pixel
                         {
                             match draft.neutralize_render_sample(pixel) {
                                 Ok(()) => {
@@ -806,7 +1086,7 @@ impl TrueRenderer {
                         .as_ref()
                         .filter(|(id, _)| id == &item.id)
                     {
-                        ui.colored_label(AMBER, error);
+                        ui.colored_label(AMBER, lang.text(error));
                     }
                     if ui.button(lang.text("Sviluppo originale")).clicked() {
                         draft = EditRecipe::neutral(saved.recipe.raw_engine);

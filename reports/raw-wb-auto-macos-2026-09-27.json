@@ -1,0 +1,366 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-27",
+  "bundle": "dist/TrueRenderer-wb-auto-final.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "7a4d497230bdac462c9d9ba8f467bceb63e83bbfef77d8079fae6e48020d3ffc",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "adcec707b2a5b8b6e4621fb5361aa5e843c0ecded918b3c65dc36aff6c708c90",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b6473fa8a820a8c59c92732979ff4af73071ccb6f469b0ad81e0b77d99f68172"
+  },
+  "scope": "Native RAW white balance on Apple, LibRaw bilinear/AHD and TrueRenderer; frozen Auto exposure and grey-world RGB; isolated generated sources on macOS.",
+  "checks": {
+    "full_suite": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_rust": 192,
+    "additional_rust": 13,
+    "private_raw_skipped": 3,
+    "python": 2,
+    "protocol": 8,
+    "resampling_signals": 24,
+    "exact_1_to_1": true,
+    "native_surface": true,
+    "fmt_clippy_build": true,
+    "suite_artifacts": "var/verify-BAtuYHTm",
+    "post_suite_review": "Corrected Apple render provenance; repeated workspace Clippy/build and worker suite (43 passed, 6 ignored). Afterwards shortened only the temperature UI label; rebuilt and repeated all five native cases plus XPC on this exact bundle."
+  },
+  "raw_wb_models": {
+    "Apple": "CIRAWFilter native temperature 2000..50000 K and tint -150..150, with readback validation",
+    "LibRawBilinear": "user_mul derived from as-shot coefficients, red/blue factors 0.250..4.000, before processing",
+    "LibRawAhd": "same sensor controls, AHD development",
+    "TrueRenderer": "as-shot sensor factors before fp32 demosaicing"
+  },
+  "numeric_regressions": {
+    "synthetic_mosaic_reference_maximum_tolerance": 2e-05,
+    "three_engine_png16_pixel_comparison": "exact, every pixel/channel against developed working render, including frozen EV",
+    "cache": "WB-specific RAM/SSD identity, in-flight equivalence and fallback separation",
+    "durability": "save/reopen/backup/undo/redo with two different sensor WBs",
+    "ui_state": "draft WB, saved recipe and before/after use distinct decode requests",
+    "auto": "fixed native grid, frozen parameters, out-of-domain/alpha/insufficient data refusals, EV limits and neutral recovery",
+    "apple_negative": "custom WB refuses bitmaps and invalid temperature; as-shot bitmap path unchanged"
+  },
+  "native_cases": [
+    {
+      "case": "Apple",
+      "report": "var/raw-wb-auto-lnoq8x3_/delivery-Apple/reports/develop-ui.json",
+      "application": "TrueRenderer",
+      "auto_actions": false,
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "fixture": "07-bayer.dng",
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 39,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1400,
+          1050
+        ]
+      },
+      "passed": true,
+      "platform": "macos",
+      "raw_wb_observed": true,
+      "recipe": {
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.75,
+        "highlights": 0.0,
+        "process_version": 1,
+        "raw_engine": "Apple",
+        "raw_wb": {
+          "apple_temperature": 4500,
+          "apple_tint": 12,
+          "blue": 1000,
+          "red": 1000
+        },
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 25.0,
+        "tint": -8.0,
+        "whites": 0.0
+      },
+      "saved_generation": 1,
+      "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+      "screenshots": [
+        "develop-viewer.png",
+        "develop-grid.png"
+      ],
+      "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "source_unchanged": true,
+      "version": "0.1.5"
+    },
+    {
+      "case": "LibRawBilinear",
+      "report": "var/raw-wb-auto-lnoq8x3_/delivery-LibRawBilinear/reports/develop-ui.json",
+      "application": "TrueRenderer",
+      "auto_actions": false,
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "fixture": "07-bayer.dng",
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 59,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1400,
+          1050
+        ]
+      },
+      "passed": true,
+      "platform": "macos",
+      "raw_wb_observed": true,
+      "recipe": {
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.75,
+        "highlights": 0.0,
+        "process_version": 1,
+        "raw_engine": "LibRawBilinear",
+        "raw_wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        },
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 25.0,
+        "tint": -8.0,
+        "whites": 0.0
+      },
+      "saved_generation": 1,
+      "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+      "screenshots": [
+        "develop-viewer.png",
+        "develop-grid.png"
+      ],
+      "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "source_unchanged": true,
+      "version": "0.1.5"
+    },
+    {
+      "case": "LibRawAhd",
+      "report": "var/raw-wb-auto-lnoq8x3_/delivery-LibRawAhd/reports/develop-ui.json",
+      "application": "TrueRenderer",
+      "auto_actions": false,
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "fixture": "07-bayer.dng",
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 53,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1400,
+          1050
+        ]
+      },
+      "passed": true,
+      "platform": "macos",
+      "raw_wb_observed": true,
+      "recipe": {
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.75,
+        "highlights": 0.0,
+        "process_version": 1,
+        "raw_engine": "LibRawAhd",
+        "raw_wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        },
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 25.0,
+        "tint": -8.0,
+        "whites": 0.0
+      },
+      "saved_generation": 1,
+      "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+      "screenshots": [
+        "develop-viewer.png",
+        "develop-grid.png"
+      ],
+      "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "source_unchanged": true,
+      "version": "0.1.5"
+    },
+    {
+      "case": "TrueRenderer",
+      "report": "var/raw-wb-auto-lnoq8x3_/delivery-TrueRenderer/reports/develop-ui.json",
+      "application": "TrueRenderer",
+      "auto_actions": false,
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "fixture": "07-bayer.dng",
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 40,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1400,
+          1050
+        ]
+      },
+      "passed": true,
+      "platform": "macos",
+      "raw_wb_observed": true,
+      "recipe": {
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.75,
+        "highlights": 0.0,
+        "process_version": 1,
+        "raw_engine": "TrueRenderer",
+        "raw_wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        },
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 25.0,
+        "tint": -8.0,
+        "whites": 0.0
+      },
+      "saved_generation": 1,
+      "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+      "screenshots": [
+        "develop-viewer.png",
+        "develop-grid.png"
+      ],
+      "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "source_unchanged": true,
+      "version": "0.1.5"
+    },
+    {
+      "case": "Auto",
+      "report": "var/raw-wb-auto-lnoq8x3_/delivery-Auto/reports/develop-ui.json",
+      "application": "TrueRenderer",
+      "auto_actions": true,
+      "export": {
+        "file": "06_Scala_neutra-export.png",
+        "passed": true,
+        "size": [
+          1200,
+          800
+        ]
+      },
+      "fixture": "06_Scala_neutra.png",
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1575,
+          1050
+        ]
+      },
+      "passed": true,
+      "platform": "macos",
+      "raw_wb_observed": false,
+      "recipe": {
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": -0.332378625869751,
+        "highlights": 0.0,
+        "process_version": 1,
+        "raw_engine": "Apple",
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 3.62396240234375e-05,
+        "tint": -0.0008969306945800781,
+        "whites": 0.0
+      },
+      "saved_generation": 1,
+      "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+      "screenshots": [
+        "develop-viewer.png",
+        "develop-grid.png"
+      ],
+      "source_digest": "0029174a941fb546159a8ebbf5f16f0438328291ec8cd6f6eeef47cf1b28f477",
+      "source_unchanged": true,
+      "version": "0.1.5"
+    }
+  ],
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-09-27T12:41:12.710986+00:00",
+    "bundle": "dist/TrueRenderer-wb-auto-final.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "7a4d497230bdac462c9d9ba8f467bceb63e83bbfef77d8079fae6e48020d3ffc",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "adcec707b2a5b8b6e4621fb5361aa5e843c0ecded918b3c65dc36aff6c708c90",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b6473fa8a820a8c59c92732979ff4af73071ccb6f469b0ad81e0b77d99f68172"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "screenshots_reviewed": [
+    "delivery-Apple/reports/develop-viewer.png",
+    "final-Apple/reports/develop-viewer.png"
+  ],
+  "evidence_root": "var/raw-wb-auto-lnoq8x3_",
+  "limitations": [
+    "Auto RGB is grey-world working-RGB correction, not automatic native sensor WB",
+    "No photographic colour target or broad real-camera qualification",
+    "No new Windows native or compact/200% accessibility campaign",
+    "No physical memory pressure or display-panel qualification",
+    "SF0-SF2 and R0-R4 remain open"
+  ],
+  "initial_attempts": [
+    "Synthetic fixture generation wrote its DNG successfully, then missed an optional fixture manifest; the DNG was used without changing the controlled-corpus allowlist",
+    "Intermediate three-engine and four-engine cases are retained in separate folders; final delivery cases include WB-observed assertions and corrected Apple provenance"
+  ]
+}

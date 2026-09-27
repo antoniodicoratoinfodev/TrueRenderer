@@ -83,8 +83,15 @@ int tr_image_probe(const uint8_t *bytes, size_t length, uint64_t max_pixels,
 }
 void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
                     TRImageInfo *info, char *error, size_t error_size) {
+    return tr_image_open_wb(bytes, length, max_pixels, 0, 0, info, error, error_size);
+}
+void *tr_image_open_wb(const uint8_t *bytes, size_t length, uint64_t max_pixels,
+                    uint32_t temperature, int32_t tint, TRImageInfo *info, char *error, size_t error_size) {
     @autoreleasepool { @try {
         if (!bytes || !length || !info) return NULL;
+        if ((temperature == 0 && tint != 0) || (temperature != 0 && (temperature < 2000 || temperature > 50000 || tint < -150 || tint > 150))) {
+            message(error,error_size,@"Temperatura/tinta Apple RAW fuori scala"); return NULL;
+        }
         memset(info,0,sizeof(*info));
         TRImage *result = [TRImage new];
         // Input bytes are kept alive by the synchronous Rust decode call.
@@ -134,11 +141,20 @@ void *tr_image_open(const uint8_t *bytes, size_t length, uint64_t max_pixels,
             if (filter.colorNoiseReductionSupported) filter.colorNoiseReductionAmount=0.;
             if (filter.moireReductionSupported) filter.moireReductionAmount=0.;
             if (filter.localToneMapSupported) filter.localToneMapAmount=0.;
+            if (temperature != 0) {
+                filter.neutralTemperature=(float)temperature;
+                filter.neutralTint=(float)tint;
+                if (fabsf(filter.neutralTemperature-(float)temperature)>0.5f || fabsf(filter.neutralTint-(float)tint)>0.01f) {
+                    CFRelease(source); message(error,error_size,@"Il decoder Apple non accetta il WB richiesto"); return NULL;
+                }
+            }
             result.image=filter.outputImage;
             snprintf(info->decoder,sizeof(info->decoder),"Apple RAW %s · full · TR-linear-v1",filter.decoderVersion.UTF8String ?: "OS");
             snprintf(info->input_color,sizeof(info->input_color),"RAW: WB/metadati Apple; baseline %.3f EV; boost/NR/sharpen off",filter.baselineExposure);
+            if (temperature != 0) snprintf(info->input_color,sizeof(info->input_color),"RAW: WB Apple personalizzato %u K, tinta %d; baseline %.3f EV; boost/NR/sharpen off",temperature,tint,filter.baselineExposure);
             // Sensor depth is not always reported. Zero means unknown, never an invented 16.
         } else {
+            if (temperature != 0) { CFRelease(source); message(error,error_size,@"WB RAW non applicabile a bitmap"); return NULL; }
             CGImageRef bitmap=CGImageSourceCreateImageAtIndex(source,0,(__bridge CFDictionaryRef)@{
                 (__bridge NSString *)kCGImageSourceShouldAllowFloat:@YES,
                 (__bridge NSString *)kCGImageSourceShouldCacheImmediately:@NO});

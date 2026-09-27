@@ -29,10 +29,12 @@ unsafe extern "C" {
         error: *mut c_char,
         error_size: usize,
     ) -> i32;
-    fn tr_image_open(
+    fn tr_image_open_wb(
         bytes: *const u8,
         length: usize,
         max_pixels: u64,
+        temperature: u32,
+        tint: i32,
         info: *mut Info,
         error: *mut c_char,
         error_size: usize,
@@ -96,14 +98,32 @@ pub fn decode(bytes: &[u8], edge: u32) -> Result<(RasterInfo, LinearImage)> {
     decode_backend(bytes, edge, false)
 }
 fn decode_backend(bytes: &[u8], edge: u32, metal: bool) -> Result<(RasterInfo, LinearImage)> {
+    decode_with_wb_backend(bytes, edge, metal, Default::default())
+}
+pub fn decode_with_wb(
+    bytes: &[u8],
+    edge: u32,
+    wb: tr_core::decoder::RawWhiteBalance,
+) -> Result<(RasterInfo, LinearImage)> {
+    decode_with_wb_backend(bytes, edge, false, wb)
+}
+fn decode_with_wb_backend(
+    bytes: &[u8],
+    edge: u32,
+    metal: bool,
+    wb: tr_core::decoder::RawWhiteBalance,
+) -> Result<(RasterInfo, LinearImage)> {
+    wb.validate_for(tr_core::decoder::RawEngine::Apple)?;
     let mut info: Info = unsafe { std::mem::zeroed() };
     let mut error = [0; 512];
     // The native handle borrows bytes only until it is dropped before this call returns.
     let raw = unsafe {
-        tr_image_open(
+        tr_image_open_wb(
             bytes.as_ptr(),
             bytes.len(),
             MAX_PIXELS as u64,
+            u32::from(wb.apple_temperature),
+            i32::from(wb.apple_tint),
             &mut info,
             error.as_mut_ptr(),
             error.len(),
@@ -257,6 +277,35 @@ mod tests {
         )
         .unwrap();
     }
+    #[test]
+    fn native_wb_rejects_bitmap_and_invalid_temperature_without_fallback() {
+        let bytes = include_bytes!("../../../corpus/01_Studio_cromatico.png");
+        let wb = tr_core::decoder::RawWhiteBalance {
+            apple_temperature: 4500,
+            apple_tint: 12,
+            ..Default::default()
+        };
+        assert!(decode_with_wb(bytes, 0, wb).is_err());
+        assert!(
+            decode_with_wb(
+                bytes,
+                0,
+                tr_core::decoder::RawWhiteBalance {
+                    apple_temperature: 1000,
+                    ..wb
+                }
+            )
+            .is_err()
+        );
+        assert_eq!(
+            decode_with_wb(bytes, 0, Default::default())
+                .unwrap()
+                .1
+                .pixels,
+            decode(bytes, 0).unwrap().1.pixels
+        );
+    }
+
     #[test]
     fn native_rejects_truncated_and_unknown_formats() {
         for bytes in [

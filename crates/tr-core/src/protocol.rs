@@ -35,6 +35,11 @@ fn default_output_bytes() -> u64 {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DecodeRequest {
+    #[serde(
+        default,
+        skip_serializing_if = "crate::decoder::RawWhiteBalance::is_as_shot"
+    )]
+    pub raw_wb: crate::decoder::RawWhiteBalance,
     #[serde(default)]
     pub raw_engine: crate::decoder::RawEngine,
     pub source_len: usize,
@@ -302,6 +307,7 @@ mod tests {
             REQUEST,
             42,
             &DecodeRequest {
+                raw_wb: Default::default(),
                 raw_engine: Default::default(),
                 source_len: 32,
                 max_edge: 320,

@@ -477,6 +477,19 @@ impl TrueRenderer {
     }
     fn preview_request(&self, item: &Item, edge: u32) -> PreviewRequest {
         PreviewRequest {
+            raw_wb: if self.editing.show_original {
+                Default::default()
+            } else {
+                self.editing
+                    .entries
+                    .get(&item.id)
+                    .and_then(|e| {
+                        e.draft
+                            .as_ref()
+                            .or_else(|| e.loaded.as_ref().map(|s| &s.recipe))
+                    })
+                    .map_or(Default::default(), |r| r.raw_wb)
+            },
             raw_engine: self
                 .editing
                 .entries
@@ -501,7 +514,9 @@ impl TrueRenderer {
         self.cache
             .iter()
             .filter(|((id, cached_request), _)| {
-                id == &item.id && cached_request.raw_engine == request.raw_engine
+                id == &item.id
+                    && cached_request.raw_engine == request.raw_engine
+                    && cached_request.raw_wb == request.raw_wb
             })
             .max_by_key(|(_, cached)| cached.pyramid.source().width)
             .map(|(key, _)| key.clone())
@@ -542,6 +557,7 @@ impl TrueRenderer {
             .filter(|((id, request), cached)| {
                 id == &item.id
                     && request.raw_engine == key.1.raw_engine
+                    && request.raw_wb == key.1.raw_wb
                     && request.quality == key.1.quality
                     && cached.pyramid.sufficient_for(key.1)
             })
@@ -2649,6 +2665,9 @@ impl TrueRenderer {
                 &lane,
             );
             self.image_focus_ids.insert(response.id);
+            if let Some(sample) = &sample {
+                self.capture_picker_areas(&image, sample.x, sample.y, sample_from_current_render);
+            }
             if sample.is_some() {
                 self.sample_source = localized_format!(
                     lang,
@@ -3584,6 +3603,33 @@ mod settings_regressions {
     }
 
     #[test]
+    fn area_picker_uses_native_current_render_and_discards_ineligible_samples() {
+        let (_dir, _ctx, mut app) = app();
+        let raster =
+            tr_core::color::LinearImage::new(11, 11, vec![[0.4, 0.4, 0.4, 1.]; 121]).unwrap();
+        let native = ImageLevels::from_source(raster.clone(), PreviewRequest::full()).unwrap();
+        app.capture_picker_areas(&native, 5, 5, true);
+        assert_eq!(app.editing.picker_side, 5);
+        for (area, count) in app.editing.picker_areas.iter().zip([25, 121]) {
+            let area = area.as_ref().unwrap().as_ref().unwrap();
+            assert_eq!(area.valid, count);
+            assert_eq!(area.total, count);
+        }
+        app.capture_picker_areas(&native, 0, 0, true);
+        assert!(
+            app.editing
+                .picker_areas
+                .iter()
+                .all(|area| area.as_ref().unwrap().is_err())
+        );
+        app.capture_picker_areas(&native, 5, 5, false);
+        assert!(app.editing.picker_areas.iter().all(Option::is_none));
+        let reduced = ImageLevels::from_reference_mip(raster, [22, 22], 1, true).unwrap();
+        app.capture_picker_areas(&reduced, 5, 5, true);
+        assert!(app.editing.picker_areas.iter().all(Option::is_none));
+    }
+
+    #[test]
     fn external_edit_identity_resolves_only_through_current_verified_cache() {
         let (_dir, ctx, mut app) = app();
         settle(&mut app, &ctx, true);
@@ -3914,6 +3960,62 @@ mod settings_regressions {
         }
     }
     #[test]
+    fn raw_wb_draft_and_before_after_select_distinct_decode_requests() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        let mut recipe =
+            tr_core::editing::EditRecipe::neutral(tr_core::decoder::RawEngine::TrueRenderer);
+        recipe.raw_wb = tr_core::decoder::RawWhiteBalance {
+            red: 1500,
+            blue: 800,
+            ..Default::default()
+        };
+        app.editing.entries.insert(
+            item.id.clone(),
+            editing::EditEntry {
+                loaded: Some(tr_store::LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: item.digest.clone(),
+                    generation: 1,
+                    revision: 1,
+                    recipe: recipe.clone(),
+                    can_undo: true,
+                    can_redo: false,
+                }),
+                draft: Some(recipe.clone()),
+                ..Default::default()
+            },
+        );
+        for edge in [0, 512] {
+            assert_eq!(app.preview_request(&item, edge).raw_wb, recipe.raw_wb);
+        }
+        app.editing.show_original = true;
+        assert!(app.preview_request(&item, 0).raw_wb.is_as_shot());
+        app.editing.show_original = false;
+        app.editing
+            .entries
+            .get_mut(&item.id)
+            .unwrap()
+            .draft
+            .as_mut()
+            .unwrap()
+            .raw_wb
+            .red = 2000;
+        assert_eq!(app.preview_request(&item, 0).raw_wb.red, 2000);
+        assert_eq!(
+            app.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .raw_wb
+                .red,
+            1500
+        );
+    }
+
+    #[test]
     fn viewer_fallback_never_uses_another_raw_engine() {
         let (_dir, ctx, mut app) = app();
         settle(&mut app, &ctx, true);
@@ -3957,6 +4059,17 @@ mod settings_regressions {
             worker_pid: None,
         };
         app.cache.insert((item.id.clone(), other), cached.clone());
+        assert!(app.viewer_fallback_key(&item, request).is_none());
+        let different_wb = PreviewRequest {
+            raw_wb: tr_core::decoder::RawWhiteBalance {
+                red: 1500,
+                blue: 800,
+                ..Default::default()
+            },
+            ..request
+        };
+        app.cache
+            .insert((item.id.clone(), different_wb), cached.clone());
         assert!(app.viewer_fallback_key(&item, request).is_none());
         let compatible = PreviewRequest {
             edge: 512,

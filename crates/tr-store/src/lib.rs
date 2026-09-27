@@ -544,12 +544,22 @@ mod tests {
         let item = catalog
             .observe(Path::new("/synthetic/photo.png"), "source-a", 4)
             .unwrap();
-        let engine = RawEngine::default();
+        let engine = RawEngine::TrueRenderer;
         let mut recipe = EditRecipe::neutral(engine);
         recipe.exposure_ev = 1.;
+        recipe.raw_wb = tr_core::decoder::RawWhiteBalance {
+            red: 1500,
+            blue: 800,
+            ..Default::default()
+        };
         let first = catalog.save_edit(&item.id, 0, &recipe).unwrap();
         assert_eq!(first.revision, 1);
         recipe.exposure_ev = 2.;
+        recipe.raw_wb = tr_core::decoder::RawWhiteBalance {
+            red: 800,
+            blue: 1500,
+            ..Default::default()
+        };
         let second = catalog
             .save_edit(&item.id, first.generation, &recipe)
             .unwrap();
@@ -558,6 +568,7 @@ mod tests {
             .step_edit(&item.id, second.generation, true)
             .unwrap();
         assert_eq!(undone.recipe.exposure_ev, 1.);
+        assert_eq!(undone.recipe.raw_wb.red, 1500);
         assert!(undone.can_redo);
         let backup = catalog.backup().unwrap();
         drop(catalog);
@@ -570,6 +581,7 @@ mod tests {
             .step_edit(&item.id, reopened.generation, false)
             .unwrap();
         assert_eq!(redone.recipe.exposure_ev, 2.);
+        assert_eq!(redone.recipe.raw_wb.red, 800);
         let undo_again = catalog
             .step_edit(&item.id, redone.generation, true)
             .unwrap();
