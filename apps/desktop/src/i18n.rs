@@ -102,6 +102,9 @@ impl Language {
             "Bianchi" => "Whites",
             "Neri" => "Blacks",
             "Curva tonale" => "Tone curve",
+            "Azzera luce" => "Reset light",
+            "Azzera curva" => "Reset curve",
+            "Azzera colore" => "Reset colour",
             "Mezzitoni curva" => "Curve midtones",
             "Colore del render · correzione RGB relativa" => {
                 "Rendered color · relative RGB correction"

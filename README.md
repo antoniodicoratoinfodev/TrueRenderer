@@ -8,7 +8,7 @@ It brings each image, its technical context and the choices behind its appearanc
 
 ![TrueRenderer viewer with the Develop controls, edited photograph and filmstrip](reports/readme-viewer.png)
 
-*Current macOS development build, shown with the generated test corpus and an editable recipe. [Screenshot verification](reports/readme-screenshots-macos.json).*
+*Current macOS development build, shown with the generated test corpus, an editable recipe and group reset controls. [Screenshot verification](reports/readme-screenshots-macos.json).*
 
 ## A clearer way to look
 
@@ -41,6 +41,10 @@ and saturation. **Vibrance** selectively adjusts less saturated colours; optiona
 Using these controls opts that revision into photographic process 2; existing
 recipes retain their previous rendering. Edits are saved as versioned recipes in the local library;
 **Undo**, **Redo** and **Before/After** leave the original file untouched.
+**Reset light**, **Reset curve** and **Reset colour** clear only their group of
+adjustments, preserving the RAW engine and native white balance. Each reset is
+saved and can be undone or redone; Reset colour also clears vibrance and warm-tone
+protection.
 **RAW white balance** now offers as-shot/reset and native controls: Apple RAW
 uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
 gains relative to as-shot, before demosaicing. These gains are not Kelvin. The
@@ -138,7 +142,7 @@ RAW files do not have one universally correct appearance, and display colour dep
 
 The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace.
 
-![Thumbnail grid with Explorer, file icons and a saved edit indicator](reports/readme-grid.png)
+![Thumbnail grid with Library, shooting data and a saved edit indicator](reports/readme-grid.png)
 
 In smaller windows, navigation opens only when needed: [compact layout](reports/readme-compact.png).
 

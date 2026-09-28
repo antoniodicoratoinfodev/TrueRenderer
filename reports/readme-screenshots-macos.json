@@ -1,61 +1,79 @@
 {
   "application": "TrueRenderer",
-  "captured_at": "2026-09-23T18:56:12.853952+00:00",
+  "captured_at": "2026-09-28T15:57:20.534613+00:00",
   "passed": true,
-  "bundle": "dist/TrueRenderer-develop-v7.app",
+  "bundle": "dist/TrueRenderer-reset-groups-2026-09-28.app",
   "binary_sha256": {
-    "Contents/MacOS/TrueRenderer": "739bc4b5f7110b53bc105ea796980e3634f13f86a51b64ba8f6d1f1024cb4cdf",
-    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b1ae85037db052a0773a6f6e1d4cc7c58b3d3487d49b5d8d6e4620a70039cfa9",
-    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "7ace86f6e7e585717df128870fe9712188a85e793bd11643e15b7a012a6d7790"
+    "Contents/MacOS/TrueRenderer": "88585438fa23e08e2f69bebab850ce3e7f2a346d97ac48ee4a3a31eb60c33924",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
   },
-  "source": "12 generated corpus images; isolated local libraries; original fixture digest unchanged",
+  "source": "12 generated corpus images; isolated local libraries; fixture digests unchanged",
   "native_smokes": {
     "develop": true,
     "filesystem": true,
     "preferences": true
   },
   "edited_recipe": {
+    "blacks": 0.0,
+    "brightness": 0.0,
+    "contrast": 0.0,
+    "curve": [],
     "exposure_ev": 0.75,
-    "temperature_rgb": 25.0,
-    "tint_rgb": -8.0
+    "highlights": 0.0,
+    "process_version": 2,
+    "protect_warm": true,
+    "raw_engine": "Apple",
+    "saturation": 0.0,
+    "schema_version": 1,
+    "shadows": 0.0,
+    "temperature": 25.0,
+    "tint": -8.0,
+    "vibrance": 65.0,
+    "whites": 0.0
   },
   "screenshots": [
     {
       "file": "reports/readme-viewer.png",
-      "capture": "develop-viewer.png",
+      "capture": "develop/reports/develop-viewer.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "3b7ea851d4b69e2ff0129b04e3248f1e80fbad9dae8eff55c251348659ca61e6"
+      "sha256": "3673854a6ae4bd4e1ea8838989cca91a09bfd67228d393b5a7aca6fa6439f148",
+      "visually_reviewed": true
     },
     {
       "file": "reports/readme-grid.png",
-      "capture": "develop-grid.png",
+      "capture": "develop/reports/develop-grid.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "1b4ed142ccd9317446356a5262327a730fa7907a3d3912f7d5377cc82ed5093c"
+      "sha256": "fa76a433cafa3c1ff7fbff615fcd135a0a8b7fafb8e07f01f85eab092b341a28",
+      "visually_reviewed": true
     },
     {
       "file": "reports/readme-compact.png",
-      "capture": "filesystem-3.png",
+      "capture": "filesystem/reports/filesystem-3.png",
       "pixels": [
         1100,
         720
       ],
-      "sha256": "404d510fa80047985d64d25c0e75ceca523e486bcfd05fa7d4512576adc739b2"
+      "sha256": "863f086a39039e21bf409b960786ccfc99df71ae00975069dacf144497b67670",
+      "visually_reviewed": true
     },
     {
       "file": "reports/readme-preferences.png",
-      "capture": "restyle-02.png",
+      "capture": "preferences/reports/restyle-02.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "f1ac4122e37e685b74fbc66afa0ab0fcbb94b199572dc2666454f87811853432"
+      "sha256": "dd3a615a182e80e478d787c0d8124a7906a5230e02944948bed048c9fb5754f7",
+      "visually_reviewed": true
     }
   ],
-  "scope": "Native macOS screenshots from the qualified development bundle and generated corpus. Viewer and grid show a saved relative RGB edit. No RAW white-balance, physical-display, Windows, or full accessibility qualification."
+  "evidence": "var/reset-groups-vrq7a3nj",
+  "scope": "Native macOS captures of the development bundle. Viewer shows group resets; grid shows edited thumbnail and shooting-data placeholders. Preferences and compact Explorer are from the same binary. No personal photographs. No Windows, calibrated-display or full accessibility qualification."
 }

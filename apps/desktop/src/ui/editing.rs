@@ -2,6 +2,56 @@ use super::*;
 use tr_core::editing::{CurvePoint, EditRecipe, RgbAreaSample, sample_rgb_area};
 use tr_store::LoadedEdit;
 
+#[derive(Clone, Copy)]
+enum ResetGroup {
+    Light,
+    Curve,
+    Color,
+}
+impl ResetGroup {
+    fn apply(self, recipe: &mut EditRecipe) {
+        // Preserve the native development and process version of the revision.
+        match self {
+            Self::Light => {
+                recipe.exposure_ev = 0.;
+                recipe.brightness = 0.;
+                recipe.contrast = 0.;
+                recipe.highlights = 0.;
+                recipe.shadows = 0.;
+                recipe.whites = 0.;
+                recipe.blacks = 0.;
+            }
+            Self::Curve => recipe.curve.clear(),
+            Self::Color => {
+                recipe.temperature = 0.;
+                recipe.tint = 0.;
+                recipe.saturation = 0.;
+                recipe.vibrance = 0.;
+                recipe.protect_warm = false;
+            }
+        }
+    }
+}
+
+fn reset_group_button(
+    ui: &mut egui::Ui,
+    label: &str,
+    group: ResetGroup,
+    draft: &mut EditRecipe,
+) -> bool {
+    let mut reset = draft.clone();
+    group.apply(&mut reset);
+    if ui
+        .add_enabled(reset != *draft, egui::Button::new(label).small())
+        .clicked()
+    {
+        *draft = reset;
+        true
+    } else {
+        false
+    }
+}
+
 #[derive(Default)]
 pub(super) struct EditEntry {
     pub loaded: Option<LoadedEdit>,
@@ -1022,6 +1072,11 @@ impl TrueRenderer {
                         }
                     }
                     ui.label(RichText::new(lang.text("Luce")).strong());
+                    if reset_group_button(ui, lang.text("Azzera luce"), ResetGroup::Light, &mut draft) {
+                        changed = true;
+                        commit = true;
+                    }
+
                     for (label, value, min, max, suffix) in [
                         ("Esposizione", &mut draft.exposure_ev, -10., 10., " EV"),
                         ("Luminosità", &mut draft.brightness, -100., 100., ""),
@@ -1099,6 +1154,11 @@ impl TrueRenderer {
                         .color(MUTED),
                     );
                     ui.label(RichText::new(lang.text("Curva tonale")).strong());
+                    if reset_group_button(ui, lang.text("Azzera curva"), ResetGroup::Curve, &mut draft) {
+                        changed = true;
+                        commit = true;
+                    }
+
                     let mut mid = draft.curve.get(1).map_or(0.5, |p| p.y);
                     let response = ui.add(
                         egui::Slider::new(&mut mid, 0. ..=1.).text(lang.text("Mezzitoni curva")),
@@ -1121,6 +1181,10 @@ impl TrueRenderer {
                         RichText::new(lang.text("Colore del render · correzione RGB relativa"))
                             .strong(),
                     );
+                    if reset_group_button(ui, lang.text("Azzera colore"), ResetGroup::Color, &mut draft) {
+                        changed = true;
+                        commit = true;
+                    }
                     for (label, value) in [
                         ("Temperatura RGB", &mut draft.temperature),
                         ("Tinta RGB", &mut draft.tint),
@@ -1604,5 +1668,152 @@ mod smoke_deadline_tests {
         assert!(elapsed > ordinary);
         assert!(elapsed < native);
         assert_eq!(native - ordinary, tr_platform::RAW_WB_TIMEOUT);
+    }
+}
+
+#[cfg(test)]
+mod reset_tests {
+    use super::*;
+    use std::path::Path;
+
+    fn edited_recipe() -> EditRecipe {
+        let mut recipe = EditRecipe::neutral(tr_core::decoder::RawEngine::TrueRenderer);
+        recipe.process_version = 2;
+        recipe.raw_wb.red = 1500;
+        recipe.raw_wb.blue = 800;
+        recipe.exposure_ev = 1.;
+        recipe.brightness = 12.;
+        recipe.contrast = 15.;
+        recipe.highlights = -20.;
+        recipe.shadows = 25.;
+        recipe.whites = 8.;
+        recipe.blacks = -6.;
+        recipe.temperature = 25.;
+        recipe.tint = -8.;
+        recipe.saturation = 20.;
+        recipe.vibrance = 40.;
+        recipe.protect_warm = true;
+        recipe.curve = vec![
+            CurvePoint { x: 0., y: 0. },
+            CurvePoint { x: 0.5, y: 0.6 },
+            CurvePoint { x: 1., y: 1. },
+        ];
+        recipe
+    }
+
+    #[test]
+    fn group_resets_preserve_other_adjustments_and_durable_history() {
+        for group in [ResetGroup::Light, ResetGroup::Curve, ResetGroup::Color] {
+            let dir = tempfile::tempdir().unwrap();
+            let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+            let item = catalog
+                .observe(Path::new("synthetic.png"), "synthetic", 4)
+                .unwrap();
+            let original = edited_recipe();
+            let saved = catalog.save_edit(&item.id, 0, &original).unwrap();
+            let mut reset = original.clone();
+            group.apply(&mut reset);
+            reset.validate().unwrap();
+            assert_eq!(reset.raw_wb, original.raw_wb);
+            assert_eq!(reset.raw_engine, original.raw_engine);
+            assert_eq!(reset.process_version, original.process_version);
+            // Only the selected family's serialized values may differ.
+            let before = serde_json::to_value(&original).unwrap();
+            let after = serde_json::to_value(&reset).unwrap();
+            let keys: &[&str] = match group {
+                ResetGroup::Light => &[
+                    "exposure_ev",
+                    "brightness",
+                    "contrast",
+                    "highlights",
+                    "shadows",
+                    "whites",
+                    "blacks",
+                ],
+                ResetGroup::Curve => &["curve"],
+                ResetGroup::Color => &[
+                    "temperature",
+                    "tint",
+                    "saturation",
+                    "vibrance",
+                    "protect_warm",
+                ],
+            };
+            for (key, value) in before.as_object().unwrap() {
+                if !keys.contains(&key.as_str()) {
+                    assert_eq!(Some(value), after.get(key));
+                } else if key == "curve" {
+                    assert!(reset.curve.is_empty());
+                } else if key == "protect_warm" {
+                    assert!(!reset.protect_warm);
+                } else {
+                    assert_eq!(after.get(key).and_then(|v| v.as_f64()).unwrap_or(0.), 0.);
+                }
+            }
+            let second = catalog
+                .save_edit(&item.id, saved.generation, &reset)
+                .unwrap();
+            let undone = catalog
+                .step_edit(&item.id, second.generation, true)
+                .unwrap();
+            assert_eq!(undone.recipe, original);
+            drop(catalog);
+            let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+            let reopened = catalog.load_edit(&item.id, original.raw_engine).unwrap();
+            let redone = catalog
+                .step_edit(&item.id, reopened.generation, false)
+                .unwrap();
+            assert_eq!(redone.recipe, reset);
+            group.apply(&mut reset);
+            assert_eq!(redone.recipe, reset);
+        }
+    }
+
+    #[test]
+    fn reset_button_requires_enabled_changed_recipe_and_a_click() {
+        for enabled in [false, true] {
+            let ctx = egui::Context::default();
+            let mut recipe = edited_recipe();
+            let original = recipe.clone();
+            let mut rect = egui::Rect::NOTHING;
+            let mut clicked = false;
+            for pressed in [None, Some(true), Some(false)] {
+                let events = pressed.map_or_else(Vec::new, |pressed| {
+                    vec![
+                        egui::Event::PointerMoved(rect.center()),
+                        egui::Event::PointerButton {
+                            pos: rect.center(),
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: egui::Modifiers::NONE,
+                        },
+                    ]
+                });
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        ui.add_enabled_ui(enabled, |ui| {
+                            clicked |= reset_group_button(
+                                ui,
+                                "Reset light",
+                                ResetGroup::Light,
+                                &mut recipe,
+                            );
+                            rect = ui.min_rect();
+                        });
+                    },
+                );
+                output.textures_delta.clear();
+            }
+            assert_eq!(clicked, enabled);
+            assert_eq!(
+                recipe.exposure_ev,
+                if enabled { 0. } else { original.exposure_ev }
+            );
+            assert_eq!(recipe.raw_wb, original.raw_wb);
+        }
     }
 }

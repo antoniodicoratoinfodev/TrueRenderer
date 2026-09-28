@@ -20,6 +20,14 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Ripristino per gruppo nello Sviluppo — 28 settembre
+
+- [x] **Implementato:** Azzera luce, Azzera curva e Azzera colore, IT/EN, con salvataggio nella cronologia ordinaria. Ogni comando conserva gli altri gruppi, motore, WB RAW e versione di processo; il colore comprende vividezza e protezione toni caldi. Comandi disabilitati per gruppi già azzerati, durante salvataggio o analisi WB.
+- [x] **Verificato:** due nuove regressioni su clic/disabilitazione e isolamento dei parametri, salvataggio, undo e redo dopo riapertura. `scripts/verify.sh --gui` passato: **207 test ordinari + 14 integrazioni**, due test Python, otto controlli protocollo, 24 segnali e superficie nativa; fmt/Clippy/build passati. Artefatti `var/verify-wSbgMwKt/`. Tre test RAW privati esclusi perché `TR_RAW_SAMPLE` non impostato.
+- [x] **Bundle e UI:** `dist/TrueRenderer-reset-groups-2026-09-28.app`, firma ad hoc, due servizi XPC, timeout/recupero e rifiuto fault injection passati. Smoke Sviluppo, navigatore e 12 layout preferenze riusciti; quattro schermate README sostituite e ispezionate, solo corpus sintetico e sorgenti invariate. Provati direttamente Azzera luce con Annulla/Ripeti, Azzera colore con esposizione 0,75 EV conservata e curva 0,78 riportata a 0,50; revisioni SQLite controllate. [Rapporto](reports/develop-group-resets-macos-2026-09-28.json), [catture e hash](reports/readme-screenshots-macos.json).
+- [ ] **Anomalia interattiva:** nella prima sessione lo strumento UI ha smesso di riflettere coerentemente le azioni; lo stack del main thread era in attesa eventi AppKit, senza deadlock dimostrato. Processo isolato riaperto e sessione di controllo reinizializzata: successive prove colore/curva riuscite e cronologia integra. Causa non stabilita, nessuna correzione attribuita; evidenze in `var/reset-groups-vrq7a3nj/`.
+- [ ] **Aperto:** prove native Windows dei nuovi comandi, qualifica estesa display/accessibilità e restanti strumenti SF. Nessun gate SF/R0–R4 chiuso.
+
 ### Revisione dei contenuti pubblici — 28 settembre
 
 - [x] Rimossi riferimenti alle richieste in chat e alla collocazione delle fotografie private; ridotti i rimandi duplicati nell'indice documentale. Tre rapporti cache usano ora percorsi relativi al repository, senza nome dell'account locale; metriche ed esiti invariati. Corretti i riferimenti obsoleti al WB RAW automatico nel README e alle verifiche del bundle Mac in NOTICE.

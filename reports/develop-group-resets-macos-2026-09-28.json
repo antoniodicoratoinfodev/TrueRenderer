@@ -1,0 +1,175 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-28T15:58:07.659760+00:00",
+  "bundle": "dist/TrueRenderer-reset-groups-2026-09-28.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "88585438fa23e08e2f69bebab850ce3e7f2a346d97ac48ee4a3a31eb60c33924",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "automated_checks_passed": true,
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "rust_ordinary_passed": 207,
+    "rust_integrations_passed": 14,
+    "private_raw_tests_excluded": 3,
+    "python_tests_passed": 2,
+    "protocol_checks_passed": 8,
+    "signal_cases_passed": 24,
+    "native_surface_passed": true,
+    "fmt_clippy_build_passed": true,
+    "evidence": "var/verify-wSbgMwKt"
+  },
+  "native_smokes": {
+    "develop": {
+      "exit_code": 0,
+      "passed": true,
+      "source_unchanged": true,
+      "report": "var/reset-groups-vrq7a3nj/develop/reports/develop-ui.json"
+    },
+    "filesystem": {
+      "exit_code": 0,
+      "passed": true,
+      "source_unchanged": true,
+      "report": "var/reset-groups-vrq7a3nj/filesystem/reports/filesystem-ui.json"
+    },
+    "preferences": {
+      "exit_code": 0,
+      "passed": true,
+      "source_unchanged": true,
+      "report": "var/reset-groups-vrq7a3nj/preferences/reports/restyle-ui.json"
+    }
+  },
+  "xpc": {
+    "passed": true,
+    "production_rejects_fault_injection": true,
+    "report": "var/reset-groups-vrq7a3nj/develop/reports/xpc-qualification-macos.json"
+  },
+  "manual_ui": {
+    "light_reset_undo_redo": true,
+    "colour_reset_preserves_exposure": true,
+    "curve_midpoint_078_reset_to_050": true,
+    "persisted_synthetic_revisions": [
+      {
+        "revision": 1,
+        "recipe": {
+          "schema_version": 1,
+          "process_version": 2,
+          "raw_engine": "Apple",
+          "exposure_ev": 0.75,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "highlights": 0.0,
+          "shadows": 0.0,
+          "whites": 0.0,
+          "blacks": 0.0,
+          "temperature": 25.0,
+          "tint": -8.0,
+          "saturation": 0.0,
+          "vibrance": 65.0,
+          "protect_warm": true,
+          "curve": []
+        }
+      },
+      {
+        "revision": 2,
+        "recipe": {
+          "schema_version": 1,
+          "process_version": 2,
+          "raw_engine": "Apple",
+          "exposure_ev": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "highlights": 0.0,
+          "shadows": 0.0,
+          "whites": 0.0,
+          "blacks": 0.0,
+          "temperature": 25.0,
+          "tint": -8.0,
+          "saturation": 0.0,
+          "vibrance": 65.0,
+          "protect_warm": true,
+          "curve": []
+        }
+      },
+      {
+        "revision": 3,
+        "recipe": {
+          "schema_version": 1,
+          "process_version": 2,
+          "raw_engine": "Apple",
+          "exposure_ev": 0.75,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "highlights": 0.0,
+          "shadows": 0.0,
+          "whites": 0.0,
+          "blacks": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "saturation": 0.0,
+          "curve": []
+        }
+      },
+      {
+        "revision": 4,
+        "recipe": {
+          "schema_version": 1,
+          "process_version": 2,
+          "raw_engine": "Apple",
+          "exposure_ev": 0.75,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "highlights": 0.0,
+          "shadows": 0.0,
+          "whites": 0.0,
+          "blacks": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "saturation": 0.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.78
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ]
+        }
+      },
+      {
+        "revision": 5,
+        "recipe": {
+          "schema_version": 1,
+          "process_version": 2,
+          "raw_engine": "Apple",
+          "exposure_ev": 0.75,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "highlights": 0.0,
+          "shadows": 0.0,
+          "whites": 0.0,
+          "blacks": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "saturation": 0.0,
+          "curve": []
+        }
+      }
+    ],
+    "observation_issue": "Initial UI-control session stopped reflecting subsequent actions consistently. Main-thread sample showed normal AppKit event wait, not a demonstrated deadlock. The isolated process was terminated and reopened, and the computer-use session reset. Subsequent visible colour/curve clicks and persisted revisions matched. Root cause not established; not claimed fixed.",
+    "evidence": "var/reset-groups-vrq7a3nj"
+  },
+  "not_qualified": [
+    "Windows native UI for these controls",
+    "RAW camera/display accuracy",
+    "Full accessibility and repeated rapid-action campaign",
+    "SF/R0-R4 gates"
+  ]
+}
