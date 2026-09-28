@@ -129,7 +129,7 @@ Le quote fisse di cache e l’assenza di budget globale sotto descrivono la 0.1.
 
 ### Richiesta e modifica dello scopo
 
-Il titolare ha richiesto un repository GitHub pubblico, README, licenza **proprietaria** e apertura effettiva di JPEG, PNG, RAW, TIFF e altri formati. La 0.1.2 ammetteva soltanto i dodici PNG del corpus. Questo incremento anticipa una parte dei formati R1/R3 attraverso i decoder Apple, conservando la modalità **Anteprima**. È una modifica esplicita del perimetro di sviluppo rispetto all'attesa del gate R0 completo nella proposta originale; non chiude quel gate e non sostituisce la futura matrice RAW/ICC multipiattaforma.
+La 0.1.3 introduce repository GitHub pubblico, README, licenza **proprietaria** e apertura di JPEG, PNG, RAW, TIFF e altri formati. La 0.1.2 ammetteva soltanto i dodici PNG del corpus. Questo incremento anticipa una parte dei formati R1/R3 attraverso i decoder Apple, conservando la modalità **Anteprima**. È una modifica esplicita del perimetro di sviluppo rispetto all'attesa del gate R0 completo nella proposta originale; non chiude quel gate e non sostituisce la futura matrice RAW/ICC multipiattaforma.
 
 ### Confine di esecuzione
 
@@ -205,7 +205,7 @@ Nella prova locale lettura e apertura in scrittura della sentinella, e creazione
 
 LPAC esclude l'autorità generica di All Application Packages. Le risorse di sistema con ACL compatibili, il profilo temporaneo proprio e gli handle concessi rimangono accessibili. Queste prove non qualificano attacchi al kernel, tutti gli oggetti IPC, tutti i driver, altri Windows o un ambiente di installazione pulito. Il nome `kernel_enforced` nell'API continua a indicare il tetto di memoria del Job, non una garanzia universale di sandbox.
 
-macOS mantiene il proprio percorso XPC/App Sandbox. Il titolare ha rinviato esplicitamente la nuova verifica nativa al Mac; le prove Windows non la sostituiscono. Il primo port è riassunto in [STATO.md](../STATO.md#prototipo-e-port); questa decisione descrive il confine successivo dell'esperimento autorizzato.
+macOS mantiene il proprio percorso XPC/App Sandbox. Le prove Windows non sostituiscono una verifica nativa del bundle Mac. Il primo port è riassunto in [STATO.md](../STATO.md#prototipo-e-port); questa decisione descrive il confine successivo dell'esperimento.
 
 Fonti primarie: [Microsoft: avvio AppContainer e LPAC](https://learn.microsoft.com/en-us/windows/win32/secauthz/implementing-an-appcontainer), [attributi di creazione](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute), [ambiente del token](https://learn.microsoft.com/en-us/windows/win32/api/userenv/nf-userenv-createenvironmentblock).
 

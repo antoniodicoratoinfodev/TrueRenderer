@@ -85,7 +85,7 @@ Grid and filmstrip thumbnails reflect saved or in-progress edits. The inspector
 histogram follows its edited thumbnail preview and labels the preview level.
 
 The remaining tools in the [photographic development plan](STATO.md#piano-sviluppo-fotografico),
-including automatic native RAW white balance, optics, spatial detail filters, masks,
+including optics, spatial detail filters, masks,
 retouching and presets, are still in development.
 
 ### Keep the work yours

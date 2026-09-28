@@ -5,7 +5,7 @@
     "corrupt": 0,
     "entries": 3,
     "evictions": 0,
-    "folder": "/Users/antonio/Desktop/TrueRenderer/var/cache-qualification-whhhK5",
+    "folder": "var/cache-qualification-whhhK5",
     "hits": 15,
     "message": "Immagine riutilizzata dalla cache",
     "misses": 3,

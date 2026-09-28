@@ -4,9 +4,9 @@ Data della proposta: 15 settembre 2026. Revisione: 3, decisioni d'implementazion
 
 Specifica del navigatore laterale per file, cartelle e directory, con un'interazione familiare a chi usa Adobe Bridge o l'esploratore di un IDE. Requisiti e matrice di accettazione descrivono il risultato completo, non una dichiarazione di disponibilità: implementato, verificato e mancante sono tracciati soltanto in [STATO.md](../STATO.md#navigatore-filesystem--implementazione-del-19-settembre-2026). Nessuna chiusura implicita dei gate R0–R4.
 
-Il nome proposto nell'interfaccia è **Esplora** in italiano, **Explorer** in inglese. «Finder» descrive qui l'intento dell'utente; il pannello fa parte di TrueRenderer su entrambe le piattaforme previste.
+Il nome nell'interfaccia è **Esplora** in italiano, **Explorer** in inglese.
 
-**Requisito esplicito del titolare: il nuovo navigatore deve essere commutabile con il pannello sinistro già presente.** Lo stesso spazio ospita due schede, **Libreria / Library** (pannello attuale) ed **Esplora / Explorer** (nuovo). Il pannello attuale conserva corpus, selezione rapida e filtri; la scheda attiva si sceglie in qualsiasi momento. La commutazione riguarda soltanto l'interfaccia, senza cambiare la cartella o la fotografia in uso.
+**Il navigatore deve essere commutabile con il pannello sinistro già presente.** Lo stesso spazio ospita due schede, **Libreria / Library** (pannello attuale) ed **Esplora / Explorer** (nuovo). Il pannello attuale conserva corpus, selezione rapida e filtri; la scheda attiva si sceglie in qualsiasi momento. La commutazione riguarda soltanto l'interfaccia, senza cambiare la cartella o la fotografia in uso.
 
 ## 1. Risultato desiderato e confini
 
@@ -33,7 +33,7 @@ Il trascinamento della prima versione serve ad aprire una posizione o gestire un
 
 ## 2. Base reale da cui partire
 
-Riferimenti verificati mediante lettura del repository in questa sessione:
+Base del repository alla data della proposta:
 
 | Area | Stato attuale | Conseguenza per l'implementazione |
 |---|---|---|
@@ -488,7 +488,7 @@ Proposte di nuovi strumenti, da creare soltanto durante l'implementazione: gener
 
 | Decisione proposta | Motivo / rischio da verificare |
 |---|---|
-| Un pannello sinistro con schede Libreria / Esplora, ultimo stato ricordato | Requisito esplicito del titolare; conserva il pannello corrente e consente lo switch in qualsiasi layout |
+| Un pannello sinistro con schede Libreria / Esplora, ultimo stato ricordato | Conserva il pannello corrente e consente lo switch in qualsiasi layout |
 | File e cartelle nello stesso albero; tutti i file per default | Soddisfa l'esplorazione in stile IDE; modalità solo cartelle/immagini per ridurre la densità |
 | Freccia espande, nome attiva; tastiera prima sposta focus | Evita scansioni e decode involontari durante l'esplorazione |
 | Listing e catalogo separati; apertura fotografica resta integrata | Il loop attuale può ritardare salvataggi/domanda durante una scansione lunga |
@@ -503,7 +503,7 @@ Scelte aperte dopo N0: adattatori nativi esatti e minimi OS per volumi/watch/pla
 ### 12.1 Decisioni per la prima implementazione
 
 - Le schede Libreria/Esplora condividono posizione e margini dell'intestazione; soltanto la larghezza ricordata del pannello può variare. Lo switch conserva l'albero e i rami compressi e completa il nuovo layout prima di presentarlo. La barra percorso usa un padding verticale di 6 punti per allinearsi alla densità delle barre superiori.
-- Estetica richiesta dal titolare: albero denso ispirato agli explorer degli IDE, con righe di circa 22 punti, rientri di 14 punti e guide gerarchiche, chevron di espansione, icone vettoriali per cartelle/immagini/file e selezione rettangolare blu tenue nel solo pannello laterale. Controlli piatti, scheda attiva sottolineata e margini ridotti; i tooltip mantengono i nomi completi. Le icone sono disegnate dal frontend, indipendenti dai glifi del font.
+- Layout: albero denso ispirato agli explorer degli IDE, con righe di circa 22 punti, rientri di 14 punti e guide gerarchiche, chevron di espansione, icone vettoriali per cartelle/immagini/file e selezione rettangolare blu tenue nel solo pannello laterale. Controlli piatti, scheda attiva sottolineata e margini ridotti; i tooltip mantengono i nomi completi. Le icone sono disegnate dal frontend, indipendenti dai glifi del font.
 - Due slot I/O complessivi condivisi da risoluzione percorsi, listing e scansioni; coda di 64 lavori e canali di quattro risposte con invio cancellabile. I thread non sono attesi alla chiusura se una syscall resta bloccata; questo non equivale a cancellare la syscall né a garantire progresso quando entrambi gli slot sono occupati.
 - Riserva navigazione di 64 MiB nel budget applicativo: 40 MiB per le voci dell'albero, 20 MiB stimati per la scansione fotografica e margine per messaggi/metadati. Limite massimo 100.000 voci: la quota byte può interrompere prima, con risultato parziale esplicito. Listing fino a 256 voci/128 KiB stimati per batch; osservazioni fotografiche fino a 16, per dare precedenza ai salvataggi fra batch.
 - Fallback di aggiornamento mediante polling ogni 15 secondi quando la finestra è attiva, con rilettura della cartella corrente e al massimo 16 rami espansi, oltre al refresh manuale. Non sostituisce la futura integrazione watcher/identità volume. Le posizioni sono locator nativi senza conversione lossy; non sono bookmark di volume persistenti.

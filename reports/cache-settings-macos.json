@@ -8,7 +8,7 @@
     "decode_jobs": 0,
     "entries": 334,
     "evictions": 0,
-    "folder": "/Users/antonio/Desktop/TrueRenderer/corpus",
+    "folder": "corpus",
     "hits": 13,
     "memory_pressure": "Normal",
     "message": "Cache della cartella pronta",

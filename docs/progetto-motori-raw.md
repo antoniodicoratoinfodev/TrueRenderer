@@ -2,7 +2,7 @@
 
 **Stato corrente, 15 settembre 2026:** incremento Windows pubblicato in `67146e3`, comprese le correzioni successive; 107 test Rust nella campagna [gamma/orientamento](../STATO.md#revisioni-windows-concluse). Il bundle Mac con i motori collegati è stato costruito e verificato per UI/corpus/XPC nel [restyling](../reports/toolbar-macos.json). La campagna Mac D750 è ora verificata sotto; restano altre fotocamere, confronto fotografico esteso e qualifica colore. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
 
-Progetto avviato il 12 settembre 2026 su richiesta del titolare: motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. Anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.
+Progetto del 12 settembre 2026: motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. Anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.
 
 ## Campagna Mac del 15 settembre
 
@@ -12,7 +12,7 @@ Ripetuti 32 Bayer sintetici: il metodo direzionale riduce MSE in 24 casi, quattr
 
 ## Contratto e progetto
 
-**Correzioni del 13 settembre:** i rilievi della [revisione prima di main](../STATO.md#revisioni-windows-concluse) sono stati corretti e verificati su Windows: anche i TIFF ordinari con miniatura vengono decodificati dall'immagine principale. Passati 89 test Rust, build debug/release, 156 sviluppi D750/D40 e cambio motore nella GUI; [rapporto](../reports/pre-main-fixes-windows.json). Il contratto resta limitato al perimetro provato. Il titolare ha rinviato Mac/XPC; il codice resta sperimentale e la promozione integrale richiede quella verifica e i restanti controlli di distribuzione.
+**Correzioni del 13 settembre:** i rilievi della [revisione prima di main](../STATO.md#revisioni-windows-concluse) sono stati corretti e verificati su Windows: anche i TIFF ordinari con miniatura vengono decodificati dall'immagine principale. Passati 89 test Rust, build debug/release, 156 sviluppi D750/D40 e cambio motore nella GUI; [rapporto](../reports/pre-main-fixes-windows.json). Il contratto resta limitato al perimetro provato. Mac/XPC non erano stati verificati in quella campagna; il codice resta sperimentale e la promozione integrale richiede quella verifica e i restanti controlli di distribuzione.
 
 - Default conservato: Apple CIRAWFilter su macOS, LibRaw bilineare su Windows.
 - Motori espliciti: Apple (solo macOS), LibRaw bilineare storico, LibRaw AHD, TrueRenderer direzionale fp32 sperimentale.

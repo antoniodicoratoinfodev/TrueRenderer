@@ -14,14 +14,6 @@ Indice delle specifiche, delle decisioni e delle evidenze. Stato corrente e atti
 | [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md) | ADR 0010: formati di uscita, DNG distinti, superficie e dati scientifici |
 | [Sviluppo fotografico non distruttivo](progetto-sviluppo-fotografico.md) | Progetto dei controlli e ADR 0011: luce/WB/colore, dettaglio, ottica, maschere, ricette e parità vista/export; attività in STATO.md |
 | [Navigatore filesystem commutabile](progetto-navigatore-filesystem.md) | Requisiti, decisioni, schede Libreria/Esplora, preferiti e matrice di accettazione; avanzamento in STATO.md |
-| [Verifica nativa navigatore](../reports/filesystem-browser-macos.json) | Layout IT/EN, finestra compatta e 200%; hash e limiti della campagna Mac |
-| [Navigatore stile IDE](../reports/navigator-ide-macos.json) | Revisione estetica, schermate aggiornate, regressioni UI e bundle Mac |
-| [Barra compatta e schede stabili](../reports/navigator-layout-macos.json) | Regressione cambio pannello, layout nativi, preferenze e XPC del bundle aggiornato |
-| [Cache e suite Mac, 15 settembre](../reports/cache-integrity-macos.json) | Correzione hard link e verifica della base prima delle misure di navigazione |
-| [Probe della superficie, 15 settembre](../reports/navigation-surface-macos.json) | Selezioni CPU/GPU e cache distinte; readback verificato, qualifica evento→display aperta |
-| [Immagini grandi, pressione e RAW Mac](../STATO.md#campagne-raw-concluse) | 12/24/45 MP, D750 e correzione stack XPC; superamento memoria esplicito |
-| [Correzione Fit, 15 settembre](../reports/fit-coverage-macos.json) | Riserva ampia entro quota; 240 azioni e copertura completa nella traccia, con limiti espliciti |
-| [Transizioni del viewer, 15 settembre](../reports/navigation-transitions-macos.json) | Zoom, pan, qualità e 1:1; copertura provvisoria misurata e limite al ritorno a Fit |
 
 ## Decisioni integrate per argomento
 
@@ -39,7 +31,7 @@ Sintesi, limiti e collegamenti ai rapporti JSON sono nel [registro unico](../STA
 
 ## Copie e supporti da mantenere
 
-- [TrueVision-Architettura nella radice](../TrueVision-Architettura.md): copia richiesta dal flusso del titolare e dal sincronizzatore; non eliminabile nel flusso attuale.
+- [TrueVision-Architettura nella radice](../TrueVision-Architettura.md): copia con nome storico, mantenuta dal sincronizzatore insieme alla versione in `docs/`.
 - [Originale v1.2](TrueVision-Architettura.originale-v1.2.md): backup immutabile, da non allineare al codice corrente.
 - [AGENTS](../AGENTS.md): istruzioni operative. Aggiornare normalmente solo STATO.md. Eseguire `python3 scripts/sync-docs.py` quando cambiano le fonti della specifica anteprime, senza modificare manualmente i blocchi generati.
 - [Laboratorio XPC](../experiments/macos-xpc/README.md): esperimento iniziale, distinto dal bundle corrente.

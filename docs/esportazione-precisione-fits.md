@@ -2,7 +2,7 @@
 
 ## ADR 0010 — tre percorsi distinti
 
-Su richiesta del titolare, l'esportazione fotografica e una verticale FITS 2D
+L'esportazione fotografica e una verticale FITS 2D
 anticipano parte dello scope post-v1. Questo documento specifica il contratto;
 implementazione, prove e limiti correnti risiedono soltanto in [STATO.md](../STATO.md).
 Non cambia l'assurance Anteprima né chiude i gate R0–R4.

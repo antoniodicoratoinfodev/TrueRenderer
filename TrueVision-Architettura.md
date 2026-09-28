@@ -5039,7 +5039,7 @@ Le impostazioni hanno schema, validazione numerica, migrazione e scrittura tempo
 
 La quota disco resta **per cartella**, come richiesto in ADR 0005; le preferenze globali si applicano alle cartelle visitate, non equivalgono a un tetto di spazio su tutti i volumi. Un eventuale limite aggregato richiede un registro dei percorsi gestiti e una politica per volumi offline e altre istanze: è un'estensione separata, non una garanzia di questa fase. Non cercare e cancellare cache su dischi non aperti dall'utente.
 
-`Svuota cache immagini` opera soltanto nella directory cache gestita. Originali, `library.sqlite`, annotazioni, configurazione e backup durevoli non sono coinvolti. Su richiesta del titolare, l'apertura ora prepara le miniature dell'intera cartella in modo progressivo e cancellabile: default background, alternativa con popup modale fino al termine. Sui backend senza sviluppo ridotto anche le miniature possono richiedere sviluppo Full della sorgente; non promettere il costo dell'estrazione JPEG né mantenere tutte le immagini native in RAM. La coda introduce una sola richiesta di preparazione per volta (edge 512, motore/qualità globali), subordinata alle viste e ai budget; le quote della cache continuano ad applicarsi.
+`Svuota cache immagini` opera soltanto nella directory cache gestita. Originali, `library.sqlite`, annotazioni, configurazione e backup durevoli non sono coinvolti. L'apertura prepara le miniature dell'intera cartella in modo progressivo e cancellabile: default background, alternativa con popup modale fino al termine. Sui backend senza sviluppo ridotto anche le miniature possono richiedere sviluppo Full della sorgente; non promettere il costo dell'estrazione JPEG né mantenere tutte le immagini native in RAM. La coda introduce una sola richiesta di preparazione per volta (edge 512, motore/qualità globali), subordinata alle viste e ai budget; le quote della cache continuano ad applicarsi.
 
 La barra compatta superiore apre il dettaglio al clic. Durante la scansione il totale è ignoto: indicatore indeterminato e immagini individuate, senza percentuale fittizia. Dopo la scansione, percentuale = immagini elaborate / immagini catalogate nella cartella corrente, indipendente da filtri/selezione; errori e sorgenti non abilitate sono separati e segnalati, non successi nascosti. Il 100% indica fine della preparazione delle miniature, non residenza integrale in RAM, dettaglio 1:1, completamento degli upload GPU o persistenza SSD garantita. Le rappresentazioni già pronte si riusano; sotto pressione il background espone l'attesa e può proseguire in primo piano liberando le viste.
 
@@ -5500,16 +5500,15 @@ Durante i futuri incrementi applicativi aggiornare soltanto [stato e piano](STAT
 
 **Fuori dal primo incremento:** demosaicing proprietario/GPU LibRaw, RAW regionale non offerto dal backend, gigapixel qualificato, texture sparse, quota disco globale su tutti i volumi, nuovo protocollo di lock incompatibile con la 0.1.4, più di due servizi XPC e promozione dei badge Standard/Riferimento. Le astrazioni devono permettere le estensioni previste senza far dipendere la navigazione di 1.000 foto dal completamento di R3.
 
-#### 15. Tracciabilità dei requisiti del titolare
+#### 15. Tracciabilità dei requisiti
 
-| Richiesta | Sezioni e verifica |
+| Requisito | Sezioni e verifica |
 |---|---|
 | RAM per le immagini utili e recupero delle lontane da SSD | §§4–7; espulsione senza risviluppo delle miniature, cache persistente e prefetch |
 | Scelta fra anteprima full qualità e standard | §§2–3, 9; selettore persistente, override 1:1, provenienza e gate di qualità |
 | Limiti cache scelti dall'utente | §§3, 5–6; quote RAM/SSD/GPU, riduzione dinamica, cache disabilitabile e manutenzione |
 | CPU/GPU molto utilizzate e app performante | §§7–9, 12; profilo Prestazioni, parallelismo/SIMD, compute WGSL verificato, riuso del contesto Apple; Metal nel decoder sperimentale e disabilitato, beneficio integrato ancora da misurare |
 | Confronto concreto con 1.000 RAW | §§1, 10, 12; baseline, scenari freddi/caldi e misure per la stessa qualità |
-| Progetto salvato prima dell'implementazione | Questo documento; checklist autonoma §13 e gate §12 ancora aperti |
 
 Le fonti API collegate descrivono capacità e vincoli delle piattaforme; formule, valori iniziali e sequenza degli incrementi sono scelte progettuali di TrueRenderer. Il riferimento normativo rimane [l'architettura corrente](docs/TrueRenderer-Architettura.md), in particolare §§1.2, 2.3, 5.3–5.4, 7.6, 10–12 e 19, con le decisioni di [ADR 0003](docs/progetto-anteprime-cache-prestazioni.md#adr-0003), [ADR 0004](docs/isolamento-decoder-e-formati.md#adr-0004) e [ADR 0005](docs/progetto-anteprime-cache-prestazioni.md#adr-0005), che aggiorna la scelta della cache accanto agli originali.
 
@@ -5584,7 +5583,7 @@ La verifica Mac copre byte/mtime, nomi conservati, descrittore e blocchi v2, lin
 
 ##### Scopo autorizzato
 
-Il titolare richiede una cartella di cache/temporanei dentro ogni cartella aperta, impostazioni di limite e pulizia, README inglese e pubblicazione su GitHub prima di ulteriori ottimizzazioni. Questa richiesta anticipa esplicitamente la cache accanto alle foto che §11.4 collocava nel post-v1. Le fotografie rimangono in sola lettura; si scrive esclusivamente nella sottocartella derivata `.truerenderer-cache`. Annotazioni, backup e preferenze rimangono nel percorso dati dell'app.
+La cache e i temporanei risiedono in una sottocartella di ogni cartella aperta, con limiti e pulizia configurabili. La decisione anticipa la cache accanto alle foto che §11.4 collocava nel post-v1. Le fotografie rimangono in sola lettura; si scrive esclusivamente nella sottocartella derivata `.truerenderer-cache`. Annotazioni, backup e preferenze rimangono nel percorso dati dell'app.
 
 ##### Formato e identità
 

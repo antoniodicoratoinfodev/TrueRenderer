@@ -1,6 +1,6 @@
 # Sviluppo fotografico non distruttivo
 
-Specifica della futura estensione richiesta dal titolare il 23 settembre 2026: regolare una fotografia con un insieme di strumenti paragonabile, per categorie d'uso, a Lightroom e Camera Raw. Piano di consegna, caselle operative e verifiche risiedono soltanto in [STATO.md](../STATO.md#piano-sviluppo-fotografico). I nomi, le scale e gli algoritmi seguenti sono scelte di TrueRenderer; non promettono equivalenza numerica con altri programmi.
+Specifica dell'estensione fotografica, proposta del 23 settembre 2026: regolare una fotografia con un insieme di strumenti paragonabile, per categorie d'uso, a Lightroom e Camera Raw. Piano di consegna, caselle operative e verifiche risiedono soltanto in [STATO.md](../STATO.md#piano-sviluppo-fotografico). I nomi, le scale e gli algoritmi seguenti sono scelte di TrueRenderer; non promettono equivalenza numerica con altri programmi.
 
 ## ADR 0011 — ricetta fotografica reversibile e condivisa
 
