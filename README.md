@@ -22,6 +22,8 @@ Folder preparation runs in the background with visible progress and controls to 
 
 Move from Fit view to physical 1:1 when you need to judge focus, texture, noise or retouching without an accidental resize getting in the way. Metadata, pixel values, histogram and rendering information remain close at hand.
 
+The Inspector’s **Shooting data** section, below **File**, shows camera, lens, shutter speed, aperture, ISO and focal length from readable standard EXIF tags. Missing or unreadable values appear as “—”; hover over a value for its source. This read-only profile covers JPEG, PNG and classic TIFF-based files, including supported RAW containers; proprietary lens names and BigTIFF metadata are not inferred.
+
 ### Compare with intent
 
 Place two images side by side with synchronized navigation to compare focus, exposure, RAW development or near-duplicate frames.

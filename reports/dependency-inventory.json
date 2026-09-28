@@ -4,7 +4,7 @@
   "target": "aarch64-apple-darwin",
   "scope": "Cargo-resolved build/test packages for this workspace; inventory only, not formal release SBOM or legal approval",
   "rust": "1.98.1",
-  "cargo_lock_sha256": "d27296dab3e4123906474cf7583ada3fd30463e1b50525d357a52ea9cf4833d6",
+  "cargo_lock_sha256": "0adc016f51c5f745f4aaef72b80e1bbf60854d696cb2d08a0ab522605d6a33cd",
   "packages": [
     {
       "name": "accesskit",
@@ -1489,6 +1489,20 @@
       ]
     },
     {
+      "name": "kamadak-exif",
+      "version": "0.6.1",
+      "license": "BSD-2-Clause",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/kamadak/exif-rs",
+      "checksum_sha256": "1130d80c7374efad55a117d715a3af9368f0fa7a2c54573afc15a188cd984837",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/kamadak-exif-0.6.1-LICENSE",
+          "sha256": "17c496a77909a1f26006427d27e58a1d1514baa6a332240aa5fc543e3fa7295d"
+        }
+      ]
+    },
+    {
       "name": "khronos-egl",
       "version": "6.0.0",
       "license": "MIT/Apache-2.0",
@@ -1741,6 +1755,20 @@
         {
           "file": "reports/dependency-notices/moxcms-0.8.1-LICENSE.md",
           "sha256": "2aa92cada6431e75615e3fe6cb1a9082c98f777d48ae1c087c0da0e37f7b8bff"
+        }
+      ]
+    },
+    {
+      "name": "mutate_once",
+      "version": "0.1.2",
+      "license": "BSD-2-Clause",
+      "source": "registry+https://github.com/rust-lang/crates.io-index",
+      "repository": "https://github.com/kamadak/mutate_once-rs",
+      "checksum_sha256": "13d2233c9842d08cfe13f9eac96e207ca6a2ea10b80259ebe8ad0268be27d2af",
+      "notices": [
+        {
+          "file": "reports/dependency-notices/mutate_once-0.1.2-LICENSE",
+          "sha256": "0c1b89e5705ae3a3f7275120e175c8ce7b1f82b1752594f8c513ae467f9e6b22"
         }
       ]
     },

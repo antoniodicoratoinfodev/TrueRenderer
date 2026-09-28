@@ -1,0 +1,103 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-28",
+  "scope": "Read-only standard EXIF shooting data in the inspector; synthetic fixtures only, no camera-wide metadata qualification.",
+  "bundle": "dist/TrueRenderer-shooting-data-2026-09-28.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "035fd33c87f448b064afa8bc08e0202116c8ebea4dd38efd35b92f086b9dd8cc",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "adaffcccd79845cfc1e944b878822bc848a038a4160b2fdb9546ad60f0f6e7ad",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "814a53acbe52e17e7f82af35a097e56aa7279b7d5ef03be79dd6b0de596e97cd"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 203,
+    "native_integrations": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "sampling_signals": 24,
+    "native_surface": true,
+    "artifacts": "var/verify-q70OjjvR"
+  },
+  "exif_tests": [
+    "TIFF little/big endian, JPEG APP1, PNG eXIf",
+    "Missing tags, thumbnail exclusion, duplicate model, zero rational denominator, long strings, truncated/invalid offsets, 4 MiB bound",
+    "LensSpecification, ISO overflow and long exposures",
+    "Probe, raster and reference mip transport",
+    "Disk preview cache metadata roundtrip"
+  ],
+  "xpc": {
+    "passed": true,
+    "production_rejects_fault_injection": true,
+    "integration": {
+      "application": "TrueRenderer",
+      "corpus_images_checked": 12,
+      "edited_export_checked_slots": 2,
+      "edited_export_native_match_slots": 2,
+      "edited_export_source_unchanged": true,
+      "elapsed_seconds": 21.062317542,
+      "first_before_stop": {
+        "completed_jobs": 1,
+        "forced_stops": 1,
+        "peak_footprint_bytes": 7979536,
+        "peak_rss_bytes": 14778368,
+        "starts": 1,
+        "worker_pid": 46718
+      },
+      "first_pid": 46718,
+      "full_sandbox_gate_passed": false,
+      "lifecycle_api": "Mach task/audit token + dynamically resolved libproc SPI; no PID-only signal",
+      "memory_before_stop": {
+        "completed_jobs": 1,
+        "forced_stops": 1,
+        "peak_footprint_bytes": 7995944,
+        "peak_rss_bytes": 14778368,
+        "starts": 1,
+        "worker_pid": 46744
+      },
+      "memory_limit_is_hard_kernel_cap": false,
+      "other_isolate_survived": true,
+      "passed": true,
+      "recovered_pid": 46744,
+      "same_pixels": true,
+      "scope": "integrated XPC R0 corpus, two processes, timeout and memory supervision; full sandbox/release gate open",
+      "second": {
+        "completed_jobs": 14,
+        "forced_stops": 0,
+        "peak_footprint_bytes": 66880064,
+        "peak_rss_bytes": 73728000,
+        "starts": 1,
+        "worker_pid": 46717
+      },
+      "second_pid": 46717,
+      "suspended_worker_timeout_ms": 208,
+      "two_distinct_processes": true,
+      "version": "0.1.5"
+    }
+  },
+  "ui": {
+    "checked": true,
+    "method": "Native accessibility tree and screenshot inspection through computer-use; grid and inspector scrolling",
+    "fixture_sha256": "c84221f00ec83eebac8d79a979cd28e1cea3a63fd44747ddf3324c24e3b612c7",
+    "observed": {
+      "camera": "Example Camera",
+      "lens": "Example 24-70 mm",
+      "exposure": "1/250 s",
+      "aperture": "f/2.8",
+      "iso": "800",
+      "focal_length": "50 mm"
+    },
+    "missing_tags": "Em dash verified on existing synthetic corpus",
+    "window_points": [
+      1224,
+      768
+    ]
+  },
+  "limitations": [
+    "Windows native and real-camera corpus not exercised in this increment",
+    "Classic TIFF-based RAW standard tags only; no general MakerNote lens identification, BigTIFF metadata or qualified catalog/XMP subsystem",
+    "Only first 4 MiB are inspected; malformed or out-of-budget EXIF can leave shooting values absent",
+    "Two formats-smoke runs used only for exploratory captures, not counted as completed format campaigns; their DNG/JPEG stages were absent",
+    "No R0-R4 or Standard/Reference gate closed"
+  ]
+}

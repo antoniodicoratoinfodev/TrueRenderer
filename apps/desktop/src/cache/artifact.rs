@@ -648,6 +648,7 @@ mod tests {
         let image = ImageLevels::from_pyramid(pyramid, request).unwrap();
         let histogram = image.source().histogram();
         let info = RasterInfo {
+            shooting: None,
             scientific: None,
             reference_mip: None,
             width: 513,
@@ -1112,7 +1113,14 @@ mod tests {
     fn v2_roundtrip_independent_levels_and_shared_v1_quota() {
         let folder = tempfile::tempdir().unwrap();
         let cache = manager();
-        let (info, preview, request) = fixture();
+        let (mut info, preview, request) = fixture();
+        info.shooting = Some(Box::new(tr_core::protocol::ShootingInfo {
+            exposure: Some(tr_core::protocol::ShootingValue {
+                text: "1/250 s".into(),
+                source: "EXIF ExposureTime".into(),
+            }),
+            ..Default::default()
+        }));
         cache
             .store_preview(folder.path(), "digest", request, &info, &preview, &|| false)
             .unwrap();
@@ -1123,11 +1131,12 @@ mod tests {
             .unwrap()
             .pixels;
         drop(preview);
-        let Lookup::Hit(_, loaded) =
+        let Lookup::Hit(loaded_info, loaded) =
             cache.load_preview(folder.path(), "digest", request, &cache.memory, &|| false)
         else {
             panic!("expected verified hit");
         };
+        assert_eq!(loaded_info.shooting, info.shooting);
         assert_eq!(loaded.image.byte_len(), bytes);
         assert_eq!(
             loaded

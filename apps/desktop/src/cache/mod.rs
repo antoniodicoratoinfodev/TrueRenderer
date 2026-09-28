@@ -105,7 +105,7 @@ impl Manager {
             // name here would let pixels developed by one recipe be served
             // under another's key after a platform or recipe change.
             fingerprint: format!(
-                "{}:{}:{}:{}:{}:raw-detection-v2:fp32-premultiplied-Rec2020",
+                "{}:{}:{}:{}:{}:shooting-exif-v1:raw-detection-v2:fp32-premultiplied-Rec2020",
                 env!("CARGO_PKG_VERSION"),
                 tr_core::resample::VERSION,
                 os,
@@ -663,6 +663,7 @@ mod tests {
         ];
         let image = tr_core::color::LinearImage::new(3, 2, pixels).unwrap();
         let info = RasterInfo {
+            shooting: None,
             scientific: None,
             reference_mip: None,
             width: 3,

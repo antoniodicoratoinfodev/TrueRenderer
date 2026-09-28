@@ -16,6 +16,7 @@ png.workspace = true
 tiff.workspace = true
 moxcms = "=0.8.1"
 anyhow.workspace = true
+kamadak-exif = "=0.6.1"
 
 [dev-dependencies]
 serde_json.workspace = true

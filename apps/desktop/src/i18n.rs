@@ -16,6 +16,14 @@ impl Language {
             return source;
         }
         match source {
+            "Dati di scatto" => "Shooting data",
+            "Fotocamera" => "Camera",
+            "Obiettivo" => "Lens",
+            "Tempo" => "Shutter speed",
+            "Diaframma" => "Aperture",
+            "ISO" => "ISO",
+            "Focale" => "Focal length",
+            "— = dato assente o non leggibile" => "— = missing or unreadable data",
             "Sviluppo" => "Develop",
             "Dimensione interfaccia" => "Interface size",
             "Auto WB RAW" => "Auto RAW WB",

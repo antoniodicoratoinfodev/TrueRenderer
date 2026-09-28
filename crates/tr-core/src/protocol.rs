@@ -56,6 +56,8 @@ pub struct DecodeRequest {
 #[serde(deny_unknown_fields)]
 pub struct RasterInfo {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shooting: Option<Box<ShootingInfo>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub scientific: Option<Box<crate::science::Metadata>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reference_mip: Option<ReferenceMip>,
@@ -69,6 +71,47 @@ pub struct RasterInfo {
     pub input_color: String,
     pub filter: String,
     pub orientation: String,
+}
+
+/// Read-only presentation of primary-image EXIF. Missing or invalid tags stay absent.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShootingInfo {
+    pub camera: Option<ShootingValue>,
+    pub lens: Option<ShootingValue>,
+    pub exposure: Option<ShootingValue>,
+    pub aperture: Option<ShootingValue>,
+    pub iso: Option<ShootingValue>,
+    pub focal_length: Option<ShootingValue>,
+}
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ShootingValue {
+    pub text: String,
+    pub source: String,
+}
+impl ShootingInfo {
+    pub fn values(&self) -> [Option<&ShootingValue>; 6] {
+        [
+            self.camera.as_ref(),
+            self.lens.as_ref(),
+            self.exposure.as_ref(),
+            self.aperture.as_ref(),
+            self.iso.as_ref(),
+            self.focal_length.as_ref(),
+        ]
+    }
+    pub fn validate(&self) -> Result<()> {
+        for value in self.values().into_iter().flatten() {
+            for text in [&value.text, &value.source] {
+                ensure!(
+                    !text.is_empty() && text.len() <= 256 && !text.chars().any(char::is_control),
+                    "Dati di scatto IPC non validi"
+                );
+            }
+        }
+        Ok(())
+    }
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -126,6 +169,9 @@ pub fn parse<T: DeserializeOwned>(data: &[u8]) -> Result<T> {
     Ok(serde_json::from_slice(data)?)
 }
 pub fn validate_info(info: &RasterInfo) -> Result<usize> {
+    if let Some(shooting) = &info.shooting {
+        shooting.validate()?;
+    }
     if let Some(science) = &info.scientific {
         science.validate(info.source_width as u64 * info.source_height as u64)?;
         ensure!(
@@ -217,6 +263,7 @@ mod tests {
     use super::*;
     fn info(width: u32, height: u32) -> RasterInfo {
         RasterInfo {
+            shooting: None,
             scientific: None,
             reference_mip: None,
             width,

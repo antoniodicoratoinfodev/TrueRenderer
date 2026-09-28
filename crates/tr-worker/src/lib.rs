@@ -12,6 +12,7 @@ mod lpac;
 mod mosaic;
 #[cfg(target_os = "macos")]
 mod native;
+mod shooting;
 use anyhow::{Context, Result, ensure};
 use image::{DynamicImage, ImageDecoder, Limits, codecs::png::PngDecoder};
 use std::io::{BufReader, BufWriter, Cursor, Read, Write};
@@ -67,6 +68,7 @@ fn decode(bytes: &[u8], max_edge: u32) -> Result<(RasterInfo, LinearImage)> {
         color::FILTER_VERSION
     };
     let info = RasterInfo {
+        shooting: None,
         scientific: None,
         reference_mip: None,
         width: reduced.width,
@@ -102,6 +104,7 @@ fn probe(bytes: &[u8]) -> Result<RasterInfo> {
         std::mem::swap(&mut width, &mut height);
     }
     let info = RasterInfo {
+        shooting: None,
         scientific: None,
         reference_mip: None,
         width,
@@ -442,6 +445,7 @@ fn portable_decode(
     };
 
     let mut info = RasterInfo {
+        shooting: None,
         scientific: None,
         reference_mip: None,
         width,
@@ -1132,6 +1136,7 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
             // render panel shows. An assumption stays visible as an assumption.
             let (mut metadata, color) = decoder.probe(&bytes)?;
             metadata.input_color = color.provenance();
+            metadata.shooting = shooting::read(&bytes);
             if request.intent == protocol::DecodeIntent::Probe {
                 return Ok((metadata, None));
             }
@@ -1160,6 +1165,7 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
             let (mut info, color, mut raster) =
                 decoder.decode(&bytes, if reference { 0 } else { request.max_edge })?;
             info.input_color = color.provenance();
+            info.shooting = metadata.shooting;
             ensure!(
                 [info.source_width, info.source_height]
                     == [metadata.source_width, metadata.source_height],

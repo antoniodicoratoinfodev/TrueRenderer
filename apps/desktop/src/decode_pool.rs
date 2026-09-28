@@ -1293,6 +1293,7 @@ mod tests {
         job.resident = Some(PreviewDecoded {
             digest: "resident-digest".into(),
             info: tr_core::protocol::RasterInfo {
+                shooting: None,
                 scientific: None,
                 reference_mip: None,
                 width: 513,

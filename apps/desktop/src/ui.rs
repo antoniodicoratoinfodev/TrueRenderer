@@ -1956,6 +1956,43 @@ impl TrueRenderer {
                 field(ui, lang.text("Dimensione"), &human_bytes(item.bytes));
             });
         ui.add_space(12.);
+        egui::CollapsingHeader::new(lang.text("Dati di scatto"))
+            .id_salt("inspector-shooting")
+            .default_open(true)
+            .show(ui, |ui| {
+                let shooting = info.as_ref().and_then(|i| i.shooting.as_ref());
+                let values = shooting.map(|s| s.values()).unwrap_or([None; 6]);
+                for (label, value) in [
+                    "Fotocamera",
+                    "Obiettivo",
+                    "Tempo",
+                    "Diaframma",
+                    "ISO",
+                    "Focale",
+                ]
+                .into_iter()
+                .zip(values)
+                {
+                    let response = ui
+                        .scope(|ui| {
+                            field(
+                                ui,
+                                lang.text(label),
+                                value.map(|v| v.text.as_str()).unwrap_or("—"),
+                            );
+                        })
+                        .response;
+                    if let Some(value) = value {
+                        response.on_hover_text(&value.source);
+                    }
+                }
+                ui.label(
+                    RichText::new(lang.text("— = dato assente o non leggibile"))
+                        .small()
+                        .color(MUTED),
+                );
+            });
+        ui.add_space(12.);
         egui::CollapsingHeader::new(lang.text("Valutazione"))
             .id_salt("inspector-rating")
             .default_open(true)
@@ -3673,6 +3710,7 @@ mod settings_regressions {
             CachedImage {
                 digest: digest.clone(),
                 info: RasterInfo {
+                    shooting: None,
                     scientific: None,
                     reference_mip: None,
                     width: 16,
@@ -4138,6 +4176,7 @@ mod settings_regressions {
         let cached = CachedImage {
             digest: item.digest.clone(),
             info: RasterInfo {
+                shooting: None,
                 scientific: None,
                 reference_mip: None,
                 width: 2,
@@ -4461,6 +4500,7 @@ mod settings_regressions {
             CachedImage {
                 digest: "test".into(),
                 info: RasterInfo {
+                    shooting: None,
                     scientific: None,
                     reference_mip: None,
                     width: size,

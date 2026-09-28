@@ -20,6 +20,14 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Dati di scatto nell’ispettore — 28 settembre
+
+- [x] **Implementato:** sezione comprimibile Dati di scatto subito sotto File, aperta inizialmente: fotocamera, obiettivo, tempo, diaframma, ISO e focale; IT/EN, fonte del valore al passaggio del mouse e “—” per dati assenti/non leggibili. Fotocamera make/model senza ripetere il marchio; obiettivo da nome standard o LensSpecification, senza identificazioni proprietarie dedotte.
+- [x] **Lettura e cache:** `kamadak-exif` 0.6.1 nel worker, solo sui byte originali già autorizzati; profilo JPEG/PNG/TIFF classico, massimo 4 MiB di input, 512 campi e stringhe bounded. IFD principale, esclusione dei tag duplicati, tipi/razionali invalidi e ISO sentinella; metadati trasportati da probe/render/mip e conservati nella cache. Fingerprint aggiornato per rileggere le cache precedenti. Nessuna scrittura sugli originali né allargamento della allowlist pipe; inventario dipendenze e licenze aggiornati.
+- [x] **Verificato:** `scripts/verify.sh --gui` passato, **203 test ordinari + 14 integrazioni**, due test Python, otto controlli protocollo, 24 segnali, superficie nativa, fmt/Clippy/build. Fixture EXIF sintetiche endian LE/BE, JPEG/PNG, valori mancanti/ambigui/malformati, tempi lunghi, ISO elevati e obiettivo; roundtrip cache e trasporto probe/raster/mip. Artefatti `var/verify-q70OjjvR/`.
+- [x] **Bundle e UI:** `dist/TrueRenderer-shooting-data-2026-09-28.app`, due XPC, timeout/recupero e rifiuto fault injection passati. Controllati visivamente dati compilati e mancanti, oltre allo scorrimento dell’ispettore a 1224×768 su fixture sintetica; nessuna fotografia personale usata. [Rapporto](reports/shooting-data-macos-2026-09-28.json). Due catture esplorative tramite formats-smoke non sono campagne formati complete; il controllo finale del pannello è stato interattivo.
+- [ ] **Aperto:** qualifica EXIF completa §13.4, corpus fotografico reale, metadati oltre il limite di lettura, BigTIFF e nomi obiettivi proprietari, Windows nativo e verifiche UI estese. Nessun gate R/SF chiuso; nessuna promessa di Standard/Riferimento aggiunta.
+
 ### Correzioni della revisione WB — 28 settembre
 
 - [x] **Implementato:** il diagnostico `--verify-native-wb` registra esplicitamente il contagocce non eseguito per assenza di aree valide; salva l'esito aggregato `passed` e restituisce errore quando una prova fallisce, la campagna è incompleta o la sorgente cambia. Il rapporto resta disponibile anche per questi esiti negativi.
