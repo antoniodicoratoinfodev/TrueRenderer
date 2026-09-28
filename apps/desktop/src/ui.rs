@@ -4010,6 +4010,7 @@ mod settings_regressions {
             },
         );
         let job = crate::photo_export::WbJob {
+            cancel: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             item: item.clone(),
             recipe: recipe.clone(),
             analysis: tr_core::raw_wb::Analysis::Auto,
@@ -4020,6 +4021,19 @@ mod settings_regressions {
             red: 1300,
             ..Default::default()
         };
+        app.editing.wb_cancel = Some(job.cancel.clone());
+        job.cancel.store(true, Ordering::Release);
+        app.raw_wb_result(job.clone(), Ok(wb));
+        assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&recipe));
+        assert!(!app.editing.entries[&item.id].pending);
+        assert!(app.editing.wb_cancel.is_none());
+        job.cancel.store(false, Ordering::Release);
+        app.editing.wb_cancel = Some(job.cancel.clone());
+        let mut unrelated = job.clone();
+        unrelated.cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        app.raw_wb_result(unrelated, Ok(wb));
+        assert!(app.editing.wb_cancel.is_some());
+        assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&recipe));
         let mut stale = job.clone();
         stale.generation += 1;
         app.raw_wb_result(stale, Ok(wb));
@@ -4032,6 +4046,7 @@ mod settings_regressions {
             .as_mut()
             .unwrap()
             .exposure_ev = 1.;
+        app.editing.wb_cancel = Some(job.cancel.clone());
         app.raw_wb_result(job, Ok(wb));
         assert!(
             app.editing.entries[&item.id]

@@ -6,6 +6,7 @@ use tr_platform::Broker;
 pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
     let (_, digest) = tr_platform::snapshot(path)?;
     let mut cases = Vec::new();
+    let mut cancellations = Vec::new();
     for engine in RawEngine::choices() {
         let mut broker = Broker::new(binary.into());
         broker.set_raw_engine(engine);
@@ -23,6 +24,21 @@ pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
             }
         }
         drop(decoded);
+        let source = broker.prepare_snapshot(path, &digest, || false)?;
+        let calls = std::cell::Cell::new(0);
+        let stops = broker.statistics().forced_stops;
+        let start = Instant::now();
+        let cancelled = broker.estimate_raw_wb(source, Analysis::Auto, || {
+            calls.set(calls.get() + 1);
+            calls.get() >= 3
+        });
+        ensure!(
+            cancelled.is_err() && broker.statistics().forced_stops == stops + 1,
+            "Il worker WB non è stato interrotto"
+        );
+        cancellations.push(serde_json::json!({"engine":engine,"cancelled":true,
+            "forced_stops":1,"seconds":start.elapsed().as_secs_f64()}));
+        // The following analyses must recover on this same broker after cancellation.
         for analysis in std::iter::once(Analysis::Auto).chain(patch) {
             let start = Instant::now();
             broker.set_raw_white_balance(Default::default());
@@ -49,7 +65,7 @@ pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
     }
     let (_, after) = tr_platform::snapshot(path)?;
     ensure!(digest == after, "Sorgente modificata");
-    let report = serde_json::json!({"source_digest":digest,"source_unchanged":true,"cases":cases,"scope":"Native WB IPC and final decode; no camera colour calibration certification"});
+    let report = serde_json::json!({"source_digest":digest,"source_unchanged":true,"cases":cases,"cancellations":cancellations,"scope":"Native WB IPC and final decode; no camera colour calibration certification"});
     std::fs::create_dir_all(root.join("reports"))?;
     std::fs::write(
         root.join("reports/native-wb.json"),

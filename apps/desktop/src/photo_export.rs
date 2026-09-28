@@ -116,6 +116,7 @@ mod tests {
 
 #[derive(Clone)]
 pub struct WbJob {
+    pub cancel: Arc<AtomicBool>,
     pub item: tr_core::Item,
     pub recipe: tr_core::editing::EditRecipe,
     pub analysis: tr_core::raw_wb::Analysis,

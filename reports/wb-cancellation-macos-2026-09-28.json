@@ -1,0 +1,279 @@
+{
+  "date": "2026-09-28",
+  "scope": "Explicit RAW WB cancellation and recovery on macOS; no camera colour or general latency qualification",
+  "verification": {
+    "ordinary_tests": 198,
+    "integration_tests": 13,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "sampling_cases": 24,
+    "native_surface_passed": true,
+    "artifacts": "var/verify-i9T0WUeb"
+  },
+  "d750": {
+    "cancellations": [
+      {
+        "cancelled": true,
+        "engine": "Apple",
+        "forced_stops": 1,
+        "seconds": 0.039922584
+      },
+      {
+        "cancelled": true,
+        "engine": "LibRawBilinear",
+        "forced_stops": 1,
+        "seconds": 0.042619041
+      },
+      {
+        "cancelled": true,
+        "engine": "LibRawAhd",
+        "forced_stops": 1,
+        "seconds": 0.042603916
+      },
+      {
+        "cancelled": true,
+        "engine": "TrueRenderer",
+        "forced_stops": 1,
+        "seconds": 0.042592167
+      }
+    ],
+    "cases": [
+      {
+        "analysis": "Auto",
+        "engine": "Apple",
+        "passed": true,
+        "seconds": 28.213363917,
+        "size": [
+          6016,
+          4016
+        ],
+        "wb": {
+          "apple_temperature": 2879,
+          "apple_tint": 12,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "analysis": {
+          "Patch": {
+            "side": 5,
+            "x": 3760,
+            "y": 502
+          }
+        },
+        "engine": "Apple",
+        "passed": true,
+        "seconds": 15.939064417,
+        "size": [
+          6016,
+          4016
+        ],
+        "wb": {
+          "apple_temperature": 2927,
+          "apple_tint": 2,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "analysis": "Auto",
+        "engine": "LibRawBilinear",
+        "passed": true,
+        "seconds": 13.210563334,
+        "size": [
+          6032,
+          4032
+        ],
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1293,
+          "red": 819
+        }
+      },
+      {
+        "analysis": {
+          "Patch": {
+            "side": 5,
+            "x": 3770,
+            "y": 504
+          }
+        },
+        "engine": "LibRawBilinear",
+        "passed": true,
+        "seconds": 3.156214083,
+        "size": [
+          6032,
+          4032
+        ],
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1154,
+          "red": 819
+        }
+      },
+      {
+        "analysis": "Auto",
+        "engine": "LibRawAhd",
+        "passed": true,
+        "seconds": 21.187350791,
+        "size": [
+          6032,
+          4032
+        ],
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1327,
+          "red": 848
+        }
+      },
+      {
+        "analysis": {
+          "Patch": {
+            "side": 5,
+            "x": 3770,
+            "y": 504
+          }
+        },
+        "engine": "LibRawAhd",
+        "passed": true,
+        "seconds": 7.674788458,
+        "size": [
+          6032,
+          4032
+        ],
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1154,
+          "red": 818
+        }
+      },
+      {
+        "analysis": "Auto",
+        "engine": "TrueRenderer",
+        "passed": true,
+        "seconds": 14.417723542,
+        "size": [
+          6032,
+          4032
+        ],
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1302,
+          "red": 827
+        }
+      },
+      {
+        "analysis": {
+          "Patch": {
+            "side": 5,
+            "x": 3770,
+            "y": 504
+          }
+        },
+        "engine": "TrueRenderer",
+        "passed": true,
+        "seconds": 5.385255209,
+        "size": [
+          6032,
+          4032
+        ],
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1151,
+          "red": 816
+        }
+      }
+    ],
+    "scope": "Native WB IPC and final decode; no camera colour calibration certification",
+    "source_digest": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+    "source_unchanged": true
+  },
+  "ui": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "07-bayer-export.png",
+      "passed": true,
+      "size": [
+        1024,
+        768
+      ]
+    },
+    "fixture": "07-bayer.dng",
+    "native_wb_analysis": "ok",
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 63,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1400,
+        1050
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": true,
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "Apple",
+      "raw_wb": {
+        "apple_temperature": 6306,
+        "apple_tint": 10,
+        "blue": 1000,
+        "red": 1000
+      },
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 2,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-09-28T11:52:15.860621+00:00",
+    "bundle": "dist/TrueRenderer-wb-cancel-2026-09-28.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "a48e9bed4259eafd22cf1ba497476fdb4e79f83055dec1d76a36af4821a14fc8",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abb24aa9cf3e59a5a9c0ec40cb1a5c17e587bbaad9773b412d7f7bbbc9563f14",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "701c85855702fd11bd5b23b1bf1462539fe3312e6a41890140481fecd6370efd"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "limitations": [
+    "One authorized D750 source; no manual click-cancellation campaign",
+    "Windows deferred by owner",
+    "Ad hoc signed bundle; SF/R gates unchanged"
+  ]
+}

@@ -20,6 +20,13 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Annullamento analisi WB RAW — 28 settembre
+
+- [x] **Implementato:** comando Annulla analisi WB RAW, token per singola richiesta condiviso fra UI e coda decoder. Interrompe il worker tramite il broker esistente; i controlli tornano disponibili alla ricezione del completamento. Risultati già consegnati ma annullati non modificano ricetta o cronologia; risposte con token diverso non liberano una nuova richiesta. Messaggi IT/EN.
+- [x] **Verificato:** `scripts/verify.sh --gui` passato: **198 test ordinari + 13 integrazioni**, due test Python, otto controlli protocollo, 24 segnali, superficie nativa, fmt/Clippy/build. Regressione UI estesa ad annullamento dopo il completamento del calcolo e risposta di un'altra richiesta, oltre a navigazione/bozza obsolete. Artefatti `var/verify-i9T0WUeb/`.
+- [x] **Campagna nativa:** quattro interruzioni del worker e **8/8 analisi successive Auto/area** riuscite sui quattro motori del bundle `dist/TrueRenderer-wb-cancel-2026-09-28.app`, con NEF D750 autorizzato in sola lettura e originale invariato. Ritorno del broker dopo annullamento circa 40–43 ms nei casi provati, non p95. Prova XPC dei due servizi, timeout/recupero e rifiuto fault injection passata. Smoke UI sintetico con Auto asincrono, ricetta salvata, viewer/griglia, resa finale ed export PNG16 riuscito. Non eseguita una campagna manuale di clic sul comando Annulla. [Rapporto](reports/wb-cancellation-macos-2026-09-28.json); artefatti privati in `var/wb-cancel-7c08x0j5/`.
+- [ ] **Aperto:** invariati i requisiti esterni e le qualifiche estese dell'incremento precedente; Windows resta rinviato. Nessun nuovo gate SF/R chiuso.
+
 ### Auto WB nativo, contagocce RAW e verifica D750 — 28 settembre
 
 - [x] **Implementato:** Auto WB RAW e WB RAW da area 5×5 sui quattro motori, con fitting dei parametri nativi nel worker isolato e ricetta numerica congelata. Sorgente senza regolazioni creative, griglia nativa per Auto (ipotesi grigio medio), area alle coordinate native per contagocce. Massimo 48 MP, 16 sviluppi seriali e deadline 120 s; rifiuto di campioni invalidi, Jacobiano instabile, parametri oltre scala e mancata convergenza. Nessun fallback RGB o allargamento della allowlist su pipe.

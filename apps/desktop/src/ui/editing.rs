@@ -51,6 +51,7 @@ struct EditPreview {
 }
 pub(super) struct EditingUi {
     wb_pending: bool,
+    pub(super) wb_cancel: Option<Arc<std::sync::atomic::AtomicBool>>,
     wb_error: Option<(String, String)>,
     wb_smoke_started: bool,
     wb_smoke_result: Option<String>,
@@ -108,6 +109,7 @@ impl Default for EditingUi {
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
             wb_pending: false,
+            wb_cancel: None,
             wb_error: None,
             wb_smoke_started: false,
             wb_smoke_result: None,
@@ -143,7 +145,24 @@ impl TrueRenderer {
         job: crate::photo_export::WbJob,
         result: Result<tr_core::decoder::RawWhiteBalance, String>,
     ) {
+        if !self
+            .editing
+            .wb_cancel
+            .as_ref()
+            .is_some_and(|token| Arc::ptr_eq(token, &job.cancel))
+        {
+            return;
+        }
         self.editing.wb_pending = false;
+        self.editing.wb_cancel = None;
+        if job.cancel.load(Ordering::Acquire) {
+            self.status = self
+                .cache_settings
+                .language
+                .text("Analisi WB RAW annullata")
+                .to_owned();
+            return;
+        }
         if self.editing.wb_smoke_started {
             self.editing.wb_smoke_result = Some(
                 result
@@ -308,7 +327,10 @@ impl TrueRenderer {
                         else {
                             return;
                         };
+                        let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
+                        self.editing.wb_cancel = Some(cancel.clone());
                         let job = crate::photo_export::WbJob {
+                            cancel,
                             item: item.clone(),
                             recipe: saved.recipe,
                             analysis: tr_core::raw_wb::Analysis::Auto,
@@ -838,7 +860,16 @@ impl TrueRenderer {
                 {
                     self.request_final_preview(&item.id, false);
                 }
-                if self.editing.wb_pending {ui.label(lang.text("Analisi WB RAW…"));}
+                if self.editing.wb_pending {
+                    ui.label(lang.text("Analisi WB RAW…"));
+                    if let Some(cancel) = &self.editing.wb_cancel {
+                        if cancel.load(Ordering::Acquire) {
+                            ui.label(lang.text("Annullamento WB RAW…"));
+                        } else if ui.button(lang.text("Annulla analisi WB RAW")).clicked() {
+                            cancel.store(true, Ordering::Release);
+                        }
+                    }
+                }
                 ui.add_enabled_ui(!pending, |ui| {
                     let engine = self.preview_request(item, 0).raw_engine;
                     let is_raw = self.cache.iter().any(|((id, request), cached)| {
@@ -859,8 +890,10 @@ impl TrueRenderer {
                         }
                         if let Some(analysis)=analysis {
                             self.editing.wb_error=None;
+                            let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
+                            self.editing.wb_cancel = Some(cancel.clone());
                             self.editing.wb_pending=self.request(Request::RawWhiteBalance(Box::new(crate::photo_export::WbJob {
-                                item:item.clone(),recipe:draft.clone(),analysis,generation:self.generation,revision:saved.generation,
+                                cancel,item:item.clone(),recipe:draft.clone(),analysis,generation:self.generation,revision:saved.generation,
                             })));
                         }
                         ui.label(RichText::new(lang.text("Bilanciamento del bianco RAW")).strong());

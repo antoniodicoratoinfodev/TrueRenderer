@@ -536,7 +536,8 @@ impl DecodePool {
                     };
                     if let Some(job) = wb {
                         let cancelled = || {
-                            stop.load(Ordering::Acquire)
+                            job.cancel.load(Ordering::Acquire)
+                                || stop.load(Ordering::Acquire)
                                 || job.generation != generation.load(Ordering::Acquire)
                         };
                         let result = (|| -> anyhow::Result<_> {

@@ -44,6 +44,8 @@ uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
 gains relative to as-shot, before demosaicing. These gains are not Kelvin. The
 controls appear for a decoded RAW and are stored with the photograph's engine.
 
+Use **Cancel RAW WB analysis** to interrupt a running estimate without changing the recipe or its history.
+
 **Auto RAW WB** estimates native WB parameters from the unedited RAW render,
 assuming average neutral scene colour. **RAW WB from 5×5 area** uses the last
 sampled native pixel as the centre of a neutral patch. Both work through the
