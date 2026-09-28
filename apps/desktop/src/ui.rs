@@ -1251,6 +1251,9 @@ impl TrueRenderer {
         if !photo_context {
             return;
         }
+        if self.editing_keyboard(ctx) {
+            return;
+        }
         let command = ctx.input(|i| i.modifiers.command);
         let key = |key| ctx.input(|i| i.key_pressed(key));
         if command {
@@ -2827,6 +2830,10 @@ impl TrueRenderer {
             ui.heading(lang.text("Un'immagine, una resa tracciabile."));
             ui.label(localized_format!(lang, "Prototipo R0 · {}", "R0 prototype · {}", env!("CARGO_PKG_VERSION")));ui.separator();
             ui.label(lang.text("Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali."));
+            ui.add_space(8.);
+            ui.label(localized_format!(lang,
+                "Sviluppo, con focus sulle immagini: Alt + Shift + C copia; Alt + Shift + V incolla i gruppi selezionati. Cmd/Ctrl + Alt + Z annulla lo sviluppo; aggiungi Shift per ripetere. Cmd/Ctrl + Z resta l’annullamento delle annotazioni.",
+                "Develop, with image focus: Alt + Shift + C copies; Alt + Shift + V pastes selected groups. Cmd/Ctrl + Alt + Z undoes an edit; add Shift to redo. Cmd/Ctrl + Z still undoes annotations."));
             ui.add_space(8.);ui.label(lang.text("Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 268.435456 MB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus."));
             ui.add_space(8.);ui.label(lang.text("Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima."));
             ui.add_space(8.);ui.monospace(localized_format!(lang, "GPU: {}\nSuperficie: {}\nSQLite: {}", "GPU: {}\nSurface: {}\nSQLite: {}",lang.text(&self.adapter),lang.text(&self.surface),tr_store::sqlite_version()));

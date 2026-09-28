@@ -1,0 +1,74 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-29",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "09421d99a71dbbd469d699bfc019d883a7c6faab748b339f01e121b94718ba01",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "verification": {
+    "passed": true,
+    "ordinary_rust_tests": 222,
+    "rust_integrations": 14,
+    "private_raw_skipped": 3,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "native_surface": true,
+    "evidence": "var/verify-GoK02duN",
+    "log": "var/edit-shortcuts-2026-09-29/verify-corrected.log"
+  },
+  "regressions": {
+    "tests": 2,
+    "persisted_copy_paste_undo_redo": true,
+    "identical_paste_no_revision": true,
+    "guards": [
+      "native_wb_pending",
+      "save_pending",
+      "settings",
+      "other_control_focus",
+      "load_error",
+      "loading",
+      "unsaved_draft"
+    ],
+    "enabled_positive_control": true
+  },
+  "native_manual": {
+    "passed": true,
+    "language": "it",
+    "copy": "Alt+Shift+C",
+    "paste": "Alt+Shift+V",
+    "undo": "Cmd+Alt+Z",
+    "redo": "Cmd+Alt+Shift+Z",
+    "source": "02_Paesaggio_analitico.png",
+    "destination": "03_Gradiente_16bit.png",
+    "exposure_ev": 0.75,
+    "temperature": 25,
+    "destination_generation": 7,
+    "annotation_undo_independent": true,
+    "confirmed_text_focus_blocks_edit_history": true,
+    "recipe_evidence": "var/edit-shortcuts-2026-09-29/manual-recipes.json",
+    "note": "AX click did not focus search; Cmd+F confirmed focus and blocked redo, clicking the image restored redo."
+  },
+  "xpc": {
+    "passed": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false,
+    "evidence": "var/edit-shortcuts-2026-09-29/native/reports"
+  },
+  "delivery": {
+    "hashes_match_qualified_bundle": true,
+    "previous_bundle": "var/edit-shortcuts-2026-09-29/previous-distribution.app",
+    "synthetic_sources_unchanged": true
+  },
+  "initial_failure": {
+    "description": "Cmd/Ctrl+Shift+C/V intercepted by egui-winit system clipboard handling; replaced with Alt+Shift+C/V and retested natively.",
+    "initial_bundle": "var/edit-shortcuts-2026-09-29/TrueRenderer.app"
+  },
+  "limitations": [
+    "Native Windows and alternative keyboard layouts not qualified.",
+    "No batch, durable presets, remapping UI or new SF/R0–R4 gate qualification.",
+    "Native develop smoke was run on the initial bundle; final bundle qualified by manual shortcuts, XPC and separate full-suite native smoke."
+  ]
+}

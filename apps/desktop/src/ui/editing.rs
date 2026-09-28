@@ -829,11 +829,77 @@ impl TrueRenderer {
             entry.error = None;
         }
     }
+    /// Called only from the image keyboard context, after modal/focus guards.
+    pub(super) fn editing_keyboard(&mut self, ctx: &egui::Context) -> bool {
+        let m = ctx.input(|i| i.modifiers);
+        let key = ctx.input(|i| {
+            [egui::Key::Z, egui::Key::C, egui::Key::V]
+                .into_iter()
+                .find(|key| i.key_pressed(*key))
+        });
+        let history = m.command && m.alt && key == Some(egui::Key::Z);
+        // egui-winit turns command+C/V into system clipboard events even with
+        // extra modifiers. Keep recipe transfer on a chord delivered as keys.
+        let transfer = !m.command
+            && !m.ctrl
+            && m.shift
+            && m.alt
+            && matches!(key, Some(egui::Key::C | egui::Key::V));
+        if !history && !transfer {
+            return false;
+        }
+        // Consume recognized chords even if unavailable: never fall through to
+        // annotation undo or another action while loading/saving a recipe.
+        let Some(item) = self.state.current_item().cloned() else {
+            return true;
+        };
+        let ready = !self.editing.wb_pending
+            && self.editing.entries.get(&item.id).is_some_and(|e| {
+                e.loaded.is_some() && !e.loading && !e.pending && !e.dirty() && e.error.is_none()
+            });
+        if !ready {
+            return true;
+        }
+        if history {
+            self.step_edit(&item.id, !m.shift);
+        } else {
+            let recipe = self.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .clone();
+            if key == Some(egui::Key::C) {
+                self.editing.clipboard.copy(&item.name, &recipe);
+                self.status = "Regolazioni copiate nella sessione".into();
+            } else if let Some(pasted) = self.editing.clipboard.paste(&recipe) {
+                self.editing.show_original = false;
+                self.apply_edit_draft(&item.id, pasted);
+                self.commit_edit(&item.id);
+            }
+        }
+        true
+    }
+
+    fn apply_edit_draft(&mut self, id: &str, draft: EditRecipe) {
+        if !self.output_proof_for(id) {
+            self.editing.verify_final = None;
+        }
+        self.editing.picker_error = None;
+        self.editing.entries.get_mut(id).unwrap().draft = Some(draft);
+        self.sample = None;
+        self.sample_item_id = None;
+        self.sample_level = None;
+        self.sample_from_current_render = false;
+        self.clear_edit_preview();
+        self.clear_edit_thumbnails(id);
+    }
+
     fn step_edit(&mut self, id: &str, undo: bool) {
         let Some(entry) = self.editing.entries.get(id) else {
             return;
         };
-        if entry.pending || entry.dirty() {
+        if entry.pending || entry.dirty() || self.editing.wb_pending {
             return;
         }
         let Some(saved) = &entry.loaded else {
@@ -905,6 +971,7 @@ impl TrueRenderer {
                             can_undo && !pending,
                             egui::Button::new(lang.text("Annulla sviluppo")),
                         )
+                        .on_hover_text("Cmd/Ctrl + Alt + Z")
                         .clicked()
                     {
                         self.step_edit(&item.id, true);
@@ -914,6 +981,7 @@ impl TrueRenderer {
                             can_redo && !pending,
                             egui::Button::new(lang.text("Ripeti sviluppo")),
                         )
+                        .on_hover_text("Cmd/Ctrl + Alt + Shift + Z")
                         .clicked()
                     {
                         self.step_edit(&item.id, false);
@@ -1350,17 +1418,7 @@ impl TrueRenderer {
                     }
                 });
                 if changed {
-                    if !self.output_proof_for(&item.id) {
-                        self.editing.verify_final = None;
-                    }
-                    self.editing.picker_error = None;
-                    self.editing.entries.get_mut(&item.id).unwrap().draft = Some(draft);
-                    self.sample = None;
-                    self.sample_item_id = None;
-                    self.sample_level = None;
-                    self.sample_from_current_render = false;
-                    self.clear_edit_preview();
-                    self.clear_edit_thumbnails(&item.id);
+                    self.apply_edit_draft(&item.id, draft);
                 }
                 if commit {
                     self.commit_edit(&item.id);
@@ -1826,5 +1884,212 @@ mod reset_tests {
             );
             assert_eq!(recipe.raw_wb, original.raw_wb);
         }
+    }
+}
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod shortcut_tests {
+    use super::*;
+    use crate::ui::settings_regressions::{app, settle};
+    fn edit_key(
+        app: &mut TrueRenderer,
+        ctx: &egui::Context,
+        key: egui::Key,
+        alt: bool,
+        shift: bool,
+    ) {
+        let modifiers = egui::Modifiers {
+            alt,
+            shift,
+            command: key == egui::Key::Z,
+            ..egui::Modifiers::NONE
+        };
+        for pressed in [true, false] {
+            let mut out = ctx.run_ui(
+                egui::RawInput {
+                    events: vec![
+                        egui::Event::ModifiersChanged(modifiers),
+                        egui::Event::Key {
+                            key,
+                            physical_key: None,
+                            pressed,
+                            repeat: false,
+                            modifiers,
+                        },
+                    ],
+                    ..Default::default()
+                },
+                |ui| app.keyboard(ui.ctx()),
+            );
+            out.textures_delta.clear();
+        }
+    }
+
+    fn settle_edits(app: &mut TrueRenderer, ctx: &egui::Context, id: &str) {
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            settle(app, ctx, true);
+            let e = &app.editing.entries[id];
+            assert!(e.error.is_none(), "{:?}", e.error);
+            if e.loaded.is_some() && !e.loading && !e.pending {
+                break;
+            }
+            assert!(Instant::now() < deadline);
+            std::thread::sleep(Duration::from_millis(5));
+        }
+    }
+
+    #[test]
+    fn editing_shortcuts_copy_paste_and_step_persisted_history() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let items = app.state.items.clone();
+        for item in &items {
+            app.ensure_edit_loaded(item);
+            settle_edits(&mut app, &ctx, &item.id);
+        }
+        let source = &items[0].id;
+        let target = &items[1].id;
+        let mut recipe = app.editing.entries[source]
+            .loaded
+            .as_ref()
+            .unwrap()
+            .recipe
+            .clone();
+        recipe.exposure_ev = 1.25;
+        app.editing.entries.get_mut(source).unwrap().draft = Some(recipe.clone());
+        app.commit_edit(source);
+        settle_edits(&mut app, &ctx, source);
+        app.state.current = Some(source.clone());
+        edit_key(&mut app, &ctx, egui::Key::C, true, true);
+        app.state.current = Some(target.clone());
+        edit_key(&mut app, &ctx, egui::Key::V, true, true);
+        settle_edits(&mut app, &ctx, target);
+        assert_eq!(
+            app.editing.entries[target]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .exposure_ev,
+            1.25
+        );
+        let generation = app.editing.entries[target]
+            .loaded
+            .as_ref()
+            .unwrap()
+            .generation;
+        edit_key(&mut app, &ctx, egui::Key::V, true, true);
+        assert!(!app.editing.entries[target].pending);
+        assert_eq!(
+            app.editing.entries[target]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .generation,
+            generation
+        );
+        edit_key(&mut app, &ctx, egui::Key::Z, true, false);
+        settle_edits(&mut app, &ctx, target);
+        assert_eq!(
+            app.editing.entries[target]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .exposure_ev,
+            0.
+        );
+        edit_key(&mut app, &ctx, egui::Key::Z, true, true);
+        settle_edits(&mut app, &ctx, target);
+        assert_eq!(
+            app.editing.entries[target]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .exposure_ev,
+            1.25
+        );
+        assert_eq!(
+            app.editing.entries[source].loaded.as_ref().unwrap().recipe,
+            recipe
+        );
+        assert!(app.state.items.iter().all(|i| i.annotation.rating == 0));
+    }
+
+    #[test]
+    fn editing_shortcuts_respect_focus_modal_and_pending_work() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        app.ensure_edit_loaded(&item);
+        settle_edits(&mut app, &ctx, &item.id);
+        app.state.current = Some(item.id.clone());
+        // Copy a non-neutral saved recipe, then restore the destination state.
+        app.editing
+            .entries
+            .get_mut(&item.id)
+            .unwrap()
+            .loaded
+            .as_mut()
+            .unwrap()
+            .recipe
+            .exposure_ev = 1.;
+        app.editing.entries.get_mut(&item.id).unwrap().draft = None;
+        edit_key(&mut app, &ctx, egui::Key::C, true, true);
+        app.editing
+            .entries
+            .get_mut(&item.id)
+            .unwrap()
+            .loaded
+            .as_mut()
+            .unwrap()
+            .recipe
+            .exposure_ev = 0.;
+        for mode in 0..7 {
+            let focus = egui::Id::new("other-control");
+            match mode {
+                0 => app.editing.wb_pending = true,
+                1 => app.editing.entries.get_mut(&item.id).unwrap().pending = true,
+                2 => app.show_settings = true,
+                3 => ctx.memory_mut(|m| m.request_focus(focus)),
+                4 => app.editing.entries.get_mut(&item.id).unwrap().error = Some("test".into()),
+                5 => app.editing.entries.get_mut(&item.id).unwrap().loading = true,
+                _ => {
+                    let mut r = app.editing.entries[&item.id]
+                        .loaded
+                        .as_ref()
+                        .unwrap()
+                        .recipe
+                        .clone();
+                    r.exposure_ev = 0.5;
+                    app.editing.entries.get_mut(&item.id).unwrap().draft = Some(r);
+                }
+            }
+            let before = app.editing.entries[&item.id].draft.clone();
+            edit_key(&mut app, &ctx, egui::Key::V, true, true);
+            assert_eq!(app.editing.entries[&item.id].draft, before, "mode={mode}");
+            app.editing.wb_pending = false;
+            app.show_settings = false;
+            ctx.memory_mut(|m| m.surrender_focus(focus));
+            let e = app.editing.entries.get_mut(&item.id).unwrap();
+            e.pending = false;
+            e.loading = false;
+            e.error = None;
+            e.draft = None;
+        }
+        edit_key(&mut app, &ctx, egui::Key::V, true, true);
+        assert!(app.editing.entries[&item.id].pending);
+        settle_edits(&mut app, &ctx, &item.id);
+        assert_eq!(
+            app.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .exposure_ev,
+            1.
+        );
     }
 }

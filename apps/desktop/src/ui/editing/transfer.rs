@@ -57,6 +57,18 @@ pub(super) struct Clipboard {
     groups: Groups,
 }
 impl Clipboard {
+    pub(super) fn copy(&mut self, name: &str, recipe: &EditRecipe) {
+        self.copied = Some((name.into(), recipe.clone()));
+    }
+
+    pub(super) fn paste(&self, destination: &EditRecipe) -> Option<EditRecipe> {
+        let (_, source) = self.copied.as_ref()?;
+        self.groups
+            .merge(source, destination)
+            .ok()
+            .filter(|r| r != destination)
+    }
+
     /// Session-local snapshot; never reads or changes the system clipboard.
     pub(super) fn controls(
         &mut self,
@@ -72,9 +84,10 @@ impl Clipboard {
             .show(ui, |ui| {
                 if ui
                     .add_enabled(ready, egui::Button::new(lang.text("Copia regolazioni")))
+                    .on_hover_text("Alt + Shift + C")
                     .clicked()
                 {
-                    self.copied = Some((name.into(), draft.clone()));
+                    self.copy(name, draft);
                 }
                 if let Some((source_name, source)) = &self.copied {
                     ui.label(format!("{}: {}", lang.text("Copiate da"), source_name));
@@ -90,6 +103,7 @@ impl Clipboard {
                             ready && changed,
                             egui::Button::new(lang.text("Incolla gruppi selezionati")),
                         )
+                        .on_hover_text("Alt + Shift + V")
                         .clicked()
                     {
                         *draft = merged.as_ref().unwrap().clone();

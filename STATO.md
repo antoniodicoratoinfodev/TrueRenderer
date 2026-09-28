@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 28 settembre 2026.
+Aggiornato: 29 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -19,6 +19,13 @@ Per ogni incremento aggiornare qui implementato, verificato, aperto e mancante, 
 Le architetture rimandano a questo file e non ne incorporano il contenuto. `python3 scripts/sync-docs.py` aggiorna i rimandi e l'appendice della specifica anteprime: serve quando cambiano le sue fonti, non a ogni aggiornamento di stato. Il backup originale v1.2 resta immutato.
 
 ## Punto di ripresa
+
+### Scorciatoie dello sviluppo — 29 settembre
+
+- [x] **Implementato:** `Alt+Shift+C/V` copia/incolla i gruppi della ricetta salvata sulla foto corrente; `Cmd/Ctrl+Alt+Z` annulla lo sviluppo e con `Shift` lo ripete. Tooltip, guida IT/EN e README aggiornati. Il salvataggio e l’invalidazione di anteprime/campioni sono condivisi con i pulsanti. `Cmd/Ctrl+Z` resta riservato alle annotazioni. Rispetto del focus, menu, impostazioni/guida e ricette in caricamento, pendenti, in errore o non salvate; nessuna modifica durante analisi WB.
+- [x] **Verificato:** due nuove regressioni con eventi tastiera e servizio/catalogo reali: copia/incolla, revisioni, Annulla/Ripeti, nessuna revisione per incolla identico; sette condizioni di blocco con controllo positivo finale. Suite `scripts/verify.sh --gui` passata: **222 test ordinari + 14 integrazioni**, due Python, otto protocollo, 24 segnali e superficie nativa; fmt/Clippy/build passati. Tre RAW privati esclusi. Evidenze `var/verify-GoK02duN/` e `var/edit-shortcuts-2026-09-29/`.
+- [x] **Prova nativa e consegna:** sul bundle finale, copia paesaggio→gradiente con 0,75 EV e temperatura RGB 25, tre cicli Annulla/Ripeti, persistenza SQLite (generazione 7), indipendenza dalle tre stelle e da `Cmd+Z`. Focus ricerca confermato con `Cmd+F`: Ripeti bloccato; ritorno al focus immagine: Ripeti riuscito. Il primo tentativo con `Cmd/Ctrl+Shift+C/V` era intercettato dal toolkit; mappatura corretta e riprovata nativamente. Due servizi XPC, timeout/recupero, rifiuto fault injection e firma ad hoc passati. Aggiornato `dist/TrueRenderer.app`, identico per hash al qualificato; precedente conservato in `var/edit-shortcuts-2026-09-29/previous-distribution.app`. Sorgenti sintetiche invariate. [Rapporto](reports/edit-shortcuts-macos-2026-09-29.json).
+- [ ] **Limiti:** Windows nativo e layout di tastiera alternativi non qualificati; nessuna rimappatura UI, batch o preset durevoli aggiunti. Nessun gate SF/R0–R4 chiuso.
 
 ### Copia selettiva delle regolazioni — 28 settembre
 

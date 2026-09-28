@@ -75,6 +75,7 @@ impl Language {
             "Ripeti sviluppo" => "Redo edit",
             "Prima/Dopo" => "Before/After",
             "Copia e incolla regolazioni" => "Copy and paste adjustments",
+            "Regolazioni copiate nella sessione" => "Adjustments copied for this session",
             "Copia regolazioni" => "Copy adjustments",
             "Copiate da" => "Copied from",
             "Colore RGB" => "RGB color",

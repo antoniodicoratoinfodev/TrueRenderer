@@ -49,7 +49,11 @@ protection.
 another photograph, choose Light, Tone curve and/or RGB color, then **Paste selected
 groups**. Pasting replaces only those groups and creates one undoable revision;
 the destination keeps its RAW engine and native white balance. The copy is cleared
-when the app closes; pasted edits remain in the library.
+when the app closes; pasted edits remain in the library. With image focus,
+use **Alt+Shift+C/V** to copy/paste the selected groups, and
+**Cmd/Ctrl+Alt+Z** / **Cmd/Ctrl+Alt+Shift+Z** to undo/redo photographic edits.
+**Cmd/Ctrl+Z** continues to undo annotations. Editing shortcuts wait until the
+recipe is loaded and saved, and stay inactive in text fields, menus and settings.
 **RAW white balance** now offers as-shot/reset and native controls: Apple RAW
 uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
 gains relative to as-shot, before demosaicing. These gains are not Kelvin. The
