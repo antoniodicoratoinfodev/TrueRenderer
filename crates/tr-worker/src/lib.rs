@@ -973,6 +973,52 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
         );
         let mut bytes = vec![0; request.source_len];
         input.read_exact(&mut bytes)?;
+        if let protocol::DecodeIntent::RawWhiteBalance(analysis) = request.intent {
+            let result = (|| -> Result<_> {
+                ensure!(
+                    policy.approves_bytes(&bytes) || external,
+                    "WB RAW esterno richiede isolamento OS"
+                );
+                ensure!(
+                    request.max_edge == 0
+                        && request.maximum_output_bytes == 0
+                        && request.edit.is_none(),
+                    "Richiesta WB incoerente"
+                );
+                let base = select_engine(
+                    if external {
+                        Trust::External
+                    } else {
+                        Trust::Controlled
+                    },
+                    request.raw_engine,
+                )?;
+                let (info, _) = base.probe(&bytes)?;
+                ensure!(
+                    info.format == "RAW"
+                        && u64::from(info.width) * u64::from(info.height) <= 48_000_000,
+                    "WB RAW: formato o dimensioni non supportati (massimo 48 MP)"
+                );
+                tr_core::raw_wb::estimate(request.raw_engine, request.raw_wb, analysis, |wb| {
+                    let decoder = WhiteBalanced {
+                        base,
+                        engine: request.raw_engine,
+                        wb,
+                    };
+                    Ok(decoder.decode(&bytes, 0)?.2)
+                })
+            })();
+            match result {
+                Ok(wb) => protocol::write_control(&mut output, protocol::RESPONSE, id, &wb)?,
+                Err(error) => protocol::write_control(
+                    &mut output,
+                    protocol::ERROR,
+                    id,
+                    &format!("{error:#}").chars().take(2048).collect::<String>(),
+                )?,
+            }
+            continue;
+        }
         if let protocol::DecodeIntent::ScientificSample { x, y } = request.intent {
             let result = (|| -> Result<_> {
                 ensure!(
@@ -1721,8 +1767,15 @@ mod tests {
             return;
         };
         let (mut seen, mut developed) = (0, 0);
-        for entry in std::fs::read_dir(&folder).expect("cartella campioni") {
-            let path = entry.expect("voce").path();
+        let paths = if folder.is_file() {
+            vec![folder]
+        } else {
+            std::fs::read_dir(&folder)
+                .expect("cartella campioni")
+                .map(|e| e.expect("voce").path())
+                .collect()
+        };
+        for path in paths {
             if !path
                 .extension()
                 .is_some_and(|e| e.eq_ignore_ascii_case("nef") || e.eq_ignore_ascii_case("dng"))

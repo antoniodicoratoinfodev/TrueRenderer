@@ -283,6 +283,7 @@ struct Work {
     result: mpsc::SyncSender<Result<WorkerOutput>>,
 }
 enum WorkerOutput {
+    RawWhiteBalance(tr_core::decoder::RawWhiteBalance),
     ScientificSample(tr_core::science::Sample),
     Raster(Box<RasterInfo>, Option<LinearImage>),
     Export(tr_core::export::Info, Vec<u8>),
@@ -530,6 +531,11 @@ impl Broker {
                         return Err(SourceRejected(protocol::parse::<String>(&data)?).into());
                     }
                     ensure!(kind == protocol::RESPONSE, "Tipo di risposta IPC inatteso");
+                    if matches!(work.intent, protocol::DecodeIntent::RawWhiteBalance(_)) {
+                        let wb: tr_core::decoder::RawWhiteBalance = protocol::parse(&data)?;
+                        wb.validate_for(work.raw_engine)?;
+                        return Ok(WorkerOutput::RawWhiteBalance(wb));
+                    }
                     if let protocol::DecodeIntent::ScientificSample { x, y } = work.intent {
                         let sample: tr_core::science::Sample = protocol::parse(&data)?;
                         ensure!(
@@ -769,6 +775,24 @@ impl Broker {
             _ => anyhow::bail!("Output inatteso durante export"),
         }
     }
+    pub fn estimate_raw_wb(
+        &mut self,
+        source: SourceSnapshot,
+        analysis: tr_core::raw_wb::Analysis,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<tr_core::decoder::RawWhiteBalance> {
+        match self.process_snapshot(
+            source,
+            0,
+            protocol::DecodeIntent::RawWhiteBalance(analysis),
+            None,
+            0,
+            cancelled,
+        )? {
+            WorkerOutput::RawWhiteBalance(wb) => Ok(wb),
+            _ => anyhow::bail!("Stima WB RAW assente"),
+        }
+    }
     pub fn scientific_sample(
         &mut self,
         source: SourceSnapshot,
@@ -821,6 +845,11 @@ impl Broker {
             edge <= if reference { 8192 } else { 2048 },
             "Dimensione anteprima fuori quota"
         );
+        let timeout = if matches!(intent, protocol::DecodeIntent::RawWhiteBalance(_)) {
+            Duration::from_secs(120)
+        } else {
+            timeout
+        };
         let started = Instant::now();
         if self.process.as_ref().is_some_and(|p| p.jobs >= 32) {
             self.process.take();
@@ -1048,14 +1077,19 @@ mod tests {
             eprintln!("TR_RAW_SAMPLE non impostata");
             return;
         };
-        let path = std::fs::read_dir(&folder)
-            .expect("cartella campioni")
-            .filter_map(|e| e.ok().map(|e| e.path()))
-            .find(|p| {
-                p.extension()
-                    .is_some_and(|e| e.eq_ignore_ascii_case("nef") || e.eq_ignore_ascii_case("dng"))
-            })
-            .expect("nessun RAW nella cartella");
+        let path = if folder.is_file() {
+            folder.clone()
+        } else {
+            std::fs::read_dir(&folder)
+                .expect("cartella campioni")
+                .filter_map(|e| e.ok().map(|e| e.path()))
+                .find(|p| {
+                    p.extension().is_some_and(|e| {
+                        e.eq_ignore_ascii_case("nef") || e.eq_ignore_ascii_case("dng")
+                    })
+                })
+                .expect("nessun RAW nella cartella")
+        };
         let mut broker = Broker::new(binary);
         let (_, digest) = snapshot(&path).unwrap();
         let source = broker

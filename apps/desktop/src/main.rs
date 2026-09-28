@@ -11,6 +11,7 @@ mod ui;
 mod verify_cache;
 mod verify_exports;
 mod verify_formats;
+mod verify_native_wb;
 mod verify_photo_export;
 mod verify_precision;
 mod verify_previews;
@@ -193,6 +194,13 @@ fn run() -> Result<()> {
     }
     if args.iter().any(|a| a == "--verify-resampling") {
         return verify_resampling::run(&root, &worker);
+    }
+    if let Some(source) = option("--verify-native-wb") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "WB diagnostics require an isolated --root"
+        );
+        return verify_native_wb::run(&root, &worker, &source);
     }
     if args.iter().any(|a| a == "--verify-xpc") {
         return verify_xpc::run(&root, &worker);

@@ -1036,6 +1036,7 @@ impl TrueRenderer {
                     self.export_result(result);
                 }
                 Event::ScientificSample { id, result } => self.science_result(id, result),
+                Event::RawWhiteBalance { job, result } => self.raw_wb_result(*job, result),
                 Event::BrowserSessionSaved(result) => match result {
                     Ok(session) => self.browser.saved = session,
                     Err(error) => self.status = format!("Browser session: {error}"),
@@ -2472,7 +2473,7 @@ impl TrueRenderer {
         let Some(item) = self.state.current_item().cloned() else {
             return;
         };
-        if self.show_filmstrip {
+        if self.show_filmstrip && ui.available_height() >= 240. {
             egui::Panel::bottom("filmstrip")
                 .exact_size(104.)
                 .frame(egui::Frame::new().fill(PANEL).inner_margin(8))
@@ -3959,6 +3960,89 @@ mod settings_regressions {
             }
         }
     }
+    #[test]
+    fn photo_zoom_shortcuts_do_not_also_zoom_the_interface() {
+        let (_dir, ctx, mut app) = app();
+        style::apply(&ctx);
+        assert!(!ctx.options(|o| o.zoom_with_keyboard));
+        let mut output = ctx.run_ui(
+            egui::RawInput {
+                events: vec![
+                    egui::Event::ModifiersChanged(egui::Modifiers::COMMAND),
+                    egui::Event::Key {
+                        key: egui::Key::Equals,
+                        physical_key: None,
+                        pressed: true,
+                        repeat: false,
+                        modifiers: egui::Modifiers::COMMAND,
+                    },
+                ],
+                ..Default::default()
+            },
+            |ui| app.keyboard(ui.ctx()),
+        );
+        output.textures_delta.clear();
+        assert_eq!(ctx.zoom_factor(), 1.);
+        assert_eq!(app.state.transform.zoom, Some(1.25));
+    }
+
+    #[test]
+    fn stale_native_wb_estimates_do_not_overwrite_edits() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        let recipe =
+            tr_core::editing::EditRecipe::neutral(tr_core::decoder::RawEngine::TrueRenderer);
+        app.editing.entries.insert(
+            item.id.clone(),
+            editing::EditEntry {
+                loaded: Some(tr_store::LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: item.digest.clone(),
+                    generation: 1,
+                    revision: 1,
+                    recipe: recipe.clone(),
+                    can_undo: false,
+                    can_redo: false,
+                }),
+                draft: Some(recipe.clone()),
+                ..Default::default()
+            },
+        );
+        let job = crate::photo_export::WbJob {
+            item: item.clone(),
+            recipe: recipe.clone(),
+            analysis: tr_core::raw_wb::Analysis::Auto,
+            generation: app.generation,
+            revision: 1,
+        };
+        let wb = tr_core::decoder::RawWhiteBalance {
+            red: 1300,
+            ..Default::default()
+        };
+        let mut stale = job.clone();
+        stale.generation += 1;
+        app.raw_wb_result(stale, Ok(wb));
+        assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&recipe));
+        app.editing
+            .entries
+            .get_mut(&item.id)
+            .unwrap()
+            .draft
+            .as_mut()
+            .unwrap()
+            .exposure_ev = 1.;
+        app.raw_wb_result(job, Ok(wb));
+        assert!(
+            app.editing.entries[&item.id]
+                .draft
+                .as_ref()
+                .unwrap()
+                .raw_wb
+                .is_as_shot()
+        );
+    }
+
     #[test]
     fn raw_wb_draft_and_before_after_select_distinct_decode_requests() {
         let (_dir, ctx, mut app) = app();

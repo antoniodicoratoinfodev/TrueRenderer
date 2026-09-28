@@ -268,6 +268,20 @@ mod tests {
     #[ignore = "requires TR_RAW_SAMPLE pointing to an authorized read-only Nikon sample"]
     fn real_raw_export_preserves_every_active_sample() {
         let path = std::env::var_os("TR_RAW_SAMPLE").expect("TR_RAW_SAMPLE");
+        let path = std::path::PathBuf::from(path);
+        let path = if path.is_dir() {
+            std::fs::read_dir(path)
+                .unwrap()
+                .map(|e| e.unwrap().path())
+                .find(|p| {
+                    p.extension().is_some_and(|e| {
+                        e.eq_ignore_ascii_case("nef") || e.eq_ignore_ascii_case("dng")
+                    })
+                })
+                .expect("RAW sample")
+        } else {
+            path
+        };
         let bytes = std::fs::read(&path).unwrap();
         let before = export_mosaic(&bytes).unwrap();
         let (_, mut exported) = crate::export::raw(
@@ -503,6 +517,44 @@ mod tests {
             .decode(bitmap, 0)
             .is_err()
         );
+    }
+
+    #[test]
+    fn native_wb_analysis_recovers_a_synthetic_neutral() {
+        use tr_core::{
+            decoder::{Decoder, RawWhiteBalance},
+            raw_wb::{Analysis, estimate},
+        };
+        let bytes = fixture(1512, true, "Synthetic DNG", 1);
+        for engine in [
+            RawEngine::LibRawBilinear,
+            RawEngine::LibRawAhd,
+            RawEngine::TrueRenderer,
+        ] {
+            let base = crate::select_engine(tr_core::decoder::Trust::External, engine).unwrap();
+            let initial = RawWhiteBalance {
+                red: 1500,
+                blue: 750,
+                ..Default::default()
+            };
+            for analysis in [
+                Analysis::Auto,
+                Analysis::Patch {
+                    x: 16,
+                    y: 12,
+                    side: 5,
+                },
+            ] {
+                let wb = estimate(engine, initial, analysis, |wb| {
+                    Ok(crate::WhiteBalanced { base, engine, wb }
+                        .decode(&bytes, 0)?
+                        .2)
+                })
+                .unwrap();
+                assert!((i32::from(wb.red) - 1000).abs() < 12, "{engine:?}: {wb:?}");
+                assert!((i32::from(wb.blue) - 1000).abs() < 12, "{engine:?}: {wb:?}");
+            }
+        }
     }
 
     #[test]

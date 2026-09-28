@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 27 settembre 2026.
+Aggiornato: 28 settembre 2026.
 
 Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
 
@@ -19,6 +19,18 @@ Per ogni incremento aggiornare qui implementato, verificato, aperto e mancante, 
 Le architetture rimandano a questo file e non ne incorporano il contenuto. `python3 scripts/sync-docs.py` aggiorna i rimandi e l'appendice della specifica anteprime: serve quando cambiano le sue fonti, non a ogni aggiornamento di stato. Il backup originale v1.2 resta immutato.
 
 ## Punto di ripresa
+
+### Auto WB nativo, contagocce RAW e verifica D750 — 28 settembre
+
+- [x] **Implementato:** Auto WB RAW e WB RAW da area 5×5 sui quattro motori, con fitting dei parametri nativi nel worker isolato e ricetta numerica congelata. Sorgente senza regolazioni creative, griglia nativa per Auto (ipotesi grigio medio), area alle coordinate native per contagocce. Massimo 48 MP, 16 sviluppi seriali e deadline 120 s; rifiuto di campioni invalidi, Jacobiano instabile, parametri oltre scala e mancata convergenza. Nessun fallback RGB o allargamento della allowlist su pipe.
+- [x] **Integrazione:** richiesta IPC dedicata, validazione risposta nel broker, riserve memoria e coda asincrona; bozza/revisione/generazione/sorgente cambiate impediscono l'applicazione di risultati obsoleti. Pulsanti disabilitati durante l'analisi, salvataggio e undo ordinari, errori accanto ai comandi RAW. Regolazioni creative conservate. Contratto numerico documentato nella specifica SF2.
+- [x] **Verifiche finali:** `scripts/verify.sh --gui` passato: **198 test ordinari + 13 integrazioni**, due test Python, otto controlli protocollo, 24 segnali, superficie nativa, fmt/Clippy/build. In più passati due test privati autorizzati: contenitori su 30 NEF D750 e conservazione di ogni campione attivo nell'export DNG RAW. Sistemata l'incoerenza file/cartella di `TR_RAW_SAMPLE`; la qualità piena dei privati su Mac è provata nel bundle XPC, non aggirando i limiti del test su pipe.
+- [x] **Campagna fotografica:** il titolare ha autorizzato in questa sessione la cartella D750 in Download, in sola lettura. **120/120 sviluppi nativi** su 30 NEF × quattro motori passati, originali invariati. Auto e contagocce: **8/8 casi sintetici e 8/8 D750** passati; sul NEF tempi osservati circa 3–19 s, non p95. Prova UI D750 con Auto reale asincrono, WB salvato, viewer/griglia ed export PNG16 6016×4016 riusciti, superficie entro 1/255 (39 canali differenti). Foto, crop, cataloghi ed export restano privati in `var/`.
+- [x] **UI e chiusura verifiche precedenti:** provati interattivamente preset Luce diurna 5500/0, Personalizzato 6000/0 e Annulla fino a Come scattato; Vividezza 40 e protezione toni caldi con Annulla a zero/off; pulsante Auto WB con esito 2879 K/tinta 12 e riapertura della ricetta. Contagocce manuale: due rifiuti di aree disomogenee/insufficienti senza modifica. Al 200% trovato e corretto il doppio zoom foto/UI di Cmd/Ctrl +/−/0; aggiunto selettore esplicito 100/150/200% in Generale per la sessione. Nelle viste basse le miniature lasciano spazio al viewer. Controllati scorrimento e inserimento Vividezza 25 al 200% nella finestra osservata 1200×768; non è una qualifica completa di accessibilità.
+- [x] **Bundle finale:** `dist/TrueRenderer-native-wb-2026-09-28.app`, firma ad hoc, due XPC, timeout/recupero e rifiuto fault injection passati. Ripetuto lo smoke Auto WB/salvataggio/export sul DNG sintetico: superficie entro 1/255 (63 canali differenti), sorgente invariata. Decoder identici per hash alla campagna D750 precedente alle sole correzioni UI; dettagli distinti nel rapporto.
+- [ ] **Restano requisiti esterni:** Windows rinviato esplicitamente dal titolare a quando lavorerà su quel PC. Preset Kelvin calibrati per LibRaw/TrueRenderer, accuratezza colore e incertezza fotografica richiedono target e illuminante noti: le fotografie D750 non li sostituiscono. Restano qualifiche estese di fotocamere/display/accessibilità/memoria e strumenti successivi SF; nessun gate SF/R chiuso.
+
+[Rapporto nativo WB/D750](reports/native-wb-d750-macos-2026-09-28.json). Evidenze in `var/native-wb-p5u1rjrl/` e `var/verify-9SwlGP3Z/`; rapporto compute storico ripristinato. Originali e libreria personale non modificati. Specifiche/README aggiornati; nessuna copia di fotografie o dati durevoli destinata al repository pubblico.
 
 ### Vividezza e protezione dei toni caldi — 27 settembre
 

@@ -16,6 +16,7 @@ pub enum DecodeIntent {
     #[default]
     LegacyRaster,
     Probe,
+    RawWhiteBalance(crate::raw_wb::Analysis),
     FullSource,
     Export(crate::export::Options),
     ScientificSample {

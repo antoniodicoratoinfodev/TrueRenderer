@@ -17,6 +17,13 @@ impl Language {
         }
         match source {
             "Sviluppo" => "Develop",
+            "Dimensione interfaccia" => "Interface size",
+            "Auto WB RAW" => "Auto RAW WB",
+            "WB RAW da area 5×5" => "RAW WB from 5×5 area",
+            "Analisi WB RAW…" => "Analyzing RAW WB…",
+            "WB nativo: analisi senza regolazioni creative; Auto assume grigio medio" => {
+                "Native WB: analysis without creative edits; Auto assumes grey world"
+            }
             "Vividezza" => "Vibrance",
             "Proteggi toni caldi" => "Protect warm tones",
             "Vividezza: processo 2 · protezione indicativa, non rileva la pelle" => {

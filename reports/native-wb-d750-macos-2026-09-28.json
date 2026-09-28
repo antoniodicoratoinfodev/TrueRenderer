@@ -1,0 +1,515 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-28",
+  "passed": true,
+  "scope": "Native RAW Auto WB and area fitting on all four engines; D750 functional corpus; manual macOS controls and UI scale. No camera colour calibration certification.",
+  "bundle": "dist/TrueRenderer-native-wb-2026-09-28.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "1834c7b9605bf8879f62400a1c07303cb91e299ecfb50257c41fa43650bfdae9",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abb24aa9cf3e59a5a9c0ec40cb1a5c17e587bbaad9773b412d7f7bbbc9563f14",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "701c85855702fd11bd5b23b1bf1462539fe3312e6a41890140481fecd6370efd"
+  },
+  "suite": {
+    "command": "scripts/verify.sh --gui",
+    "exit_code": 0,
+    "ordinary_rust": 198,
+    "additional_rust": 13,
+    "python": 2,
+    "protocol_checks": 8,
+    "resampling_signals": 24,
+    "native_surface_passed": true,
+    "fmt_clippy_build": true,
+    "artifacts": "var/verify-9SwlGP3Z"
+  },
+  "private_tests": {
+    "container_test": "passed on authorized folder, 30 NEF sources",
+    "raw_export_test": "passed, every active sample preserved on authorized D750 NEF",
+    "full_quality": "Verified through bundled full-resolution broker in 120 native cases; unbundled pipe test not used to bypass the external-file allowlist."
+  },
+  "native_wb_synthetic": [
+    {
+      "analysis": "Auto",
+      "engine": "Apple",
+      "passed": true,
+      "seconds": 0.214941625,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 6306,
+        "apple_tint": 10,
+        "blue": 1000,
+        "red": 1000
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 128,
+          "y": 96
+        }
+      },
+      "engine": "Apple",
+      "passed": true,
+      "seconds": 0.316094666,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 8640,
+        "apple_tint": -11,
+        "blue": 1000,
+        "red": 1000
+      }
+    },
+    {
+      "analysis": "Auto",
+      "engine": "LibRawBilinear",
+      "passed": true,
+      "seconds": 0.069724458,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1030,
+        "red": 985
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 128,
+          "y": 96
+        }
+      },
+      "engine": "LibRawBilinear",
+      "passed": true,
+      "seconds": 0.068263291,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 728,
+        "red": 1004
+      }
+    },
+    {
+      "analysis": "Auto",
+      "engine": "LibRawAhd",
+      "passed": true,
+      "seconds": 0.157212042,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1030,
+        "red": 985
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 128,
+          "y": 96
+        }
+      },
+      "engine": "LibRawAhd",
+      "passed": true,
+      "seconds": 0.1584355,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 728,
+        "red": 1004
+      }
+    },
+    {
+      "analysis": "Auto",
+      "engine": "TrueRenderer",
+      "passed": true,
+      "seconds": 0.127824,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1030,
+        "red": 985
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 128,
+          "y": 96
+        }
+      },
+      "engine": "TrueRenderer",
+      "passed": true,
+      "seconds": 0.133478333,
+      "size": [
+        1024,
+        768
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 728,
+        "red": 1004
+      }
+    }
+  ],
+  "native_wb_d750": [
+    {
+      "analysis": "Auto",
+      "engine": "Apple",
+      "passed": true,
+      "seconds": 19.0911495,
+      "size": [
+        6016,
+        4016
+      ],
+      "wb": {
+        "apple_temperature": 2879,
+        "apple_tint": 12,
+        "blue": 1000,
+        "red": 1000
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 3760,
+          "y": 502
+        }
+      },
+      "engine": "Apple",
+      "passed": true,
+      "seconds": 15.897108417,
+      "size": [
+        6016,
+        4016
+      ],
+      "wb": {
+        "apple_temperature": 2927,
+        "apple_tint": 2,
+        "blue": 1000,
+        "red": 1000
+      }
+    },
+    {
+      "analysis": "Auto",
+      "engine": "LibRawBilinear",
+      "passed": true,
+      "seconds": 3.154002583,
+      "size": [
+        6032,
+        4032
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1293,
+        "red": 819
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 3770,
+          "y": 504
+        }
+      },
+      "engine": "LibRawBilinear",
+      "passed": true,
+      "seconds": 3.179742875,
+      "size": [
+        6032,
+        4032
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1154,
+        "red": 819
+      }
+    },
+    {
+      "analysis": "Auto",
+      "engine": "LibRawAhd",
+      "passed": true,
+      "seconds": 12.449036625,
+      "size": [
+        6032,
+        4032
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1327,
+        "red": 848
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 3770,
+          "y": 504
+        }
+      },
+      "engine": "LibRawAhd",
+      "passed": true,
+      "seconds": 7.731563917,
+      "size": [
+        6032,
+        4032
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1154,
+        "red": 818
+      }
+    },
+    {
+      "analysis": "Auto",
+      "engine": "TrueRenderer",
+      "passed": true,
+      "seconds": 5.43158375,
+      "size": [
+        6032,
+        4032
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1302,
+        "red": 827
+      }
+    },
+    {
+      "analysis": {
+        "Patch": {
+          "side": 5,
+          "x": 3770,
+          "y": 504
+        }
+      },
+      "engine": "TrueRenderer",
+      "passed": true,
+      "seconds": 5.397502709,
+      "size": [
+        6032,
+        4032
+      ],
+      "wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 1151,
+        "red": 816
+      }
+    }
+  ],
+  "originals_unchanged": true,
+  "corpus": {
+    "files": 30,
+    "cases": 120,
+    "passed": true,
+    "originals_unchanged": true,
+    "scope": "Full-resolution functional checks through the confined worker. Sequential uncached develops; OS cache not flushed. Private 1:1 SDR crops of the first file. Numerical range is observed, not a quality verdict. No measured camera colour accuracy, Apple parity on Windows, p95 or total process-memory qualification.",
+    "private_report": "var/native-wb-p5u1rjrl/var/raw-engine-evaluation-1790553847/report.json"
+  },
+  "d750_ui_export": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "nikon_d750_01-export.png",
+      "passed": true,
+      "size": [
+        6016,
+        4016
+      ]
+    },
+    "fixture": "nikon_d750_01.nef",
+    "native_wb_analysis": "ok",
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 39,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1573,
+        1050
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": true,
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "Apple",
+      "raw_wb": {
+        "apple_temperature": 2879,
+        "apple_tint": 12,
+        "blue": 1000,
+        "red": 1000
+      },
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 2,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "final_synthetic_ui_export": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "07-bayer-export.png",
+      "passed": true,
+      "size": [
+        1024,
+        768
+      ]
+    },
+    "fixture": "07-bayer.dng",
+    "native_wb_analysis": "ok",
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 63,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1400,
+        1050
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": true,
+    "recipe": {
+      "blacks": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "curve": [],
+      "exposure_ev": 0.75,
+      "highlights": 0.0,
+      "process_version": 1,
+      "raw_engine": "Apple",
+      "raw_wb": {
+        "apple_temperature": 6306,
+        "apple_tint": 10,
+        "blue": 1000,
+        "red": 1000
+      },
+      "saturation": 0.0,
+      "schema_version": 1,
+      "shadows": 0.0,
+      "temperature": 25.0,
+      "tint": -8.0,
+      "whites": 0.0
+    },
+    "saved_generation": 2,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+    "source_unchanged": true,
+    "version": "0.1.5"
+  },
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-09-28T00:08:12.180932+00:00",
+    "bundle": "dist/TrueRenderer-native-wb-2026-09-28.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "1834c7b9605bf8879f62400a1c07303cb91e299ecfb50257c41fa43650bfdae9",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abb24aa9cf3e59a5a9c0ec40cb1a5c17e587bbaad9773b412d7f7bbbc9563f14",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "701c85855702fd11bd5b23b1bf1462539fe3312e6a41890140481fecd6370efd"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "evidence_identity": {
+    "d750_ui_bundle": "dist/TrueRenderer-native-wb-final.app",
+    "d750_ui_binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "65e65ebe7499344e94dc922d2d745fb0267d75972429a78696fb9a983d9a84ba",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abb24aa9cf3e59a5a9c0ec40cb1a5c17e587bbaad9773b412d7f7bbbc9563f14",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "701c85855702fd11bd5b23b1bf1462539fe3312e6a41890140481fecd6370efd"
+    },
+    "note": "D750 UI evidence precedes error-placement/UI-scale changes. Final worker executables are byte-identical; final app repeated XPC, synthetic Auto WB/export and manual scale checks. The 120-case corpus used the final bundle."
+  },
+  "manual": {
+    "source": "private verified D750 copy; isolated catalog",
+    "preset": "Daylight 5500/0, custom 6000/0, Undo back through preset to as-shot observed",
+    "vibrance": "40 and warm protection enabled; Undo both to zero/off observed; final 200% UI numeric entry 25 observed",
+    "native_auto": "Button started disabled/busy state, completed and saved 2879 K/tint 12; values survived reopen",
+    "native_picker": "Two interactive requests refused heterogeneous/insufficient-valid-pixel areas without changing WB. Positive patch fits tested via IPC on synthetic and real RAW, all four engines.",
+    "ui_scale": "100% and explicit 200% in screenshot canvas 1200×768, inspector scroll and controls checked; image remains Fit and filmstrip hides in short viewport. Not a complete accessibility/VoiceOver qualification."
+  },
+  "fixed_during_review": [
+    "Native WB error moved from RGB section to its own controls.",
+    "Cmd/Ctrl +/-/0 no longer also invokes toolkit UI zoom; explicit 100/150/200% session selector added.",
+    "Filmstrip hidden when fewer than 240 logical pixels of height are available.",
+    "Private RAW test fixtures now accept either a file or directory."
+  ],
+  "preliminary_negatives": [
+    "Core Image unavailable in terminal sandbox; native suite rerun outside it.",
+    "Initial private-suite attempt exposed inconsistent file/directory TR_RAW_SAMPLE expectations; corrected, then two worker private tests passed and full-resolution checks ran via XPC.",
+    "Interactive rejected areas are expected refusal cases, not calibrated neutral references."
+  ],
+  "limitations": [
+    "Windows deferred explicitly by owner until returning to the Windows PC.",
+    "Calibrated Kelvin presets for LibRaw/TrueRenderer and measured camera colour accuracy require a known target/illuminant; supplied photographs are not a calibration reference.",
+    "Auto assumes grey world; does not identify illuminants or guarantee photographic suitability.",
+    "48 MP ceiling, up to 16 developments and 120-second deadline; no p95/RSS/physical-display or universal camera qualification.",
+    "No R0-R4 or SF0-SF2 gates closed."
+  ]
+}

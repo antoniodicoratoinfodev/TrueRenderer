@@ -44,6 +44,14 @@ uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
 gains relative to as-shot, before demosaicing. These gains are not Kelvin. The
 controls appear for a decoded RAW and are stored with the photograph's engine.
 
+**Auto RAW WB** estimates native WB parameters from the unedited RAW render,
+assuming average neutral scene colour. **RAW WB from 5×5 area** uses the last
+sampled native pixel as the centre of a neutral patch. Both work through the
+isolated decoder on supported RAWs up to 48 MP, save resolved values and support
+Undo. Analysis may take multiple RAW developments (up to 120 seconds); unstable,
+out-of-range or insufficient samples are refused without changing the recipe.
+These controls are separate from Auto RGB and do not identify the scene illuminant.
+
 Apple RAW also offers adjustable Tungsten (3200 K), Daylight (5500 K), Cloudy
 (6500 K) and Shade (7500 K) presets, all with tint zero, plus As-shot. These are
 starting points, not measurements of scene lighting. Presets save numerical WB
@@ -133,6 +141,8 @@ In smaller windows, navigation opens only when needed: [compact layout](reports/
 ![Performance preferences with SDR presentation precision and processing options](reports/readme-preferences.png)
 
 Preferences are grouped by purpose, and the interface is available in English and Italian.
+
+Interface size can be set to 100%, 150% or 200% in **Settings → General → View · this session**. Cmd/Ctrl +/−/0 controls the photograph only. In short windows the filmstrip hides automatically to keep space for the viewer.
 
 ## Local by design
 

@@ -113,3 +113,12 @@ mod tests {
         assert_eq!(std::fs::read_dir(folder.path()).unwrap().count(), 2);
     }
 }
+
+#[derive(Clone)]
+pub struct WbJob {
+    pub item: tr_core::Item,
+    pub recipe: tr_core::editing::EditRecipe,
+    pub analysis: tr_core::raw_wb::Analysis,
+    pub generation: u64,
+    pub revision: u64,
+}

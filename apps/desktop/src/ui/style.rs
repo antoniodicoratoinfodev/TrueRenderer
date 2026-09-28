@@ -10,6 +10,8 @@ pub const SURFACE: Color32 = Color32::from_gray(38);
 pub const LINE: Color32 = Color32::from_gray(56);
 
 pub fn apply(ctx: &egui::Context) {
+    // Cmd +/-/0 belong to the photograph; UI scale has its own control.
+    ctx.options_mut(|options| options.zoom_with_keyboard = false);
     ctx.set_theme(egui::Theme::Dark);
     let mut visuals = egui::Visuals::dark();
     visuals.panel_fill = PANEL;

@@ -50,6 +50,7 @@ const MAX_SOURCE_SNAPSHOTS: u64 = 2;
 #[derive(Default)]
 struct Queues {
     sample: Option<crate::photo_export::ScientificJob>,
+    wb: Option<Box<crate::photo_export::WbJob>>,
     export: Option<crate::photo_export::Job>,
     lookup: VecDeque<Job>,
     decode: VecDeque<Ready>,
@@ -527,6 +528,53 @@ impl DecodePool {
                 loop {
                     if stop.load(Ordering::Acquire) {
                         break;
+                    }
+                    let wb = if slot == 0 {
+                        queues.0.lock().unwrap().wb.take()
+                    } else {
+                        None
+                    };
+                    if let Some(job) = wb {
+                        let cancelled = || {
+                            stop.load(Ordering::Acquire)
+                                || job.generation != generation.load(Ordering::Acquire)
+                        };
+                        let result = (|| -> anyhow::Result<_> {
+                            let _slot = snapshot_slots.try_reserve(1).ok_or_else(|| {
+                                anyhow::anyhow!("Snapshot occupati: riprovare WB")
+                            })?;
+                            let _admission = decode_admission
+                                .try_lock()
+                                .map_err(|_| anyhow::anyhow!("Decoder occupato: riprovare WB"))?;
+                            let length = job.item.bytes.min(tr_core::protocol::MAX_SOURCE as u64);
+                            let _source_memory = reserve(
+                                &cache,
+                                length * 2 + 128 * 1024 * 1024,
+                                &events,
+                                &ctx,
+                                &cancelled,
+                            )?;
+                            let source = broker.prepare_snapshot_bounded(
+                                &job.item.path,
+                                &job.item.digest,
+                                length,
+                                &cancelled,
+                            )?;
+                            broker.set_raw_engine(job.recipe.raw_engine);
+                            broker.set_raw_white_balance(job.recipe.raw_wb);
+                            let metadata = broker.probe_snapshot(&source, cancelled)?;
+                            let pixels = u64::from(metadata.width) * u64::from(metadata.height);
+                            anyhow::ensure!(
+                                metadata.format == "RAW" && pixels <= 48_000_000,
+                                "WB RAW: formato o dimensioni non supportati (massimo 48 MP)"
+                            );
+                            let _raster_memory =
+                                reserve(&cache, pixels * 48, &events, &ctx, &cancelled)?;
+                            broker.estimate_raw_wb(source, job.analysis, cancelled)
+                        })()
+                        .map_err(|e| format!("{e:#}"));
+                        deliver(&events, Event::RawWhiteBalance { job, result }, &ctx, &stop);
+                        continue;
                     }
                     let sample = if slot == 0 {
                         queues.0.lock().unwrap().sample.take()
@@ -1087,6 +1135,15 @@ impl DecodePool {
             return false;
         }
         q.export = Some(job);
+        self.queues.1.notify_all();
+        true
+    }
+    pub fn submit_wb(&self, job: Box<crate::photo_export::WbJob>) -> bool {
+        let mut q = self.queues.0.lock().unwrap();
+        if q.wb.is_some() || self.stop.load(Ordering::Acquire) {
+            return false;
+        }
+        q.wb = Some(job);
         self.queues.1.notify_all();
         true
     }

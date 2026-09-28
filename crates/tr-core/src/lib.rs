@@ -13,6 +13,7 @@ pub mod presentation;
 pub mod preview;
 pub mod protocol;
 pub mod provider;
+pub mod raw_wb;
 pub mod resample;
 pub mod science;
 use anyhow::{Result, ensure};

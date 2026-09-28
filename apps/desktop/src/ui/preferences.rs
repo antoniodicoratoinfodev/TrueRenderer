@@ -178,6 +178,18 @@ impl TrueRenderer {
         );
         ui.add_space(24.);
         section(ui, lang.text("Vista · questa sessione"));
+        ui.label(lang.text("Dimensione interfaccia"));
+        ui.horizontal_wrapped(|ui| {
+            let mut zoom = (ui.ctx().zoom_factor() * 100.).round() as u16;
+            for percent in [100, 150, 200] {
+                if ui
+                    .selectable_value(&mut zoom, percent, format!("{percent}%"))
+                    .changed()
+                {
+                    ui.ctx().set_zoom_factor(f32::from(zoom) / 100.);
+                }
+            }
+        });
         ui.checkbox(&mut self.show_inspector, lang.text("Mostra ispettore"));
         ui.checkbox(
             &mut self.show_filmstrip,

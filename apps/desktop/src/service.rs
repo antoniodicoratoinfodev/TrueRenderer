@@ -53,6 +53,7 @@ pub enum Request {
     Export(PathBuf),
     ExportPhoto(crate::photo_export::Job),
     ScientificSample(crate::photo_export::ScientificJob),
+    RawWhiteBalance(Box<crate::photo_export::WbJob>),
     Shutdown,
 }
 pub struct PreparedDecoded {
@@ -68,6 +69,10 @@ pub struct PreviewDecoded {
     pub worker_pid: Option<u32>,
 }
 pub enum Event {
+    RawWhiteBalance {
+        job: Box<crate::photo_export::WbJob>,
+        result: Result<tr_core::decoder::RawWhiteBalance, String>,
+    },
     ScientificSample {
         id: String,
         result: Result<tr_core::science::Sample, String>,
@@ -412,6 +417,14 @@ impl Service {
                     Request::ExportPhoto(job) => {
                         if !pool.submit_export(job) {
                             send(Event::PhotoExport(Err("Coda export occupata".into())));
+                        }
+                    }
+                    Request::RawWhiteBalance(job) => {
+                        if !pool.submit_wb(job.clone()) {
+                            send(Event::RawWhiteBalance {
+                                job,
+                                result: Err("Coda WB RAW occupata".into()),
+                            });
                         }
                     }
                     Request::ScientificSample(job) => {

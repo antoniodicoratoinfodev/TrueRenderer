@@ -50,6 +50,10 @@ struct EditPreview {
     touched: u64,
 }
 pub(super) struct EditingUi {
+    wb_pending: bool,
+    wb_error: Option<(String, String)>,
+    wb_smoke_started: bool,
+    wb_smoke_result: Option<String>,
     pub entries: HashMap<String, EditEntry>,
     pub show_original: bool,
     pub verify_final: Option<String>,
@@ -103,6 +107,10 @@ impl Default for EditingUi {
         let (tx, rx) = std::sync::mpsc::channel();
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
+            wb_pending: false,
+            wb_error: None,
+            wb_smoke_started: false,
+            wb_smoke_result: None,
             entries: HashMap::new(),
             show_original: false,
             verify_final: None,
@@ -130,6 +138,51 @@ impl Default for EditingUi {
     }
 }
 impl TrueRenderer {
+    pub(super) fn raw_wb_result(
+        &mut self,
+        job: crate::photo_export::WbJob,
+        result: Result<tr_core::decoder::RawWhiteBalance, String>,
+    ) {
+        self.editing.wb_pending = false;
+        if self.editing.wb_smoke_started {
+            self.editing.wb_smoke_result = Some(
+                result
+                    .as_ref()
+                    .map(|_| "ok".to_owned())
+                    .unwrap_or_else(|e| e.clone()),
+            );
+        }
+        let valid = self.generation == job.generation
+            && self
+                .state
+                .items
+                .iter()
+                .any(|i| i.id == job.item.id && i.digest == job.item.digest)
+            && self.editing.entries.get(&job.item.id).is_some_and(|e| {
+                !e.pending
+                    && e.loaded
+                        .as_ref()
+                        .is_some_and(|s| s.generation == job.revision)
+                    && e.draft.as_ref().or(e.loaded.as_ref().map(|s| &s.recipe))
+                        == Some(&job.recipe)
+            });
+        if !valid {
+            return;
+        }
+        match result {
+            Ok(wb) => {
+                let mut recipe = job.recipe;
+                recipe.raw_wb = wb;
+                self.editing.entries.get_mut(&job.item.id).unwrap().draft = Some(recipe);
+                self.sample = None;
+                self.sample_from_current_render = false;
+                self.clear_edit_preview();
+                self.clear_edit_thumbnails(&job.item.id);
+                self.commit_edit(&job.item.id);
+            }
+            Err(error) => self.editing.wb_error = Some((job.item.id, error)),
+        }
+    }
     pub(super) fn capture_picker_areas(
         &mut self,
         image: &ImageLevels,
@@ -245,6 +298,37 @@ impl TrueRenderer {
             }
             1 => {
                 self.ensure_edit_loaded(&item);
+                if args.iter().any(|a| a == "--native-wb-smoke") {
+                    if !self.editing.wb_smoke_started {
+                        let Some(saved) = self
+                            .editing
+                            .entries
+                            .get(&item.id)
+                            .and_then(|e| e.loaded.clone())
+                        else {
+                            return;
+                        };
+                        let job = crate::photo_export::WbJob {
+                            item: item.clone(),
+                            recipe: saved.recipe,
+                            analysis: tr_core::raw_wb::Analysis::Auto,
+                            generation: self.generation,
+                            revision: saved.generation,
+                        };
+                        self.editing.wb_smoke_started =
+                            self.request(Request::RawWhiteBalance(Box::new(job)));
+                        self.editing.wb_pending = self.editing.wb_smoke_started;
+                        return;
+                    }
+                    if self.editing.wb_pending {
+                        return;
+                    }
+                    if self.editing.wb_smoke_result.as_deref() != Some("ok") {
+                        self.status = self.editing.wb_smoke_result.clone().unwrap_or_default();
+                        self.fatal = true;
+                        return;
+                    }
+                }
                 if let Some(entry) = self.editing.entries.get_mut(&item.id)
                     && let Some(saved) = &entry.loaded
                     && !entry.pending
@@ -471,6 +555,7 @@ impl TrueRenderer {
                     "version":env!("CARGO_PKG_VERSION"),
                     "passed":(!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!proof_smoke || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
                     "raw_wb_observed":wb_observed,
+                    "native_wb_analysis":self.editing.wb_smoke_result,
                     "auto_actions":args.iter().any(|a|a=="--auto-smoke"),
                     "output_proof_surface":self.editing.smoke_proof_result,
                     "export":self.editing.smoke_export_result,
@@ -693,7 +778,7 @@ impl TrueRenderer {
                 };
                 let error = entry.error.clone();
                 let saved = entry.loaded.clone();
-                let pending = entry.pending;
+                let pending = entry.pending || self.editing.wb_pending;
                 let existing_draft = entry.draft.clone();
                 if let Some(error) = &error {
                     ui.colored_label(AMBER, error);
@@ -753,6 +838,7 @@ impl TrueRenderer {
                 {
                     self.request_final_preview(&item.id, false);
                 }
+                if self.editing.wb_pending {ui.label(lang.text("Analisi WB RAW…"));}
                 ui.add_enabled_ui(!pending, |ui| {
                     let engine = self.preview_request(item, 0).raw_engine;
                     let is_raw = self.cache.iter().any(|((id, request), cached)| {
@@ -761,6 +847,22 @@ impl TrueRenderer {
                             && cached.info.format == "RAW"
                     });
                     if is_raw {
+                        if let Some((_,error))=self.editing.wb_error.as_ref().filter(|(id,_)|id==&item.id) {
+                            ui.colored_label(AMBER,lang.text(error));
+                        }
+                        ui.small(lang.text("WB nativo: analisi senza regolazioni creative; Auto assume grigio medio"));
+                        let mut analysis=None;
+                        if ui.button(lang.text("Auto WB RAW")).clicked() {analysis=Some(tr_core::raw_wb::Analysis::Auto);}
+                        let point = self.sample.as_ref().filter(|_| self.sample_item_id.as_deref()==Some(item.id.as_str()) && self.sample_level==Some(0) && self.sample_from_current_render && !self.output_proof_for(&item.id));
+                        if ui.add_enabled(point.is_some(),egui::Button::new(lang.text("WB RAW da area 5×5"))).clicked() {
+                            let point=point.unwrap(); analysis=Some(tr_core::raw_wb::Analysis::Patch{x:point.x,y:point.y,side:5});
+                        }
+                        if let Some(analysis)=analysis {
+                            self.editing.wb_error=None;
+                            self.editing.wb_pending=self.request(Request::RawWhiteBalance(Box::new(crate::photo_export::WbJob {
+                                item:item.clone(),recipe:draft.clone(),analysis,generation:self.generation,revision:saved.generation,
+                            })));
+                        }
                         ui.label(RichText::new(lang.text("Bilanciamento del bianco RAW")).strong());
                         if engine == tr_core::decoder::RawEngine::Apple {
                             // Presets resolve to the same durable native parameters as sliders.
