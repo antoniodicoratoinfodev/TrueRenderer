@@ -1,6 +1,7 @@
 //! Disposable, lossless, bounded folder cache. It never contains annotations.
 mod artifact;
 mod directory;
+mod registry;
 pub mod writer;
 pub use artifact::Lookup;
 mod settings;
@@ -53,6 +54,7 @@ pub struct Manager {
     settings: RwLock<Settings>,
     statistics: Mutex<Statistics>,
     settings_writer: Mutex<()>,
+    disk_policy: Mutex<registry::Registry>,
     readers: AtomicUsize,
     pressure: AtomicI8,
     battery: std::sync::atomic::AtomicBool,
@@ -98,6 +100,7 @@ impl Manager {
             settings: RwLock::new(settings),
             statistics: Mutex::new(Statistics::default()),
             settings_writer: Mutex::new(()),
+            disk_policy: Mutex::new(registry::Registry::default()),
             readers: AtomicUsize::new(0),
             pressure: AtomicI8::new(-1),
             battery: std::sync::atomic::AtomicBool::new(false),
@@ -225,12 +228,20 @@ impl Manager {
             return Ok(());
         }
         self.wait_for_readers(&|| false)?;
+        let mut policy = self.disk_policy.lock().unwrap();
         let cache = Folder::open(folder, true, true)?;
+        if !clear {
+            policy.register(folder)?;
+        }
         let (entries, removed) = cache.trim(
             if clear { 0 } else { settings.disk_mib * MIB },
-            if clear { 0 } else { settings.unused_days },
+            if clear { 0 } else { settings.retention_days() },
         )?;
         self.update_usage(folder, entries, removed);
+        drop(cache);
+        if !clear && (settings.global_disk_quota || settings.clean_known_folders) {
+            policy.sweep(&settings, 0, &|| false)?;
+        }
         self.note(
             if clear {
                 "Cache della cartella svuotata"
@@ -265,7 +276,7 @@ impl Manager {
                 .entries
                 .open_file(&format!("{key}.tvc"), false, false, false)?;
             let expired = file.metadata()?.modified()?.elapsed().unwrap_or_default()
-                > Duration::from_secs(self.settings().unused_days as u64 * 86400);
+                > Duration::from_secs(self.settings().retention_days() as u64 * 86400);
             ensure!(!expired, "Cache scaduta");
             match read_artifact(&file, &key, digest, cancelled) {
                 Ok(value) => {
@@ -319,6 +330,7 @@ impl Manager {
         let json = serde_json::to_vec(&header)?;
         ensure!(json.len() <= 65536, "Header cache fuori quota");
         let required = 12 + json.len() as u64 + prepared.pyramid.byte_len() as u64 + 32;
+        let _policy = self.reserve_disk(folder, required, cancelled)?;
         let quota = settings.disk_mib * MIB;
         ensure!(
             required <= quota && required <= settings.temporary_mib * MIB,
@@ -334,7 +346,7 @@ impl Manager {
         {
             cache.entries.remove(&target)?;
         }
-        let (entries, removed) = cache.trim(quota - required, settings.unused_days)?;
+        let (entries, removed) = cache.trim(quota - required, settings.retention_days())?;
         self.update_usage(folder, entries, removed);
         ensure!(
             fs2::available_space(&cache.root.path)? >= required + settings.free_mib * MIB,
@@ -368,7 +380,7 @@ impl Manager {
         let _ = cache.tmp.remove(&name);
         self.statistics.lock().unwrap().temporary_bytes = 0;
         result?;
-        let (entries, removed) = cache.trim(quota, settings.unused_days)?;
+        let (entries, removed) = cache.trim(quota, settings.retention_days())?;
         self.update_usage(folder, entries, removed);
         let mut stats = self.statistics.lock().unwrap();
         stats.writes += 1;
@@ -448,8 +460,16 @@ impl Folder {
         })
     }
     fn files(dir: &Directory, suffix: &str) -> Result<Vec<Entry>> {
+        Self::files_cancellable(dir, suffix, &|| false)
+    }
+    fn files_cancellable(
+        dir: &Directory,
+        suffix: &str,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<Vec<Entry>> {
         let mut entries = vec![];
         for (index, entry) in std::fs::read_dir(&dir.path)?.enumerate() {
+            ensure!(!cancelled(), "Manutenzione cache annullata");
             ensure!(index < 100000, "Indice cache oltre quota");
             let entry = entry?;
             let name = entry.file_name().to_string_lossy().into_owned();
@@ -476,11 +496,22 @@ impl Folder {
         days: u32,
         thumbnail_minimum: u64,
     ) -> Result<(Vec<Entry>, u64)> {
+        self.trim_cancellable(limit, days, thumbnail_minimum, &|| false)
+    }
+    fn trim_cancellable(
+        &self,
+        limit: u64,
+        days: u32,
+        thumbnail_minimum: u64,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<(Vec<Entry>, u64)> {
         // Exclusive lock excludes all active readers and writers in this folder.
-        for entry in Self::files(&self.tmp, ".part")? {
+        ensure!(!cancelled(), "Manutenzione cache annullata");
+        for entry in Self::files_cancellable(&self.tmp, ".part", cancelled)? {
+            ensure!(!cancelled(), "Manutenzione cache annullata");
             self.tmp.remove(&entry.name)?;
         }
-        let mut entries = Self::files(&self.entries, ".tvc")?;
+        let mut entries = Self::files_cancellable(&self.entries, ".tvc", cancelled)?;
         entries.sort_by_key(|e| e.modified);
         let mut total: u64 = entries.iter().map(|e| e.bytes).sum();
         let protected = if days > 0 && total > limit {
@@ -501,23 +532,24 @@ impl Folder {
         );
         entries.sort_by_key(|e| (protected.contains(&e.name), e.modified));
         let mut removed = 0;
-        entries.retain(|entry| {
+        let mut retained = Vec::new();
+        for entry in entries {
+            ensure!(!cancelled(), "Manutenzione cache annullata");
             let expired = days == 0
                 || entry.modified.elapsed().unwrap_or_default()
                     > Duration::from_secs(days as u64 * 86400);
             if (expired || total > limit) && self.entries.remove(&entry.name).is_ok() {
                 total = total.saturating_sub(entry.bytes);
                 removed += 1;
-                false
             } else {
-                true
+                retained.push(entry);
             }
-        });
+        }
         ensure!(
             total <= limit,
             "Quota cache non applicabile; scrittura saltata"
         );
-        Ok((entries, removed))
+        Ok((retained, removed))
     }
 }
 #[derive(Serialize, Deserialize)]

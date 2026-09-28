@@ -40,7 +40,28 @@ impl Writer {
         let worker_cache = cache.clone();
         let worker_stop = stop.clone();
         let worker = thread::spawn(move || {
-            while let Ok(job) = rx.recv() {
+            let mut last_cleanup = std::time::Instant::now() - std::time::Duration::from_secs(60);
+            loop {
+                if worker_stop.load(Ordering::Acquire) {
+                    break;
+                }
+                let settings = worker_cache.settings();
+                if settings.enabled
+                    && settings.clean_known_folders
+                    && last_cleanup.elapsed() >= std::time::Duration::from_secs(60)
+                {
+                    if let Err(error) = worker_cache.maintain_known(&|| {
+                        worker_stop.load(Ordering::Acquire) || worker_cache.settings() != settings
+                    }) {
+                        worker_cache.note(format!("Manutenzione cache: {error:#}"));
+                    }
+                    last_cleanup = std::time::Instant::now();
+                }
+                let job = match rx.recv_timeout(std::time::Duration::from_secs(1)) {
+                    Ok(job) => job,
+                    Err(mpsc::RecvTimeoutError::Timeout) => continue,
+                    Err(mpsc::RecvTimeoutError::Disconnected) => break,
+                };
                 let cancelled = || {
                     worker_stop.load(Ordering::Acquire)
                         || worker_cache.under_pressure()

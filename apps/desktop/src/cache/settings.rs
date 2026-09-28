@@ -34,6 +34,9 @@ pub struct Settings {
     pub schema: u32,
     pub enabled: bool,
     pub disk_mib: u64,
+    pub global_disk_quota: bool,
+    pub expire_unused: bool,
+    pub clean_known_folders: bool,
     pub temporary_mib: u64,
     pub unused_days: u32,
     pub free_mib: u64,
@@ -58,6 +61,9 @@ impl Default for Settings {
             schema: 2,
             enabled: true,
             disk_mib: 4096,
+            global_disk_quota: false,
+            expire_unused: true,
+            clean_known_folders: false,
             temporary_mib: 2048,
             unused_days: 30,
             free_mib: 512,
@@ -75,6 +81,14 @@ impl Default for Settings {
     }
 }
 impl Settings {
+    pub fn retention_days(&self) -> u32 {
+        if self.expire_unused {
+            self.unused_days
+        } else {
+            u32::MAX
+        }
+    }
+
     pub fn validate(&self) -> Result<()> {
         ensure!(self.schema == 2, "Versione impostazioni non supportata");
         ensure!(
@@ -244,6 +258,34 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn cache_controls_preserve_legacy_defaults_and_roundtrip_independently() {
+        let data = tempfile::tempdir().unwrap();
+        std::fs::write(
+            data.path().join("settings.json"),
+            br#"{"schema":2,"disk_mib":8192,"unused_days":17}"#,
+        )
+        .unwrap();
+        let mut settings = Settings::load(data.path()).unwrap();
+        assert!(
+            !settings.global_disk_quota && !settings.clean_known_folders && settings.expire_unused
+        );
+        assert_eq!(settings.retention_days(), 17);
+        for global in [false, true] {
+            for expiry in [false, true] {
+                for periodic in [false, true] {
+                    settings.global_disk_quota = global;
+                    settings.expire_unused = expiry;
+                    settings.clean_known_folders = periodic;
+                    settings.save(data.path()).unwrap();
+                    let loaded = Settings::load(data.path()).unwrap();
+                    assert_eq!(loaded, settings);
+                    assert_eq!((loaded.disk_mib, loaded.unused_days), (8192, 17));
+                    assert_eq!(loaded.retention_days(), if expiry { 17 } else { u32::MAX });
+                }
+            }
+        }
+    }
     #[test]
     fn language_defaults_to_english_and_roundtrips_without_losing_preferences() {
         use crate::i18n::Language;

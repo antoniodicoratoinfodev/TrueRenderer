@@ -156,6 +156,8 @@ Interface size can be set to 100%, 150% or 200% in **Settings → General → Vi
 
 Original files are read-only. Previews use a separate cache, while ratings, keywords and backups remain durable library data.
 
+In **Settings → Cache and data**, one space limit applies either per folder or across all folders known to the current library. The total limit is optional. You can disable unused-preview expiry or enable periodic cleanup of folders that are not open; periodic cleanup runs every minute while the app is running and uses the same quota and expiry. **Clean known caches now** applies the saved policy, while **Clear folder cache** clears only the current folder. The summary reports the last cleanup measurement and incomplete checks. Previously visited folders become known when reopened with this version; disconnected folders are retried. No cleanup service runs after the app closes.
+
 External decoding is isolated in sandboxed XPC services on macOS and a confined worker on Windows. Decoder failures remain separated from the library writer.
 
 TrueRenderer targets Apple silicon Macs and x86-64 Windows PCs. JPEG, PNG and TIFF use its portable path; native macOS services and a growing set of camera profiles extend format support.

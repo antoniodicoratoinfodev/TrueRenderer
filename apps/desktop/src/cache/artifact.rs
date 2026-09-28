@@ -115,7 +115,7 @@ impl Manager {
                     .modified()?
                     .elapsed()
                     .unwrap_or_default()
-                    <= Duration::from_secs(self.settings().unused_days as u64 * 86400),
+                    <= Duration::from_secs(self.settings().retention_days() as u64 * 86400),
                 "Derivato scaduto"
             );
             let header: Descriptor = serde_json::from_slice(&bytes)?;
@@ -317,7 +317,7 @@ impl Manager {
             .open_file(&format!("{key}.tvc"), false, false, false)?;
         ensure!(
             file.metadata()?.modified()?.elapsed().unwrap_or_default()
-                <= Duration::from_secs(self.settings().unused_days as u64 * 86400),
+                <= Duration::from_secs(self.settings().retention_days() as u64 * 86400),
             "Cache v1 scaduta"
         );
         let Some(mut lease) = budget.try_reserve(file.metadata()?.len().saturating_add(MIB)) else {
@@ -357,6 +357,7 @@ impl Manager {
         // The logical job, including its descriptor/record overhead, is admitted
         // before any block. Splitting cannot bypass temporary_mib.
         let required = preview.image.byte_len() as u64 + HEADER_LIMIT as u64 + 48 * 1024;
+        let _policy = self.reserve_disk(folder, required, cancelled)?;
         let quota = settings.disk_mib * MIB;
         ensure!(
             required <= quota && required <= settings.temporary_mib * MIB,
@@ -366,7 +367,7 @@ impl Manager {
         {
             let cache = Folder::open(folder, true, true)?;
             let (entries, removed) =
-                cache.trim_with_minimum(quota - required, settings.unused_days, quota / 5)?;
+                cache.trim_with_minimum(quota - required, settings.retention_days(), quota / 5)?;
             self.update_usage(folder, entries, removed);
             ensure!(
                 fs2::available_space(&cache.root.path)? >= required + settings.free_mib * MIB,
@@ -680,6 +681,42 @@ mod tests {
         })
     }
     #[test]
+    fn aggregate_admission_is_applied_to_real_preview_publication() {
+        let root = tempfile::tempdir().unwrap();
+        let a = root.path().join("a");
+        let b = root.path().join("b");
+        std::fs::create_dir(&a).unwrap();
+        std::fs::create_dir(&b).unwrap();
+        let cache = manager();
+        let mut settings = cache.settings();
+        settings.disk_mib = 64;
+        settings.global_disk_quota = true;
+        cache.configure(settings);
+        let old = {
+            let disk = Folder::open(&a, true, true).unwrap();
+            let name = format!("{}.tvc", "a".repeat(64));
+            let file = disk.entries.open_file(&name, true, true, true).unwrap();
+            file.set_len(64 * MIB).unwrap();
+            file.set_modified(SystemTime::now() - Duration::from_secs(86400))
+                .unwrap();
+            disk.entries.path.join(name)
+        };
+        cache.maintain(&a, false).unwrap();
+        let (info, preview, request) = fixture();
+        cache
+            .store_preview(&b, "aggregate", request, &info, &preview, &|| false)
+            .unwrap();
+        assert!(!old.exists());
+        assert!(matches!(
+            cache.load_preview(&b, "aggregate", request, &cache.memory, &|| false),
+            Lookup::Hit(..)
+        ));
+        cache.maintain_known(&|| false).unwrap();
+        let summary = cache.known_cache_summary().unwrap();
+        assert!(summary.bytes > 0 && summary.bytes <= 64 * MIB);
+        assert_eq!(summary.folders, 2);
+    }
+    #[test]
     fn smaller_cache_request_reads_only_its_tail_and_keeps_quality_and_engine() {
         let folder = tempfile::tempdir().unwrap();
         let cache = manager();
@@ -842,11 +879,18 @@ mod tests {
                 disk.entries
                     .open_file(&entry.name, true, false, false)
                     .unwrap()
-                    .set_modified(SystemTime::now() - Duration::from_secs(86400 * 20))
+                    .set_modified(SystemTime::now() - Duration::from_secs(86400 * 40))
                     .unwrap();
             }
             entries.into_iter().map(|e| e.name).collect::<Vec<_>>()
         };
+        assert!(!matches!(
+            cache.load_preview(folder.path(), "touch", request, &cache.memory, &|| false),
+            Lookup::Hit(..)
+        ));
+        let mut settings = cache.settings();
+        settings.expire_unused = false;
+        cache.configure(settings);
         assert!(matches!(
             cache.load_preview(folder.path(), "touch", request, &cache.memory, &|| false),
             Lookup::Hit(..)

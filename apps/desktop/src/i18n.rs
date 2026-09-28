@@ -507,6 +507,23 @@ impl Language {
             "Abilita cache su disco nella cartella delle immagini" => {
                 "Enable disk cache in the image folder"
             }
+            "Un solo limite di spazio: scegli se applicarlo per cartella o al totale delle cartelle conosciute." => {
+                "One space limit: apply it per folder or to the total across known folders."
+            }
+            "Limite totale tra cartelle conosciute" => "Total limit across known folders",
+            "Disattivato: il limite vale per ogni cartella. Attivato: lo stesso limite vale per la somma, con rimozione delle anteprime meno recenti." => {
+                "Off: the limit applies to each folder. On: the same limit applies to the total, removing least recently used previews."
+            }
+            "Limite spazio cache (MB)" => "Cache space limit (MB)",
+            "Elimina anteprime non utilizzate" => "Remove unused previews",
+            "Pulisci periodicamente anche le cartelle non aperte" => {
+                "Periodically clean folders that are not open"
+            }
+            "Ogni minuto mentre l'app è aperta. Usa gli stessi limiti e la stessa scadenza; considera solo le cartelle registrate da questa libreria, senza cercare nei dischi. Le cartelle non disponibili vengono segnalate e riprovate." => {
+                "Every minute while the app is open. Uses the same limits and expiry; only folders registered by this library are checked, without searching disks. Unavailable folders are reported and retried."
+            }
+            "Spazio totale non ancora misurato" => "Total space not measured yet",
+            "Pulisci ora le cache conosciute" => "Clean known caches now",
             "Quota per cartella (MB)" => "Quota per folder (MB)",
             "Temporanei (MB)" => "Temporary files (MB)",
             "Scadenza senza utilizzo (giorni)" => "Expire after inactivity (days)",

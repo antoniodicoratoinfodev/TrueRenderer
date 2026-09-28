@@ -140,6 +140,7 @@ impl Service {
         let ctx = wake.clone();
         let (settings, warning) = crate::cache::Settings::load_or_recover(&data);
         let cache = Arc::new(crate::cache::Manager::new(settings));
+        cache.load_registry(&data);
         if let Some(warning) = warning {
             cache.note(warning);
         }

@@ -33,3 +33,4 @@ __pycache__/
 *.py[cod]
 
 .truerenderer-cache/
+cache-folders.json

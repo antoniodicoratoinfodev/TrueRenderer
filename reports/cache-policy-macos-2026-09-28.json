@@ -1,0 +1,121 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-28T18:07:41.193988+00:00",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "4cbf5c9a790cfcade4bc0c2275ed3d25a920681d554a2bd07613436bd18e63a5",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "verification": {
+    "passed": true,
+    "rust_ordinary": 217,
+    "rust_integrations": 14,
+    "private_raw_skipped": 3,
+    "cache_tests": 35,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signals": 24,
+    "native_surface": true,
+    "evidence": "var/verify-u1yqlKLS",
+    "log": "var/cache-policy-review-2026-09-28/verify.log"
+  },
+  "preferences": {
+    "passed": true,
+    "screenshots": 12,
+    "evidence": "var/cache-policy-review-2026-09-28/preferences/reports",
+    "visually_inspected": [
+      "restyle-07.png"
+    ],
+    "manual_check": "See initial_campaign.preferences.manual_check; UI unchanged in final cancellation fix."
+  },
+  "xpc": {
+    "passed": true,
+    "production_rejects_fault_injection": true,
+    "evidence": "var/cache-policy-review-2026-09-28/xpc/reports",
+    "full_sandbox_gate_passed": false
+  },
+  "policy": {
+    "one_space_limit": true,
+    "scope_switch": "per-folder or total known folders",
+    "expiry_optional": true,
+    "periodic_cleanup_optional": true,
+    "period_seconds": 60,
+    "runs_only_while_application_open": true,
+    "legacy_defaults_preserved": true,
+    "max_registered_folders": 256,
+    "global_admission_skipped_if_inventory_incomplete": true
+  },
+  "delivery": {
+    "bundle_copy_hashes_match": true,
+    "previous_bundle": "var/cache-policy-review-2026-09-28/before-review.app"
+  },
+  "limitations": [
+    "No native Windows qualification in this campaign.",
+    "Known folders are scoped to the application data directory; no disk-wide discovery.",
+    "No atomic physical quota across independent processes, catalogs or disconnected volumes.",
+    "R0–R4 and release/accessibility/display gates remain open."
+  ],
+  "initial_campaign": {
+    "checked_at": "2026-09-28T17:54:29.524170+00:00",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "a8dade4449dc154f60543f3f5faa9e078b9771908abaee6ce0f31b4789533ada",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "verification": {
+      "passed": true,
+      "rust_ordinary": 215,
+      "rust_integrations": 14,
+      "private_raw_skipped": 3,
+      "cache_tests": 33,
+      "python_tests": 2,
+      "protocol_checks": 8,
+      "signals": 24,
+      "native_surface": true,
+      "evidence": "var/verify-OuQdqMNE",
+      "log": "var/cache-policy-2026-09-28/tr-global-verify-final.log"
+    },
+    "preferences": {
+      "passed": true,
+      "screenshots": 12,
+      "evidence": "var/cache-policy-2026-09-28/preferences/reports",
+      "manual_check": {
+        "isolated_data": "var/cache-policy-2026-09-28/manual-data",
+        "independent_switches_saved_both_directions": true,
+        "expiry_field_disabled_when_off": true,
+        "manual_cleanup_completed": true,
+        "summary_bytes_display": "131.8 MB",
+        "summary_folders": 1,
+        "summary_incomplete_checks": 0,
+        "ax_limitation": "Accessibility tree did not reflect modal controls; screenshot-guided coordinate interactions verified visually and against saved settings."
+      }
+    },
+    "xpc": {
+      "passed": true,
+      "production_rejects_fault_injection": true,
+      "evidence": "var/cache-policy-2026-09-28/xpc/reports",
+      "full_sandbox_gate_passed": false
+    },
+    "delivery": {
+      "bundle_copy_hashes_match": true,
+      "previous_bundle": "var/cache-policy-2026-09-28/previous-distribution.app"
+    }
+  },
+  "review": {
+    "cancellation_fix": "Check cancellation/deadline during directory iteration and before each temporary/expired/quota removal within a folder.",
+    "regressions_added": 2,
+    "regression_failed_before_fix": true,
+    "publication_check": {
+      "text_files_scanned": 1109,
+      "json_validated": 129,
+      "findings": [],
+      "ignored_examples": 10,
+      "included_examples": 4,
+      "license_and_original_unchanged": true
+    },
+    "local_document_links_checked": 348,
+    "document_sync_idempotent": true,
+    "private_folder_registry_ignored": true
+  }
+}

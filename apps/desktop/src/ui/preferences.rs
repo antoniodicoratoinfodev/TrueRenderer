@@ -508,17 +508,20 @@ impl TrueRenderer {
     fn cache_preferences(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         section(ui, lang.text("Archiviazione delle anteprime"));
-        ui.label(RichText::new(lang.text("Le impostazioni valgono per tutte le cartelle; la quota disco si applica a ciascuna cartella separatamente.")).small().color(MUTED));
+        ui.label(RichText::new(lang.text("Un solo limite di spazio: scegli se applicarlo per cartella o al totale delle cartelle conosciute.")).small().color(MUTED));
         ui.checkbox(
             &mut self.cache_settings.enabled,
             lang.text("Abilita cache su disco nella cartella delle immagini"),
         );
+        ui.add_enabled_ui(self.cache_settings.enabled, |ui| {
+        ui.checkbox(&mut self.cache_settings.global_disk_quota, lang.text("Limite totale tra cartelle conosciute"));
+        ui.label(RichText::new(lang.text("Disattivato: il limite vale per ogni cartella. Attivato: lo stesso limite vale per la somma, con rimozione delle anteprime meno recenti.")).small().color(MUTED));
         ui.add(
             egui::Slider::new(&mut self.cache_settings.disk_mib, 64..=65536)
                 .logarithmic(true)
                 .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
                 .custom_parser(crate::size_units::parse_mb_as_mib)
-                .text(lang.text("Quota per cartella (MB)")),
+                .text(lang.text("Limite spazio cache (MB)")),
         );
         ui.add(
             egui::Slider::new(&mut self.cache_settings.temporary_mib, 16..=2048)
@@ -527,7 +530,8 @@ impl TrueRenderer {
                 .custom_parser(crate::size_units::parse_mb_as_mib)
                 .text(lang.text("Temporanei (MB)")),
         );
-        ui.add(
+        ui.checkbox(&mut self.cache_settings.expire_unused, lang.text("Elimina anteprime non utilizzate"));
+        ui.add_enabled(self.cache_settings.expire_unused,
             egui::Slider::new(&mut self.cache_settings.unused_days, 1..=3650)
                 .logarithmic(true)
                 .text(lang.text("Scadenza senza utilizzo (giorni)")),
@@ -539,6 +543,43 @@ impl TrueRenderer {
                 .custom_parser(crate::size_units::parse_mb_as_mib)
                 .text(lang.text("Spazio libero da riservare (MB)")),
         );
+        ui.checkbox(&mut self.cache_settings.clean_known_folders, lang.text("Pulisci periodicamente anche le cartelle non aperte"));
+        ui.label(RichText::new(lang.text("Ogni minuto mentre l'app è aperta. Usa gli stessi limiti e la stessa scadenza; considera solo le cartelle registrate da questa libreria, senza cercare nei dischi. Le cartelle non disponibili vengono segnalate e riprovate.")).small().color(MUTED));
+        });
+        if let Some(summary) = self.service.cache.known_cache_summary() {
+            if summary.measured {
+                ui.label(localized_format!(
+                    lang,
+                    "Ultima pulizia: {} · {} cartelle · {} controlli non completati",
+                    "Last cleanup: {} · {} folders · {} checks incomplete",
+                    human_bytes(summary.bytes),
+                    summary.folders,
+                    summary.unavailable
+                ));
+            } else {
+                ui.label(lang.text("Spazio totale non ancora misurato"));
+            }
+        } else {
+            ui.label(lang.text("Aggiornamento cache…"));
+        }
+        let saved = self.cache_settings == self.service.cache.settings();
+        if ui
+            .add_enabled(
+                saved && self.cache_action.is_none(),
+                egui::Button::new(lang.text("Pulisci ora le cache conosciute")),
+            )
+            .clicked()
+        {
+            let cache = self.service.cache.clone();
+            let (tx, rx) = std::sync::mpsc::sync_channel(1);
+            self.cache_action = Some(rx);
+            std::thread::spawn(move || {
+                let result = cache
+                    .maintain_known(&|| false)
+                    .map_err(|error| format!("Cache: {error:#}"));
+                let _ = tx.send(result);
+            });
+        }
         ui.label(lang.text("I temporanei rientrano nella quota disco. Le immagini troppo grandi per la cache restano visualizzabili in RAM. I file meno usati vengono rimossi per rispettare la quota."));
         ui.separator();
         ui.label(lang.text("Cartella corrente:"));
