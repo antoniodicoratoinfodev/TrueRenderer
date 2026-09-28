@@ -24,6 +24,10 @@ pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
             }
         }
         drop(decoded);
+        if patch.is_none() {
+            cases.push(serde_json::json!({"engine":engine,"analysis":"Patch",
+                "passed":false,"error":"Nessuna area 5×5 valida: prova contagocce non eseguita"}));
+        }
         let source = broker.prepare_snapshot(path, &digest, || false)?;
         let calls = std::cell::Cell::new(0);
         let stops = broker.statistics().forced_stops;
@@ -64,12 +68,82 @@ pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
         }
     }
     let (_, after) = tr_platform::snapshot(path)?;
-    ensure!(digest == after, "Sorgente modificata");
-    let report = serde_json::json!({"source_digest":digest,"source_unchanged":true,"cases":cases,"cancellations":cancellations,"scope":"Native WB IPC and final decode; no camera colour calibration certification"});
+    write_report(root, &digest, digest == after, cases, cancellations)
+}
+
+fn write_report(
+    root: &Path,
+    digest: &str,
+    source_unchanged: bool,
+    cases: Vec<serde_json::Value>,
+    cancellations: Vec<serde_json::Value>,
+) -> Result<()> {
+    let engines = RawEngine::choices().count();
+    let passed = source_unchanged
+        && cases.len() == engines * 2
+        && cases.iter().all(|case| case["passed"] == true)
+        && cancellations.len() == engines
+        && cancellations.iter().all(|case| case["cancelled"] == true);
+    let report = serde_json::json!({"passed":passed,"source_digest":digest,"source_unchanged":source_unchanged,"cases":cases,"cancellations":cancellations,"scope":"Native WB IPC and final decode; no camera colour calibration certification"});
     std::fs::create_dir_all(root.join("reports"))?;
     std::fs::write(
         root.join("reports/native-wb.json"),
         serde_json::to_vec_pretty(&report)?,
     )?;
+    ensure!(
+        passed,
+        "Verifica WB RAW fallita o incompleta: vedere reports/native-wb.json"
+    );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn failed_or_incomplete_campaigns_save_a_failed_report_and_return_error() {
+        let root = tempfile::tempdir().unwrap();
+        let cases: Vec<_> = RawEngine::choices().flat_map(|engine| {
+            ["Auto", "Patch"].map(|analysis| serde_json::json!({"engine":engine,"analysis":analysis,"passed":true}))
+        }).collect();
+        let cancellations: Vec<_> = RawEngine::choices()
+            .map(|engine| serde_json::json!({"engine":engine,"cancelled":true}))
+            .collect();
+        let read = || -> serde_json::Value {
+            serde_json::from_slice(
+                &std::fs::read(root.path().join("reports/native-wb.json")).unwrap(),
+            )
+            .unwrap()
+        };
+        write_report(
+            root.path(),
+            "test",
+            true,
+            cases.clone(),
+            cancellations.clone(),
+        )
+        .unwrap();
+        assert_eq!(read()["passed"], true);
+        let mut failed = cases.clone();
+        failed[0]["passed"] = false.into();
+        assert!(write_report(root.path(), "test", true, failed, cancellations.clone()).is_err());
+        assert_eq!(read()["cases"][0]["passed"], false);
+        assert_eq!(read()["passed"], false);
+        assert!(
+            write_report(
+                root.path(),
+                "test",
+                true,
+                cases[1..].to_vec(),
+                cancellations.clone()
+            )
+            .is_err()
+        );
+        assert_eq!(read()["passed"], false);
+        assert!(write_report(root.path(), "test", true, cases.clone(), vec![]).is_err());
+        assert_eq!(read()["passed"], false);
+        assert!(write_report(root.path(), "test", false, cases, cancellations).is_err());
+        assert_eq!(read()["source_unchanged"], false);
+        assert_eq!(read()["passed"], false);
+    }
 }

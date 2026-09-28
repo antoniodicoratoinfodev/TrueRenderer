@@ -20,6 +20,14 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Correzioni della revisione WB — 28 settembre
+
+- [x] **Implementato:** il diagnostico `--verify-native-wb` registra esplicitamente il contagocce non eseguito per assenza di aree valide; salva l'esito aggregato `passed` e restituisce errore quando una prova fallisce, la campagna è incompleta o la sorgente cambia. Il rapporto resta disponibile anche per questi esiti negativi.
+- [x] **Timeout smoke:** budget WB UI portato a 210 s: i 120 s del broker, condivisi tramite costante, più i 90 s ordinari per caricamento/salvataggio/export. Lo smoke senza analisi nativa mantiene 90 s; il rapporto positivo dichiara il budget usato.
+- [x] **Verificato:** `scripts/verify.sh --gui` passato: **200 test ordinari + 13 integrazioni**, due test Python, otto controlli protocollo, 24 segnali e superficie nativa; fmt/Clippy/build. Regressioni per rapporto negativo persistito, campagna incompleta, sorgente cambiata e budget dell'analisi rispetto al resto dello smoke. Artefatti `var/verify-JJZZpq22/`.
+- [x] **Bundle verificato:** diagnostico sintetico **8/8** con quattro annullamenti/recuperi, esito aggregato positivo ed exit 0; due XPC, timeout/recupero e rifiuto fault injection passati. Smoke UI WB asincrono, salvataggio, resa finale ed export PNG16 1024×768 passati, sorgente invariata e budget dichiarato 210 s. Bundle `dist/TrueRenderer-wb-checks-2026-09-28.app`; [rapporto](reports/wb-diagnostic-checks-macos-2026-09-28.json), artefatti `var/wb-checks-i6_8w55w/`. Nessuna nuova campagna D750 né analisi nativa artificialmente prolungata a 120 s; esiti negativi coperti dai test del rapporto.
+- [ ] **Aperto:** requisiti esterni e qualifiche estese invariati; Windows rinviato, nessun gate SF/R chiuso.
+
 ### Annullamento analisi WB RAW — 28 settembre
 
 - [x] **Implementato:** comando Annulla analisi WB RAW, token per singola richiesta condiviso fra UI e coda decoder. Interrompe il worker tramite il broker esistente; i controlli tornano disponibili alla ricezione del completamento. Risultati già consegnati ma annullati non modificano ricetta o cronologia; risposte con token diverso non liberano una nuova richiesta. Messaggi IT/EN.

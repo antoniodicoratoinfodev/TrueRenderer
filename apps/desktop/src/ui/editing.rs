@@ -256,7 +256,10 @@ impl TrueRenderer {
             .and_then(|i| args.get(i + 1))
             .and_then(|p| std::fs::canonicalize(p).ok());
         ctx.request_repaint_after(Duration::from_millis(50));
-        let timed_out = self.started.elapsed() > Duration::from_secs(90) || self.fatal;
+        // Preserve the ordinary smoke budget for loading, saving and export,
+        // in addition to the broker's complete native-analysis allowance.
+        let timeout = develop_smoke_timeout(args.iter().any(|a| a == "--native-wb-smoke"));
+        let timed_out = self.started.elapsed() > timeout || self.fatal;
         let target = self
             .state
             .items
@@ -578,6 +581,7 @@ impl TrueRenderer {
                     "passed":(!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!proof_smoke || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
                     "raw_wb_observed":wb_observed,
                     "native_wb_analysis":self.editing.wb_smoke_result,
+                    "timeout_seconds":timeout.as_secs(),
                     "auto_actions":args.iter().any(|a|a=="--auto-smoke"),
                     "output_proof_surface":self.editing.smoke_proof_result,
                     "export":self.editing.smoke_export_result,
@@ -1556,5 +1560,29 @@ impl TrueRenderer {
             .preview_errors
             .get(id)
             .map(|failure| failure.message.as_str())
+    }
+}
+
+fn develop_smoke_timeout(native_wb: bool) -> Duration {
+    Duration::from_secs(90)
+        + if native_wb {
+            tr_platform::RAW_WB_TIMEOUT
+        } else {
+            Duration::ZERO
+        }
+}
+
+#[cfg(test)]
+mod smoke_deadline_tests {
+    use super::*;
+    #[test]
+    fn native_analysis_keeps_the_full_budget_for_the_rest_of_the_smoke() {
+        let ordinary = develop_smoke_timeout(false);
+        let native = develop_smoke_timeout(true);
+        assert_eq!(ordinary, Duration::from_secs(90));
+        let elapsed = Duration::from_secs(30) + tr_platform::RAW_WB_TIMEOUT;
+        assert!(elapsed > ordinary);
+        assert!(elapsed < native);
+        assert_eq!(native - ordinary, tr_platform::RAW_WB_TIMEOUT);
     }
 }

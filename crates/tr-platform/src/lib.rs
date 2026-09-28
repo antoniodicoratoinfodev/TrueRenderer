@@ -20,6 +20,8 @@ use std::{
     time::{Duration, Instant},
 };
 pub use tr_core::corpus::CorpusPolicy;
+/// Maximum duration of one native RAW white-balance analysis.
+pub const RAW_WB_TIMEOUT: Duration = Duration::from_secs(120);
 /// Read once at service startup; other resource adapters remain unqualified.
 pub fn physical_memory_mib() -> u64 {
     #[cfg(target_os = "macos")]
@@ -846,7 +848,7 @@ impl Broker {
             "Dimensione anteprima fuori quota"
         );
         let timeout = if matches!(intent, protocol::DecodeIntent::RawWhiteBalance(_)) {
-            Duration::from_secs(120)
+            RAW_WB_TIMEOUT
         } else {
             timeout
         };
