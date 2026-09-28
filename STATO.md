@@ -20,6 +20,18 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Pulizia locale e controllo pubblicazione — 28 settembre
+
+- [x] Rimossi `target`, cache delle anteprime delle prove, staging del pacchetto, cache Python e due vecchi bundle di qualifica in `var`. Liberati **15,66 GB allocati**; progetto da 19,93 a 4,27 GB. Conservati toolchain, bundle corrente, sorgenti, fixture, rapporti e catture, fotografie, database e backup. Hash invariati per tutti i 5.210 file conservati in `var` e `dist`; inventario locale in `var/cleanup-2026-09-28/cleanup.json`. Le cache eliminate sono rigenerabili; i vecchi eseguibili di qualifica non sono più disponibili.
+- [x] Controllati 1.107 file testuali candidati alla pubblicazione e validati 128 JSON; nessun pattern di credenziali o percorso personale rilevato dalla scansione. Confermate 12 esclusioni e nove inclusioni rappresentative con `git check-ignore`, nessun file già versionato intercettato dalle regole di esclusione. `.gitignore` già adeguato: build, toolchain, `var`, `dist`, database, credenziali e cache restano locali; codice, lockfile, licenze e fixture restano pubblicabili. Nessuna modifica applicativa successiva alla suite dell'incremento sotto; nessun nuovo gate qualificato.
+
+### Unità decimali e riordino distribuzioni — 28 settembre
+
+- [x] **Implementato:** dimensioni file, cache, memoria e relativi messaggi in B/kB/MB/GB decimali nelle schermate IT/EN. I sei cursori delle quote mostrano e accettano MB, anche con virgola decimale; le impostazioni persistite e i limiti interni mantengono le unità precedenti. Nessuna migrazione o variazione delle quote alla sola apertura.
+- [x] **Verificato:** `scripts/verify.sh --gui` passato fuori dal sandbox aggiuntivo del terminale: **208 test ordinari + 14 integrazioni**, due test Python, otto controlli protocollo, 24 segnali e superficie nativa; fmt/Clippy/build passati. Round-trip di tutti i valori interi da 0 a 65.536 MiB tramite display/input MB. Il primo tentativo nel sandbox falliva due test Core Image; conservato insieme alla ripetizione riuscita. Tre prove RAW private escluse. Evidenze `var/verify-aJ9bQMyT/` e `var/decimal-units-2026-09-28/`.
+- [x] **Bundle e pulizia richiesta:** build release `dist/TrueRenderer.app`, firma ad hoc e due servizi XPC verificati, timeout/recupero e rifiuto fault injection passati. Probe preferenze IT/EN con 12 catture passato; ispezionate Prestazioni e Cache e dati in italiano, compresa la dimensione file nell'ispettore. Eliminati soltanto i 23 vecchi bundle in `dist` (circa 1,05 GB logici); originali, libreria e backup durevoli conservati. [Rapporto](reports/decimal-units-macos-2026-09-28.json).
+- [ ] **Aperto:** verifica nativa Windows e interazione dei cursori memoria sotto lo scorrimento non ripetute; nessun gate SF/R0–R4 chiuso.
+
 ### Ripristino per gruppo nello Sviluppo — 28 settembre
 
 - [x] **Implementato:** Azzera luce, Azzera curva e Azzera colore, IT/EN, con salvataggio nella cronologia ordinaria. Ogni comando conserva gli altri gruppi, motore, WB RAW e versione di processo; il colore comprende vividezza e protezione toni caldi. Comandi disabilitati per gruppi già azzerati, durante salvataggio o analisi WB.

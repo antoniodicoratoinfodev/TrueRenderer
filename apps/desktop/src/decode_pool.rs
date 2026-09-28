@@ -136,10 +136,10 @@ fn reserve(
         }
         if start.elapsed() > Duration::from_secs(2) || bytes > cache.memory.usage().limit {
             anyhow::bail!(
-                "Memoria richiesta {} MiB; limite {} MiB, occupata/prenotata {} MiB. Aumentare il limite o liberare le viste.",
-                bytes.div_ceil(1024 * 1024),
-                cache.memory.usage().limit / (1024 * 1024),
-                cache.memory.usage().reserved / (1024 * 1024)
+                "Memoria richiesta {}; limite {}, occupata/prenotata {}. Aumentare il limite o liberare le viste.",
+                crate::size_units::human_bytes(bytes),
+                crate::size_units::human_bytes(cache.memory.usage().limit),
+                crate::size_units::human_bytes(cache.memory.usage().reserved)
             );
         }
         if start.elapsed() < Duration::from_millis(25) {

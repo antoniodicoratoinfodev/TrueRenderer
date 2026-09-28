@@ -188,9 +188,11 @@ impl Manager {
             let Some(mut lease) = budget.try_reserve(total + BLOCK as u64 + HEADER_LIMIT as u64)
             else {
                 return Ok(Lookup::Limited(format!(
-                    "Derivato richiede {} MiB; memoria disponibile {} MiB",
-                    total.div_ceil(MIB),
-                    budget.usage().limit.saturating_sub(budget.usage().reserved) / MIB
+                    "Derivato richiede {}; memoria disponibile {}",
+                    crate::size_units::human_bytes(total),
+                    crate::size_units::human_bytes(
+                        budget.usage().limit.saturating_sub(budget.usage().reserved)
+                    )
                 )));
             };
             let mut names = header.blocks.iter();

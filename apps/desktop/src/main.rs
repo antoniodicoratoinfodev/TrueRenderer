@@ -6,6 +6,7 @@ mod graphics;
 mod i18n;
 mod photo_export;
 mod service;
+mod size_units;
 mod source_monitor;
 mod ui;
 mod verify_cache;

@@ -1,0 +1,78 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-28T16:56:02.938140+00:00",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "230bd2d0b56879f795d2156d733e1a5428e74d0a0c9b77b8e6a665c46b23d29e",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "verification": {
+    "passed": true,
+    "rust_ordinary": 208,
+    "rust_integrations": 14,
+    "private_raw_skipped": 3,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signals": 24,
+    "native_surface": true,
+    "evidence": "var/verify-aJ9bQMyT",
+    "initial_terminal_sandbox_attempt": "Two native Core Image tests failed; full suite passed outside terminal sandbox."
+  },
+  "preferences": {
+    "passed": true,
+    "screenshots": 12,
+    "visually_inspected": [
+      "restyle-06.png",
+      "restyle-07.png"
+    ],
+    "evidence": "var/decimal-units-2026-09-28/preferences/reports"
+  },
+  "xpc": {
+    "passed": true,
+    "production_rejects_fault_injection": true,
+    "evidence": "var/decimal-units-2026-09-28/xpc/reports"
+  },
+  "units": {
+    "decimal": true,
+    "settings_storage_unchanged": true,
+    "roundtrip_checked_mib": [
+      0,
+      65536
+    ]
+  },
+  "cleanup": {
+    "removed_bundles": [
+      "TrueRenderer-native-wb-final.app",
+      "TrueRenderer-raw-wb-auto-2026-09-27.app",
+      "TrueRenderer-white-balance-2026-09-27.app",
+      "TrueRenderer-native-wb-2026-09-27.app",
+      "TrueRenderer-development-2026-09-27.app",
+      "TrueRenderer-wb-cancel-2026-09-28.app",
+      "TrueRenderer-audit-v1.app",
+      "TrueRenderer-shooting-data-2026-09-28.app",
+      "TrueRenderer-picker-2026-09-27.app",
+      "TrueRenderer-output-proof-icc.app",
+      "TrueRenderer-reset-groups-2026-09-28.app",
+      "TrueRenderer-output-proof.app",
+      "TrueRenderer-wb-auto-final.app",
+      "TrueRenderer-output-proof-review.app",
+      "TrueRenderer-native-wb-2026-09-28.app",
+      "TrueRenderer-vibrance-2026-09-27.app",
+      "TrueRenderer-output-proof-review-final.app",
+      "TrueRenderer-memory-final.app",
+      "TrueRenderer-develop-v4.app",
+      "TrueRenderer-photo-parity.app",
+      "TrueRenderer-wb-checks-2026-09-28.app",
+      "TrueRenderer-develop-v6.app",
+      "TrueRenderer-develop-v7.app"
+    ],
+    "removed_logical_bytes": 1048337502,
+    "remaining": "dist/TrueRenderer.app"
+  },
+  "limits": [
+    "Windows native verification not performed",
+    "No new SF/R qualification",
+    "Memory controls below the fold not visually inspected"
+  ]
+}

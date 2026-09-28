@@ -86,7 +86,7 @@ impl Session {
             file.take(2 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
             ensure!(
                 bytes.len() <= 2 * 1024 * 1024,
-                "Browser session exceeds 2 MiB"
+                "Browser session exceeds 2.097152 MB"
             );
             let session: Self = serde_json::from_slice(&bytes)?;
             session.validate()?;

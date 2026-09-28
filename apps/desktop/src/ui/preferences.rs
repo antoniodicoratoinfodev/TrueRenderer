@@ -444,14 +444,16 @@ impl TrueRenderer {
                     &mut self.cache_settings.memory_mib,
                     512..=(physical * 3 / 4).max(512),
                 )
-                .text(lang.text("Memoria richiesta (MiB)")),
+                .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                .custom_parser(crate::size_units::parse_mb_as_mib)
+                .text(lang.text("Memoria richiesta (MB)")),
             );
         }
         ui.label(localized_format!(
             lang,
-            "Budget di ammissione effettivo: {} MiB",
-            "Effective admission budget: {} MiB",
-            self.cache_settings.effective_memory_mib(physical)
+            "Budget di ammissione effettivo: {}",
+            "Effective admission budget: {}",
+            human_bytes(self.cache_settings.effective_memory_mib(physical) * 1024 * 1024)
         ));
         let mut automatic = self.cache_settings.reusable_mib.is_none();
         if ui
@@ -466,7 +468,9 @@ impl TrueRenderer {
                     value,
                     0..=self.service.cache.memory.usage().limit / (1024 * 1024),
                 )
-                .text(lang.text("Cache RAM riutilizzabile (MiB; 0 = solo viste)")),
+                .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                .custom_parser(crate::size_units::parse_mb_as_mib)
+                .text(lang.text("Cache RAM riutilizzabile (MB; 0 = solo viste)")),
             );
         }
         egui::CollapsingHeader::new(lang.text("Utilizzo memoria"))
@@ -485,9 +489,9 @@ impl TrueRenderer {
                 }
                 ui.label(localized_format!(
                     lang,
-                    "Stima di base app/worker/device: {} MiB",
-                    "App/worker/device baseline estimate: {} MiB",
-                    self.service.cache.baseline_bytes / (1024 * 1024)
+                    "Stima di base app/worker/device: {}",
+                    "App/worker/device baseline estimate: {}",
+                    human_bytes(self.service.cache.baseline_bytes)
                 ));
                 ui.label(lang.text(
                     "Il budget include stime dei decoder; non è un limite RSS imposto dal sistema.",
@@ -495,7 +499,9 @@ impl TrueRenderer {
             });
         ui.add(
             egui::Slider::new(&mut self.cache_settings.gpu_mib, 0..=1024)
-                .text(lang.text("Cache GPU (MiB; 0 = automatica)")),
+                .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                .custom_parser(crate::size_units::parse_mb_as_mib)
+                .text(lang.text("Cache GPU (MB; 0 = automatica)")),
         );
     }
 
@@ -510,12 +516,16 @@ impl TrueRenderer {
         ui.add(
             egui::Slider::new(&mut self.cache_settings.disk_mib, 64..=65536)
                 .logarithmic(true)
-                .text(lang.text("Quota per cartella (MiB)")),
+                .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                .custom_parser(crate::size_units::parse_mb_as_mib)
+                .text(lang.text("Quota per cartella (MB)")),
         );
         ui.add(
             egui::Slider::new(&mut self.cache_settings.temporary_mib, 16..=2048)
                 .logarithmic(true)
-                .text(lang.text("Temporanei (MiB)")),
+                .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                .custom_parser(crate::size_units::parse_mb_as_mib)
+                .text(lang.text("Temporanei (MB)")),
         );
         ui.add(
             egui::Slider::new(&mut self.cache_settings.unused_days, 1..=3650)
@@ -525,7 +535,9 @@ impl TrueRenderer {
         ui.add(
             egui::Slider::new(&mut self.cache_settings.free_mib, 0..=65536)
                 .logarithmic(true)
-                .text(lang.text("Spazio libero da riservare (MiB)")),
+                .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                .custom_parser(crate::size_units::parse_mb_as_mib)
+                .text(lang.text("Spazio libero da riservare (MB)")),
         );
         ui.label(lang.text("I temporanei rientrano nella quota disco. Le immagini troppo grandi per la cache restano visualizzabili in RAM. I file meno usati vengono rimossi per rispettare la quota."));
         ui.separator();

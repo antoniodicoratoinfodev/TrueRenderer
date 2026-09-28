@@ -428,8 +428,8 @@ impl Language {
             "Preparazione dettaglio 1:1…" => "Preparing 1:1 detail…",
             "Raffinamento anteprima…" => "Refining preview…",
             "Preparazione dell'immagine…" => "Preparing image…",
-            "Aprire il bundle macOS con decoder XPC.\nLimite: 256 MiB per file, 64 Mi pixel." => {
-                "Open the macOS bundle with XPC decoders.\nLimits: 256 MiB per file, 64 Mi pixels."
+            "Aprire il bundle macOS con decoder XPC.\nLimite: 268.435456 MB per file, 64 Mi pixel." => {
+                "Open the macOS bundle with XPC decoders.\nLimits: 268.435456 MB per file, 64 Mi pixels."
             }
             "sRGB > lineare Rec.2020 > sRGB" => "sRGB > linear Rec.2020 > sRGB",
             "Salvataggio…" => "Saving…",
@@ -439,8 +439,8 @@ impl Language {
             "Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali." => {
                 "Available: 8/16-bit PNG corpus, grid, preview, two-image comparison, physical 1:1 zoom, pointer sampling, ratings, labels, keywords, search, undo and local backups."
             }
-            "Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 256 MiB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus." => {
-                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD and experimental TrueRenderer fp32. The custom engine currently supports Nikon D750 and D40 Bayer files; compatibility and rendering depend on the engine. The Mac bundle uses XPC services; Windows uses an experimental confined worker. Limits: 256 MiB and 64 Mi pixels; the unconfined worker accepts only the test corpus."
+            "Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 268.435456 MB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus." => {
+                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD and experimental TrueRenderer fp32. The custom engine currently supports Nikon D750 and D40 Bayer files; compatibility and rendering depend on the engine. The Mac bundle uses XPC services; Windows uses an experimental confined worker. Limits: 268.435456 MB and 64 Mi pixels; the unconfined worker accepts only the test corpus."
             }
             "Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima." => {
                 "Qualification remains open for XPC/App Sandbox and Windows, ICC/Little CMS, monitor presentation, filters and CPU/GPU, accessibility and performance. Format qualification, XMP and gigapixel support follow the roadmap. Assurance remains Preview."
@@ -470,16 +470,16 @@ impl Language {
                 "Experimental: Nikon D750 and D40 Bayer. Colour accuracy and superiority over other engines remain unqualified. Unsupported RAW files show an error."
             }
             "Memoria automatica" => "Automatic memory",
-            "Memoria richiesta (MiB)" => "Requested memory (MiB)",
+            "Memoria richiesta (MB)" => "Requested memory (MB)",
             "Cache RAM automatica" => "Automatic RAM cache",
-            "Cache RAM riutilizzabile (MiB; 0 = solo viste)" => {
-                "Reusable RAM cache (MiB; 0 = views only)"
+            "Cache RAM riutilizzabile (MB; 0 = solo viste)" => {
+                "Reusable RAM cache (MB; 0 = views only)"
             }
             "Riduzione memoria in corso" => "Reducing memory use",
             "Il budget include stime dei decoder; non è un limite RSS imposto dal sistema." => {
                 "The budget includes decoder estimates; it is not an OS-enforced RSS limit."
             }
-            "Cache GPU (MiB; 0 = automatica)" => "GPU cache (MiB; 0 = automatic)",
+            "Cache GPU (MB; 0 = automatica)" => "GPU cache (MB; 0 = automatic)",
             "Profilo prestazioni" => "Performance profile",
             "Prestazioni" => "Performance",
             "Bilanciato" => "Balanced",
@@ -507,10 +507,10 @@ impl Language {
             "Abilita cache su disco nella cartella delle immagini" => {
                 "Enable disk cache in the image folder"
             }
-            "Quota per cartella (MiB)" => "Quota per folder (MiB)",
-            "Temporanei (MiB)" => "Temporary files (MiB)",
+            "Quota per cartella (MB)" => "Quota per folder (MB)",
+            "Temporanei (MB)" => "Temporary files (MB)",
             "Scadenza senza utilizzo (giorni)" => "Expire after inactivity (days)",
-            "Spazio libero da riservare (MiB)" => "Free space to reserve (MiB)",
+            "Spazio libero da riservare (MB)" => "Free space to reserve (MB)",
             "I temporanei rientrano nella quota disco. Le immagini troppo grandi per la cache restano visualizzabili in RAM. I file meno usati vengono rimossi per rispettare la quota." => {
                 "Temporary files count towards the disk quota. Images too large for the cache remain viewable in RAM. Least recently used files are removed to meet the quota."
             }

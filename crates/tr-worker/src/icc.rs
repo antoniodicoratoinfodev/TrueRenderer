@@ -23,7 +23,7 @@ fn u32be(bytes: &[u8], offset: usize) -> usize {
 fn validate(bytes: &[u8]) -> Result<bool> {
     ensure!(
         (132..=MAX_PROFILE).contains(&bytes.len()),
-        "ICC: dimensione fuori quota (4 MiB)"
+        "ICC: dimensione fuori quota (4.194304 MB)"
     );
     ensure!(
         u32be(bytes, 0) == bytes.len() && &bytes[36..40] == b"acsp",
@@ -204,7 +204,7 @@ pub fn jpeg_profile(bytes: &[u8]) -> Result<Option<Vec<u8>>> {
             );
             total = Some(count);
             size += payload.len() - 14;
-            ensure!(size <= MAX_PROFILE, "JPEG ICC: profilo oltre 4 MiB");
+            ensure!(size <= MAX_PROFILE, "JPEG ICC: profilo oltre 4.194304 MB");
             ensure!(
                 chunks.insert(seq, &payload[14..]).is_none(),
                 "JPEG ICC: segmento duplicato"

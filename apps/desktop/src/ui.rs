@@ -2722,7 +2722,7 @@ impl TrueRenderer {
         } else {
             egui::Frame::new().fill(Color32::from_gray(119)).show(ui,|ui|{
                 ui.set_min_size(ui.available_size());ui.centered_and_justified(|ui|{
-                    ui.label(lang.message(self.errors.get(&format!("{}:{:?}", item.id, key.1)).map(String::as_str).unwrap_or(if item.approved{lang.text("Preparazione dell'immagine…")}else{lang.text("Aprire il bundle macOS con decoder XPC.\nLimite: 256 MiB per file, 64 Mi pixel.")})));
+                    ui.label(lang.message(self.errors.get(&format!("{}:{:?}", item.id, key.1)).map(String::as_str).unwrap_or(if item.approved{lang.text("Preparazione dell'immagine…")}else{lang.text("Aprire il bundle macOS con decoder XPC.\nLimite: 268.435456 MB per file, 64 Mi pixel.")})));
                 });
             });
         }
@@ -2827,7 +2827,7 @@ impl TrueRenderer {
             ui.heading(lang.text("Un'immagine, una resa tracciabile."));
             ui.label(localized_format!(lang, "Prototipo R0 · {}", "R0 prototype · {}", env!("CARGO_PKG_VERSION")));ui.separator();
             ui.label(lang.text("Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali."));
-            ui.add_space(8.);ui.label(lang.text("Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 256 MiB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus."));
+            ui.add_space(8.);ui.label(lang.text("Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 268.435456 MB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus."));
             ui.add_space(8.);ui.label(lang.text("Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima."));
             ui.add_space(8.);ui.monospace(localized_format!(lang, "GPU: {}\nSuperficie: {}\nSQLite: {}", "GPU: {}\nSurface: {}\nSQLite: {}",lang.text(&self.adapter),lang.text(&self.surface),tr_store::sqlite_version()));
             ui.label(lang.message(&self.gpu_status));
@@ -3572,13 +3572,7 @@ fn nav(ui: &mut egui::Ui, title: &str, count: &str, selected: bool) -> egui::Res
     );
     response
 }
-fn human_bytes(bytes: u64) -> String {
-    if bytes >= 1_048_576 {
-        format!("{:.1} MiB", bytes as f64 / 1_048_576.)
-    } else {
-        format!("{:.0} KiB", bytes as f64 / 1024.)
-    }
-}
+use crate::size_units::human_bytes;
 
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod settings_regressions {

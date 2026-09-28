@@ -68,7 +68,7 @@ fn snapshot_bounded(
     );
     ensure!(
         file.metadata()?.len() <= maximum.min(MAX_SOURCE as u64),
-        "Limite sorgente: 256 MiB"
+        "Limite sorgente: 268.435456 MB"
     );
     let before = file.metadata()?;
     let length = before.len() as usize;
