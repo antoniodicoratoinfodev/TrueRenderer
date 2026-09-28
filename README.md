@@ -45,6 +45,11 @@ recipes retain their previous rendering. Edits are saved as versioned recipes in
 adjustments, preserving the RAW engine and native white balance. Each reset is
 saved and can be undone or redone; Reset colour also clears vibrance and warm-tone
 protection.
+**Copy and paste adjustments** keeps a session copy of the saved recipe. Select
+another photograph, choose Light, Tone curve and/or RGB color, then **Paste selected
+groups**. Pasting replaces only those groups and creates one undoable revision;
+the destination keeps its RAW engine and native white balance. The copy is cleared
+when the app closes; pasted edits remain in the library.
 **RAW white balance** now offers as-shot/reset and native controls: Apple RAW
 uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
 gains relative to as-shot, before demosaicing. These gains are not Kelvin. The

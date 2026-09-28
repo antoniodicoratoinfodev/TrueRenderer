@@ -74,6 +74,17 @@ impl Language {
             "Annulla sviluppo" => "Undo edit",
             "Ripeti sviluppo" => "Redo edit",
             "Prima/Dopo" => "Before/After",
+            "Copia e incolla regolazioni" => "Copy and paste adjustments",
+            "Copia regolazioni" => "Copy adjustments",
+            "Copiate da" => "Copied from",
+            "Colore RGB" => "RGB color",
+            "Incolla gruppi selezionati" => "Paste selected groups",
+            "Copia da una foto, poi seleziona la destinazione." => {
+                "Copy from a photo, then select the destination."
+            }
+            "Solo questa sessione. Motore e WB RAW della destinazione sono conservati." => {
+                "This session only. Destination RAW engine and WB are preserved."
+            }
             "Prima" => "Before",
             "Modificata" => "Edited",
             "In calcolo" => "Rendering",

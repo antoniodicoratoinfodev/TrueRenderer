@@ -1,6 +1,7 @@
 use super::*;
 use tr_core::editing::{CurvePoint, EditRecipe, RgbAreaSample, sample_rgb_area};
 use tr_store::LoadedEdit;
+mod transfer;
 
 #[derive(Clone, Copy)]
 enum ResetGroup {
@@ -100,6 +101,7 @@ struct EditPreview {
     touched: u64,
 }
 pub(super) struct EditingUi {
+    clipboard: transfer::Clipboard,
     wb_pending: bool,
     pub(super) wb_cancel: Option<Arc<std::sync::atomic::AtomicBool>>,
     wb_error: Option<(String, String)>,
@@ -158,6 +160,7 @@ impl Default for EditingUi {
         let (tx, rx) = std::sync::mpsc::channel();
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
+            clipboard: transfer::Clipboard::default(),
             wb_pending: false,
             wb_cancel: None,
             wb_error: None,
@@ -923,6 +926,14 @@ impl TrueRenderer {
                         self.sample_from_current_render = false;
                     }
                 });
+                let transfer_ready = !pending
+                    && draft == saved.recipe
+                    && !self.editing.entries[&item.id].pending;
+                if self.editing.clipboard.controls(ui, lang, &item.name, &mut draft, transfer_ready) {
+                    changed = true;
+                    commit = true;
+                    self.editing.show_original = false;
+                }
                 if ui.button(lang.text("Verifica resa finale")).clicked() {
                     self.request_final_preview(&item.id, true);
                 }

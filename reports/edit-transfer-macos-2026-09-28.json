@@ -1,0 +1,140 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-09-28T19:10:38.947823+00:00",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "de5340510edfca2e4a23c12f9c7beec052124609309e88f80c3ce5673161a53a",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "verification": {
+    "passed": true,
+    "rust_ordinary": 219,
+    "rust_integrations": 14,
+    "private_raw_skipped": 3,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signals": 24,
+    "native_surface": true,
+    "evidence": "var/verify-JhJr6LXM",
+    "log": "var/edit-transfer-2026-09-28/verify.log"
+  },
+  "transfer_regressions": {
+    "passed": true,
+    "tests": 3,
+    "group_combinations": 8,
+    "raw_recipe_and_source_identity_preserved": true,
+    "process_upgrade_only_when_required": true,
+    "copied_snapshot_independent_of_later_source_edits": true,
+    "undo_redo_after_reopen": true,
+    "invalid_recipe_rejected": true,
+    "ui_cases": {
+      "count": 24,
+      "languages": [
+        "it",
+        "en"
+      ],
+      "widths_points": [
+        220,
+        300,
+        440
+      ],
+      "states": [
+        "not_ready",
+        "no_groups",
+        "identical",
+        "paste_enabled"
+      ],
+      "actual_clicks_and_text_bounds": true
+    }
+  },
+  "native_manual": {
+    "passed": true,
+    "languages": [
+      "it",
+      "en"
+    ],
+    "source": "02_Paesaggio_analitico.png",
+    "destination": "03_Gradiente_16bit.png",
+    "light_only": {
+      "exposure_ev": 0.75,
+      "temperature": 0,
+      "vibrance": 0,
+      "process_version": 1
+    },
+    "color_only_after_light": {
+      "exposure_ev": 0.75,
+      "temperature": 25,
+      "tint": -8,
+      "vibrance": 65,
+      "protect_warm": true,
+      "process_version": 2
+    },
+    "undo_redo": true,
+    "no_groups_and_identical_values_disable_paste": true,
+    "edits_persist_after_restart": true,
+    "session_clipboard_empty_after_restart": true,
+    "destination_generation": 4,
+    "evidence": "var/edit-transfer-2026-09-28"
+  },
+  "native_render_export": {
+    "passed": true,
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 1,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1683,
+        1122
+      ]
+    },
+    "export": {
+      "file": "02_Paesaggio_analitico-export.png",
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "evidence": "var/edit-transfer-2026-09-28/native/reports",
+    "scope": "Generated source edited by the existing native develop probe; independent from the subsequent manual paste into the second image."
+  },
+  "xpc": {
+    "passed": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false,
+    "evidence": "var/edit-transfer-2026-09-28/xpc/reports"
+  },
+  "delivery": {
+    "bundle_copy_hashes_match": true,
+    "previous_bundle": "var/edit-transfer-2026-09-28/before-transfer.app",
+    "all_generated_sources_unchanged": true
+  },
+  "limitations": [
+    "Single destination only; no batch, persistent presets or native RAW WB transfer.",
+    "Native Windows, full minimum-size native window and full accessibility not qualified in this campaign; compact component geometry tested headlessly.",
+    "No SF8 or R0–R4 gate closed."
+  ],
+  "final_review": {
+    "passed": true,
+    "rust_ordinary": 220,
+    "rust_integrations": 14,
+    "evidence": "var/verify-A5k4gNI6",
+    "log": "var/edit-transfer-review-2026-09-28/verify.log",
+    "runtime_unchanged_since_bundle_qualification": true,
+    "bundle_hashes_rechecked": true,
+    "generated_sources_unchanged": true,
+    "native_200_percent": {
+      "languages": [
+        "it",
+        "en"
+      ],
+      "scrolling_and_controls_inspected": true,
+      "paste_to": "04_Frequenze_radiali.png",
+      "destination_generation": 1,
+      "recipe_confirmed_after_exit": true,
+      "evidence": "var/edit-transfer-review-2026-09-28/manual-200.json"
+    }
+  }
+}
