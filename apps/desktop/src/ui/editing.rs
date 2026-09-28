@@ -294,9 +294,20 @@ impl TrueRenderer {
             );
         }
         if timed_out {
+            let report = serde_json::json!({
+                "passed":false,
+                "reason":if self.fatal { "fatal error" } else { "timeout" },
+                "status":self.status,
+                "stage":self.smoke_stage,
+                "elapsed_seconds":self.started.elapsed().as_secs_f64(),
+                "timeout_seconds":timeout.as_secs(),
+                "native_wb_analysis":self.editing.wb_smoke_result,
+                "decode_errors":self.errors,
+                "presentation_errors":self.presenter.has_errors(),
+            });
             let _ = std::fs::write(
                 self.root.join("reports/develop-ui.json"),
-                b"{\"passed\":false,\"reason\":\"timeout or fatal error\"}",
+                serde_json::to_vec_pretty(&report).unwrap(),
             );
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             return;
@@ -322,6 +333,15 @@ impl TrueRenderer {
                 self.ensure_edit_loaded(&item);
                 if args.iter().any(|a| a == "--native-wb-smoke") {
                     if !self.editing.wb_smoke_started {
+                        // Selection starts preview reads that own snapshot slots.
+                        // Let them finish before this one-shot WB probe, just as
+                        // the export probe does after entering the grid.
+                        if !self.pending_images.is_empty()
+                            || self.editing.inflight.is_some()
+                            || !self.editing.thumbnail_inflight.is_empty()
+                        {
+                            return;
+                        }
                         let Some(saved) = self
                             .editing
                             .entries

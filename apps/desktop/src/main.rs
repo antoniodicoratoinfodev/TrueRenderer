@@ -9,6 +9,7 @@ mod service;
 mod source_monitor;
 mod ui;
 mod verify_cache;
+mod verify_develop;
 mod verify_exports;
 mod verify_formats;
 mod verify_native_wb;
@@ -229,6 +230,10 @@ fn run() -> Result<()> {
         worker.is_file(),
         "Manca tr-worker accanto all'applicazione. Eseguire scripts/build-macos.sh."
     );
+    let develop_report = develop_smoke.then(|| root.join("reports/develop-ui.json"));
+    if let Some(report) = &develop_report {
+        verify_develop::begin(report)?;
+    }
     graphics::run(
         root,
         data,
@@ -242,6 +247,9 @@ fn run() -> Result<()> {
             open: initial_open,
         },
     )?;
+    if let Some(report) = &develop_report {
+        verify_develop::finish(report)?;
+    }
     Ok(())
 }
 fn main() {

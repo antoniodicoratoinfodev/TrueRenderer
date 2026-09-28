@@ -1,0 +1,1510 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-09-28",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "base_commit": "ee243f22a7af356759e5e264be177163e35d3f91",
+  "previous_commit": "bdb0327",
+  "remote_update": "Fast-forward of six commits to ee243f2; initially clean checkout",
+  "local_change": "Only the one-shot native WB UI probe waits for outstanding image/edit preview reads before submitting analysis; production decoding and WB fitting unchanged.",
+  "editing_source_sha256": "3c241006ab396eb353435d53b20a160f4318cdd436af0e951ce64c4c9be82023",
+  "binary_sha256": {
+    "truerenderer.exe": "525f998b980baa5363f2935a471f25d06082ef567c7be811cae01130db2a844e",
+    "tr-worker.exe": "9369ab34e9abdec1b3853bb4eb1ec8de055f4e3be3b45f6bc72b9b741e83cd34"
+  },
+  "initial_binary_sha256": {
+    "truerenderer.exe": "5c0a77f6fa60ad527db1c539be606047b04397cefea7cc63d5be673345d79b1e",
+    "tr-worker.exe": "9369ab34e9abdec1b3853bb4eb1ec8de055f4e3be3b45f6bc72b9b741e83cd34"
+  },
+  "suite": {
+    "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/dev-windows.ps1 verify --gui",
+    "exit_code": 0,
+    "seconds": 104.21594510000068,
+    "ordinary_rust_tests": 210,
+    "additional_rust_tests": 10,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "sampling_signals": 24,
+    "fmt_clippy_all_targets_build": true,
+    "artifacts": "var/verify-Jw6DdzkY"
+  },
+  "native_surface": {
+    "application": "TrueRenderer",
+    "channel_error_threshold_u8": 1,
+    "checks": [
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          908.0,
+          124.0,
+          1100.0,
+          252.0
+        ],
+        "screenshot": "01-grid",
+        "size": [
+          192,
+          128
+        ],
+        "step": [
+          6.25,
+          6.25
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          178.0,
+          83.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          146.0,
+          1068.0,
+          779.0
+        ],
+        "screenshot": "04-radial-1to1",
+        "size": [
+          844,
+          633
+        ],
+        "step": [
+          1.0,
+          1.0
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          224.0,
+          181.0,
+          1068.0,
+          744.0
+        ],
+        "screenshot": "05-radial-fit",
+        "size": [
+          844,
+          563
+        ],
+        "step": [
+          1.4201183431952662,
+          1.4209591474245116
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          608.0,
+          800.0,
+          702.0,
+          863.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          94,
+          63
+        ],
+        "step": [
+          12.76595744680851,
+          12.698412698412698
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          424.0,
+          315.0,
+          868.0,
+          611.0
+        ],
+        "screenshot": "06-radial-37percent",
+        "size": [
+          444,
+          296
+        ],
+        "step": [
+          2.702702702702702,
+          2.702702702702702
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          1097.0,
+          175.0,
+          1410.0,
+          384.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          313,
+          209
+        ],
+        "step": [
+          3.8338658146964857,
+          3.827751196172249
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          745.0,
+          123.0,
+          883.0,
+          215.0
+        ],
+        "screenshot": "07-grid-small",
+        "size": [
+          138,
+          92
+        ],
+        "step": [
+          8.695652173913043,
+          8.695652173913043
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          1097.0,
+          175.0,
+          1410.0,
+          384.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          313,
+          209
+        ],
+        "step": [
+          3.8338658146964857,
+          3.827751196172249
+        ]
+      },
+      {
+        "differing_channels": 0,
+        "max_channel_error_u8": 0,
+        "origin": [
+          0.0,
+          0.0
+        ],
+        "passed": true,
+        "rect_physical": [
+          706.0,
+          382.0,
+          1008.0,
+          584.0
+        ],
+        "screenshot": "08-grid-large",
+        "size": [
+          302,
+          202
+        ],
+        "step": [
+          3.9735099337748343,
+          3.96039603960396
+        ]
+      }
+    ],
+    "passed": true,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "Actual egui/wgpu surface screenshot pixels vs CPU raster, six views at the captured backing scale. Not compositor, monitor profile or physical display certification.",
+    "version": "0.1.5"
+  },
+  "native_smoke": {
+    "adapter": "NVIDIA GeForce RTX 3060 · Vulkan",
+    "application": "TrueRenderer",
+    "compute": {
+      "cpu_frames": 68,
+      "fallbacks": 0,
+      "gpu_frames": 2,
+      "last_fallback": "",
+      "wide_frames": 1,
+      "wide_gpu_bytes": 2114640,
+      "wide_peak_frames": 1,
+      "wide_peak_gpu_bytes": 2114640,
+      "wide_peak_memory_bytes": 6343920,
+      "wide_reprojections": 0
+    },
+    "decode_errors": {},
+    "elapsed_seconds": 5.126498699188232,
+    "frames": 308,
+    "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
+    "images": 12,
+    "passed": true,
+    "pixels_per_point": 1.0,
+    "presentation_errors": false,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "native R0 corpus smoke; not color/display/sandbox qualification",
+    "screenshots": [
+      "08-grid-large",
+      "04-radial-1to1",
+      "03-compare",
+      "05-radial-fit",
+      "01-grid",
+      "07-grid-small",
+      "06-radial-37percent",
+      "02-preview"
+    ],
+    "sqlite": "3.53.2",
+    "status": "Cartella pronta · Anteprima",
+    "surface": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgba8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgba8Unorm, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB) }])",
+    "version": "0.1.5",
+    "worker_pids": [],
+    "worker_transports": [
+      "Cache disco · fp32 · Anteprima",
+      "LPAC senza capacità + Job Object · pipe"
+    ]
+  },
+  "native_wb": {
+    "synthetic": {
+      "cancellations": [
+        {
+          "cancelled": true,
+          "engine": "LibRawBilinear",
+          "forced_stops": 1,
+          "seconds": 0.034848
+        },
+        {
+          "cancelled": true,
+          "engine": "LibRawAhd",
+          "forced_stops": 1,
+          "seconds": 0.0434761
+        },
+        {
+          "cancelled": true,
+          "engine": "TrueRenderer",
+          "forced_stops": 1,
+          "seconds": 0.0432869
+        }
+      ],
+      "cases": [
+        {
+          "analysis": "Auto",
+          "engine": "LibRawBilinear",
+          "passed": true,
+          "seconds": 0.4114234,
+          "size": [
+            1024,
+            768
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1030,
+            "red": 985
+          }
+        },
+        {
+          "analysis": {
+            "Patch": {
+              "side": 5,
+              "x": 128,
+              "y": 96
+            }
+          },
+          "engine": "LibRawBilinear",
+          "passed": true,
+          "seconds": 0.2174701,
+          "size": [
+            1024,
+            768
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 728,
+            "red": 1004
+          }
+        },
+        {
+          "analysis": "Auto",
+          "engine": "LibRawAhd",
+          "passed": true,
+          "seconds": 0.6394808,
+          "size": [
+            1024,
+            768
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1030,
+            "red": 985
+          }
+        },
+        {
+          "analysis": {
+            "Patch": {
+              "side": 5,
+              "x": 128,
+              "y": 96
+            }
+          },
+          "engine": "LibRawAhd",
+          "passed": true,
+          "seconds": 0.4555661,
+          "size": [
+            1024,
+            768
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 728,
+            "red": 1004
+          }
+        },
+        {
+          "analysis": "Auto",
+          "engine": "TrueRenderer",
+          "passed": true,
+          "seconds": 0.9120756,
+          "size": [
+            1024,
+            768
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1030,
+            "red": 985
+          }
+        },
+        {
+          "analysis": {
+            "Patch": {
+              "side": 5,
+              "x": 128,
+              "y": 96
+            }
+          },
+          "engine": "TrueRenderer",
+          "passed": true,
+          "seconds": 0.7220578,
+          "size": [
+            1024,
+            768
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 728,
+            "red": 1004
+          }
+        }
+      ],
+      "passed": true,
+      "scope": "Native WB IPC and final decode; no camera colour calibration certification",
+      "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "source_unchanged": true
+    },
+    "d750": {
+      "cancellations": [
+        {
+          "cancelled": true,
+          "engine": "LibRawBilinear",
+          "forced_stops": 1,
+          "seconds": 0.037533
+        },
+        {
+          "cancelled": true,
+          "engine": "LibRawAhd",
+          "forced_stops": 1,
+          "seconds": 0.0353778
+        },
+        {
+          "cancelled": true,
+          "engine": "TrueRenderer",
+          "forced_stops": 1,
+          "seconds": 0.0438551
+        }
+      ],
+      "cases": [
+        {
+          "analysis": "Auto",
+          "engine": "LibRawBilinear",
+          "passed": true,
+          "seconds": 8.372221,
+          "size": [
+            6032,
+            4032
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1293,
+            "red": 819
+          }
+        },
+        {
+          "analysis": {
+            "Patch": {
+              "side": 5,
+              "x": 3770,
+              "y": 504
+            }
+          },
+          "engine": "LibRawBilinear",
+          "passed": true,
+          "seconds": 8.1550613,
+          "size": [
+            6032,
+            4032
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1154,
+            "red": 819
+          }
+        },
+        {
+          "analysis": "Auto",
+          "engine": "LibRawAhd",
+          "passed": true,
+          "seconds": 27.7411179,
+          "size": [
+            6032,
+            4032
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1327,
+            "red": 848
+          }
+        },
+        {
+          "analysis": {
+            "Patch": {
+              "side": 5,
+              "x": 3770,
+              "y": 504
+            }
+          },
+          "engine": "LibRawAhd",
+          "passed": true,
+          "seconds": 17.4714595,
+          "size": [
+            6032,
+            4032
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1154,
+            "red": 818
+          }
+        },
+        {
+          "analysis": "Auto",
+          "engine": "TrueRenderer",
+          "passed": true,
+          "seconds": 24.2340199,
+          "size": [
+            6032,
+            4032
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1302,
+            "red": 827
+          }
+        },
+        {
+          "analysis": {
+            "Patch": {
+              "side": 5,
+              "x": 3770,
+              "y": 504
+            }
+          },
+          "engine": "TrueRenderer",
+          "passed": true,
+          "seconds": 24.1026667,
+          "size": [
+            6032,
+            4032
+          ],
+          "wb": {
+            "apple_temperature": 0,
+            "apple_tint": 0,
+            "blue": 1151,
+            "red": 816
+          }
+        }
+      ],
+      "passed": true,
+      "scope": "Native WB IPC and final decode; no camera colour calibration certification",
+      "source_digest": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+      "source_unchanged": true
+    }
+  },
+  "exports": {
+    "bitmap": {
+      "passed": true,
+      "checks": [
+        {
+          "engine": "LibRawBilinear",
+          "format": "Jpeg",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "Png8",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "Png16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "Tiff16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "TiffFloat32",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "DngLinear16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Jpeg",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Png8",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Png16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Tiff16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "TiffFloat32",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "DngLinear16",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Jpeg",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Png8",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Png16",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Tiff16",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "TiffFloat32",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "DngLinear16",
+          "passed": true
+        },
+        {
+          "engine": null,
+          "format": null,
+          "passed": true
+        },
+        {
+          "engine": null,
+          "format": null,
+          "passed": true
+        }
+      ]
+    },
+    "d750": {
+      "passed": true,
+      "checks": [
+        {
+          "engine": "LibRawBilinear",
+          "format": "Jpeg",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "Png8",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "Png16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "Tiff16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "TiffFloat32",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "DngLinear16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawBilinear",
+          "format": "DngRaw",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Jpeg",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Png8",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Png16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "Tiff16",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "TiffFloat32",
+          "passed": true
+        },
+        {
+          "engine": "LibRawAhd",
+          "format": "DngLinear16",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Jpeg",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Png8",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Png16",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "Tiff16",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "TiffFloat32",
+          "passed": true
+        },
+        {
+          "engine": "TrueRenderer",
+          "format": "DngLinear16",
+          "passed": true
+        }
+      ]
+    }
+  },
+  "ui": {
+    "binary_sha256": "525f998b980baa5363f2935a471f25d06082ef567c7be811cae01130db2a844e",
+    "worker_sha256": "9369ab34e9abdec1b3853bb4eb1ec8de055f4e3be3b45f6bc72b9b741e83cd34",
+    "cases": [
+      {
+        "name": "native-wb-LibRawBilinear",
+        "exit_code": 0,
+        "seconds": 4.719272899999851,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "07-bayer-export.png",
+            "passed": true,
+            "size": [
+              1024,
+              768
+            ]
+          },
+          "fixture": "07-bayer.dng",
+          "native_wb_analysis": "ok",
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 34029,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              765,
+              574
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 1,
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 1030,
+              "red": 985
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "whites": 0.0
+          },
+          "saved_generation": 2,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "timeout_seconds": 210,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "native-wb-LibRawAhd",
+        "exit_code": 0,
+        "seconds": 5.200374700000793,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "07-bayer-export.png",
+            "passed": true,
+            "size": [
+              1024,
+              768
+            ]
+          },
+          "fixture": "07-bayer.dng",
+          "native_wb_analysis": "ok",
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 34588,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              765,
+              574
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 1,
+            "raw_engine": "LibRawAhd",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 1030,
+              "red": 985
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "whites": 0.0
+          },
+          "saved_generation": 2,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "timeout_seconds": 210,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "native-wb-TrueRenderer",
+        "exit_code": 0,
+        "seconds": 5.65756969999984,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "07-bayer-export.png",
+            "passed": true,
+            "size": [
+              1024,
+              768
+            ]
+          },
+          "fixture": "07-bayer.dng",
+          "native_wb_analysis": "ok",
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 34039,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              765,
+              574
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 1,
+            "raw_engine": "TrueRenderer",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 1030,
+              "red": 985
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "whites": 0.0
+          },
+          "saved_generation": 2,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "timeout_seconds": 210,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "manual-wb-vibrance-LibRawBilinear",
+        "exit_code": 0,
+        "seconds": 4.213113699999667,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "07-bayer-export.png",
+            "passed": true,
+            "size": [
+              1024,
+              768
+            ]
+          },
+          "fixture": "07-bayer.dng",
+          "native_wb_analysis": null,
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 24780,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              765,
+              574
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 2,
+            "protect_warm": true,
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 750,
+              "red": 1500
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "vibrance": 65.0,
+            "whites": 0.0
+          },
+          "saved_generation": 1,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "timeout_seconds": 90,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "manual-wb-vibrance-LibRawAhd",
+        "exit_code": 0,
+        "seconds": 4.4204343999999764,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "07-bayer-export.png",
+            "passed": true,
+            "size": [
+              1024,
+              768
+            ]
+          },
+          "fixture": "07-bayer.dng",
+          "native_wb_analysis": null,
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 37062,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              765,
+              574
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 2,
+            "protect_warm": true,
+            "raw_engine": "LibRawAhd",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 750,
+              "red": 1500
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "vibrance": 65.0,
+            "whites": 0.0
+          },
+          "saved_generation": 1,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "timeout_seconds": 90,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "manual-wb-vibrance-TrueRenderer",
+        "exit_code": 0,
+        "seconds": 4.485554400000183,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "07-bayer-export.png",
+            "passed": true,
+            "size": [
+              1024,
+              768
+            ]
+          },
+          "fixture": "07-bayer.dng",
+          "native_wb_analysis": null,
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 29950,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              765,
+              574
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 2,
+            "protect_warm": true,
+            "raw_engine": "TrueRenderer",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 750,
+              "red": 1500
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "vibrance": 65.0,
+            "whites": 0.0
+          },
+          "saved_generation": 1,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "timeout_seconds": 90,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "d750-native-wb-vibrance-TrueRenderer",
+        "exit_code": 0,
+        "seconds": 64.5582015,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": false,
+          "export": {
+            "file": "sample-export.png",
+            "passed": true,
+            "size": [
+              6032,
+              4032
+            ]
+          },
+          "fixture": "sample.nef",
+          "native_wb_analysis": "ok",
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 42964,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              844,
+              564
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": true,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": 0.75,
+            "highlights": 0.0,
+            "process_version": 2,
+            "protect_warm": true,
+            "raw_engine": "TrueRenderer",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 1302,
+              "red": 827
+            },
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 25.0,
+            "tint": -8.0,
+            "vibrance": 65.0,
+            "whites": 0.0
+          },
+          "saved_generation": 2,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+          "source_unchanged": true,
+          "timeout_seconds": 210,
+          "version": "0.1.5"
+        }
+      },
+      {
+        "name": "auto-rgb-exposure-TrueRenderer",
+        "exit_code": 0,
+        "seconds": 4.374014199999692,
+        "captures_present": true,
+        "result": {
+          "application": "TrueRenderer",
+          "auto_actions": true,
+          "export": {
+            "file": "06_Scala_neutra-export.png",
+            "passed": true,
+            "size": [
+              1200,
+              800
+            ]
+          },
+          "fixture": "06_Scala_neutra.png",
+          "native_wb_analysis": null,
+          "output_proof_surface": {
+            "compute": "GPU",
+            "differing_channels": 27039,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              848,
+              566
+            ]
+          },
+          "passed": true,
+          "platform": "windows",
+          "raw_wb_observed": false,
+          "recipe": {
+            "blacks": 0.0,
+            "brightness": 0.0,
+            "contrast": 0.0,
+            "curve": [],
+            "exposure_ev": -0.332378625869751,
+            "highlights": 0.0,
+            "process_version": 1,
+            "raw_engine": "TrueRenderer",
+            "saturation": 0.0,
+            "schema_version": 1,
+            "shadows": 0.0,
+            "temperature": 3.62396240234375e-05,
+            "tint": -0.0008969306945800781,
+            "whites": 0.0
+          },
+          "saved_generation": 1,
+          "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+          "screenshots": [
+            "develop-viewer.png",
+            "develop-grid.png"
+          ],
+          "source_digest": "0029174a941fb546159a8ebbf5f16f0438328291ec8cd6f6eeef47cf1b28f477",
+          "source_unchanged": true,
+          "timeout_seconds": 90,
+          "version": "0.1.5"
+        }
+      }
+    ],
+    "sources_unchanged": true,
+    "passed": true,
+    "d750_final_artifacts": "var/windows-update-2026-09-28/d750-repeat"
+  },
+  "private_camera_tests": {
+    "passed": true,
+    "additional_tests": 13,
+    "new_private_tests": 3,
+    "sample_files": 1,
+    "checks": [
+      "native full resolution",
+      "RAW container stage",
+      "every active RAW sample preserved in DNG export"
+    ],
+    "note": "Ten integrations overlap the ordinary verification campaign; not thirteen new distinct tests."
+  },
+  "isolation": {
+    "passed": true,
+    "observed": {
+      "confined": {
+        "all_application_packages": {
+          "member": 0,
+          "ok": 1
+        },
+        "appcontainer": {
+          "error": null,
+          "ok": 1,
+          "value": 1
+        },
+        "capabilities": {
+          "bytes": 8,
+          "count": 0,
+          "ok": 1
+        },
+        "child_spawn_denied": true,
+        "code_read": true,
+        "job": {
+          "active": 1,
+          "flags": 9992,
+          "job_memory": 402653184,
+          "ok": 1,
+          "process_memory": 402653184
+        },
+        "lpac": {
+          "error": 87,
+          "ok": 0,
+          "value": 0
+        },
+        "lpac_native": {
+          "status": -1073741821,
+          "value": 0
+        },
+        "lpac_verified": true,
+        "network_error": 10107,
+        "read_error": 5,
+        "runtime_write_error": 5,
+        "winsock_init_error": 10107,
+        "write_error": 5
+      },
+      "control": {
+        "network_error": 0,
+        "read_error": 0,
+        "winsock_init_error": 0,
+        "write_error": 0
+      }
+    },
+    "network_scope": "Winsock initialization 10107; not an exhaustive network isolation qualification."
+  },
+  "layout": {
+    "passed": true,
+    "scope": "Four preferences tabs in English/Italian, minimum window and 200% UI zoom on synthetic corpus. Not full accessibility/display qualification.",
+    "screenshots": [
+      "restyle-07",
+      "restyle-04",
+      "restyle-01",
+      "restyle-06",
+      "restyle-08",
+      "restyle-03",
+      "restyle-02",
+      "restyle-09",
+      "restyle-10",
+      "restyle-05",
+      "restyle-11",
+      "restyle-00"
+    ]
+  },
+  "shooting_ui": {
+    "missing_fields_visually_checked": true,
+    "populated_fields_visually_checked": false,
+    "scope": "Missing values inspected in the original corpus grid behind the preferences window. External synthetic EXIF fixtures decoded in exploratory viewer captures, but their populated shooting panel remained below the visible development controls. A modified controlled-corpus copy was correctly unavailable and is not counted as EXIF evidence. No allowlist changed."
+  },
+  "raw_corpus": {
+    "passed": true,
+    "complete": true,
+    "files": 30,
+    "developments": 90,
+    "engines": {
+      "LibRawBilinear": 30,
+      "LibRawAhd": 30,
+      "TrueRenderer": 30
+    },
+    "originals_unchanged": true,
+    "shooting_fields_present_per_development": {
+      "aperture": 90,
+      "camera": 90,
+      "exposure": 90,
+      "focal_length": 90,
+      "iso": 84
+    }
+  },
+  "negative_evidence": [
+    {
+      "case": "Initial offline suite",
+      "reason": "New locked EXIF dependencies absent; fetched before successful verification."
+    },
+    {
+      "case": "Native WB UI on all three synthetic engines",
+      "reason": "Probe submitted while preview snapshot slots were occupied; three failed JSON reports despite process exit zero. Native diagnostic succeeded. Fixed probe sequencing; final runs check JSON, screenshots and exit status."
+    },
+    {
+      "case": "Auto RGB on the analytical landscape",
+      "reason": "Explicit out-of-scale correction refusal. Positive case repeated on the neutral scale used in the macOS campaign; thresholds unchanged."
+    },
+    {
+      "case": "First D750 UI run on final binary",
+      "reason": "Exit 0 after about 21 seconds without final report or screenshots; incomplete, cause unestablished. Separate repeat on the identical binary completed and is reported as final."
+    }
+  ],
+  "manual_ui": {
+    "performed": false,
+    "reason": "Computer Use native pipe unavailable (OS error 2), including retry and reset. Automated native screenshots inspected; no manual clicks, picker or EXIF scrolling claimed."
+  },
+  "sources_unchanged": true,
+  "artifacts": "var/windows-update-2026-09-28",
+  "limitations": [
+    "Windows x86-64 debug build on this PC only; no new macOS/XPC tests.",
+    "Apple RAW and its temperature presets are not available on Windows.",
+    "No calibrated photographic colour target, physical display, broad camera/ICC, NVDA, installer signing or p95/RSS qualification.",
+    "No SF or R0-R4 gate closed; no Standard/Reference assurance claim."
+  ],
+  "passed": true
+}
