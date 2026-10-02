@@ -8,7 +8,7 @@ It brings each image, its technical context and the choices behind its appearanc
 
 ![TrueRenderer viewer with the Develop controls, edited photograph and filmstrip](reports/readme-viewer.png)
 
-*Current macOS development build with the Develop tab, an edited image and filmstrip. All screenshots use the generated test corpus. [Capture details and verification](reports/readme-screenshots-macos.json).*
+*Current macOS development build with the Develop tab, an edited image and filmstrip. All screenshots use 100% UI scale and the generated test corpus. [Capture details and verification](reports/readme-screenshots-macos.json).*
 
 ## A clearer way to look
 
@@ -178,9 +178,9 @@ The interface keeps the image at the centre. Explorer stays compact, technical i
 
 In smaller windows, navigation and the Inspector open as floating panels. The compact Inspector uses more of the available height; the image preview and histogram can be expanded when needed. Portrait previews fit within a bounded height so File metadata stays close at hand.
 
-<img src="reports/readme-inspector-compact.png" alt="Compact Develop inspector at 200% UI scale, with Actions and the Exposure control visible" width="720">
+![Develop inspector at 100% UI scale, with the histogram and Light controls visible](reports/readme-inspector.png)
 
-*Develop at 200% UI scale in a 550 × 360-point workspace. [Compact navigation](reports/readme-compact.png).*
+*Develop at 100% UI scale. [Compact navigation](reports/readme-compact.png).*
 
 ![Performance preferences with SDR presentation precision and processing options](reports/readme-preferences.png)
 

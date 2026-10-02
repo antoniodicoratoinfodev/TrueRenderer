@@ -20,6 +20,10 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Screenshot README al 100% — 2 ottobre
+
+- [x] **Aggiornato e verificato:** sostituita la schermata dell’ispettore al 200% con la vista Sviluppo al 100% della stessa campagna qualificata (`inspector-01`), ispezionata visivamente. Tutte le sei immagini collegate dal README usano la UI al 100%; didascalie e rapporto con scala, hash e dimensioni allineati. Solo documentazione e immagini; nessuna nuova prova applicativa.
+
 ### Secondo controllo dell’interfaccia — 2 ottobre
 
 - [x] **Corretto:** l’ispettore nella finestra minima lasciava appena 64 punti al corpo scorrevole. Finestra compatta con margini e intestazione ridotti, altezza disponibile sfruttata; sotto 500 punti di altezza anteprima e istogramma sono richiudibili e le azioni secondarie dello Sviluppo sono nel menu Azioni. Nomi dei metadati allineati a sinistra; anteprime verticali limitate in altezza e adattate senza ritaglio.

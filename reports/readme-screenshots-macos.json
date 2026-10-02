@@ -43,7 +43,8 @@
         1782
       ],
       "sha256": "db93bbb41ef915e6b602b1dac146306a814cf1585b927ab1cd0f4d9b7356eeaa",
-      "visually_reviewed": true
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-grid.png",
@@ -53,7 +54,8 @@
         1782
       ],
       "sha256": "7439b3f53a44a4a48d364d0bd56f8e9480db35d045cf13f23651339dac8c8896",
-      "visually_reviewed": true
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-preferences.png",
@@ -63,7 +65,8 @@
         1782
       ],
       "sha256": "0c07a3daed87d9b5cc4c82687df1d2301a2b4150621600a8225433b959a78736",
-      "visually_reviewed": true
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-compact.png",
@@ -73,17 +76,19 @@
         720
       ],
       "sha256": "4aefd6dd150333ca992c3018162e8fef54665d3becfe82f1689039d75bf23ade",
-      "visually_reviewed": true
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
     },
     {
-      "file": "reports/readme-inspector-compact.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/inspector/reports/inspector-05.png",
+      "file": "reports/readme-inspector.png",
+      "capture": "var/aesthetic-followup-2026-10-02/final/inspector/reports/inspector-01.png",
       "pixels": [
-        2200,
-        1440
+        2880,
+        1782
       ],
-      "sha256": "022aaad47c7b9169022f449e01b41b38c6e04f93fbde27742d1c1e7c098020e4",
-      "visually_reviewed": true
+      "sha256": "09ae3392ee5f22abd39c2b6907bba5fbf77eb66f062635c883e0f93af18ca77a",
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-cache.png",
@@ -93,7 +98,8 @@
         1782
       ],
       "sha256": "32a2d282e35b98b3a80f2d11b3dd723cca2d0c9f916b284679521364e0e8ff81",
-      "visually_reviewed": true
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
     }
   ],
   "evidence": "var/aesthetic-followup-2026-10-02/final",
