@@ -20,6 +20,10 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 
 ## Punto di ripresa
 
+### Screenshot README con Esplora — 2 ottobre
+
+- [x] **Aggiornato e verificato:** ricatturate viewer e griglia con pannello Esplora e albero del corpus aperto, UI al 100%, usando il bundle qualificato senza modifiche. Smoke Sviluppo passato su libreria isolata e sole sorgenti sintetiche; entrambe le immagini ispezionate, hash/dimensioni e didascalie aggiornati nel [rapporto catture](reports/readme-screenshots-macos.json). Hash del bundle e del corpus invariati; evidenze in `var/readme-explorer-2026-10-02/`. Nessuna modifica applicativa o chiusura di gate.
+
 ### Screenshot README al 100% — 2 ottobre
 
 - [x] **Aggiornato e verificato:** sostituita la schermata dell’ispettore al 200% con la vista Sviluppo al 100% della stessa campagna qualificata (`inspector-01`), ispezionata visivamente. Tutte le sei immagini collegate dal README usano la UI al 100%; didascalie e rapporto con scala, hash e dimensioni allineati. Solo documentazione e immagini; nessuna nuova prova applicativa.

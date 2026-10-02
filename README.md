@@ -6,9 +6,9 @@ TrueRenderer is a native desktop application for photographers, astrophotographe
 
 It brings each image, its technical context and the choices behind its appearance into one focused workspace. Originals remain untouched, the library stays on your computer, and no account, upload or subscription is required.
 
-![TrueRenderer viewer with the Develop controls, edited photograph and filmstrip](reports/readme-viewer.png)
+![TrueRenderer viewer with Explorer, Develop controls, edited photograph and filmstrip](reports/readme-viewer.png)
 
-*Current macOS development build with the Develop tab, an edited image and filmstrip. All screenshots use 100% UI scale and the generated test corpus. [Capture details and verification](reports/readme-screenshots-macos.json).*
+*Current macOS development build with Explorer, the Develop tab, an edited image and filmstrip. All screenshots use 100% UI scale and the generated test corpus. [Capture details and verification](reports/readme-screenshots-macos.json).*
 
 ## A clearer way to look
 
@@ -174,7 +174,7 @@ RAW files do not have one universally correct appearance, and display colour dep
 
 The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace. Develop pairs each full-width slider with an editable value, while edit indicators sit below thumbnails to keep photographs unobstructed. Neutral selection borders and consistent navigation icons keep the controls easy to distinguish.
 
-![Thumbnail grid with Library, shooting data and a saved edit indicator](reports/readme-grid.png)
+![Thumbnail grid with Explorer, shooting data and a saved edit indicator](reports/readme-grid.png)
 
 In smaller windows, navigation and the Inspector open as floating panels. The compact Inspector uses more of the available height; the image preview and histogram can be expanded when needed. Portrait previews fit within a bounded height so File metadata stays close at hand.
 

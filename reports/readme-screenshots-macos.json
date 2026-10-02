@@ -37,25 +37,31 @@
   "screenshots": [
     {
       "file": "reports/readme-viewer.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/develop/reports/develop-viewer.png",
+      "capture": "var/readme-explorer-2026-10-02/reports/develop-viewer.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "db93bbb41ef915e6b602b1dac146306a814cf1585b927ab1cd0f4d9b7356eeaa",
+      "sha256": "79104c37c44692bf6ae3196ae27524752f22a39ea24a9ece20bdaf81646847cd",
       "visually_reviewed": true,
-      "ui_scale_percent": 100
+      "ui_scale_percent": 100,
+      "panel": "Explorer",
+      "captured_at": "2026-10-02T20:19:33.976564+00:00",
+      "evidence": "var/readme-explorer-2026-10-02/reports/develop-ui.json"
     },
     {
       "file": "reports/readme-grid.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/develop/reports/develop-grid.png",
+      "capture": "var/readme-explorer-2026-10-02/reports/develop-grid.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "7439b3f53a44a4a48d364d0bd56f8e9480db35d045cf13f23651339dac8c8896",
+      "sha256": "6dcc0842742446789568607146baed17e0ae7279caa1908491be9c150028a95e",
       "visually_reviewed": true,
-      "ui_scale_percent": 100
+      "ui_scale_percent": 100,
+      "panel": "Explorer",
+      "captured_at": "2026-10-02T20:19:33.978867+00:00",
+      "evidence": "var/readme-explorer-2026-10-02/reports/develop-ui.json"
     },
     {
       "file": "reports/readme-preferences.png",
@@ -103,5 +109,5 @@
     }
   ],
   "evidence": "var/aesthetic-followup-2026-10-02/final",
-  "scope": "Native macOS after compact inspector and metadata refinement. Synthetic photographs only. No Windows or extended accessibility/display qualification."
+  "scope": "Native macOS on synthetic photographs only. Viewer and grid recaptured with Explorer at 100% UI scale; remaining screenshots from the prior verified campaign. No Windows or extended accessibility/display qualification."
 }
