@@ -1,0 +1,201 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "general-review-macos-2026-10-02",
+  "checked_at": "2026-10-02T15:58:30.038680+00:00",
+  "review_base_commit": "27da4364b906d94c21b2e9bdbb34e9825af40619",
+  "scope": "Last seven commits and cross-cutting editing, cache, catalog/history/backup, selection/export, decoder boundaries and existing verification. Local uncommitted corrections; not an exhaustive audit or release qualification.",
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "high",
+      "file": "crates/tr-store/src/lib.rs",
+      "description": "History could commit an unreadable cursor before checking the destination revision. Transactional validation now rolls back malformed, missing or mismatched-source targets.",
+      "regression": "invalid_history_target_never_changes_the_saved_edit_head",
+      "negative_log": "var/review-2026-10-02/history-negative.log",
+      "reproduced_before_fix": true,
+      "passed_after_fix": true
+    },
+    {
+      "id": "R2",
+      "priority": "medium",
+      "file": "apps/desktop/src/ui/editing.rs",
+      "description": "Retry save did nothing after a history failure with no dirty draft. Reload now recovers the saved head. Dirty drafts remain retryable, with an explicit discard and reload action; two-writer conflict recovery is tested in IT/EN.",
+      "regression": "retry_after_history_error_reloads_without_creating_a_revision",
+      "negative_log": "var/review-2026-10-02/ui-cache-negative.log",
+      "reproduced_before_fix": true,
+      "passed_after_fix": true
+    },
+    {
+      "id": "R3",
+      "priority": "medium",
+      "file": "apps/desktop/src/ui.rs",
+      "description": "Changing photo did not commit the previous draft. Selection and navigation now submit it to the normal service and preserve it on failure.",
+      "regression": "changing_photo_commits_the_previous_draft",
+      "negative_log": "var/review-2026-10-02/ui-cache-negative.log",
+      "reproduced_before_fix": true,
+      "passed_after_fix": true
+    },
+    {
+      "id": "R4",
+      "priority": "medium",
+      "file": "apps/desktop/src/cache/mod.rs",
+      "description": "Local thumbnail protection ran before aggregate LRU on folder opening, sometimes removing a newer file first. Global quota now decides eviction across folders.",
+      "regression": "opening_with_global_quota_does_not_apply_local_thumbnail_protection_first",
+      "negative_log": "var/review-2026-10-02/ui-cache-negative.log",
+      "reproduced_before_fix": true,
+      "passed_after_fix": true
+    },
+    {
+      "id": "R5",
+      "priority": "medium",
+      "file": "apps/desktop/src/ui.rs",
+      "description": "Photo shortcuts remained active behind the export window. They now stop while it is open; export readiness also rejects loading or failed recipe states.",
+      "regression": "editing_shortcuts_respect_focus_modal_and_pending_work",
+      "negative_log": "var/review-2026-10-02/ui-cache-negative.log",
+      "reproduced_before_fix": true,
+      "passed_after_fix": true
+    },
+    {
+      "id": "R6",
+      "priority": "medium",
+      "file": "apps/desktop/src/ui/editing.rs",
+      "description": "Unapplied RAW preferences could select the engine for the first saved recipe or export. Initial recipe loading, first save and export now use active service settings.",
+      "regression": "unsaved_preferences_never_select_the_engine_of_a_new_edit",
+      "negative_log": "var/review-2026-10-02/preferences-negative.log",
+      "reproduced_before_fix": true,
+      "passed_after_fix": true
+    }
+  ],
+  "additional_regression": "failed_drafts_can_be_retried_or_explicitly_discarded_in_both_languages",
+  "test_harness_fix": {
+    "files": [
+      "scripts/verify.sh",
+      "crates/tr-worker/src/native.rs"
+    ],
+    "description": "TR_VERIFY_REPORTS directs native compute output to the current campaign. Standalone runs write under var; historical published reports are preserved."
+  },
+  "verification": {
+    "baseline": {
+      "ordinary_tests": 222,
+      "integration_tests": 14,
+      "log": "var/review-2026-10-02/baseline-native.log",
+      "artifacts": "var/verify-tuv5Hexq"
+    },
+    "final": {
+      "command": "scripts/verify.sh --gui",
+      "passed": true,
+      "ordinary_tests": 228,
+      "integration_tests": 14,
+      "python_tests": 2,
+      "worker_protocol_checks": 8,
+      "signal_cases": 24,
+      "native_surface_passed": true,
+      "fmt_clippy_build_passed": true,
+      "log": "var/review-2026-10-02/final-verify.log",
+      "artifacts": "var/verify-pMnNZZoX"
+    },
+    "initial_sandbox_attempt": {
+      "passed": false,
+      "reason": "Core Image unavailable inside terminal sandbox in two native tests; full native rerun passed.",
+      "log": "var/review-2026-10-02/baseline.log"
+    },
+    "native_bundle_runs": [
+      {
+        "name": "xpc",
+        "exit_code": 0,
+        "passed": true,
+        "seconds": 22.28,
+        "report": "var/review-2026-10-02/xpc/reports/xpc-qualification-macos.json",
+        "sources_unchanged": true
+      },
+      {
+        "name": "develop",
+        "exit_code": 0,
+        "passed": true,
+        "seconds": 3.56,
+        "report": "var/review-2026-10-02/develop/reports/develop-ui.json",
+        "sources_unchanged": true
+      },
+      {
+        "name": "output-proof",
+        "exit_code": 0,
+        "passed": true,
+        "seconds": 3.69,
+        "report": "var/review-2026-10-02/output-proof/reports/develop-ui.json",
+        "sources_unchanged": true
+      },
+      {
+        "name": "preferences",
+        "exit_code": 0,
+        "passed": true,
+        "seconds": 5.08,
+        "report": "var/review-2026-10-02/preferences/reports/restyle-ui.json",
+        "sources_unchanged": true
+      }
+    ],
+    "proof_export": {
+      "report": "var/review-2026-10-02/proof-export/reports/develop-ui.json",
+      "passed": true,
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 1,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1683,
+          1122
+        ]
+      },
+      "source_unchanged": true
+    },
+    "xpc": {
+      "passed": true,
+      "two_distinct_processes": true,
+      "other_isolate_survived": true,
+      "edited_export_native_match_slots": 2,
+      "full_sandbox_gate_passed": false,
+      "memory_limit_is_hard_kernel_cap": false,
+      "production_rejects_fault_injection": true
+    },
+    "visual_inspection": [
+      "var/review-2026-10-02/develop/reports/develop-viewer.png",
+      "var/review-2026-10-02/output-proof/reports/develop-grid.png",
+      "var/review-2026-10-02/preferences/reports/restyle-03.png",
+      "var/review-2026-10-02/preferences/reports/restyle-11.png"
+    ],
+    "local_document_links": 351
+  },
+  "delivery": {
+    "delivered_bundle": "dist/TrueRenderer.app",
+    "previous_bundle": "var/review-2026-10-02/previous-distribution.app",
+    "all_bundle_files_match_qualified": true,
+    "previous_bundle_preserved": true,
+    "sha256": {
+      "Contents/MacOS/TrueRenderer": "3756ce2cb337310b6ef2f79d3c1adfe6ddb19135cbfb4ec5f28a3ff5254d169c",
+      "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    }
+  },
+  "preserved": [
+    "User originals and durable library/backups were not used by the campaigns.",
+    "Synthetic source hashes unchanged in the four native campaigns; proof/export source digest unchanged.",
+    "LICENSE and original v1.2 architecture match HEAD.",
+    "Historical native compute report restored byte-for-byte after the baseline run."
+  ],
+  "limits": [
+    "Three private-camera tests skipped: TR_RAW_SAMPLE unset.",
+    "No native Windows rerun, alternative keyboard layout, physical display or extended accessibility qualification.",
+    "New recovery controls exercised with egui events and real service/catalog, without manual native-window clicks in this campaign.",
+    "No R0-R4 or SF gate closed; ad hoc signature and RSS supervision are not release guarantees."
+  ]
+}

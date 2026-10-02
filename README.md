@@ -8,7 +8,7 @@ It brings each image, its technical context and the choices behind its appearanc
 
 ![TrueRenderer viewer with the Develop controls, edited photograph and filmstrip](reports/readme-viewer.png)
 
-*Current macOS development build, shown with the generated test corpus, an editable recipe and group reset controls. [Screenshot verification](reports/readme-screenshots-macos.json).*
+*Current macOS development build with the Develop tab, an edited image and filmstrip. All screenshots use the generated test corpus. [Capture details and verification](reports/readme-screenshots-macos.json).*
 
 ## A clearer way to look
 
@@ -22,7 +22,9 @@ Folder preparation runs in the background with visible progress and controls to 
 
 Move from Fit view to physical 1:1 when you need to judge focus, texture, noise or retouching without an accidental resize getting in the way. Metadata, pixel values, histogram and rendering information remain close at hand.
 
-The Inspector’s **Shooting data** section, below **File**, shows camera, lens, shutter speed, aperture, ISO and focal length from readable standard EXIF tags. Missing or unreadable values appear as “—”; hover over a value for its source. This read-only profile covers JPEG, PNG and classic TIFF-based files, including supported RAW containers; proprietary lens names and BigTIFF metadata are not inferred.
+The photographic Inspector has two tabs: **Information** opens by default in the grid, and **Develop** in the viewer. Each view keeps its tab choice for the session. The filename and tabs stay visible while the contents scroll.
+
+**Information → Shooting data**, below **File**, shows camera, lens, shutter speed, aperture, ISO and focal length from readable standard EXIF tags. Missing fields appear as “—”; when no shooting data is available, a single message replaces the empty list. Hover over a value for its source. This read-only profile covers JPEG, PNG and classic TIFF-based files, including supported RAW containers; proprietary lens names and BigTIFF metadata are not inferred.
 
 ### Compare with intent
 
@@ -34,17 +36,27 @@ RAW development always involves interpretation. TrueRenderer makes that choice e
 
 ### Develop a photograph
 
-The viewer's **Develop** section now has reversible exposure, brightness, contrast,
+The **Develop** tab has reversible exposure, brightness, contrast,
 highlights, shadows, whites, blacks, a basic tone curve, relative RGB warmth/tint
 and saturation. **Vibrance** selectively adjusts less saturated colours; optional
 **Protect warm tones** reduces its effect on warm hues without identifying skin.
 Using these controls opts that revision into photographic process 2; existing
-recipes retain their previous rendering. Edits are saved as versioned recipes in the local library;
+recipes retain their previous rendering.
+
+#### History and reusable adjustments
+
+Edits are saved as versioned recipes in the local library;
 **Undo**, **Redo** and **Before/After** leave the original file untouched.
+Changing photos saves the current draft. If saving fails, **Retry save** keeps
+your adjustments; **Discard draft and reload saved recipe** explicitly abandons
+the unsaved changes and reloads the library version. Retrying a failed history
+operation reloads the saved recipe without creating an extra revision.
+
 **Reset light**, **Reset curve** and **Reset colour** clear only their group of
 adjustments, preserving the RAW engine and native white balance. Each reset is
 saved and can be undone or redone; Reset colour also clears vibrance and warm-tone
 protection.
+
 **Copy and paste adjustments** keeps a session copy of the saved recipe. Select
 another photograph, choose Light, Tone curve and/or RGB color, then **Paste selected
 groups**. Pasting replaces only those groups and creates one undoable revision;
@@ -53,11 +65,15 @@ when the app closes; pasted edits remain in the library. With image focus,
 use **Alt+Shift+C/V** to copy/paste the selected groups, and
 **Cmd/Ctrl+Alt+Z** / **Cmd/Ctrl+Alt+Shift+Z** to undo/redo photographic edits.
 **Cmd/Ctrl+Z** continues to undo annotations. Editing shortcuts wait until the
-recipe is loaded and saved, and stay inactive in text fields, menus and settings.
-**RAW white balance** now offers as-shot/reset and native controls: Apple RAW
+recipe is loaded and saved, and stay inactive in text fields, menus, settings and
+the photo export window.
+
+#### RAW white balance
+
+For a decoded RAW, the panel offers as-shot/reset and native controls: Apple RAW
 uses temperature/tint; LibRaw bilinear, AHD and TrueRenderer use red/blue sensor
 gains relative to as-shot, before demosaicing. These gains are not Kelvin. The
-controls appear for a decoded RAW and are stored with the photograph's engine.
+values are stored with the photograph's engine.
 
 Use **Cancel RAW WB analysis** to interrupt a running estimate without changing the recipe or its history.
 
@@ -74,6 +90,8 @@ Apple RAW also offers adjustable Tungsten (3200 K), Daylight (5500 K), Cloudy
 starting points, not measurements of scene lighting. Presets save numerical WB
 values and support Undo; changing the sliders shows Custom when appropriate.
 
+#### Automatic adjustments and sampling
+
 **Auto exposure** suggests a conservative exposure; **Auto RGB · grey world**
 assumes an average neutral scene and adjusts the relative RGB controls. Choose
 **Load native for Auto** when needed. Both actions save their resolved values and
@@ -88,6 +106,9 @@ reduces the influence of isolated outliers and rejects mixed-colour regions,
 incomplete areas at image edges and areas with too few usable pixels. The panel
 shows valid pixels and chromatic spread. The picker requires zero saturation
 in the edit recipe.
+
+#### Check the final rendering
+
 The quick edited view is provisional. **Verify final rendering** builds an
 **sRGB16 export preview** from native resolution when the memory budget permits
 it. It simulates native-size PNG/TIFF16 conversion before reducing the image,
@@ -96,6 +117,8 @@ values. Choose **Return to extended fp32 render** for working-space inspection
 and the RGB picker. JPEG compression and resized exports need separate checks.
 Grid and filmstrip thumbnails reflect saved or in-progress edits. The inspector
 histogram follows its edited thumbnail preview and labels the preview level.
+
+In short windows, copy/paste and final-render checks are in **Develop → Actions**.
 
 The remaining tools in the [photographic development plan](STATO.md#piano-sviluppo-fotografico),
 including optics, spatial detail filters, masks,
@@ -149,11 +172,15 @@ RAW files do not have one universally correct appearance, and display colour dep
 
 ## Designed around the photograph
 
-The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace.
+The interface keeps the image at the centre. Explorer stays compact, technical information lives in collapsible sections, and familiar controls remain available across the grid, viewer and comparison workspace. Develop pairs each full-width slider with an editable value, while edit indicators sit below thumbnails to keep photographs unobstructed. Neutral selection borders and consistent navigation icons keep the controls easy to distinguish.
 
 ![Thumbnail grid with Library, shooting data and a saved edit indicator](reports/readme-grid.png)
 
-In smaller windows, navigation opens only when needed: [compact layout](reports/readme-compact.png).
+In smaller windows, navigation and the Inspector open as floating panels. The compact Inspector uses more of the available height; the image preview and histogram can be expanded when needed. Portrait previews fit within a bounded height so File metadata stays close at hand.
+
+<img src="reports/readme-inspector-compact.png" alt="Compact Develop inspector at 200% UI scale, with Actions and the Exposure control visible" width="720">
+
+*Develop at 200% UI scale in a 550 × 360-point workspace. [Compact navigation](reports/readme-compact.png).*
 
 ![Performance preferences with SDR presentation precision and processing options](reports/readme-preferences.png)
 
@@ -166,6 +193,10 @@ Interface size can be set to 100%, 150% or 200% in **Settings → General → Vi
 Original files are read-only. Previews use a separate cache, while ratings, keywords and backups remain durable library data.
 
 In **Settings → Cache and data**, one space limit applies either per folder or across all folders known to the current library. The total limit is optional. You can disable unused-preview expiry or enable periodic cleanup of folders that are not open; periodic cleanup runs every minute while the app is running and uses the same quota and expiry. **Clean known caches now** applies the saved policy, while **Clear folder cache** clears only the current folder. The summary reports the last cleanup measurement and incomplete checks. Previously visited folders become known when reopened with this version; disconnected folders are retried. No cleanup service runs after the app closes.
+
+Cache and memory limits pair an editable value with a full-width slider. Sizes use decimal B/kB/MB/GB; MB fields also accept a decimal comma.
+
+![Cache preferences with aligned quota controls, expiry and optional cleanup across known folders](reports/readme-cache.png)
 
 External decoding is isolated in sandboxed XPC services on macOS and a confined worker on Windows. Decoder failures remain separated from the library writer.
 

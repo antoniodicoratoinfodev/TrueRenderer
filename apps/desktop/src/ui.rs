@@ -18,6 +18,7 @@ use tr_core::{
 mod editing;
 mod explorer;
 mod export;
+mod inspector_probe;
 mod loading;
 pub(crate) mod navigation;
 mod preferences;
@@ -26,6 +27,12 @@ mod science;
 mod style;
 use preferences::SettingsPage;
 use style::{AMBER, CANVAS, MUTED, PANEL, TEXT};
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+enum InspectorPage {
+    Information,
+    Develop,
+}
 
 #[derive(Clone)]
 struct CachedImage {
@@ -96,6 +103,7 @@ pub struct TrueRenderer {
     folder_load: loading::FolderLoad,
     cache_action: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
     show_inspector: bool,
+    inspector_pages: [InspectorPage; 2],
     show_filmstrip: bool,
     fullscreen: bool,
     adapter: String,
@@ -259,6 +267,7 @@ impl TrueRenderer {
             settings_page: SettingsPage::Previews,
             settings_smoke,
             show_inspector: true,
+            inspector_pages: [InspectorPage::Information, InspectorPage::Develop],
             show_filmstrip: true,
             fullscreen: false,
             adapter,
@@ -443,6 +452,9 @@ impl TrueRenderer {
     }
     fn command(&mut self, command: Command) {
         if matches!(&command, Command::Select { .. } | Command::Move(_)) {
+            if let Some(id) = self.state.current.clone() {
+                self.commit_edit(&id);
+            }
             self.browser_user_selection();
         }
         for effect in self.state.dispatch(command) {
@@ -1233,7 +1245,7 @@ impl TrueRenderer {
     fn keyboard(&mut self, ctx: &egui::Context) {
         // Menus and quality selectors own keyboard input until they close.
         // In particular, Escape must not also leave the viewer behind a popup.
-        if egui::Popup::is_any_open(ctx) {
+        if self.photo_export.open || egui::Popup::is_any_open(ctx) {
             return;
         }
         if self.browser_keyboard(ctx) {
@@ -1379,10 +1391,11 @@ impl TrueRenderer {
             .frame(
                 egui::Frame::new()
                     .fill(PANEL)
-                    .inner_margin(egui::Margin::symmetric(16, 10)),
+                    .inner_margin(egui::Margin::symmetric(16, 6)),
             )
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
+                    ui.set_height(34.);
                     ui.label(RichText::new("TrueRenderer").size(17.).strong());
                     ui.add_space(8.);
                     ui.menu_button(lang.text("Apri"), |ui| {
@@ -1452,7 +1465,10 @@ impl TrueRenderer {
                             }
                         });
                         if ui
-                            .add(egui::Button::new(lang.text("Impostazioni")))
+                            .add(
+                                egui::Button::new(lang.text("Impostazioni"))
+                                    .frame_when_inactive(false),
+                            )
                             .clicked()
                         {
                             self.open_preferences(SettingsPage::Previews);
@@ -1468,7 +1484,7 @@ impl TrueRenderer {
                         self.search_box(ui, ui.available_width());
                     });
                 }
-                if viewer {
+                if viewer && ui.ctx().content_rect().width() < 1200. {
                     ui.add_space(4.);
                     self.viewer_controls(ui);
                 }
@@ -1516,23 +1532,34 @@ impl TrueRenderer {
 
     fn view_choices(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
-        for (mode, title, shortcut) in [
-            (ViewMode::Grid, "Griglia", "G"),
-            (ViewMode::Preview, "Anteprima", "E"),
-            (ViewMode::Compare, "Confronto", "C"),
-        ] {
-            if ui
-                .add(
-                    egui::Button::new(lang.text(title))
-                        .selected(self.state.view == mode)
-                        .min_size(egui::vec2(72., 28.)),
-                )
-                .on_hover_text(shortcut)
-                .clicked()
-            {
-                self.command(Command::SetView(mode));
-            }
-        }
+        egui::Frame::new()
+            .fill(style::SURFACE)
+            .corner_radius(6)
+            .inner_margin(2)
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.;
+                    for (mode, title, shortcut) in [
+                        (ViewMode::Grid, "Griglia", "G"),
+                        (ViewMode::Preview, "Anteprima", "E"),
+                        (ViewMode::Compare, "Confronto", "C"),
+                    ] {
+                        if ui
+                            .add(
+                                egui::Button::new(lang.text(title))
+                                    .selected(self.state.view == mode)
+                                    .frame_when_inactive(self.state.view == mode)
+                                    .stroke(egui::Stroke::NONE)
+                                    .min_size(egui::vec2(68., 26.)),
+                            )
+                            .on_hover_text(shortcut)
+                            .clicked()
+                        {
+                            self.command(Command::SetView(mode));
+                        }
+                    }
+                });
+            });
     }
 
     fn language_choices(&mut self, ui: &mut egui::Ui) {
@@ -1627,7 +1654,7 @@ impl TrueRenderer {
             self.reset_filters();
             self.open_folder(self.root.join("corpus"));
         }
-        ui.add_space(20.);
+        ui.add_space(12.);
         section(ui, lang.text("Selezione"));
         if nav(
             ui,
@@ -1670,7 +1697,7 @@ impl TrueRenderer {
             self.state.minimum_rating = 0;
             self.state.refilter();
         }
-        ui.add_space(24.);
+        ui.add_space(16.);
         section(ui, lang.text("Filtri"));
         ui.label(
             RichText::new(lang.text("Valutazione minima"))
@@ -1733,7 +1760,7 @@ impl TrueRenderer {
         }
         ui.add_space(8.);
         if ui
-            .add(egui::Button::new(lang.text("Azzera filtri")).frame(false))
+            .add(egui::Button::new(lang.text("Azzera filtri")).frame_when_inactive(false))
             .clicked()
         {
             self.reset_filters();
@@ -1758,14 +1785,27 @@ impl TrueRenderer {
     fn inspector(&mut self, ui: &mut egui::Ui) {
         if ui.available_width() < 700. {
             let mut open = self.show_inspector;
-            egui::Window::new(self.cache_settings.language.text("Ispettore"))
-                .id(egui::Id::new("compact-inspector"))
-                .open(&mut open)
-                .default_width(300.)
-                .max_width((ui.ctx().content_rect().width() - 56.).max(220.))
-                .max_height((ui.ctx().content_rect().height() - 120.).max(180.))
-                .vscroll(true)
-                .show(ui.ctx(), |ui| self.inspector_contents(ui));
+            let ctx = ui.ctx();
+            let bounds = ctx.content_rect().shrink(8.);
+            let frame = egui::Frame::window(ui.style()).inner_margin(12);
+            egui::Window::new(
+                RichText::new(self.cache_settings.language.text("Ispettore")).size(16.),
+            )
+            .id(egui::Id::new("compact-inspector"))
+            .open(&mut open)
+            .frame(frame)
+            .title_frame(frame.inner_margin(egui::Margin::symmetric(12, 6)))
+            .default_pos(bounds.min)
+            .default_width(300.)
+            .default_height(bounds.height())
+            .max_width((bounds.width() - 24.).max(220.))
+            .max_height(bounds.height())
+            .constrain_to(bounds)
+            .vscroll(false)
+            .show(ctx, |ui| {
+                ui.spacing_mut().item_spacing.y = 6.;
+                self.inspector_contents(ui);
+            });
             self.show_inspector = open;
         } else {
             egui::Panel::right("inspector")
@@ -1776,15 +1816,7 @@ impl TrueRenderer {
                     // Reserve a gutter: a floating scrollbar paints over image
                     // pixels and makes the inspector preview depend on hover.
                     ui.style_mut().spacing.scroll.floating = false;
-                    let mut scroll = egui::ScrollArea::vertical().id_salt("inspector-scroll");
-                    if self.smoke
-                        && self.state.view != ViewMode::Grid
-                        && std::env::args()
-                            .any(|arg| arg == "--develop-smoke" || arg == "--output-proof-smoke")
-                    {
-                        scroll = scroll.vertical_scroll_offset(230.);
-                    }
-                    scroll.show(ui, |ui| self.inspector_contents(ui));
+                    self.inspector_contents(ui);
                 });
         }
     }
@@ -1796,8 +1828,8 @@ impl TrueRenderer {
             return;
         };
         self.ensure_edit_loaded(&item);
-        ui.add_space(12.);
-        ui.label(RichText::new(&item.name).strong());
+        ui.add(egui::Label::new(RichText::new(&item.name).size(14.).strong()).truncate())
+            .on_hover_text(&item.name);
         ui.label(
             RichText::new(if item.approved {
                 lang.text("ANTEPRIMA")
@@ -1807,25 +1839,61 @@ impl TrueRenderer {
             .small()
             .color(AMBER),
         );
-        if let Some(error) =
-            self.errors
-                .get(&format!("{}:{:?}", item.id, self.image_key(&item, 0).1))
-        {
-            ui.colored_label(AMBER, error);
-        }
-
-        ui.add_space(12.);
         let edge = (ui.available_width() * ui.ctx().pixels_per_point()).ceil() as u32;
         let edge = tr_core::preview::thumbnail_edge(edge);
         self.ensure_image(&item, edge);
         let key = self.image_key(&item, edge);
         let info = self.cache.get(&key).map(|c| c.info.clone());
-        if let Some(info) = &info
-            && info.scientific.is_some()
-        {
-            self.science_inspector(ui, &item, info);
-            return;
+        let scientific = info.as_ref().is_some_and(|info| info.scientific.is_some());
+        let context = usize::from(self.state.view != ViewMode::Grid);
+        if !scientific {
+            ui.horizontal(|ui| {
+                for (page, title) in [
+                    (InspectorPage::Information, "Informazioni"),
+                    (InspectorPage::Develop, "Sviluppo"),
+                ] {
+                    if style::tab_button(
+                        ui,
+                        self.inspector_pages[context] == page,
+                        lang.text(title),
+                    )
+                    .clicked()
+                    {
+                        self.inspector_pages[context] = page;
+                    }
+                }
+            });
         }
+        ui.separator();
+        let page = self.inspector_pages[context];
+        ui.style_mut().spacing.scroll.floating = false;
+        egui::ScrollArea::vertical()
+            .id_salt(("inspector-scroll", context, page))
+            .auto_shrink([false, false])
+            .show(ui, |ui| {
+                if let Some(error) = self.errors.get(&format!("{}:{:?}", item.id, key.1)) {
+                    ui.colored_label(AMBER, error);
+                }
+                if let Some(info) = &info
+                    && scientific
+                {
+                    self.science_inspector(ui, &item, info);
+                } else {
+                    self.inspector_body(ui, &item, key, info, page);
+                }
+            });
+    }
+
+    fn inspector_body(
+        &mut self,
+        ui: &mut egui::Ui,
+        item: &Item,
+        key: (String, PreviewRequest),
+        info: Option<RasterInfo>,
+        page: InspectorPage,
+    ) {
+        let lang = self.cache_settings.language;
+        let short = ui.ctx().content_rect().height() < 500.;
         if let Some((source, digest, source_histogram, cached_info)) =
             self.cache.get(&key).map(|c| {
                 (
@@ -1853,11 +1921,11 @@ impl TrueRenderer {
                 source_histogram
             };
             let mut preview = |ui: &mut egui::Ui| {
-                let size = Vec2::new(
-                    ui.available_width(),
-                    ui.available_width() * cached_info.source_height as f32
-                        / cached_info.source_width as f32,
-                );
+                // Portraits should not push all metadata below the first screen.
+                let width = ui.available_width();
+                let height = width * cached_info.source_height as f32
+                    / cached_info.source_width.max(1) as f32;
+                let size = Vec2::new(width, height.min(220.));
                 let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
                 tr_render::presenter::fitted(
                     &mut self.presenter,
@@ -1866,59 +1934,97 @@ impl TrueRenderer {
                     &shown,
                     rect,
                 );
-                ui.add_space(12.);
+                ui.add_space(4.);
             };
-            if self.state.view == ViewMode::Grid {
+            if page == InspectorPage::Information && self.state.view == ViewMode::Grid && !short {
                 preview(ui);
-            } else {
+            } else if page == InspectorPage::Information {
                 egui::CollapsingHeader::new(lang.text("Anteprima immagine"))
                     .id_salt("inspector-preview")
                     .default_open(false)
                     .show(ui, preview);
             }
-            tr_render::histogram(ui, &histogram);
             if let Some(error) = self.edited_thumbnail_error(source.id()) {
                 ui.colored_label(AMBER, format!("Sviluppo: {error}"));
             }
-            ui.label(
-                RichText::new(if edited && self.editing.show_original {
-                    localized_format!(
-                        lang,
-                        "Istogramma dello sviluppo originale · livello {}",
-                        "Original development histogram · level {}",
-                        source.base_level()
-                    )
-                } else if edited && rendered_edit {
-                    localized_format!(
-                        lang,
-                        "Istogramma dell'anteprima modificata · livello {}",
-                        "Edited preview histogram · level {}",
-                        shown.base_level()
-                    )
-                } else if edited {
-                    localized_format!(
-                        lang,
-                        "Istogramma della sorgente · modifica in calcolo · livello {}",
-                        "Source histogram · edit computing · level {}",
-                        source.base_level()
-                    )
-                } else {
-                    localized_format!(
-                        lang,
-                        "Istogramma del livello {} · uscita sRGB composita",
-                        "Level {} histogram · composited sRGB output",
-                        source.base_level()
-                    )
-                })
-                .small()
-                .color(MUTED),
-            );
+            let description = if edited && self.editing.show_original {
+                localized_format!(
+                    lang,
+                    "Istogramma dello sviluppo originale · livello {}",
+                    "Original development histogram · level {}",
+                    source.base_level()
+                )
+            } else if edited && rendered_edit {
+                localized_format!(
+                    lang,
+                    "Istogramma dell'anteprima modificata · livello {}",
+                    "Edited preview histogram · level {}",
+                    shown.base_level()
+                )
+            } else if edited {
+                localized_format!(
+                    lang,
+                    "Istogramma della sorgente · modifica in calcolo · livello {}",
+                    "Source histogram · edit computing · level {}",
+                    source.base_level()
+                )
+            } else {
+                localized_format!(
+                    lang,
+                    "Istogramma del livello {} · uscita sRGB composita",
+                    "Level {} histogram · composited sRGB output",
+                    source.base_level()
+                )
+            };
+            let caption = if edited && self.editing.show_original {
+                localized_format!(
+                    lang,
+                    "Originale · livello {}",
+                    "Original · level {}",
+                    source.base_level()
+                )
+            } else if edited && rendered_edit {
+                localized_format!(
+                    lang,
+                    "Modificata · livello {}",
+                    "Edited · level {}",
+                    shown.base_level()
+                )
+            } else if edited {
+                localized_format!(
+                    lang,
+                    "In calcolo · livello {}",
+                    "Computing · level {}",
+                    source.base_level()
+                )
+            } else {
+                localized_format!(
+                    lang,
+                    "sRGB · livello {}",
+                    "sRGB · level {}",
+                    source.base_level()
+                )
+            };
+            if short {
+                egui::CollapsingHeader::new(format!("{} · {caption}", lang.text("Istogramma")))
+                    .id_salt("inspector-histogram-short")
+                    .default_open(false)
+                    .show(ui, |ui| {
+                        tr_render::histogram_with_height(ui, &histogram, 52.)
+                    })
+                    .header_response
+                    .on_hover_text(description);
+            } else {
+                tr_render::histogram_with_height(ui, &histogram, 52.);
+                ui.label(RichText::new(caption).small().color(MUTED))
+                    .on_hover_text(description);
+            }
         }
-        ui.add_space(12.);
-        if self.state.view != ViewMode::Grid {
-            self.editing_controls(ui, &item);
+        if page == InspectorPage::Develop {
+            self.editing_controls(ui, item);
+            return;
         }
-        ui.add_space(12.);
+        ui.add_space(4.);
         egui::CollapsingHeader::new(lang.text("File"))
             .id_salt("inspector-file")
             .default_open(true)
@@ -1965,6 +2071,14 @@ impl TrueRenderer {
             .show(ui, |ui| {
                 let shooting = info.as_ref().and_then(|i| i.shooting.as_ref());
                 let values = shooting.map(|s| s.values()).unwrap_or([None; 6]);
+                if values.iter().all(Option::is_none) {
+                    ui.label(
+                        RichText::new(lang.text("Dati di scatto non disponibili"))
+                            .small()
+                            .color(MUTED),
+                    );
+                    return;
+                }
                 for (label, value) in [
                     "Fotocamera",
                     "Obiettivo",
@@ -2187,11 +2301,11 @@ impl TrueRenderer {
             painter.rect_stroke(
                 rect,
                 5,
-                egui::Stroke::new(1.5, TEXT),
+                egui::Stroke::new(1., if response.has_focus() { TEXT } else { MUTED }),
                 egui::StrokeKind::Inside,
             );
         }
-        let bottom = if show_name { 47. } else { 8. };
+        let bottom = if show_name { 52. } else { 20. };
         let area = egui::Rect::from_min_max(
             rect.min + Vec2::splat(10.),
             egui::pos2(rect.right() - 10., rect.bottom() - bottom),
@@ -2234,20 +2348,15 @@ impl TrueRenderer {
                 } else {
                     lang.text("In calcolo")
                 };
-                let badge = egui::Rect::from_min_size(
-                    area.min + Vec2::splat(4.),
-                    Vec2::new(
-                        (label.chars().count() as f32 * 6.5 + 12.).min(area.width()),
-                        19.,
-                    ),
-                );
-                painter.rect_filled(badge, 3., Color32::from_black_alpha(190));
                 painter.text(
-                    badge.center(),
-                    egui::Align2::CENTER_CENTER,
+                    egui::pos2(
+                        rect.left() + 12.,
+                        rect.bottom() - if show_name { 42. } else { 10. },
+                    ),
+                    egui::Align2::LEFT_CENTER,
                     label,
                     egui::FontId::proportional(11.),
-                    Color32::WHITE,
+                    if edit_error.is_some() { AMBER } else { MUTED },
                 );
             }
         } else {
@@ -2280,25 +2389,17 @@ impl TrueRenderer {
             title.wrap.break_anywhere = true;
             let galley = painter.layout_job(title);
             painter.galley(
-                egui::pos2(rect.left() + 12., rect.bottom() - 42.),
+                egui::pos2(rect.left() + 12., rect.bottom() - 31.),
                 galley,
                 TEXT,
             );
             let stars = if item.annotation.rating == -1 {
                 lang.text("Scartata").into()
             } else {
-                format!(
-                    "{}{}",
-                    "★".repeat(item.annotation.rating.max(0) as usize),
-                    if item.annotation.rating == 0 {
-                        "—".into()
-                    } else {
-                        String::new()
-                    }
-                )
+                "★".repeat(item.annotation.rating.max(0) as usize)
             };
             painter.text(
-                egui::pos2(rect.left() + 12., rect.bottom() - 15.),
+                egui::pos2(rect.left() + 12., rect.bottom() - 10.),
                 egui::Align2::LEFT_CENTER,
                 stars,
                 egui::FontId::proportional(12.),
@@ -2306,7 +2407,7 @@ impl TrueRenderer {
             );
             if item.annotation.label != Label::None {
                 painter.text(
-                    egui::pos2(rect.right() - 12., rect.bottom() - 15.),
+                    egui::pos2(rect.right() - 12., rect.bottom() - 10.),
                     egui::Align2::RIGHT_CENTER,
                     lang.text(item.annotation.label.text()),
                     egui::FontId::proportional(10.),
@@ -2352,7 +2453,7 @@ impl TrueRenderer {
         self.grid_columns = columns as i32;
         let size = Vec2::new(
             (ui.available_width() - (columns - 1) as f32 * 12.) / columns as f32,
-            self.cell_size * 0.70 + 57.,
+            self.cell_size * 0.70 + 62.,
         );
         let count = self.state.visible.len();
         let rows = count.div_ceil(columns);
@@ -2376,7 +2477,7 @@ impl TrueRenderer {
     }
     fn viewer_controls(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
-        let compact = ui.available_width() < 780.;
+        let compact = ui.available_width() < 620.;
         ui.horizontal_wrapped(|ui| {
             ui.add_enabled_ui(self.state.current_item().is_some(), |ui| {
                 if ui
@@ -2410,17 +2511,19 @@ impl TrueRenderer {
                         .transform
                         .set_zoom(self.state.transform.zoom.unwrap_or(1.) / 1.25);
                 }
-                ui.label(
-                    RichText::new(
-                        self.state
-                            .transform
-                            .zoom
-                            .map(|z| format!("{:.0}%", z * 100.))
-                            .unwrap_or_else(|| lang.text("Adatta").into()),
-                    )
-                    .monospace()
-                    .color(MUTED),
-                );
+                if self.state.transform.zoom.is_some() {
+                    ui.label(
+                        RichText::new(
+                            self.state
+                                .transform
+                                .zoom
+                                .map(|z| format!("{:.0}%", z * 100.))
+                                .unwrap_or_default(),
+                        )
+                        .monospace()
+                        .color(MUTED),
+                    );
+                }
                 if ui.small_button("+").clicked() {
                     self.state
                         .transform
@@ -2446,7 +2549,7 @@ impl TrueRenderer {
         };
         ui.add_enabled_ui(self.cache_action.is_none(), |ui| {
             egui::ComboBox::from_id_salt("global-quality")
-                .width(155.)
+                .width(132.)
                 .selected_text(format!(
                     "{}: {}",
                     lang.text("Globale"),
@@ -2469,7 +2572,7 @@ impl TrueRenderer {
         let effective = item.as_ref().map_or(global, |item| self.quality(item));
         ui.add_enabled_ui(item.is_some(), |ui| {
             egui::ComboBox::from_id_salt("photo-quality")
-                .width(210.)
+                .width(182.)
                 .selected_text(format!(
                     "{}: {}",
                     lang.text("Solo questa foto"),
@@ -2515,7 +2618,7 @@ impl TrueRenderer {
         };
         if self.show_filmstrip && ui.available_height() >= 240. {
             egui::Panel::bottom("filmstrip")
-                .exact_size(104.)
+                .exact_size(121.)
                 .frame(egui::Frame::new().fill(PANEL).inner_margin(8))
                 .show(ui, |ui| {
                     egui::ScrollArea::horizontal().show(ui, |ui| {
@@ -2527,7 +2630,7 @@ impl TrueRenderer {
                                 .unwrap_or(0);
                             for i in visible.into_iter().skip(pos.saturating_sub(4)).take(12) {
                                 let thumb = self.state.items[i].clone();
-                                self.thumbnail(ui, &thumb, Vec2::new(114., 84.), false);
+                                self.thumbnail(ui, &thumb, Vec2::new(114., 101.), false);
                             }
                         });
                     });
@@ -3201,6 +3304,10 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
     }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
+        if std::env::args().any(|a| a == "--inspector-layout-smoke") {
+            self.inspector_layout_smoke(ctx);
+            return;
+        }
         if std::env::args().any(|a| a == "--folder-loading-smoke") {
             self.folder_loading_smoke(ctx);
             return;
@@ -3528,22 +3635,28 @@ impl eframe::App for TrueRenderer {
     }
 }
 fn section(ui: &mut egui::Ui, title: &str) {
-    ui.label(RichText::new(title).size(12.).strong().color(TEXT));
-    ui.add_space(8.);
+    ui.label(RichText::new(title).size(13.).strong().color(TEXT));
+    ui.add_space(4.);
 }
 fn field(ui: &mut egui::Ui, key: &str, value: &str) {
     ui.horizontal_top(|ui| {
-        ui.add_sized(
-            [82., 16.],
-            egui::Label::new(RichText::new(key).small().color(MUTED)),
+        ui.allocate_ui_with_layout(
+            egui::vec2(82., 16.),
+            egui::Layout::top_down(egui::Align::Min),
+            |ui| {
+                ui.set_min_width(82.);
+                ui.add(egui::Label::new(RichText::new(key).small().color(MUTED)).wrap());
+            },
         );
-        ui.add(egui::Label::new(RichText::new(value).small()).wrap());
+        ui.add(egui::Label::new(value).wrap());
     });
 }
 fn nav(ui: &mut egui::Ui, title: &str, count: &str, selected: bool) -> egui::Response {
     let response = ui.add_sized(
-        [ui.available_width(), 32.],
-        egui::Button::new("").selected(selected).frame(false),
+        [ui.available_width(), 28.],
+        egui::Button::new("")
+            .selected(selected)
+            .frame_when_inactive(selected),
     );
     response.widget_info(|| {
         egui::WidgetInfo::selected(
@@ -3580,6 +3693,9 @@ fn nav(ui: &mut egui::Ui, title: &str, count: &str, selected: bool) -> egui::Res
     response
 }
 use crate::size_units::human_bytes;
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod inspector_tests;
 
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod settings_regressions {
@@ -4631,6 +4747,7 @@ mod settings_regressions {
             |ui| {
                 app.keyboard(ui.ctx());
                 app.toolbar(ui);
+                app.location_bar(ui);
                 app.footer(ui);
                 app.settings_window(ui.ctx());
             },
@@ -4669,7 +4786,10 @@ mod settings_regressions {
                     (rect(lang.text("Apri")).center().y
                         - rect(lang.text("Impostazioni")).center().y)
                         .abs()
-                        < 1.
+                        < 1.,
+                    "Top alignment {lang:?} {size:?}: open {:?}, settings {:?}",
+                    rect(lang.text("Apri")),
+                    rect(lang.text("Impostazioni"))
                 );
                 for label in [
                     format!("{}: Standard", lang.text("Globale")),

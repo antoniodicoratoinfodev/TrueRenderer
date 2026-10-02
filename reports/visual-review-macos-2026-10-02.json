@@ -1,0 +1,88 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "visual-review-macos-2026-10-02",
+  "checked_at": "2026-10-02T16:39:36.685495+00:00",
+  "scope": "Toolbar, Develop adjustment layout, thumbnail metadata, empty shooting data and preferences. Preserves the preceding general-review corrections.",
+  "changes": [
+    "Grouped view selector with visible active state; zoom and quality beside navigation at >=1200 points, compact fallback retained.",
+    "Named adjustments with aligned editable values and full-width slider below; reset on group heading. Quieter secondary buttons with hover feedback and visible Before/After selection.",
+    "Edit state in reserved metadata area outside grid and filmstrip images; consistent image geometry across edit states.",
+    "Single empty-EXIF message; lighter preferences copy, contextual help, expandable cache details and reserved visible scrollbar."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 229,
+    "native_integration_tests": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "private_raw_tests_skipped": 3,
+    "artifacts": "var/verify-rGzlvDSn",
+    "log": "var/visual-review-2026-10-02/verify-final.log",
+    "final_ui_tests": 46,
+    "final_ui_log": "var/visual-review-2026-10-02/ui-final.log",
+    "fmt_clippy_build": true,
+    "new_regression": "adjustment_keeps_drag_commit_and_numeric_entry_at_compact_widths: IT/EN at 200/248/328 points; one commit signal at drag release and 0.75 EV keyboard entry",
+    "chrome_regression": "IT/EN at 1440x940, 1100x720 and 550x360; navigation now included in frame"
+  },
+  "native": [
+    {
+      "name": "xpc",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 22.2,
+      "report": "var/visual-review-2026-10-02/xpc/reports/xpc-qualification-macos.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "develop",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.59,
+      "report": "var/visual-review-2026-10-02/develop/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "output-proof",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.92,
+      "report": "var/visual-review-2026-10-02/output-proof/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "preferences",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 6.14,
+      "report": "var/visual-review-2026-10-02/preferences/reports/restyle-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "filesystem",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 5.86,
+      "report": "var/visual-review-2026-10-02/filesystem/reports/filesystem-ui.json",
+      "sources_unchanged": true
+    }
+  ],
+  "screenshots_report": "reports/readme-screenshots-macos.json",
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "identical_to_qualified": true,
+    "previous_bundle": "var/visual-review-2026-10-02/previous-distribution.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "5054c82442b14373cdff88859709e6af6d796266143b90d7c7770983c6fa7654",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    }
+  },
+  "limitations": [
+    "Three private RAW tests skipped; no native Windows repetition or exhaustive display/accessibility qualification.",
+    "Additional manual CUA inspection was not accepted as evidence: delayed getApp resolved a different existing instance. No UI mutation was performed through CUA; the isolated test process was closed.",
+    "No SF or R0\u2013R4 gates closed."
+  ]
+}

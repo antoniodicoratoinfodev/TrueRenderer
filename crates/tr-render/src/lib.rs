@@ -126,7 +126,11 @@ pub fn viewport(
     (response, sample)
 }
 pub fn histogram(ui: &mut egui::Ui, bins: &[[u32; 256]; 3]) {
-    let (rect, _) = ui.allocate_exact_size(Vec2::new(ui.available_width(), 70.), Sense::hover());
+    histogram_with_height(ui, bins, 70.);
+}
+
+pub fn histogram_with_height(ui: &mut egui::Ui, bins: &[[u32; 256]; 3], height: f32) {
+    let (rect, _) = ui.allocate_exact_size(Vec2::new(ui.available_width(), height), Sense::hover());
     let painter = ui.painter();
     painter.rect_filled(rect, 3, Color32::from_gray(20));
     let max = bins.iter().flatten().copied().max().unwrap_or(1).max(1) as f32;

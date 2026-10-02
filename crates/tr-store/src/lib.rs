@@ -246,9 +246,13 @@ impl Catalog {
                 digest == source_digest,
                 "Ricetta associata a una sorgente diversa"
             );
-            let (json,parent): (String,Option<i64>) = self.library.query_row(
-                "SELECT recipe,parent_revision FROM photo_edit_revision WHERE asset_id=?1 AND revision=?2",
-                params![id,cursor], |r| Ok((r.get(0)?,r.get(1)?)))?;
+            let (json,parent,revision_digest): (String,Option<i64>,String) = self.library.query_row(
+                "SELECT recipe,parent_revision,source_digest FROM photo_edit_revision WHERE asset_id=?1 AND revision=?2",
+                params![id,cursor], |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?)))?;
+            ensure!(
+                revision_digest == source_digest,
+                "Revisione associata a una sorgente diversa"
+            );
             let recipe: EditRecipe = serde_json::from_str(&json)?;
             recipe.validate()?;
             let redo: Vec<u64> = serde_json::from_str(&redo)?;
@@ -325,6 +329,9 @@ impl Catalog {
         expected_generation: u64,
         undo: bool,
     ) -> Result<LoadedEdit> {
+        // Keep the head, redo stack and target validation in one transaction.
+        // A missing/corrupt/future revision must never become the durable cursor.
+        let tx = self.library.unchecked_transaction()?;
         let before = self.load_edit(id, RawEngine::default())?;
         ensure!(
             before.generation == expected_generation,
@@ -360,7 +367,9 @@ impl Catalog {
             changed == 1,
             "Conflitto: cronologia fotografica aggiornata altrove"
         );
-        self.load_edit(id, before.recipe.raw_engine)
+        let saved = self.load_edit(id, before.recipe.raw_engine)?;
+        tx.commit()?;
+        Ok(saved)
     }
     pub fn favorites(&self) -> Result<Vec<Favorite>> {
         let mut stmt = self.library.prepare(
@@ -503,6 +512,61 @@ fn backup_connection(library: &Connection, root: &Path) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn invalid_history_target_never_changes_the_saved_edit_head() {
+        for undo in [true, false] {
+            for damage in 0..3 {
+                let dir = tempfile::tempdir().unwrap();
+                let mut catalog = Catalog::open(dir.path()).unwrap();
+                let item = catalog
+                    .observe(Path::new("photo.png"), "source", 4)
+                    .unwrap();
+                let mut recipe = EditRecipe::neutral(RawEngine::default());
+                recipe.exposure_ev = 1.;
+                let first = catalog.save_edit(&item.id, 0, &recipe).unwrap();
+                recipe.exposure_ev = 2.;
+                let second = catalog
+                    .save_edit(&item.id, first.generation, &recipe)
+                    .unwrap();
+                let before = if undo {
+                    second
+                } else {
+                    catalog
+                        .step_edit(&item.id, second.generation, true)
+                        .unwrap()
+                };
+                let target = if undo { 1 } else { 2 };
+                let sql = match damage {
+                    0 => {
+                        "UPDATE photo_edit_revision SET recipe='broken' WHERE asset_id=?1 AND revision=?2"
+                    }
+                    1 => {
+                        "UPDATE photo_edit_revision SET source_digest='other-source' WHERE asset_id=?1 AND revision=?2"
+                    }
+                    _ => "DELETE FROM photo_edit_revision WHERE asset_id=?1 AND revision=?2",
+                };
+                catalog
+                    .library
+                    .execute(sql, params![item.id, target])
+                    .unwrap();
+                assert!(
+                    catalog
+                        .step_edit(&item.id, before.generation, undo)
+                        .is_err(),
+                    "undo={undo} damage={damage}"
+                );
+                let after = catalog.load_edit(&item.id, recipe.raw_engine).unwrap();
+                assert_eq!(after.generation, before.generation);
+                assert_eq!(after.revision, before.revision);
+                assert_eq!(after.recipe, before.recipe);
+                assert_eq!(
+                    (after.can_undo, after.can_redo),
+                    (before.can_undo, before.can_redo)
+                );
+            }
+        }
+    }
+
     #[test]
     fn undo_limit_never_publishes_an_unreadable_edit_head() {
         let dir = tempfile::tempdir().unwrap();

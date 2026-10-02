@@ -234,7 +234,15 @@ impl Manager {
             policy.register(folder)?;
         }
         let (entries, removed) = cache.trim(
-            if clear { 0 } else { settings.disk_mib * MIB },
+            if clear {
+                0
+            } else if settings.global_disk_quota {
+                // Aggregate LRU decides eviction across every known folder;
+                // local thumbnail protection must not discard newer files first.
+                u64::MAX
+            } else {
+                settings.disk_mib * MIB
+            },
             if clear { 0 } else { settings.retention_days() },
         )?;
         self.update_usage(folder, entries, removed);

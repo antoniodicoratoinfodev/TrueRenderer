@@ -81,6 +81,13 @@ fn run() -> Result<()> {
     let develop_smoke = args
         .iter()
         .any(|a| a == "--develop-smoke" || a == "--output-proof-smoke");
+    let inspector_smoke = args.iter().any(|a| a == "--inspector-layout-smoke");
+    if inspector_smoke {
+        anyhow::ensure!(
+            option("--root").is_some() && option("--data").is_some(),
+            "Inspector layout probe requires an isolated --root and --data"
+        );
+    }
     if develop_smoke {
         anyhow::ensure!(
             option("--root").is_some() && option("--data").is_some(),
@@ -93,6 +100,7 @@ fn run() -> Result<()> {
         || source_smoke
         || settings_smoke
         || develop_smoke
+        || inspector_smoke
         || external_smoke
         || sampling_smoke
         || args.iter().any(|a| a == "--smoke-test");
@@ -232,7 +240,11 @@ fn run() -> Result<()> {
         "Manca tr-worker accanto all'applicazione. Eseguire scripts/build-macos.sh."
     );
     let develop_report = develop_smoke.then(|| root.join("reports/develop-ui.json"));
+    let inspector_report = inspector_smoke.then(|| root.join("reports/inspector-ui.json"));
     if let Some(report) = &develop_report {
+        verify_develop::begin(report)?;
+    }
+    if let Some(report) = &inspector_report {
         verify_develop::begin(report)?;
     }
     graphics::run(
@@ -249,6 +261,9 @@ fn run() -> Result<()> {
         },
     )?;
     if let Some(report) = &develop_report {
+        verify_develop::finish(report)?;
+    }
+    if let Some(report) = &inspector_report {
         verify_develop::finish(report)?;
     }
     Ok(())

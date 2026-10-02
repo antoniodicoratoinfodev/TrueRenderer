@@ -638,22 +638,15 @@ impl TrueRenderer {
             widget.bg_stroke = egui::Stroke::NONE;
             widget.corner_radius = 2.into();
         }
-        ui.visuals_mut().selection.bg_fill = egui::Color32::from_rgb(43, 65, 83);
-        ui.visuals_mut().selection.stroke =
-            egui::Stroke::new(1., egui::Color32::from_rgb(100, 166, 215));
+        ui.visuals_mut().selection.bg_fill = style::SELECTED;
+        ui.visuals_mut().selection.stroke = egui::Stroke::new(1., TEXT);
         ui.horizontal(|ui| {
             for (mode, title) in [
                 (PanelMode::Library, "Libreria"),
                 (PanelMode::Explorer, "Esplora"),
             ] {
                 let response =
-                    ui.selectable_label(self.browser.session.mode == mode, lang.text(title));
-                if self.browser.session.mode == mode {
-                    ui.painter().line_segment(
-                        [response.rect.left_bottom(), response.rect.right_bottom()],
-                        egui::Stroke::new(2., egui::Color32::from_rgb(100, 166, 215)),
-                    );
-                }
+                    style::tab_button(ui, self.browser.session.mode == mode, lang.text(title));
                 if response.clicked()
                     || (response.has_focus()
                         && ui.input(|i| {
@@ -855,7 +848,7 @@ impl TrueRenderer {
             let response = ui.add_enabled(
                 path.is_some(),
                 egui::Button::new(&favorite.label)
-                    .frame(false)
+                    .frame_when_inactive(false)
                     .sense(egui::Sense::click_and_drag()),
             );
             response.dnd_set_drag_payload(DragLocation::Favorite(favorite.id.clone()));
@@ -1150,7 +1143,7 @@ impl TrueRenderer {
                                 rect,
                                 0.,
                                 if active {
-                                    egui::Color32::from_rgb(43, 65, 83)
+                                    style::SELECTED
                                 } else {
                                     egui::Color32::from_gray(42)
                                 },
@@ -1159,7 +1152,7 @@ impl TrueRenderer {
                         if active {
                             ui.painter().line_segment(
                                 [rect.left_top(), rect.left_bottom()],
-                                egui::Stroke::new(2., egui::Color32::from_rgb(100, 166, 215)),
+                                egui::Stroke::new(1., style::SELECTION_EDGE),
                             );
                         }
                         for level in 0..row.depth.min(6) {
@@ -1334,6 +1327,125 @@ impl TrueRenderer {
             self.browser.focus_tree = false;
         }
     }
+    fn location_navigation(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        ui.horizontal(|ui| {
+            if ui
+                .add(egui::Button::new(lang.text("Pannello")).frame_when_inactive(false))
+                .on_hover_text("Cmd/Ctrl+B")
+                .clicked()
+            {
+                if ui.ctx().content_rect().width() < 1000. {
+                    self.browser.temporary = !self.browser.temporary;
+                } else {
+                    self.browser.session.visible = !self.browser.session.visible;
+                }
+            }
+            if style::icon_button(
+                ui,
+                self.browser.cursor.is_some_and(|c| c > 0),
+                style::Icon::Back,
+                lang.text("Indietro"),
+            )
+            .on_hover_text("Alt+← · Cmd/Ctrl+[")
+            .clicked()
+            {
+                self.history_go(-1);
+            }
+            if style::icon_button(
+                ui,
+                self.browser
+                    .cursor
+                    .is_some_and(|c| c + 1 < self.browser.history.len()),
+                style::Icon::Forward,
+                lang.text("Avanti"),
+            )
+            .on_hover_text("Alt+→ · Cmd/Ctrl+]")
+            .clicked()
+            {
+                self.history_go(1);
+            }
+            if style::icon_button(
+                ui,
+                self.folder.parent().is_some(),
+                style::Icon::Up,
+                lang.text("Cartella superiore"),
+            )
+            .on_hover_text("Cmd/Ctrl+↑")
+            .clicked()
+                && let Some(parent) = self.folder.parent()
+            {
+                self.open_folder(parent.into());
+            }
+            if style::icon_button(
+                ui,
+                true,
+                style::Icon::Refresh,
+                lang.text("Rileggi cartella"),
+            )
+            .on_hover_text("F5")
+            .clicked()
+            {
+                self.refresh_folder();
+            }
+            if self.browser.path_edit {
+                let response = ui.add(
+                    egui::TextEdit::singleline(&mut self.browser.path_text)
+                        .id(egui::Id::new("browser-path"))
+                        .desired_width(ui.available_width().max(40.)),
+                );
+                if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+                    let path = PathBuf::from(&self.browser.path_text);
+                    self.browser.path_edit = false;
+                    self.open_path(path);
+                }
+            } else {
+                let mut ancestors: Vec<_> = self
+                    .folder
+                    .ancestors()
+                    .map(std::path::Path::to_path_buf)
+                    .collect();
+                ancestors.reverse();
+                let keep = if ui.available_width() < 350. { 1 } else { 3 };
+                if ancestors.len() > keep {
+                    ui.menu_button("…", |ui| {
+                        for path in &ancestors[..ancestors.len() - keep] {
+                            if ui.button(path.display().to_string()).clicked() {
+                                self.open_folder(path.clone());
+                                ui.close();
+                            }
+                        }
+                    });
+                }
+                for path in ancestors.iter().skip(ancestors.len().saturating_sub(keep)) {
+                    if ui
+                        .add(
+                            egui::Button::new(
+                                path.file_name()
+                                    .unwrap_or(path.as_os_str())
+                                    .to_string_lossy(),
+                            )
+                            .frame_when_inactive(false)
+                            .truncate(),
+                        )
+                        .on_hover_text(path.display().to_string())
+                        .clicked()
+                    {
+                        self.open_folder(path.clone());
+                    }
+                    ui.label("›");
+                }
+                if ui
+                    .small_button("/")
+                    .on_hover_text(lang.text("Inserisci un percorso"))
+                    .clicked()
+                {
+                    self.edit_location();
+                }
+            }
+        });
+    }
+
     pub(super) fn location_bar(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         egui::Panel::top("location-bar")
@@ -1343,110 +1455,19 @@ impl TrueRenderer {
                     .inner_margin(egui::Margin::symmetric(16, 6)),
             )
             .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    if ui
-                        .button(lang.text("Pannello"))
-                        .on_hover_text("Cmd/Ctrl+B")
-                        .clicked()
-                    {
-                        if ui.ctx().content_rect().width() < 1000. {
-                            self.browser.temporary = !self.browser.temporary;
-                        } else {
-                            self.browser.session.visible = !self.browser.session.visible;
-                        }
-                    }
-                    if ui
-                        .add_enabled(
-                            self.browser.cursor.is_some_and(|c| c > 0),
-                            egui::Button::new("<"),
-                        )
-                        .on_hover_text(lang.text("Indietro"))
-                        .clicked()
-                    {
-                        self.history_go(-1);
-                    }
-                    if ui
-                        .add_enabled(
-                            self.browser
-                                .cursor
-                                .is_some_and(|c| c + 1 < self.browser.history.len()),
-                            egui::Button::new(">"),
-                        )
-                        .on_hover_text(lang.text("Avanti"))
-                        .clicked()
-                    {
-                        self.history_go(1);
-                    }
-                    if ui
-                        .add_enabled(self.folder.parent().is_some(), egui::Button::new("^"))
-                        .on_hover_text(lang.text("Cartella superiore"))
-                        .clicked()
-                        && let Some(parent) = self.folder.parent()
-                    {
-                        self.open_folder(parent.into());
-                    }
-                    if ui
-                        .button("↻")
-                        .on_hover_text(lang.text("Rileggi cartella"))
-                        .clicked()
-                    {
-                        self.refresh_folder();
-                    }
-                    if self.browser.path_edit {
-                        let response = ui.add(
-                            egui::TextEdit::singleline(&mut self.browser.path_text)
-                                .id(egui::Id::new("browser-path"))
-                                .desired_width(ui.available_width().max(40.)),
+                if self.state.view != ViewMode::Grid && ui.ctx().content_rect().width() >= 1200. {
+                    ui.horizontal(|ui| {
+                        let navigation_width = (ui.available_width() - 650.).max(280.);
+                        ui.allocate_ui_with_layout(
+                            egui::vec2(navigation_width, 28.),
+                            egui::Layout::left_to_right(egui::Align::Center),
+                            |ui| self.location_navigation(ui),
                         );
-                        if response.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) {
-                            let path = PathBuf::from(&self.browser.path_text);
-                            self.browser.path_edit = false;
-                            self.open_path(path);
-                        }
-                    } else {
-                        let mut ancestors: Vec<_> = self
-                            .folder
-                            .ancestors()
-                            .map(std::path::Path::to_path_buf)
-                            .collect();
-                        ancestors.reverse();
-                        let keep = if ui.available_width() < 350. { 1 } else { 3 };
-                        if ancestors.len() > keep {
-                            ui.menu_button("…", |ui| {
-                                for path in &ancestors[..ancestors.len() - keep] {
-                                    if ui.button(path.display().to_string()).clicked() {
-                                        self.open_folder(path.clone());
-                                        ui.close();
-                                    }
-                                }
-                            });
-                        }
-                        for path in ancestors.iter().skip(ancestors.len().saturating_sub(keep)) {
-                            if ui
-                                .add(
-                                    egui::Button::new(
-                                        path.file_name()
-                                            .unwrap_or(path.as_os_str())
-                                            .to_string_lossy(),
-                                    )
-                                    .truncate(),
-                                )
-                                .on_hover_text(path.display().to_string())
-                                .clicked()
-                            {
-                                self.open_folder(path.clone());
-                            }
-                            ui.label("›");
-                        }
-                        if ui
-                            .small_button("/")
-                            .on_hover_text(lang.text("Inserisci un percorso"))
-                            .clicked()
-                        {
-                            self.edit_location();
-                        }
-                    }
-                });
+                        self.viewer_controls(ui);
+                    });
+                } else {
+                    self.location_navigation(ui);
+                }
                 if self.state.targeted.is_some() {
                     ui.horizontal(|ui| {
                         ui.label(lang.text("Filtri sospesi per apertura diretta"));

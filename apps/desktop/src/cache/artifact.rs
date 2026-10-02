@@ -1106,6 +1106,68 @@ mod tests {
         );
     }
     #[test]
+    fn opening_with_global_quota_does_not_apply_local_thumbnail_protection_first() {
+        let folder = tempfile::tempdir().unwrap();
+        let other = tempfile::tempdir().unwrap();
+        let manager = manager();
+        let (info, preview, request) = fixture();
+        manager
+            .store_preview(
+                folder.path(),
+                "global-lru",
+                request,
+                &info,
+                &preview,
+                &|| false,
+            )
+            .unwrap();
+        let cache = Folder::open(folder.path(), false, true).unwrap();
+        for entry in Folder::files(&cache.entries, ".tvc").unwrap() {
+            cache
+                .entries
+                .open_file(&entry.name, true, false, false)
+                .unwrap()
+                .set_modified(SystemTime::now() - Duration::from_secs(2 * 86400))
+                .unwrap();
+        }
+        let heavy = format!("{}.tvc", "f".repeat(64));
+        cache
+            .entries
+            .open_file(&heavy, true, true, true)
+            .unwrap()
+            .set_len(64 * MIB)
+            .unwrap();
+        let heavy_path = cache.entries.path.join(heavy);
+        drop(cache);
+        let old_cache = Folder::open(other.path(), true, true).unwrap();
+        let oldest = format!("{}.tvc", "e".repeat(64));
+        let old_file = old_cache
+            .entries
+            .open_file(&oldest, true, true, true)
+            .unwrap();
+        old_file.set_len(MIB).unwrap();
+        old_file
+            .set_modified(SystemTime::now() - Duration::from_secs(3 * 86400))
+            .unwrap();
+        let oldest_path = old_cache.entries.path.join(oldest);
+        drop(old_file);
+        drop(old_cache);
+        manager.maintain(folder.path(), false).unwrap();
+        manager.maintain(other.path(), false).unwrap();
+        let mut settings = manager.settings();
+        settings.disk_mib = 64;
+        settings.global_disk_quota = true;
+        manager.configure(settings);
+        manager.maintain(folder.path(), false).unwrap();
+        assert!(
+            heavy_path.exists(),
+            "Global LRU must retain the newest file"
+        );
+        assert!(!oldest_path.exists());
+        assert_eq!(manager.known_cache_summary().unwrap().bytes, 64 * MIB);
+    }
+
+    #[test]
     fn thumbnail_minimum_survives_newer_heavy_entries_and_v1_reads_are_bounded() {
         let folder = tempfile::tempdir().unwrap();
         let manager = manager();

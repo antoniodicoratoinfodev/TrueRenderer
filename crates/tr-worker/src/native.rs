@@ -273,8 +273,13 @@ mod tests {
             "Generate format fixtures before native qualification"
         );
         let report = serde_json::json!({"scope":"Generated fixtures only, CPU persistent context bit-exact and explicit Metal experiment; no camera-wide or RSS qualification. Timings are single trials, not p95.","threshold":"1e-5 + 1e-4 * abs(cpu)","metal_enabled_for_decode":false,"cases":cases});
+        // Routine verification must not overwrite a historical published campaign.
+        let reports = std::env::var_os("TR_VERIFY_REPORTS")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| root.join("var"));
+        std::fs::create_dir_all(&reports).unwrap();
         std::fs::write(
-            root.join("reports/preview-native-compute-macos.json"),
+            reports.join("preview-native-compute-macos.json"),
             serde_json::to_vec_pretty(&report).unwrap(),
         )
         .unwrap();

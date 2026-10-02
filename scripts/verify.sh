@@ -23,9 +23,11 @@ cp -R "$TR_ROOT/corpus" "$TR_VERIFY_ROOT/corpus"
 mkdir -p "$TR_VERIFY_ROOT/reports"
 printf 'Verification artifacts: %s\n' "$TR_VERIFY_ROOT"
 export TR_WORKER_BINARY="$TR_ROOT/target/debug/tr-worker$TR_EXE"
+export TR_VERIFY_REPORTS="$TR_VERIFY_ROOT/reports"
 # Native Rust does not interpret MSYS /c/... paths in environment variables.
 if [ -n "$TR_EXE" ]; then
   TR_WORKER_BINARY=$(cygpath -m "$TR_WORKER_BINARY")
+  TR_VERIFY_REPORTS=$(cygpath -m "$TR_VERIFY_REPORTS")
 fi
 ./scripts/cargo-local.sh fmt --all --check
 "$TR_PYTHON" scripts/test-preview-reporting.py

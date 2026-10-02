@@ -1,0 +1,109 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "aesthetic-review-macos-2026-10-02",
+  "checked_at": "2026-10-02T17:20:01.685288+00:00",
+  "scope": "Inspector hierarchy, navigation icons, neutral selection/borders, thumbnail captions and preferences alignment; preserves pre-existing worktree changes.",
+  "changes": [
+    "Separate Information/Develop tabs: pinned filename and tab controls, distinct grid/viewer defaults and independent scroll positions. Scientific inspector retains its dedicated path.",
+    "Compact histogram and localized level caption with complete provenance in its tooltip; visible group headings and metadata values.",
+    "Vector Back/Forward/Up/Refresh icons with accessible names, original disabled states and shortcut tooltips; neutral active tabs and thinner borders.",
+    "Smaller thumbnail metadata areas with preserved image dimensions; no dash for an absent rating, edit state remains outside photograph pixels.",
+    "Preferences align names left, editable values right and full-width sliders below. Decimal MB parsing/storage and disabled control behavior preserved; secondary notes quieter and essential warnings visible."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 231,
+    "native_integration_tests": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "private_raw_tests_skipped": 3,
+    "artifacts": "var/verify-A88DOhvU",
+    "log": "var/aesthetic-review-2026-10-02/verify-final.log",
+    "final_ui_tests": 48,
+    "final_ui_log": "var/aesthetic-review-2026-10-02/ui-final.log",
+    "final_fmt_clippy_release_build": true,
+    "final_clippy_log": "var/aesthetic-review-2026-10-02/clippy-final.log",
+    "final_build_log": "var/aesthetic-review-2026-10-02/build-delivery.log",
+    "final_change_after_full_suite": "Only left alignment of preferences slider labels; existing 48 UI tests, fmt, Clippy and final native checks repeated.",
+    "new_regressions": [
+      "Inspector tabs in IT/EN at 550x360 and 1440x940: actual click routing, pinned header under scrolling, grid/viewer independence and unchanged dirty draft, saved recipe/generation, selection and zoom.",
+      "Preference quotas in IT/EN at 200/328/628 points, enabled/disabled: opening unchanged, drag, decimal comma input 1000.00 MB to 954 MiB and blocked disabled controls."
+    ]
+  },
+  "native": [
+    {
+      "name": "xpc",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 21.996,
+      "report": "var/aesthetic-review-2026-10-02/final/xpc/reports/xpc-qualification-macos.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "develop",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.496,
+      "report": "var/aesthetic-review-2026-10-02/final/develop/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "output-proof",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.974,
+      "report": "var/aesthetic-review-2026-10-02/final/output-proof/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "preferences",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 5.269,
+      "report": "var/aesthetic-review-2026-10-02/final/preferences/reports/restyle-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "filesystem",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 5.831,
+      "report": "var/aesthetic-review-2026-10-02/final/filesystem/reports/filesystem-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "inspector",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 6.186,
+      "report": "var/aesthetic-review-2026-10-02/final/inspector/reports/inspector-ui.json",
+      "sources_unchanged": true
+    }
+  ],
+  "visually_reviewed": [
+    "Final edited viewer and grid; compact navigator; cache/performance preferences EN and compact/200% IT/EN.",
+    "Final Information/Develop inspector in IT/EN at wide 100% and compact 200% (550x360 logical)."
+  ],
+  "screenshots_report": "reports/readme-screenshots-macos.json",
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "identical_to_qualified": true,
+    "previous_bundle": "var/aesthetic-review-2026-10-02/previous-distribution.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "c1c5172e6f11a243cd04fddf3e7df3aa9882115615bc9e6d1be1565c08af4c67",
+      "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "signature": "ad hoc, deep/strict verified"
+  },
+  "limitations": [
+    "Three private RAW tests skipped; no native Windows repetition or exhaustive display/accessibility qualification.",
+    "Native inspector captures cover initial content; actual tab clicks and scrolling verified through egui regression tests, not a manual screen-reader campaign.",
+    "macOS constrained the requested 1440x940 wide window to 1440x891; actual viewports recorded. Compact inspector tested at 550x360 logical points at 200% UI zoom.",
+    "Ad hoc signing, RSS supervision and these XPC checks are not full release or sandbox guarantees. No SF or R0–R4 gates closed; Standard/Reference availability unchanged."
+  ]
+}

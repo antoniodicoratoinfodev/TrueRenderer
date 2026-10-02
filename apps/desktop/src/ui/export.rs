@@ -87,7 +87,9 @@ impl TrueRenderer {
         let ready = selected.iter().all(|item| {
             self.editing.entries.get(&item.id).is_some_and(|entry| {
                 entry.loaded.is_some()
+                    && !entry.loading
                     && !entry.pending
+                    && entry.error.is_none()
                     && entry
                         .draft
                         .as_ref()
@@ -105,7 +107,7 @@ impl TrueRenderer {
                         .and_then(|entry| entry.loaded.clone())
                         .map(|mut edit| {
                             if edit.generation == 0 {
-                                edit.recipe.raw_engine = self.cache_settings.raw_engine;
+                                edit.recipe.raw_engine = self.service.cache.settings().raw_engine;
                             }
                             (item.clone(), edit)
                         })

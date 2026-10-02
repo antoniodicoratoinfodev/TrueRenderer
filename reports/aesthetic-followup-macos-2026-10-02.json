@@ -1,0 +1,102 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "aesthetic-followup-macos-2026-10-02",
+  "checked_at": "2026-10-02T17:40:51.959102+00:00",
+  "scope": "Review and refinement of the preceding aesthetic work, focused on usable compact inspector content and aligned metadata.",
+  "findings_and_changes": [
+    "At the minimum window the old inspector left only 64 logical points for content. The new window uses the available height with tighter title/body margins and retains a close control and fixed tabs.",
+    "Below 500 logical points in viewport height, histogram and preview are collapsible; copy/paste and final-render actions move to Actions. Before/After and the Exposure input are immediately visible on the tested neutral PNG.",
+    "Metadata names now align left. Portrait previews fit in a maximum 220-point height without cropping, preserving room for File fields."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 232,
+    "native_integration_tests": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "private_raw_tests_skipped": 3,
+    "artifacts": "var/verify-nPC22sS5",
+    "log": "var/aesthetic-followup-2026-10-02/verify.log",
+    "fmt_clippy_release_build": true,
+    "negative_regression": "Before correction the Format field was clipped at 550x360; see compact-before.log.",
+    "positive_regression": "IT/EN, populated preview/histogram, metadata and Exposure visible at 550x360; actual 0.75 EV entry creates one saved generation; Actions copy/paste/final-render controls reachable. File fields visible for a 1:6 portrait at 1440x940. Existing tab/draft/selection/zoom regressions pass.",
+    "targeted_log": "var/aesthetic-followup-2026-10-02/compact-interaction.log"
+  },
+  "native": [
+    {
+      "name": "xpc",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 22.282,
+      "report": "var/aesthetic-followup-2026-10-02/final/xpc/reports/xpc-qualification-macos.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "develop",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.598,
+      "report": "var/aesthetic-followup-2026-10-02/final/develop/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "output-proof",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.954,
+      "report": "var/aesthetic-followup-2026-10-02/final/output-proof/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "preferences",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 5.317,
+      "report": "var/aesthetic-followup-2026-10-02/final/preferences/reports/restyle-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "filesystem",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 5.817,
+      "report": "var/aesthetic-followup-2026-10-02/final/filesystem/reports/filesystem-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "inspector",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 7.425,
+      "report": "var/aesthetic-followup-2026-10-02/final/inspector/reports/inspector-ui.json",
+      "sources_unchanged": true
+    }
+  ],
+  "inspector_captures": 10,
+  "visually_reviewed": [
+    "Final viewer, grid, performance preferences and compact navigator.",
+    "Compact Information/Develop IT/EN at 200%, plus compact grid Information in both languages; normal Information with aligned File metadata."
+  ],
+  "screenshots_report": "reports/readme-screenshots-macos.json",
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "identical_to_qualified": true,
+    "previous_bundle": "var/aesthetic-followup-2026-10-02/previous-distribution.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "1f65cbe9ef04d521ddee5a3be7c34e9bcd0cf1d342630af59b8ebff71792464f",
+      "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "signature": "ad hoc, deep/strict verified"
+  },
+  "limitations": [
+    "No native Windows repetition or extended accessibility/display qualification; three private RAW tests skipped.",
+    "Interactions verified using egui input events; native captures show initial content. RAW controls and expanded histogram still require scrolling in a short window.",
+    "Wide native viewport constrained by macOS to 1440x891; compact viewport 550x360 logical at 200% UI zoom.",
+    "Ad hoc signing and these XPC checks do not establish release or full sandbox guarantees. No SF or R0–R4 gates closed."
+  ]
+}

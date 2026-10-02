@@ -16,6 +16,12 @@ impl Language {
             return source;
         }
         match source {
+            "Informazioni" => "Information",
+            "Istogramma" => "Histogram",
+            "Azioni" => "Actions",
+            "Dati di scatto non disponibili" => "No shooting data available",
+            "Ripeti" => "Redo",
+            "Dettagli cache" => "Cache details",
             "Dati di scatto" => "Shooting data",
             "Fotocamera" => "Camera",
             "Obiettivo" => "Lens",
@@ -71,6 +77,7 @@ impl Language {
 
             "Caricamento ricetta…" => "Loading edit recipe…",
             "Riprova salvataggio" => "Retry save",
+            "Scarta bozza e ricarica ricetta" => "Discard draft and reload saved recipe",
             "Annulla sviluppo" => "Undo edit",
             "Ripeti sviluppo" => "Redo edit",
             "Prima/Dopo" => "Before/After",

@@ -43,7 +43,10 @@ fn reset_group_button(
     let mut reset = draft.clone();
     group.apply(&mut reset);
     if ui
-        .add_enabled(reset != *draft, egui::Button::new(label).small())
+        .add_enabled(
+            reset != *draft,
+            egui::Button::new(label).small().frame_when_inactive(false),
+        )
         .clicked()
     {
         *draft = reset;
@@ -51,6 +54,78 @@ fn reset_group_button(
     } else {
         false
     }
+}
+
+// Keep the numeric field and slider in one response so a drag still commits once.
+fn adjustment<Num: egui::emath::Numeric>(
+    ui: &mut egui::Ui,
+    label: &str,
+    value: &mut Num,
+    range: std::ops::RangeInclusive<Num>,
+    suffix: &str,
+    step: Option<f64>,
+) -> egui::Response {
+    ui.push_id(label, |ui| {
+        ui.spacing_mut().item_spacing.y = 2.;
+        ui.spacing_mut().interact_size.y = 20.;
+        ui.spacing_mut().button_padding.y = 2.;
+        let speed = step.unwrap_or_else(|| {
+            if Num::INTEGRAL {
+                1.
+            } else {
+                (range.end().to_f64() - range.start().to_f64()) / 1000.
+            }
+        });
+        let (label_id, number) = ui
+            .horizontal(|ui| {
+                let label_id = ui.label(label).id;
+                let number = ui
+                    .with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        ui.add(
+                            egui::DragValue::new(value)
+                                .range(range.clone())
+                                .speed(speed)
+                                .suffix(suffix),
+                        )
+                        .labelled_by(label_id)
+                    })
+                    .inner;
+                (label_id, number)
+            })
+            .inner;
+        let slider = ui
+            .scope(|ui| {
+                ui.spacing_mut().slider_width = ui.available_width();
+                let mut slider = egui::Slider::new(value, range).show_value(false);
+                if let Some(step) = step {
+                    slider = slider.step_by(step);
+                }
+                ui.add(slider).labelled_by(label_id)
+            })
+            .inner;
+        number.union(slider)
+    })
+    .inner
+}
+
+fn adjustment_heading(
+    ui: &mut egui::Ui,
+    lang: Language,
+    title: &str,
+    reset: &str,
+    group: ResetGroup,
+    draft: &mut EditRecipe,
+) -> bool {
+    ui.add_space(4.);
+    ui.separator();
+    ui.horizontal(|ui| {
+        ui.label(RichText::new(lang.text(title)).strong());
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            reset_group_button(ui, lang.text(reset), group, draft)
+        })
+        .inner
+    })
+    .inner
 }
 
 #[derive(Default)]
@@ -767,7 +842,7 @@ impl TrueRenderer {
             return;
         }
         let id = item.id.clone();
-        let engine = self.cache_settings.raw_engine;
+        let engine = self.service.cache.settings().raw_engine;
         if self.request(Request::LoadEdit {
             id: id.clone(),
             engine,
@@ -812,7 +887,7 @@ impl TrueRenderer {
         };
         let (expected_generation, mut recipe) = (saved.generation, recipe.clone());
         if expected_generation == 0 {
-            recipe.raw_engine = self.cache_settings.raw_engine;
+            recipe.raw_engine = self.service.cache.settings().raw_engine;
         }
         if let Err(error) = recipe.validate() {
             self.editing.entries.get_mut(id).unwrap().error = Some(format!("{error:#}"));
@@ -929,468 +1004,373 @@ impl TrueRenderer {
             self.commit_edit(&id);
         }
     }
+    fn secondary_edit_actions(
+        &mut self,
+        ui: &mut egui::Ui,
+        item: &Item,
+        draft: &mut EditRecipe,
+        ready: bool,
+    ) -> bool {
+        let lang = self.cache_settings.language;
+        let pasted = self
+            .editing
+            .clipboard
+            .controls(ui, lang, &item.name, draft, ready);
+        if ui
+            .button(lang.text("Verifica resa finale"))
+            .on_hover_text(lang.text("PNG/TIFF16 · sRGB · dimensioni native"))
+            .clicked()
+        {
+            self.request_final_preview(&item.id, true);
+        }
+        if self.output_proof_for(&item.id)
+            && ui
+                .button(lang.text("Torna al render esteso fp32"))
+                .clicked()
+        {
+            self.request_final_preview(&item.id, false);
+        }
+        pasted
+    }
+
     pub(super) fn editing_controls(&mut self, ui: &mut egui::Ui, item: &Item) {
         let lang = self.cache_settings.language;
         self.ensure_edit_loaded(item);
-        ui.add_space(12.);
-        egui::CollapsingHeader::new(lang.text("Sviluppo"))
-            .id_salt("photographic-edit")
-            .default_open(self.state.view != ViewMode::Grid)
-            .show(ui, |ui| {
-                let Some(entry) = self.editing.entries.get(&item.id) else {
-                    ui.label(lang.text("Caricamento ricetta…"));
-                    return;
-                };
-                let error = entry.error.clone();
-                let saved = entry.loaded.clone();
-                let pending = entry.pending || self.editing.wb_pending;
-                let existing_draft = entry.draft.clone();
-                if let Some(error) = &error {
-                    ui.colored_label(AMBER, error);
-                    if ui.button(lang.text("Riprova salvataggio")).clicked() {
-                        if saved.is_some() {
-                            self.commit_edit(&item.id);
-                        } else {
-                            self.editing.entries.remove(&item.id);
-                        }
+        ui.push_id("photographic-edit", |ui| {
+            let Some(entry) = self.editing.entries.get(&item.id) else {
+                ui.label(lang.text("Caricamento ricetta…"));
+                return;
+            };
+            let error = entry.error.clone();
+            let saved = entry.loaded.clone();
+            let pending = entry.pending || self.editing.wb_pending;
+            let existing_draft = entry.draft.clone();
+            let dirty = entry.dirty();
+            if let Some(error) = &error {
+                ui.colored_label(AMBER, error);
+                if ui.button(lang.text("Riprova salvataggio")).clicked() {
+                    if dirty {
+                        self.commit_edit(&item.id);
+                    } else {
+                        // A failed load/history step has no draft to save.
+                        // Reload the confirmed head instead of leaving a dead retry.
+                        self.editing.entries.remove(&item.id);
+                        self.ensure_edit_loaded(item);
                     }
-                    return;
                 }
-                let Some(saved) = saved else {
-                    ui.label(lang.text("Caricamento ricetta…"));
-                    return;
-                };
-                let mut draft = existing_draft.unwrap_or_else(|| saved.recipe.clone());
-                let can_undo = saved.can_undo;
-                let can_redo = saved.can_redo;
-                let mut changed = false;
-                let mut commit = false;
-                ui.horizontal_wrapped(|ui| {
-                    if ui
-                        .add_enabled(
-                            can_undo && !pending,
-                            egui::Button::new(lang.text("Annulla sviluppo")),
-                        )
-                        .on_hover_text("Cmd/Ctrl + Alt + Z")
-                        .clicked()
-                    {
-                        self.step_edit(&item.id, true);
-                    }
-                    if ui
-                        .add_enabled(
-                            can_redo && !pending,
-                            egui::Button::new(lang.text("Ripeti sviluppo")),
-                        )
-                        .on_hover_text("Cmd/Ctrl + Alt + Shift + Z")
-                        .clicked()
-                    {
-                        self.step_edit(&item.id, false);
-                    }
-                    if ui.button(lang.text("Prima/Dopo")).clicked() {
-                        self.editing.show_original = !self.editing.show_original;
-                        self.sample = None;
-                        self.sample_item_id = None;
-                        self.sample_level = None;
-                        self.sample_from_current_render = false;
-                    }
-                });
-                let transfer_ready = !pending
-                    && draft == saved.recipe
-                    && !self.editing.entries[&item.id].pending;
-                if self.editing.clipboard.controls(ui, lang, &item.name, &mut draft, transfer_ready) {
-                    changed = true;
-                    commit = true;
-                    self.editing.show_original = false;
-                }
-                if ui.button(lang.text("Verifica resa finale")).clicked() {
-                    self.request_final_preview(&item.id, true);
-                }
-                ui.label(lang.text("PNG/TIFF16 · sRGB · dimensioni native"));
-                if self.output_proof_for(&item.id)
+                if dirty
                     && ui
-                        .button(lang.text("Torna al render esteso fp32"))
+                        .button(lang.text("Scarta bozza e ricarica ricetta"))
                         .clicked()
                 {
-                    self.request_final_preview(&item.id, false);
+                    self.editing.entries.remove(&item.id);
+                    self.ensure_edit_loaded(item);
                 }
-                if self.editing.wb_pending {
-                    ui.label(lang.text("Analisi WB RAW…"));
-                    if let Some(cancel) = &self.editing.wb_cancel {
-                        if cancel.load(Ordering::Acquire) {
-                            ui.label(lang.text("Annullamento WB RAW…"));
-                        } else if ui.button(lang.text("Annulla analisi WB RAW")).clicked() {
-                            cancel.store(true, Ordering::Release);
-                        }
+                return;
+            }
+            let Some(saved) = saved else {
+                ui.label(lang.text("Caricamento ricetta…"));
+                return;
+            };
+            let mut draft = existing_draft.unwrap_or_else(|| saved.recipe.clone());
+            let can_undo = saved.can_undo;
+            let can_redo = saved.can_redo;
+            let mut changed = false;
+            let mut commit = false;
+            let short = ui.ctx().content_rect().height() < 500.;
+            let mut pasted = false;
+            ui.horizontal_wrapped(|ui| {
+                ui.spacing_mut().button_padding.x = 6.;
+                if ui
+                    .add_enabled(
+                        can_undo && !pending,
+                        egui::Button::new(localized_format!(lang, "Annulla", "Undo"))
+                            .frame_when_inactive(false),
+                    )
+                    .on_hover_text("Cmd/Ctrl + Alt + Z")
+                    .clicked()
+                {
+                    self.step_edit(&item.id, true);
+                }
+                if ui
+                    .add_enabled(
+                        can_redo && !pending,
+                        egui::Button::new(lang.text("Ripeti")).frame_when_inactive(false),
+                    )
+                    .on_hover_text("Cmd/Ctrl + Alt + Shift + Z")
+                    .clicked()
+                {
+                    self.step_edit(&item.id, false);
+                }
+                if ui
+                    .add(
+                        egui::Button::new(lang.text("Prima/Dopo"))
+                            .frame_when_inactive(self.editing.show_original)
+                            .selected(self.editing.show_original),
+                    )
+                    .clicked()
+                {
+                    self.editing.show_original = !self.editing.show_original;
+                    self.sample = None;
+                    self.sample_item_id = None;
+                    self.sample_level = None;
+                    self.sample_from_current_render = false;
+                }
+                if short {
+                    let ready = !pending
+                        && draft == saved.recipe
+                        && !self.editing.entries[&item.id].pending;
+                    ui.menu_button(lang.text("Azioni"), |ui| {
+                        ui.set_max_width(280.);
+                        ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
+                        pasted = self.secondary_edit_actions(ui, item, &mut draft, ready);
+                    });
+                }
+            });
+            if !short {
+                let ready =
+                    !pending && draft == saved.recipe && !self.editing.entries[&item.id].pending;
+                pasted = self.secondary_edit_actions(ui, item, &mut draft, ready);
+            }
+            if pasted {
+                changed = true;
+                commit = true;
+                self.editing.show_original = false;
+            }
+            if self.editing.wb_pending {
+                ui.label(lang.text("Analisi WB RAW…"));
+                if let Some(cancel) = &self.editing.wb_cancel {
+                    if cancel.load(Ordering::Acquire) {
+                        ui.label(lang.text("Annullamento WB RAW…"));
+                    } else if ui.button(lang.text("Annulla analisi WB RAW")).clicked() {
+                        cancel.store(true, Ordering::Release);
                     }
                 }
-                ui.add_enabled_ui(!pending, |ui| {
-                    let engine = self.preview_request(item, 0).raw_engine;
-                    let is_raw = self.cache.iter().any(|((id, request), cached)| {
-                        id == &item.id
-                            && request.raw_engine == engine
-                            && cached.info.format == "RAW"
+            }
+            ui.add_enabled_ui(!pending, |ui| {
+                let engine = self.preview_request(item, 0).raw_engine;
+                let is_raw = self.cache.iter().any(|((id, request), cached)| {
+                    id == &item.id && request.raw_engine == engine && cached.info.format == "RAW"
+                });
+                if is_raw {
+                    if let Some((_, error)) = self
+                        .editing
+                        .wb_error
+                        .as_ref()
+                        .filter(|(id, _)| id == &item.id)
+                    {
+                        ui.colored_label(AMBER, lang.text(error));
+                    }
+                    ui.small(lang.text(
+                        "WB nativo: analisi senza regolazioni creative; Auto assume grigio medio",
+                    ));
+                    let mut analysis = None;
+                    if ui.button(lang.text("Auto WB RAW")).clicked() {
+                        analysis = Some(tr_core::raw_wb::Analysis::Auto);
+                    }
+                    let point = self.sample.as_ref().filter(|_| {
+                        self.sample_item_id.as_deref() == Some(item.id.as_str())
+                            && self.sample_level == Some(0)
+                            && self.sample_from_current_render
+                            && !self.output_proof_for(&item.id)
                     });
-                    if is_raw {
-                        if let Some((_,error))=self.editing.wb_error.as_ref().filter(|(id,_)|id==&item.id) {
-                            ui.colored_label(AMBER,lang.text(error));
-                        }
-                        ui.small(lang.text("WB nativo: analisi senza regolazioni creative; Auto assume grigio medio"));
-                        let mut analysis=None;
-                        if ui.button(lang.text("Auto WB RAW")).clicked() {analysis=Some(tr_core::raw_wb::Analysis::Auto);}
-                        let point = self.sample.as_ref().filter(|_| self.sample_item_id.as_deref()==Some(item.id.as_str()) && self.sample_level==Some(0) && self.sample_from_current_render && !self.output_proof_for(&item.id));
-                        if ui.add_enabled(point.is_some(),egui::Button::new(lang.text("WB RAW da area 5×5"))).clicked() {
-                            let point=point.unwrap(); analysis=Some(tr_core::raw_wb::Analysis::Patch{x:point.x,y:point.y,side:5});
-                        }
-                        if let Some(analysis)=analysis {
-                            self.editing.wb_error=None;
-                            let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
-                            self.editing.wb_cancel = Some(cancel.clone());
-                            self.editing.wb_pending=self.request(Request::RawWhiteBalance(Box::new(crate::photo_export::WbJob {
-                                cancel,item:item.clone(),recipe:draft.clone(),analysis,generation:self.generation,revision:saved.generation,
-                            })));
-                        }
-                        ui.label(RichText::new(lang.text("Bilanciamento del bianco RAW")).strong());
-                        if engine == tr_core::decoder::RawEngine::Apple {
-                            // Presets resolve to the same durable native parameters as sliders.
-                            // Names describe starting points, not measured scene illuminants.
-                            let presets = [
-                                ("WB RAW come scattato", 0),
-                                ("Tungsteno · 3200 K", 3200),
-                                ("Luce diurna · 5500 K", 5500),
-                                ("Nuvoloso · 6500 K", 6500),
-                                ("Ombra · 7500 K", 7500),
-                            ];
-                            let selected = presets
-                                .iter()
-                                .find(|(_, kelvin)| {
-                                    draft.raw_wb.apple_temperature == *kelvin
-                                        && draft.raw_wb.apple_tint == 0
-                                })
-                                .map_or("Personalizzato", |(label, _)| *label);
-                            egui::ComboBox::from_id_salt("apple-wb-preset")
-                                .selected_text(lang.text(selected))
-                                .show_ui(ui, |ui| {
-                                    for (label, kelvin) in presets {
-                                        if ui
-                                            .selectable_label(selected == label, lang.text(label))
-                                            .clicked()
-                                        {
-                                            let wb = tr_core::decoder::RawWhiteBalance {
-                                                apple_temperature: kelvin,
-                                                ..Default::default()
-                                            };
-                                            if draft.raw_wb != wb {
-                                                draft.raw_wb = wb;
-                                                changed = true;
-                                                commit = true;
-                                            }
+                    if ui
+                        .add_enabled(
+                            point.is_some(),
+                            egui::Button::new(lang.text("WB RAW da area 5×5")),
+                        )
+                        .clicked()
+                    {
+                        let point = point.unwrap();
+                        analysis = Some(tr_core::raw_wb::Analysis::Patch {
+                            x: point.x,
+                            y: point.y,
+                            side: 5,
+                        });
+                    }
+                    if let Some(analysis) = analysis {
+                        self.editing.wb_error = None;
+                        let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
+                        self.editing.wb_cancel = Some(cancel.clone());
+                        self.editing.wb_pending = self.request(Request::RawWhiteBalance(Box::new(
+                            crate::photo_export::WbJob {
+                                cancel,
+                                item: item.clone(),
+                                recipe: draft.clone(),
+                                analysis,
+                                generation: self.generation,
+                                revision: saved.generation,
+                            },
+                        )));
+                    }
+                    ui.label(RichText::new(lang.text("Bilanciamento del bianco RAW")).strong());
+                    if engine == tr_core::decoder::RawEngine::Apple {
+                        // Presets resolve to the same durable native parameters as sliders.
+                        // Names describe starting points, not measured scene illuminants.
+                        let presets = [
+                            ("WB RAW come scattato", 0),
+                            ("Tungsteno · 3200 K", 3200),
+                            ("Luce diurna · 5500 K", 5500),
+                            ("Nuvoloso · 6500 K", 6500),
+                            ("Ombra · 7500 K", 7500),
+                        ];
+                        let selected = presets
+                            .iter()
+                            .find(|(_, kelvin)| {
+                                draft.raw_wb.apple_temperature == *kelvin
+                                    && draft.raw_wb.apple_tint == 0
+                            })
+                            .map_or("Personalizzato", |(label, _)| *label);
+                        egui::ComboBox::from_id_salt("apple-wb-preset")
+                            .selected_text(lang.text(selected))
+                            .show_ui(ui, |ui| {
+                                for (label, kelvin) in presets {
+                                    if ui
+                                        .selectable_label(selected == label, lang.text(label))
+                                        .clicked()
+                                    {
+                                        let wb = tr_core::decoder::RawWhiteBalance {
+                                            apple_temperature: kelvin,
+                                            ..Default::default()
+                                        };
+                                        if draft.raw_wb != wb {
+                                            draft.raw_wb = wb;
+                                            changed = true;
+                                            commit = true;
                                         }
                                     }
-                                });
-                            ui.small(lang.text("Preset indicativi · tinta 0 · regolabili"));
-                            let mut custom = draft.raw_wb.apple_temperature != 0;
-                            if ui
-                                .checkbox(&mut custom, lang.text("WB Apple personalizzato"))
-                                .changed()
-                            {
-                                draft.raw_wb = Default::default();
-                                if custom {
-                                    draft.raw_wb.apple_temperature = 6500;
                                 }
-                                changed = true;
-                                commit = true;
-                            }
-                            if custom {
-                                let temperature = ui.add(
-                                    egui::Slider::new(
-                                        &mut draft.raw_wb.apple_temperature,
-                                        2000..=50000,
-                                    )
-                                    .text(lang.text("Temperatura"))
-                                    .suffix(" K"),
-                                );
-                                let tint = ui.add(
-                                    egui::Slider::new(&mut draft.raw_wb.apple_tint, -150..=150)
-                                        .text(lang.text("Tinta RAW")),
-                                );
-                                for response in [temperature, tint] {
-                                    changed |= response.changed();
-                                    commit |= response.drag_stopped()
-                                        || (response.changed() && !response.dragged());
-                                }
-                            } else {
-                                ui.label(lang.text("WB RAW come scattato"));
-                            }
-                        } else {
-                            ui.label(lang.text(
-                                "Guadagni sensore relativi a come scattato · prima del demosaic",
-                            ));
-                            for (label, value) in [
-                                ("Rosso RAW", &mut draft.raw_wb.red),
-                                ("Blu RAW", &mut draft.raw_wb.blue),
-                            ] {
-                                let mut gain = f32::from(*value) / 1000.;
-                                let response = ui.add(
-                                    egui::Slider::new(&mut gain, 0.25..=4.)
-                                        .step_by(0.001)
-                                        .text(lang.text(label))
-                                        .suffix(" ×"),
-                                );
-                                if response.changed() {
-                                    *value = (gain * 1000.).round() as u16;
-                                    changed = true;
-                                }
-                                commit |= response.drag_stopped()
-                                    || (response.changed() && !response.dragged());
-                            }
-                            if ui.button(lang.text("WB RAW come scattato")).clicked() {
-                                draft.raw_wb = Default::default();
-                                changed = true;
-                                commit = true;
-                            }
-                        }
-                    }
-                    ui.label(RichText::new(lang.text("Luce")).strong());
-                    if reset_group_button(ui, lang.text("Azzera luce"), ResetGroup::Light, &mut draft) {
-                        changed = true;
-                        commit = true;
-                    }
-
-                    for (label, value, min, max, suffix) in [
-                        ("Esposizione", &mut draft.exposure_ev, -10., 10., " EV"),
-                        ("Luminosità", &mut draft.brightness, -100., 100., ""),
-                        ("Contrasto", &mut draft.contrast, -100., 100., ""),
-                        ("Alte luci", &mut draft.highlights, -100., 100., ""),
-                        ("Ombre", &mut draft.shadows, -100., 100., ""),
-                        ("Bianchi", &mut draft.whites, -100., 100., ""),
-                        ("Neri", &mut draft.blacks, -100., 100., ""),
-                    ] {
-                        let response = ui.add(
-                            egui::Slider::new(value, min..=max)
-                                .text(lang.text(label))
-                                .suffix(suffix),
-                        );
-                        changed |= response.changed();
-                        commit |=
-                            response.drag_stopped() || (response.changed() && !response.dragged());
-                    }
-                    let request = self.preview_request(item, 0);
-                    let auto_source = (!changed && !self.editing.show_original)
-                        .then(|| {
-                            self.cache
-                                .iter()
-                                .find(|((id, r), cached)| {
-                                    id == &item.id
-                                        && r.raw_engine == request.raw_engine
-                                        && r.raw_wb == draft.raw_wb
-                                        && cached.pyramid.base_level() == 0
-                                })
-                                .map(|(_, c)| c.pyramid.clone())
-                        })
-                        .flatten();
-                    ui.horizontal_wrapped(|ui| {
-                        if auto_source.is_none()
-                            && ui.button(lang.text("Carica nativo per Auto")).clicked()
+                            });
+                        ui.small(lang.text("Preset indicativi · tinta 0 · regolabili"));
+                        let mut custom = draft.raw_wb.apple_temperature != 0;
+                        if ui
+                            .checkbox(&mut custom, lang.text("WB Apple personalizzato"))
+                            .changed()
                         {
-                            self.request_final_preview(&item.id, false);
-                        }
-                        for (label, rgb) in [
-                            ("Auto esposizione", false),
-                            ("Auto RGB · grigio medio", true),
-                        ] {
-                            if ui
-                                .add_enabled(
-                                    auto_source.is_some(),
-                                    egui::Button::new(lang.text(label)),
-                                )
-                                .clicked()
-                            {
-                                let source = auto_source.as_ref().unwrap().source();
-                                let result = if rgb {
-                                    draft.auto_rgb(source)
-                                } else {
-                                    draft.auto_exposure(source)
-                                };
-                                match result {
-                                    Ok(()) => {
-                                        changed = true;
-                                        commit = true;
-                                        self.editing.picker_error = None;
-                                    }
-                                    Err(error) => {
-                                        self.editing.picker_error =
-                                            Some((item.id.clone(), error.to_string()));
-                                    }
-                                }
+                            draft.raw_wb = Default::default();
+                            if custom {
+                                draft.raw_wb.apple_temperature = 6500;
                             }
-                        }
-                    });
-                    ui.label(
-                        RichText::new(lang.text(
-                            "Auto RGB assume una scena mediamente neutra; non cambia il WB RAW.",
-                        ))
-                        .small()
-                        .color(MUTED),
-                    );
-                    ui.label(RichText::new(lang.text("Curva tonale")).strong());
-                    if reset_group_button(ui, lang.text("Azzera curva"), ResetGroup::Curve, &mut draft) {
-                        changed = true;
-                        commit = true;
-                    }
-
-                    let mut mid = draft.curve.get(1).map_or(0.5, |p| p.y);
-                    let response = ui.add(
-                        egui::Slider::new(&mut mid, 0. ..=1.).text(lang.text("Mezzitoni curva")),
-                    );
-                    if response.changed() {
-                        draft.curve = if (mid - 0.5).abs() < 1e-6 {
-                            vec![]
-                        } else {
-                            vec![
-                                CurvePoint { x: 0., y: 0. },
-                                CurvePoint { x: 0.5, y: mid },
-                                CurvePoint { x: 1., y: 1. },
-                            ]
-                        };
-                        changed = true;
-                    }
-                    commit |=
-                        response.drag_stopped() || (response.changed() && !response.dragged());
-                    ui.label(
-                        RichText::new(lang.text("Colore del render · correzione RGB relativa"))
-                            .strong(),
-                    );
-                    if reset_group_button(ui, lang.text("Azzera colore"), ResetGroup::Color, &mut draft) {
-                        changed = true;
-                        commit = true;
-                    }
-                    for (label, value) in [
-                        ("Temperatura RGB", &mut draft.temperature),
-                        ("Tinta RGB", &mut draft.tint),
-                        ("Saturazione", &mut draft.saturation),
-                    ] {
-                        let response =
-                            ui.add(egui::Slider::new(value, -100. ..=100.).text(lang.text(label)));
-                        changed |= response.changed();
-                        commit |=
-                            response.drag_stopped() || (response.changed() && !response.dragged());
-                    }
-                    let response = ui.add(
-                        egui::Slider::new(&mut draft.vibrance, -100. ..=100.)
-                            .text(lang.text("Vividezza")),
-                    );
-                    let protection =
-                        ui.checkbox(&mut draft.protect_warm, lang.text("Proteggi toni caldi"));
-                    if response.changed() || protection.changed() {
-                        draft.process_version = 2;
-                        changed = true;
-                    }
-                    commit |= response.drag_stopped()
-                        || (response.changed() && !response.dragged())
-                        || protection.changed();
-                    ui.small(lang.text(
-                        "Vividezza: processo 2 · protezione indicativa, non rileva la pelle",
-                    ));
-                    ui.label(
-                        RichText::new(
-                            lang.text("La correzione RGB non cambia il WB RAW del decoder."),
-                        )
-                        .small()
-                        .color(MUTED),
-                    );
-                    ui.horizontal_wrapped(|ui| {
-                        ui.label(lang.text("Area contagocce"));
-                        for side in [1, 5, 11] {
-                            if ui
-                                .selectable_value(
-                                    &mut self.editing.picker_side,
-                                    side,
-                                    format!("{side}×{side}"),
-                                )
-                                .changed()
-                            {
-                                self.editing.picker_error = None;
-                            }
-                        }
-                    });
-                    let sample = if !changed
-                        && self.sample_item_id.as_deref() == Some(item.id.as_str())
-                        && self.sample_level == Some(0)
-                        && self.sample_from_current_render
-                        && !self.output_proof_for(&item.id)
-                    {
-                        self.sample
-                            .as_ref()
-                            .map(|sample| (sample.working, sample.x, sample.y))
-                    } else {
-                        None
-                    };
-                    let area = match self.editing.picker_side {
-                        5 => self.editing.picker_areas[0].as_ref(),
-                        11 => self.editing.picker_areas[1].as_ref(),
-                        _ => None,
-                    };
-                    let picker_pixel = sample.and_then(|(pixel, _, _)| {
-                        if self.editing.picker_side == 1 {
-                            Some(pixel)
-                        } else {
-                            area.and_then(|result| result.as_ref().ok())
-                                .map(|s| s.working)
-                        }
-                    });
-                    if sample.is_some()
-                        && let Some(area) = area
-                    {
-                        match area {
-                            Ok(area) => {
-                                ui.label(localized_format!(
-                                    lang,
-                                    "Pixel validi: {}/{} · dispersione cromatica: {:.3}",
-                                    "Valid pixels: {}/{} · chromatic spread: {:.3}",
-                                    area.valid,
-                                    area.total,
-                                    area.chroma_spread
-                                ));
-                            }
-                            Err(error) => {
-                                ui.colored_label(AMBER, lang.text(error));
-                            }
-                        }
-                    }
-                    if let Some((_, x, y)) = sample {
-                        ui.label(localized_format!(
-                            lang,
-                            "Ultimo campione RGB: {}, {}",
-                            "Last RGB sample: {}, {}",
-                            x,
-                            y
-                        ));
-                    }
-                    if self.output_proof_for(&item.id) {
-                        ui.label(lang.text("Per il contagocce torna al render esteso fp32."));
-                    } else if self.sample_item_id.as_deref() == Some(item.id.as_str())
-                        && (self.sample_level != Some(0) || !self.sample_from_current_render)
-                    {
-                        ui.label(
-                            lang.text("Verifica la resa finale e campiona la vista modificata."),
-                        );
-                    }
-                    ui.horizontal_wrapped(|ui| {
-                        if ui.button(lang.text("Azzera correzione RGB")).clicked() {
-                            draft.temperature = 0.;
-                            draft.tint = 0.;
                             changed = true;
                             commit = true;
                         }
+                        if custom {
+                            let temperature = adjustment(
+                                ui,
+                                lang.text("Temperatura"),
+                                &mut draft.raw_wb.apple_temperature,
+                                2000..=50000,
+                                " K",
+                                None,
+                            );
+                            let tint = adjustment(
+                                ui,
+                                lang.text("Tinta RAW"),
+                                &mut draft.raw_wb.apple_tint,
+                                -150..=150,
+                                "",
+                                None,
+                            );
+                            for response in [temperature, tint] {
+                                changed |= response.changed();
+                                commit |= response.drag_stopped()
+                                    || (response.changed() && !response.dragged());
+                            }
+                        } else {
+                            ui.label(lang.text("WB RAW come scattato"));
+                        }
+                    } else {
+                        ui.label(lang.text(
+                            "Guadagni sensore relativi a come scattato · prima del demosaic",
+                        ));
+                        for (label, value) in [
+                            ("Rosso RAW", &mut draft.raw_wb.red),
+                            ("Blu RAW", &mut draft.raw_wb.blue),
+                        ] {
+                            let mut gain = f32::from(*value) / 1000.;
+                            let response = adjustment(
+                                ui,
+                                lang.text(label),
+                                &mut gain,
+                                0.25..=4.,
+                                " ×",
+                                Some(0.001),
+                            );
+                            if response.changed() {
+                                *value = (gain * 1000.).round() as u16;
+                                changed = true;
+                            }
+                            commit |= response.drag_stopped()
+                                || (response.changed() && !response.dragged());
+                        }
+                        if ui.button(lang.text("WB RAW come scattato")).clicked() {
+                            draft.raw_wb = Default::default();
+                            changed = true;
+                            commit = true;
+                        }
+                    }
+                }
+                if adjustment_heading(
+                    ui,
+                    lang,
+                    "Luce",
+                    "Azzera luce",
+                    ResetGroup::Light,
+                    &mut draft,
+                ) {
+                    changed = true;
+                    commit = true;
+                }
+
+                for (label, value, min, max, suffix) in [
+                    ("Esposizione", &mut draft.exposure_ev, -10., 10., " EV"),
+                    ("Luminosità", &mut draft.brightness, -100., 100., ""),
+                    ("Contrasto", &mut draft.contrast, -100., 100., ""),
+                    ("Alte luci", &mut draft.highlights, -100., 100., ""),
+                    ("Ombre", &mut draft.shadows, -100., 100., ""),
+                    ("Bianchi", &mut draft.whites, -100., 100., ""),
+                    ("Neri", &mut draft.blacks, -100., 100., ""),
+                ] {
+                    let response = adjustment(ui, lang.text(label), value, min..=max, suffix, None);
+                    changed |= response.changed();
+                    commit |=
+                        response.drag_stopped() || (response.changed() && !response.dragged());
+                }
+                let request = self.preview_request(item, 0);
+                let auto_source = (!changed && !self.editing.show_original)
+                    .then(|| {
+                        self.cache
+                            .iter()
+                            .find(|((id, r), cached)| {
+                                id == &item.id
+                                    && r.raw_engine == request.raw_engine
+                                    && r.raw_wb == draft.raw_wb
+                                    && cached.pyramid.base_level() == 0
+                            })
+                            .map(|(_, c)| c.pyramid.clone())
+                    })
+                    .flatten();
+                ui.horizontal_wrapped(|ui| {
+                    if auto_source.is_none()
+                        && ui.button(lang.text("Carica nativo per Auto")).clicked()
+                    {
+                        self.request_final_preview(&item.id, false);
+                    }
+                    for (label, rgb) in [
+                        ("Auto esposizione", false),
+                        ("Auto RGB · grigio medio", true),
+                    ] {
                         if ui
-                            .add_enabled(
-                                picker_pixel.is_some(),
-                                egui::Button::new(lang.text("Neutralizza campione RGB")),
-                            )
+                            .add_enabled(auto_source.is_some(), egui::Button::new(lang.text(label)))
                             .clicked()
-                            && let Some(pixel) = picker_pixel
                         {
-                            match draft.neutralize_render_sample(pixel) {
+                            let source = auto_source.as_ref().unwrap().source();
+                            let result = if rgb {
+                                draft.auto_rgb(source)
+                            } else {
+                                draft.auto_exposure(source)
+                            };
+                            match result {
                                 Ok(()) => {
                                     changed = true;
                                     commit = true;
@@ -1398,51 +1378,242 @@ impl TrueRenderer {
                                 }
                                 Err(error) => {
                                     self.editing.picker_error =
-                                        Some((item.id.clone(), format!("{error:#}")));
+                                        Some((item.id.clone(), error.to_string()));
                                 }
                             }
                         }
-                    });
-                    if let Some((_, error)) = self
-                        .editing
-                        .picker_error
-                        .as_ref()
-                        .filter(|(id, _)| id == &item.id)
-                    {
-                        ui.colored_label(AMBER, lang.text(error));
-                    }
-                    if ui.button(lang.text("Sviluppo originale")).clicked() {
-                        draft = EditRecipe::neutral(saved.recipe.raw_engine);
-                        changed = true;
-                        commit = true;
                     }
                 });
-                if changed {
-                    self.apply_edit_draft(&item.id, draft);
-                }
-                if commit {
-                    self.commit_edit(&item.id);
-                }
-                let entry = self.editing.entries.get(&item.id).unwrap();
-                ui.label(lang.text(if entry.pending {
-                    "Salvataggio…"
-                } else if entry.dirty() {
-                    "Modifiche in corso"
-                } else {
-                    "Ricetta salvata nella libreria"
-                }));
                 ui.label(
-                    RichText::new(lang.text(if self.output_proof_for(&item.id) {
-                        "Anteprima export sRGB16 · PNG/TIFF · dimensioni native"
-                    } else if self.editing.verify_final.as_deref() == Some(&item.id) {
-                        "Resa finale alla risoluzione nativa"
-                    } else {
-                        "Vista modificata provvisoria; export alla risoluzione nativa."
-                    }))
+                    RichText::new(lang.text(
+                        "Auto RGB assume una scena mediamente neutra; non cambia il WB RAW.",
+                    ))
                     .small()
                     .color(MUTED),
                 );
+                if adjustment_heading(
+                    ui,
+                    lang,
+                    "Curva tonale",
+                    "Azzera curva",
+                    ResetGroup::Curve,
+                    &mut draft,
+                ) {
+                    changed = true;
+                    commit = true;
+                }
+
+                let mut mid = draft.curve.get(1).map_or(0.5, |p| p.y);
+                let response = adjustment(
+                    ui,
+                    lang.text("Mezzitoni curva"),
+                    &mut mid,
+                    0. ..=1.,
+                    "",
+                    None,
+                );
+                if response.changed() {
+                    draft.curve = if (mid - 0.5).abs() < 1e-6 {
+                        vec![]
+                    } else {
+                        vec![
+                            CurvePoint { x: 0., y: 0. },
+                            CurvePoint { x: 0.5, y: mid },
+                            CurvePoint { x: 1., y: 1. },
+                        ]
+                    };
+                    changed = true;
+                }
+                commit |= response.drag_stopped() || (response.changed() && !response.dragged());
+                if adjustment_heading(
+                    ui,
+                    lang,
+                    "Colore RGB",
+                    "Azzera colore",
+                    ResetGroup::Color,
+                    &mut draft,
+                ) {
+                    changed = true;
+                    commit = true;
+                }
+                for (label, value) in [
+                    ("Temperatura RGB", &mut draft.temperature),
+                    ("Tinta RGB", &mut draft.tint),
+                    ("Saturazione", &mut draft.saturation),
+                ] {
+                    let response = adjustment(ui, lang.text(label), value, -100. ..=100., "", None);
+                    changed |= response.changed();
+                    commit |=
+                        response.drag_stopped() || (response.changed() && !response.dragged());
+                }
+                let response = adjustment(
+                    ui,
+                    lang.text("Vividezza"),
+                    &mut draft.vibrance,
+                    -100. ..=100.,
+                    "",
+                    None,
+                );
+                let protection =
+                    ui.checkbox(&mut draft.protect_warm, lang.text("Proteggi toni caldi"));
+                if response.changed() || protection.changed() {
+                    draft.process_version = 2;
+                    changed = true;
+                }
+                commit |= response.drag_stopped()
+                    || (response.changed() && !response.dragged())
+                    || protection.changed();
+                ui.small(
+                    lang.text("Vividezza: processo 2 · protezione indicativa, non rileva la pelle"),
+                );
+                ui.label(
+                    RichText::new(lang.text("La correzione RGB non cambia il WB RAW del decoder."))
+                        .small()
+                        .color(MUTED),
+                );
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(lang.text("Area contagocce"));
+                    for side in [1, 5, 11] {
+                        if ui
+                            .selectable_value(
+                                &mut self.editing.picker_side,
+                                side,
+                                format!("{side}×{side}"),
+                            )
+                            .changed()
+                        {
+                            self.editing.picker_error = None;
+                        }
+                    }
+                });
+                let sample = if !changed
+                    && self.sample_item_id.as_deref() == Some(item.id.as_str())
+                    && self.sample_level == Some(0)
+                    && self.sample_from_current_render
+                    && !self.output_proof_for(&item.id)
+                {
+                    self.sample
+                        .as_ref()
+                        .map(|sample| (sample.working, sample.x, sample.y))
+                } else {
+                    None
+                };
+                let area = match self.editing.picker_side {
+                    5 => self.editing.picker_areas[0].as_ref(),
+                    11 => self.editing.picker_areas[1].as_ref(),
+                    _ => None,
+                };
+                let picker_pixel = sample.and_then(|(pixel, _, _)| {
+                    if self.editing.picker_side == 1 {
+                        Some(pixel)
+                    } else {
+                        area.and_then(|result| result.as_ref().ok())
+                            .map(|s| s.working)
+                    }
+                });
+                if sample.is_some()
+                    && let Some(area) = area
+                {
+                    match area {
+                        Ok(area) => {
+                            ui.label(localized_format!(
+                                lang,
+                                "Pixel validi: {}/{} · dispersione cromatica: {:.3}",
+                                "Valid pixels: {}/{} · chromatic spread: {:.3}",
+                                area.valid,
+                                area.total,
+                                area.chroma_spread
+                            ));
+                        }
+                        Err(error) => {
+                            ui.colored_label(AMBER, lang.text(error));
+                        }
+                    }
+                }
+                if let Some((_, x, y)) = sample {
+                    ui.label(localized_format!(
+                        lang,
+                        "Ultimo campione RGB: {}, {}",
+                        "Last RGB sample: {}, {}",
+                        x,
+                        y
+                    ));
+                }
+                if self.output_proof_for(&item.id) {
+                    ui.label(lang.text("Per il contagocce torna al render esteso fp32."));
+                } else if self.sample_item_id.as_deref() == Some(item.id.as_str())
+                    && (self.sample_level != Some(0) || !self.sample_from_current_render)
+                {
+                    ui.label(lang.text("Verifica la resa finale e campiona la vista modificata."));
+                }
+                ui.horizontal_wrapped(|ui| {
+                    if ui.button(lang.text("Azzera correzione RGB")).clicked() {
+                        draft.temperature = 0.;
+                        draft.tint = 0.;
+                        changed = true;
+                        commit = true;
+                    }
+                    if ui
+                        .add_enabled(
+                            picker_pixel.is_some(),
+                            egui::Button::new(lang.text("Neutralizza campione RGB")),
+                        )
+                        .clicked()
+                        && let Some(pixel) = picker_pixel
+                    {
+                        match draft.neutralize_render_sample(pixel) {
+                            Ok(()) => {
+                                changed = true;
+                                commit = true;
+                                self.editing.picker_error = None;
+                            }
+                            Err(error) => {
+                                self.editing.picker_error =
+                                    Some((item.id.clone(), format!("{error:#}")));
+                            }
+                        }
+                    }
+                });
+                if let Some((_, error)) = self
+                    .editing
+                    .picker_error
+                    .as_ref()
+                    .filter(|(id, _)| id == &item.id)
+                {
+                    ui.colored_label(AMBER, lang.text(error));
+                }
+                if ui.button(lang.text("Sviluppo originale")).clicked() {
+                    draft = EditRecipe::neutral(saved.recipe.raw_engine);
+                    changed = true;
+                    commit = true;
+                }
             });
+            if changed {
+                self.apply_edit_draft(&item.id, draft);
+            }
+            if commit {
+                self.commit_edit(&item.id);
+            }
+            let entry = self.editing.entries.get(&item.id).unwrap();
+            ui.label(lang.text(if entry.pending {
+                "Salvataggio…"
+            } else if entry.dirty() {
+                "Modifiche in corso"
+            } else {
+                "Ricetta salvata nella libreria"
+            }));
+            ui.label(
+                RichText::new(lang.text(if self.output_proof_for(&item.id) {
+                    "Anteprima export sRGB16 · PNG/TIFF · dimensioni native"
+                } else if self.editing.verify_final.as_deref() == Some(&item.id) {
+                    "Resa finale alla risoluzione nativa"
+                } else {
+                    "Vista modificata provvisoria; export alla risoluzione nativa."
+                }))
+                .small()
+                .color(MUTED),
+            );
+        });
     }
     pub(super) fn poll_edit_preview(&mut self) {
         while let Ok((id, source, base, proof, recipe, result)) = self.editing.rx.try_recv() {
@@ -1839,6 +2010,100 @@ mod reset_tests {
     }
 
     #[test]
+    fn adjustment_keeps_drag_commit_and_numeric_entry_at_compact_widths() {
+        for lang in [Language::Italian, Language::English] {
+            for width in [200., 248., 328.] {
+                let ctx = egui::Context::default();
+                style::apply(&ctx);
+                let mut value = 0_f32;
+                let mut commits = 0;
+                let mut frame = |events: Vec<egui::Event>| {
+                    let mut rect = egui::Rect::NOTHING;
+                    let mut output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                egui::vec2(width, 180.),
+                            )),
+                            events,
+                            ..Default::default()
+                        },
+                        |ui| {
+                            let response = adjustment(
+                                ui,
+                                lang.text("Esposizione"),
+                                &mut value,
+                                -10. ..=10.,
+                                " EV",
+                                None,
+                            );
+                            commits += usize::from(
+                                response.drag_stopped()
+                                    || (response.changed() && !response.dragged()),
+                            );
+                            rect = response.rect;
+                        },
+                    );
+                    output.textures_delta.clear();
+                    assert!(
+                        rect.left() >= 0. && rect.right() <= width,
+                        "{lang:?}: {rect:?}"
+                    );
+                    (rect, value, commits)
+                };
+                let (rect, _, _) = frame(vec![]);
+                let pointer = |pos, pressed| egui::Event::PointerButton {
+                    pos,
+                    pressed,
+                    button: egui::PointerButton::Primary,
+                    modifiers: egui::Modifiers::NONE,
+                };
+                let start = egui::pos2(rect.center().x, rect.bottom() - 10.);
+                let end = egui::pos2(rect.right() - 35., start.y);
+                frame(vec![egui::Event::PointerMoved(start), pointer(start, true)]);
+                let (_, moved, during) = frame(vec![egui::Event::PointerMoved(end)]);
+                assert!(moved > 0.);
+                assert_eq!(
+                    during, 0,
+                    "A slider drag must not create intermediate revisions"
+                );
+                let (_, moved, after) = frame(vec![pointer(end, false)]);
+                assert!(moved > 0.);
+                assert_eq!(after, 1);
+                let number = egui::pos2(rect.right() - 24., rect.top() + 10.);
+                frame(vec![
+                    egui::Event::PointerMoved(number),
+                    pointer(number, true),
+                ]);
+                frame(vec![pointer(number, false)]);
+                let (_, typed, saved) = frame(vec![
+                    egui::Event::Key {
+                        key: egui::Key::A,
+                        physical_key: None,
+                        pressed: true,
+                        repeat: false,
+                        modifiers: egui::Modifiers {
+                            command: true,
+                            ctrl: true,
+                            ..Default::default()
+                        },
+                    },
+                    egui::Event::Text("0.75".into()),
+                    egui::Event::Key {
+                        key: egui::Key::Enter,
+                        physical_key: None,
+                        pressed: true,
+                        repeat: false,
+                        modifiers: egui::Modifiers::NONE,
+                    },
+                ]);
+                assert_eq!(typed, 0.75, "Numeric entry {lang:?} at {width}");
+                assert_eq!(saved, 2);
+            }
+        }
+    }
+
+    #[test]
     fn reset_button_requires_enabled_changed_recipe_and_a_click() {
         for enabled in [false, true] {
             let ctx = egui::Context::default();
@@ -1937,6 +2202,198 @@ mod shortcut_tests {
             assert!(Instant::now() < deadline);
             std::thread::sleep(Duration::from_millis(5));
         }
+    }
+
+    fn click_edit_control(app: &mut TrueRenderer, ctx: &egui::Context, item: &Item, label: &str) {
+        fn find(shape: &egui::Shape, label: &str) -> Option<egui::Pos2> {
+            match shape {
+                egui::Shape::Text(text) if text.galley.job.text == label => {
+                    Some(text.galley.rect.translate(text.pos.to_vec2()).center())
+                }
+                egui::Shape::Vec(shapes) => shapes.iter().find_map(|s| find(s, label)),
+                _ => None,
+            }
+        }
+        app.state.view = ViewMode::Preview;
+        let mut pos = None;
+        for _ in 0..3 {
+            let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
+                app.editing_controls(ui, item)
+            });
+            pos = out.shapes.iter().find_map(|s| find(&s.shape, label));
+            out.textures_delta.clear();
+        }
+        let pos = pos.unwrap_or_else(|| panic!("Missing control: {label}"));
+        for pressed in [true, false] {
+            let mut out = ctx.run_ui(
+                egui::RawInput {
+                    events: vec![
+                        egui::Event::PointerMoved(pos),
+                        egui::Event::PointerButton {
+                            pos,
+                            button: egui::PointerButton::Primary,
+                            pressed,
+                            modifiers: egui::Modifiers::NONE,
+                        },
+                    ],
+                    ..Default::default()
+                },
+                |ui| app.editing_controls(ui, item),
+            );
+            out.textures_delta.clear();
+        }
+    }
+
+    #[test]
+    fn retry_after_history_error_reloads_without_creating_a_revision() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.cache_settings.language = Language::Italian;
+        let item = app.state.items[0].clone();
+        app.ensure_edit_loaded(&item);
+        settle_edits(&mut app, &ctx, &item.id);
+        let before = app.editing.entries[&item.id].loaded.clone().unwrap();
+        app.edit_result(
+            item.id.clone(),
+            Err("Transient history read failure".into()),
+        );
+        click_edit_control(&mut app, &ctx, &item, "Riprova salvataggio");
+        settle_edits(&mut app, &ctx, &item.id);
+        let after = app.editing.entries[&item.id].loaded.as_ref().unwrap();
+        assert_eq!(after.generation, before.generation);
+        assert_eq!(after.recipe, before.recipe);
+    }
+
+    #[test]
+    fn failed_drafts_can_be_retried_or_explicitly_discarded_in_both_languages() {
+        for lang in [Language::Italian, Language::English] {
+            let (dir, ctx, mut app) = app();
+            settle(&mut app, &ctx, true);
+            app.cache_settings.language = lang;
+            let item = app.state.items[0].clone();
+            app.ensure_edit_loaded(&item);
+            settle_edits(&mut app, &ctx, &item.id);
+            let mut draft = app.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .clone();
+            draft.exposure_ev = 1.;
+            app.apply_edit_draft(&item.id, draft.clone());
+            app.edit_result(item.id.clone(), Err("Temporary write failure".into()));
+            assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&draft));
+            click_edit_control(&mut app, &ctx, &item, lang.text("Riprova salvataggio"));
+            settle_edits(&mut app, &ctx, &item.id);
+            assert_eq!(
+                app.editing.entries[&item.id]
+                    .loaded
+                    .as_ref()
+                    .unwrap()
+                    .recipe,
+                draft
+            );
+
+            // A second writer changes the durable head. Retrying our stale draft
+            // must preserve it and report the conflict, never overwrite that head.
+            let mut catalog = tr_store::Catalog::open(&dir.path().join("data")).unwrap();
+            let mut other = draft.clone();
+            other.exposure_ev = 4.;
+            let saved = catalog.save_edit(&item.id, 1, &other).unwrap();
+            draft.exposure_ev = 2.;
+            app.apply_edit_draft(&item.id, draft.clone());
+            app.commit_edit(&item.id);
+            let deadline = Instant::now() + Duration::from_secs(10);
+            while app.editing.entries[&item.id].pending {
+                settle(&mut app, &ctx, true);
+                assert!(Instant::now() < deadline);
+                std::thread::sleep(Duration::from_millis(5));
+            }
+            assert!(app.editing.entries[&item.id].error.is_some());
+            assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&draft));
+            click_edit_control(
+                &mut app,
+                &ctx,
+                &item,
+                lang.text("Scarta bozza e ricarica ricetta"),
+            );
+            settle_edits(&mut app, &ctx, &item.id);
+            let reloaded = app.editing.entries[&item.id].loaded.as_ref().unwrap();
+            assert_eq!(reloaded.generation, saved.generation);
+            assert_eq!(reloaded.recipe, other);
+            assert_eq!(
+                catalog
+                    .load_edit(&item.id, other.raw_engine)
+                    .unwrap()
+                    .generation,
+                saved.generation
+            );
+        }
+    }
+
+    #[test]
+    fn unsaved_preferences_never_select_the_engine_of_a_new_edit() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        let active_engine = app.service.cache.settings().raw_engine;
+        app.cache_settings.raw_engine = tr_core::decoder::RawEngine::choices()
+            .find(|engine| *engine != active_engine)
+            .unwrap();
+        app.ensure_edit_loaded(&item);
+        settle_edits(&mut app, &ctx, &item.id);
+        assert_eq!(
+            app.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .raw_engine,
+            active_engine
+        );
+        let mut draft = EditRecipe::neutral(active_engine);
+        draft.exposure_ev = 1.;
+        app.apply_edit_draft(&item.id, draft);
+        app.commit_edit(&item.id);
+        settle_edits(&mut app, &ctx, &item.id);
+        assert_eq!(
+            app.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe
+                .raw_engine,
+            active_engine
+        );
+    }
+
+    #[test]
+    fn changing_photo_commits_the_previous_draft() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[app.state.visible[0]].clone();
+        app.command(Command::Select {
+            id: item.id.clone(),
+            extend: false,
+        });
+        app.ensure_edit_loaded(&item);
+        settle_edits(&mut app, &ctx, &item.id);
+        let mut draft = app.editing.entries[&item.id]
+            .loaded
+            .as_ref()
+            .unwrap()
+            .recipe
+            .clone();
+        draft.exposure_ev = 1.25;
+        app.apply_edit_draft(&item.id, draft.clone());
+        app.command(Command::Move(1));
+        assert_ne!(app.state.current.as_deref(), Some(item.id.as_str()));
+        assert!(app.editing.entries[&item.id].pending);
+        settle_edits(&mut app, &ctx, &item.id);
+        let entry = &app.editing.entries[&item.id];
+        assert!(!entry.dirty());
+        assert_eq!(entry.loaded.as_ref().unwrap().recipe, draft);
+        assert_eq!(entry.loaded.as_ref().unwrap().generation, 1);
     }
 
     #[test]
@@ -2047,7 +2504,7 @@ mod shortcut_tests {
             .unwrap()
             .recipe
             .exposure_ev = 0.;
-        for mode in 0..7 {
+        for mode in 0..8 {
             let focus = egui::Id::new("other-control");
             match mode {
                 0 => app.editing.wb_pending = true,
@@ -2056,6 +2513,7 @@ mod shortcut_tests {
                 3 => ctx.memory_mut(|m| m.request_focus(focus)),
                 4 => app.editing.entries.get_mut(&item.id).unwrap().error = Some("test".into()),
                 5 => app.editing.entries.get_mut(&item.id).unwrap().loading = true,
+                7 => app.photo_export.open = true,
                 _ => {
                     let mut r = app.editing.entries[&item.id]
                         .loaded
@@ -2072,6 +2530,7 @@ mod shortcut_tests {
             assert_eq!(app.editing.entries[&item.id].draft, before, "mode={mode}");
             app.editing.wb_pending = false;
             app.show_settings = false;
+            app.photo_export.open = false;
             ctx.memory_mut(|m| m.surrender_focus(focus));
             let e = app.editing.entries.get_mut(&item.id).unwrap();
             e.pending = false;
