@@ -183,7 +183,7 @@ impl TrueRenderer {
                                 ui.add_space(16.);
                                 section(ui, lang.text("Manutenzione"));
                                 ui.label(RichText::new(lang.text("Svuota solo le anteprime ricostruibili della cartella corrente.")).small().color(MUTED));
-                                if ui.add_enabled(self.cache_action.is_none() && !self.scanning,
+                                if ui.add_enabled(self.cache_action.is_none(),
                                     egui::Button::new(lang.text("Svuota cache cartella"))).clicked() { action = 2; }
                                 ui.separator();
                                 self.library_actions(ui);
@@ -261,19 +261,11 @@ impl TrueRenderer {
     fn preview_preferences(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         section(ui, lang.text("Resa delle anteprime"));
-        ui.horizontal_wrapped(|ui| {
-            ui.label(lang.text("Qualità globale delle anteprime"));
-            ui.selectable_value(
-                &mut self.cache_settings.quality,
-                PreviewQuality::Standard,
-                "Standard",
-            );
-            ui.selectable_value(
-                &mut self.cache_settings.quality,
-                PreviewQuality::Full,
-                lang.text("Piena"),
-            );
-        });
+        self.global_quality_control(ui);
+        preference_note(
+            ui,
+            lang.text("La qualità viene applicata e salvata subito."),
+        );
         ui.horizontal_wrapped(|ui| {
             ui.label(lang.text("Motore RAW"));
             egui::ComboBox::from_id_salt("raw-engine")
@@ -346,7 +338,7 @@ impl TrueRenderer {
         ui.horizontal_wrapped(|ui| {
             if ui
                 .add_enabled(
-                    self.rebuild.is_empty() && !self.scanning,
+                    self.rebuild.is_empty() && !self.scanning && !self.clearing_current_folder(),
                     egui::Button::new(lang.text("Ricostruisci anteprime della cartella")),
                 )
                 .clicked()
@@ -646,7 +638,7 @@ impl TrueRenderer {
         {
             let cache = self.service.cache.clone();
             let (tx, rx) = std::sync::mpsc::sync_channel(1);
-            self.cache_action = Some(rx);
+            self.cache_action = Some(cache_actions::CacheAction::new(rx));
             std::thread::spawn(move || {
                 let result = cache
                     .maintain_known(&|| false)

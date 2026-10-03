@@ -49,6 +49,7 @@ struct Shared {
 }
 struct Entry {
     key: Key,
+    superseded: bool,
     texture: FrameTexture,
     touched: u64,
     lease: Arc<Lease>,
@@ -125,7 +126,9 @@ pub struct Capture {
 }
 /// Draw-command coverage for diagnostic traces, not compositor visibility.
 pub struct PaintCoverage {
+    pub lane: String,
     pub source: u64,
+    pub displayed_source: Option<u64>,
     pub fraction: f32,
     pub exact: bool,
 }
@@ -409,6 +412,7 @@ impl Presenter {
         }
         if let Some(old) = self.entries.remove(&lane) {
             let retain = lane.starts_with("view:")
+                && !old.superseded
                 && !self.pressure.load(Ordering::Acquire)
                 && source_area(old.key.region) > source_area(entry.key.region)
                 && self
@@ -542,6 +546,7 @@ impl Presenter {
                         finished.lane,
                         Entry {
                             key: finished.key,
+                            superseded: false,
                             texture,
                             touched: self.clock,
                             lease: finished.lease,
@@ -586,6 +591,23 @@ impl Presenter {
         }
     }
     pub fn invalidate_sources(&mut self, sources: &std::collections::HashSet<u64>) {
+        self.supersede_sources(sources);
+        let lanes: Vec<_> = self
+            .entries
+            .iter()
+            .filter(|(_, entry)| sources.contains(&entry.key.source))
+            .map(|(lane, _)| lane.clone())
+            .collect();
+        for lane in lanes {
+            if let Some(entry) = self.entries.remove(&lane) {
+                self.retire(entry);
+            }
+        }
+    }
+    /// Revoke obsolete work but retain the last displayed texture until its
+    /// replacement is ready. It owns only display-frame credits, not CPU mips.
+    /// Callers must keep lanes isolated by asset, source epoch and display mode.
+    pub fn supersede_sources(&mut self, sources: &std::collections::HashSet<u64>) {
         let stale: Vec<_> = self
             .wide
             .iter()
@@ -599,16 +621,9 @@ impl Presenter {
         self.waiting.retain(|_, key| !sources.contains(&key.source));
         self.errors
             .retain(|_, (key, _)| !sources.contains(&key.source));
-        let lanes: Vec<_> = self
-            .entries
-            .iter()
-            .filter(|(_, entry)| sources.contains(&entry.key.source))
-            .map(|(lane, _)| lane.clone())
-            .collect();
-        for lane in lanes {
-            if let Some(entry) = self.entries.remove(&lane) {
-                self.retired
-                    .push((self.clock, entry.lease, entry.gpu_lease));
+        for entry in self.entries.values_mut() {
+            if sources.contains(&entry.key.source) {
+                entry.superseded = true;
             }
         }
         let mut shared = self.shared.0.lock().unwrap();
@@ -659,8 +674,10 @@ impl Presenter {
         self.gpu_memory.configure(bytes);
         self.trim_wide();
     }
-    /// A lane must identify the asset revision, rendering recipe and source
-    /// coordinate space. Distinct provider instances may hold compatible levels.
+    /// A lane identifies the asset/source epoch, RAW recipe, display mode and
+    /// coordinate space. `supersede_sources` allows a complete previous edit to
+    /// remain visible while its replacement is computed, without qualifying it
+    /// as exact or retaining it as optional wide coverage afterwards.
     pub fn paint(
         &mut self,
         ui: &egui::Ui,
@@ -679,11 +696,17 @@ impl Presenter {
             source: image.id(),
             region,
         };
-        if let Some(entry) = self.entries.get_mut(&lane).filter(|e| e.key == key) {
+        if let Some(entry) = self
+            .entries
+            .get_mut(&lane)
+            .filter(|e| e.key == key && !e.superseded)
+        {
             entry.touched = self.clock;
             if self.capturing {
                 self.coverage.push(PaintCoverage {
+                    lane: lane.clone(),
                     source: image.id(),
+                    displayed_source: Some(image.id()),
                     fraction: 1.,
                     exact: true,
                 });
@@ -707,40 +730,7 @@ impl Presenter {
             );
             return;
         }
-        let mut covered = 0.;
-        let wide_is_better = self
-            .wide
-            .get(&lane)
-            .and_then(|e| reproject(e.key.region, region, rect))
-            .is_some_and(|(wide, _)| {
-                let current = self
-                    .entries
-                    .get(&lane)
-                    .and_then(|e| reproject(e.key.region, region, rect))
-                    .map_or(0., |(r, _)| r.area());
-                wide.area() > current
-            });
-        let previous = if wide_is_better {
-            self.wide_reprojections += 1;
-            self.wide.get_mut(&lane)
-        } else {
-            self.entries.get_mut(&lane)
-        };
-        if let Some(entry) = previous {
-            entry.touched = self.clock;
-            if let Some((coverage, uv)) = reproject(entry.key.region, region, rect) {
-                covered = coverage.intersect(rect).area() / rect.area();
-                ui.painter()
-                    .image(entry.texture.id(), coverage, uv, Color32::WHITE);
-            }
-        }
-        if self.capturing {
-            self.coverage.push(PaintCoverage {
-                source: image.id(),
-                fraction: covered,
-                exact: false,
-            });
-        }
+        self.paint_previous(ui, &lane, image.id(), rect, region);
         if let Some((_, error)) = self.errors.get(&lane).filter(|(failed, _)| *failed == key) {
             ui.painter().text(
                 rect.center(),
@@ -752,6 +742,103 @@ impl Presenter {
             return;
         }
         self.errors.remove(&lane);
+        self.enqueue(ui, lane, image, rect, key);
+    }
+
+    pub(crate) fn is_current(&self, lane: &str, source: u64, region: Region) -> bool {
+        self.entries
+            .get(lane)
+            .is_some_and(|e| !e.superseded && e.key.source == source && e.key.region == region)
+    }
+    pub fn source_is_current(&self, lane: &str, source: u64) -> bool {
+        self.entries
+            .get(lane)
+            .is_some_and(|e| !e.superseded && e.key.source == source)
+    }
+
+    /// While the CPU edit is pending, draw only the last complete frame. Never
+    /// enqueue the neutral source as a replacement for an already edited photo.
+    pub fn paint_pending(
+        &mut self,
+        ui: &egui::Ui,
+        lane: &str,
+        source: u64,
+        rect: Rect,
+        region: Region,
+    ) {
+        self.waiting.remove(lane);
+        self.errors.remove(lane);
+        {
+            let mut shared = self.shared.0.lock().unwrap();
+            shared.jobs.retain(|job| job.lane != lane);
+            shared.completed.retain(|job| job.lane != lane);
+        }
+        if let Some(entry) = self.entries.get_mut(lane) {
+            entry.superseded = true;
+        }
+        if let Some(old) = self.wide.remove(lane) {
+            self.retire(old);
+        }
+        self.paint_previous(ui, lane, source, rect, region);
+    }
+
+    fn paint_previous(
+        &mut self,
+        ui: &egui::Ui,
+        lane: &str,
+        source: u64,
+        rect: Rect,
+        region: Region,
+    ) {
+        let mut covered = 0.;
+        let mut displayed_source = None;
+        let wide_is_better = self
+            .wide
+            .get(lane)
+            .and_then(|e| reproject(e.key.region, region, rect))
+            .is_some_and(|(wide, _)| {
+                let current = self
+                    .entries
+                    .get(lane)
+                    .and_then(|e| reproject(e.key.region, region, rect))
+                    .map_or(0., |(r, _)| r.area());
+                wide.area() > current
+            });
+        let previous = if wide_is_better {
+            self.wide_reprojections += 1;
+            self.wide.get_mut(lane)
+        } else {
+            self.entries.get_mut(lane)
+        };
+        if let Some(entry) = previous {
+            entry.touched = self.clock;
+            if let Some((coverage, uv)) = reproject(entry.key.region, region, rect) {
+                covered = coverage.intersect(rect).area() / rect.area();
+                displayed_source = Some(entry.key.source);
+                ui.painter()
+                    .image(entry.texture.id(), coverage, uv, Color32::WHITE);
+            }
+        }
+        if self.capturing {
+            self.coverage.push(PaintCoverage {
+                lane: lane.into(),
+                source,
+                displayed_source,
+                fraction: covered,
+                exact: false,
+            });
+        }
+    }
+
+    fn enqueue(
+        &mut self,
+        ui: &egui::Ui,
+        lane: String,
+        image: &Arc<ImageLevels>,
+        rect: Rect,
+        key: Key,
+    ) {
+        let region = key.region;
         if self.waiting.get(&lane) != Some(&key) {
             let pixels = region.size[0] as u64 * region.size[1] as u64;
             let display_bytes = pixels * if self.high_precision { 8 } else { 4 };
@@ -928,11 +1015,29 @@ pub fn fitted(
     presenter.paint(ui, lane, image, rect, Region::fitted(source, size));
 }
 
+pub fn fitted_pending(
+    presenter: &mut Presenter,
+    ui: &egui::Ui,
+    lane: &str,
+    image: &ImageLevels,
+    area: Rect,
+) {
+    let source = image.source_size();
+    let ppp = ui.ctx().pixels_per_point();
+    let rect = fitted_rect(area, source, ppp);
+    let size = [
+        (rect.width() * ppp).round() as u32,
+        (rect.height() * ppp).round() as u32,
+    ];
+    presenter.paint_pending(ui, lane, image.id(), rect, Region::fitted(source, size));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     fn fixture_entry(ctx: &egui::Context, p: &Presenter, source: u64, region: Region) -> Entry {
         Entry {
+            superseded: false,
             key: Key {
                 source,
                 region,
@@ -958,6 +1063,64 @@ mod tests {
         };
         p.install(lane.into(), fixture_entry(ctx, p, source, full));
         p.install(lane.into(), fixture_entry(ctx, p, source, crop));
+    }
+    #[test]
+    fn superseded_edits_hold_only_the_last_texture_and_reject_late_work() {
+        let ctx = egui::Context::default();
+        let memory = MemoryBudget::new(4096);
+        let mut p = Presenter::new(ctx.clone(), memory.clone(), None);
+        let lane = "view:edit";
+        let region = Region::fitted([2, 2], [2, 2]);
+        let rect = Rect::from_min_size(Pos2::ZERO, egui::vec2(2., 2.));
+        let first = fixture_entry(&ctx, &p, 1, region);
+        let texture = first.texture.id();
+        p.install(lane.into(), first);
+        let old_key = p.entries[lane].key.clone();
+        p.waiting.insert(lane.into(), old_key.clone());
+        p.supersede_sources(&std::collections::HashSet::from([1]));
+        assert_eq!(memory.usage().reserved, 48);
+        assert_eq!(p.entries[lane].texture.id(), texture);
+        assert!(!p.is_current(lane, 1, region));
+        // An already active worker can still finish after logical revocation.
+        p.shared.0.lock().unwrap().completed.push_back(Completed {
+            lane: lane.into(),
+            key: old_key,
+            result: Ok(Rendered::Cpu(vec![0; 16])),
+            lease: Arc::new(memory.try_reserve(48).unwrap()),
+            gpu_lease: Arc::new(p.gpu_memory.try_reserve(16).unwrap()),
+        });
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 48);
+        assert_eq!(p.entries[lane].texture.id(), texture);
+        for (name, coverage) in [(lane, 1.), ("view:other-photo", 0.), ("view:proof", 0.)] {
+            p.begin_capture();
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                p.paint_pending(ui, name, 99, rect, region);
+            });
+            output.textures_delta.clear();
+            assert_eq!(p.coverage()[0].fraction, coverage);
+            assert!(!p.coverage()[0].exact);
+            assert!(p.waiting.is_empty());
+            assert!(p.shared.0.lock().unwrap().jobs.is_empty());
+        }
+        let crop = Region {
+            origin: [1., 0.],
+            step: [0.5, 1.],
+            ..region
+        };
+        p.install(lane.into(), fixture_entry(&ctx, &p, 2, crop));
+        assert!(
+            p.wide.is_empty(),
+            "An older edit must not return during a later pan"
+        );
+        assert_eq!(memory.usage().reserved, 96); // Retired until completion.
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 48);
+        assert!(p.is_current(lane, 2, crop));
+        p.invalidate_sources(&std::collections::HashSet::from([2]));
+        assert!(!p.entries.contains_key(lane));
+        p.poll(&ctx);
+        assert_eq!(memory.usage().reserved, 0);
     }
     #[test]
     fn wider_frame_covers_pan_and_fit_without_duplicating_or_early_releasing_credits() {
@@ -1117,6 +1280,7 @@ mod tests {
         presenter.entries.insert(
             "view".into(),
             Entry {
+                superseded: false,
                 key: Key {
                     stretch: Default::default(),
                     high_precision: false,

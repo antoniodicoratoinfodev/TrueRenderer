@@ -43,6 +43,7 @@ pub struct Statistics {
     pub busy: u64,
     pub evictions: u64,
     pub writer_yields: u64,
+    pub native_preview_fallbacks: u64,
     pub memory_pressure: Option<tr_platform::MemoryPressure>,
     pub folder: String,
     pub bytes: u64,
@@ -56,6 +57,7 @@ pub struct Manager {
     settings_writer: Mutex<()>,
     disk_policy: Mutex<registry::Registry>,
     readers: AtomicUsize,
+    pub(super) preview_writes: Arc<AtomicUsize>,
     pressure: AtomicI8,
     battery: std::sync::atomic::AtomicBool,
     fingerprint: String,
@@ -102,6 +104,7 @@ impl Manager {
             settings_writer: Mutex::new(()),
             disk_policy: Mutex::new(registry::Registry::default()),
             readers: AtomicUsize::new(0),
+            preview_writes: Arc::new(AtomicUsize::new(0)),
             pressure: AtomicI8::new(-1),
             battery: std::sync::atomic::AtomicBool::new(false),
             // The recipe comes from the decoder that applies it. Hard-coding a
@@ -121,6 +124,9 @@ impl Manager {
         self.readers.fetch_add(1, Ordering::AcqRel);
         ReadDemand(&self.readers)
     }
+    pub fn preview_writes_pending(&self) -> bool {
+        self.preview_writes.load(Ordering::Acquire) != 0
+    }
     fn wait_for_readers(&self, cancelled: &impl Fn() -> bool) -> Result<()> {
         let start = std::time::Instant::now();
         let mut noted = false;
@@ -129,10 +135,14 @@ impl Manager {
                 self.statistics.lock().unwrap().writer_yields += 1;
                 noted = true;
             }
-            ensure!(
-                !cancelled() && start.elapsed() < Duration::from_millis(250),
-                "Persistenza rinviata per letture prioritarie"
-            );
+            ensure!(!cancelled(), "Persistenza annullata");
+            if start.elapsed() >= Duration::from_millis(250) {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::WouldBlock,
+                    "Persistenza rinviata per letture prioritarie",
+                )
+                .into());
+            }
             std::thread::sleep(Duration::from_millis(2));
         }
         Ok(())
@@ -513,6 +523,25 @@ impl Folder {
         thumbnail_minimum: u64,
         cancelled: &impl Fn() -> bool,
     ) -> Result<(Vec<Entry>, u64)> {
+        self.trim_previews_cancellable(limit, days, thumbnail_minimum, limit, cancelled)
+    }
+    fn trim_preserving_previews(
+        &self,
+        limit: u64,
+        days: u32,
+        thumbnail_minimum: u64,
+        preview_minimum: u64,
+    ) -> Result<(Vec<Entry>, u64)> {
+        self.trim_previews_cancellable(limit, days, thumbnail_minimum, preview_minimum, &|| false)
+    }
+    fn trim_previews_cancellable(
+        &self,
+        limit: u64,
+        days: u32,
+        thumbnail_minimum: u64,
+        preview_minimum: u64,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<(Vec<Entry>, u64)> {
         // Exclusive lock excludes all active readers and writers in this folder.
         ensure!(!cancelled(), "Manutenzione cache annullata");
         for entry in Self::files_cancellable(&self.tmp, ".part", cancelled)? {
@@ -523,12 +552,13 @@ impl Folder {
         entries.sort_by_key(|e| e.modified);
         let mut total: u64 = entries.iter().map(|e| e.bytes).sum();
         let protected = if days > 0 && total > limit {
-            artifact::protected_thumbnails(self, &entries, thumbnail_minimum)
+            artifact::protected_previews(self, &entries, thumbnail_minimum, preview_minimum)
         } else {
             std::collections::HashSet::new()
         };
-        // Unused thumbnail space is lent to other classes. Only the guaranteed
-        // minimum is placed after ordinary LRU candidates; expiry still wins.
+        // Keep independently readable viewer mip tails ahead of optional native
+        // ancestors. A native write may fall back to its viewer tail if retaining
+        // the whole pyramid would evict already prepared fitted previews.
         ensure!(
             entries
                 .iter()
@@ -536,7 +566,7 @@ impl Folder {
                 .map(|e| e.bytes)
                 .sum::<u64>()
                 <= limit,
-            "Artefatto invaderebbe la riserva miniature"
+            "Artefatto invaderebbe la riserva anteprime"
         );
         entries.sort_by_key(|e| (protected.contains(&e.name), e.modified));
         let mut removed = 0;

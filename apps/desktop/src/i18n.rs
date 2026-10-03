@@ -96,6 +96,10 @@ impl Language {
             "Prima" => "Before",
             "Modificata" => "Edited",
             "In calcolo" => "Rendering",
+            "Aggiornamento regolazioni…" => "Updating adjustments…",
+            "Istogramma precedente · aggiornamento regolazioni…" => {
+                "Previous histogram · updating adjustments…"
+            }
             "Errore" => "Error",
             "Verifica resa finale" => "Verify final rendering",
             "PNG/TIFF16 · sRGB · dimensioni native" => "PNG/TIFF16 · sRGB · native dimensions",
@@ -268,9 +272,13 @@ impl Language {
             "Cartella" => "Folder",
             "Annullato" => "Cancelled",
             "Preparazione delle anteprime…" => "Preparing previews…",
-            "Preparazione delle miniature, non del dettaglio 1:1." => {
-                "Preparing thumbnails, not full 1:1 detail."
+            "Preparazione dello sviluppo e dei livelli per la qualità scelta, con la ricetta di ogni foto. Piena include il dettaglio nativo." => {
+                "Preparing development and levels for the selected quality, using each photo's recipe. Full includes native detail."
             }
+            "Quota cache insufficiente per tutti i dettagli nativi: conservate le anteprime per la visualizzazione." => {
+                "Cache quota cannot retain all native detail: viewing previews have been preserved."
+            }
+            "Salvataggio anteprime…" => "Saving previews…",
             "Preparazione annullata" => "Preparation cancelled",
             "Lettura della cartella incompleta" => "Folder scan incomplete",
             "In attesa delle viste attive o di memoria disponibile." => {
@@ -338,6 +346,10 @@ impl Language {
             }
             "Globale" => "Global",
             "Qualità globale delle anteprime" => "Global preview quality",
+            "Anteprime" => "Previews",
+            "La qualità viene applicata e salvata subito." => {
+                "Quality is applied and saved immediately."
+            }
             "Cambia tutte le foto e azzera le eccezioni di sessione." => {
                 "Changes all photos and resets per-photo session overrides."
             }
@@ -557,6 +569,7 @@ impl Language {
             "Applica e salva" => "Apply and save",
             "Svuota cache cartella" => "Clear folder cache",
             "Aggiornamento cache…" => "Updating cache…",
+            "Svuotamento cache…" => "Clearing cache…",
             "Immagini" => "Images",
             "Lettura dei file…" => "Reading files…",
             "Nessuna immagine da mostrare" => "No images to display",

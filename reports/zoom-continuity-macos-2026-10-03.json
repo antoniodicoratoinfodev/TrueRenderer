@@ -1,0 +1,171 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "scope": "Fix blank image draw when fitted RAW preview is replaced with native detail at 300% zoom; functional continuity and output checks on the qualified bundle.",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "2df0a311d607ec78ef7dc296e2169dd31ea0b7f9d9c68c01668247d7fb1ebb44",
+    "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "delivered_bundle_matches_qualified": true,
+  "cause": "Viewer lane included the transient ImageLevels allocation ID, so native detail lost the previous frame despite unchanged asset, source digest and RAW recipe.",
+  "change": "Stable decoder-preview lane across mip/provider/quality changes, isolated by asset, digest, RAW engine, RAW WB and source coordinates. RGB edit/proof revisions retain separate identities in this qualified build.",
+  "verification": {
+    "negative_regression_reproduced": true,
+    "new_viewer_regressions": 3,
+    "rust_ordinary_passed": 252,
+    "rust_explicit_integrations_passed": 14,
+    "python_tests_passed": 2,
+    "protocol_checks_passed": 8,
+    "resampling_signal_cases": 24,
+    "fmt_clippy_debug_release_passed": true,
+    "native_sampling_passed": true,
+    "xpc_two_services_signature_timeout_recovery_fault_rejection_passed": true,
+    "original_sha256_unchanged": 30
+  },
+  "navigation_cases": [
+    {
+      "source": "raw",
+      "engine": "Apple",
+      "quality": "Full",
+      "mode": "Gpu",
+      "renderer_pressure_injected": false,
+      "passed": true,
+      "steps": 10,
+      "zero_coverage_redraws": 0,
+      "minimum_transition_coverage": 0.016114616766572,
+      "zoom_300_minimum_coverage": 0.9684931635856628,
+      "maximum_channel_error_u8": 1,
+      "physical_1to1_exact": true,
+      "sampled_peak_rss_bytes": 1511571456,
+      "sampled_peak_footprint_bytes": 1703972560,
+      "memory_samples_complete": true,
+      "sampled_within_2_gib": true,
+      "evidence": "var/large-navigation-5s6j2xoy/report.json"
+    },
+    {
+      "source": "raw",
+      "engine": "Apple",
+      "quality": "Standard",
+      "mode": "Cpu",
+      "renderer_pressure_injected": false,
+      "passed": true,
+      "steps": 10,
+      "zero_coverage_redraws": 0,
+      "minimum_transition_coverage": 1.0,
+      "zoom_300_minimum_coverage": 1.0,
+      "maximum_channel_error_u8": 0,
+      "physical_1to1_exact": true,
+      "sampled_peak_rss_bytes": 1471315968,
+      "sampled_peak_footprint_bytes": 1584254744,
+      "memory_samples_complete": true,
+      "sampled_within_2_gib": true,
+      "evidence": "var/large-navigation-lf4o8quy/report.json"
+    },
+    {
+      "source": "raw",
+      "engine": "Apple",
+      "quality": "Standard",
+      "mode": "Gpu",
+      "renderer_pressure_injected": false,
+      "passed": true,
+      "steps": 10,
+      "zero_coverage_redraws": 0,
+      "minimum_transition_coverage": 0.14503155648708344,
+      "zoom_300_minimum_coverage": 1.0,
+      "maximum_channel_error_u8": 1,
+      "physical_1to1_exact": true,
+      "sampled_peak_rss_bytes": 1504133120,
+      "sampled_peak_footprint_bytes": 1525976784,
+      "memory_samples_complete": true,
+      "sampled_within_2_gib": true,
+      "evidence": "var/large-navigation-lf4o8quy/report.json"
+    },
+    {
+      "source": "raw",
+      "engine": "Apple",
+      "quality": "Full",
+      "mode": "Cpu",
+      "renderer_pressure_injected": false,
+      "passed": true,
+      "steps": 10,
+      "zero_coverage_redraws": 0,
+      "minimum_transition_coverage": 0.016114616766572,
+      "zoom_300_minimum_coverage": 0.9684931635856628,
+      "maximum_channel_error_u8": 0,
+      "physical_1to1_exact": true,
+      "sampled_peak_rss_bytes": 1417592832,
+      "sampled_peak_footprint_bytes": 1507200720,
+      "memory_samples_complete": true,
+      "sampled_within_2_gib": true,
+      "evidence": "var/large-navigation-vv_o7wql/report.json"
+    },
+    {
+      "source": "12",
+      "engine": "Apple",
+      "quality": "Full",
+      "mode": "Gpu",
+      "renderer_pressure_injected": true,
+      "passed": true,
+      "steps": 10,
+      "zero_coverage_redraws": 0,
+      "minimum_transition_coverage": 0.03244444355368614,
+      "zoom_300_minimum_coverage": 1.0,
+      "maximum_channel_error_u8": 1,
+      "physical_1to1_exact": true,
+      "sampled_peak_rss_bytes": 1223081984,
+      "sampled_peak_footprint_bytes": 1346506184,
+      "memory_samples_complete": true,
+      "sampled_within_2_gib": true,
+      "evidence": "var/large-navigation-he_lg5w1/report.json"
+    }
+  ],
+  "native_output_proof": {
+    "passed": true,
+    "surface": {
+      "compute": "GPU",
+      "differing_channels": 1,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1761,
+        1174
+      ]
+    },
+    "source_unchanged": true,
+    "evidence": "var/zoom-continuity-2026-10-03/native/reports/develop-ui.json"
+  },
+  "native_folder_loading": {
+    "passed": true,
+    "processed": 12,
+    "errors": 0,
+    "cache_clears": 3,
+    "foreground_and_background": true,
+    "evidence": "var/zoom-continuity-2026-10-03/native/reports/folder-loading.json"
+  },
+  "additional_probe": {
+    "evidence": "var/large-navigation-fze5m1hp/report.json",
+    "navigation_steps_passed": 10,
+    "eviction_assertion_passed": false,
+    "reason": "D750 had already released all optional wide frames before injection, so their eviction could not be observed. Repeated with generated 12 MP images; one optional frame was evicted and all ten steps passed."
+  },
+  "evidence": {
+    "root": "var/zoom-continuity-2026-10-03",
+    "suite": "var/verify-2OE5tusF",
+    "negative_test": "var/zoom-continuity-2026-10-03/before-test.log",
+    "xpc": "var/zoom-continuity-2026-10-03/native/reports/xpc-qualification-macos.json",
+    "previous_bundle": "var/zoom-continuity-2026-10-03/previous-distribution.app"
+  },
+  "limitations": [
+    "Coverage observes image draw commands per UI redraw, not physical display refreshes; partial overlap during pan/fit remains possible.",
+    "Navigation used two private D750 copies, Apple RAW, CPU/GPU and Standard/Full at 2 GiB. It does not qualify every camera or engine.",
+    "Memory figures are samples of host and XPC processes, not a hard kernel limit or every transient GPU/driver allocation. Pressure was renderer policy injection, not an OS memory-pressure event.",
+    "Native Windows and broader colour/display/release gates were not repeated or closed.",
+    "Parallel work changed editing and rendering source files after this bundle was built. Those later changes are preserved in the shared workspace and excluded from this bundle qualification."
+  ]
+}

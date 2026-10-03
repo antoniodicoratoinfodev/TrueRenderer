@@ -1,0 +1,60 @@
+{
+  "application": "TrueRenderer",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "scope": "Follow-up review of folder preview preparation. No implementation changes; no broader navigation or 1:1 qualification.",
+  "reviewed_paths": [
+    "apps/desktop/src/ui/loading.rs",
+    "apps/desktop/src/ui.rs",
+    "apps/desktop/src/cache/writer.rs",
+    "apps/desktop/src/cache/mod.rs",
+    "apps/desktop/src/cache/artifact.rs",
+    "apps/desktop/src/decode_pool.rs",
+    "apps/desktop/src/ui/raw_previews.rs"
+  ],
+  "checks": [
+    "Physical window target covers the fitted viewer, including Retina; compatible mip tails serve smaller viewer and thumbnail requests.",
+    "Submission registers pending persistence before UI delivery; queue credits and pending state release on completion, cancellation and failed sends.",
+    "Folder completion waits for accepted writes; cancellation, rescan, cache clear and session mode transitions remain bounded.",
+    "Preparation uses global engine and quality with as-shot RAW WB, as specified. Per-photo RAW engine/WB overrides or native zoom can require a separate development."
+  ],
+  "reexecuted": {
+    "desktop_tests_passed": 127,
+    "native_integrations_passed": 7,
+    "fmt_passed": true,
+    "bundle_codesign_passed": true,
+    "delivery_manifest_matches_qualified_bundle": true,
+    "original_hashes_unchanged": 30
+  },
+  "prior_campaign_reviewed": {
+    "report": "reports/folder-refinement-macos-2026-10-03.json",
+    "d750_images": 30,
+    "quality_mode_cases": 4,
+    "viewer_reopenings": 120,
+    "new_raw_decodes_on_reopen": 0,
+    "identical_pixel_chains": 120,
+    "native_ui_cases": 2,
+    "xpc_qualified_binary_identity_matches": true,
+    "reexecuted_in_this_review": false
+  },
+  "existing_findings": [
+    {
+      "area": "Full/GPU zoom at 300%",
+      "status": "open",
+      "same_failure_on_previous_bundle": true,
+      "introduced_by_this_correction": false,
+      "evidence": [
+        "var/large-navigation-hdj5gf8f/report.json",
+        "var/large-navigation-qo02k1j5/report.json"
+      ]
+    }
+  ],
+  "limitations": [
+    "Existing disk cache quotas, disabled cache, I/O failures and memory pressure still apply.",
+    "Native 1:1, later window enlargement and per-photo RAW engine/WB changes may require more preparation.",
+    "Prior D750 timings measure CPU availability, not display latency. No new broad performance, colour or release qualification."
+  ],
+  "evidence_root": "var/folder-refinement-review-2026-10-03",
+  "implementation_changed": false
+}

@@ -1,0 +1,164 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "scope": "Continuous photographic adjustment presentation; complete last frame retained through asynchronous CPU edit and GPU/CPU presentation, with explicit pending status and source/mode isolation.",
+  "cause": [
+    "Draft invalidation removed the displayed texture before its replacement existed.",
+    "Pending edits returned to the unmodified source; each edited pyramid created a different presentation lane.",
+    "Output-proof pending path stopped drawing; save acknowledgements invalidated unchanged thumbnails."
+  ],
+  "suite": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 254,
+    "additional_integrations": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "sampling_signals": 24,
+    "native_surface_passed": true,
+    "private_camera_tests_skipped": 3,
+    "evidence": "var/verify-6JcUIK21",
+    "fmt": true,
+    "clippy": true,
+    "debug_and_release_builds": true
+  },
+  "regressions": {
+    "negative": "var/edit-continuity-2026-10-03/before-test.log",
+    "coverage": "20 rapid drafts across fit/native zoom and preview/proof; first adjustment, grid/filmstrip, late results, final convergence, save acknowledgement, Before/After, renderer cancellation and lease retirement.",
+    "final_extended_test": "var/edit-continuity-2026-10-03/thumbnails-test.log",
+    "post_extension_clippy": "var/edit-continuity-2026-10-03/clippy-final.log"
+  },
+  "native_cases": [
+    {
+      "case": "cpu-preview",
+      "passed": true,
+      "adjustments": 40,
+      "redraws": 46,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_revision": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-2026-10-03/cpu-preview/reports",
+      "screenshots_sha256": {
+        "develop-viewer.png": "f6b5bc7d2487231f271c359958496adb38937a00d4c0913b66e0e4de39593f22",
+        "develop-grid.png": "0b2ed998f368de0141fcedf8bf1ad8a98193b232ba8aec26f28b795013dd11f6"
+      }
+    },
+    {
+      "case": "cpu-proof",
+      "passed": true,
+      "adjustments": 40,
+      "redraws": 52,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_revision": 2,
+      "surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1761,
+          1174
+        ]
+      },
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-2026-10-03/cpu-proof/reports",
+      "screenshots_sha256": {
+        "develop-viewer.png": "a84b0e4d2b051c2f2fe53547137d1753d85fff94a0574d52e7a5de1e90a41957",
+        "develop-grid.png": "0105987fa6aa51f8a43c617639bfb00920607cf707e80dd31f227d7652ab28a8"
+      }
+    },
+    {
+      "case": "gpu-preview",
+      "passed": true,
+      "adjustments": 40,
+      "redraws": 43,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_revision": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-2026-10-03/gpu-preview/reports",
+      "screenshots_sha256": {
+        "develop-viewer.png": "766f253e13a5efdc6560ace726504bcbc57c0080125382a95d136fc958677e67",
+        "develop-grid.png": "81af6946b352043703a6fe86c953892b7b8fb2c9ac174ed6b362989de1db2fb7"
+      }
+    },
+    {
+      "case": "gpu-proof",
+      "passed": true,
+      "adjustments": 40,
+      "redraws": 50,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_revision": 2,
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 24,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1761,
+          1174
+        ]
+      },
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-2026-10-03/gpu-proof/reports",
+      "screenshots_sha256": {
+        "develop-viewer.png": "028888b21c7408f0c386687573fdd751783e211399e3435a196cac2c0d1b1528",
+        "develop-grid.png": "e739ee1d1c1baa8da5657ad5701f1e32ed00f45571d348e5fdd640b699dde1e4"
+      }
+    }
+  ],
+  "xpc": {
+    "passed": true,
+    "two_services_timeout_recovery": true,
+    "production_rejects_fault_injection": true,
+    "evidence": "var/edit-continuity-2026-10-03/xpc/reports/xpc-qualification-macos.json"
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "matches_qualified_bundle": true,
+    "signature": "Ad hoc, codesign --deep --strict verified",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "2c685b4d167b6158d1b10dc390c52aed3242817b5d35f6ed4eaf93d12635ed04",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "manifest_sha256": "e47364f1e588a365d51b7394c73205951ec62946bfb6d770141a457eed587d6e",
+    "previous_bundle": "var/edit-continuity-2026-10-03/previous-distribution.app"
+  },
+  "limitations": [
+    "Native runs use generated images on macOS. Windows, additional RAW cameras/engines and physical-display refreshes were not qualified.",
+    "Coverage is measured on every UI redraw during the probe, not every physical monitor refresh.",
+    "Rapid inputs are coalesced while work is in flight; the last complete frame remains visible until the current result is ready. These runs do not qualify live-feedback latency or p95.",
+    "No SF or R0-R4 release, universal memory or colour gate is closed. Existing zoom-continuity changes are included; earlier D750 measurements remain tied to their earlier bundle hashes."
+  ]
+}

@@ -1,10 +1,11 @@
 {
   "application": "TrueRenderer",
-  "captured_at": "2026-10-02T17:40:51.959102+00:00",
+  "captured_at": "2026-10-02T21:57:24.839647+00:00",
+  "checked_at": "2026-10-02T23:16:18.194150+00:00",
   "passed": true,
   "bundle": "dist/TrueRenderer.app",
   "binary_sha256": {
-    "Contents/MacOS/TrueRenderer": "1f65cbe9ef04d521ddee5a3be7c34e9bcd0cf1d342630af59b8ebff71792464f",
+    "Contents/MacOS/TrueRenderer": "cd160641a3812e49ded2c15136664f05fc6a130211e3d8088ca0213775e280e8",
     "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
     "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
     "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
@@ -37,77 +38,71 @@
   "screenshots": [
     {
       "file": "reports/readme-viewer.png",
-      "capture": "var/readme-explorer-2026-10-02/reports/develop-viewer.png",
+      "capture": "var/toolbar-quality-2026-10-02/final/develop/reports/develop-viewer.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "79104c37c44692bf6ae3196ae27524752f22a39ea24a9ece20bdaf81646847cd",
+      "sha256": "ddf38b4b895733b58e2eb4162729d4b2df44e8ec6f52ddc69ebe52b6c2b75f49",
       "visually_reviewed": true,
-      "ui_scale_percent": 100,
-      "panel": "Explorer",
-      "captured_at": "2026-10-02T20:19:33.976564+00:00",
-      "evidence": "var/readme-explorer-2026-10-02/reports/develop-ui.json"
+      "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-grid.png",
-      "capture": "var/readme-explorer-2026-10-02/reports/develop-grid.png",
+      "capture": "var/toolbar-quality-2026-10-02/final/develop/reports/develop-grid.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "6dcc0842742446789568607146baed17e0ae7279caa1908491be9c150028a95e",
+      "sha256": "bf4c1cf4b6ef5596160762a9892272ae4387762031bf3a735e84cdc56f074f50",
       "visually_reviewed": true,
-      "ui_scale_percent": 100,
-      "panel": "Explorer",
-      "captured_at": "2026-10-02T20:19:33.978867+00:00",
-      "evidence": "var/readme-explorer-2026-10-02/reports/develop-ui.json"
+      "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-preferences.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/preferences/reports/restyle-02.png",
+      "capture": "var/toolbar-quality-2026-10-02/final/preferences/reports/restyle-02.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "0c07a3daed87d9b5cc4c82687df1d2301a2b4150621600a8225433b959a78736",
-      "visually_reviewed": true,
-      "ui_scale_percent": 100
-    },
-    {
-      "file": "reports/readme-compact.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/filesystem/reports/filesystem-3.png",
-      "pixels": [
-        1100,
-        720
-      ],
-      "sha256": "4aefd6dd150333ca992c3018162e8fef54665d3becfe82f1689039d75bf23ade",
-      "visually_reviewed": true,
-      "ui_scale_percent": 100
-    },
-    {
-      "file": "reports/readme-inspector.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/inspector/reports/inspector-01.png",
-      "pixels": [
-        2880,
-        1782
-      ],
-      "sha256": "09ae3392ee5f22abd39c2b6907bba5fbf77eb66f062635c883e0f93af18ca77a",
+      "sha256": "7f83a4c9d7b899c09b3aa6a31255eec4ede86f81cb1a44d49ad28b5be3efbf57",
       "visually_reviewed": true,
       "ui_scale_percent": 100
     },
     {
       "file": "reports/readme-cache.png",
-      "capture": "var/aesthetic-followup-2026-10-02/final/preferences/reports/restyle-03.png",
+      "capture": "var/toolbar-quality-2026-10-02/final/preferences/reports/restyle-03.png",
       "pixels": [
         2880,
         1782
       ],
-      "sha256": "32a2d282e35b98b3a80f2d11b3dd723cca2d0c9f916b284679521364e0e8ff81",
+      "sha256": "4a419d48be3fedf98ecc0422fb60b69ba0afa2110c411b43d81768e7b8b797ca",
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
+    },
+    {
+      "file": "reports/readme-compact.png",
+      "capture": "var/toolbar-quality-2026-10-02/final/filesystem/reports/filesystem-3.png",
+      "pixels": [
+        1100,
+        720
+      ],
+      "sha256": "b6eadb43bc8c269f71a028acd9b754591989510068c57755e2de178cb442b58c",
+      "visually_reviewed": true,
+      "ui_scale_percent": 100
+    },
+    {
+      "file": "reports/readme-inspector.png",
+      "capture": "var/toolbar-quality-2026-10-02/final/inspector/reports/inspector-01.png",
+      "pixels": [
+        2880,
+        1782
+      ],
+      "sha256": "647fb9acd59fd48f9de4e8040321fb8b07ea46fcc3cf24ddec3e01be6e715804",
       "visually_reviewed": true,
       "ui_scale_percent": 100
     }
   ],
-  "evidence": "var/aesthetic-followup-2026-10-02/final",
-  "scope": "Native macOS on synthetic photographs only. Viewer and grid recaptured with Explorer at 100% UI scale; remaining screenshots from the prior verified campaign. No Windows or extended accessibility/display qualification."
+  "evidence": "var/toolbar-quality-2026-10-02/final",
+  "scope": "Native macOS toolbar with engine badge, synchronized global quality selector and matching Menu/Settings buttons. All README captures at 100% UI scale. Viewer and grid show Explorer. No native Windows or extended accessibility/display qualification."
 }

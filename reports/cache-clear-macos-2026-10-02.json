@@ -1,0 +1,197 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "cache-clear-macos-2026-10-02",
+  "checked_at": "2026-10-02T21:06:44.548353+00:00",
+  "passed": true,
+  "scope": "Explicit current-folder cache deletion during foreground/background loading, invalidation of resident previews and late work, restart after disk deletion, and preservation of catalogue state.",
+  "changes": [
+    "Clear revokes the preview generation used by lookup, decode and optional persistence, clears RAM/presenter/edited previews and picker samples, and suspends new image demand for that folder until completion.",
+    "Preparation restarts from zero with current inventory and session foreground/background choice; completed/cancelled preparations use saved preference. Incomplete scans remain explicitly incomplete.",
+    "Clear is available in the loading popup and during scans. Reader contention is retryable; failure releases the pause and remains visible. A clear finishing after navigation does not restart the new folder.",
+    "An observed DecodePool shutdown lost-wakeup was corrected by changing the stop predicate under the waiter mutex before notification."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 242,
+    "native_integration_tests": 14,
+    "new_regressions": 10,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "private_raw_tests_skipped": 3,
+    "fmt_clippy_workspace_all_targets": true,
+    "debug_release_builds": true,
+    "native_surface": true,
+    "artifacts": "var/verify-ojUeXWYD",
+    "log": "var/cache-clear-2026-10-02/verify-final.log",
+    "negative_regression": "Before correction clearing_cache_revokes_loading_and_restarts_every_thumbnail failed because the decode generation did not advance; baseline.log.",
+    "shutdown_evidence": "A desktop test stopped in DecodePool::drop, joining a lookup thread asleep on the condvar; hung-test-sample.txt. Fixed and covered by shutdown_does_not_lose_lookup_wakeup.",
+    "regression_scope": [
+      "foreground/background; complete/cancelled/paused session",
+      "actual popup clicks in IT/EN",
+      "reader contention with disk artifact deletion",
+      "old queued writes and late decode/edited results",
+      "selection, zoom, recipe, settings, source and backup preservation",
+      "pending/failed scan and navigation while clearing"
+    ]
+  },
+  "native": [
+    {
+      "name": "xpc",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 21.636,
+      "report": "var/cache-clear-2026-10-02/final/xpc/reports/xpc-qualification-macos.json",
+      "sources_unchanged": true,
+      "language": "it",
+      "quality": "Full"
+    },
+    {
+      "name": "loading-it",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 31.948,
+      "report": "var/cache-clear-2026-10-02/final/loading-it/reports/folder-loading.json",
+      "sources_unchanged": true,
+      "language": "it",
+      "quality": "Full",
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 12,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 13,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 11,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ]
+    },
+    {
+      "name": "loading-en",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 22.676,
+      "report": "var/cache-clear-2026-10-02/final/loading-en/reports/folder-loading.json",
+      "sources_unchanged": true,
+      "language": "en",
+      "quality": "Standard",
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 12,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 13,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 11,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ]
+    },
+    {
+      "name": "develop",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.046,
+      "report": "var/cache-clear-2026-10-02/final/develop/reports/develop-ui.json",
+      "sources_unchanged": true,
+      "language": "it",
+      "quality": "Full"
+    },
+    {
+      "name": "output-proof",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.174,
+      "report": "var/cache-clear-2026-10-02/final/output-proof/reports/develop-ui.json",
+      "sources_unchanged": true,
+      "language": "en",
+      "quality": "Full"
+    },
+    {
+      "name": "preferences",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 4.701,
+      "report": "var/cache-clear-2026-10-02/final/preferences/reports/restyle-ui.json",
+      "sources_unchanged": true,
+      "language": "it",
+      "quality": "Standard"
+    }
+  ],
+  "visually_reviewed": [
+    "Final Italian foreground loading modal, English background clear popup and regenerated grid.",
+    "Debug foreground/background captures."
+  ],
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "qualified_bundle": "var/cache-clear-2026-10-02/TrueRenderer.app",
+    "previous_distribution": "var/cache-clear-2026-10-02/previous-distribution.app",
+    "all_files_match_qualified_bundle": true,
+    "previous_distribution_unchanged": true,
+    "files": 10,
+    "binary_sha256": {
+      "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+      "Contents/MacOS/TrueRenderer": "73978634aa64903ff6c07462e0fff216bf2c3e862df8d1b6f9bb4904cafafd62",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    }
+  },
+  "protected_files_unchanged_sha256": {
+    "LICENSE": "f54c6c6ee279ba06a1b1618009826fe2a3f3af97083e962d3a3ae76f50cc039e",
+    "NOTICE.md": "e22f473e267935bca1ab57eae5c6322536d0c3065137db0e8463ce566cce26cb",
+    "docs/TrueVision-Architettura.originale-v1.2.md": "ad3db38205e58d7f02e85259d5e0516feb3ced143909c96e1699951d65500e4c"
+  },
+  "limits": [
+    "Native execution on macOS only; Windows was not rerun. Three private-camera integrations were skipped; native loading used the 12 generated corpus images.",
+    "Popup clicks use egui input events in tests; native loading probes invoke the same application actions. No manual click campaign is claimed.",
+    "The folder cache can grow again as fresh previews are prepared. Policy-based expiry/quota cleanup retains valid RAM representations.",
+    "No new release, colour/display, accessibility, broad filesystem or physical-memory qualification; SF/R0-R4 remain open."
+  ]
+}

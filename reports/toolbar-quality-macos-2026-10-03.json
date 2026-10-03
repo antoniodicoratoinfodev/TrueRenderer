@@ -1,0 +1,104 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "toolbar-quality-macos-2026-10-03",
+  "checked_at": "2026-10-02T23:16:18.194150+00:00",
+  "passed": true,
+  "scope": "Engine indication and global preview quality in the main toolbar, shared immediate application/persistence with preferences, and matching Menu/Settings chrome.",
+  "changes": [
+    "RAW badge preserves the applied engine or the selected photograph's saved recipe engine; unapplied preferences do not change the indication.",
+    "One global preview quality selector immediately applies and saves the same value from the toolbar and preferences. Other drafts, selection and zoom are preserved; per-photo session overrides clear on a global change.",
+    "The engine and quality stay adjacent in grid, viewer and comparison. Narrow layouts use a dedicated row; per-photo quality remains beside zoom.",
+    "Menu and Settings use the same button and neutral chrome style."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_tests": 245,
+    "native_integration_tests": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "signal_cases": 24,
+    "private_raw_tests_skipped": 3,
+    "ui_tests": 60,
+    "new_regressions": 3,
+    "artifacts": "var/verify-aUSGAG71",
+    "log": "var/toolbar-quality-2026-10-02/verify.log",
+    "fmt_clippy_debug_release_builds": true,
+    "interaction_scope": "Real egui pointer events in IT/EN, grid/viewer/comparison, changes in both directions, saved settings, unrelated engine/disk drafts, per-photo override reset, selection/zoom and disabled controls during cache maintenance.",
+    "layout_scope": "Loading progress active and TrueRenderer fp32 engine name at 550, 760, 1100, 1319, 1320 and 1440 logical points in IT/EN. Search and selector bounds do not overlap. Additional layout assertion and final Clippy passed after the full suite; production code unchanged."
+  },
+  "native": [
+    {
+      "name": "xpc",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 21.512,
+      "report": "var/toolbar-quality-2026-10-02/final/xpc/reports/xpc-qualification-macos.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "develop",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.151,
+      "report": "var/toolbar-quality-2026-10-02/final/develop/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "output-proof",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 3.25,
+      "report": "var/toolbar-quality-2026-10-02/final/output-proof/reports/develop-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "preferences",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 4.47,
+      "report": "var/toolbar-quality-2026-10-02/final/preferences/reports/restyle-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "filesystem",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 5.611,
+      "report": "var/toolbar-quality-2026-10-02/final/filesystem/reports/filesystem-ui.json",
+      "sources_unchanged": true
+    },
+    {
+      "name": "inspector",
+      "exit_code": 0,
+      "passed": true,
+      "seconds": 6.876,
+      "report": "var/toolbar-quality-2026-10-02/final/inspector/reports/inspector-ui.json",
+      "sources_unchanged": true
+    }
+  ],
+  "visual_review": [
+    "Viewer and grid with Explorer; engine badge and adjacent quality selector.",
+    "English preview preferences: the same selector visible in the toolbar and window.",
+    "Performance/cache preferences, compact navigation, normal inspector and compact Italian inspector at 200%."
+  ],
+  "screenshots_report": "reports/readme-screenshots-macos.json",
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "identical_to_qualified": true,
+    "previous_bundle": "var/toolbar-quality-2026-10-02/previous-distribution.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "cd160641a3812e49ded2c15136664f05fc6a130211e3d8088ca0213775e280e8",
+      "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "signature": "ad hoc, deep/strict verified"
+  },
+  "limitations": [
+    "Native Windows and extended display/accessibility qualification not repeated. Three private RAW tests skipped.",
+    "Optional Computer Use attachment returned after a long delay with content outside the test corpus; no automated UI action performed or counted. Bidirectional clicks were verified with egui input events.",
+    "Synthetic native sources unchanged. No SF/R0-R4 gates closed; ad hoc signing and XPC checks do not establish release or full sandbox guarantees."
+  ]
+}

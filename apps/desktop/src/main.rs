@@ -166,6 +166,9 @@ fn run() -> Result<()> {
     if let Some(folder) = option("--verify-raw-previews") {
         return ui::raw_previews::run(&root, &worker, &folder);
     }
+    if let Some(folder) = option("--verify-folder-previews") {
+        return ui::raw_previews::folder_loading(&root, &worker, &folder);
+    }
     if args.iter().any(|a| a == "--verify-preview-navigation") {
         return verify_previews::navigation(&root, &worker);
     }

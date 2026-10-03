@@ -1,0 +1,1839 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "problem": "Folder preparation used global RAW settings and fitted-view detail. Saved per-photo engines/WB and native zoom could trigger RAW development after completion.",
+  "changes": [
+    "Load the photo recipe before preparation; ignore temporary Before view. Prepare native detail in Full and the existing capped detail in Standard, using the effective per-photo quality.",
+    "Complete each photo only against its current request and after accepted asynchronous cache writes finish.",
+    "Retain independently readable viewer mip tails ahead of optional native ancestors. If native detail exceeds disk/queue bounds, preserve the existing computed viewing preview with accounted copy credits and report the limit.",
+    "Reuse stored previews selecting the same canonical mip even when nominal edges differ; preserve source, engine, WB and quality separation.",
+    "Keep refinement status truthful. Source hashing/cache reads, GPU upload and viewport rendering are still performed when needed."
+  ],
+  "verification": {
+    "full_suite": "var/verify-SsAQf0VN",
+    "ordinary_tests": 256,
+    "integrations": 14,
+    "fmt_clippy_debug_release_native_surface_passed": true,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "negative_regressions": "var/folder-preload-engines-2026-10-03/before-tests.log",
+    "regressions": "All engines/qualities, saved engine/WB before preparation, cache quota retaining all fitted previews, equivalent mip lookup, queue-over-limit fallback, cancellation and source/recipe isolation.",
+    "native_raw_sources": 2,
+    "camera": "Nikon D750",
+    "configured_memory_mib": 2048,
+    "sources_and_copies_unchanged": true
+  },
+  "raw_matrix": {
+    "cases": 16,
+    "viewer_reopens_after_ram_eviction": 64,
+    "new_raw_decodes_during_reopens": 0,
+    "all_mip_samples_bit_identical": true,
+    "saved_recipe_on_second_photo": "Different RAW engine and native white balance from global preferences.",
+    "rows": [
+      {
+        "engine": "Apple",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 6.608780041,
+        "preparation_writes": 2,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "Apple"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.2838385
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.580052084
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.2766995
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.57773075
+          }
+        ]
+      },
+      {
+        "engine": "Apple",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 9.193339625,
+        "preparation_writes": 3,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "Apple"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.269677125
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.561483625
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.282924042
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.563096292
+          }
+        ]
+      },
+      {
+        "engine": "Apple",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 3.06508675,
+        "preparation_writes": 2,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "Apple"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.070093875
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.066114125
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.070952583
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.069559667
+          }
+        ]
+      },
+      {
+        "engine": "Apple",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 11.636611083,
+        "preparation_writes": 3,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "Apple"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.07323275
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "seconds": 0.067208375
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.084178584
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear",
+              "raw_wb": {
+                "apple_temperature": 0,
+                "apple_tint": 0,
+                "blue": 850,
+                "red": 1200
+              }
+            },
+            "seconds": 0.065617167
+          }
+        ]
+      },
+      {
+        "engine": "LibRawBilinear",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 9.9617585,
+        "preparation_writes": 2,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "LibRawBilinear"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.275547208
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.54438
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.262715042
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.546033083
+          }
+        ]
+      },
+      {
+        "engine": "LibRawBilinear",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 11.667275625,
+        "preparation_writes": 3,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "LibRawBilinear"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.276647208
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.567822917
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.269133958
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.5505315
+          }
+        ]
+      },
+      {
+        "engine": "LibRawBilinear",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 3.433325791,
+        "preparation_writes": 2,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "LibRawBilinear"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.070759333
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.069647958
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.066803167
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.067683875
+          }
+        ]
+      },
+      {
+        "engine": "LibRawBilinear",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 11.136707875,
+        "preparation_writes": 3,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "LibRawBilinear"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.067469167
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "seconds": 0.065406584
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.071518417
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.07055725
+          }
+        ]
+      },
+      {
+        "engine": "LibRawAhd",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 10.186519291,
+        "preparation_writes": 2,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "LibRawAhd"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.270943709
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.550585417
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.275048916
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.558102042
+          }
+        ]
+      },
+      {
+        "engine": "LibRawAhd",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 11.169678375,
+        "preparation_writes": 3,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "LibRawAhd"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.295516833
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.560873417
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.277023
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.551377292
+          }
+        ]
+      },
+      {
+        "engine": "LibRawAhd",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 4.627500084,
+        "preparation_writes": 2,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "LibRawAhd"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.072077125
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.067684458
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.072438417
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.070022959
+          }
+        ]
+      },
+      {
+        "engine": "LibRawAhd",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 10.576778083,
+        "preparation_writes": 3,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "LibRawAhd"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.064577625
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "seconds": 0.0751505
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.064734667
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.069283833
+          }
+        ]
+      },
+      {
+        "engine": "TrueRenderer",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 7.043966333,
+        "preparation_writes": 2,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "TrueRenderer"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.275964583
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.551444542
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.278809125
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.551647709
+          }
+        ]
+      },
+      {
+        "engine": "TrueRenderer",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 7.905149625,
+        "preparation_writes": 3,
+        "quality": "Full",
+        "request": {
+          "edge": 0,
+          "quality": "Full",
+          "raw_engine": "TrueRenderer"
+        },
+        "viewer_visits": [
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.278292083
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.557470542
+          },
+          {
+            "base": 1,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.275331542
+          },
+          {
+            "base": 0,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.554873958
+          }
+        ]
+      },
+      {
+        "engine": "TrueRenderer",
+        "images": 2,
+        "mode": "Foreground",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 2,
+        "preparation_seconds": 3.496026666,
+        "preparation_writes": 2,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "TrueRenderer"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.067020334
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.073593166
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.066305666
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.071597125
+          }
+        ]
+      },
+      {
+        "engine": "TrueRenderer",
+        "images": 2,
+        "mode": "Background",
+        "native_cache_fallbacks": 0,
+        "passed": true,
+        "preparation_decode_jobs": 3,
+        "preparation_seconds": 11.406673042,
+        "preparation_writes": 3,
+        "quality": "Standard",
+        "request": {
+          "edge": 0,
+          "quality": "Standard",
+          "raw_engine": "TrueRenderer"
+        },
+        "viewer_visits": [
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.071167541
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "seconds": 0.070074459
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 2700,
+            "pixels_identical": true,
+            "request": {
+              "edge": 2700,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.071259708
+          },
+          {
+            "base": 2,
+            "decode_jobs": 0,
+            "decoder": "Apple RAW 8 · full · TR-linear-v1",
+            "disk_hits": 2,
+            "edge": 0,
+            "pixels_identical": true,
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple",
+              "raw_wb": {
+                "apple_temperature": 4500,
+                "apple_tint": 8,
+                "blue": 1000,
+                "red": 1000
+              }
+            },
+            "seconds": 0.072661333
+          }
+        ]
+      }
+    ],
+    "evidence": "var/folder-preload-engines-2026-10-03/raw-matrix-final/folder-previews.json"
+  },
+  "native_navigation": {
+    "cases": 12,
+    "surface_comparisons": 120,
+    "same_quality_actions": 88,
+    "same_quality_new_raw_decodes": 0,
+    "physical_1to1_exact_cases": 12,
+    "rows": [
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Cpu",
+        "passed": true,
+        "preparation_seconds": 7.567028583,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 0,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 455.51541699999996,
+        "compute_statistics": {
+          "cpu_frames": 12,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11979408,
+          "wide_peak_memory_bytes": 35938224,
+          "wide_reprojections": 31
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/Apple-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 7.685947,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 355.363125,
+        "compute_statistics": {
+          "cpu_frames": 4,
+          "fallbacks": 4,
+          "gpu_frames": 8,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11979408,
+          "wide_peak_memory_bytes": 35938224,
+          "wide_reprojections": 20
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/Apple-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 3.899570042,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 6,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 0.14046205580234528,
+        "first_fitted_readback_ms": 142.4355,
+        "compute_statistics": {
+          "cpu_frames": 1,
+          "fallbacks": 1,
+          "gpu_frames": 9,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11979408,
+          "wide_peak_memory_bytes": 35938224,
+          "wide_reprojections": 2
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/Apple-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Cpu",
+        "passed": true,
+        "preparation_seconds": 5.487353584,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 0,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 421.921459,
+        "compute_statistics": {
+          "cpu_frames": 12,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11962440,
+          "wide_peak_memory_bytes": 35887320,
+          "wide_reprojections": 29
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/LibRawBilinear-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 5.520415666,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 355.220708,
+        "compute_statistics": {
+          "cpu_frames": 4,
+          "fallbacks": 4,
+          "gpu_frames": 8,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11962440,
+          "wide_peak_memory_bytes": 35887320,
+          "wide_reprojections": 19
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/LibRawBilinear-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 1.8558489169999999,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 6,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 0.13953357934951782,
+        "first_fitted_readback_ms": 142.321625,
+        "compute_statistics": {
+          "cpu_frames": 1,
+          "fallbacks": 1,
+          "gpu_frames": 9,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11201184,
+          "wide_peak_memory_bytes": 33603552,
+          "wide_reprojections": 2
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/LibRawBilinear-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Cpu",
+        "passed": true,
+        "preparation_seconds": 5.867437542,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 0,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 405.73025,
+        "compute_statistics": {
+          "cpu_frames": 12,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11962440,
+          "wide_peak_memory_bytes": 35887320,
+          "wide_reprojections": 29
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/LibRawAhd-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 5.965312875,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 354.955625,
+        "compute_statistics": {
+          "cpu_frames": 4,
+          "fallbacks": 4,
+          "gpu_frames": 8,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11962440,
+          "wide_peak_memory_bytes": 35887320,
+          "wide_reprojections": 21
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/LibRawAhd-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 2.29980625,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 6,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 0.13953357934951782,
+        "first_fitted_readback_ms": 141.9165,
+        "compute_statistics": {
+          "cpu_frames": 1,
+          "fallbacks": 1,
+          "gpu_frames": 9,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11201184,
+          "wide_peak_memory_bytes": 33603552,
+          "wide_reprojections": 2
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/LibRawAhd-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Cpu",
+        "passed": true,
+        "preparation_seconds": 5.850989458,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 0,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 422.407041,
+        "compute_statistics": {
+          "cpu_frames": 12,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11962440,
+          "wide_peak_memory_bytes": 35887320,
+          "wide_reprojections": 30
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/TrueRenderer-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 5.867505875,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 8,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 1.0,
+        "first_fitted_readback_ms": 371.87266600000004,
+        "compute_statistics": {
+          "cpu_frames": 4,
+          "fallbacks": 4,
+          "gpu_frames": 8,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11962440,
+          "wide_peak_memory_bytes": 35887320,
+          "wide_reprojections": 20
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/TrueRenderer-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "passed": true,
+        "preparation_seconds": 2.065040834,
+        "preparation_decode_jobs": 2,
+        "prepared_photos": 2,
+        "ram_discarded_before_navigation": true,
+        "actions": 10,
+        "same_quality_actions": 6,
+        "same_quality_new_raw_decodes": 0,
+        "physical_1to1_exact": true,
+        "maximum_surface_error_u8": 1,
+        "minimum_transition_draw_coverage": 0.13953357934951782,
+        "first_fitted_readback_ms": 142.617833,
+        "compute_statistics": {
+          "cpu_frames": 1,
+          "fallbacks": 1,
+          "gpu_frames": 9,
+          "last_fallback": "Livello oltre capability GPU",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 1,
+          "wide_peak_gpu_bytes": 11201184,
+          "wide_peak_memory_bytes": 33603552,
+          "wide_reprojections": 2
+        },
+        "evidence": "var/folder-preload-engines-2026-10-03/native-delivery/TrueRenderer-Standard-Gpu/reports/navigation-surface.json"
+      }
+    ],
+    "scope": "Full CPU/GPU and Standard GPU for all four engines. Fit, 300%, pan, quality changes and physical 1:1. Changes to a quality not prepared may develop new pixels and are excluded from the zero-decode claim."
+  },
+  "additional_native": {
+    "folder_loading": {
+      "passed": true,
+      "processed": 12,
+      "cache_clears": 3,
+      "evidence": "var/folder-preload-engines-2026-10-03/loading/reports/folder-loading.json"
+    },
+    "edit_continuity": {
+      "passed": true,
+      "adjustments": 40,
+      "redraws": 49,
+      "minimum_coverage": 1.0,
+      "returns_to_original": 0
+    },
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 24,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1761,
+        1174
+      ]
+    },
+    "png16_export": {
+      "file": "02_Paesaggio_analitico-export.png",
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "xpc": {
+      "passed": true,
+      "evidence": "var/folder-preload-engines-2026-10-03/xpc/reports/xpc-qualification-macos.json"
+    }
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "manifest_sha256": "477b53932432cac2c175babc9ad9ebfaff9d9ef519812be000717744277c626f",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "470a4fc659fb7f212bf5f4fac121830d95116092c4007c641c968326d4b9ad16",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "previous_bundle": "var/folder-preload-engines-2026-10-03/previous-distribution.app",
+    "delivered_bundle_identical": true
+  },
+  "limitations": [
+    "Cache disabled, quotas, I/O errors, source/recipe/quality changes or external eviction can require additional work. Native data for an arbitrarily large folder cannot be guaranteed inside a fixed quota.",
+    "Two D750 sources, macOS Apple M4/Metal. No new other-camera, Windows, physical-memory or colour qualification; no SF/R0-R4 gate closure.",
+    "Readback and CPU-delivery timings are descriptive functional samples; no controlled before/after speedup, physical monitor timing or p95/p99 claim. GPU capability fallbacks to CPU are recorded.",
+    "Preliminary campaigns remain under raw-matrix/ and native/. Only final delivery campaigns above are counted."
+  ]
+}

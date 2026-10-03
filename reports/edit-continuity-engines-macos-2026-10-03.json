@@ -1,0 +1,653 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "passed": true,
+  "complete": true,
+  "scope": "Editing continuity on the delivered macOS bundle using actual D750 RAW decoding: LibRaw bilinear, LibRaw AHD, TrueRenderer fp32 and Apple control, each in CPU/GPU and quick preview/output proof.",
+  "finding": "No remaining engine-specific flicker was reproduced. The existing fix retains the last complete presentation in the shared viewer after RAW decoding, and all four engines exercise it successfully.",
+  "changes": "No application code or bundle change required; this report and STATO.md record the additional native campaign.",
+  "setup": {
+    "camera": "Nikon D750",
+    "raw_sources": 1,
+    "isolated_cases": 16,
+    "quality": "Full",
+    "memory_mib": 2048,
+    "prefetch": "Disabled",
+    "source": "Private copies of an existing authorized project fixture; images, source hashes and catalogs remain under var.",
+    "controls": "40 rapid exposure/brightness drafts per case after a saved RGB edit. Final draft convergence, one committed gesture, viewer/grid screenshots and optional native PNG16 export.",
+    "provenance": "SHA-256-verified TRCACHE2 descriptors assert RAW format, requested engine, decoder recipe and D750 camera; proof additionally requires a native base-0 artifact."
+  },
+  "totals": {
+    "cases": 16,
+    "adjustments": 640,
+    "redraws": 1228,
+    "blank_frames": 0,
+    "returns_to_original": 0,
+    "surface_comparisons": 8,
+    "png16_exports": 8,
+    "sources_unchanged": true
+  },
+  "native_cases": [
+    {
+      "case": "LibRawBilinear-Gpu-preview",
+      "engine": "LibRawBilinear",
+      "compute": "Gpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 43,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Gpu-preview/reports"
+    },
+    {
+      "case": "LibRawBilinear-Gpu-proof",
+      "engine": "LibRawBilinear",
+      "compute": "Gpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 108,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 51,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1646,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6032,
+          4032
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Gpu-proof/reports"
+    },
+    {
+      "case": "LibRawBilinear-Cpu-preview",
+      "engine": "LibRawBilinear",
+      "compute": "Cpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 45,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Cpu-preview/reports"
+    },
+    {
+      "case": "LibRawBilinear-Cpu-proof",
+      "engine": "LibRawBilinear",
+      "compute": "Cpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 110,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1646,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6032,
+          4032
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Cpu-proof/reports"
+    },
+    {
+      "case": "LibRawAhd-Gpu-preview",
+      "engine": "LibRawAhd",
+      "compute": "Gpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 43,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Gpu-preview/reports"
+    },
+    {
+      "case": "LibRawAhd-Gpu-proof",
+      "engine": "LibRawAhd",
+      "compute": "Gpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 108,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 26,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1646,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6032,
+          4032
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Gpu-proof/reports"
+    },
+    {
+      "case": "LibRawAhd-Cpu-preview",
+      "engine": "LibRawAhd",
+      "compute": "Cpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 45,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Cpu-preview/reports"
+    },
+    {
+      "case": "LibRawAhd-Cpu-proof",
+      "engine": "LibRawAhd",
+      "compute": "Cpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 111,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1646,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6032,
+          4032
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Cpu-proof/reports"
+    },
+    {
+      "case": "TrueRenderer-Gpu-preview",
+      "engine": "TrueRenderer",
+      "compute": "Gpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 43,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Gpu-preview/reports"
+    },
+    {
+      "case": "TrueRenderer-Gpu-proof",
+      "engine": "TrueRenderer",
+      "compute": "Gpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 109,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 55,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1646,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6032,
+          4032
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Gpu-proof/reports"
+    },
+    {
+      "case": "TrueRenderer-Cpu-preview",
+      "engine": "TrueRenderer",
+      "compute": "Cpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 45,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Cpu-preview/reports"
+    },
+    {
+      "case": "TrueRenderer-Cpu-proof",
+      "engine": "TrueRenderer",
+      "compute": "Cpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750"
+      ],
+      "source_sizes": [
+        [
+          6032,
+          4032
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 112,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1646,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6032,
+          4032
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Cpu-proof/reports"
+    },
+    {
+      "case": "Apple-Gpu-preview",
+      "engine": "Apple",
+      "compute": "Gpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "Apple RAW 8 · full · TR-linear-v1"
+      ],
+      "source_sizes": [
+        [
+          6016,
+          4016
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 43,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/Apple-Gpu-preview/reports"
+    },
+    {
+      "case": "Apple-Gpu-proof",
+      "engine": "Apple",
+      "compute": "Gpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "Apple RAW 8 · full · TR-linear-v1"
+      ],
+      "source_sizes": [
+        [
+          6016,
+          4016
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 108,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 45,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1648,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/Apple-Gpu-proof/reports"
+    },
+    {
+      "case": "Apple-Cpu-preview",
+      "engine": "Apple",
+      "compute": "Cpu",
+      "mode": "quick_preview",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "Apple RAW 8 · full · TR-linear-v1"
+      ],
+      "source_sizes": [
+        [
+          6016,
+          4016
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 45,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": null,
+      "export": null,
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/Apple-Cpu-preview/reports"
+    },
+    {
+      "case": "Apple-Cpu-proof",
+      "engine": "Apple",
+      "compute": "Cpu",
+      "mode": "output_proof",
+      "passed": true,
+      "raw_provenance_verified": true,
+      "decoder": [
+        "Apple RAW 8 · full · TR-linear-v1"
+      ],
+      "source_sizes": [
+        [
+          6016,
+          4016
+        ]
+      ],
+      "adjustments": 40,
+      "redraws": 110,
+      "minimum_coverage": 1.0,
+      "blank_frames": 0,
+      "returns_to_original": 0,
+      "final_presentation_current": true,
+      "distinct_displayed_sources": 2,
+      "saved_generation": 2,
+      "surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1648,
+          1100
+        ]
+      },
+      "export": {
+        "passed": true,
+        "format": "PNG",
+        "bit_depth": 16,
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      "source_unchanged": true,
+      "evidence": "var/edit-continuity-engines-2026-10-03/Apple-Cpu-proof/reports"
+    }
+  ],
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "unchanged": true,
+    "manifest_sha256": "e47364f1e588a365d51b7394c73205951ec62946bfb6d770141a457eed587d6e",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "2c685b4d167b6158d1b10dc390c52aed3242817b5d35f6ed4eaf93d12635ed04",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+    },
+    "signature_verified": true,
+    "xpc_integration": "No bundle/decoder/broker changes. Prior integration report remains attached to these unchanged hashes; native RAW tests here use the packaged XPC services."
+  },
+  "evidence": "var/edit-continuity-engines-2026-10-03",
+  "harness_note": "The first case completed successfully; initial offline parsing treated cache data blocks as descriptors. Parsing was corrected and the existing successful native result was retained, without rerunning or discarding it.",
+  "limitations": [
+    "One D750 RAW on macOS, Full quality and Fit view. No new Windows, other-camera, Standard-quality, native-WB slider or engine-switch continuity qualification.",
+    "Draw-command coverage, not every physical monitor refresh. Rapid drafts are coalesced: each run displayed the baseline and the final edited frame. No live-update latency/p95 claim.",
+    "Surface comparisons verify the existing CPU/GPU presentation of each engine, not colour equivalence between RAW engines. No new colour, physical-memory or SF/R0-R4 gate qualification."
+  ]
+}

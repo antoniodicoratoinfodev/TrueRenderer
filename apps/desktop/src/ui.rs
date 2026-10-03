@@ -15,6 +15,7 @@ use tr_core::{
     provider::ImageLevels,
 };
 
+mod cache_actions;
 mod editing;
 mod explorer;
 mod export;
@@ -101,7 +102,8 @@ pub struct TrueRenderer {
     rebuild: VecDeque<Item>,
     rebuild_total: usize,
     folder_load: loading::FolderLoad,
-    cache_action: Option<std::sync::mpsc::Receiver<Result<(), String>>>,
+    loading_probe: loading::Probe,
+    cache_action: Option<cache_actions::CacheAction>,
     show_inspector: bool,
     inspector_pages: [InspectorPage; 2],
     show_filmstrip: bool,
@@ -234,6 +236,7 @@ impl TrueRenderer {
             rebuild: VecDeque::new(),
             rebuild_total: 0,
             folder_load: loading::FolderLoad::default(),
+            loading_probe: loading::Probe::default(),
             service,
             root,
             folder: folder.clone(),
@@ -488,8 +491,11 @@ impl TrueRenderer {
             .unwrap_or_else(|| self.service.cache.settings().quality)
     }
     fn preview_request(&self, item: &Item, edge: u32) -> PreviewRequest {
+        self.preview_request_for_mode(item, edge, self.editing.show_original)
+    }
+    fn preview_request_for_mode(&self, item: &Item, edge: u32, original: bool) -> PreviewRequest {
         PreviewRequest {
-            raw_wb: if self.editing.show_original {
+            raw_wb: if original {
                 Default::default()
             } else {
                 self.editing
@@ -545,11 +551,22 @@ impl TrueRenderer {
         );
     }
     fn ensure_image_priority(&mut self, item: &Item, edge: u32, priority: PreviewPriority) {
+        self.ensure_preview_request(item, self.preview_request(item, edge), priority);
+    }
+    fn ensure_preview_request(
+        &mut self,
+        item: &Item,
+        request: PreviewRequest,
+        priority: PreviewPriority,
+    ) {
+        if self.clearing_current_folder() {
+            return;
+        }
         self.watched_sources.insert(item.id.clone());
         if !item.approved {
             return;
         }
-        let key = self.image_key(item, edge);
+        let key = (item.id.clone(), request);
         if matches!(
             priority,
             PreviewPriority::Immediate | PreviewPriority::Refinement
@@ -619,6 +636,10 @@ impl TrueRenderer {
         });
     }
     fn background_demand(&mut self, ctx: &egui::Context) {
+        if self.clearing_current_folder() {
+            ctx.request_repaint_after(Duration::from_millis(50));
+            return;
+        }
         if self.folder_preparation_demand(ctx) {
             return;
         }
@@ -823,7 +844,7 @@ impl TrueRenderer {
         self.prune_edit_previews(pressure);
     }
     /// Revoke old work and presentation while preserving the catalogue and selection.
-    fn invalidate_raw_engine(&mut self) {
+    fn invalidate_previews(&mut self) {
         self.generation += 1;
         self.service
             .generation
@@ -846,6 +867,7 @@ impl TrueRenderer {
         self.sample_item_id = None;
         self.sample_level = None;
         self.sample_from_current_render = false;
+        self.editing.picker_areas = [None, None];
         self.errors.clear();
         // Filesystem scan IDs are independent of decoder generations.
     }
@@ -855,7 +877,7 @@ impl TrueRenderer {
             || old.quality != self.cache_settings.quality
             || old.folder_loading != self.cache_settings.folder_loading;
         if self.cache_settings.raw_engine != self.service.cache.settings().raw_engine {
-            self.invalidate_raw_engine();
+            self.invalidate_previews();
         }
         self.service.cache.configure(self.cache_settings.clone());
         if restart {
@@ -864,6 +886,9 @@ impl TrueRenderer {
         }
     }
     fn set_quality(&mut self, quality: PreviewQuality) {
+        if self.cache_action.is_some() {
+            return;
+        }
         let mut settings = self.service.cache.settings();
         if settings.quality == quality {
             return;
@@ -871,14 +896,14 @@ impl TrueRenderer {
         settings.quality = quality;
         self.quality_overrides.clear();
         self.errors.clear();
-        // The toolbar changes only quality, not other unapplied preferences.
+        // Both quality selectors change only quality, not other unapplied preferences.
         self.cache_settings.quality = quality;
         self.service.cache.configure(settings.clone());
         self.begin_folder_loading();
         self.start_folder_preparation(true);
         let data = self.settings_data.clone();
         let (tx, rx) = std::sync::mpsc::sync_channel(1);
-        self.cache_action = Some(rx);
+        self.cache_action = Some(cache_actions::CacheAction::new(rx));
         self.status = "Qualità aggiornata; override per foto rimossi".into();
         let cache = self.service.cache.clone();
         std::thread::spawn(move || {
@@ -1122,12 +1147,8 @@ impl TrueRenderer {
                         }
                     }
                     self.pending_images.remove(&key);
-                    if self.folder_load.request == Some(request)
-                        && self.rebuild.front().is_some_and(|i| i.id == id)
-                    {
-                        self.rebuild.pop_front();
-                        self.folder_load.errors += usize::from(result.is_err());
-                    }
+                    // Folder completion is checked against the current per-photo
+                    // recipe by its consumer, after accepted writes finish.
                     match *result {
                         Ok(decoded) => {
                             self.source_status.remove(&id);
@@ -1385,7 +1406,8 @@ impl TrueRenderer {
     }
     fn toolbar(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
-        let compact = ui.available_width() < 1000.;
+        let compact = ui.available_width() < 1320.;
+        let narrow = ui.available_width() < 760.;
         let viewer = self.state.view != ViewMode::Grid;
         egui::Panel::top("toolbar")
             .frame(
@@ -1430,12 +1452,19 @@ impl TrueRenderer {
                         ui.add_space(8.);
                         self.view_choices(ui);
                     }
-                    self.folder_loading_button(ui, compact);
+                    if !narrow {
+                        self.folder_loading_button(ui, compact);
+                    }
                     if !compact {
                         self.engine_indicator(ui);
+                        self.global_quality_control(ui);
                     }
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.menu_button(lang.text("Menu"), |ui| {
+                        style::toolbar_controls(ui);
+                        egui::containers::menu::MenuButton::from_button(style::toolbar_button(
+                            lang.text("Menu"),
+                        ))
+                        .ui(ui, |ui| {
                             ui.set_min_width(200.);
                             ui.menu_button(lang.text("Lingua"), |ui| {
                                 self.language_choices(ui);
@@ -1465,10 +1494,7 @@ impl TrueRenderer {
                             }
                         });
                         if ui
-                            .add(
-                                egui::Button::new(lang.text("Impostazioni"))
-                                    .frame_when_inactive(false),
-                            )
+                            .add(style::toolbar_button(lang.text("Impostazioni")))
                             .clicked()
                         {
                             self.open_preferences(SettingsPage::Previews);
@@ -1481,6 +1507,20 @@ impl TrueRenderer {
                 if compact {
                     ui.horizontal(|ui| {
                         self.engine_indicator(ui);
+                        self.global_quality_control(ui);
+                        if !narrow {
+                            ui.with_layout(
+                                egui::Layout::right_to_left(egui::Align::Center),
+                                |ui| {
+                                    self.search_box(ui, ui.available_width().min(320.));
+                                },
+                            );
+                        }
+                    });
+                }
+                if narrow {
+                    ui.horizontal(|ui| {
+                        self.folder_loading_button(ui, true);
                         self.search_box(ui, ui.available_width());
                     });
                 }
@@ -1507,7 +1547,21 @@ impl TrueRenderer {
             tr_core::decoder::RawEngine::LibRawAhd => "LibRaw AHD",
             tr_core::decoder::RawEngine::TrueRenderer => "TrueRenderer fp32",
         };
-        ui.add_sized([150., 28.], egui::Label::new(RichText::new(format!("RAW: {name}")).small().color(MUTED)).truncate())
+        egui::Frame::new()
+            .fill(style::SURFACE)
+            .stroke(egui::Stroke::new(1., style::LINE))
+            .corner_radius(5)
+            .inner_margin(egui::Margin::symmetric(10, 4))
+            .show(ui, |ui| {
+                ui.spacing_mut().interact_size.y = 18.;
+                ui.horizontal(|ui| {
+                    ui.set_height(18.);
+                    ui.spacing_mut().item_spacing.x = 7.;
+                    ui.label(RichText::new("RAW").size(11.).color(MUTED));
+                    ui.label(RichText::new(name).size(13.).color(TEXT));
+                });
+            })
+            .response
             .on_hover_text(format!("{}: {}\n{}", lang.text("Motore RAW"), lang.text(engine.label()),
                 if saved.is_some() {lang.text("Motore salvato nella ricetta della foto.")}
                 else {lang.text("Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni.")}));
@@ -1910,11 +1964,11 @@ impl TrueRenderer {
                 .get(&item.id)
                 .and_then(|entry| entry.draft.as_ref())
                 .is_some_and(|recipe| !recipe.is_neutral());
-            let shown = self
-                .edited_thumbnail(&item.id, &digest, source.clone())
-                .unwrap_or_else(|| source.clone());
+            let ready = self.edited_thumbnail(&item.id, &digest, source.clone());
+            let pending = ready.is_none() && edited && !self.editing.show_original;
+            let shown = ready.unwrap_or_else(|| source.clone());
             let rendered_edit = shown.id() != source.id();
-            let histogram = if rendered_edit {
+            let histogram = if rendered_edit || pending {
                 self.edited_thumbnail_histogram(source.id())
                     .unwrap_or(source_histogram)
             } else {
@@ -1927,13 +1981,21 @@ impl TrueRenderer {
                     / cached_info.source_width.max(1) as f32;
                 let size = Vec2::new(width, height.min(220.));
                 let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
-                tr_render::presenter::fitted(
-                    &mut self.presenter,
-                    ui,
-                    format!("inspector:{}", item.id),
-                    &shown,
-                    rect,
+                let lane = format!(
+                    "inspector:{}:{}:{}:{:?}:{}",
+                    item.id, item.digest, digest, key.1, self.editing.show_original
                 );
+                if pending {
+                    tr_render::presenter::fitted_pending(
+                        &mut self.presenter,
+                        ui,
+                        &lane,
+                        &shown,
+                        rect,
+                    );
+                } else {
+                    tr_render::presenter::fitted(&mut self.presenter, ui, lane, &shown, rect);
+                }
                 ui.add_space(4.);
             };
             if page == InspectorPage::Information && self.state.view == ViewMode::Grid && !short {
@@ -1954,6 +2016,9 @@ impl TrueRenderer {
                     "Original development histogram · level {}",
                     source.base_level()
                 )
+            } else if pending {
+                lang.text("Istogramma precedente · aggiornamento regolazioni…")
+                    .into()
             } else if edited && rendered_edit {
                 localized_format!(
                     lang,
@@ -1983,6 +2048,8 @@ impl TrueRenderer {
                     "Original · level {}",
                     source.base_level()
                 )
+            } else if pending {
+                lang.text("In calcolo").into()
             } else if edited && rendered_edit {
                 localized_format!(
                     lang,
@@ -2331,13 +2398,17 @@ impl TrueRenderer {
             let rendered_edit = shown
                 .as_ref()
                 .is_some_and(|image| image.id() != source.id());
-            tr_render::presenter::fitted(
-                &mut self.presenter,
-                ui,
-                format!("thumbnail:{}:{show_name}", item.id),
-                &shown.unwrap_or(source),
-                area,
+            let pending = shown.is_none() && has_edit && !self.editing.show_original;
+            let shown = shown.unwrap_or(source);
+            let lane = format!(
+                "thumbnail:{}:{}:{}:{:?}:{}:{show_name}",
+                item.id, item.digest, digest, key.1, self.editing.show_original
             );
+            if pending {
+                tr_render::presenter::fitted_pending(&mut self.presenter, ui, &lane, &shown, area);
+            } else {
+                tr_render::presenter::fitted(&mut self.presenter, ui, lane, &shown, area);
+            }
             if has_edit {
                 let label = if edit_error.is_some() {
                     lang.text("Errore")
@@ -2477,7 +2548,6 @@ impl TrueRenderer {
     }
     fn viewer_controls(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
-        let compact = ui.available_width() < 620.;
         ui.horizontal_wrapped(|ui| {
             ui.add_enabled_ui(self.state.current_item().is_some(), |ui| {
                 if ui
@@ -2530,36 +2600,37 @@ impl TrueRenderer {
                         .set_zoom(self.state.transform.zoom.unwrap_or(1.) * 1.25);
                 }
             });
-            if !compact {
-                ui.separator();
-                self.quality_controls(ui);
-            }
+            ui.separator();
+            self.photo_quality_control(ui);
         });
-        if compact {
-            ui.horizontal(|ui| self.quality_controls(ui));
-        }
     }
 
-    fn quality_controls(&mut self, ui: &mut egui::Ui) {
+    /// One applied value and one action for the toolbar and preferences window.
+    fn global_quality_control(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         let mut global = self.service.cache.settings().quality;
-        let quality_name = |quality| match quality {
-            PreviewQuality::Standard => "Standard",
-            PreviewQuality::Full => lang.text("Piena"),
-        };
         ui.add_enabled_ui(self.cache_action.is_none(), |ui| {
+            style::toolbar_controls(ui);
             egui::ComboBox::from_id_salt("global-quality")
-                .width(132.)
+                .width(174.)
+                .truncate()
                 .selected_text(format!(
-                    "{}: {}",
-                    lang.text("Globale"),
-                    quality_name(global)
+                    "{} · {}",
+                    lang.text("Anteprime"),
+                    match global {
+                        PreviewQuality::Standard => "Standard",
+                        PreviewQuality::Full => lang.text("Piena"),
+                    }
                 ))
                 .show_ui(ui, |ui| {
+                    ui.set_min_width(244.);
+                    ui.set_max_width(280.);
+                    ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
                     ui.label(lang.text("Qualità globale delle anteprime"));
                     ui.selectable_value(&mut global, PreviewQuality::Standard, "Standard");
                     ui.selectable_value(&mut global, PreviewQuality::Full, lang.text("Piena"));
                     ui.separator();
+                    ui.label(lang.text("La qualità viene applicata e salvata subito."));
                     ui.label(lang.text("Cambia tutte le foto e azzera le eccezioni di sessione."));
                 })
                 .response
@@ -2568,6 +2639,15 @@ impl TrueRenderer {
                 );
         });
         self.set_quality(global);
+    }
+
+    fn photo_quality_control(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        let global = self.service.cache.settings().quality;
+        let quality_name = |quality| match quality {
+            PreviewQuality::Standard => "Standard",
+            PreviewQuality::Full => lang.text("Piena"),
+        };
         let item = self.state.current_item().cloned();
         let effective = item.as_ref().map_or(global, |item| self.quality(item));
         ui.add_enabled_ui(item.is_some(), |ui| {
@@ -2766,47 +2846,66 @@ impl TrueRenderer {
                 .and_then(|e| e.draft.as_ref())
                 .is_some_and(|r| !r.is_neutral());
             let proof = self.output_proof_for(&item.id) && !self.editing.show_original;
-            if proof {
-                ui.label(lang.text("Anteprima export sRGB16 · PNG/TIFF · dimensioni native"));
-                if image.is_none() {
-                    ui.spinner();
-                    ui.label(lang.text("Preparazione anteprima export dalla sorgente nativa…"));
-                    if let Some(error) = self.edited_preview_error(&item.id) {
-                        ui.colored_label(AMBER, error);
-                    }
-                    return;
+            let pending = image.is_none() && (edited || proof);
+            // Stable across RGB drafts; incompatible sources and display modes
+            // have separate lanes and can never borrow these retained pixels.
+            let lane = format!(
+                "view:{id}:{}:{}:{}:{:?}:{:?}:{:?}:{}:{proof}",
+                item.id,
+                item.digest,
+                digest,
+                key.1.raw_engine,
+                key.1.raw_wb,
+                source_size,
+                self.editing.show_original
+            );
+            let updating = pending
+                || image
+                    .as_ref()
+                    .is_some_and(|image| !self.presenter.source_is_current(&lane, image.id()));
+            let description = if proof {
+                if updating {
+                    lang.text("Preparazione anteprima export dalla sorgente nativa…")
+                } else {
+                    lang.text("Anteprima export sRGB16 · PNG/TIFF · dimensioni native")
                 }
             } else if edited {
                 if self.editing.show_original {
-                    ui.label(lang.text("Prima · sviluppo originale"));
-                } else if image.is_none() {
-                    ui.label(lang.text("Calcolo regolazioni · originale provvisorio"));
+                    lang.text("Prima · sviluppo originale")
+                } else if updating {
+                    lang.text("Aggiornamento regolazioni…")
                 } else if image.as_ref().is_some_and(|image| image.base_level() == 0) {
-                    ui.label(lang.text("Resa finale alla risoluzione nativa"));
+                    lang.text("Resa finale alla risoluzione nativa")
                 } else {
-                    ui.label(lang.text("Anteprima modificata provvisoria · export nativo"));
+                    lang.text("Anteprima modificata provvisoria · export nativo")
                 }
-            }
+            } else if updating && !source.scientific() {
+                lang.text("Aggiornamento regolazioni…")
+            } else {
+                ""
+            };
+            // A fixed single status row prevents fit/centering from jumping as
+            // the first edit starts or an asynchronous proof finishes.
+            ui.add_sized(
+                [
+                    ui.available_width(),
+                    ui.text_style_height(&egui::TextStyle::Body),
+                ],
+                egui::Label::new(description).truncate(),
+            );
             if let Some(error) = self.edited_preview_error(&item.id) {
                 ui.colored_label(AMBER, error);
             }
             let sample_from_current_render =
                 !source.scientific() && !self.editing.show_original && !proof && image.is_some();
             let image = image.unwrap_or(source);
-            let lane = format!(
-                "view:{id}:{}:{}:{:?}:{:?}:{}",
-                item.id,
-                digest,
-                key.1.raw_engine,
-                source_size,
-                image.id()
-            );
             let (response, sample) = tr_render::viewport(
                 ui,
                 &mut self.presenter,
                 &image,
                 &mut self.state.transform,
                 &lane,
+                pending,
             );
             self.image_focus_ids.insert(response.id);
             if let Some(sample) = &sample {
@@ -3022,64 +3121,6 @@ impl TrueRenderer {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         ctx.request_repaint_after(Duration::from_millis(50));
-    }
-    fn poll_cache_action(&mut self, ctx: &egui::Context) {
-        if let Some(rx) = &self.cache_action {
-            match rx.try_recv() {
-                Ok(result) => {
-                    self.cache_action = None;
-                    self.status = match result {
-                        Ok(()) => "Impostazioni/cache aggiornate".into(),
-                        Err(e) => e,
-                    };
-                }
-                Err(std::sync::mpsc::TryRecvError::Disconnected) => {
-                    self.cache_action = None;
-                    self.status = "Operazione cache interrotta".into();
-                }
-                _ => {}
-            }
-            ctx.request_repaint_after(Duration::from_millis(50));
-        }
-    }
-    /// Full settings-button action, also used by native and headless regression
-    /// checks. Cache maintenance has its own receiver; `scanning` only describes
-    /// a real pending Request::Scan and must survive maintenance completion.
-    fn start_cache_action(&mut self, save: bool) {
-        if save && self.cache_settings.quality != self.service.cache.settings().quality {
-            self.quality_overrides.clear();
-        }
-        self.errors.clear();
-        if save {
-            self.apply_settings();
-        }
-        let cache = self.service.cache.clone();
-        let folder = self.folder.clone();
-        let data = self.settings_data.clone();
-        let (tx, rx) = std::sync::mpsc::sync_channel(1);
-        self.cache_action = Some(rx);
-        std::thread::spawn(move || {
-            let result = (|| -> anyhow::Result<()> {
-                if save {
-                    cache.save_current(&data)?;
-                }
-                let start = Instant::now();
-                loop {
-                    match cache.maintain(&folder, !save) {
-                        Err(e)
-                            if e.downcast_ref::<std::io::Error>()
-                                .is_some_and(|e| e.kind() == std::io::ErrorKind::WouldBlock)
-                                && start.elapsed() < Duration::from_secs(3) =>
-                        {
-                            std::thread::sleep(Duration::from_millis(25))
-                        }
-                        result => return result,
-                    }
-                }
-            })()
-            .map_err(|e| format!("Cache: {e:#}"));
-            let _ = tx.send(result);
-        });
     }
     fn source_change_smoke(&mut self, ctx: &egui::Context) {
         let finish = |passed: bool, stage: u8, generation: u64| {
@@ -3525,9 +3566,16 @@ impl TrueRenderer {
     }
 }
 impl eframe::App for TrueRenderer {
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let lang = self.cache_settings.language;
         let ctx = ui.ctx().clone();
+        // A paused loading modal has no image compute to drive readback
+        // callbacks. Native diagnostic captures must still finish in this state.
+        if self.smoke
+            && let Some(gpu) = frame.wgpu_render_state()
+        {
+            let _ = gpu.device.poll(eframe::wgpu::PollType::Poll);
+        }
         self.frame_number += 1;
         self.watched_sources.clear();
         self.demand.clear();
@@ -3696,6 +3744,12 @@ use crate::size_units::human_bytes;
 
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod inspector_tests;
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod toolbar_tests;
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod viewer_tests;
 
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod settings_regressions {
@@ -4718,7 +4772,7 @@ mod settings_regressions {
         );
     }
 
-    fn chrome_frame(
+    pub(super) fn chrome_frame(
         app: &mut TrueRenderer,
         ctx: &egui::Context,
         size: Vec2,
@@ -4792,13 +4846,13 @@ mod settings_regressions {
                     rect(lang.text("Impostazioni"))
                 );
                 for label in [
-                    format!("{}: Standard", lang.text("Globale")),
+                    format!("{} · Standard", lang.text("Anteprime")),
                     format!("{}: Standard", lang.text("Solo questa foto")),
                     "1:1".to_owned(),
                     if cfg!(target_os = "macos") {
-                        "RAW: Apple RAW"
+                        "Apple RAW"
                     } else {
-                        "RAW: LibRaw bilinear"
+                        "LibRaw bilinear"
                     }
                     .to_owned(),
                 ] {

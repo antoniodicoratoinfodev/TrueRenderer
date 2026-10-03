@@ -1,0 +1,166 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "scope": "Folder preparation and fitted-viewer cache reuse; separate diagnostic findings are listed explicitly.",
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "7e4f814f4221ddbf8b796d80d49a0b43fd9ad56c2d09ed303176eae863f09676",
+    "Contents/MacOS/tr-worker": "3728e428522f19706c7a1da8edaf74252ad8000dd9acaf018fa757c0dfee8dbc",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "1605d885d68d81dca8e8f1c1f97ff7c7085f2cd08fe9251e3a2d57bea9a7ed4b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "386fa4177377bf13958ae24e07dc0f74bab83ad5ddd4c7ba7f33c09d534093ef"
+  },
+  "changes": [
+    "Folder opening prepares the fitted viewer and its thumbnail mip tail using the physical window size, in both foreground and background. The target stays fixed during the run.",
+    "Optional writer queue admits up to one quarter of the live memory budget, capped at 512 MiB, instead of dropping every viewer larger than 64 MiB. Global pixel and scratch credits remain enforced.",
+    "Folder preparation waits asynchronously for accepted writes before advancing; completion includes the viewer representation and queued persistence. Cache quotas and disabled/read-only/unavailable storage still apply.",
+    "Native diagnostic captures explicitly poll GPU callbacks while a loading modal is paused. The loading smoke waits for pending writes; invalid diagnostic input clears an earlier success."
+  ],
+  "verification": {
+    "rust_ordinary_passed": 249,
+    "rust_explicit_integrations_passed": 14,
+    "private_camera_tests_skipped_by_default_suite": 3,
+    "new_regressions": 4,
+    "python_tests_passed": 2,
+    "protocol_checks_passed": 8,
+    "resampling_signal_cases": 24,
+    "native_sampling_passed": true,
+    "fmt_clippy_debug_release_passed": true,
+    "xpc_signature_two_services_timeout_recovery_fault_rejection_passed": true,
+    "missing_input_invalidates_success": true
+  },
+  "native_ui": [
+    {
+      "language": "it",
+      "quality": "Full",
+      "processed": 12,
+      "total": 12,
+      "errors": 0,
+      "foreground_and_background": true,
+      "cache_clears": 3,
+      "screenshots": 3,
+      "evidence": "var/folder-refinement-2026-10-03/gui-it-release/reports/folder-loading.json"
+    },
+    {
+      "language": "en",
+      "quality": "Standard",
+      "processed": 12,
+      "total": 12,
+      "errors": 0,
+      "foreground_and_background": true,
+      "cache_clears": 3,
+      "screenshots": 3,
+      "evidence": "var/folder-refinement-2026-10-03/gui-en/reports/folder-loading.json"
+    }
+  ],
+  "raw_folder_loading": [
+    {
+      "quality": "Full",
+      "mode": "Foreground",
+      "request": {
+        "edge": 2944,
+        "quality": "Full",
+        "raw_engine": "Apple"
+      },
+      "images": 30,
+      "preparation_seconds": 72.95303575,
+      "preparation_decode_jobs": 32,
+      "preparation_writes": 30,
+      "passed": true,
+      "reopened_viewers": 30,
+      "new_raw_decodes_on_reopen": 0,
+      "identical_pixel_chains": 30,
+      "reopen_median_ms": 214.326167,
+      "reopen_maximum_ms": 226.572958
+    },
+    {
+      "quality": "Full",
+      "mode": "Background",
+      "request": {
+        "edge": 2944,
+        "quality": "Full",
+        "raw_engine": "Apple"
+      },
+      "images": 30,
+      "preparation_seconds": 70.717683625,
+      "preparation_decode_jobs": 32,
+      "preparation_writes": 31,
+      "passed": true,
+      "reopened_viewers": 30,
+      "new_raw_decodes_on_reopen": 0,
+      "identical_pixel_chains": 30,
+      "reopen_median_ms": 213.94924999999998,
+      "reopen_maximum_ms": 236.374
+    },
+    {
+      "quality": "Standard",
+      "mode": "Foreground",
+      "request": {
+        "edge": 2944,
+        "quality": "Standard",
+        "raw_engine": "Apple"
+      },
+      "images": 30,
+      "preparation_seconds": 58.229389541,
+      "preparation_decode_jobs": 30,
+      "preparation_writes": 30,
+      "passed": true,
+      "reopened_viewers": 30,
+      "new_raw_decodes_on_reopen": 0,
+      "identical_pixel_chains": 30,
+      "reopen_median_ms": 71.3513755,
+      "reopen_maximum_ms": 85.385791
+    },
+    {
+      "quality": "Standard",
+      "mode": "Background",
+      "request": {
+        "edge": 2944,
+        "quality": "Standard",
+        "raw_engine": "Apple"
+      },
+      "images": 30,
+      "preparation_seconds": 65.578310125,
+      "preparation_decode_jobs": 31,
+      "preparation_writes": 31,
+      "passed": true,
+      "reopened_viewers": 30,
+      "new_raw_decodes_on_reopen": 0,
+      "identical_pixel_chains": 30,
+      "reopen_median_ms": 70.4843545,
+      "reopen_maximum_ms": 86.80212499999999
+    }
+  ],
+  "ancillary_navigation": {
+    "passed": false,
+    "same_failure_on_previous_bundle": true,
+    "configuration": "Apple / Full / GPU / 2 GiB / two private D750 copies",
+    "action": "zoom-300",
+    "step": 3,
+    "error": "Same-source transition produced an empty image draw",
+    "current_evidence": "var/large-navigation-hdj5gf8f/report.json",
+    "previous_evidence": "var/large-navigation-qo02k1j5/report.json",
+    "scope": "Pre-existing zoom continuity finding, separate from folder preparation and fitted-viewer reopening. No navigation or 1:1 qualification claimed."
+  },
+  "evidence": {
+    "root": "var/folder-refinement-2026-10-03",
+    "suite": "var/verify-omVnAA0O",
+    "negative_test": "var/folder-refinement-2026-10-03/before-test.log",
+    "xpc": "var/folder-refinement-2026-10-03/gui-en/reports/xpc-qualification-macos.json",
+    "raw_first_bundle": "var/folder-refinement-2026-10-03/folder-previews-first-bundle.json",
+    "raw_final_bundle": "var/folder-refinement-2026-10-03/folder-previews.json",
+    "previous_distribution": "var/folder-refinement-2026-10-03/previous-distribution.app"
+  },
+  "limitations": [
+    "RAW folder measurements use Apple RAW on 30 D750 files at 1440x900 points, 2x scale, 2 GiB RAM and the default 4 GiB per-folder disk quota. Other engines, cameras and native Windows were not repeated in this campaign.",
+    "Viewer timings end at CPU artifact availability and exclude display presentation and rendering. One sequential functional campaign per build, without OS-cache flushing or p95/p99 qualification.",
+    "100% does not guarantee all images remain resident, native 1:1 detail, GPU upload completion or persistence beyond disabled cache, quotas, I/O failures and external eviction.",
+    "The first native popup smoke timed out waiting for GPU capture callbacks; preserved under gui/. The corrected diagnostic passed. CUA returned after about nine minutes and launched a separate test instance; no clicks were performed, and only that test instance was terminated.",
+    "No SF/R0-R4, physical-memory, colour, display or release gate closed. Originals and the user catalogue remain outside the test roots."
+  ],
+  "originals_unchanged": 30,
+  "private_copies_unchanged": true,
+  "delivered_bundle_identical": true
+}

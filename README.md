@@ -34,6 +34,13 @@ Place two images side by side with synchronized navigation to compare focus, exp
 
 RAW development always involves interpretation. TrueRenderer makes that choice explicit with Apple RAW on macOS, LibRaw bilinear, LibRaw AHD and the experimental TrueRenderer fp32 engine for supported cameras.
 
+The toolbar shows the active RAW engine in a compact badge. Next to it,
+**Previews → Standard / Full** changes global preview quality in every view.
+The same selector in **Settings → Previews and RAW** stays synchronized:
+changes apply and save immediately, leaving other unapplied preferences intact.
+Changing global quality clears session overrides; **This photo only** beside
+the zoom controls remains available for individual photographs.
+
 ### Develop a photograph
 
 The **Develop** tab has reversible exposure, brightness, contrast,
@@ -192,7 +199,9 @@ Interface size can be set to 100%, 150% or 200% in **Settings → General → Vi
 
 Original files are read-only. Previews use a separate cache, while ratings, keywords and backups remain durable library data.
 
-In **Settings → Cache and data**, one space limit applies either per folder or across all folders known to the current library. The total limit is optional. You can disable unused-preview expiry or enable periodic cleanup of folders that are not open; periodic cleanup runs every minute while the app is running and uses the same quota and expiry. **Clean known caches now** applies the saved policy, while **Clear folder cache** clears only the current folder. The summary reports the last cleanup measurement and incomplete checks. Previously visited folders become known when reopened with this version; disconnected folders are retried. No cleanup service runs after the app closes.
+Opening a folder prepares RAW development and the image levels for each photo, using its saved engine and white balance. **Full quality includes native detail**; Standard keeps its existing resolution limit. Choose background loading or a foreground popup in **Settings → Previews and RAW**. Completion waits for accepted cache writes, so subsequent Fit and zoom views can read prepared pixels instead of developing the RAW again. Memory and disk limits still apply: viewing previews take priority over optional native detail, and the popup reports when native detail cannot be retained. Cache reads, uploads and viewport rendering may still show a refinement message; changing quality or RAW settings can require new preparation.
+
+In **Settings → Cache and data**, one space limit applies either per folder or across all folders known to the current library. The total limit is optional. You can disable unused-preview expiry or enable periodic cleanup of folders that are not open; periodic cleanup runs every minute while the app is running and uses the same quota and expiry. **Clean known caches now** applies the saved policy, while **Clear folder cache** clears only the current folder. Clearing also removes its resident previews, cancels earlier image work and restarts thumbnail and viewing-preview preparation after deletion, in foreground or background. The command is available in the folder-loading popup too. Fresh previews can repopulate the disk cache as loading resumes; selection, zoom and saved edits are preserved. The summary reports the last cleanup measurement and incomplete checks. Previously visited folders become known when reopened with this version; disconnected folders are retried. No cleanup service runs after the app closes.
 
 Cache and memory limits pair an editable value with a full-width slider. Sizes use decimal B/kB/MB/GB; MB fields also accept a decimal comma.
 

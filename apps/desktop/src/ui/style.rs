@@ -83,6 +83,20 @@ pub fn tab_button(ui: &mut egui::Ui, selected: bool, label: &str) -> egui::Respo
     )
 }
 
+/// Matching top-level actions, whether they open a menu or a window.
+pub fn toolbar_button(label: &str) -> egui::Button<'_> {
+    egui::Button::new(label)
+        .min_size(egui::vec2(0., 28.))
+        .corner_radius(5)
+}
+
+/// Quiet chrome surfaces; hover, focus and active feedback stay native to egui.
+pub fn toolbar_controls(ui: &mut egui::Ui) {
+    let widgets = &mut ui.visuals_mut().widgets;
+    widgets.inactive.weak_bg_fill = SURFACE;
+    widgets.inactive.bg_stroke = egui::Stroke::new(1., LINE);
+}
+
 #[derive(Clone, Copy)]
 pub enum Icon {
     Back,

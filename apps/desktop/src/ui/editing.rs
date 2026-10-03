@@ -146,6 +146,7 @@ impl EditEntry {
 }
 
 type PreviewOutcome = (
+    u64,
     String,
     u64,
     u32,
@@ -154,7 +155,12 @@ type PreviewOutcome = (
     Result<Arc<ImageLevels>, String>,
 );
 type ProofCapture = (Vec<u8>, [u32; 2], [f32; 4], &'static str);
+
+mod continuity_probe;
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod continuity_tests;
 type ThumbnailOutcome = (
+    u64,
     String,
     String,
     u64,
@@ -176,6 +182,7 @@ struct EditPreview {
     touched: u64,
 }
 pub(super) struct EditingUi {
+    continuity: continuity_probe::Probe,
     clipboard: transfer::Clipboard,
     wb_pending: bool,
     pub(super) wb_cancel: Option<Arc<std::sync::atomic::AtomicBool>>,
@@ -235,6 +242,7 @@ impl Default for EditingUi {
         let (tx, rx) = std::sync::mpsc::channel();
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
+            continuity: Default::default(),
             clipboard: transfer::Clipboard::default(),
             wb_pending: false,
             wb_cancel: None,
@@ -443,6 +451,9 @@ impl TrueRenderer {
         let Some(item) = target else {
             return;
         };
+        if self.editing.continuity.active() && !self.edit_continuity_tick(&item) {
+            return;
+        }
         match self.smoke_stage {
             0 if !self.scanning => {
                 self.editing.smoke_source_digest = tr_platform::snapshot(&item.path)
@@ -594,6 +605,12 @@ impl TrueRenderer {
                         .is_some_and(|start| start.elapsed() > Duration::from_secs(1))
                     && self.presenter.is_idle()
                 {
+                    if args.iter().any(|a| a == "--edit-continuity-smoke")
+                        && !self.editing.continuity.done()
+                    {
+                        self.edit_continuity_tick(&item);
+                        return;
+                    }
                     if proof_smoke {
                         let image = &self.editing.previews[&item.id].image;
                         let Some(capture) = self
@@ -781,6 +798,28 @@ impl TrueRenderer {
         }
         self.editing.preview_errors.remove(id);
     }
+    fn supersede_edit_preview_for(&mut self, id: &str) {
+        if let Some(preview) = self.editing.previews.remove(id) {
+            self.presenter
+                .supersede_sources(&HashSet::from([preview.image.id()]));
+        }
+        self.editing.preview_errors.remove(id);
+    }
+    fn supersede_edit_thumbnails(&mut self, id: &str) {
+        // The small histogram/image remains bounded by the existing thumbnail
+        // cache. It can describe the last preview while the replacement runs.
+        let sources = self
+            .editing
+            .thumbnails
+            .values()
+            .filter(|preview| preview.id == id)
+            .map(|preview| preview.image.id())
+            .collect();
+        self.presenter.supersede_sources(&sources);
+        self.editing
+            .thumbnail_errors
+            .retain(|_, (photo, _, _)| photo != id);
+    }
     pub(super) fn clear_edit_thumbnails(&mut self, id: &str) {
         self.editing
             .thumbnail_errors
@@ -851,14 +890,14 @@ impl TrueRenderer {
         }
     }
     pub(super) fn edit_result(&mut self, id: String, result: Result<LoadedEdit, String>) {
-        self.clear_edit_thumbnails(&id);
+        let previous = self.editing.entries.get(&id).and_then(|e| e.draft.clone());
         if self.sample_item_id.as_deref() == Some(id.as_str()) {
             self.sample = None;
             self.sample_item_id = None;
             self.sample_level = None;
             self.sample_from_current_render = false;
         }
-        let entry = self.editing.entries.entry(id).or_default();
+        let entry = self.editing.entries.entry(id.clone()).or_default();
         entry.loading = false;
         entry.pending = false;
         match result {
@@ -873,6 +912,12 @@ impl TrueRenderer {
                 entry.error = Some(error.clone());
                 self.status = format!("Sviluppo non salvato: {error}");
             }
+        }
+        // A save acknowledgement of the same draft must not invalidate its
+        // preview. History/reloads do replace the draft and revoke older work.
+        if entry.draft != previous {
+            self.supersede_edit_preview_for(&id);
+            self.supersede_edit_thumbnails(&id);
         }
     }
     pub(super) fn commit_edit(&mut self, id: &str) {
@@ -966,8 +1011,8 @@ impl TrueRenderer {
         self.sample_item_id = None;
         self.sample_level = None;
         self.sample_from_current_render = false;
-        self.clear_edit_preview();
-        self.clear_edit_thumbnails(id);
+        self.supersede_edit_preview_for(id);
+        self.supersede_edit_thumbnails(id);
     }
 
     fn step_edit(&mut self, id: &str, undo: bool) {
@@ -1616,16 +1661,19 @@ impl TrueRenderer {
         });
     }
     pub(super) fn poll_edit_preview(&mut self) {
-        while let Ok((id, source, base, proof, recipe, result)) = self.editing.rx.try_recv() {
+        while let Ok((generation, id, source, base, proof, recipe, result)) =
+            self.editing.rx.try_recv()
+        {
             self.editing.inflight = None;
-            if self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe)
+            if generation != self.generation
+                || self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe)
                 || self.output_proof_for(&id) != proof
             {
                 continue;
             }
             match result {
                 Ok(image) => {
-                    self.clear_edit_preview_for(&id);
+                    self.supersede_edit_preview_for(&id);
                     if self.editing.previews.len() >= 2
                         && let Some(oldest) = self
                             .editing
@@ -1661,20 +1709,24 @@ impl TrueRenderer {
                 }
             }
         }
-        while let Ok((id, digest, source, recipe, result)) = self.editing.thumbnail_rx.try_recv() {
+        while let Ok((generation, id, digest, source, recipe, result)) =
+            self.editing.thumbnail_rx.try_recv()
+        {
             self.editing.thumbnail_inflight.remove(&source);
-            let current = self.editing.entries.get(&id).is_some_and(|entry| {
-                entry.loaded.as_ref().is_some_and(|saved| {
-                    self.edit_source_matches(&id, &saved.source_digest, &digest, source)
-                }) && entry.draft.as_ref() == Some(&recipe)
-            });
+            let current = generation == self.generation
+                && self.editing.entries.get(&id).is_some_and(|entry| {
+                    entry.loaded.as_ref().is_some_and(|saved| {
+                        self.edit_source_matches(&id, &saved.source_digest, &digest, source)
+                    }) && entry.draft.as_ref() == Some(&recipe)
+                });
             if !current {
                 continue;
             }
             match result {
                 Ok((image, histogram)) => {
                     self.editing.thumbnail_errors.remove(&source);
-                    if self.editing.thumbnails.len() >= 64
+                    if !self.editing.thumbnails.contains_key(&source)
+                        && self.editing.thumbnails.len() >= 64
                         && let Some(oldest) = self
                             .editing
                             .thumbnails
@@ -1685,6 +1737,10 @@ impl TrueRenderer {
                     {
                         self.presenter
                             .invalidate_sources(&HashSet::from([old.image.id()]));
+                    }
+                    if let Some(old) = self.editing.thumbnails.get(&source) {
+                        self.presenter
+                            .supersede_sources(&HashSet::from([old.image.id()]));
                     }
                     self.editing.thumbnails.insert(
                         source,
@@ -1764,6 +1820,7 @@ impl TrueRenderer {
                 let base = neutral.base_level() + index as u32;
                 let size = neutral.source_size();
                 self.editing.thumbnail_inflight.insert(source);
+                let generation = self.generation;
                 std::thread::spawn(move || {
                     let result = (|| -> anyhow::Result<_> {
                         let mut raster = neutral.levels()[index].clone();
@@ -1776,7 +1833,7 @@ impl TrueRenderer {
                         Ok((Arc::new(image), histogram))
                     })()
                     .map_err(|e| format!("{e:#}"));
-                    let _ = tx.send((id, digest, source, recipe, result));
+                    let _ = tx.send((generation, id, digest, source, recipe, result));
                     wake.request_repaint();
                 });
             }
@@ -1831,7 +1888,7 @@ impl TrueRenderer {
         }) {
             return None;
         }
-        self.clear_edit_preview_for(id);
+        self.supersede_edit_preview_for(id);
         if self.editing.inflight.is_none() {
             let level = &neutral.levels()[index];
             let bytes = preview_working_bytes(level.width, level.height);
@@ -1841,6 +1898,7 @@ impl TrueRenderer {
                 let id = id.to_owned();
                 let size = neutral.source_size();
                 self.editing.inflight = Some((id.clone(), source, recipe.clone()));
+                let generation = self.generation;
                 std::thread::spawn(move || {
                     let result = (|| -> anyhow::Result<Arc<ImageLevels>> {
                         let mut raster = neutral.levels()[index].clone();
@@ -1861,7 +1919,7 @@ impl TrueRenderer {
                         Ok(Arc::new(image))
                     })()
                     .map_err(|e| format!("{e:#}"));
-                    let _ = tx.send((id, source, base, proof, recipe, result));
+                    let _ = tx.send((generation, id, source, base, proof, recipe, result));
                     wake.request_repaint();
                 });
             } else {
@@ -1915,6 +1973,77 @@ mod smoke_deadline_tests {
 mod reset_tests {
     use super::*;
     use std::path::Path;
+
+    #[test]
+    #[cfg(any(windows, target_os = "macos"))]
+    fn cache_clear_rejects_late_edited_results_and_preserves_the_recipe() {
+        let (_dir, ctx, mut app) = crate::ui::settings_regressions::app();
+        crate::ui::settings_regressions::settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        let mut recipe = EditRecipe::neutral(app.cache_settings.raw_engine);
+        recipe.exposure_ev = 0.75;
+        app.editing.entries.insert(
+            item.id.clone(),
+            EditEntry {
+                loaded: Some(tr_store::LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: item.digest.clone(),
+                    generation: 3,
+                    revision: 2,
+                    recipe: recipe.clone(),
+                    can_undo: true,
+                    can_redo: false,
+                }),
+                draft: Some(recipe.clone()),
+                ..Default::default()
+            },
+        );
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(8, 8, vec![[0.2, 0.3, 0.4, 1.]; 64]).unwrap(),
+                PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let old = app.generation;
+        for (generation, accepted) in [(old, true), (old, false), (old + 1, true)] {
+            if !accepted {
+                app.start_cache_action(false);
+                assert!(app.editing.previews.is_empty() && app.editing.thumbnails.is_empty());
+            }
+            app.editing
+                .tx
+                .send((
+                    generation,
+                    item.id.clone(),
+                    image.id(),
+                    0,
+                    false,
+                    recipe.clone(),
+                    Ok(image.clone()),
+                ))
+                .unwrap();
+            app.editing
+                .thumbnail_tx
+                .send((
+                    generation,
+                    item.id.clone(),
+                    item.digest.clone(),
+                    image.id(),
+                    recipe.clone(),
+                    Ok((image.clone(), image.source().histogram())),
+                ))
+                .unwrap();
+            app.poll_edit_preview();
+            assert_eq!(app.editing.previews.contains_key(&item.id), accepted);
+            assert_eq!(app.editing.thumbnails.contains_key(&image.id()), accepted);
+            let entry = &app.editing.entries[&item.id];
+            assert_eq!(entry.draft.as_ref(), Some(&recipe));
+            assert_eq!(entry.loaded.as_ref().unwrap().generation, 3);
+            assert_eq!(entry.loaded.as_ref().unwrap().revision, 2);
+        }
+        crate::ui::settings_regressions::settle(&mut app, &ctx, true);
+    }
 
     fn edited_recipe() -> EditRecipe {
         let mut recipe = EditRecipe::neutral(tr_core::decoder::RawEngine::TrueRenderer);

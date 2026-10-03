@@ -47,6 +47,8 @@ pub(super) struct Probe {
     redraws: usize,
     reprojections: usize,
     minimum_coverage: f32,
+    prepare_folder: bool,
+    preparation: Option<serde_json::Value>,
 }
 impl Probe {
     pub fn new() -> Self {
@@ -79,6 +81,8 @@ impl Probe {
             redraws: 0,
             reprojections: 0,
             minimum_coverage: 1.,
+            prepare_folder: args.iter().any(|arg| arg == "--navigation-prepared-folder"),
+            preparation: None,
         }
     }
     fn steps(&self) -> usize {
@@ -145,6 +149,7 @@ impl TrueRenderer {
             "compute":self.presenter.statistics(), "trace":probe.trace,
             "pressure_injected":probe.pressure, "pressure_wide_before":probe.pressure_before, "pressure_wide_after":probe.pressure_after,
             "transitions":probe.transitions,
+            "folder_preparation":probe.preparation,
             "actions":&ACTIONS[..probe.steps()],
             "inflight_step":probe.rows.len(), "inflight_redraws":probe.redraws,
             "inflight_minimum_draw_coverage":probe.minimum_coverage,
@@ -273,6 +278,34 @@ impl TrueRenderer {
             );
             return false;
         }
+        if probe.prepare_folder && probe.preparation.is_none() {
+            if self.folder_load.request.is_none() {
+                self.start_folder_preparation(true);
+            }
+            self.background_demand(ctx);
+            self.flush_demand();
+            if self.folder_progress().2 < 1.
+                || self.folder_loading_blocks()
+                || !self.pending_images.is_empty()
+                || self.service.cache.preview_writes_pending()
+            {
+                ctx.request_repaint_after(Duration::from_millis(10));
+                return false;
+            }
+            let preparation = serde_json::json!({
+                "processed":self.folder_progress().0, "total":self.folder_progress().1,
+                "errors":self.folder_load.errors, "cache":self.service.cache.stats(),
+                "request":self.folder_load.request,
+                "seconds":self.navigation_probe.as_ref().unwrap().started.elapsed().as_secs_f64(),
+                "ram_discarded_before_navigation":true,
+            });
+            self.cache.clear();
+            self.presenter.clear();
+            let probe = self.navigation_probe.as_mut().unwrap();
+            probe.preparation = Some(preparation);
+            probe.started = Instant::now();
+        }
+        let probe = self.navigation_probe.as_ref().unwrap();
         if probe.event.is_none() {
             let step = probe.rows.len();
             let target = probe.target();

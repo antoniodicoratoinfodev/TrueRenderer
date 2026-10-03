@@ -482,6 +482,18 @@ impl DecodePool {
                             .is_some()
                             .then(|| result.as_ref().ok().cloned())
                             .flatten();
+                        if let Some(decoded) = persist
+                            && let Some(folder) = job.item.path.parent()
+                        {
+                            writer.submit(
+                                folder.into(),
+                                decoded.digest,
+                                job.request,
+                                decoded.info,
+                                decoded.prepared,
+                                job.generation,
+                            );
+                        }
                         if !deliver(
                             &events,
                             Event::Image {
@@ -494,18 +506,6 @@ impl DecodePool {
                             &stop,
                         ) {
                             break;
-                        }
-                        if let Some(decoded) = persist
-                            && let Some(folder) = job.item.path.parent()
-                        {
-                            writer.submit(
-                                folder.into(),
-                                decoded.digest,
-                                job.request,
-                                decoded.info,
-                                decoded.prepared,
-                                job.generation,
-                            );
                         }
                     }
                 }
@@ -1038,6 +1038,18 @@ impl DecodePool {
                             continue;
                         }
                         let persist = result.as_ref().ok().cloned();
+                        if let Some(decoded) = persist
+                            && let Some(folder) = consumer.item.path.parent()
+                        {
+                            writer.submit(
+                                folder.into(),
+                                decoded.digest,
+                                consumer.request,
+                                decoded.info,
+                                decoded.prepared,
+                                consumer.generation,
+                            );
+                        }
                         if !deliver(
                             &events,
                             Event::Image {
@@ -1050,18 +1062,6 @@ impl DecodePool {
                             &stop,
                         ) {
                             break;
-                        }
-                        if let Some(decoded) = persist
-                            && let Some(folder) = consumer.item.path.parent()
-                        {
-                            writer.submit(
-                                folder.into(),
-                                decoded.digest,
-                                consumer.request,
-                                decoded.info,
-                                decoded.prepared,
-                                consumer.generation,
-                            );
                         }
                     }
                 }
@@ -1160,8 +1160,13 @@ impl DecodePool {
 }
 impl Drop for DecodePool {
     fn drop(&mut self) {
-        self.stop.store(true, Ordering::Release);
-        self.queues.1.notify_all();
+        {
+            // Pair the predicate change with the waiter's mutex. Otherwise the
+            // lookup lane can miss shutdown between checking stop and waiting.
+            let _queue = self.queues.0.lock().unwrap();
+            self.stop.store(true, Ordering::Release);
+            self.queues.1.notify_all();
+        }
         for worker in self.workers.drain(..) {
             let _ = worker.join();
         }
@@ -1338,6 +1343,60 @@ mod tests {
         drop(result);
         drop(image);
         assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+    }
+
+    #[test]
+    fn shutdown_does_not_lose_lookup_wakeup() {
+        let queues = Arc::new((Mutex::new(Queues::default()), Condvar::new()));
+        let stop = Arc::new(AtomicBool::new(false));
+        let (checked_tx, checked_rx) = mpsc::sync_channel(1);
+        let (resume_tx, resume_rx) = mpsc::sync_channel(1);
+        let worker_queues = queues.clone();
+        let worker_stop = stop.clone();
+        let worker = thread::spawn(move || {
+            let mut q = worker_queues.0.lock().unwrap();
+            assert!(!worker_stop.load(Ordering::Acquire));
+            checked_tx.send(()).unwrap();
+            // Deterministically pause between the empty-queue/stop predicate
+            // and wait, still holding the same mutex as the real lookup lane.
+            resume_rx.recv().unwrap();
+            q = worker_queues.1.wait(q).unwrap();
+            while !worker_stop.load(Ordering::Acquire) {
+                q = worker_queues.1.wait(q).unwrap();
+            }
+        });
+        checked_rx.recv_timeout(Duration::from_secs(3)).unwrap();
+        let pool = DecodePool {
+            queues: queues.clone(),
+            stop: stop.clone(),
+            workers: vec![worker],
+        };
+        let (dropping_tx, dropping_rx) = mpsc::sync_channel(1);
+        let (done_tx, done_rx) = mpsc::sync_channel(1);
+        let shutdown = thread::spawn(move || {
+            dropping_tx.send(()).unwrap();
+            drop(pool);
+            done_tx.send(()).unwrap();
+        });
+        dropping_rx.recv_timeout(Duration::from_secs(3)).unwrap();
+        let deadline = Instant::now() + Duration::from_millis(100);
+        while !stop.load(Ordering::Acquire) && Instant::now() < deadline {
+            thread::sleep(Duration::from_millis(1));
+        }
+        let notified_before_wait = stop.load(Ordering::Acquire);
+        resume_tx.send(()).unwrap();
+        // Rescue the deliberately reproduced old failure so a negative test
+        // returns an assertion instead of leaking a thread or hanging the suite.
+        {
+            let _q = queues.0.lock().unwrap();
+            queues.1.notify_all();
+        }
+        done_rx.recv_timeout(Duration::from_secs(3)).unwrap();
+        shutdown.join().unwrap();
+        assert!(
+            !notified_before_wait,
+            "Shutdown could be lost before lookup waits"
+        );
     }
 
     #[test]

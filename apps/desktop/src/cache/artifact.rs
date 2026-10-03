@@ -87,16 +87,40 @@ impl Manager {
                     .filter(|edge| *edge != request.edge),
             ) {
                 let stored = PreviewRequest { edge, ..request };
-                if stored.maximum_level_edge() < request.maximum_level_edge() {
-                    continue;
-                }
                 let key = self.preview_key(digest, stored);
                 match cache
                     .entries
                     .open_file(&format!("{key}.tvc"), false, false, false)
                 {
                     Ok(file) => {
-                        candidate = Some((file, stored, key));
+                        let bytes = read_record(&file, HEADER_LIMIT, cancelled)?;
+                        let header: Descriptor = serde_json::from_slice(&bytes)?;
+                        ensure!(
+                            header.key == key
+                                && header.digest == digest
+                                && header.request == stored,
+                            "Identità derivato incoerente"
+                        );
+                        protocol::validate_info(&header.info)?;
+                        let (_, stored_base) = protocol::mip_geometry(
+                            [header.info.source_width, header.info.source_height],
+                            stored.maximum_level_edge(),
+                        );
+                        ensure!(
+                            header.base == stored_base,
+                            "Dettaglio cache insufficiente o livello non canonico per la richiesta"
+                        );
+                        // Different pixel-edge requests can select exactly the
+                        // same canonical mip. Compare actual source geometry,
+                        // not just the nominal edge, before starting a decoder.
+                        let (_, requested_base) = protocol::mip_geometry(
+                            [header.info.source_width, header.info.source_height],
+                            request.maximum_level_edge(),
+                        );
+                        if requested_base < header.base {
+                            continue;
+                        }
+                        candidate = Some((file, stored, key, header));
                         break;
                     }
                     Err(e)
@@ -105,10 +129,9 @@ impl Manager {
                     Err(e) => return Err(e),
                 }
             }
-            let Some((descriptor, stored_request, key)) = candidate else {
+            let Some((descriptor, stored_request, key, header)) = candidate else {
                 return self.legacy_preview(&cache, digest, request, budget, cancelled);
             };
-            let bytes = read_record(&descriptor, HEADER_LIMIT, cancelled)?;
             ensure!(
                 descriptor
                     .metadata()?
@@ -118,7 +141,6 @@ impl Manager {
                     <= Duration::from_secs(self.settings().retention_days() as u64 * 86400),
                 "Derivato scaduto"
             );
-            let header: Descriptor = serde_json::from_slice(&bytes)?;
             ensure!(
                 header.key == key && header.digest == digest && header.request == stored_request,
                 "Identità derivato incoerente"
@@ -366,8 +388,16 @@ impl Manager {
         self.wait_for_readers(cancelled)?;
         {
             let cache = Folder::open(folder, true, true)?;
-            let (entries, removed) =
-                cache.trim_with_minimum(quota - required, settings.retention_days(), quota / 5)?;
+            let (entries, removed) = cache.trim_preserving_previews(
+                quota - required,
+                settings.retention_days(),
+                quota / 5,
+                if request.edge == 0 && preview.image.base_level() == 0 {
+                    quota
+                } else {
+                    quota - required
+                },
+            )?;
             self.update_usage(folder, entries, removed);
             ensure!(
                 fs2::available_space(&cache.root.path)? >= required + settings.free_mib * MIB,
@@ -581,45 +611,87 @@ fn read_record(file: &File, maximum: usize, cancelled: &impl Fn() -> bool) -> Re
 
 /// Protect the newest complete thumbnail sets up to the recoverable minimum.
 /// Classification reads only bounded descriptors, never full fp32 payloads.
-pub(super) fn protected_thumbnails(
+pub(super) fn protected_previews(
     folder: &Folder,
     entries: &[Entry],
-    limit: u64,
+    thumbnail_limit: u64,
+    viewer_limit: u64,
 ) -> std::collections::HashSet<String> {
     let sizes: std::collections::HashMap<_, _> =
         entries.iter().map(|e| (e.name.as_str(), e.bytes)).collect();
     let mut protected = std::collections::HashSet::new();
     let mut retained = 0;
-    for entry in entries.iter().rev() {
-        if entry.bytes > (HEADER_LIMIT + 44) as u64 {
-            continue;
-        }
-        let Ok(file) = folder.entries.open_file(&entry.name, false, false, false) else {
-            continue;
-        };
-        let Ok(bytes) = read_record(&file, HEADER_LIMIT, &|| false) else {
-            continue;
-        };
-        let Ok(header) = serde_json::from_slice::<Descriptor>(&bytes) else {
-            continue;
-        };
-        if header.request.edge == 0 || header.request.edge > 512 || header.blocks.len() > 1024 {
-            continue;
-        }
-        let names: std::collections::HashSet<_> = std::iter::once(entry.name.clone())
-            .chain(header.blocks.iter().map(|b| format!("{b}.tvc")))
-            .collect();
-        if names.iter().any(|n| !sizes.contains_key(n.as_str())) {
-            continue;
-        }
-        let bytes: u64 = names
-            .iter()
-            .filter(|n| !protected.contains(*n))
-            .map(|n| sizes[n.as_str()])
-            .sum();
-        if retained + bytes <= limit {
-            retained += bytes;
-            protected.extend(names);
+    // Two streaming passes keep metadata memory bounded by one descriptor.
+    for thumbnails in [true, false] {
+        for entry in entries.iter().rev() {
+            if entry.bytes > (HEADER_LIMIT + 44) as u64 {
+                continue;
+            }
+            let Ok(file) = folder.entries.open_file(&entry.name, false, false, false) else {
+                continue;
+            };
+            let Ok(bytes) = read_record(&file, HEADER_LIMIT, &|| false) else {
+                continue;
+            };
+            let Ok(header) = serde_json::from_slice::<Descriptor>(&bytes) else {
+                continue;
+            };
+            if header.levels.is_empty() || header.levels.len() > 32 || header.blocks.len() > 1024 {
+                continue;
+            }
+            // Preserve thumbnails first, then independently readable viewer tails
+            // up to 4096 source pixels, including tails of native descriptors.
+            if thumbnails && (header.request.edge == 0 || header.request.edge > 512) {
+                continue;
+            }
+            let skip = if thumbnails {
+                0
+            } else {
+                let Some(index) = header.levels.iter().position(|[w, h]| (*w).max(*h) <= 4096)
+                else {
+                    continue;
+                };
+                index
+            };
+            let Some(block_skip) =
+                header.levels[..skip]
+                    .iter()
+                    .try_fold(0usize, |total, [w, h]| {
+                        if *w == 0 || *h == 0 || *w > 32768 || *h > 32768 {
+                            return None;
+                        }
+                        total.checked_add((*w as usize * *h as usize * 16).div_ceil(BLOCK))
+                    })
+            else {
+                continue;
+            };
+            if block_skip >= header.blocks.len() {
+                continue;
+            }
+            let names: std::collections::HashSet<_> = std::iter::once(entry.name.clone())
+                .chain(
+                    header.blocks[block_skip..]
+                        .iter()
+                        .map(|b| format!("{b}.tvc")),
+                )
+                .collect();
+            if names.iter().any(|n| !sizes.contains_key(n.as_str())) {
+                continue;
+            }
+            let bytes: u64 = names
+                .iter()
+                .filter(|n| !protected.contains(*n))
+                .map(|n| sizes[n.as_str()])
+                .sum();
+            let limit = if thumbnails {
+                thumbnail_limit.min(viewer_limit)
+            } else {
+                viewer_limit
+            };
+            if retained + bytes <= limit {
+                retained += bytes;
+                protected.extend(names);
+            }
         }
     }
     protected

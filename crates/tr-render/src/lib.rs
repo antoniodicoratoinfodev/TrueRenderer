@@ -41,6 +41,7 @@ pub fn viewport(
     image: &Arc<tr_core::provider::ImageLevels>,
     transform: &mut ViewTransform,
     id: &str,
+    pending: bool,
 ) -> (egui::Response, Option<Sample>) {
     let raster = image.source();
     let [source_width, source_height] = image.source_size();
@@ -85,6 +86,7 @@ pub fn viewport(
     let visible = image_rect.intersect(rect);
     let min = egui::pos2((visible.min.x * ppp).ceil(), (visible.min.y * ppp).ceil());
     let max = egui::pos2((visible.max.x * ppp).floor(), (visible.max.y * ppp).floor());
+    let mut current = false;
     if max.x > min.x && max.y > min.y {
         let region = Region {
             size: [(max.x - min.x) as u32, (max.y - min.y) as u32],
@@ -97,16 +99,17 @@ pub fn viewport(
                 source_height as f64 / physical_size.y as f64,
             ],
         };
-        presenter.paint(
-            ui,
-            id.to_owned(),
-            image,
-            Rect::from_min_max(min / ppp, max / ppp),
-            region,
-        );
+        let rect = Rect::from_min_max(min / ppp, max / ppp);
+        if pending {
+            presenter.paint_pending(ui, id, image.id(), rect, region);
+        } else {
+            presenter.paint(ui, id.to_owned(), image, rect, region);
+            current = presenter.is_current(id, image.id(), region);
+        }
     }
     let sample = response
         .hover_pos()
+        .filter(|_| current)
         .filter(|p| image_rect.contains(*p))
         .map(|p| {
             let x = (((p.x - top.x) / size.x * source_width as f32).floor() as u32)

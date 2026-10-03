@@ -1774,7 +1774,7 @@ mod tests {
         app.state.minimum_rating = 5;
         app.state.refilter();
         app.open_path(target.clone());
-        app.invalidate_raw_engine();
+        app.invalidate_previews();
         settle(&mut app, &ctx, true);
         assert_eq!(app.state.current_item().unwrap().path, target);
         assert_eq!(app.state.query, "does-not-match");
