@@ -108,6 +108,8 @@ fn real_raws_inner(root: &Path, worker: &Path, folder: &Path, memory_mib: u64) -
         .tempdir_in(root.join("var"))?;
     let settings = Settings {
         memory_mib,
+        diagnostic_fixed_memory: true,
+        diagnostic_no_prefetch: true,
         ..Settings::default()
     };
     settings.validate()?;

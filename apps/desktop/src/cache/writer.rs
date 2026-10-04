@@ -248,6 +248,7 @@ mod tests {
         let folder = tempfile::tempdir().unwrap();
         let cache = Arc::new(Manager::new(super::super::Settings {
             memory_mib: 1024,
+            diagnostic_fixed_memory: true,
             disk_mib: 64,
             free_mib: 0,
             ..Default::default()
@@ -340,6 +341,7 @@ mod tests {
             let folder = tempfile::tempdir().unwrap();
             let cache = Arc::new(Manager::new(super::super::Settings {
                 memory_mib,
+                diagnostic_fixed_memory: true,
                 free_mib: 0,
                 ..Default::default()
             }));

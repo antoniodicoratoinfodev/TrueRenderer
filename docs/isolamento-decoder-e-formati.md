@@ -16,6 +16,10 @@ Data: 6 settembre 2026. Stato: adottata per il prototipo interno 0.1.1; gate di 
 
 Le quote 32 MiB/8 Mi pixel, la sola allowlist e le misure sotto descrivono la 0.1.1. [ADR 0004](isolamento-decoder-e-formati.md#adr-0004) estende il bundle macOS agli esterni come Anteprima (256 MiB/64 Mi pixel, supervisione esterni 2 GiB/45 s); i binari su pipe conservano la allowlist. [ADR 0006](progetto-anteprime-cache-prestazioni.md#adr-0006) aggiunge budget globale stimato, code indipendenti e P0–P6. La revoca del dominio continua a riciclare i servizi; l’abbandono di una vista interrompe soltanto i passaggi cancellabili e lascia terminare le chiamate native già iniziate. Firma di release e gate sandbox completi restano aperti.
 
+### Budget automatico e supervisione dei lavori — 4 ottobre 2026
+
+Il pool applicativo comunica al broker XPC i crediti del singolo lavoro già ammesso, inclusi snapshot, picco per fasi e allowance base. La soglia esterna supervisionata è `min(budget corrente, max(2 GiB, crediti del lavoro + max(10%, 256 MB)))`, ricalcolata prima del probe e del decode/export; non assegna l'intero budget dell'app a ciascun servizio. Il campionamento rimane ogni 25 ms, senza garanzia kernel. Quote corpus, file/pixel, timeout, policy su pipe e isolamento restano invariati. I limiti ridotti dai diagnostici non possono essere rialzati da questo adattamento. Il contratto storico ADR 0004 sotto descrive le quote originarie; la gestione globale corrente è in [ADR 0006](progetto-anteprime-cache-prestazioni.md#adr-0006).
+
 ### Correzione stack LibRaw — 15 settembre 2026
 
 La prova dei motori su D750 ha riprodotto `Thread stack size exceeded` nel probe LibRaw eseguito dal thread dispatch XPC. I quattro oggetti LibRaw locali del bridge sono ora posseduti sullo heap tramite `std::unique_ptr`: stessa durata ed eccezioni gestite, senza occupare lo stack limitato del thread. Passati i 120 sviluppi dei 30 NEF autorizzati sui quattro motori dopo la correzione. Non cambiano ricette, capability, entitlement o garanzie di rilascio. Protocolli e limiti nella [campagna immagini grandi/RAW](../STATO.md#campagne-raw-concluse).

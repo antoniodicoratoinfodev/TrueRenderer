@@ -267,17 +267,40 @@ impl Language {
                 "16-float uses more texture/surface memory; nonuniform precision differs from 16-bit integer. Working data and cache remain fp32, including CPU processing."
             }
             "Superficie effettiva e capacità" => "Effective surface and capabilities",
+            "Le anteprime vengono preparate automaticamente. Le foto vicine restano pronte in memoria, secondo le risorse disponibili." => {
+                "Previews are prepared automatically. Nearby photos stay ready in memory, according to available resources."
+            }
+            "Applica e riavvia per cambiare la precisione di visualizzazione." => {
+                "Apply and restart to change display precision."
+            }
+            "Applica e riavvia per usare la modalità selezionata." => {
+                "Apply and restart to use the selected mode."
+            }
+            "SDR · 8 bit" => "SDR · 8-bit",
+            "Non disponibile" => "Unavailable",
+            "SDR · 10 bit" => "SDR · 10-bit",
+            "SDR · 16 bit a virgola mobile" => "SDR · 16-bit floating point",
+            "La modalità richiesta non è supportata: è attiva SDR a 8 bit." => {
+                "The requested mode is not supported: SDR 8-bit is active."
+            }
+            "Indica il formato usato dall'app, non la profondità verificata del monitor. Le modalità a precisione maggiore restano sperimentali." => {
+                "This is the format used by the app, not the verified bit depth of your monitor. Higher precision modes remain experimental."
+            }
+            "Dettagli tecnici della visualizzazione" => "Technical display details",
+            "La memoria cresce automaticamente secondo il lavoro da eseguire, mantenendo un margine per la navigazione. La base non viene occupata tutta all'avvio." => {
+                "Memory grows automatically to fit the work, leaving room for navigation. The starting budget is not all allocated at launch."
+            }
+            "Memoria di partenza (MB; crescita automatica)" => {
+                "Starting memory budget (MB; grows automatically)"
+            }
+            "La memoria utilizzabile è inferiore alla base: l'app conserva spazio per il sistema e le altre applicazioni." => {
+                "Usable memory is below the starting budget: the app leaves room for the system and other apps."
+            }
             "Caricamento cartella" => "Folder loading",
             "Conteggio file…" => "Counting files…",
             "Cartella" => "Folder",
             "Annullato" => "Cancelled",
             "Preparazione delle anteprime…" => "Preparing previews…",
-            "Preparazione dello sviluppo e dei livelli per la qualità scelta, con la ricetta di ogni foto. Piena include il dettaglio nativo." => {
-                "Preparing development and levels for the selected quality, using each photo's recipe. Full includes native detail."
-            }
-            "Quota cache insufficiente per tutti i dettagli nativi: conservate le anteprime per la visualizzazione." => {
-                "Cache quota cannot retain all native detail: viewing previews have been preserved."
-            }
             "Salvataggio anteprime…" => "Saving previews…",
             "Preparazione annullata" => "Preparation cancelled",
             "Lettura della cartella incompleta" => "Folder scan incomplete",

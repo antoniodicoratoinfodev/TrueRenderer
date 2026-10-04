@@ -1,3 +1,79 @@
+use tr_core::presentation::Precision;
+
+pub(super) fn presentation_precision(format: eframe::wgpu::TextureFormat) -> Precision {
+    match format {
+        eframe::wgpu::TextureFormat::Rgb10a2Unorm => Precision::Sdr10,
+        eframe::wgpu::TextureFormat::Rgba16Float => Precision::Sdr16Float,
+        _ => Precision::Compatible8,
+    }
+}
+fn presentation_label(precision: Precision) -> &'static str {
+    match precision {
+        Precision::Compatible8 => "SDR · 8 bit",
+        Precision::Sdr10 => "SDR · 10 bit",
+        Precision::Sdr16Float => "SDR · 16 bit a virgola mobile",
+    }
+}
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod display_tests {
+    use super::*;
+    use crate::ui::settings_regressions::{app, chrome_frame, settle};
+
+    #[test]
+    fn active_display_uses_actual_format_and_distinguishes_pending_change_from_fallback() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.show_settings = true;
+        app.settings_page = SettingsPage::Performance;
+        for language in [Language::Italian, Language::English] {
+            app.cache_settings.language = language;
+            for format in [
+                eframe::wgpu::TextureFormat::Bgra8Unorm,
+                eframe::wgpu::TextureFormat::Rgb10a2Unorm,
+                eframe::wgpu::TextureFormat::Rgba16Float,
+            ] {
+                let actual = presentation_precision(format);
+                app.presentation_active = Some(actual);
+                app.presentation_requested = actual;
+                app.cache_settings.presentation = actual;
+                for _ in 0..3 {
+                    chrome_frame(&mut app, &ctx, Vec2::new(1440., 940.), vec![]);
+                }
+                let text = chrome_frame(&mut app, &ctx, Vec2::new(1440., 940.), vec![]);
+                assert!(
+                    text.iter()
+                        .any(|(s, _)| s.contains(language.text(presentation_label(actual)))),
+                    "{text:?}"
+                );
+                assert!(!text.iter().any(|(s, _)| s.contains("Superficie effettiva")));
+            }
+            app.presentation_active = Some(Precision::Compatible8);
+            app.presentation_requested = Precision::Sdr16Float;
+            for (draft, expected, absent) in [
+                (
+                    Precision::Sdr16Float,
+                    "La modalità richiesta non è supportata: è attiva SDR a 8 bit.",
+                    "Applica e riavvia per usare la modalità selezionata.",
+                ),
+                (
+                    Precision::Sdr10,
+                    "Applica e riavvia per usare la modalità selezionata.",
+                    "La modalità richiesta non è supportata: è attiva SDR a 8 bit.",
+                ),
+            ] {
+                app.cache_settings.presentation = draft;
+                let text = chrome_frame(&mut app, &ctx, Vec2::new(1440., 940.), vec![]);
+                assert!(
+                    text.iter().any(|(s, _)| s == language.text(expected)),
+                    "{text:?}"
+                );
+                assert!(!text.iter().any(|(s, _)| s == language.text(absent)));
+            }
+        }
+    }
+}
+
 use super::*;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -313,24 +389,7 @@ impl TrueRenderer {
                 "La scelta si applica dopo Applica e salva. Il popup può continuare in background.",
             ),
         );
-        ui.horizontal_wrapped(|ui| {
-            ui.label(lang.text("Precaricamento"));
-            ui.selectable_value(
-                &mut self.cache_settings.prefetch,
-                crate::cache::Prefetch::Disabled,
-                lang.text("Disattivato"),
-            );
-            ui.selectable_value(
-                &mut self.cache_settings.prefetch,
-                crate::cache::Prefetch::Automatic,
-                lang.text("Automatico"),
-            );
-            ui.selectable_value(
-                &mut self.cache_settings.prefetch,
-                crate::cache::Prefetch::Extended,
-                lang.text("Esteso"),
-            );
-        });
+        preference_note(ui, lang.text("Le anteprime vengono preparate automaticamente. Le foto vicine restano pronte in memoria, secondo le risorse disponibili."));
         ui.checkbox(
             &mut self.preparation_paused,
             lang.text("Pausa preparazione in background"),
@@ -379,11 +438,34 @@ impl TrueRenderer {
                     );
                 }
             });
-        ui.label(RichText::new(lang.text("Applicare e riavviare l'app. La coppia formato + sRGB deve essere supportata; altrimenti rimane SDR 8 bit. Non abilita HDR né certifica i bit del monitor.")).small());
-        preference_note(ui, lang.text("16 float aumenta memoria di texture/superficie; precisione non uniforme, diversa da 16 bit interi. Working e cache restano fp32, anche con calcolo CPU."));
-        egui::CollapsingHeader::new(lang.text("Superficie effettiva e capacità")).show(ui, |ui| {
-            ui.label(&self.surface);
-        });
+        preference_note(
+            ui,
+            lang.text("Applica e riavvia per cambiare la precisione di visualizzazione."),
+        );
+        ui.label(localized_format!(
+            lang,
+            "Visualizzazione attiva: {}",
+            "Active display: {}",
+            lang.text(
+                self.presentation_active
+                    .map_or("Non disponibile", presentation_label)
+            )
+        ));
+        if self.cache_settings.presentation != self.presentation_requested {
+            preference_note(
+                ui,
+                lang.text("Applica e riavvia per usare la modalità selezionata."),
+            );
+        } else if self
+            .presentation_active
+            .is_some_and(|active| active != self.presentation_requested)
+        {
+            preference_note(
+                ui,
+                lang.text("La modalità richiesta non è supportata: è attiva SDR a 8 bit."),
+            );
+        }
+        preference_note(ui, lang.text("Indica il formato usato dall'app, non la profondità verificata del monitor. Le modalità a precisione maggiore restano sperimentali."));
         ui.add_space(20.);
         section(ui, lang.text("Elaborazione"));
         ui.horizontal_wrapped(|ui| {
@@ -422,6 +504,9 @@ impl TrueRenderer {
             .id_salt("gpu-details")
             .show(ui, |ui| {
                 ui.label(lang.message(&self.gpu_status));
+                ui.collapsing(lang.text("Dettagli tecnici della visualizzazione"), |ui| {
+                    ui.label(&self.surface);
+                });
                 let compute = self.presenter.statistics();
                 ui.label(localized_format!(
                     lang,
@@ -483,37 +568,31 @@ impl TrueRenderer {
 
         ui.add_space(24.);
         section(ui, lang.text("Memoria e GPU"));
-        let physical = self.service.cache.physical_mib;
-        let mut automatic = self.cache_settings.memory_mib == 0;
-        if ui
-            .checkbox(&mut automatic, lang.text("Memoria automatica"))
-            .changed()
-        {
-            self.cache_settings.memory_mib = if automatic {
-                0
-            } else {
-                self.cache_settings.effective_memory_mib(physical).max(512)
-            };
-        }
-        if !automatic {
-            preference_slider(
-                ui,
-                lang.text("Memoria richiesta (MB)"),
-                &mut self.cache_settings.memory_mib,
-                512..=(physical * 3 / 4).max(512),
-                false,
-                true,
-            );
-        }
-        preference_note(
+        preference_note(ui, lang.text("La memoria cresce automaticamente secondo il lavoro da eseguire, mantenendo un margine per la navigazione. La base non viene occupata tutta all'avvio."));
+        preference_slider(
             ui,
-            localized_format!(
-                lang,
-                "Budget di ammissione effettivo: {}",
-                "Effective admission budget: {}",
-                human_bytes(self.cache_settings.effective_memory_mib(physical) * 1024 * 1024)
-            ),
+            lang.text("Memoria di partenza (MB; crescita automatica)"),
+            &mut self.cache_settings.memory_mib,
+            crate::cache::BASE_MEMORY_MIB
+                ..=self
+                    .service
+                    .cache
+                    .physical_mib
+                    .max(crate::cache::BASE_MEMORY_MIB),
+            false,
+            true,
         );
+        let memory = self.service.cache.memory.usage();
+        ui.label(localized_format!(
+            lang,
+            "Budget attuale: {} · occupata/prenotata: {}",
+            "Current budget: {} · used/reserved: {}",
+            human_bytes(memory.limit),
+            human_bytes(memory.reserved)
+        ));
+        if memory.limit < memory.base {
+            preference_note(ui, lang.text("La memoria utilizzabile è inferiore alla base: l'app conserva spazio per il sistema e le altre applicazioni."));
+        }
         let mut automatic = self.cache_settings.reusable_mib.is_none();
         if ui
             .checkbox(&mut automatic, lang.text("Cache RAM automatica"))

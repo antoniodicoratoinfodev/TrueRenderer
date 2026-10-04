@@ -1,0 +1,1951 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-04",
+  "completed_at": "2026-10-04T01:37:15.174595+00:00",
+  "passed": true,
+  "complete": true,
+  "scope": "Automatic preview preparation and adaptive admission budget, recovered session review and final macOS delivery. Functional qualification and exploratory comparison; no general performance or release-gate qualification.",
+  "test_environment": {
+    "os": "macOS",
+    "cpu_family": "Apple Silicon",
+    "physical_memory_gib": 16,
+    "power_source": "battery",
+    "system_swap_used_bytes": 0
+  },
+  "behavior": {
+    "memory_base_bytes": 8000634880,
+    "preallocation": false,
+    "growth": "Atomic reservation of live credits plus new job, with max(10%, 256 MB) headroom; usable physical capacity leaves max(20%, 2 GB) to the system.",
+    "preparation": "No user prefetch selector; extends the former Extended neighborhood according to bytes and idle time, with two admissions at a time and bounded recipe lookups. Recent viewing previews outrank speculative ones.",
+    "limits": "Manual RAM/GPU/disk sublimits, read-only originals, pipe allowlist and XPC isolation retained; no lower-quality success is substituted for an impossible request.",
+    "migration": "Schema 3, exact original JSON backup, migration of all three prefetch values without resetting unrelated preferences.",
+    "battery": "Off by default or when absent; explicit existing settings preserved.",
+    "active_display": "Actual SDR 8/10/16-float format, with distinct pending-change and fallback messages in Italian/English."
+  },
+  "review_findings": [
+    {
+      "problem": "Historical working headroom could exceed the current budget after pressure, permanently blocking subsequent folder and neighbor preparation.",
+      "negative_evidence": "var/automatic-previews-resume-2026-10-04/before-headroom-test.log",
+      "correction": "Track only admitted work and cap speculative headroom at 75% of the current budget. Actual jobs retain atomic admission, growth and reclamation.",
+      "regression": "preparation_recovers_after_a_large_request_or_pressure_reduces_the_budget",
+      "passed_after": true,
+      "scope": "Foreground/background scheduling after an impossible request or simulated return from an expanded budget to the base; no physical pressure injection."
+    }
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "suite": "var/verify-B4poU72O",
+    "ordinary_rust_tests": 272,
+    "native_integrations": 14,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt_passed": true,
+    "clippy_all_targets_passed": true,
+    "debug_build_passed": true,
+    "release_bundle_build_passed": true,
+    "native_surface_smoke_passed": true,
+    "application_sources_unchanged": true,
+    "tested_source_manifest_sha256": "2172410c1b3168a86ba66b380dafd70bd8111b1ee98bfd155974372bcbc32f04",
+    "visual_inspection": {
+      "passed": true,
+      "screens": [
+        "restyle-05.png",
+        "restyle-06.png",
+        "restyle-09.png",
+        "restyle-02.png",
+        "restyle-11.png"
+      ],
+      "scope": "Inspected final native Italian/English preferences, compact and 200% layouts, and actual installed app at 100% UI: automatic preparation replaces selector; SDR 8-bit is readable; battery reduction unchecked; memory base 8000.63 MB, budget 8.00 GB, used/reserved 827.2 MB. Controls, scrolling and footer fit. App left on completed 12-image test corpus grid.",
+      "installed_app": {
+        "passed": true,
+        "schema": 3,
+        "base_bytes": 8000634880,
+        "explicit_battery_setting_preserved": true,
+        "unrelated_preferences_preserved": true,
+        "original_json_backup": "var/settings-before-automatic-bsTFAH.json",
+        "original_json_sha256": "9f8eb0bcb777c101152be5f7f510fb9cd68681172865b6baa5ece7d60c1cd15f",
+        "ui_observed_budget": "8.00 GB",
+        "ui_observed_used_reserved": "827.2 MB",
+        "ui_observed_effective_threads_on_battery": 9,
+        "ui_observed_prepared": "12/12",
+        "ui_active_display": "SDR 8-bit"
+      }
+    }
+  },
+  "native_viewer": {
+    "camera": "Nikon D750",
+    "private_sources": 2,
+    "runs": 32,
+    "views": 96,
+    "all_passed": true,
+    "sources_unchanged": true,
+    "engines": [
+      "Apple",
+      "LibRawAhd",
+      "LibRawBilinear",
+      "TrueRenderer"
+    ],
+    "qualities": [
+      "Full",
+      "Standard"
+    ],
+    "compute": [
+      "Cpu",
+      "Gpu"
+    ],
+    "cache_policies": [
+      "disabled",
+      "64 MiB per folder"
+    ],
+    "new_decodes": 0,
+    "cache_hits": 0,
+    "max_error_by_compute": {
+      "Cpu": 0,
+      "Gpu": 1
+    },
+    "gpu_fallbacks": 0,
+    "evidence": "var/automatic-previews-resume-2026-10-04/final/native-results.json",
+    "scope": "Fit viewing after preparation, retaining only independent viewing previews; native GPU readback versus CPU reference. Two sources, not a broad camera corpus."
+  },
+  "normal_cache": {
+    "runs": 16,
+    "visits": 64,
+    "passed": true,
+    "sources_unchanged": true,
+    "new_decodes": 0,
+    "all_pixels_identical": true,
+    "saved_engine_and_wb_recipes": true,
+    "fixed_diagnostic_budget_bytes": 2147483648,
+    "scope": "Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB; private source copies and isolated catalogues. Cold preparation then RAM eviction and fitted/native-quality viewers reloaded from disk. Optional saved recipe on the second photo uses a different engine and native WB. No GPU/display, colour or physical-memory qualification.",
+    "evidence": "var/automatic-previews-resume-2026-10-04/final/raw-normal/folder-previews.json"
+  },
+  "cache_clear": {
+    "disabled": {
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 12,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 37,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 22,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ],
+      "complete": true,
+      "errors": 0,
+      "failure": null,
+      "foreground_and_background": true,
+      "passed": true,
+      "processed": 12,
+      "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+      "screenshots": [
+        "folder-loading-foreground",
+        "folder-loading-complete",
+        "folder-loading-background"
+      ],
+      "total": 12
+    },
+    "limited": {
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 12,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 37,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 22,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ],
+      "complete": true,
+      "errors": 0,
+      "failure": null,
+      "foreground_and_background": true,
+      "passed": true,
+      "processed": 12,
+      "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+      "screenshots": [
+        "folder-loading-foreground",
+        "folder-loading-complete",
+        "folder-loading-background"
+      ],
+      "total": 12
+    }
+  },
+  "settings": {
+    "passed": true,
+    "scope": "Four preferences tabs in English/Italian, minimum window and 200% UI zoom on synthetic corpus. Not full accessibility/display qualification.",
+    "screenshots": [
+      "restyle-08",
+      "restyle-09",
+      "restyle-05",
+      "restyle-07",
+      "restyle-04",
+      "restyle-06",
+      "restyle-00",
+      "restyle-10",
+      "restyle-01",
+      "restyle-11",
+      "restyle-02",
+      "restyle-03"
+    ]
+  },
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-04T01:23:55.372030+00:00",
+    "bundle": "var/automatic-previews-resume-2026-10-04/final/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "5605bf80492c8d152a8b418f84c6770e2b04661c179a83d980e4b05c608a4580",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abd8e4de7b8300cda9f6a872267e5c5ede35c872416b4ad8a3285a601483270b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5e52dd6170571d26c6d602b916a4d334ce6c01cacbf177e95d0d36894affd98a"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "performance": {
+    "passed": true,
+    "evidence": "var/automatic-previews-resume-2026-10-04/performance-results.json",
+    "sha256": "16c4c60424e4b9cbb974a9f6225a27998e4fdf991124a56d8f8d7639845e4bec",
+    "trace": [
+      "00.png",
+      "06.png",
+      "12.png",
+      "18.png",
+      "24.png",
+      "29.png",
+      "18.png",
+      "12.png",
+      "06.png",
+      "00.png"
+    ],
+    "repeats": 2,
+    "dwell_ms": 2500,
+    "comparison": "Old Extended versus automatic at identical 8 GB budget base (rounded up to MiB), 2048 MiB reusable RAM and 512 MiB GPU cache; distinct generated images, Apple bitmap decode and GPU viewer.",
+    "scope": "Application cache cold/reopened; OS disk cache is not purged. End-to-end software readback and process RSS/footprint sampling, not physical display or population p95/p99. Steps within a run are dependent. No physical memory-pressure injection.",
+    "summary": {
+      "baseline": {
+        "runs": 10,
+        "views": 100,
+        "median_of_run_readback_medians_ms": 562.90773975,
+        "range_of_run_readback_medians_ms": [
+          508.123292,
+          575.013875
+        ],
+        "resident_at_command": 3,
+        "peak_rss": 4130308096,
+        "peak_footprint": 4100592944,
+        "total_decode_jobs": 389
+      },
+      "automatic": {
+        "runs": 10,
+        "views": 100,
+        "median_of_run_readback_medians_ms": 563.4081875,
+        "range_of_run_readback_medians_ms": [
+          500.44235449999996,
+          592.1248125
+        ],
+        "resident_at_command": 22,
+        "peak_rss": 3632021504,
+        "peak_footprint": 3645854688,
+        "total_decode_jobs": 463
+      }
+    },
+    "runs": [
+      {
+        "repeat": 0,
+        "policy": "disabled",
+        "variant": "baseline",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 574.9700204999999,
+        "readback_range_ms": [
+          558.51825,
+          691.2437500000001
+        ],
+        "encoded_median_ms": 516.654833,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 42,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 42,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "",
+          "misses": 0,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539460712,
+          "worker_peak_rss_bytes": 525467648,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 967,
+          "peak_rss": 4107288576,
+          "peak_footprint": 4083913984,
+          "maximum_processes": 4,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03398025000000082
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 68%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 65%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "disabled",
+        "variant": "automatic",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 575.514625,
+        "readback_range_ms": [
+          61.267833,
+          2342.0270419999997
+        ],
+        "encoded_median_ms": 516.967084,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 52,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 52,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "",
+          "misses": 0,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539542608,
+          "worker_peak_rss_bytes": 525565952,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 993,
+          "peak_rss": 3434643456,
+          "peak_footprint": 3350500128,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.0386539579999976
+        },
+        "admission_peak": 4481856612,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "limited",
+        "variant": "baseline",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 575.013875,
+        "readback_range_ms": [
+          541.525125,
+          689.646167
+        ],
+        "encoded_median_ms": 516.6217085000001,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 43,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 43,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 45,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539526272,
+          "worker_peak_rss_bytes": 525369344,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 965,
+          "peak_rss": 4126228480,
+          "peak_footprint": 4092171592,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03421450000000448
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 65%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "limited",
+        "variant": "baseline",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 558.7062920000001,
+        "readback_range_ms": [
+          558.224708,
+          622.7675419999999
+        ],
+        "encoded_median_ms": 500.325667,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 42,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 42,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 44,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539444352,
+          "worker_peak_rss_bytes": 525090816,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 962,
+          "peak_rss": 4097245184,
+          "peak_footprint": 4067824920,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.034716165999995496
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 65%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "limited",
+        "variant": "automatic",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 576.9851249999999,
+        "readback_range_ms": [
+          59.664792,
+          1848.834208
+        ],
+        "encoded_median_ms": 516.863729,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 51,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 51,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 60,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 541148264,
+          "worker_peak_rss_bytes": 526565376,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 980,
+          "peak_rss": 3451535360,
+          "peak_footprint": 3355349792,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.0356525410000188
+        },
+        "admission_peak": 4481856612,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "limited",
+        "variant": "automatic",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 558.6579165,
+        "readback_range_ms": [
+          60.605542,
+          2875.0025
+        ],
+        "encoded_median_ms": 500.2709585,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 51,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 51,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 60,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539542608,
+          "worker_peak_rss_bytes": 525189120,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 1008,
+          "peak_rss": 3454959616,
+          "peak_footprint": 3330511648,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03427283299998862
+        },
+        "admission_peak": 4481856612,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "normal",
+        "variant": "baseline",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 558.7412085000001,
+        "readback_range_ms": [
+          375.2015,
+          691.893375
+        ],
+        "encoded_median_ms": 500.14614600000004,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 36,
+        "final_cache": {
+          "busy": 19,
+          "bytes": 4152623880,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 36,
+          "entries": 1158,
+          "evictions": 696,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/0-normal-baseline/inputs",
+          "hits": 6,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 38,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539640936,
+          "worker_peak_rss_bytes": 525467648,
+          "writer_yields": 20,
+          "writes": 25
+        },
+        "memory": {
+          "samples": 967,
+          "peak_rss": 3764371456,
+          "peak_footprint": 4079506736,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.038581333999985645
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 66%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 59%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "normal",
+        "variant": "baseline",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 1,
+        "readback_median_ms": 508.123292,
+        "readback_range_ms": [
+          63.295041999999995,
+          675.510167
+        ],
+        "encoded_median_ms": 450.01162550000004,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 27,
+        "final_cache": {
+          "busy": 14,
+          "bytes": 4068736920,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 27,
+          "entries": 1138,
+          "evictions": 1256,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/0-normal-baseline/inputs",
+          "hits": 14,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 29,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539509840,
+          "worker_peak_rss_bytes": 524337152,
+          "writer_yields": 15,
+          "writes": 16
+        },
+        "memory": {
+          "samples": 934,
+          "peak_rss": 3793813504,
+          "peak_footprint": 4100592944,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.036981499999996004
+        },
+        "admission_peak": 4819132228,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 60%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "normal",
+        "variant": "automatic",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 592.1248125,
+        "readback_range_ms": [
+          59.450666,
+          1792.075209
+        ],
+        "encoded_median_ms": 533.5458125,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 46,
+        "final_cache": {
+          "busy": 93,
+          "bytes": 4028876904,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 46,
+          "entries": 1118,
+          "evictions": 13,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/0-normal-automatic/inputs",
+          "hits": 6,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Persistenza rinviata per letture prioritarie",
+          "misses": 47,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539608144,
+          "worker_peak_rss_bytes": 525582336,
+          "writer_yields": 34,
+          "writes": 15
+        },
+        "memory": {
+          "samples": 976,
+          "peak_rss": 3585622016,
+          "peak_footprint": 3604796408,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03360604199997397
+        },
+        "admission_peak": 4515411044,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 0,
+        "policy": "normal",
+        "variant": "automatic",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 3,
+        "readback_median_ms": 500.44235449999996,
+        "readback_range_ms": [
+          58.721000000000004,
+          642.0461250000001
+        ],
+        "encoded_median_ms": 441.786542,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 32,
+        "final_cache": {
+          "busy": 18,
+          "bytes": 4159939380,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 32,
+          "entries": 1159,
+          "evictions": 1120,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/0-normal-automatic/inputs",
+          "hits": 24,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 35,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539591784,
+          "worker_peak_rss_bytes": 524959744,
+          "writer_yields": 28,
+          "writes": 13
+        },
+        "memory": {
+          "samples": 908,
+          "peak_rss": 3551346688,
+          "peak_footprint": 3623261104,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.037119125000003805
+        },
+        "admission_peak": 4515409952,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 60%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "disabled",
+        "variant": "automatic",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 559.085896,
+        "readback_range_ms": [
+          59.694458,
+          1975.2456249999998
+        ],
+        "encoded_median_ms": 500.473437,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 51,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 51,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "",
+          "misses": 0,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 541049936,
+          "worker_peak_rss_bytes": 526532608,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 972,
+          "peak_rss": 3404152832,
+          "peak_footprint": 3373110024,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.034239292000052046
+        },
+        "admission_peak": 4481856612,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 61%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 61%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "disabled",
+        "variant": "baseline",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 1,
+        "readback_median_ms": 558.608625,
+        "readback_range_ms": [
+          61.659583,
+          692.0689169999999
+        ],
+        "encoded_median_ms": 500.25306250000006,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 42,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 42,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "",
+          "misses": 0,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 540968016,
+          "worker_peak_rss_bytes": 526336000,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 957,
+          "peak_rss": 4130308096,
+          "peak_footprint": 4089386336,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03542937500003518
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "limited",
+        "variant": "automatic",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 559.056979,
+        "readback_range_ms": [
+          60.10425,
+          2325.3523330000003
+        ],
+        "encoded_median_ms": 500.4465205,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 52,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 52,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 60,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539444304,
+          "worker_peak_rss_bytes": 525451264,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 984,
+          "peak_rss": 3398270976,
+          "peak_footprint": 3344831288,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03400929200000746
+        },
+        "admission_peak": 4481856612,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "limited",
+        "variant": "automatic",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 567.7304790000001,
+        "readback_range_ms": [
+          59.875209,
+          1874.9862080000003
+        ],
+        "encoded_median_ms": 508.799854,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 51,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 51,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 59,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 540984400,
+          "worker_peak_rss_bytes": 527073280,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 975,
+          "peak_rss": 3415113728,
+          "peak_footprint": 3363558200,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.041566375000002154
+        },
+        "admission_peak": 4481856612,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "limited",
+        "variant": "baseline",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 574.246854,
+        "readback_range_ms": [
+          541.146208,
+          675.530166
+        ],
+        "encoded_median_ms": 515.8068539999999,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 43,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 43,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 45,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 540951608,
+          "worker_peak_rss_bytes": 526565376,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 934,
+          "peak_rss": 4115759104,
+          "peak_footprint": 4089173272,
+          "maximum_processes": 4,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.04890362499997991
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "limited",
+        "variant": "baseline",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 574.3964584999999,
+        "readback_range_ms": [
+          557.549833,
+          624.613042
+        ],
+        "encoded_median_ms": 516.1270625,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 42,
+        "final_cache": {
+          "busy": 0,
+          "bytes": 0,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 42,
+          "entries": 0,
+          "evictions": 0,
+          "folder": "",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+          "misses": 44,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 540984424,
+          "worker_peak_rss_bytes": 526450688,
+          "writer_yields": 0,
+          "writes": 0
+        },
+        "memory": {
+          "samples": 930,
+          "peak_rss": 4112220160,
+          "peak_footprint": 4083045752,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03894600000000992
+        },
+        "admission_peak": 4802355064,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "normal",
+        "variant": "automatic",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 2,
+        "readback_median_ms": 575.709125,
+        "readback_range_ms": [
+          58.876833000000005,
+          2905.1256670000002
+        ],
+        "encoded_median_ms": 516.8266665,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 45,
+        "final_cache": {
+          "busy": 35,
+          "bytes": 4071858072,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 45,
+          "entries": 1138,
+          "evictions": 536,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/1-normal-automatic/inputs",
+          "hits": 11,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 51,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 4194348,
+          "worker_peak_footprint_bytes": 539542656,
+          "worker_peak_rss_bytes": 525598720,
+          "writer_yields": 40,
+          "writes": 23
+        },
+        "memory": {
+          "samples": 996,
+          "peak_rss": 3632021504,
+          "peak_footprint": 3645051944,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.07147433300002604
+        },
+        "admission_peak": 4482644858,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "normal",
+        "variant": "automatic",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 3,
+        "readback_median_ms": 550.4030835,
+        "readback_range_ms": [
+          59.476167000000004,
+          644.039209
+        ],
+        "encoded_median_ms": 492.099125,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 32,
+        "final_cache": {
+          "busy": 16,
+          "bytes": 4144759472,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 32,
+          "entries": 1156,
+          "evictions": 1095,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/1-normal-automatic/inputs",
+          "hits": 26,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 35,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 4194348,
+          "worker_peak_footprint_bytes": 539591760,
+          "worker_peak_rss_bytes": 525025280,
+          "writer_yields": 27,
+          "writes": 13
+        },
+        "memory": {
+          "samples": 903,
+          "peak_rss": 3500130304,
+          "peak_footprint": 3645854688,
+          "maximum_processes": 4,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.05018191700003172
+        },
+        "admission_peak": 4515409952,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "normal",
+        "variant": "baseline",
+        "phase": "cold",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 0,
+        "readback_median_ms": 567.074271,
+        "readback_range_ms": [
+          541.783791,
+          692.12675
+        ],
+        "encoded_median_ms": 508.585896,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 43,
+        "final_cache": {
+          "busy": 30,
+          "bytes": 4064634408,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 43,
+          "entries": 1146,
+          "evictions": 258,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/1-normal-baseline/inputs",
+          "hits": 0,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 47,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539493456,
+          "worker_peak_rss_bytes": 525565952,
+          "writer_yields": 30,
+          "writes": 28
+        },
+        "memory": {
+          "samples": 957,
+          "peak_rss": 4111745024,
+          "peak_footprint": 4076180760,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.03783170899998822
+        },
+        "admission_peak": 4819132280,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 61%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      },
+      {
+        "repeat": 1,
+        "policy": "normal",
+        "variant": "baseline",
+        "phase": "reopened",
+        "passed": true,
+        "views": 10,
+        "resident_at_command": 1,
+        "readback_median_ms": 541.9324374999999,
+        "readback_range_ms": [
+          69.549042,
+          625.333625
+        ],
+        "encoded_median_ms": 483.570604,
+        "max_channel_error_u8": 1,
+        "final_decode_jobs": 29,
+        "final_cache": {
+          "busy": 15,
+          "bytes": 4219784468,
+          "coalesced_consumers": 0,
+          "corrupt": 0,
+          "decode_jobs": 29,
+          "entries": 1179,
+          "evictions": 1432,
+          "folder": "var/automatic-previews-resume-2026-10-04/performance/1-normal-baseline/inputs",
+          "hits": 12,
+          "memory_pressure": "Normal",
+          "message": "Cache della cartella aggiornata",
+          "misses": 31,
+          "native_preview_fallbacks": 0,
+          "temporary_bytes": 0,
+          "worker_peak_footprint_bytes": 539477072,
+          "worker_peak_rss_bytes": 525402112,
+          "writer_yields": 16,
+          "writes": 21
+        },
+        "memory": {
+          "samples": 932,
+          "peak_rss": 3971760128,
+          "peak_footprint": 4079310080,
+          "maximum_processes": 3,
+          "incomplete_samples": 0,
+          "max_gap_seconds": 0.041692917000091256
+        },
+        "admission_peak": 4622914196,
+        "maximum_admission_limit": 8000634880,
+        "admission_rejections": 0,
+        "growths": 0,
+        "sources_unchanged": true,
+        "system_before": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 61%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        },
+        "system_after": {
+          "swap": {
+            "exit_code": 0,
+            "value": "total = 0.00M  used = 0.00M  free = 0.00M  (encrypted)"
+          },
+          "memory_pressure": {
+            "exit_code": 0,
+            "value": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%"
+          },
+          "power": {
+            "exit_code": 0,
+            "value": "Battery power; private device diagnostics omitted"
+          }
+        }
+      }
+    ]
+  },
+  "performance_interpretation": "The experiment records resident previews, redraw latency, completed decode jobs and sampled process memory. Extra speculation can perform more decodes. Run medians and variation are reported without a p95/p99 or statistically qualified speedup claim; steps within a process are dependent.",
+  "prior_evidence": {
+    "pre_review_bundle_manifest_sha256": "45138283cf0c8dae12dcd67572962f506abf4ab48ce118460f8bbbf655eab1e3",
+    "completed_after_session_interruption": "var/automatic-previews-2026-10-04/performance-results.json",
+    "repeated_on_final_bundle": true,
+    "baseline_original_bundle": "var/automatic-previews-2026-10-04/baseline.app",
+    "baseline_replay_bundle": "var/automatic-previews-2026-10-04/replay-baseline.app",
+    "baseline_binary_sha256": "7071c5f4b573273230674dc8702551bb7c19f34f88ad8eb8ae3f624db396cb2d",
+    "baseline_source_changes": [
+      "apps/desktop/src/ui/navigation.rs"
+    ],
+    "baseline_instrumentation": {
+      "sha256": "efebef88597493abdd59e0c1021194d3f5fac23301f9bd388dfdc38af16e7c60",
+      "scope": "Same replay instrumentation, plus failed-surface capture after timing endpoint; original production behavior unchanged."
+    }
+  },
+  "negative_evidence": [
+    {
+      "case": "Earlier baseline pilot, 1600 ms dwell and 1536 MiB reusable cache",
+      "evidence": "var/automatic-previews-2026-10-04/pilot-baseline-failure.json",
+      "passed": false,
+      "error": "Surface pixel/physical 1:1 check failed (maximum error 232)",
+      "completed_views": 9,
+      "scope": "Preserved failed surface comparison; subsequent attempts did not reproduce it. Not counted as a passing performance run and no production fix claimed."
+    },
+    {
+      "case": "First resumed complete suite",
+      "evidence": "var/automatic-previews-resume-2026-10-04/first-verify.log",
+      "passed": false,
+      "failed_test": "navigation_finishes_native_probe_but_skips_obsolete_development",
+      "followup": "Passed in isolation and 30 diagnostic repetitions. Test now waits for a valid PID rather than mere file existence and retains the process-liveness assertion with error detail. Complete final suite passed. The initial failure was not conclusively attributed to this readiness race."
+    }
+  ],
+  "bundle": {
+    "manifest_sha256": "53a113b23b8f601c68dd06e40e776d2932c5ec4a8c8a47c8ad4656febe42b94b",
+    "files": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "5605bf80492c8d152a8b418f84c6770e2b04661c179a83d980e4b05c608a4580",
+      "Contents/MacOS/tr-worker": "27ea994fc97f592a47cbab8b98c9e243d3cb177cd666a610f3e4f8bf3117cdd2",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abd8e4de7b8300cda9f6a872267e5c5ede35c872416b4ad8a3285a601483270b",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5e52dd6170571d26c6d602b916a4d334ce6c01cacbf177e95d0d36894affd98a",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "5b5b45537ecff1b501f56cb4f8bb0378a6c79ebf7d14caadfd2f42c48bbda0d2"
+    },
+    "delivery": {
+      "passed": true,
+      "installed_bundle": "dist/TrueRenderer.app",
+      "backup": "var/automatic-previews-resume-2026-10-04/previous-distribution.app",
+      "manifest_sha256": "53a113b23b8f601c68dd06e40e776d2932c5ec4a8c8a47c8ad4656febe42b94b",
+      "previous_manifest_sha256": "ac862b337509e48e2e2480c29b9936fc391bf4d9c532b11c9c7007a2aea0d4d7",
+      "files_match_qualified_bundle": true,
+      "signature_verified": true,
+      "originals_or_library_replaced": false,
+      "launched_and_visually_verified": true,
+      "settings_migration": {
+        "passed": true,
+        "schema": 3,
+        "base_bytes": 8000634880,
+        "explicit_battery_setting_preserved": true,
+        "unrelated_preferences_preserved": true,
+        "original_json_backup": "var/settings-before-automatic-bsTFAH.json",
+        "original_json_sha256": "9f8eb0bcb777c101152be5f7f510fb9cd68681172865b6baa5ece7d60c1cd15f",
+        "ui_observed_budget": "8.00 GB",
+        "ui_observed_used_reserved": "827.2 MB",
+        "ui_observed_effective_threads_on_battery": 9,
+        "ui_observed_prepared": "12/12",
+        "ui_active_display": "SDR 8-bit"
+      }
+    }
+  },
+  "limitations": [
+    "Single macOS Apple M4 machine; Windows and other camera families not requalified.",
+    "Admission growth/concurrency and pressure recovery tested through live-credit accounting and simulated notifications; not proof of safe arbitrary physical RAM exhaustion, all driver allocations or a kernel-enforced working set.",
+    "Performance comparison uses 30 distinct generated 4096x3000 PNGs with Apple bitmap decode and GPU presentation; the four-engine RAW matrix is a separate functional test.",
+    "Two repetitions per configuration; application cache controlled, OS disk cache not purged. RSS/footprint sums may double-count shared pages and miss peaks between samples. System swap belongs to the whole machine.",
+    "Replay measures selection and returns in Fit, not physical monitor refresh, a large-grid throughput campaign, native RAW zoom for every engine or p95/p99.",
+    "Not every photo remains resident: optional cache can be evicted and requested content may need disk reads, uploads, rendering or new decoding.",
+    "Ad hoc signature and XPC tests do not close distribution, color, accessibility, memory or R0-R4/SF gates."
+  ]
+}

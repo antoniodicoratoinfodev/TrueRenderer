@@ -15,7 +15,8 @@ pub(super) struct FolderLoad {
     waiting: bool,
     scan_failed: bool,
     finishing: bool,
-    native_fallbacks_before: u64,
+    viewer_edge: u32,
+    refining: Option<(String, PreviewRequest)>,
 }
 
 #[derive(Default)]
@@ -111,8 +112,8 @@ impl TrueRenderer {
         self.folder_load.cancelled_remaining = 0;
         self.folder_load.scan_failed = false;
         self.folder_load.finishing = true;
-        self.folder_load.native_fallbacks_before =
-            self.service.cache.stats().native_preview_fallbacks;
+        self.folder_load.viewer_edge = 0;
+        self.folder_load.refining = None;
         if self.folder_load.foreground {
             self.preparation_paused = false;
             self.cache.clear();
@@ -140,6 +141,7 @@ impl TrueRenderer {
         self.folder_load.cancelled = true;
         self.folder_load.finishing = false;
         self.folder_load.foreground = false;
+        self.folder_load.refining = None;
         // Next frame's ViewDemand cancels only this consumer, never saves/scans.
     }
 
@@ -153,11 +155,18 @@ impl TrueRenderer {
         // Its submission is registered before delivery of the decoded result.
         if self.folder_load.finishing && self.service.cache.preview_writes_pending() {
             if let Some(item) = self.rebuild.front() {
-                let key = (
-                    item.id.clone(),
-                    self.preview_request_for_mode(item, 0, false),
-                );
-                if self.pending_images.contains(&key) {
+                let key = self.folder_load.refining.clone().unwrap_or_else(|| {
+                    (
+                        item.id.clone(),
+                        self.preview_request_for_mode(item, 0, false),
+                    )
+                });
+                if let Some(cached) = self.cache.get_mut(&key) {
+                    // A slow or failed write must not let residency trimming
+                    // discard this photo before the RAM refinement can consume it.
+                    cached.touched = self.frame_number;
+                }
+                if self.pending_images.contains(&key) || self.cache.contains_key(&key) {
                     self.demand.insert(key);
                 }
             }
@@ -182,6 +191,12 @@ impl TrueRenderer {
         if self.folder_load.request.is_none() {
             return true;
         }
+        if self.folder_load.viewer_edge == 0 {
+            // Cover the physical window, including a viewer opened from the grid.
+            // The native result is detached on the I/O lane, never copied by UI.
+            let size = ctx.content_rect().size() * ctx.pixels_per_point();
+            self.folder_load.viewer_edge = size.x.max(size.y).ceil().clamp(1., 4096.) as u32;
+        }
         // Finish resident/failed entries without resubmitting an already known error.
         for _ in 0..16 {
             let Some(item) = self.rebuild.front().cloned() else {
@@ -201,11 +216,66 @@ impl TrueRenderer {
                 return true;
             }
             let request = self.preview_request_for_mode(&item, 0, false);
-            let key = (item.id.clone(), request);
+            let native_key = (item.id.clone(), request);
+            let viewer_key = (
+                item.id.clone(),
+                PreviewRequest {
+                    edge: self.folder_load.viewer_edge,
+                    ..request
+                },
+            );
+            if self
+                .folder_load
+                .refining
+                .as_ref()
+                .is_some_and(|key| key != &viewer_key)
+            {
+                self.folder_load.refining = None;
+            }
+            if self.folder_load.refining.is_none() && self.cache.contains_key(&native_key) {
+                self.folder_load.refining = Some(viewer_key.clone());
+            }
+            let key = self
+                .folder_load
+                .refining
+                .clone()
+                .unwrap_or(native_key.clone());
             let failed = self.errors.contains_key(&format!("{}:{:?}", key.0, key.1));
             if self.cache.contains_key(&key) || failed {
+                // Make an unused native ancestor reclaimable immediately, while
+                // preserving the independently owned viewing preview and aliases.
+                if let Some(native) = self.cache.get(&native_key) {
+                    let source = native.pyramid.id();
+                    if self
+                        .cache
+                        .get(&viewer_key)
+                        .is_some_and(|c| c.pyramid.id() != source)
+                        && !self
+                            .cache
+                            .iter()
+                            .any(|(k, c)| c.pyramid.id() == source && self.demand.contains(k))
+                    {
+                        for cached in self.cache.values_mut().filter(|c| c.pyramid.id() == source) {
+                            cached.touched = self.frame_number.saturating_sub(2);
+                        }
+                    }
+                }
                 self.rebuild.pop_front();
+                self.folder_load.refining = None;
                 self.folder_load.errors += usize::from(failed);
+            } else if self.folder_load.refining.is_some() {
+                // This phase also runs with persistence disabled or over quota.
+                // Keep the native parent alive until its detached tail is ready.
+                if let Some(native) = self.cache.get_mut(&native_key) {
+                    native.touched = self.frame_number;
+                }
+                self.ensure_preview_request(&item, key.1, self.folder_preparation_priority());
+                if self.cache.contains_key(&key) {
+                    // Equivalent mip geometry aliases immediately. Do not add a
+                    // 100 ms repaint wait per photo in an already warm folder.
+                    continue;
+                }
+                return true;
             } else {
                 break;
             }
@@ -220,13 +290,23 @@ impl TrueRenderer {
                 return true;
             }
         }
-        if self.service.cache.memory.usage().reserved > self.service.cache.memory.usage().limit / 2
+        if self.service.cache.memory.usage().reserved
+            > self
+                .service
+                .cache
+                .memory
+                .usage()
+                .limit
+                .saturating_sub(self.service.cache.background_headroom())
         {
-            self.trim_images(true);
+            self.trim_images_for_headroom(self.service.cache.background_headroom());
         }
         let memory = self.service.cache.memory.usage();
         if self.service.cache.under_pressure()
-            || memory.reserved > memory.limit / 2
+            || memory.reserved
+                > memory
+                    .limit
+                    .saturating_sub(self.service.cache.background_headroom())
             || self.demand.iter().any(|key| {
                 !self.cache.contains_key(key)
                     && !self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
@@ -237,17 +317,21 @@ impl TrueRenderer {
         }
         if let Some(item) = self.rebuild.front().cloned() {
             let request = self.preview_request_for_mode(&item, 0, false);
-            self.ensure_preview_request(
-                &item,
-                request,
-                if self.folder_load.foreground {
-                    PreviewPriority::Immediate
-                } else {
-                    PreviewPriority::Background
-                },
-            );
+            self.ensure_preview_request(&item, request, self.folder_preparation_priority());
         }
         true
+    }
+
+    fn folder_preparation_priority(&self) -> PreviewPriority {
+        if self.folder_load.foreground {
+            PreviewPriority::Immediate
+        } else {
+            PreviewPriority::Background
+        }
+    }
+
+    pub(super) fn prepared_viewer_edge(&self) -> u32 {
+        self.folder_load.viewer_edge
     }
 
     pub(super) fn folder_progress(&self) -> (usize, usize, f32) {
@@ -380,12 +464,6 @@ impl TrueRenderer {
                 self.folder_load.errors,
                 self.folder_load.skipped
             ));
-        }
-        ui.label(lang.text("Preparazione dello sviluppo e dei livelli per la qualità scelta, con la ricetta di ogni foto. Piena include il dettaglio nativo."));
-        if self.service.cache.stats().native_preview_fallbacks
-            > self.folder_load.native_fallbacks_before
-        {
-            ui.label(lang.text("Quota cache insufficiente per tutti i dettagli nativi: conservate le anteprime per la visualizzazione."));
         }
         if self.folder_load.finishing && self.service.cache.preview_writes_pending() {
             ui.label(lang.text("Salvataggio anteprime…"));
@@ -589,6 +667,9 @@ impl TrueRenderer {
         }
     }
 }
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod retention_tests;
 
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod tests {

@@ -34,6 +34,9 @@ struct Pending {
 pub(super) struct Probe {
     started: Instant,
     trace: [String; 3],
+    replay: Vec<String>,
+    dwell: Duration,
+    settled: Option<Instant>,
     pressure: bool,
     pressure_before: usize,
     pressure_after: usize,
@@ -48,6 +51,7 @@ pub(super) struct Probe {
     reprojections: usize,
     minimum_coverage: f32,
     prepare_folder: bool,
+    retain_prepared_viewers: bool,
     preparation: Option<serde_json::Value>,
 }
 impl Probe {
@@ -61,7 +65,27 @@ impl Probe {
                 .unwrap_or_else(|| fallback.into())
         };
         let first = target("--navigation-first", TRACE[0]);
+        let replay = args
+            .iter()
+            .position(|a| a == "--navigation-replay")
+            .and_then(|i| args.get(i + 1))
+            .map(|p| {
+                let bytes = std::fs::read(p).expect("Replay file must be readable");
+                assert!(bytes.len() <= 65536);
+                let names: Vec<String> =
+                    serde_json::from_slice(&bytes).expect("Replay must contain file names");
+                assert!(!names.is_empty() && names.len() <= 256);
+                names
+            })
+            .unwrap_or_default();
         Self {
+            replay,
+            dwell: Duration::from_millis(
+                target("--navigation-dwell-ms", "750")
+                    .parse()
+                    .expect("Dwell milliseconds"),
+            ),
+            settled: None,
             trace: [
                 first.clone(),
                 target("--navigation-second", TRACE[1]),
@@ -82,18 +106,37 @@ impl Probe {
             reprojections: 0,
             minimum_coverage: 1.,
             prepare_folder: args.iter().any(|arg| arg == "--navigation-prepared-folder"),
+            retain_prepared_viewers: args
+                .iter()
+                .any(|arg| arg == "--navigation-retain-prepared-viewers"),
             preparation: None,
         }
     }
+    pub(super) fn prefetch_enabled(&self) -> bool {
+        !self.replay.is_empty()
+    }
+    fn action(&self, step: usize) -> &str {
+        if self.prefetch_enabled() {
+            "select"
+        } else {
+            ACTIONS[step]
+        }
+    }
     fn steps(&self) -> usize {
-        if self.transitions {
+        if self.prefetch_enabled() {
+            self.replay.len()
+        } else if self.transitions {
             ACTIONS.len()
         } else {
             TRACE.len()
         }
     }
     fn target(&self) -> &str {
-        &self.trace[self.rows.len().min(2)]
+        if self.prefetch_enabled() {
+            &self.replay[self.rows.len().min(self.replay.len() - 1)]
+        } else {
+            &self.trace[self.rows.len().min(2)]
+        }
     }
 }
 
@@ -150,11 +193,13 @@ impl TrueRenderer {
             "pressure_injected":probe.pressure, "pressure_wide_before":probe.pressure_before, "pressure_wide_after":probe.pressure_after,
             "transitions":probe.transitions,
             "folder_preparation":probe.preparation,
-            "actions":&ACTIONS[..probe.steps()],
+            "actions":(0..probe.steps()).map(|s| probe.action(s)).collect::<Vec<_>>(),
+            "replay":probe.replay,"dwell_ms":probe.dwell.as_millis(), "prefetch_enabled":probe.prefetch_enabled(),
+            "final_cache":self.service.cache.stats(),
             "inflight_step":probe.rows.len(), "inflight_redraws":probe.redraws,
             "inflight_minimum_draw_coverage":probe.minimum_coverage,
             "continuity_scope":"Per-redraw image draw-command coverage during same-source transitions. Partial overlap is recorded; zero coverage fails. No per-refresh compositor/display continuity claim.",
-            "scope":"Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Prefetch, filmstrip and inspector disabled. Steps within each process are dependent, not independent p95/p99 samples."
+            "scope":"Synthetic selection/transform/photo-quality actions through the production viewer. Event timestamp precedes the action; encoded timestamp means the exact requested raster was added to egui, before surface submit. Readback receipt includes surface rendering, GPU readback and event delivery; excludes subsequent CPU reference verification. Neither timestamp measures physical display presentation. Listing and GPU qualification precede the trace. Filmstrip and inspector disabled. Prefetch disabled except in explicit replay mode; background work can contribute to per-interval counters. Steps within each process are dependent, not independent p95/p99 samples."
         });
         if let Err(e) = std::fs::write(
             self.root.join("reports/navigation-surface.json"),
@@ -198,6 +243,29 @@ impl TrueRenderer {
                 pending.rect,
             )
         });
+        if check.as_ref().is_ok_and(|(maximum, _)| *maximum > 1) {
+            // Keep the failing surface, reference and geometry for a reproducible
+            // diagnosis; never discard a bad sample and retry it as a success.
+            let pixels: Vec<u8> = screen.pixels.iter().flat_map(|p| p.to_array()).collect();
+            let _ = image::save_buffer(
+                self.root.join("reports/navigation-failed-surface.png"),
+                &pixels,
+                screen.width() as u32,
+                screen.height() as u32,
+                image::ColorType::Rgba8,
+            );
+            if let Ok(reference) = pending.source.render(pending.region) {
+                let _ = image::save_buffer(
+                    self.root.join("reports/navigation-failed-reference.png"),
+                    &reference.to_display(),
+                    pending.region.size[0],
+                    pending.region.size[1],
+                    image::ColorType::Rgba8,
+                );
+            }
+            let _ = std::fs::write(self.root.join("reports/navigation-failed-geometry.json"),
+                serde_json::to_vec_pretty(&serde_json::json!({"rect":pending.rect,"source":probe.target(),"token":pending.token})).unwrap());
+        }
         match check {
             Ok((maximum, differing))
                 if maximum <= 1
@@ -207,7 +275,7 @@ impl TrueRenderer {
             {
                 let after = self.service.cache.stats();
                 probe.rows.push(serde_json::json!({
-                    "step":probe.rows.len(), "source":probe.target(), "action":ACTIONS[probe.rows.len()],
+                    "step":probe.rows.len(), "source":probe.target(), "action":probe.action(probe.rows.len()),
                     "event_to_encoded_ms":pending.encoded_ms, "event_to_readback_ms":readback_ms,
                     "resident_at_command":probe.resident,
                     "cache_hits":after.hits.saturating_sub(probe.before.hits),
@@ -219,15 +287,19 @@ impl TrueRenderer {
                     "memory_reserved":self.service.cache.memory.usage().reserved,
                     "memory_peak":self.service.cache.memory.usage().peak,
                     "memory_limit":self.service.cache.memory.usage().limit,
+                    "memory_base":self.service.cache.memory.usage().base,
+                    "memory_ceiling":self.service.cache.memory.usage().ceiling,
+                    "memory_growths":self.service.cache.memory.usage().growths,
                     "admission_rejections":self.service.cache.memory.usage().rejected,
                     "presenter":self.presenter.statistics(),
                     "max_channel_error_u8":maximum, "differing_channels":differing, "passed":true
                     ,"redraws":probe.redraws, "reprojected_redraws":probe.reprojections,
                     "minimum_draw_coverage":probe.minimum_coverage,
                     "effective_quality":self.state.current_item().map(|item| self.quality_overrides.get(&item.id).copied().unwrap_or(self.cache_settings.quality)),
-                    "physical_1to1_exact": if ACTIONS[probe.rows.len()] == "physical-1to1" { Some(maximum == 0 && pending.region.step == [1.,1.]) } else { None }
+                    "physical_1to1_exact": if probe.action(probe.rows.len()) == "physical-1to1" { Some(maximum == 0 && pending.region.step == [1.,1.]) } else { None }
                 }));
                 probe.event = None;
+                probe.settled = Some(Instant::now());
                 if probe.rows.len() == probe.steps() {
                     self.navigation_finish(ctx, None);
                 }
@@ -249,7 +321,7 @@ impl TrueRenderer {
         if probe.done {
             return false;
         }
-        if probe.started.elapsed() > Duration::from_secs(180)
+        if probe.started.elapsed() > Duration::from_secs(1200)
             || self.fatal
             || !self.errors.is_empty()
             || self.presenter.has_errors()
@@ -267,15 +339,8 @@ impl TrueRenderer {
             ctx.request_repaint_after(Duration::from_millis(10));
             return false; // No image demand may precede the first command.
         }
-        if !self.gpu_passed
-            || self.service.cache.settings().prefetch != crate::cache::Prefetch::Disabled
-        {
-            self.navigation_finish(
-                ctx,
-                Some(
-                    "Probe requires verified GPU and disabled prefetch in isolated settings".into(),
-                ),
-            );
+        if !self.gpu_passed {
+            self.navigation_finish(ctx, Some("Probe requires verified GPU".into()));
             return false;
         }
         if probe.prepare_folder && probe.preparation.is_none() {
@@ -292,14 +357,28 @@ impl TrueRenderer {
                 ctx.request_repaint_after(Duration::from_millis(10));
                 return false;
             }
+            let retain = self
+                .navigation_probe
+                .as_ref()
+                .unwrap()
+                .retain_prepared_viewers;
+            if retain {
+                // Exercise the autonomous viewing previews alone. In Standard,
+                // identical mip geometry may share the quality-capped parent.
+                let edge = self.prepared_viewer_edge();
+                self.cache.retain(|(_, request), _| request.edge == edge);
+            } else {
+                self.cache.clear();
+            }
             let preparation = serde_json::json!({
                 "processed":self.folder_progress().0, "total":self.folder_progress().1,
                 "errors":self.folder_load.errors, "cache":self.service.cache.stats(),
                 "request":self.folder_load.request,
                 "seconds":self.navigation_probe.as_ref().unwrap().started.elapsed().as_secs_f64(),
-                "ram_discarded_before_navigation":true,
+                "ram_discarded_before_navigation":!retain,
+                "only_prepared_viewers_retained":retain,
+                "retained_entries":self.cache.len(),
             });
-            self.cache.clear();
             self.presenter.clear();
             let probe = self.navigation_probe.as_mut().unwrap();
             probe.preparation = Some(preparation);
@@ -307,6 +386,11 @@ impl TrueRenderer {
         }
         let probe = self.navigation_probe.as_ref().unwrap();
         if probe.event.is_none() {
+            if probe.prefetch_enabled() && probe.settled.is_some_and(|t| t.elapsed() < probe.dwell)
+            {
+                ctx.request_repaint_after(Duration::from_millis(25));
+                return true;
+            }
             let step = probe.rows.len();
             let target = probe.target();
             let Some(item) = self.state.items.iter().find(|i| i.name == target).cloned() else {
@@ -316,7 +400,7 @@ impl TrueRenderer {
             self.show_inspector = false;
             self.show_filmstrip = false;
             self.state.view = ViewMode::Preview;
-            if step < 3 {
+            if step < 3 || probe.prefetch_enabled() {
                 self.state.transform = ViewTransform::default();
             }
             let probe = self.navigation_probe.as_mut().unwrap();
@@ -331,7 +415,7 @@ impl TrueRenderer {
             probe.redraws = 0;
             probe.reprojections = 0;
             probe.minimum_coverage = 1.;
-            match step {
+            match if probe.prefetch_enabled() { 0 } else { step } {
                 0..=2 => self.command(Command::Select {
                     id: item.id,
                     extend: false,

@@ -339,6 +339,7 @@ pub struct Broker {
     timeout: Duration,
     memory_limit: u64,
     external_memory_limit: u64,
+    probe_limits: bool,
     active_external: bool,
     external_timeout: Duration,
     slot: u32,
@@ -377,6 +378,7 @@ impl Broker {
             timeout: Duration::from_secs(12),
             memory_limit: 384 * 1024 * 1024,
             external_memory_limit: 2 * 1024 * 1024 * 1024,
+            probe_limits: false,
             active_external: false,
             external_timeout: Duration::from_secs(45),
             slot,
@@ -407,8 +409,20 @@ impl Broker {
     pub fn statistics(&self) -> &BrokerStatistics {
         &self.statistics
     }
+    /// macOS supervision follows the admitted job, not the entire app budget.
+    /// This remains sampled RSS/footprint supervision, not a kernel ceiling.
+    /// Pipe confinement and deliberately tightened qualification limits stay fixed.
+    pub fn set_admitted_memory(&mut self, admitted: u64, budget: u64) {
+        if self.bundled_xpc && !self.probe_limits {
+            self.external_memory_limit = admitted
+                .saturating_add(tr_core::budget::MemoryBudget::margin(admitted))
+                .max(2 * 1024 * 1024 * 1024)
+                .min(budget);
+        }
+    }
     /// Internal qualification only; may only lower production limits.
     pub fn tighten_limits_for_probe(&mut self, timeout: Duration, memory_bytes: u64) {
+        self.probe_limits = true;
         self.timeout = timeout.min(Duration::from_secs(12));
         self.external_timeout = timeout.min(Duration::from_secs(45));
         self.external_memory_limit = memory_bytes.min(2 * 1024 * 1024 * 1024);
@@ -930,6 +944,23 @@ impl Broker {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn admitted_xpc_memory_is_bounded_and_cannot_relax_probe_or_pipe_limits() {
+        let mut broker = Broker::new(PathBuf::from("worker"));
+        broker.set_admitted_memory(4_000_000_000, 8_000_000_000);
+        assert_eq!(broker.external_memory_limit, 2 * 1024 * 1024 * 1024);
+        broker.bundled_xpc = true;
+        broker.set_admitted_memory(4_000_000_000, 8_000_000_000);
+        assert_eq!(broker.external_memory_limit, 4_400_000_000);
+        assert_eq!(broker.memory_limit, 384 * 1024 * 1024);
+        broker.set_admitted_memory(4_000_000_000, 4_100_000_000);
+        assert_eq!(broker.external_memory_limit, 4_100_000_000);
+        broker.set_admitted_memory(128_000_000, 8_000_000_000);
+        assert_eq!(broker.external_memory_limit, 2 * 1024 * 1024 * 1024);
+        broker.tighten_limits_for_probe(Duration::from_millis(50), 100_000_000);
+        broker.set_admitted_memory(4_000_000_000, 8_000_000_000);
+        assert_eq!(broker.external_memory_limit, 100_000_000);
+    }
     #[cfg(windows)]
     #[test]
     #[ignore = "requires TR_WORKER_BINARY; exercises AppContainer launches"]

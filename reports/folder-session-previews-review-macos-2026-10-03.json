@@ -1,0 +1,1562 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "scope": "Follow-up review of prepared folder previews with disabled, limited and normal disk cache; two memory-admission defects reproduced and corrected.",
+  "prior_campaign": {
+    "report": "reports/folder-session-previews-macos-2026-10-03.json",
+    "note": "Historical evidence remains tied to its earlier bundle. The 32 disabled/limited headless cases from that campaign were not rerun or counted here."
+  },
+  "findings": [
+    {
+      "problem": "Temporary memory pressure while reading a valid cached preview became a permanent photo error.",
+      "negative_evidence": "var/folder-session-review-2026-10-03/cache-admission-before.log",
+      "regression": "decode_pool::tests::cached_neighbor_recovers_from_temporary_admission_without_decode",
+      "correction": "Return the total admission bytes including reader scratch; preserve the typed admission error, wait with cancellation and a two-second bound, then defer background demand. After releasing credits the cached pixels are returned unchanged without launching a decoder.",
+      "passed_after": true
+    },
+    {
+      "problem": "Admission classification ignored the source snapshot or resident parent retained by the same job, so a background request that could never fit after a quota reduction could keep retrying.",
+      "negative_evidence": "var/folder-session-review-2026-10-03/parent-admission-before.log",
+      "regression": "decode_pool::tests::resident_derivation_reports_when_parent_and_tail_cannot_fit_together",
+      "correction": "Include baseline and mandatory retained bytes when deciding whether admission can recover. Report impossible requests explicitly; continue to defer genuinely temporary pressure.",
+      "passed_after": true
+    }
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "suite": "var/verify-Q6lcl1Ex",
+    "ordinary_rust_tests": 264,
+    "native_integrations": 14,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt_passed": true,
+    "clippy_all_targets_passed": true,
+    "debug_build_passed": true,
+    "release_bundle_build_passed": true,
+    "native_surface_smoke_passed": true,
+    "visual_inspection": "Inspected the newly captured Italian foreground popup and completed grid with disabled disk cache. Explanatory text and controls fit; all twelve generated thumbnails are present.",
+    "targeted_pool_tests": 11,
+    "targeted_pool_evidence": "var/folder-session-review-2026-10-03/pool-after.log",
+    "application_sources_unchanged": true,
+    "tested_source_manifest_sha256": "4ade3545ef6f4057b9193cbf6dfa7c1d263ff81604286df0fe73627a17373404"
+  },
+  "native_viewer": {
+    "camera": "Nikon D750",
+    "private_sources": 2,
+    "adapter": "Apple M4 · Metal",
+    "engines": [
+      "Apple",
+      "LibRawBilinear",
+      "LibRawAhd",
+      "TrueRenderer"
+    ],
+    "qualities": [
+      "Full",
+      "Standard"
+    ],
+    "compute": [
+      "Cpu",
+      "Gpu"
+    ],
+    "cache_policies": [
+      "disabled",
+      "64 MiB"
+    ],
+    "cases": 32,
+    "displayed_samples": 96,
+    "new_raw_decodes": 0,
+    "cache_hits": 0,
+    "gpu_fallbacks": 0,
+    "maximum_surface_error_u8": {
+      "Cpu": 0,
+      "Gpu": 1
+    },
+    "preparation": "Real folder preparation, foreground for CPU and background for GPU. Retain only the two prepared viewer-edge entries, then select both photos and return to the first in Fit. Prefetch disabled; isolated catalogues and copied sources.",
+    "evidence": "var/folder-session-review-2026-10-03/native-results.json",
+    "rows": [
+      {
+        "case": "disabled-Apple-Full-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-Apple-Full-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-Apple-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-Apple-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawBilinear-Full-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawBilinear-Full-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawBilinear-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawBilinear-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawAhd-Full-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawAhd-Full-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawAhd-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-LibRawAhd-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-TrueRenderer-Full-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-TrueRenderer-Full-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-TrueRenderer-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "disabled-TrueRenderer-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "disabled",
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-Apple-Full-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-Apple-Full-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-Apple-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-Apple-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawBilinear-Full-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawBilinear-Full-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawBilinear-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawBilinear-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawAhd-Full-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawAhd-Full-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawAhd-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-LibRawAhd-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-TrueRenderer-Full-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-TrueRenderer-Full-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-TrueRenderer-Standard-Cpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "loading_mode": "Foreground",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 0,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      },
+      {
+        "case": "limited-TrueRenderer-Standard-Gpu",
+        "passed": true,
+        "cache_policy": "limited",
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "loading_mode": "Background",
+        "displayed_samples": 3,
+        "prepared_viewers": 2,
+        "new_raw_decodes": 0,
+        "cache_hits": 0,
+        "maximum_surface_error_u8": 1,
+        "maximum_accounted_memory_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "gpu_fallbacks": 0,
+        "source_unchanged": true
+      }
+    ]
+  },
+  "disk_cache_reopen": {
+    "cache_policy": "normal",
+    "camera": "Nikon D750",
+    "private_sources": 2,
+    "cases": 16,
+    "viewer_visits": 64,
+    "new_raw_decodes": 0,
+    "all_mip_samples_bit_identical": true,
+    "preparation": "All four engines, Full/Standard, foreground/background. Cold preparation after cache clearing; complete RAM eviction before fitted/native-quality cache reloads. The second photo has a saved engine and native WB different from global preferences.",
+    "sources_unchanged": true,
+    "evidence": "var/folder-session-review-2026-10-03/raw-normal/folder-previews.json",
+    "rows": [
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1959732640,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1967788752,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1863091616,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear",
+            "raw_wb": {
+              "apple_temperature": 0,
+              "apple_tint": 0,
+              "blue": 850,
+              "red": 1200
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1871147728,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1952873392,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1960983280,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1855589296,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1863699184,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1952873392,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1960983280,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1855589296,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1863699184,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1952873392,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 2700,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1960983280,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "mode": "Foreground",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1855589296,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "mode": "Background",
+        "passed": true,
+        "viewer_visits": 4,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "viewer_requests": [
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          {
+            "edge": 2700,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          },
+          {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple",
+            "raw_wb": {
+              "apple_temperature": 4500,
+              "apple_tint": 8,
+              "blue": 1000,
+              "red": 1000
+            }
+          }
+        ],
+        "maximum_accounted_memory_bytes": 1863699184,
+        "memory_limit_bytes": 2147483648,
+        "native_cache_fallbacks": 0
+      }
+    ]
+  },
+  "cache_rebuild": {
+    "cases": 2,
+    "cache_clears": 6,
+    "policies": {
+      "disabled": {
+        "cache_clears": [
+          {
+            "decode_jobs_before": 0,
+            "disk_empty_before_reload": true,
+            "foreground": true,
+            "fresh_images_after_reload": true,
+            "generation_before": 1,
+            "new_decode_jobs": 12,
+            "pending_images": 1,
+            "resident_images": 0,
+            "revoked_and_invalidated": true
+          },
+          {
+            "decode_jobs_before": 12,
+            "disk_empty_before_reload": true,
+            "foreground": false,
+            "generation_before": 2,
+            "pending_images": 0,
+            "resident_images": 37,
+            "revoked_and_invalidated": true
+          },
+          {
+            "decode_jobs_before": 12,
+            "disk_empty_before_reload": true,
+            "foreground": false,
+            "fresh_images_after_reload": true,
+            "generation_before": 3,
+            "new_decode_jobs": 22,
+            "pending_images": 1,
+            "resident_images": 0,
+            "revoked_and_invalidated": true
+          }
+        ],
+        "complete": true,
+        "errors": 0,
+        "failure": null,
+        "foreground_and_background": true,
+        "passed": true,
+        "processed": 12,
+        "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+        "screenshots": [
+          "folder-loading-background",
+          "folder-loading-foreground",
+          "folder-loading-complete"
+        ],
+        "total": 12
+      },
+      "limited": {
+        "cache_clears": [
+          {
+            "decode_jobs_before": 0,
+            "disk_empty_before_reload": true,
+            "foreground": true,
+            "fresh_images_after_reload": true,
+            "generation_before": 1,
+            "new_decode_jobs": 12,
+            "pending_images": 1,
+            "resident_images": 0,
+            "revoked_and_invalidated": true
+          },
+          {
+            "decode_jobs_before": 12,
+            "disk_empty_before_reload": true,
+            "foreground": false,
+            "generation_before": 2,
+            "pending_images": 0,
+            "resident_images": 37,
+            "revoked_and_invalidated": true
+          },
+          {
+            "decode_jobs_before": 12,
+            "disk_empty_before_reload": true,
+            "foreground": false,
+            "fresh_images_after_reload": true,
+            "generation_before": 3,
+            "new_decode_jobs": 21,
+            "pending_images": 1,
+            "resident_images": 0,
+            "revoked_and_invalidated": true
+          }
+        ],
+        "complete": true,
+        "errors": 0,
+        "failure": null,
+        "foreground_and_background": true,
+        "passed": true,
+        "processed": 12,
+        "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+        "screenshots": [
+          "folder-loading-complete",
+          "folder-loading-background",
+          "folder-loading-foreground"
+        ],
+        "total": 12
+      }
+    }
+  },
+  "xpc": {
+    "passed": true,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "ea907589ae1d5227cd8c928fbf607d6593b637145c20bf367b039916cf7159ad",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7cf6e9a19cc5f92dfee6616c72d773501c1689439c5bbd2de61779fbe49bc78d",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8255679f6520ca7fec7e171fccbabe59d6b9200c82e8c810b03e4630f50a1537"
+    },
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false,
+    "integration": {
+      "corpus_images_checked": 12,
+      "two_distinct_processes": true,
+      "same_pixels": true,
+      "other_isolate_survived": true,
+      "suspended_worker_timeout_ms": 210,
+      "edited_export_checked_slots": 2,
+      "edited_export_native_match_slots": 2,
+      "edited_export_source_unchanged": true,
+      "memory_limit_is_hard_kernel_cap": false
+    },
+    "evidence": "var/folder-session-review-2026-10-03/xpc/reports/xpc-qualification-macos.json"
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "qualified_bundle": "var/folder-session-review-2026-10-03/TrueRenderer.app",
+    "manifest_sha256": "ac862b337509e48e2e2480c29b9936fc391bf4d9c532b11c9c7007a2aea0d4d7",
+    "manifest": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "ea907589ae1d5227cd8c928fbf607d6593b637145c20bf367b039916cf7159ad",
+      "Contents/MacOS/tr-worker": "398c3b8e5d868804103a5cf56b789c73874b4da00a8ad05ae774752863ead8e2",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7cf6e9a19cc5f92dfee6616c72d773501c1689439c5bbd2de61779fbe49bc78d",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8255679f6520ca7fec7e171fccbabe59d6b9200c82e8c810b03e4630f50a1537",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "fe0f42c0d25ae1af2aa732d5cc1f1abee2ecd1f5f9a7a4328bc66ff74f5cab1e"
+    },
+    "previous_bundle": "var/folder-session-review-2026-10-03/previous-distribution.app",
+    "delivered_bundle_identical": true,
+    "previous_bundle_preserved": true,
+    "ad_hoc_signature_verified": true,
+    "test_sources_unchanged": true
+  },
+  "limitations": [
+    "macOS, Apple M4/Metal and two D750 source copies only. Other cameras, formats and Windows were not newly qualified.",
+    "Native viewer actions cover Fit at the prepared quality and size. Normal disk-cache tests also reopen native-quality data; disabled/limited disk cache does not promise native zoom without additional work.",
+    "Memory and disk quotas remain binding, including zero reusable RAM. Completion certifies preparation, not permanent simultaneous residency of every photo. Eviction, larger views or recipe/source/quality changes may require new work.",
+    "Accounted memory stayed within the configured budget; this is not a physical RSS or kernel memory guarantee. No statistical p95/p99 latency, colour or physical monitor refresh qualification.",
+    "The ad-hoc signature and XPC integration checks do not close the full sandbox/release gate or R0-R4/SF gates."
+  ]
+}

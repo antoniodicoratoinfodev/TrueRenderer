@@ -16,7 +16,8 @@ pub enum Lookup {
     Invalid,
     Busy,
     Disabled,
-    Limited(String),
+    /// Additional credits required for pixels and bounded reader scratch.
+    Limited(u64),
 }
 impl std::fmt::Debug for Lookup {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -207,15 +208,9 @@ impl Manager {
                             == header.levels[0][0] as u64 * header.levels[0][1] as u64),
                 "Istogramma derivato incoerente"
             );
-            let Some(mut lease) = budget.try_reserve(total + BLOCK as u64 + HEADER_LIMIT as u64)
-            else {
-                return Ok(Lookup::Limited(format!(
-                    "Derivato richiede {}; memoria disponibile {}",
-                    crate::size_units::human_bytes(total),
-                    crate::size_units::human_bytes(
-                        budget.usage().limit.saturating_sub(budget.usage().reserved)
-                    )
-                )));
+            let required = total + BLOCK as u64 + HEADER_LIMIT as u64;
+            let Some(mut lease) = budget.try_reserve(required) else {
+                return Ok(Lookup::Limited(required));
             };
             let mut names = header.blocks.iter();
             let mut levels = Vec::new();

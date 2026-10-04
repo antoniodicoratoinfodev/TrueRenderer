@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-04",
+  "passed": true,
+  "scope": "Removal of three folder loading explanatory messages and disposable local development artifacts. No change to preview algorithms.",
+  "validation": {
+    "format": true,
+    "clippy": true,
+    "folder_loading_unit_tests_passed": 20,
+    "release_build": true,
+    "native_folder_loading": {
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 11,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 11,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 37,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 11,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 21,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ],
+      "complete": true,
+      "errors": 0,
+      "failure": null,
+      "foreground_and_background": true,
+      "passed": true,
+      "processed": 12,
+      "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+      "screenshots": [
+        "folder-loading-background",
+        "folder-loading-foreground",
+        "folder-loading-complete"
+      ],
+      "total": 12
+    },
+    "xpc": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-10-04T01:47:30.168507+00:00",
+      "bundle": "var/popup-cleanup-2026-10-04/TrueRenderer.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "2c0a4243174cecb8822c1bb5f04cf0261d4c76d75c7ac6721f9b486b8bef9911",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abd8e4de7b8300cda9f6a872267e5c5ede35c872416b4ad8a3285a601483270b",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5e52dd6170571d26c6d602b916a4d334ce6c01cacbf177e95d0d36894affd98a"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "popup_screenshot_reviewed": true
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "manifest_sha256": "cf1522739d676741e43ea383a4596fb5387f288b20f89e5c811ff618221db1bb"
+  },
+  "cleanup": {
+    "initial_disk_gib_approximate": 97,
+    "final_allocated_bytes": 3953688576,
+    "removed_cache_directories": 271,
+    "removed_test_raw_files": 509,
+    "removed_historical_app_bundles": 54,
+    "build_output_removed": true,
+    "deduplicated_diagnostic_images": 918,
+    "deduplicated_logical_bytes": 1213749225,
+    "durable_files_hash_verified_unchanged": true,
+    "preserved": [
+      "sources and regression fixtures",
+      "licenses",
+      "local offline Rust toolchain and dependencies",
+      "dist/TrueRenderer.app and one rollback bundle",
+      "library and durable backups",
+      "reports, logs and diagnostic images"
+    ],
+    "limits": [
+      "Historical campaign RAW inputs, caches and bundles must be regenerated to rerun those campaigns.",
+      "Identical immutable historical diagnostic images share hard links.",
+      "External original photographs untouched.",
+      "No full RAW campaign repeated for this UI-only change.",
+      "Relaunch regenerates the active viewing cache: approximately 3.9 GiB after reopening, versus 3.7 GiB immediately after cleanup."
+    ],
+    "after_app_relaunch_allocated_bytes": 4195348480
+  },
+  "space_recheck": {
+    "date": "2026-10-04",
+    "project_du_allocated_bytes": 4195233792,
+    "apfs_container_free_bytes": 113341562880,
+    "data_volume_snapshots": 0,
+    "deleted_open_project_files": 0,
+    "exact_disk_free_delta_available": false,
+    "note": "Initial 97 GiB was a rounded du project measurement, not a recorded pre-cleanup APFS free-space baseline. The approximately 93 GiB reduction is confirmed for project accounting; exact physical free-space gain cannot be reconstructed."
+  }
+}

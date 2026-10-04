@@ -8,7 +8,7 @@ mod settings;
 use anyhow::{Result, ensure};
 use directory::Directory;
 use serde::{Deserialize, Serialize};
-pub use settings::{FolderLoading, PerformanceProfile, Prefetch, Settings};
+pub use settings::{BASE_MEMORY_MIB, FolderLoading, PerformanceProfile, Settings};
 use sha2::{Digest, Sha256};
 use std::{
     fs::File,
@@ -16,7 +16,7 @@ use std::{
     path::Path,
     sync::{
         Arc, Mutex, RwLock,
-        atomic::{AtomicI8, AtomicUsize, Ordering},
+        atomic::{AtomicI8, AtomicU64, AtomicUsize, Ordering},
     },
     time::{Duration, SystemTime},
 };
@@ -60,6 +60,7 @@ pub struct Manager {
     pub(super) preview_writes: Arc<AtomicUsize>,
     pressure: AtomicI8,
     battery: std::sync::atomic::AtomicBool,
+    working_peak: AtomicU64,
     fingerprint: String,
     pub memory: tr_core::budget::MemoryBudget,
     pub physical_mib: u64,
@@ -76,8 +77,12 @@ impl Manager {
     pub fn new(settings: Settings) -> Self {
         let _ = tr_core::compute::configure(settings.effective_threads());
         let physical_mib = tr_platform::physical_memory_mib();
-        let memory =
-            tr_core::budget::MemoryBudget::new(settings.effective_memory_mib(physical_mib) * MIB);
+        let base = settings.initial_memory_bytes();
+        let memory = if settings.diagnostic_fixed_memory {
+            tr_core::budget::MemoryBudget::new(base)
+        } else {
+            tr_core::budget::MemoryBudget::automatic(base, Self::memory_ceiling(physical_mib))
+        };
         // Explicit allowance for the host, persistent worker contexts and device
         // infrastructure. Incremental image/native scratch remains separately
         // reserved; this estimate is validated by sampled process reports.
@@ -107,6 +112,7 @@ impl Manager {
             preview_writes: Arc::new(AtomicUsize::new(0)),
             pressure: AtomicI8::new(-1),
             battery: std::sync::atomic::AtomicBool::new(false),
+            working_peak: AtomicU64::new(0),
             // The recipe comes from the decoder that applies it. Hard-coding a
             // name here would let pixels developed by one recipe be served
             // under another's key after a platform or recipe change.
@@ -150,6 +156,33 @@ impl Manager {
     pub fn under_pressure(&self) -> bool {
         self.pressure.load(Ordering::Acquire) > 0
     }
+    fn memory_ceiling(physical_mib: u64) -> u64 {
+        let physical = physical_mib * MIB;
+        // Leave real capacity for the OS, other apps and uncertain native costs.
+        // Pressure notifications can stop growth and reclaim optional data earlier.
+        physical.saturating_sub((physical / 5).max(2_000_000_000))
+    }
+    pub fn reusable_bytes(&self) -> u64 {
+        self.settings().reusable_bytes(self.memory.usage().limit)
+    }
+    pub fn background_headroom(&self) -> u64 {
+        // Keep capacity for one full decode and its source while warming views.
+        let usage = self.memory.usage();
+        if !usage.automatic {
+            return usage.limit / 2;
+        }
+        let peak = self.working_peak.load(Ordering::Relaxed);
+        (usage.limit / 5)
+            .max(peak.saturating_add(tr_core::budget::MemoryBudget::margin(peak)))
+            .max(1_500_000_000)
+            // A past large decode may exceed the budget after pressure returns
+            // it to the base. Leave room to admit new work; its own reservation
+            // can grow the budget again or report an impossible request.
+            .min(usage.limit.saturating_mul(3) / 4)
+    }
+    pub fn observe_working_bytes(&self, bytes: u64) {
+        self.working_peak.fetch_max(bytes, Ordering::Relaxed);
+    }
     pub fn effective_threads(&self) -> usize {
         self.threads_with_resources(&self.settings())
     }
@@ -167,6 +200,7 @@ impl Manager {
             return false;
         }
         self.statistics.lock().unwrap().memory_pressure = pressure;
+        self.memory.set_pressure(next > 0);
         let _ = tr_core::compute::configure(self.effective_threads());
         true
     }
@@ -187,8 +221,14 @@ impl Manager {
         if let Err(error) = tr_core::compute::configure(self.threads_with_resources(&settings)) {
             self.note(format!("Pool CPU: {error:#}"));
         }
-        self.memory
-            .configure(settings.effective_memory_mib(self.physical_mib) * MIB);
+        if settings.diagnostic_fixed_memory {
+            self.memory.configure(settings.initial_memory_bytes());
+        } else {
+            self.memory.configure_automatic(
+                settings.initial_memory_bytes(),
+                Self::memory_ceiling(self.physical_mib),
+            );
+        }
         *self.settings.write().unwrap() = settings;
     }
     /// Serialize persistence and snapshot the latest live settings after acquiring

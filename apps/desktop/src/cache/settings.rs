@@ -10,13 +10,7 @@ pub enum PerformanceProfile {
     Balanced,
     Saver,
 }
-#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
-pub enum Prefetch {
-    Disabled,
-    #[default]
-    Automatic,
-    Extended,
-}
+pub const BASE_MEMORY_MIB: u64 = 8_000_000_000u64.div_ceil(1024 * 1024);
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub enum FolderLoading {
@@ -41,14 +35,18 @@ pub struct Settings {
     pub unused_days: u32,
     pub free_mib: u64,
     pub quality: PreviewQuality,
-    /// Zero selects automatic. Reusable cache uses Option: Some(0) disables retention.
+    /// Initial automatic budget, not a hard cap or a preallocation.
     pub memory_mib: u64,
     pub reusable_mib: Option<u64>,
     pub gpu_mib: u64,
     pub profile: PerformanceProfile,
     pub adapt_on_battery: bool,
     pub cpu_threads: usize,
-    pub prefetch: Prefetch,
+    /// Isolated tests can still exercise fixed quotas and disable speculation.
+    #[serde(skip)]
+    pub diagnostic_fixed_memory: bool,
+    #[serde(skip)]
+    pub diagnostic_no_prefetch: bool,
     pub folder_loading: FolderLoading,
     pub compute: tr_core::preview::ImageCompute,
 }
@@ -58,7 +56,7 @@ impl Default for Settings {
             presentation: Default::default(),
             language: crate::i18n::Language::default(),
             raw_engine: tr_core::decoder::RawEngine::default(),
-            schema: 2,
+            schema: 3,
             enabled: true,
             disk_mib: 4096,
             global_disk_quota: false,
@@ -68,13 +66,14 @@ impl Default for Settings {
             unused_days: 30,
             free_mib: 512,
             quality: PreviewQuality::Standard,
-            memory_mib: 0,
+            memory_mib: BASE_MEMORY_MIB,
             reusable_mib: None,
             gpu_mib: 0,
             profile: PerformanceProfile::Performance,
-            adapt_on_battery: true,
+            adapt_on_battery: false,
             cpu_threads: 0,
-            prefetch: Prefetch::Automatic,
+            diagnostic_fixed_memory: false,
+            diagnostic_no_prefetch: false,
             folder_loading: FolderLoading::Background,
             compute: tr_core::preview::ImageCompute::Automatic,
         }
@@ -90,7 +89,7 @@ impl Settings {
     }
 
     pub fn validate(&self) -> Result<()> {
-        ensure!(self.schema == 2, "Versione impostazioni non supportata");
+        ensure!(self.schema == 3, "Versione impostazioni non supportata");
         ensure!(
             self.raw_engine.available() || !cfg!(any(windows, target_os = "macos")),
             "Motore RAW non disponibile su questa piattaforma: scegliere un motore nelle impostazioni"
@@ -103,7 +102,8 @@ impl Settings {
             "Impostazioni cache fuori intervallo"
         );
         ensure!(
-            (self.memory_mib == 0 || (512..=786432).contains(&self.memory_mib))
+            ((self.diagnostic_fixed_memory && self.memory_mib > 0)
+                || (512..=786432).contains(&self.memory_mib))
                 && self.reusable_mib.is_none_or(|v| v <= 786432)
                 && self.gpu_mib <= 786432
                 && self.cpu_threads <= 256,
@@ -135,15 +135,43 @@ impl Settings {
             "Impostazioni troppo grandi"
         );
         let bytes = std::fs::read(&path)?;
-        let value: serde_json::Value = serde_json::from_slice(&bytes)?;
+        let mut value: serde_json::Value = serde_json::from_slice(&bytes)?;
         let legacy = value.get("schema").is_none();
+        if legacy || value.get("schema").and_then(|v| v.as_u64()) == Some(2) {
+            let object = value
+                .as_object_mut()
+                .ok_or_else(|| anyhow::anyhow!("Formato impostazioni non valido"))?;
+            object.remove("prefetch");
+            let base = object
+                .get("memory_mib")
+                .and_then(|v| v.as_u64())
+                .unwrap_or(0);
+            object.insert("memory_mib".into(), base.max(BASE_MEMORY_MIB).into());
+            object.insert("schema".into(), 3.into());
+        }
         let mut settings: Self = serde_json::from_value(value)?;
+        // Stored preferences always describe the automatic base. Smaller fixed
+        // budgets exist only in explicitly configured in-memory diagnostics.
+        settings.memory_mib = settings.memory_mib.max(BASE_MEMORY_MIB);
         if legacy {
             settings.quality = PreviewQuality::Full;
         }
         Ok(settings)
     }
     pub fn load_or_recover(data: &Path) -> (Self, Option<String>) {
+        // Preserve the exact original before the normal save publishes schema 3.
+        let path = data.join("settings.json");
+        if let Ok(bytes) = std::fs::read(&path)
+            && let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes)
+            && (value.get("schema").is_none()
+                || value.get("schema").and_then(|v| v.as_u64()) == Some(2))
+            && let Err(error) = Self::backup(data, "settings-before-automatic-")
+        {
+            return (
+                Self::read(data).unwrap_or_default(),
+                Some(format!("Migrazione non salvata: {error:#}")),
+            );
+        }
         // Preserve the other preferences and the original cross-platform JSON.
         if let Ok(mut settings) = Self::read(data)
             && cfg!(any(windows, target_os = "macos"))
@@ -241,23 +269,65 @@ impl Settings {
             PerformanceProfile::Saver => 1,
         }
     }
-    pub fn effective_memory_mib(&self, physical_mib: u64) -> u64 {
-        let maximum = physical_mib.saturating_mul(3) / 4;
-        if self.memory_mib == 0 {
-            2048.min(physical_mib / 4)
+    pub fn initial_memory_bytes(&self) -> u64 {
+        if self.diagnostic_fixed_memory {
+            self.memory_mib * 1024 * 1024
         } else {
-            self.memory_mib.min(maximum)
+            self.memory_mib.max(BASE_MEMORY_MIB) * 1024 * 1024
         }
     }
-    pub fn reusable_bytes(&self, physical_mib: u64) -> u64 {
-        let total = self.effective_memory_mib(physical_mib);
-        self.reusable_mib.unwrap_or(total * 40 / 100).min(total) * 1024 * 1024
+    pub fn reusable_bytes(&self, budget: u64) -> u64 {
+        self.reusable_mib
+            .map_or(budget * 3 / 5, |mib| mib * 1024 * 1024)
+            .min(budget)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn automatic_migration_preserves_preferences_and_backs_up_all_legacy_prefetch_modes() {
+        for prefetch in ["Disabled", "Automatic", "Extended"] {
+            let data = tempfile::tempdir().unwrap();
+            let original = serde_json::to_vec(&serde_json::json!({
+                "schema":2, "prefetch":prefetch, "memory_mib":2048,
+                "language":"it", "disk_mib":8192, "quality":"Full",
+                "folder_loading":"Foreground", "adapt_on_battery":true
+            }))
+            .unwrap();
+            std::fs::write(data.path().join("settings.json"), &original).unwrap();
+            let (settings, warning) = Settings::load_or_recover(data.path());
+            assert!(warning.is_none(), "{warning:?}");
+            assert_eq!(settings.schema, 3);
+            assert!(settings.initial_memory_bytes() >= 8_000_000_000);
+            assert_eq!(settings.language, crate::i18n::Language::Italian);
+            assert_eq!(settings.disk_mib, 8192);
+            assert_eq!(settings.quality, PreviewQuality::Full);
+            assert_eq!(settings.folder_loading, FolderLoading::Foreground);
+            assert!(settings.adapt_on_battery);
+            assert!(std::fs::read_dir(data.path()).unwrap().flatten().any(|p| {
+                p.file_name()
+                    .to_string_lossy()
+                    .starts_with("settings-before-automatic-")
+                    && std::fs::read(p.path()).unwrap() == original
+            }));
+            let saved: serde_json::Value =
+                serde_json::from_slice(&std::fs::read(data.path().join("settings.json")).unwrap())
+                    .unwrap();
+            assert!(saved.get("prefetch").is_none());
+            assert_eq!(Settings::load(data.path()).unwrap(), settings);
+        }
+        let settings = Settings::default();
+        assert!(!settings.adapt_on_battery);
+        assert_eq!(
+            settings.threads_for_power(true),
+            settings.threads_for_power(false)
+        );
+        let data = tempfile::tempdir().unwrap();
+        std::fs::write(data.path().join("settings.json"), br#"{"schema":2}"#).unwrap();
+        assert!(!Settings::load(data.path()).unwrap().adapt_on_battery);
+    }
     #[test]
     fn cache_controls_preserve_legacy_defaults_and_roundtrip_independently() {
         let data = tempfile::tempdir().unwrap();

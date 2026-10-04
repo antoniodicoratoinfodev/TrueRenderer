@@ -1,0 +1,5349 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recorded_on": "2026-10-03",
+  "passed": true,
+  "complete": true,
+  "problem": "With disk cache disabled or insufficient, completed folder preparation could discard native pixels without retaining an autonomous viewing preview. Neighbour prefetch also waited for the whole folder and treated filmstrip demand as sufficient.",
+  "changes": [
+    "Folder loading derives and accounts an independent viewer mip tail before counting the photo complete, using the already developed pixels on the I/O lane. Equivalent mip geometry is aliased directly.",
+    "Retain prepared viewing previews ahead of optional native data, preferring nearby photos in visible order. Reclaim only the headroom requested by a failed admission, removing aliases together. OS memory pressure can still release optional data.",
+    "Run neighbour prefetch while bulk folder preparation continues, resolve saved RAW recipes first, and distinguish filmstrip thumbnails from viewing previews. Retain demand for pending admitted neighbours.",
+    "Temporarily blocked background admissions are deferred instead of becoming permanent photo errors. Preserve foreground errors for work that cannot fit.",
+    "Cache rebuilding uses the same two phases; pause, cancellation, recipe identity and generation invalidation remain enforced. RAM/disk quotas and pixel quality are unchanged.",
+    "Extend the opt-in native diagnostic to retain only prepared viewing previews and compare the actual displayed raster with the CPU reference."
+  ],
+  "resumed_from_thread": "01a101ad-79b3-7dd1-88ab-915e767078f5",
+  "verification": {
+    "recovered_code_gui_suite": "var/verify-imWw16ZQ",
+    "final_code_suite": "var/verify-363XHeaz",
+    "ordinary_tests": 262,
+    "integrations": 14,
+    "python_tests": 2,
+    "protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt_clippy_debug_release_passed": true,
+    "commands": [
+      "scripts/verify.sh --gui (recovered application code)",
+      "scripts/verify.sh (final diagnostic source)",
+      "scripts/build-macos.sh var/folder-session-resume-2026-10-03/TrueRenderer.app"
+    ],
+    "regressions": [
+      "detachment before completion",
+      "reuse without new source reads or decode",
+      "recipe changes and cache clearing",
+      "pause/cancellation",
+      "equivalent geometry completion",
+      "nearby preview retention and alias eviction",
+      "prefetch while folder loads and filmstrip exists",
+      "temporary memory admission and later recovery"
+    ],
+    "tested_source_manifest_sha256": "857e2836619bd34edcd67fc68bf1e469e5a5a74836b2dddfe76a28c512468c9c",
+    "tested_source_files_unchanged": true,
+    "harness_setup_note": "Initial invocation stopped before exercising XPC because the isolated corpus directory was missing. Created the fixture root and ran the XPC test successfully; initial log retained in xpc-setup-failure.log.",
+    "visual_inspection": "Final foreground popup and completed grid screenshots inspected; new explanatory text and controls fit, all twelve generated thumbnails present."
+  },
+  "raw_matrix": {
+    "camera": "Nikon D750",
+    "private_sources": 2,
+    "cases": 48,
+    "viewer_visits": 128,
+    "new_raw_decodes": 0,
+    "saved_recipe": "Second photo uses an explicit saved engine and native WB differing from global preferences.",
+    "preparation": "Real production folder scheduler after explicit cache clearing; both foreground and background for every engine/quality/policy.",
+    "policies": [
+      {
+        "policy": "disabled",
+        "cases": 16,
+        "viewer_visits": 32,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "sources_unchanged": true,
+        "scope": "Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB. Cold preparation with disabled disk cache or 64 MiB quota, then discard native RAM entries and open fitted viewers using retained previews. Private copies and isolated catalogues; optional saved recipe differs from global engine/WB. No GPU/display, colour or physical-memory qualification.",
+        "rows": [
+          {
+            "accounted_memory_peak": 1959732640,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 3.90851,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015076916
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.014877042
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1967788752,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.504810291,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.012423875
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.011389583
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863091616,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 7.65667925,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015138
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.015045917
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1871147728,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.263094875,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015052583
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.015050375
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 8.5217905,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.015075833
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015083958
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.266266333,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.012619458
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.012695416
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 9.2301565,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.010158583
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.014945917
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 10.816840625,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.015059958
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015083334
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 9.7127475,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.014732542
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015093833
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.630414458,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.015056083
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.01507925
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 9.429168667,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.015037041
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015068709
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.37247475,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.01247075
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.013545375
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 11.565755542,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.0136035
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.011483792
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 10.446018333,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.01511275
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015076709
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 8.220040792,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.01508625
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015028917
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.161654459,
+            "preparation_writes": 0,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.015050167
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.0138035
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "policy": "limited",
+        "cases": 16,
+        "viewer_visits": 32,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "sources_unchanged": true,
+        "scope": "Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB. Cold preparation with disabled disk cache or 64 MiB quota, then discard native RAM entries and open fitted viewers using retained previews. Private copies and isolated catalogues; optional saved recipe differs from global engine/WB. No GPU/display, colour or physical-memory qualification.",
+        "rows": [
+          {
+            "accounted_memory_peak": 1959732640,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 4.254818166,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015035916
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.015036708
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1967788752,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.046514375,
+            "preparation_writes": 1,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015064792
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.015040334
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863091616,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 6.973440917,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015072458
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.014952292
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1871147728,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 13.768218375,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.015059459
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.01504575
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 11.646766334,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.0150565
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.011159708
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.602097292,
+            "preparation_writes": 1,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.013235792
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015043333
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 8.379945416,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.015039166
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015105167
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.202082625,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.013782167
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.014501333
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 8.960413542,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.015059375
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015044667
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.790259583,
+            "preparation_writes": 1,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.012891209
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.010833666
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 7.550302708,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.011140167
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015082042
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.430196625,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.010422708
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015062042
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 4.703417417,
+            "preparation_writes": 0,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.015030042
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015068375
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 6.560384291,
+            "preparation_writes": 1,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.015094333
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015083708
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 7.401779042,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.0150845
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015052625
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.248187791,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.013884833
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 0,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.015083167
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "policy": "normal",
+        "cases": 16,
+        "viewer_visits": 64,
+        "new_raw_decodes": 0,
+        "all_mip_samples_bit_identical": true,
+        "sources_unchanged": true,
+        "scope": "Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB; private source copies and isolated catalogues. Cold preparation then RAM eviction and fitted/native-quality viewers reloaded from disk. Optional saved recipe on the second photo uses a different engine and native WB. No GPU/display, colour or physical-memory qualification.",
+        "rows": [
+          {
+            "accounted_memory_peak": 1959732640,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 7.258994875,
+            "preparation_writes": 4,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.2826725
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.563629833
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.270318625
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.562449375
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1967788752,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 13.869732667,
+            "preparation_writes": 5,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.275581833
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.563070667
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.285181375
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.57157125
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863091616,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 3.892928125,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.085570625
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.071215416
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.071169584
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.07017825
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1871147728,
+            "engine": "Apple",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.523778125,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "Apple"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.085526375
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple"
+                },
+                "seconds": 0.072281542
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.067503125
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear",
+                  "raw_wb": {
+                    "apple_temperature": 0,
+                    "apple_tint": 0,
+                    "blue": 850,
+                    "red": 1200
+                  }
+                },
+                "seconds": 0.071139458
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 12.458250959,
+            "preparation_writes": 4,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.272838291
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.569153041
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.266854042
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.553573875
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 9.151156083,
+            "preparation_writes": 5,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.284565625
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.569772625
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.268440334
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.564279375
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 3.31029675,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.085436041
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.081722167
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.070797375
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.071653167
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "LibRawBilinear",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 11.001135333,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawBilinear"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.083577375
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-libraw-linear-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawBilinear"
+                },
+                "seconds": 0.080657958
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.077297375
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.078707292
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 13.629292958,
+            "preparation_writes": 4,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.266844666
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.554951583
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.262534833
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.555412667
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.5984385,
+            "preparation_writes": 5,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.286087417
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.567232458
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.27151725
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.558883458
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 3.5472277500000002,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.082325792
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.085687458
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.070245083
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.076535584
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "LibRawAhd",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 10.511665042,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "LibRawAhd"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.086632458
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw 0.22.2-Release · LibRaw-0.22.2-TR-ahd-rec2020-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "LibRawAhd"
+                },
+                "seconds": 0.087378917
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.068386291
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.079472167
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1952873392,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 13.577749333,
+            "preparation_writes": 4,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.276322625
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.547905
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.267270208
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.551031417
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1960983280,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 9.353928708,
+            "preparation_writes": 5,
+            "quality": "Full",
+            "request": {
+              "edge": 0,
+              "quality": "Full",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.2755015
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.560741417
+              },
+              {
+                "base": 1,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.2674955
+              },
+              {
+                "base": 0,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Full",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.574184
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1855589296,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Foreground",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 2,
+            "preparation_seconds": 3.415344458,
+            "preparation_writes": 2,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.084355542
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.083185958
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.070940459
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.073692542
+              }
+            ]
+          },
+          {
+            "accounted_memory_peak": 1863699184,
+            "engine": "TrueRenderer",
+            "images": 2,
+            "memory_limit": 2147483648,
+            "mode": "Background",
+            "native_cache_fallbacks": 0,
+            "passed": true,
+            "preparation_decode_jobs": 3,
+            "preparation_seconds": 12.331776125,
+            "preparation_writes": 3,
+            "quality": "Standard",
+            "request": {
+              "edge": 0,
+              "quality": "Standard",
+              "raw_engine": "TrueRenderer"
+            },
+            "viewer_visits": [
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.075189875
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "LibRaw-0.22.2-TR-directional-f32-v1 · Nikon D750",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "TrueRenderer"
+                },
+                "seconds": 0.072411084
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 2700,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 2700,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.070436
+              },
+              {
+                "base": 2,
+                "decode_jobs": 0,
+                "decoder": "Apple RAW 8 · full · TR-linear-v1",
+                "disk_hits": 2,
+                "edge": 0,
+                "pixels_identical": true,
+                "request": {
+                  "edge": 0,
+                  "quality": "Standard",
+                  "raw_engine": "Apple",
+                  "raw_wb": {
+                    "apple_temperature": 4500,
+                    "apple_tint": 8,
+                    "blue": 1000,
+                    "red": 1000
+                  }
+                },
+                "seconds": 0.070859125
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "native_viewer": {
+    "cases": 32,
+    "displayed_samples": 96,
+    "new_raw_decodes": 0,
+    "cache_reads": 0,
+    "fallback_count": 0,
+    "maximum_surface_error_u8": 1,
+    "rows": [
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 939066688,
+            "worker_peak_rss_bytes": 788725760,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 5.497143375,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-Apple-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 937821552,
+            "worker_peak_rss_bytes": 787759104,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 5.886070333,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-Apple-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 971556208,
+            "worker_peak_rss_bytes": 792608768,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 4.544143167,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-Apple-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 987530560,
+            "worker_peak_rss_bytes": 789086208,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 4.552778583,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-Apple-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 821085216,
+            "worker_peak_rss_bytes": 827654144,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 4.326760542,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawBilinear-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 941081728,
+            "worker_peak_rss_bytes": 947585024,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 3.125851541,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawBilinear-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 919356568,
+            "worker_peak_rss_bytes": 926072832,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 1.695882959,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawBilinear-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 919831704,
+            "worker_peak_rss_bytes": 926564352,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 1.846170208,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawBilinear-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 962774168,
+            "worker_peak_rss_bytes": 969277440,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 3.559325291,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawAhd-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 951633048,
+            "worker_peak_rss_bytes": 958136320,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 3.43755275,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawAhd-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 942081176,
+            "worker_peak_rss_bytes": 948797440,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 2.198508875,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawAhd-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 926909616,
+            "worker_peak_rss_bytes": 933642240,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 2.1456095,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-LibRawAhd-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 860669008,
+            "worker_peak_rss_bytes": 867205120,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 3.224400125,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-TrueRenderer-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 860963920,
+            "worker_peak_rss_bytes": 867516416,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 3.21830475,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-TrueRenderer-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 862831744,
+            "worker_peak_rss_bytes": 869564416,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 1.8277947079999999,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-TrueRenderer-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "disabled",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "",
+            "misses": 0,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 862815336,
+            "worker_peak_rss_bytes": 869564416,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 1.82056975,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/disabled-TrueRenderer-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 990233872,
+            "worker_peak_rss_bytes": 788267008,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 5.407352833,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-Apple-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 992920944,
+            "worker_peak_rss_bytes": 788267008,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 5.139463667,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1952015776,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-Apple-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64446728,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-Apple-Standard-Cpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 954336624,
+            "worker_peak_rss_bytes": 788856832,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 4.050527625,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-Apple-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "Apple",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64446728,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-Apple-Standard-Gpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 992888176,
+            "worker_peak_rss_bytes": 791085056,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "Apple"
+          },
+          "retained_entries": 2,
+          "seconds": 3.837792875,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1855374752,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-Apple-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 852493368,
+            "worker_peak_rss_bytes": 859045888,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 3.263413667,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawBilinear-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 862356536,
+            "worker_peak_rss_bytes": 868941824,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 3.18558375,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawBilinear-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64875548,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-LibRawBilinear-Standard-Cpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 1,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 919061656,
+            "worker_peak_rss_bytes": 925777920,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 1.838471833,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawBilinear-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64875548,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-LibRawBilinear-Standard-Gpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 1,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 919127192,
+            "worker_peak_rss_bytes": 925843456,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawBilinear"
+          },
+          "retained_entries": 2,
+          "seconds": 1.8224675000000001,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawBilinear-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 840729656,
+            "worker_peak_rss_bytes": 847298560,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 3.676938792,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawAhd-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 827540536,
+            "worker_peak_rss_bytes": 834142208,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 3.614763042,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawAhd-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64874773,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-LibRawAhd-Standard-Cpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 1,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 960480432,
+            "worker_peak_rss_bytes": 967180288,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 2.3650126670000002,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawAhd-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "LibRawAhd",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64874773,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-LibRawAhd-Standard-Gpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 1,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 965985456,
+            "worker_peak_rss_bytes": 972718080,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "LibRawAhd"
+          },
+          "retained_entries": 2,
+          "seconds": 2.285935,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-LibRawAhd-Standard-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 860603496,
+            "worker_peak_rss_bytes": 867123200,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 3.465042917,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-TrueRenderer-Full-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Full",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 0,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 0,
+            "evictions": 0,
+            "folder": "",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Persistenza anteprima saltata: Derivato oltre quota disco/temporanei",
+            "misses": 2,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 861078608,
+            "worker_peak_rss_bytes": 867631104,
+            "writer_yields": 0,
+            "writes": 0
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Full",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 3.372824375,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1960590256,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-TrueRenderer-Full-Gpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Cpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Foreground",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64875666,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-TrueRenderer-Standard-Cpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 1,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 861095016,
+            "worker_peak_rss_bytes": 867827712,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 2.088679542,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 0,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 2,
+          "fallbacks": 0,
+          "gpu_frames": 0,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-TrueRenderer-Standard-Cpu/reports/navigation-surface.json"
+      },
+      {
+        "engine": "TrueRenderer",
+        "quality": "Standard",
+        "compute": "Gpu",
+        "cache_policy": "limited",
+        "passed": true,
+        "source_unchanged": true,
+        "folder_mode": "Background",
+        "preparation": {
+          "cache": {
+            "busy": 0,
+            "bytes": 64875666,
+            "coalesced_consumers": 0,
+            "corrupt": 0,
+            "decode_jobs": 2,
+            "entries": 38,
+            "evictions": 0,
+            "folder": "var/folder-session-resume-2026-10-03/native/limited-TrueRenderer-Standard-Gpu/inputs",
+            "hits": 0,
+            "memory_pressure": "Normal",
+            "message": "Cache della cartella aggiornata",
+            "misses": 1,
+            "native_preview_fallbacks": 0,
+            "temporary_bytes": 0,
+            "worker_peak_footprint_bytes": 862848104,
+            "worker_peak_rss_bytes": 869597184,
+            "writer_yields": 0,
+            "writes": 2
+          },
+          "errors": 0,
+          "only_prepared_viewers_retained": true,
+          "processed": 2,
+          "ram_discarded_before_navigation": false,
+          "request": {
+            "edge": 0,
+            "quality": "Standard",
+            "raw_engine": "TrueRenderer"
+          },
+          "retained_entries": 2,
+          "seconds": 2.020434583,
+          "total": 2
+        },
+        "actions": 3,
+        "new_raw_decodes": 0,
+        "cache_reads": 0,
+        "maximum_surface_error_u8": 1,
+        "accounted_peak_bytes": 1863306160,
+        "memory_limit_bytes": 2147483648,
+        "compute_statistics": {
+          "cpu_frames": 0,
+          "fallbacks": 0,
+          "gpu_frames": 2,
+          "last_fallback": "",
+          "wide_frames": 0,
+          "wide_gpu_bytes": 0,
+          "wide_peak_frames": 0,
+          "wide_peak_gpu_bytes": 0,
+          "wide_peak_memory_bytes": 0,
+          "wide_reprojections": 0
+        },
+        "evidence": "var/folder-session-resume-2026-10-03/native/limited-TrueRenderer-Standard-Gpu/reports/navigation-surface.json"
+      }
+    ]
+  },
+  "cache_rebuild": {
+    "disabled": {
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 12,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 37,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 22,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ],
+      "complete": true,
+      "errors": 0,
+      "failure": null,
+      "foreground_and_background": true,
+      "passed": true,
+      "processed": 12,
+      "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+      "screenshots": [
+        "folder-loading-foreground",
+        "folder-loading-complete",
+        "folder-loading-background"
+      ],
+      "total": 12
+    },
+    "limited": {
+      "cache_clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 12,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 37,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 12,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 22,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ],
+      "complete": true,
+      "errors": 0,
+      "failure": null,
+      "foreground_and_background": true,
+      "passed": true,
+      "processed": 12,
+      "scope": "Isolated native folder loading and cache clear during foreground/background preparation, disk deletion and fresh decoding. Fitted viewer and thumbnail preparation; not native 1:1, GPU readiness or guaranteed disk retention beyond configured quotas.",
+      "screenshots": [
+        "folder-loading-complete",
+        "folder-loading-foreground",
+        "folder-loading-background"
+      ],
+      "total": 12
+    }
+  },
+  "xpc": {
+    "passed": true,
+    "evidence": "var/folder-session-resume-2026-10-03/xpc/reports/xpc-qualification-macos.json"
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "qualified_bundle": "var/folder-session-resume-2026-10-03/TrueRenderer.app",
+    "manifest_sha256": "22929860afb7a3dde4add4ff1e00c0ac9ed3ddd859cce068841ea4d8d995f1be",
+    "manifest": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "e93676216fde0ef4933b94c12b65b3c480053937697ae48381cea11e7be28efd",
+      "Contents/MacOS/tr-worker": "398c3b8e5d868804103a5cf56b789c73874b4da00a8ad05ae774752863ead8e2",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7cf6e9a19cc5f92dfee6616c72d773501c1689439c5bbd2de61779fbe49bc78d",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8255679f6520ca7fec7e171fccbabe59d6b9200c82e8c810b03e4630f50a1537",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "fe0f42c0d25ae1af2aa732d5cc1f1abee2ecd1f5f9a7a4328bc66ff74f5cab1e"
+    },
+    "previous_bundle": "var/folder-session-resume-2026-10-03/previous-distribution.app",
+    "delivered_bundle_identical": true,
+    "ad_hoc_signature_verified": true
+  },
+  "limitations": [
+    "A completed folder means its photos were processed, not that every photo remains resident. Memory and disk quotas, including reusable RAM set to zero, remain binding. Native zoom, larger views, evictions, or source/recipe/quality changes can require new work.",
+    "Functional tests on two Nikon D750 sources and generated PNG fixtures on macOS. No new Windows, other-camera, absolute colour, physical-memory or R0-R4/SF qualification.",
+    "The native retained-preview trace covers Fit selection/return in Full and Standard. It does not guarantee native zoom retention with disk disabled. Full-cache native-detail reloads are checked separately in the RAW matrix.",
+    "Surface readback matches CPU rendering within one 8-bit channel level. It is not a measurement of every physical display refresh, p95/p99 latency or a controlled before/after speedup.",
+    "Earlier interrupted-session evidence is retained privately but is not counted as a new run in this report. The counted RAW/native/XPC runs use the final delivered bundle hashes."
+  ]
+}

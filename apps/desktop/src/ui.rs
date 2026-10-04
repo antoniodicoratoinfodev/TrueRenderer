@@ -74,6 +74,8 @@ pub struct TrueRenderer {
     navigation_changed: Instant,
     navigation_anchor: Option<usize>,
     navigation_direction: isize,
+    prefetched_this_view: HashSet<(String, PreviewRequest)>,
+    recently_viewed: VecDeque<String>,
     primary_demand: HashSet<String>,
     viewer_prefetch_edge: u32,
     requested_at: HashMap<(String, PreviewRequest), Instant>,
@@ -110,6 +112,8 @@ pub struct TrueRenderer {
     fullscreen: bool,
     adapter: String,
     surface: String,
+    presentation_active: Option<tr_core::presentation::Precision>,
+    presentation_requested: tr_core::presentation::Precision,
     frame_number: u64,
     sample: Option<tr_render::Sample>,
     sample_item_id: Option<String>,
@@ -251,6 +255,8 @@ impl TrueRenderer {
             navigation_changed: Instant::now(),
             navigation_anchor: None,
             navigation_direction: 1,
+            prefetched_this_view: HashSet::new(),
+            recently_viewed: VecDeque::new(),
             primary_demand: HashSet::new(),
             viewer_prefetch_edge: 2048,
             requested_at: HashMap::new(),
@@ -275,6 +281,16 @@ impl TrueRenderer {
             fullscreen: false,
             adapter,
             surface,
+            presentation_active: cc
+                .wgpu_render_state
+                .as_ref()
+                .map(|r| preferences::presentation_precision(r.target_format)),
+            presentation_requested: cc
+                .wgpu_render_state
+                .as_ref()
+                .and_then(|r| r.surface_config.preferred_format)
+                .map(preferences::presentation_precision)
+                .unwrap_or_default(),
             frame_number: 0,
             sample: None,
             sample_item_id: None,
@@ -351,6 +367,12 @@ impl TrueRenderer {
                 gpu.adapter.get_info().backend
             );
             self.surface = gpu.surface_diagnostics.clone();
+            self.presentation_active = Some(preferences::presentation_precision(gpu.target_format));
+            self.presentation_requested = gpu
+                .surface_config
+                .preferred_format
+                .map(preferences::presentation_precision)
+                .unwrap_or_default();
             match tr_render::preview_compute::check(&gpu.device, &gpu.queue) {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
@@ -440,6 +462,8 @@ impl TrueRenderer {
         self.promoted.clear();
         self.requested_at.clear();
         self.recent_latencies.clear();
+        self.prefetched_this_view.clear();
+        self.recently_viewed.clear();
         self.navigation_anchor = None;
         self.errors.clear();
         self.state.replace_items(vec![]);
@@ -640,7 +664,20 @@ impl TrueRenderer {
             ctx.request_repaint_after(Duration::from_millis(50));
             return;
         }
-        if self.folder_preparation_demand(ctx) {
+        // Neighbours must not wait for the entire folder. They share the same
+        // scheduler and outrank its bulk preparation, while visible work wins.
+        if !self.folder_loading_blocks() {
+            self.neighbor_demand(ctx);
+        }
+        self.folder_preparation_demand(ctx);
+    }
+    fn neighbor_demand(&mut self, ctx: &egui::Context) {
+        if self.service.cache.settings().diagnostic_no_prefetch
+            || self
+                .navigation_probe
+                .as_ref()
+                .is_some_and(|p| !p.prefetch_enabled())
+        {
             return;
         }
         if self.foreground_demand != self.demand {
@@ -654,6 +691,13 @@ impl TrueRenderer {
             {
                 self.navigation_direction = if current > previous { 1 } else { -1 };
             }
+            if let Some(index) = anchor {
+                let id = self.state.items[self.state.visible[index]].id.clone();
+                self.recently_viewed.retain(|previous| previous != &id);
+                self.recently_viewed.push_front(id);
+                self.recently_viewed.truncate(4);
+            }
+            self.prefetched_this_view.clear();
             self.navigation_anchor = anchor;
             self.foreground_demand.clone_from(&self.demand);
             self.navigation_changed = Instant::now();
@@ -662,9 +706,7 @@ impl TrueRenderer {
             self.recent_latencies.make_contiguous(),
         ));
         if self.navigation_changed.elapsed() < delay {
-            if self.service.cache.settings().prefetch != crate::cache::Prefetch::Disabled {
-                ctx.request_repaint_after(delay.saturating_sub(self.navigation_changed.elapsed()));
-            }
+            ctx.request_repaint_after(delay.saturating_sub(self.navigation_changed.elapsed()));
             return;
         }
         if self.preparation_paused || self.scanning || self.service.cache.under_pressure() {
@@ -672,16 +714,16 @@ impl TrueRenderer {
         }
         let settings = self.service.cache.settings();
         let memory = self.service.cache.memory.usage();
-        // Leave at least half the budget for immediate navigation; never feed a
-        // background decode while visible dependencies are still outstanding.
-        if memory.reserved > memory.limit / 2
-            || self.demand.iter().any(|key| {
+        // Speculation keeps working headroom and never competes with missing
+        // visible dependencies. Already-admitted requests remain wanted.
+        let can_admit = memory.reserved
+            <= memory
+                .limit
+                .saturating_sub(self.service.cache.background_headroom())
+            && !self.demand.iter().any(|key| {
                 !self.cache.contains_key(key)
                     && !self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
-            })
-        {
-            return;
-        }
+            });
         let mut candidates = Vec::new();
         {
             let primary: Vec<_> = self
@@ -694,24 +736,45 @@ impl TrueRenderer {
                 .collect();
             if let (Some(first), Some(last)) = (primary.first(), primary.last()) {
                 let grid = self.state.view == ViewMode::Grid;
-                let count = match settings.prefetch {
-                    crate::cache::Prefetch::Disabled => 0,
-                    crate::cache::Prefetch::Automatic => {
-                        if grid {
-                            (primary.len() * 3 / 2).clamp(2, 16)
-                        } else {
-                            2
-                        }
-                    }
-                    crate::cache::Prefetch::Extended => {
-                        if grid {
-                            (primary.len() * 3 / 2).clamp(2, 32)
-                        } else {
-                            4
-                        }
-                    }
-                };
-                if settings.reusable_bytes(self.service.cache.physical_mib) > 0 {
+                let estimated = self
+                    .demand
+                    .iter()
+                    .filter_map(|key| {
+                        self.cache.get(key).map(|c| {
+                            c.pyramid.levels()[c.pyramid.requested_base(key.1)..]
+                                .iter()
+                                .map(|level| level.pixels.len() as u64 * 16)
+                                .sum::<u64>()
+                        })
+                    })
+                    .max()
+                    .unwrap_or(if grid { 2_000_000 } else { 160_000_000 });
+                let idle = self
+                    .navigation_changed
+                    .elapsed()
+                    .saturating_sub(delay)
+                    .as_millis() as u64;
+                let count = tr_app::scheduler::automatic_prefetch_count(
+                    self.service.cache.reusable_bytes(),
+                    estimated,
+                    grid,
+                    idle,
+                    settings.adapt_on_battery && self.service.cache.on_battery(),
+                );
+                let capacity = tr_app::scheduler::automatic_prefetch_count(
+                    self.service.cache.reusable_bytes(),
+                    estimated,
+                    grid,
+                    102_400,
+                    settings.adapt_on_battery && self.service.cache.on_battery(),
+                )
+                .min(self.state.visible.len().saturating_sub(last - first + 1));
+                if can_admit && count < capacity {
+                    // Expand even when every currently requested preview is ready
+                    // and there are no input events or decoder completions.
+                    ctx.request_repaint_after(Duration::from_millis(100));
+                }
+                if count > 0 {
                     for index in tr_app::scheduler::prefetch_indices(
                         self.state.visible.len(),
                         *first..=*last,
@@ -719,40 +782,60 @@ impl TrueRenderer {
                         count,
                     ) {
                         let item = &self.state.items[self.state.visible[index]];
-                        if !self.demand.iter().any(|(id, _)| id == &item.id) {
-                            candidates.push((
-                                item.clone(),
-                                if grid { 256 } else { self.viewer_prefetch_edge },
-                            ));
-                        }
+                        candidates.push((
+                            item.clone(),
+                            if grid {
+                                256
+                            } else if self.state.transform.zoom.is_some() {
+                                0
+                            } else {
+                                self.viewer_prefetch_edge.max(1)
+                            },
+                        ));
                     }
                 }
             }
         }
+        let mut slots = 2usize.saturating_sub(self.pending_images.len());
         for (item, edge) in candidates {
             let key = self.image_key(&item, edge);
-            self.demand.insert(key.clone());
-            if self.pending_images.contains(&key)
-                || self
-                    .demand_jobs
-                    .iter()
-                    .any(|j| j.item.id == item.id && j.request == key.1)
-                || self.cache.contains_key(&key)
-                || self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
+            if !self.pending_images.contains(&key) && !self.cache.contains_key(&key) {
+                if !can_admit || slots == 0 || self.prefetched_this_view.contains(&key) {
+                    continue;
+                }
+                // Loading a neighbour's recipe is speculative work too: avoid
+                // scheduling thousands of metadata requests ahead of two decodes.
+                slots -= 1;
+            }
+            self.ensure_edit_loaded(&item);
+            if !self
+                .editing
+                .entries
+                .get(&item.id)
+                .is_some_and(|e| e.loaded.is_some())
             {
                 continue;
             }
-            self.demand_jobs.push(crate::decode_pool::Job {
-                resident: None,
-                item,
-                request: key.1,
-                priority: if self.state.view == ViewMode::Grid {
+            let key = self.image_key(&item, edge);
+            // Ready neighbours are retained by distance, not pinned like actual
+            // views. Otherwise widening lookahead could prevent all eviction.
+            if self.cache.contains_key(&key) {
+                self.prefetched_this_view.insert(key);
+                continue;
+            }
+            if self.prefetched_this_view.contains(&key) {
+                continue; // Do not rebuild an evicted speculative preview in a loop.
+            }
+            // A filmstrip thumbnail does not satisfy a viewing preview.
+            self.ensure_image_priority(
+                &item,
+                edge,
+                if self.state.view == ViewMode::Grid {
                     PreviewPriority::AdjacentRows
                 } else {
                     PreviewPriority::NeighborPreview
                 },
-                generation: self.generation,
-            });
+            );
         }
     }
     fn flush_demand(&mut self) {
@@ -806,12 +889,19 @@ impl TrueRenderer {
         }
     }
     fn trim_images(&mut self, pressure: bool) {
-        let settings = self.service.cache.settings();
+        self.trim_images_with_headroom(pressure, 0);
+    }
+    fn trim_images_for_headroom(&mut self, bytes: u64) {
+        self.trim_images_with_headroom(false, bytes);
+    }
+    fn trim_images_with_headroom(&mut self, pressure: bool, headroom: u64) {
         let limit = if pressure {
             0
         } else {
-            settings.reusable_bytes(self.service.cache.physical_mib) as usize
+            self.service.cache.reusable_bytes() as usize
         };
+        self.prune_edit_previews(pressure || headroom > 0);
+        let mut retention = None;
         loop {
             let pinned: HashSet<_> = self
                 .cache
@@ -826,22 +916,68 @@ impl TrueRenderer {
                 .filter(|c| !pinned.contains(&c.pyramid.id()) && counted.insert(c.pyramid.id()))
                 .map(|c| c.pyramid.byte_len())
                 .sum();
-            if bytes <= limit && self.cache.len() <= 1024 {
+            let memory = self.service.cache.memory.usage();
+            if bytes <= limit
+                && (headroom == 0 || memory.reserved <= memory.limit.saturating_sub(headroom))
+            {
                 break;
             }
+            // Ranking the folder is only necessary when something must actually
+            // be evicted, not on every idle/UI frame or successful admission.
+            let (viewers, distances) = retention.get_or_insert_with(|| {
+                let viewer_edge = self.prepared_viewer_edge();
+                let active_edge = self.viewer_prefetch_edge;
+                let viewers: HashSet<_> = self
+                    .cache
+                    .iter()
+                    .filter(|((_, r), _)| {
+                        r.edge > 0 && (r.edge == viewer_edge || r.edge == active_edge)
+                    })
+                    .map(|(_, c)| c.pyramid.id())
+                    .collect();
+                let anchor = self
+                    .state
+                    .visible
+                    .iter()
+                    .position(|i| self.state.current.as_ref() == Some(&self.state.items[*i].id))
+                    .unwrap_or(0);
+                let distances: HashMap<_, _> = self
+                    .state
+                    .visible
+                    .iter()
+                    .enumerate()
+                    .map(|(position, i)| {
+                        (self.state.items[*i].id.clone(), position.abs_diff(anchor))
+                    })
+                    .collect();
+                (viewers, distances)
+            });
             let victim = self
                 .cache
                 .iter()
-                .filter(|(_, c)| c.touched + 1 < self.frame_number)
-                .min_by_key(|(_, c)| c.touched)
-                .map(|(k, _)| k.clone());
+                .filter(|(_, c)| !pinned.contains(&c.pyramid.id()))
+                .min_by_key(|((id, _), c)| {
+                    let viewer = viewers.contains(&c.pyramid.id());
+                    (
+                        viewer,
+                        viewer && self.recently_viewed.contains(id),
+                        std::cmp::Reverse(if viewer {
+                            distances.get(id.as_str()).copied().unwrap_or(usize::MAX)
+                        } else {
+                            0
+                        }),
+                        c.touched,
+                    )
+                })
+                .map(|(_, c)| c.pyramid.id());
             if let Some(victim) = victim {
-                self.cache.remove(&victim);
+                // Aliases own one allocation. Removing only one key can leave
+                // every byte alive and evict useful independent previews instead.
+                self.cache.retain(|_, c| c.pyramid.id() != victim);
             } else {
                 break;
             }
         }
-        self.prune_edit_previews(pressure);
     }
     /// Revoke old work and presentation while preserving the catalogue and selection.
     fn invalidate_previews(&mut self) {
@@ -1023,7 +1159,7 @@ impl TrueRenderer {
         }
         let settings = self.service.cache.settings();
         let gpu_mib = if settings.gpu_mib == 0 {
-            256
+            (self.service.cache.memory.usage().limit / 8 / (1024 * 1024)).clamp(256, 2048)
         } else {
             settings.gpu_mib
         };
@@ -1039,7 +1175,8 @@ impl TrueRenderer {
         let rejected = self.service.cache.memory.usage().rejected;
         if rejected > self.rejected_admissions {
             self.presenter.release_optional_frames();
-            self.trim_images(true);
+            let needed = self.service.cache.memory.take_reclaim_request();
+            self.trim_images_for_headroom(needed);
             self.rejected_admissions = rejected;
         }
         if self.smoke {
@@ -1100,7 +1237,14 @@ impl TrueRenderer {
                         self.finish_browser_scan();
                     }
                 }
-                Event::MemoryPressure => self.trim_images(true),
+                Event::MemoryPressure => {
+                    if self.service.cache.under_pressure() {
+                        self.trim_images(true);
+                    } else {
+                        let needed = self.service.cache.memory.take_reclaim_request();
+                        self.trim_images_for_headroom(needed);
+                    }
+                }
                 Event::DecodeDeferred {
                     id,
                     request,

@@ -121,9 +121,59 @@ fn deliver(
         }
     }
 }
+#[derive(Debug)]
+struct MemoryAdmission {
+    bytes: u64,
+    limit: u64,
+    reserved: u64,
+    temporary: bool,
+}
+impl std::fmt::Display for MemoryAdmission {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Questa elaborazione richiede {} aggiuntivi; risorse utilizzabili {}, già impegnate {}. Le risorse disponibili non consentono di completarla ora.",
+            crate::size_units::human_bytes(self.bytes),
+            crate::size_units::human_bytes(self.limit),
+            crate::size_units::human_bytes(self.reserved)
+        )
+    }
+}
+impl std::error::Error for MemoryAdmission {}
+impl MemoryAdmission {
+    fn new(cache: &crate::cache::Manager, bytes: u64, retained: u64) -> Self {
+        let usage = cache.memory.usage();
+        Self {
+            bytes,
+            limit: usage.ceiling,
+            reserved: usage.reserved,
+            // This job cannot release its own snapshot/parent while waiting.
+            // Only unrelated optional allocations can make a retry succeed.
+            temporary: {
+                let minimum = cache
+                    .baseline_bytes
+                    .saturating_add(retained)
+                    .saturating_add(bytes);
+                minimum <= usage.limit
+                    || (usage.automatic
+                        && minimum.saturating_add(tr_core::budget::MemoryBudget::margin(minimum))
+                            <= usage.ceiling)
+            },
+        }
+    }
+}
+fn temporary_admission<T>(result: &anyhow::Result<T>) -> bool {
+    result
+        .as_ref()
+        .err()
+        .and_then(|error| error.downcast_ref::<MemoryAdmission>())
+        .is_some_and(|error| error.temporary)
+}
+
 fn reserve(
     cache: &crate::cache::Manager,
     bytes: u64,
+    retained: u64,
     events: &mpsc::SyncSender<Event>,
     ctx: &crate::wake::Wake,
     cancelled: &impl Fn() -> bool,
@@ -132,15 +182,12 @@ fn reserve(
     loop {
         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
         if let Some(lease) = cache.memory.try_reserve(bytes) {
+            cache.observe_working_bytes(bytes);
             return Ok(lease);
         }
-        if start.elapsed() > Duration::from_secs(2) || bytes > cache.memory.usage().limit {
-            anyhow::bail!(
-                "Memoria richiesta {}; limite {}, occupata/prenotata {}. Aumentare il limite o liberare le viste.",
-                crate::size_units::human_bytes(bytes),
-                crate::size_units::human_bytes(cache.memory.usage().limit),
-                crate::size_units::human_bytes(cache.memory.usage().reserved)
-            );
+        let failure = MemoryAdmission::new(cache, bytes, retained);
+        if start.elapsed() > Duration::from_secs(2) || !failure.temporary {
+            return Err(failure.into());
         }
         if start.elapsed() < Duration::from_millis(25) {
             let _ = events.try_send(Event::MemoryPressure);
@@ -312,7 +359,14 @@ impl DecodePool {
                                 .iter()
                                 .map(|level| level.pixels.len() as u64 * 16)
                                 .sum();
-                            let credits = reserve(&cache, bytes, &events, &ctx, &cancelled)?;
+                            let credits = reserve(
+                                &cache,
+                                bytes,
+                                image.byte_len() as u64,
+                                &events,
+                                &ctx,
+                                &cancelled,
+                            )?;
                             let tail = Arc::new(image.detach(job.request, credits)?);
                             let histogram = tail.source().histogram();
                             return Ok(Some(PreviewDecoded {
@@ -357,6 +411,7 @@ impl DecodePool {
                         let lease = reserve(
                             &cache,
                             maximum.saturating_mul(2) + 1024 * 1024,
+                            0,
                             &events,
                             &ctx,
                             &cancelled,
@@ -374,6 +429,7 @@ impl DecodePool {
                             .ok_or_else(|| anyhow::anyhow!("Cartella assente"))?;
                         let reading = cache.read_demand();
                         let start = Instant::now();
+                        let mut memory_notified = false;
                         loop {
                             match cache.load_preview(
                                 folder,
@@ -397,7 +453,24 @@ impl DecodePool {
                                 {
                                     thread::sleep(Duration::from_millis(20))
                                 }
-                                Lookup::Limited(error) => anyhow::bail!("{error}"),
+                                Lookup::Limited(bytes) => {
+                                    let failure =
+                                        MemoryAdmission::new(&cache, bytes, lease.bytes());
+                                    if cancelled()
+                                        || !failure.temporary
+                                        || start.elapsed() >= Duration::from_secs(2)
+                                    {
+                                        return Err(failure.into());
+                                    }
+                                    // Let UI reclaim optional previews, with a bounded
+                                    // wait rather than a tight snapshot/requeue loop.
+                                    if !memory_notified {
+                                        let _ = events.try_send(Event::MemoryPressure);
+                                        ctx.request_repaint();
+                                        memory_notified = true;
+                                    }
+                                    thread::sleep(Duration::from_millis(25));
+                                }
                                 _ => break,
                             }
                         }
@@ -462,7 +535,7 @@ impl DecodePool {
                             q.claimed.remove(&job.key());
                         }
                     }
-                    if !revoked() && cancelled() {
+                    if !revoked() && (cancelled() || temporary_admission(&result)) {
                         // A quick return to this request must be retryable. Do
                         // not turn a cancelled lookup into a permanent UI error.
                         deliver(
@@ -551,6 +624,7 @@ impl DecodePool {
                             let _source_memory = reserve(
                                 &cache,
                                 length * 2 + 128 * 1024 * 1024,
+                                0,
                                 &events,
                                 &ctx,
                                 &cancelled,
@@ -563,14 +637,30 @@ impl DecodePool {
                             )?;
                             broker.set_raw_engine(job.recipe.raw_engine);
                             broker.set_raw_white_balance(job.recipe.raw_wb);
+                            broker.set_admitted_memory(
+                                _source_memory.bytes() + cache.baseline_bytes,
+                                cache.memory.usage().limit,
+                            );
                             let metadata = broker.probe_snapshot(&source, cancelled)?;
                             let pixels = u64::from(metadata.width) * u64::from(metadata.height);
                             anyhow::ensure!(
                                 metadata.format == "RAW" && pixels <= 48_000_000,
                                 "WB RAW: formato o dimensioni non supportati (massimo 48 MP)"
                             );
-                            let _raster_memory =
-                                reserve(&cache, pixels * 48, &events, &ctx, &cancelled)?;
+                            let _raster_memory = reserve(
+                                &cache,
+                                pixels * 48,
+                                _source_memory.bytes(),
+                                &events,
+                                &ctx,
+                                &cancelled,
+                            )?;
+                            broker.set_admitted_memory(
+                                _source_memory.bytes()
+                                    + _raster_memory.bytes()
+                                    + cache.baseline_bytes,
+                                cache.memory.usage().limit,
+                            );
                             broker.estimate_raw_wb(source, job.analysis, cancelled)
                         })()
                         .map_err(|e| format!("{e:#}"));
@@ -595,6 +685,7 @@ impl DecodePool {
                             let _memory = reserve(
                                 &cache,
                                 length * 2 + 16 * 1024 * 1024,
+                                0,
                                 &events,
                                 &ctx,
                                 &cancelled,
@@ -654,7 +745,7 @@ impl DecodePool {
                             let source_limit =
                                 job.item.bytes.min(tr_core::protocol::MAX_SOURCE as u64);
                             let _source_lease =
-                                reserve(&cache, source_limit * 2, &events, &ctx, &cancelled)?;
+                                reserve(&cache, source_limit * 2, 0, &events, &ctx, &cancelled)?;
                             let source = broker.prepare_snapshot_bounded(
                                 &job.item.path,
                                 &job.item.digest,
@@ -667,8 +758,18 @@ impl DecodePool {
                             );
                             broker.set_raw_engine(job.engine);
                             broker.set_raw_white_balance(Default::default());
-                            let probe_lease =
-                                reserve(&cache, 128 * 1024 * 1024, &events, &ctx, &cancelled)?;
+                            let probe_lease = reserve(
+                                &cache,
+                                128 * 1024 * 1024,
+                                _source_lease.bytes(),
+                                &events,
+                                &ctx,
+                                &cancelled,
+                            )?;
+                            broker.set_admitted_memory(
+                                _source_lease.bytes() + probe_lease.bytes() + cache.baseline_bytes,
+                                cache.memory.usage().limit,
+                            );
                             let metadata = broker.probe_snapshot(&source, cancelled)?;
                             drop(probe_lease);
                             let pixels =
@@ -691,7 +792,18 @@ impl DecodePool {
                                 metadata.source_height,
                             )?
                             .max(pixels * 20 + output_limit * 2);
-                            let _working = reserve(&cache, peak, &events, &ctx, &cancelled)?;
+                            let _working = reserve(
+                                &cache,
+                                peak,
+                                _source_lease.bytes(),
+                                &events,
+                                &ctx,
+                                &cancelled,
+                            )?;
+                            broker.set_admitted_memory(
+                                _source_lease.bytes() + _working.bytes() + cache.baseline_bytes,
+                                cache.memory.usage().limit,
+                            );
                             let (info, bytes) = broker.export_edited_snapshot_bounded(
                                 source,
                                 job.options,
@@ -797,13 +909,23 @@ impl DecodePool {
                         });
                         // Parser state is an estimated allowance; OS footprint remains
                         // supervised independently and must be qualified on real RAWs.
-                        let probe_lease =
-                            reserve(&cache, 128 * 1024 * 1024, &events, &ctx, &cancelled)?;
+                        let probe_lease = reserve(
+                            &cache,
+                            128 * 1024 * 1024,
+                            _snapshot.bytes(),
+                            &events,
+                            &ctx,
+                            &cancelled,
+                        )?;
                         // Only domain revocation/shutdown may terminate a native
                         // call. View changes cancel at boundaries, retaining all
                         // leases until the actual probe/decode has completed.
                         broker.set_raw_engine(job.request.raw_engine);
                         broker.set_raw_white_balance(job.request.raw_wb);
+                        broker.set_admitted_memory(
+                            _snapshot.bytes() + probe_lease.bytes() + cache.baseline_bytes,
+                            cache.memory.usage().limit,
+                        );
                         let info = broker.probe_snapshot(&source, revoked)?;
                         drop(probe_lease);
                         anyhow::ensure!(!cancelled(), "Richiesta sostituita");
@@ -821,7 +943,18 @@ impl DecodePool {
                         }
                         // Reserve the peak of phases, not their sum. Pixel data,
                         // native scratch allowance and fp32 precision are unchanged.
-                        let mut lease = reserve(&cache, working_bytes, &events, &ctx, &cancelled)?;
+                        let mut lease = reserve(
+                            &cache,
+                            working_bytes,
+                            _snapshot.bytes(),
+                            &events,
+                            &ctx,
+                            &cancelled,
+                        )?;
+                        broker.set_admitted_memory(
+                            _snapshot.bytes() + lease.bytes() + cache.baseline_bytes,
+                            cache.memory.usage().limit,
+                        );
                         // Capture the finest current consumer before crossing IPC.
                         // Later requests for more detail remain queued; a reduced
                         // response can never satisfy a native-detail request.
@@ -964,8 +1097,9 @@ impl DecodePool {
                             ));
                         }
                         Ok(results)
-                    })()
-                    .map_err(|e| format!("{e:#}"));
+                    })();
+                    let admission_deferred = temporary_admission(&result);
+                    let result = result.map_err(|e| format!("{e:#}"));
                     drop(_snapshot);
                     drop(_snapshot_lane);
                     drop(_snapshot_slot);
@@ -1024,7 +1158,10 @@ impl DecodePool {
                         );
                     }
                     for (consumer, result) in results {
-                        if obsolete.get() || !queues.0.lock().unwrap().wants_job(&consumer) {
+                        if obsolete.get()
+                            || !queues.0.lock().unwrap().wants_job(&consumer)
+                            || admission_deferred
+                        {
                             deliver(
                                 &events,
                                 Event::DecodeDeferred {
@@ -1223,7 +1360,7 @@ mod tests {
         let cache = crate::cache::Manager::new(crate::cache::Settings::default());
         let (tx, _rx) = mpsc::sync_channel(4);
         let wake = egui::Context::default().into();
-        assert!(reserve(&cache, 1024, &tx, &wake, &|| true).is_err());
+        assert!(reserve(&cache, 1024, 0, &tx, &wake, &|| true).is_err());
         assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
     }
 
@@ -1273,14 +1410,125 @@ mod tests {
     }
     #[test]
     fn resident_thumbnail_needs_no_file_read_or_decoder_and_releases_credits() {
+        resident_derivative(false, false);
+        resident_derivative(true, false);
+    }
+    #[test]
+    fn resident_derivation_reports_when_parent_and_tail_cannot_fit_together() {
+        resident_derivative(false, true);
+    }
+    #[test]
+    fn cached_neighbor_recovers_from_temporary_admission_without_decode() {
+        let folder = tempfile::tempdir().unwrap();
+        let mut job = navigation_job("cached-neighbor");
+        let source = folder.path().join("source.png");
+        std::fs::copy(&job.item.path, &source).unwrap();
+        job.item.path = source;
+        job.priority = PreviewPriority::NeighborPreview;
+        let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+            free_mib: 0,
+            diagnostic_fixed_memory: true,
+            ..Default::default()
+        }));
+        let image = ImageLevels::from_source(
+            tr_core::color::LinearImage::new(513, 257, vec![[0.2, 0.3, 0.4, 1.]; 513 * 257])
+                .unwrap(),
+            job.request,
+        )
+        .unwrap();
+        let info = tr_core::protocol::RasterInfo {
+            shooting: None,
+            scientific: None,
+            reference_mip: None,
+            width: 513,
+            height: 257,
+            source_width: 513,
+            source_height: 257,
+            native_bits: 32,
+            format: "test".into(),
+            decoder: "test".into(),
+            input_color: "linear Rec2020".into(),
+            filter: "reference".into(),
+            orientation: "applied".into(),
+        };
+        let preview = tr_render::PreparedPreview {
+            histogram: image.source().histogram(),
+            image: Arc::new(image),
+        };
+        cache
+            .store_preview(
+                folder.path(),
+                &job.item.digest,
+                job.request,
+                &info,
+                &preview,
+                &|| false,
+            )
+            .unwrap();
+        // Admit the source snapshot, but leave too little for the cached pixels
+        // plus reader scratch. No native worker should ever be started.
+        let usage = cache.memory.usage();
+        let held = cache
+            .memory
+            .try_reserve(usage.limit - usage.reserved - 2 * 1024 * 1024)
+            .unwrap();
+        let (tx, rx) = mpsc::sync_channel(16);
+        let pool = DecodePool::start(
+            PathBuf::from("nonexistent-worker"),
+            Arc::new(AtomicU64::new(1)),
+            tx,
+            egui::Context::default(),
+            cache.clone(),
+        );
+        assert!(pool.submit(job.clone()).is_ok());
+        loop {
+            match rx.recv_timeout(Duration::from_secs(5)).unwrap() {
+                Event::MemoryPressure => {}
+                Event::DecodeDeferred { .. } => break,
+                Event::Image { result, .. } => panic!(
+                    "Temporary cache admission must defer, not become a photo error: {:?}",
+                    result.err()
+                ),
+                _ => panic!("Unexpected cache lookup event"),
+            }
+        }
+        drop(held);
+        job.priority = PreviewPriority::Immediate;
+        assert!(pool.submit(job).is_ok());
+        loop {
+            match rx.recv_timeout(Duration::from_secs(5)).unwrap() {
+                Event::MemoryPressure => {}
+                Event::Image { result, .. } => {
+                    let decoded = result.unwrap();
+                    assert_eq!(
+                        decoded.prepared.image.source().pixels,
+                        preview.image.source().pixels
+                    );
+                    break;
+                }
+                _ => panic!("Cached image must recover after credits are released"),
+            }
+        }
+        drop(pool);
+        drop(rx);
+        assert_eq!(cache.stats().decode_jobs, 0);
+        assert_eq!(cache.stats().hits, 1);
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+    }
+    fn resident_derivative(pressure: bool, parent_over_limit: bool) {
         let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
             enabled: false,
+            diagnostic_fixed_memory: true,
             ..Default::default()
         }));
         let mut job = navigation_job("resident");
         job.item.path = PathBuf::from("nonexistent-resident-source");
         job.request.edge = 32;
-        job.priority = PreviewPriority::SecondaryVisible;
+        job.priority = if pressure || parent_over_limit {
+            PreviewPriority::NeighborPreview
+        } else {
+            PreviewPriority::SecondaryVisible
+        };
         let source = tr_core::color::LinearImage::new(
             513,
             257,
@@ -1319,6 +1567,24 @@ mod tests {
             transport: "resident",
             worker_pid: None,
         });
+        if parent_over_limit {
+            // Simulate a lowered quota: the parent is mandatory until copying
+            // finishes. Evicting unrelated previews cannot make this copy fit.
+            let tail_bytes = image.levels()[image.requested_base(job.request)..]
+                .iter()
+                .map(|level| level.pixels.len() as u64 * 16)
+                .sum::<u64>();
+            cache
+                .memory
+                .configure(cache.baseline_bytes + image.byte_len() as u64 + tail_bytes - 1);
+        }
+        let held = pressure.then(|| {
+            let usage = cache.memory.usage();
+            cache
+                .memory
+                .try_reserve(usage.limit - usage.reserved)
+                .unwrap()
+        });
         let (tx, rx) = mpsc::sync_channel(8);
         let pool = DecodePool::start(
             PathBuf::from("nonexistent-worker"),
@@ -1327,7 +1593,47 @@ mod tests {
             egui::Context::default(),
             cache.clone(),
         );
-        assert!(pool.submit(job).is_ok());
+        assert!(pool.submit(job.clone()).is_ok());
+        if parent_over_limit {
+            loop {
+                match rx.recv_timeout(Duration::from_secs(5)).unwrap() {
+                    Event::MemoryPressure => {}
+                    Event::Image { result, .. } => {
+                        assert!(
+                            result
+                                .err()
+                                .unwrap()
+                                .contains("Questa elaborazione richiede")
+                        );
+                        break;
+                    }
+                    _ => {
+                        panic!("An impossible parent + tail must fail instead of retrying forever")
+                    }
+                }
+            }
+            drop(pool);
+            drop(job);
+            drop(image);
+            assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
+            return;
+        }
+        if pressure {
+            loop {
+                match rx.recv_timeout(Duration::from_secs(5)).unwrap() {
+                    Event::MemoryPressure => {}
+                    Event::DecodeDeferred { .. } => break,
+                    _ => panic!(
+                        "Temporary pressure must defer a neighbour, not poison its future visible request"
+                    ),
+                }
+            }
+            drop(held);
+            job.priority = PreviewPriority::Immediate;
+            assert!(pool.submit(job).is_ok());
+        } else {
+            drop(job);
+        }
         let Event::Image { result, .. } = rx.recv_timeout(Duration::from_secs(5)).unwrap() else {
             panic!("No resident result");
         };
@@ -1404,6 +1710,7 @@ mod tests {
     fn navigation_cancels_inflight_lookup_before_memory_becomes_available() {
         let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
             enabled: false,
+            diagnostic_fixed_memory: true,
             ..Default::default()
         }));
         let held = cache
@@ -1499,11 +1806,17 @@ mod tests {
         let old = navigation_job("old");
         assert!(pool.submit(old.clone()).is_ok());
         let start = Instant::now();
-        while !marker.exists() {
+        let native_pid = loop {
+            // Redirection creates the marker before printf writes the PID.
+            // File existence alone is not a readiness barrier under load.
+            if let Ok(pid) = std::fs::read_to_string(&marker)
+                && pid.trim().parse::<u32>().is_ok_and(|pid| pid > 0)
+            {
+                break pid;
+            }
             assert!(start.elapsed() < Duration::from_secs(5));
             thread::sleep(Duration::from_millis(10));
-        }
-        let native_pid = std::fs::read_to_string(&marker).unwrap();
+        };
         let mut next = if keep_source {
             old.clone()
         } else {
@@ -1547,14 +1860,14 @@ mod tests {
             "Only the current consumer needs development"
         );
         assert!(pool.queues.0.lock().unwrap().pending.is_empty());
+        let alive = Command::new("/bin/kill")
+            .args(["-0", native_pid.trim()])
+            .output()
+            .unwrap();
         assert!(
-            Command::new("/bin/kill")
-                .args(["-0", native_pid.trim()])
-                .output()
-                .unwrap()
-                .status
-                .success(),
-            "Changing view must not terminate the native call/process"
+            alive.status.success(),
+            "Changing view must not terminate the native call/process: PID {native_pid:?}, {}",
+            String::from_utf8_lossy(&alive.stderr)
         );
         drop(pool);
         drop(rx);

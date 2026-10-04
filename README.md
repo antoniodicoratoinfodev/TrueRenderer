@@ -16,7 +16,11 @@ It brings each image, its technical context and the choices behind its appearanc
 
 Open an image or a folder, then move between the thumbnail grid, filmstrip and focused viewer. Library and Explorer views, search, favourites and navigation history keep large collections easy to explore.
 
-Folder preparation runs in the background with visible progress and controls to pause, resume or cancel.
+Folder preparation runs in the background with visible progress and controls to pause, resume or cancel. Nearby previews are prepared automatically, with a window that expands according to available memory. Useful previews stay in RAM; the lossless disk cache can serve evicted images without developing the RAW again when its quota allows.
+
+The memory budget starts at **8 GB** and grows with the work, leaving a margin for navigation and capacity for the system. This is an admission budget, not memory allocated at startup. Physical capacity can make the usable budget lower on smaller machines. Under pressure, optional previews are released and work can wait for memory. **Automatically reduce work on battery** is off by default; an existing explicit choice is preserved.
+
+Settings → Performance shows **Active display** in plain terms: SDR 8-bit, 10-bit or 16-bit floating point, plus any restart requirement or fallback. This describes the app's output format, not the verified bit depth of the monitor.
 
 ### Inspect real detail
 
@@ -199,7 +203,9 @@ Interface size can be set to 100%, 150% or 200% in **Settings → General → Vi
 
 Original files are read-only. Previews use a separate cache, while ratings, keywords and backups remain durable library data.
 
-Opening a folder prepares RAW development and the image levels for each photo, using its saved engine and white balance. **Full quality includes native detail**; Standard keeps its existing resolution limit. Choose background loading or a foreground popup in **Settings → Previews and RAW**. Completion waits for accepted cache writes, so subsequent Fit and zoom views can read prepared pixels instead of developing the RAW again. Memory and disk limits still apply: viewing previews take priority over optional native detail, and the popup reports when native detail cannot be retained. Cache reads, uploads and viewport rendering may still show a refinement message; changing quality or RAW settings can require new preparation.
+Opening a folder prepares RAW development and the image levels for each photo, using its saved engine and white balance. **Full quality includes native detail**; Standard keeps its existing resolution limit. Choose background loading or a foreground popup in **Settings → Previews and RAW**. Completion waits for accepted cache writes, so subsequent Fit and zoom views can read prepared pixels instead of developing the RAW again. Memory and disk limits still apply: viewing previews take priority over optional native detail. Cache reads, uploads and viewport rendering may still show a refinement message; changing quality or RAW settings can require new preparation.
+
+Folder loading also prepares independent viewing previews in RAM, even when disk caching is disabled or its quota is too small. These previews stay usable when larger native buffers are released; nearby photos take priority within the memory limit. Neighbour preloading continues while the rest of the folder loads. Clearing the cache runs the same preparation again. A completed folder can still need work for photos evicted from both RAM and disk, larger views or changed settings; disabling reusable RAM also disables this retention.
 
 In **Settings → Cache and data**, one space limit applies either per folder or across all folders known to the current library. The total limit is optional. You can disable unused-preview expiry or enable periodic cleanup of folders that are not open; periodic cleanup runs every minute while the app is running and uses the same quota and expiry. **Clean known caches now** applies the saved policy, while **Clear folder cache** clears only the current folder. Clearing also removes its resident previews, cancels earlier image work and restarts thumbnail and viewing-preview preparation after deletion, in foreground or background. The command is available in the folder-loading popup too. Fresh previews can repopulate the disk cache as loading resumes; selection, zoom and saved edits are preserved. The summary reports the last cleanup measurement and incomplete checks. Previously visited folders become known when reopened with this version; disconnected folders are retried. No cleanup service runs after the app closes.
 

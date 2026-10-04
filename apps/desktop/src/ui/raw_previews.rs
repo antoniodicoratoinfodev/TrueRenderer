@@ -25,7 +25,21 @@ fn pixel_digest_from(image: &tr_core::provider::ImageLevels, skip: usize) -> Str
 /// Exercise the real folder scheduler, then discard RAM and visit every viewer.
 /// Source copies and disposable catalogues must be below the diagnostic root.
 pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
-    use crate::cache::{FolderLoading, Prefetch, Settings};
+    use crate::cache::{FolderLoading, Settings};
+    let policy = std::env::args()
+        .skip_while(|arg| arg != "--folder-cache-policy")
+        .nth(1)
+        .unwrap_or_else(|| "normal".into());
+    ensure!(
+        matches!(policy.as_str(), "normal" | "disabled" | "limited"),
+        "Unknown folder cache policy"
+    );
+    let session_previews = policy != "normal";
+    let edges: &[u32] = if session_previews {
+        &[2700]
+    } else {
+        &[2700, 0]
+    };
     let report_path = root.join("folder-previews.json");
     let mut rows = vec![];
     let report = |rows: &Vec<serde_json::Value>, complete: bool, unchanged: bool| -> Result<()> {
@@ -33,8 +47,12 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
             &report_path,
             serde_json::to_vec_pretty(&serde_json::json!({
                 "passed":complete && unchanged && rows.iter().all(|r| r["passed"] == true),
-                "complete":complete, "sources_unchanged":unchanged, "rows":rows,
-                "scope":"Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB; private source copies and isolated catalogues. Cold preparation then RAM eviction and fitted/native-quality viewers reloaded from disk. Optional saved recipe on the second photo uses a different engine and native WB. No GPU/display, colour or physical-memory qualification."
+                "complete":complete, "sources_unchanged":unchanged, "rows":rows, "cache_policy":policy,
+                "scope": if session_previews {
+                    "Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB. Cold preparation with disabled disk cache or 64 MiB quota, then discard native RAM entries and open fitted viewers using retained previews. Private copies and isolated catalogues; optional saved recipe differs from global engine/WB. No GPU/display, colour or physical-memory qualification."
+                } else {
+                    "Production folder scheduler, all RAW engines, 1440x900 points / Retina 2x, 2 GiB; private source copies and isolated catalogues. Cold preparation then RAM eviction and fitted/native-quality viewers reloaded from disk. Optional saved recipe on the second photo uses a different engine and native WB. No GPU/display, colour or physical-memory qualification."
+                }
             }))?,
         )?;
         Ok(())
@@ -61,7 +79,10 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                     quality,
                     folder_loading: mode,
                     memory_mib: 2048,
-                    prefetch: Prefetch::Disabled,
+                    diagnostic_no_prefetch: true,
+                    diagnostic_fixed_memory: true,
+                    enabled: policy != "disabled",
+                    disk_mib: if policy == "limited" { 64 } else { 4096 },
                     ..Default::default()
                 }
                 .save(data.path())?;
@@ -82,6 +103,10 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                         open: Some(folder.into()),
                     },
                 );
+                app.cache_settings.memory_mib = 2048;
+                app.cache_settings.diagnostic_fixed_memory = true;
+                app.cache_settings.diagnostic_no_prefetch = true;
+                app.service.cache.configure(app.cache_settings.clone());
                 let input = || egui::RawInput {
                     screen_rect: Some(egui::Rect::from_min_size(
                         egui::Pos2::ZERO,
@@ -193,7 +218,7 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                     for ((id, r), cached) in &app.cache {
                         let item = items.iter().find(|item| item.id == *id).unwrap();
                         if *r == app.preview_request_for_mode(item, 0, false) {
-                            for edge in [2700, 0] {
+                            for &edge in edges {
                                 pixels.entry((id.clone(), edge)).or_insert_with(|| {
                                     pixel_digest_from(
                                         &cached.pyramid,
@@ -224,14 +249,20 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                 let prepared = app.service.cache.stats();
                 let request = app.folder_load.request.unwrap();
                 ensure!(
-                    pixels.len() == items.len() * 2,
+                    pixels.len() == items.len() * edges.len(),
                     "Not all viewer results were observed"
                 );
-                app.cache.clear();
+                if session_previews {
+                    app.cache.retain(|(_, request), _| request.edge != 0);
+                } else {
+                    app.cache.clear();
+                }
                 let mut visits = vec![];
                 for item in &items {
-                    for edge in [2700, 0] {
-                        app.cache.clear();
+                    for &edge in edges {
+                        if !session_previews {
+                            app.cache.clear();
+                        }
                         let before = app.service.cache.stats();
                         let started = Instant::now();
                         loop {
@@ -268,7 +299,8 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                 let passed = visits
                     .iter()
                     .all(|v| v["decode_jobs"] == 0 && v["pixels_identical"] == true);
-                rows.push(serde_json::json!({"passed":passed,"engine":engine,"quality":quality,"mode":mode,"request":request,"images":items.len(),"preparation_seconds":preparation_seconds,"preparation_decode_jobs":prepared.decode_jobs-before.decode_jobs,"preparation_writes":prepared.writes-before.writes,"native_cache_fallbacks":prepared.native_preview_fallbacks-before.native_preview_fallbacks,"viewer_visits":visits}));
+                let memory = app.service.cache.memory.usage();
+                rows.push(serde_json::json!({"passed":passed,"engine":engine,"quality":quality,"mode":mode,"request":request,"images":items.len(),"preparation_seconds":preparation_seconds,"preparation_decode_jobs":prepared.decode_jobs-before.decode_jobs,"preparation_writes":prepared.writes-before.writes,"native_cache_fallbacks":prepared.native_preview_fallbacks-before.native_preview_fallbacks,"viewer_visits":visits,"accounted_memory_peak":memory.peak,"memory_limit":memory.limit}));
                 report(&rows, false, false)?;
                 eprintln!(
                     "Folder {engine:?}/{quality:?}/{mode:?}: {passed}, {preparation_seconds:.3}s, {} viewers",
@@ -312,6 +344,7 @@ pub fn run(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
         .tempdir_in(root)?;
     let settings = crate::cache::Settings {
         memory_mib: 2048,
+        diagnostic_fixed_memory: true,
         quality: PreviewQuality::Full,
         ..Default::default()
     };
@@ -332,6 +365,8 @@ pub fn run(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
             open: Some(folder.into()),
         },
     );
+    app.cache_settings.diagnostic_fixed_memory = true;
+    app.service.cache.configure(app.cache_settings.clone());
     let started = Instant::now();
     while app.scanning {
         app.poll(&ctx);
