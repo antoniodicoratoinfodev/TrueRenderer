@@ -1,0 +1,241 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-04",
+  "reviewed_commit": "f6fb2fa",
+  "passed": true,
+  "complete": true,
+  "scope": "Review of automatic preview preparation, independent session previews, admission/reclamation, settings migration and diagnostic accuracy. macOS functional verification on generated inputs.",
+  "findings": [
+    {
+      "problem": "Failed decode/recipe or excluded neighbours consumed speculative slots, preventing later valid candidates from warming.",
+      "fix": "Skip unavailable candidates before charging admission slots; preserve the two-job bound.",
+      "regression": "neighbors_skip_unavailable_photos_without_spending_admission_slots"
+    },
+    {
+      "problem": "Cache/source invalidation retained the completed-prefetch set and suppressed regeneration in an unchanged view.",
+      "fix": "Clear prefetch completion on whole-cache invalidation and remove changed assets on source revision changes.",
+      "regression": "invalidated_neighbors_can_be_prepared_again_in_the_same_view"
+    },
+    {
+      "problem": "A failed migration backup could return deserialized preferences without validating resource limits.",
+      "fix": "Bound the initial read, validate the recovered preferences, preserve original bytes and use Full defaults on invalid input.",
+      "regression": "failed_migration_backup_never_returns_invalid_preferences"
+    },
+    {
+      "problem": "Automatic migration replaced the fixed memory quota requested by RAW/navigation diagnostics.",
+      "fix": "Apply explicit diagnostic memory at startup, keep it out of persisted diagnostic flags and verify actual quotas in reports/runners.",
+      "regression": "diagnostic_startup_keeps_its_fixed_quota_after_settings_migration",
+      "before_navigation_limit_bytes": 8000634880,
+      "after_navigation_limit_bytes": 2147483648
+    }
+  ],
+  "negative_evidence": {
+    "before-neighbor-errors.log": {
+      "path": "var/precommit-review-2026-10-04/before-neighbor-errors.log",
+      "sha256": "3c0485aaa7eede609db06f7e6bbf68031448223ee967cb1606d5d9a291741bf1"
+    },
+    "before-neighbor-invalidation.log": {
+      "path": "var/precommit-review-2026-10-04/before-neighbor-invalidation.log",
+      "sha256": "b53e9ceeba7bbd243211e31e4991b9cdbcef69b7863e7d58c3016358bb08bca3"
+    },
+    "before-settings-recovery.log": {
+      "path": "var/precommit-review-2026-10-04/before-settings-recovery.log",
+      "sha256": "a869557ca8768a78014dade5b38a1129429c0f0e5de6f7afad1192bafdd9637e"
+    },
+    "before-navigation-budget.log": {
+      "path": "var/precommit-review-2026-10-04/before-navigation-budget.log",
+      "sha256": "36664d91306c9c3e410e68c09bb8b076f41c65b413a6db9d709d8d5e4cce0d3d"
+    }
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "suite": "var/verify-YloaKBn6",
+    "ordinary_rust_tests": 276,
+    "native_integrations": 14,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt_passed": true,
+    "clippy_all_targets_passed": true,
+    "release_build_passed": true,
+    "native_surface_passed": true,
+    "local_document_links_checked": 375,
+    "document_sync_unchanged": true,
+    "diagnostic_cli_rejection_checks": 5,
+    "initial_sandbox_failures": "Two Core Image tests could not initialize their backend inside the terminal sandbox; all 47 worker tests and the final suite passed outside that context.",
+    "source_manifest_sha256": "f1b2ff3c75590ee38f2923decdaa6e305de973c3c56cf568e05edb9db7b51cf2",
+    "sources_unchanged_during_final_verification": true
+  },
+  "xpc": {
+    "passed": true,
+    "two_distinct_processes": true,
+    "corpus_images_checked": 12,
+    "same_pixels": true,
+    "other_isolate_survived": true,
+    "edited_export_checked_slots": 2,
+    "edited_export_native_match_slots": 2,
+    "edited_export_source_unchanged": true,
+    "memory_limit_is_hard_kernel_cap": false,
+    "full_sandbox_gate_passed": false
+  },
+  "cache_clear": {
+    "passed": true,
+    "runs": 2,
+    "clears": 6,
+    "images_per_run": 12,
+    "foreground_and_background": true,
+    "screenshots_inspected": true
+  },
+  "native_navigation": [
+    {
+      "case": "navigation-Standard-Cpu-cold",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 0,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Standard-Cpu-ssd",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 0,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Standard-Gpu-cold",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 1,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Standard-Gpu-ssd",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 1,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Full-Cpu-cold",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 0,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Full-Cpu-ssd",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 0,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Full-Gpu-cold",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 1,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    },
+    {
+      "case": "navigation-Full-Gpu-ssd",
+      "passed": true,
+      "views": 10,
+      "max_channel_error_u8": 1,
+      "memory_limit_bytes": 2147483648,
+      "physical_1to1_exact": true
+    }
+  ],
+  "folder_raw_matrix": {
+    "source": "Two own 1024x768 Bayer DNG fixtures, no embedded preview.",
+    "engines": [
+      "Apple",
+      "LibRawBilinear",
+      "LibRawAhd",
+      "TrueRenderer"
+    ],
+    "qualities": [
+      "Full",
+      "Standard"
+    ],
+    "saved_engine_and_wb_differ": true,
+    "modes": [
+      "Foreground",
+      "Background"
+    ],
+    "policies": [
+      {
+        "policy": "disabled",
+        "passed": true,
+        "cases": 16,
+        "viewer_reopens": 32,
+        "additional_decodes": 0,
+        "pixels_identical": true,
+        "sources_unchanged": true,
+        "memory_limit_bytes": 2147483648,
+        "peak_accounted_bytes": 662701348
+      },
+      {
+        "policy": "limited",
+        "passed": true,
+        "cases": 16,
+        "viewer_reopens": 32,
+        "additional_decodes": 0,
+        "pixels_identical": true,
+        "sources_unchanged": true,
+        "memory_limit_bytes": 2147483648,
+        "peak_accounted_bytes": 662701348
+      },
+      {
+        "policy": "normal",
+        "passed": true,
+        "cases": 16,
+        "viewer_reopens": 64,
+        "additional_decodes": 0,
+        "pixels_identical": true,
+        "sources_unchanged": true,
+        "memory_limit_bytes": 2147483648,
+        "peak_accounted_bytes": 662701348
+      }
+    ]
+  },
+  "raw_grid_viewer": {
+    "passed": true,
+    "cases": 24,
+    "sources_unchanged": true,
+    "memory_limit_bytes": 2147483648,
+    "peak_accounted_bytes": 914360936
+  },
+  "bundle": {
+    "qualified_path": "var/precommit-review-2026-10-04/TrueRenderer.app",
+    "manifest_sha256": "bb0e0961679084a041205043ac3aa1a3a962db4ac21aaf8e91c13edb36c5e7f6",
+    "files": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "77b394d997bb0ea18c797c0e51a880aab1142047b82f09fbfd260f7fd1a06eb2",
+      "Contents/MacOS/tr-worker": "27ea994fc97f592a47cbab8b98c9e243d3cb177cd666a610f3e4f8bf3117cdd2",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abd8e4de7b8300cda9f6a872267e5c5ede35c872416b4ad8a3285a601483270b",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5e52dd6170571d26c6d602b916a4d334ce6c01cacbf177e95d0d36894affd98a",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "5b5b45537ecff1b501f56cb4f8bb0378a6c79ebf7d14caadfd2f42c48bbda0d2"
+    },
+    "ad_hoc_signature_verified": true,
+    "existing_distribution_unchanged": true,
+    "existing_distribution_manifest_sha256": "cf1522739d676741e43ea383a4596fb5387f288b20f89e5c811ff618221db1bb"
+  },
+  "limitations": [
+    "Generated PNG and small Bayer DNG inputs; this does not repeat the historical private-camera/large-RAW campaign or qualify other cameras and Windows.",
+    "Accounted memory is an admission budget, not an RSS/physical-memory or kernel cap. No new memory exhaustion, p95/p99, colour, accessibility or performance improvement qualification.",
+    "Historical navigation measurements that set only JSON memory_mib after automatic migration do not attest a fixed 2 GiB limit unless the actual recorded limit was checked.",
+    "Existing distributed app is preserved; the reviewed release bundle remains separate under var/. R0-R4/SF and full release/sandbox gates remain open."
+  ]
+}

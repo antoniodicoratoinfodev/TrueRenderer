@@ -96,6 +96,7 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                     worker.into(),
                     Startup {
                         navigation: false,
+                        fixed_memory_mib: Some(2048),
                         smoke: false,
                         sampling_smoke: false,
                         external_smoke: false,
@@ -103,8 +104,6 @@ pub fn folder_loading(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                         open: Some(folder.into()),
                     },
                 );
-                app.cache_settings.memory_mib = 2048;
-                app.cache_settings.diagnostic_fixed_memory = true;
                 app.cache_settings.diagnostic_no_prefetch = true;
                 app.service.cache.configure(app.cache_settings.clone());
                 let input = || egui::RawInput {
@@ -358,6 +357,7 @@ pub fn run(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
         worker.into(),
         Startup {
             navigation: false,
+            fixed_memory_mib: Some(2048),
             smoke: false,
             sampling_smoke: false,
             external_smoke: false,
@@ -365,8 +365,6 @@ pub fn run(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
             open: Some(folder.into()),
         },
     );
-    app.cache_settings.diagnostic_fixed_memory = true;
-    app.service.cache.configure(app.cache_settings.clone());
     let started = Instant::now();
     while app.scanning {
         app.poll(&ctx);
@@ -445,7 +443,12 @@ pub fn run(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                         std::thread::sleep(Duration::from_millis(16));
                     }
                     let seconds = start.elapsed().as_secs_f64();
-                    let passed = ready && app.errors.is_empty() && !app.fatal;
+                    let memory = app.service.cache.memory.usage();
+                    let passed = ready
+                        && app.errors.is_empty()
+                        && !app.fatal
+                        && !memory.automatic
+                        && memory.limit == 2048 * 1024 * 1024;
                     let after = app.service.cache.stats();
                     let pixels: Vec<_> = visible
                         .iter()
@@ -455,7 +458,7 @@ pub fn run(root: &Path, worker: &Path, folder: &Path) -> Result<()> {
                                 .map(|image| pixel_digest(&image.pyramid))
                         })
                         .collect();
-                    rows.push(serde_json::json!({"engine":engine,"quality":quality,"batch":batch,"phase":phase,"images":visible.len(),"passed":passed,"errors":app.errors,"seconds":seconds,"first_thumbnail_seconds":first_ready,"all_thumbnails_seconds":visible_ready,"decode_jobs":after.decode_jobs-before.decode_jobs,"disk_hits":after.hits-before.hits,"pixel_digests":pixels,"cache_statistics":after}));
+                    rows.push(serde_json::json!({"engine":engine,"quality":quality,"batch":batch,"phase":phase,"images":visible.len(),"passed":passed,"errors":app.errors,"seconds":seconds,"first_thumbnail_seconds":first_ready,"all_thumbnails_seconds":visible_ready,"decode_jobs":after.decode_jobs-before.decode_jobs,"disk_hits":after.hits-before.hits,"pixel_digests":pixels,"cache_statistics":after,"memory_limit":memory.limit,"memory_peak":memory.peak}));
                     std::fs::write(
                         &report_path,
                         serde_json::to_vec_pretty(

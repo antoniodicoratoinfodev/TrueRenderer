@@ -42,8 +42,8 @@ def run_probe(bundle, root, mode, quality, phase, transitions=False, require_ful
     data = root / (mode + "-" + phase)
     data.mkdir()
     (data / "settings.json").write_text(json.dumps({
-        "schema": 2, "quality": quality, "compute": mode,
-        "prefetch": "Disabled", "adapt_on_battery": False,
+        "schema": 3, "quality": quality, "compute": mode,
+        "adapt_on_battery": False,
         "memory_mib": memory_mib, "reusable_mib": 512, "raw_engine": raw_engine,
     }))
     report = root / "reports/navigation-surface.json"
@@ -58,6 +58,7 @@ def run_probe(bundle, root, mode, quality, phase, transitions=False, require_ful
     result = subprocess.run([
         str(bundle / "Contents/MacOS/TrueRenderer"), "--navigation-transitions-smoke" if transitions else "--navigation-smoke",
         "--root", str(root), "--data", str(data),
+        "--navigation-memory-mib", str(memory_mib),
     ] + extra, capture_output=True, text=True, timeout=210)
     (root / (mode + "-" + phase + ".log")).write_text(result.stdout + result.stderr)
     output = json.loads(report.read_text())
@@ -67,6 +68,8 @@ def run_probe(bundle, root, mode, quality, phase, transitions=False, require_ful
     first, _, returned = output["samples"][:3]
     if len(output["samples"]) != (10 if transitions else 3):
         raise RuntimeError("Incomplete navigation trace")
+    if any(row["memory_limit"] != memory_mib * 1024**2 for row in output["samples"]):
+        raise RuntimeError("Navigation did not use the requested fixed memory budget")
     if transitions:
         if require_full_coverage and any(row["minimum_draw_coverage"] < 1. - 1e-6 for row in output["samples"][3:]):
             raise RuntimeError("Same-source transition lost full image coverage")

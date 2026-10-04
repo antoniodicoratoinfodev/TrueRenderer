@@ -161,14 +161,20 @@ impl Settings {
     pub fn load_or_recover(data: &Path) -> (Self, Option<String>) {
         // Preserve the exact original before the normal save publishes schema 3.
         let path = data.join("settings.json");
-        if let Ok(bytes) = std::fs::read(&path)
+        if path
+            .metadata()
+            .is_ok_and(|metadata| metadata.len() <= 16384)
+            && let Ok(bytes) = std::fs::read(&path)
             && let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes)
             && (value.get("schema").is_none()
                 || value.get("schema").and_then(|v| v.as_u64()) == Some(2))
             && let Err(error) = Self::backup(data, "settings-before-automatic-")
         {
             return (
-                Self::read(data).unwrap_or_default(),
+                Self::load(data).unwrap_or_else(|_| Self {
+                    quality: PreviewQuality::Full,
+                    ..Self::default()
+                }),
                 Some(format!("Migrazione non salvata: {error:#}")),
             );
         }
@@ -286,6 +292,37 @@ impl Settings {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(unix)]
+    #[test]
+    fn failed_migration_backup_never_returns_invalid_preferences() {
+        use std::os::unix::fs::PermissionsExt;
+        for memory_mib in [2048, u64::MAX] {
+            let data = tempfile::tempdir().unwrap();
+            let original = serde_json::to_vec(&serde_json::json!({
+                "schema": 2, "memory_mib": memory_mib, "language": "it"
+            }))
+            .unwrap();
+            std::fs::write(data.path().join("settings.json"), &original).unwrap();
+            let permissions = std::fs::metadata(data.path()).unwrap().permissions();
+            std::fs::set_permissions(data.path(), std::fs::Permissions::from_mode(0o555)).unwrap();
+            let (settings, warning) = Settings::load_or_recover(data.path());
+            std::fs::set_permissions(data.path(), permissions).unwrap();
+            assert!(warning.unwrap().contains("Migrazione non salvata"));
+            assert!(
+                settings.validate().is_ok(),
+                "Invalid preferences escaped recovery"
+            );
+            if memory_mib == 2048 {
+                assert_eq!(settings.language, crate::i18n::Language::Italian);
+            } else {
+                assert_eq!(settings.quality, PreviewQuality::Full);
+            }
+            assert_eq!(
+                std::fs::read(data.path().join("settings.json")).unwrap(),
+                original
+            );
+        }
+    }
     #[test]
     fn automatic_migration_preserves_preferences_and_backs_up_all_legacy_prefetch_modes() {
         for prefetch in ["Disabled", "Automatic", "Extended"] {

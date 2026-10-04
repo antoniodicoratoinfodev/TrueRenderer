@@ -47,6 +47,8 @@ struct CachedImage {
 }
 pub struct Startup {
     pub navigation: bool,
+    /// Explicit diagnostic quota; never restored from user preferences.
+    pub fixed_memory_mib: Option<u64>,
     pub smoke: bool,
     pub sampling_smoke: bool,
     pub external_smoke: bool,
@@ -152,6 +154,7 @@ impl TrueRenderer {
         let root = root.canonicalize().unwrap_or(root);
         let Startup {
             navigation,
+            fixed_memory_mib,
             smoke,
             sampling_smoke,
             external_smoke,
@@ -175,6 +178,12 @@ impl TrueRenderer {
             })
             .unwrap_or(("GPU non disponibile".into(), "sconosciuta".into()));
         let service = Service::start(root.clone(), data.clone(), worker, ctx.clone());
+        if let Some(memory_mib) = fixed_memory_mib {
+            let mut settings = service.cache.settings();
+            settings.memory_mib = memory_mib;
+            settings.diagnostic_fixed_memory = true;
+            service.cache.configure(settings);
+        }
         let (gpu_tx, gpu_rx) = std::sync::mpsc::sync_channel(1);
         if let Some(gpu) = &cc.wgpu_render_state {
             let device = gpu.device.clone();
@@ -798,7 +807,21 @@ impl TrueRenderer {
         }
         let mut slots = 2usize.saturating_sub(self.pending_images.len());
         for (item, edge) in candidates {
+            // Failed/excluded photos cannot use an admission slot. Otherwise
+            // two broken neighbours prevent every later candidate from warming.
+            if !item.approved
+                || self
+                    .editing
+                    .entries
+                    .get(&item.id)
+                    .is_some_and(|entry| entry.loaded.is_none() && entry.error.is_some())
+            {
+                continue;
+            }
             let key = self.image_key(&item, edge);
+            if self.errors.contains_key(&format!("{}:{:?}", key.0, key.1)) {
+                continue;
+            }
             if !self.pending_images.contains(&key) && !self.cache.contains_key(&key) {
                 if !can_admit || slots == 0 || self.prefetched_this_view.contains(&key) {
                     continue;
@@ -995,6 +1018,7 @@ impl TrueRenderer {
         self.promoted.clear();
         self.requested_at.clear();
         self.recent_latencies.clear();
+        self.prefetched_this_view.clear();
         self.rebuild.clear();
         self.rebuild_total = 0;
         self.watched_sources.clear();
@@ -1102,6 +1126,8 @@ impl TrueRenderer {
         self.promoted.clear();
         self.requested_at.clear();
         self.cache.retain(|(id, _), _| !changed.contains(id));
+        self.prefetched_this_view
+            .retain(|(id, _)| !changed.contains(id));
         self.presenter.invalidate_sources(&sources);
         self.errors
             .retain(|key, _| !changed.iter().any(|id| key.starts_with(&format!("{id}:"))));
@@ -3900,6 +3926,12 @@ mod settings_regressions {
     use super::*;
 
     pub(super) fn app() -> (tempfile::TempDir, egui::Context, TrueRenderer) {
+        app_with_fixed_memory(None)
+    }
+
+    fn app_with_fixed_memory(
+        fixed_memory_mib: Option<u64>,
+    ) -> (tempfile::TempDir, egui::Context, TrueRenderer) {
         let dir = tempfile::tempdir().unwrap();
         std::fs::create_dir(dir.path().join("corpus")).unwrap();
         std::fs::create_dir(dir.path().join("data")).unwrap();
@@ -3924,6 +3956,7 @@ mod settings_regressions {
             dir.path().join("unused-worker"),
             Startup {
                 navigation: false,
+                fixed_memory_mib,
                 smoke: false,
                 sampling_smoke: false,
                 external_smoke: false,
@@ -3932,6 +3965,20 @@ mod settings_regressions {
             },
         );
         (dir, ctx, app)
+    }
+
+    #[test]
+    fn diagnostic_startup_keeps_its_fixed_quota_after_settings_migration() {
+        let (dir, ctx, mut app) = app_with_fixed_memory(Some(2048));
+        settle(&mut app, &ctx, true);
+        assert_eq!(app.service.cache.memory.usage().limit, 2048 * 1024 * 1024);
+        assert!(!app.service.cache.memory.usage().automatic);
+        app.apply_settings();
+        settle(&mut app, &ctx, false);
+        assert_eq!(app.service.cache.memory.usage().limit, 2048 * 1024 * 1024);
+        let ordinary = crate::cache::Settings::load(&dir.path().join("data")).unwrap();
+        assert!(!ordinary.diagnostic_fixed_memory);
+        assert!(ordinary.initial_memory_bytes() >= 8_000_000_000);
     }
 
     pub(super) fn settle(app: &mut TrueRenderer, ctx: &egui::Context, scans: bool) {

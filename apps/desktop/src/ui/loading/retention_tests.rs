@@ -447,6 +447,97 @@ fn automatic_neighbors_expand_without_pinning_rebuilding_or_overfilling_the_queu
 }
 
 #[test]
+fn neighbors_skip_unavailable_photos_without_spending_admission_slots() {
+    for failure in ["decode", "recipe", "unapproved"] {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.cancel_folder_preparation();
+        let template = app.state.items[0].clone();
+        let items: Vec<_> = (0..6)
+            .map(|n| {
+                let mut item = template.clone();
+                item.id = format!("neighbor-{n:02}");
+                item.name = format!("neighbor-{n:02}.png");
+                item.approved = failure != "unapproved" || !(1..=2).contains(&n);
+                item
+            })
+            .collect();
+        app.state.reconcile(items.clone(), true);
+        app.cache.clear();
+        app.state.view = ViewMode::Preview;
+        app.viewer_prefetch_edge = 64;
+        for item in &items {
+            if failure == "recipe" && items[1..=2].iter().any(|i| i.id == item.id) {
+                app.edit_result(item.id.clone(), Err("recipe unavailable".into()));
+            } else {
+                neutral(&mut app, item);
+            }
+        }
+        if failure == "decode" {
+            for item in &items[1..=2] {
+                let key = app.image_key(item, 64);
+                app.errors
+                    .insert(format!("{}:{:?}", key.0, key.1), "invalid file".into());
+            }
+        }
+        let current = app.image_key(&items[0], 64);
+        app.cache.insert(current.clone(), cached(&app, 64));
+        app.demand = HashSet::from([current]);
+        app.primary_demand = HashSet::from([items[0].id.clone()]);
+        app.foreground_demand = app.demand.clone();
+        app.navigation_changed = Instant::now() - Duration::from_secs(10);
+        app.neighbor_demand(&ctx);
+        let scheduled: Vec<_> = app.demand_jobs.iter().map(|j| j.item.id.as_str()).collect();
+        assert_eq!(
+            scheduled,
+            [items[3].id.as_str(), items[4].id.as_str()],
+            "{failure}"
+        );
+    }
+}
+
+#[test]
+fn invalidated_neighbors_can_be_prepared_again_in_the_same_view() {
+    for source_change in [false, true] {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        app.cancel_folder_preparation();
+        app.cache.clear();
+        app.state.view = ViewMode::Preview;
+        app.viewer_prefetch_edge = 64;
+        let items = app.state.items.clone();
+        for item in &items {
+            neutral(&mut app, item);
+        }
+        let current = app.image_key(&items[0], 64);
+        let next = app.image_key(&items[1], 64);
+        app.prefetched_this_view.insert(next.clone());
+        app.foreground_demand = HashSet::from([current.clone()]);
+        if source_change {
+            app.apply_source_changes(vec![crate::source_monitor::Change {
+                id: items[1].id.clone(),
+                observation: "changed".into(),
+                bytes: items[1].bytes,
+                available: true,
+            }]);
+        } else {
+            app.invalidate_previews();
+        }
+        app.cache.insert(current.clone(), cached(&app, 64));
+        app.demand = HashSet::from([current]);
+        app.primary_demand = HashSet::from([items[0].id.clone()]);
+        app.navigation_changed = Instant::now() - Duration::from_secs(10);
+        app.neighbor_demand(&ctx);
+        assert!(
+            app.demand_jobs
+                .iter()
+                .any(|j| (j.item.id.clone(), j.request) == next),
+            "Invalidation must allow a fresh preview without requiring navigation: source_change={source_change}"
+        );
+    }
+}
+
+#[test]
 fn preparation_recovers_after_a_large_request_or_pressure_reduces_the_budget() {
     for rejected in [false, true] {
         for foreground in [false, true] {

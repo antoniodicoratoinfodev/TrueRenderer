@@ -55,6 +55,25 @@ fn run() -> Result<()> {
     let navigation = args
         .iter()
         .any(|a| a == "--navigation-smoke" || a == "--navigation-transitions-smoke");
+    let fixed_memory_mib =
+        if let Some(index) = args.iter().position(|a| a == "--navigation-memory-mib") {
+            anyhow::ensure!(
+                navigation,
+                "Fixed navigation memory requires navigation diagnostic mode"
+            );
+            let memory_mib: u64 = args
+                .get(index + 1)
+                .context("Missing navigation memory quota")?
+                .parse()
+                .context("Invalid navigation memory quota")?;
+            anyhow::ensure!(
+                (512..=65536).contains(&memory_mib),
+                "Navigation memory must be 512..65536 MiB"
+            );
+            Some(memory_mib)
+        } else {
+            None
+        };
     if navigation {
         anyhow::ensure!(
             option("--data").is_some() && option("--open").is_none(),
@@ -256,6 +275,7 @@ fn run() -> Result<()> {
         worker,
         ui::Startup {
             navigation,
+            fixed_memory_mib,
             smoke,
             sampling_smoke,
             external_smoke,
