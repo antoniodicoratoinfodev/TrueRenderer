@@ -96,10 +96,11 @@ Undo. Analysis may take multiple RAW developments (up to 120 seconds); unstable,
 out-of-range or insufficient samples are refused without changing the recipe.
 These controls are separate from Auto RGB and do not identify the scene illuminant.
 
-Apple RAW also offers adjustable Tungsten (3200 K), Daylight (5500 K), Cloudy
-(6500 K) and Shade (7500 K) presets, all with tint zero, plus As-shot. These are
-starting points, not measurements of scene lighting. Presets save numerical WB
-values and support Undo; changing the sliders shows Custom when appropriate.
+Apple RAW temperature and tint are always-visible continuous sliders, with editable
+numerical values. Temperature uses a logarithmic 2000–50000 K range with 1 K steps.
+As-shot remains unchanged until you move a control; the initial manual reference
+is explicitly 6500 K, not a measurement of the photograph. **As-shot RAW WB** resets
+both values. Existing recipes keep their saved temperature and tint.
 
 #### Automatic adjustments and sampling
 
@@ -131,9 +132,38 @@ histogram follows its edited thumbnail preview and labels the preview level.
 
 In short windows, copy/paste and final-render checks are in **Develop → Actions**.
 
-The remaining tools in the [photographic development plan](STATO.md#piano-sviluppo-fotografico),
-including optics, spatial detail filters, masks,
-retouching and presets, are still in development.
+#### Geometry, detail, colour and masks
+
+Open the collapsible sections below the basic adjustments:
+
+- **Crop and geometry:** aspect ratios or adjustable edges, 90° rotations,
+  flips, straightening, manual perspective and scale. Enable **Draw a line to
+  straighten** and drag along a horizontal or vertical feature. **Remove empty
+  borders** searches for a tighter view; remaining missing pixels stay transparent.
+- **Manual optics:** distortion, moustache distortion, optical vignetting,
+  residual red/blue CA and purple/green defringe. Residual CA works on developed
+  RGB. No lens profile is selected automatically.
+- **Presence and detail:** Texture, Clarity, Dehaze, sharpening with native-pixel
+  radius and noise threshold, plus luminance/chroma noise reduction.
+- **Advanced colour:** eight hue bands, shadow/midtone/highlight grading,
+  black and white, and per-channel curve controls. The basic tone curve also
+  offers editable control points.
+- **Local masks:** radial, linear gradient, brush, luminance and hue ranges;
+  feather/invert plus local exposure, warmth and saturation. Select **Draw on
+  photo** to position or paint a mask, then disable it to pan. Mask vectors are
+  stored with the recipe and survive cache clearing, undo and backup/restore.
+
+These tools opt the edited revision into process 3; older recipes keep their
+rendering. Each section can be reset. Quick views remain provisional: assess
+spatial detail at 100% with **Verify final rendering**. Native PNG/TIFF/JPEG
+export applies the saved geometry and adjustments. Masks currently allow
+16 groups and 512 brush points per photograph; exceeding a limit is reported.
+Auto exposure/RGB and RGB neutralization require advanced tools to be reset;
+native RAW WB remains a separate operation.
+
+Automatic lens profiles, retouching, durable presets, extended mask combinations
+and the remaining [photographic development gates](STATO.md#piano-sviluppo-fotografico)
+remain planned. The extended preview/memory campaign follows this increment.
 
 ### Keep the work yours
 

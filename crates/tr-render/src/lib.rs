@@ -41,10 +41,13 @@ pub fn viewport(
     image: &Arc<tr_core::provider::ImageLevels>,
     transform: &mut ViewTransform,
     id: &str,
-    pending: bool,
+    pending_size: Option<[u32; 2]>,
+    editing_mask: bool,
 ) -> (egui::Response, Option<Sample>) {
     let raster = image.source();
-    let [source_width, source_height] = image.source_size();
+    // During editing, `image` is the unedited source used only as an identity.
+    // Keep the draft's geometry while presenting the retained edited frame.
+    let [source_width, source_height] = pending_size.unwrap_or_else(|| image.source_size());
     let available = ui.available_size().max(Vec2::splat(20.0));
     let (rect, _) = ui.allocate_exact_size(available, Sense::hover());
     let response = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
@@ -54,7 +57,7 @@ pub fn viewport(
         [rect.width(), rect.height()],
         ppp,
     );
-    if response.dragged() {
+    if response.dragged() && !editing_mask {
         let delta = ui.input(|i| i.pointer.delta());
         transform.center[0] =
             (transform.center[0] - delta.x / (source_width as f32 * scale)).clamp(0.0, 1.0);
@@ -100,7 +103,7 @@ pub fn viewport(
             ],
         };
         let rect = Rect::from_min_max(min / ppp, max / ppp);
-        if pending {
+        if pending_size.is_some() {
             presenter.paint_pending(ui, id, image.id(), rect, region);
         } else {
             presenter.paint(ui, id.to_owned(), image, rect, region);

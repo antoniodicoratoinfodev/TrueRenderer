@@ -1020,9 +1020,9 @@ pub fn fitted_pending(
     ui: &egui::Ui,
     lane: &str,
     image: &ImageLevels,
+    source: [u32; 2],
     area: Rect,
 ) {
-    let source = image.source_size();
     let ppp = ui.ctx().pixels_per_point();
     let rect = fitted_rect(area, source, ppp);
     let size = [

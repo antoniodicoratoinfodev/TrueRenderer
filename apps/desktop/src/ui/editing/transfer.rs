@@ -43,7 +43,7 @@ impl Groups {
             // Process 2 adds vibrance without changing the earlier operations.
             // Never downgrade an existing destination or import a RAW recipe.
             if result.vibrance != 0. || result.protect_warm {
-                result.process_version = 2;
+                result.process_version = result.process_version.max(2);
             }
         }
         result.validate()?;

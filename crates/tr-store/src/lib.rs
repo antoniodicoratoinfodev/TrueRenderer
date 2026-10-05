@@ -512,6 +512,57 @@ fn backup_connection(library: &Connection, root: &Path) -> Result<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn spatial_edit_and_vector_strokes_survive_backup_without_any_source_or_cache() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(Path::new("/synthetic/offline.png"), "fixed-source", 4)
+            .unwrap();
+        let mut recipe = EditRecipe::neutral(RawEngine::Apple);
+        recipe.raw_wb.apple_temperature = 4873;
+        recipe.raw_wb.apple_tint = -17;
+        recipe.process_version = 3;
+        let mut advanced = tr_core::editing::Advanced::default();
+        advanced.geometry.crop = [0.1, 0.2, 0.9, 0.8];
+        advanced.geometry.quarter_turns = 1;
+        advanced.detail.sharpen = 35.;
+        advanced.masks.push(tr_core::editing::masks::Mask {
+            shape: tr_core::editing::masks::Shape::Brush,
+            points: vec![[0.1, 0.2], [0.2, 0.3], [0.7, 0.8], [0.8, 0.9]],
+            breaks: vec![2],
+            exposure: 0.5,
+            ..Default::default()
+        });
+        recipe.advanced = Some(Box::new(advanced));
+        let saved = catalog.save_edit(&item.id, 0, &recipe).unwrap();
+        let undo = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+        assert!(undo.recipe.is_neutral());
+        let backup = catalog.backup().unwrap();
+        drop(catalog);
+        let restored = tempfile::tempdir().unwrap();
+        std::fs::copy(backup, restored.path().join("library.sqlite")).unwrap();
+        let mut catalog = Catalog::open(restored.path()).unwrap();
+        let head = catalog.load_edit(&item.id, RawEngine::Apple).unwrap();
+        let redo = catalog.step_edit(&item.id, head.generation, false).unwrap();
+        assert_eq!(redo.recipe, recipe);
+        assert_eq!(redo.source_digest, "fixed-source");
+        let mut invalid = recipe.clone();
+        invalid.advanced.as_mut().unwrap().geometry.crop[0] = 1.;
+        assert!(
+            catalog
+                .save_edit(&item.id, redo.generation, &invalid)
+                .is_err()
+        );
+        assert_eq!(
+            catalog
+                .load_edit(&item.id, RawEngine::Apple)
+                .unwrap()
+                .recipe,
+            recipe
+        );
+    }
     #[test]
     fn invalid_history_target_never_changes_the_saved_edit_head() {
         for undo in [true, false] {

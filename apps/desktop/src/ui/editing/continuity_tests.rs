@@ -315,5 +315,46 @@ fn editing_keeps_the_last_frame_through_rapid_drafts_and_presentation() {
         } else {
             assert_eq!(app.presenter.captures()[0].source, source.id());
         }
+
+        // After crop/rotation, pending drafts must retain the edited coordinate
+        // domain in the viewer and thumbnails, including output-proof mode.
+        let mut cropped = neutral;
+        cropped.process_version = 3;
+        let mut advanced = tr_core::editing::Advanced::default();
+        advanced.geometry.crop = [0.125, 0., 0.875, 1.];
+        advanced.geometry.quarter_turns = 1;
+        cropped.advanced = Some(Box::new(advanced));
+        app.apply_edit_draft(&item.id, cropped.clone());
+        converge(&mut app, &ctx, &item, false);
+        for grid in [false, true] {
+            let deadline = Instant::now() + Duration::from_secs(5);
+            loop {
+                app.poll_edit_preview();
+                app.presenter.poll(&ctx);
+                if draw_thumbnail(&mut app, &ctx, &item, grid).1 {
+                    break;
+                }
+                assert!(Instant::now() < deadline);
+                std::thread::sleep(Duration::from_millis(5));
+            }
+        }
+        let retained = app.editing.thumbnails[&source.id()].image.id();
+        for step in 1..=3 {
+            cropped.exposure_ev = step as f32 * 0.1;
+            app.apply_edit_draft(&item.id, cropped.clone());
+            assert_eq!(
+                draw(&mut app, &ctx, &item),
+                (1., false),
+                "A pending cropped edit must keep the entire displayed frame"
+            );
+            for grid in [false, true] {
+                assert_eq!(
+                    draw_thumbnail(&mut app, &ctx, &item, grid),
+                    (1., false, Some(retained)),
+                    "A pending cropped thumbnail must keep its edited dimensions"
+                );
+            }
+        }
+        converge(&mut app, &ctx, &item, true);
     }
 }

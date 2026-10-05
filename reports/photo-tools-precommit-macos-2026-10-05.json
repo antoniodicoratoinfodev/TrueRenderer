@@ -1,0 +1,182 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-05",
+  "recorded_at": "2026-10-05T17:30:07.379307+00:00",
+  "passed": true,
+  "scope": "Pre-commit review of process 3 photographic tools, continuous WB and documentation. Corrected gesture guards and retained cropped previews; qualified the resulting macOS development bundle.",
+  "findings_fixed": [
+    {
+      "severity": "P2",
+      "area": "Photo gestures during asynchronous work and comparison",
+      "problem": "Mask input could modify a draft during RAW WB analysis; straightening also bypassed the save guard. Gestures could edit the other comparison photo although its controls were not selected.",
+      "regression": "Actual egui press/move/release events for mask placement and straightening, while saving, analyzing WB or displaying the other comparison photo. Draft and pending-save state must remain unchanged.",
+      "reproduced_before_fix": true
+    },
+    {
+      "severity": "P2",
+      "area": "Panning after resetting masks",
+      "problem": "The global draw toggle could disable viewport panning after its mask no longer existed.",
+      "regression": "Reset recipe with draw mode still on; real viewport drag moves the view without changing or saving a recipe."
+    },
+    {
+      "severity": "P2",
+      "area": "Continuity of cropped editing previews",
+      "problem": "Pending rendering fell back to original dimensions when positioning the retained edited frame. A cropped/rotated fixture covered only 56.25% of the requested viewer region.",
+      "correction": "Viewer, filmstrip/grid, inspector and mask input share the edited native dimensions while work is pending.",
+      "regression": "Rapid drafts with crop/rotation retain full frame coverage in Fit and 1:1, working and output-proof modes, including filmstrip and grid.",
+      "coverage_before": 0.5625,
+      "coverage_after": 1.0,
+      "reproduced_before_fix": true
+    }
+  ],
+  "source_files_changed_by_review": [
+    "apps/desktop/src/ui.rs",
+    "apps/desktop/src/ui/editing.rs",
+    "apps/desktop/src/ui/editing/advanced.rs",
+    "apps/desktop/src/ui/editing/continuity_tests.rs",
+    "apps/desktop/src/ui/editing/controls_tests.rs",
+    "crates/tr-render/src/lib.rs",
+    "crates/tr-render/src/presenter.rs"
+  ],
+  "source_files_sha256": {
+    "apps/desktop/src/decode_pool.rs": "2f0264ed4717319d34c02ddb4eff2d20cecf4c076c80e861d160dd031588ed4f",
+    "apps/desktop/src/i18n.rs": "c239fbd12cf550246f032f56b8718147b8b48b20a0ed2690f39c9a16ad8d6af7",
+    "apps/desktop/src/main.rs": "fb13e5779ad84cc67da4f378fff1517336151e1a13647484723ec77247ab3943",
+    "apps/desktop/src/ui.rs": "744aefa2782b5517f0c21001e037e2208313711e1491899970a88f0bba3c49f6",
+    "apps/desktop/src/ui/editing.rs": "c9fd59e1440516b9420398ab48e103c9efd73602699e45b5517cd0e52e07a3ac",
+    "apps/desktop/src/ui/editing/advanced.rs": "2d9cfec570d8e666904a45b46dd468e28e5a322bb59f0b857857bdf6a784bec1",
+    "apps/desktop/src/ui/editing/continuity_tests.rs": "72da6882389e349da2f790c5a486aea3b5e7710a9f5308fb120c422c786d4238",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "35f49cd6dcfbbaab3d3d9c4754a4eb7ca9ada53785e5917ea0b32c91112b2fb6",
+    "apps/desktop/src/ui/editing/curve.rs": "7a823e7ebbb39e1da4bafedc5bf8e55125dece6751172ba5135d5f4a020781fc",
+    "apps/desktop/src/ui/editing/transfer.rs": "b8553e0d439b49d0420cb0e489f1f51c25052148ff4439852846c87d3423274a",
+    "apps/desktop/src/verify_advanced.rs": "c083191d56ba35dcda4e08ca22b417c0ef6955fee15657389bf4c3d74075a902",
+    "crates/tr-core/src/editing.rs": "7acd014c11542cbbd7d7d826a54951f45b4742e40b1c3ab4d9e00db299c48dfb",
+    "crates/tr-core/src/editing/color.rs": "7c46aa31d7a5cf34f252f0cd2a338c7c4b5e9b39e1a05da9e147f634635155df",
+    "crates/tr-core/src/editing/detail.rs": "1d191757d8bbb27a7acc06a48ba22216d6e0ea19c204559878b77a54b6097393",
+    "crates/tr-core/src/editing/geometry.rs": "6ffcd15ee6029d69aa50e1e15b8297d6c47e5480c935d221aff508714a7ed6a0",
+    "crates/tr-core/src/editing/masks.rs": "4f783905db8d2f2e4f1a28f7789358550c58a1caa5f92d9dfddd539bcf53f779",
+    "crates/tr-core/src/editing/process3_tests.rs": "326dd3b2497e8a3221b3ad83438d45ad459bf5d4b8731433c2c990a718fe8b0e",
+    "crates/tr-render/src/lib.rs": "9a3f2c2abd36a7f74aca5b38d0b22a3047d8a839ded62b4ddb98700eacfcb0bc",
+    "crates/tr-render/src/presenter.rs": "c1e598231563c9477b4c577163d975bfbebf2aaed4edb4abdbe7b1a3ea07c3eb",
+    "crates/tr-store/src/lib.rs": "3de5b3a2ae2a72629bf91cd69b3c7655a8b736b6fd672a68d31f64e23942d449"
+  },
+  "bundle_files_sha256": {
+    "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+    "Contents/MacOS/TrueRenderer": "aefa2c805cadacf12aad878680d5e59bc8e24ec8c96549fd944d9c96394fdabe",
+    "Contents/MacOS/tr-worker": "63a64ccdb4d77212a3f64fe01e4509ab59d5d7f3156d8c38be4bd4d6be72ad1b",
+    "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "48211e3f0b326d73e1e84463a7f289fef685589fc2c4c96b88aceaa9847a9bca",
+    "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8e99509e7dbc46c93a8002b6be9364cac708b44759351316cec403bca505beb5",
+    "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+    "Contents/_CodeSignature/CodeResources": "7f29f90878e4131f89422b2991db09dbc946ddc967f5e0e24375ebb7533321f9"
+  },
+  "validation": {
+    "suite": {
+      "command": "scripts/verify.sh --gui",
+      "ordinary_tests_passed": 295,
+      "integration_tests_passed": 14,
+      "private_raw_tests_not_run": 3,
+      "python_checks": 2,
+      "ipc_checks": 8,
+      "signal_cases": 24,
+      "fmt": true,
+      "clippy": true,
+      "native_surface_smoke": true,
+      "evidence_root": "var/verify-JxPdabMM"
+    },
+    "editing_regressions_passed": 23,
+    "control_regressions_passed": 8,
+    "native_surfaces": {
+      "final-native-cpu": {
+        "passed": true,
+        "fixture": "02_Paesaggio_analitico.png",
+        "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+        "source_unchanged": true,
+        "saved_generation": 1,
+        "output_proof_surface": {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            727,
+            1174
+          ]
+        },
+        "export": {
+          "file": "02_Paesaggio_analitico-export.png",
+          "passed": true,
+          "size": [
+            749,
+            1210
+          ]
+        }
+      },
+      "final-native-gpu": {
+        "passed": true,
+        "fixture": "02_Paesaggio_analitico.png",
+        "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+        "source_unchanged": true,
+        "saved_generation": 1,
+        "output_proof_surface": {
+          "compute": "GPU",
+          "differing_channels": 34,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            727,
+            1174
+          ]
+        },
+        "export": {
+          "file": "02_Paesaggio_analitico-export.png",
+          "passed": true,
+          "size": [
+            749,
+            1210
+          ]
+        }
+      }
+    },
+    "xpc": {
+      "passed": true,
+      "corpus_images_checked": 12,
+      "two_distinct_processes": true,
+      "same_pixels": true,
+      "other_isolate_survived": true,
+      "edited_export_checked_slots": 2,
+      "edited_export_native_match_slots": 2,
+      "edited_export_source_unchanged": true
+    },
+    "ad_hoc_signature_verified": true,
+    "original_architecture_and_license_unchanged": true,
+    "prior_numeric_export_matrix": {
+      "report": "reports/photo-tools-macos-2026-10-05.json",
+      "cases": 96,
+      "maximum_error_u16": 0,
+      "rerun_in_this_review": false,
+      "processing_sources_and_all_three_worker_binaries_unchanged": true
+    },
+    "environment_note": "The first terminal-sandbox run failed two Core Image availability tests. The full native suite was rerun outside that sandbox and passed; no Core Image failure was suppressed."
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "qualified_bundle": "var/commit-review-2026-10-05/TrueRenderer.app",
+    "previous_distribution": "var/commit-review-2026-10-05/previous-distribution.app",
+    "identical_to_qualified_bundle": true,
+    "bundle_manifest_sha256": "ce78b640e0ba69c3775cb30e35760ce9d023067cf398ffe23f420bb1ebbe4dbf",
+    "manifest_encoding": "SHA256 of compact sorted JSON mapping bundle-relative file names to SHA256"
+  },
+  "evidence_root": "var/commit-review-2026-10-05",
+  "limitations": [
+    "No R0-R4 or SF0-SF10 gate closed; assurance Standard/Reference remains unavailable.",
+    "Generated RGB native probes on macOS; no new private-camera RAW, Windows, calibrated-display or physical-memory campaign.",
+    "The extended preview/memory campaign remains deferred.",
+    "Reduced spatial-detail previews remain provisional; final preview/export use the native graph.",
+    "The 96-case PNG16/TIFF16 matrix is prior evidence for unchanged processing sources and worker binaries, not 96 new executions.",
+    "Ad hoc signature is for development, not notarized release assurance."
+  ]
+}

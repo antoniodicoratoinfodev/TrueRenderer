@@ -9,6 +9,7 @@ mod service;
 mod size_units;
 mod source_monitor;
 mod ui;
+mod verify_advanced;
 mod verify_cache;
 mod verify_develop;
 mod verify_exports;
@@ -171,6 +172,13 @@ fn run() -> Result<()> {
     }
     if args.iter().any(|a| a == "--verify-cache") {
         return verify_cache::run(&root, &worker);
+    }
+    if let Some(source) = option("--verify-advanced-editing") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "Advanced editing probe requires isolated --root"
+        );
+        return verify_advanced::run(&root, &worker, &source);
     }
     if args.iter().any(|a| a == "--verify-raw-engine-screenshots") {
         return verify_raw_engines::screenshots(&root);

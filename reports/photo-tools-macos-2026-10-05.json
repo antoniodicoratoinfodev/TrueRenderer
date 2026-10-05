@@ -1,0 +1,2398 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-05",
+  "recorded_at": "2026-10-05T11:07:09.643748+00:00",
+  "passed": true,
+  "scope": "Photographic process 3 and continuous native WB controls. Functional manual tools for requested priorities 2-4, not completion of every SF/R gate. Extended preview/memory campaign (priority 1) deferred by owner.",
+  "source_files_sha256": {
+    "apps/desktop/src/decode_pool.rs": "2f0264ed4717319d34c02ddb4eff2d20cecf4c076c80e861d160dd031588ed4f",
+    "apps/desktop/src/i18n.rs": "c239fbd12cf550246f032f56b8718147b8b48b20a0ed2690f39c9a16ad8d6af7",
+    "apps/desktop/src/main.rs": "fb13e5779ad84cc67da4f378fff1517336151e1a13647484723ec77247ab3943",
+    "apps/desktop/src/ui.rs": "7037718b122873297b862173655563e6dfc4283a2bc57492c60398a6304c3ebb",
+    "apps/desktop/src/ui/editing.rs": "1c6c64933d8457e6350d55ba8f2da63e3ff211d49e414b88826c7aa891feb1f1",
+    "apps/desktop/src/ui/editing/transfer.rs": "b8553e0d439b49d0420cb0e489f1f51c25052148ff4439852846c87d3423274a",
+    "crates/tr-core/src/editing.rs": "7acd014c11542cbbd7d7d826a54951f45b4742e40b1c3ab4d9e00db299c48dfb",
+    "crates/tr-render/src/lib.rs": "b34a70e2831201fb538ab3cb5798009ee107452e7d3b9f08f8077e08b0bf0a40",
+    "crates/tr-store/src/lib.rs": "3de5b3a2ae2a72629bf91cd69b3c7655a8b736b6fd672a68d31f64e23942d449",
+    "apps/desktop/src/ui/editing/advanced.rs": "551833d0ecd7a0187b865ddd66373f3a4ed6627b4ac40d2bbf6d11066a4abe75",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "ff1d455798f7ad18d7e21f9a21285f9f02f03ce3dc83e2b157973514c79c25c9",
+    "apps/desktop/src/ui/editing/curve.rs": "7a823e7ebbb39e1da4bafedc5bf8e55125dece6751172ba5135d5f4a020781fc",
+    "apps/desktop/src/verify_advanced.rs": "c083191d56ba35dcda4e08ca22b417c0ef6955fee15657389bf4c3d74075a902",
+    "crates/tr-core/src/editing/color.rs": "7c46aa31d7a5cf34f252f0cd2a338c7c4b5e9b39e1a05da9e147f634635155df",
+    "crates/tr-core/src/editing/detail.rs": "1d191757d8bbb27a7acc06a48ba22216d6e0ea19c204559878b77a54b6097393",
+    "crates/tr-core/src/editing/geometry.rs": "6ffcd15ee6029d69aa50e1e15b8297d6c47e5480c935d221aff508714a7ed6a0",
+    "crates/tr-core/src/editing/masks.rs": "4f783905db8d2f2e4f1a28f7789358550c58a1caa5f92d9dfddd539bcf53f779",
+    "crates/tr-core/src/editing/process3_tests.rs": "326dd3b2497e8a3221b3ad83438d45ad459bf5d4b8731433c2c990a718fe8b0e"
+  },
+  "bundle_files_sha256": {
+    "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+    "Contents/MacOS/TrueRenderer": "39b7538a09a166655c4c2cbcf6f9e687c8f0c7181520afef7df0bd7ecbffdd7e",
+    "Contents/MacOS/tr-worker": "63a64ccdb4d77212a3f64fe01e4509ab59d5d7f3156d8c38be4bd4d6be72ad1b",
+    "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "48211e3f0b326d73e1e84463a7f289fef685589fc2c4c96b88aceaa9847a9bca",
+    "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8e99509e7dbc46c93a8002b6be9364cac708b44759351316cec403bca505beb5",
+    "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+    "Contents/_CodeSignature/CodeResources": "7f29f90878e4131f89422b2991db09dbc946ddc967f5e0e24375ebb7533321f9"
+  },
+  "validation": {
+    "suite": {
+      "command": "scripts/verify.sh --gui",
+      "ordinary_tests_passed": 292,
+      "integration_tests_passed": 14,
+      "private_raw_tests_not_run": 3,
+      "python_checks": 2,
+      "ipc_checks": 8,
+      "signal_cases": 24,
+      "fmt": true,
+      "clippy": true,
+      "native_surface_smoke": true,
+      "evidence_root": "var/verify-CYkt36mV"
+    },
+    "storage_and_history": "Process-3 geometry, detail and brush recipe survives undo, redo and backup restore into an empty data root without source/cache; invalid recipes do not advance history. Historical process-1/2 identity remains exact.",
+    "numeric_export_parity": {
+      "cases": 96,
+      "maximum_error_u16": 0,
+      "formats": [
+        "PNG16",
+        "TIFF16"
+      ],
+      "engines": [
+        "Apple",
+        "LibRawBilinear",
+        "LibRawAhd",
+        "TrueRenderer"
+      ],
+      "worker_slots": [
+        0,
+        1
+      ],
+      "recipe_modes": [
+        "combined tools and geometry",
+        "monochrome without geometry",
+        "dehaze and tiny crop"
+      ],
+      "inputs": [
+        {
+          "input": "generated RGB PNG",
+          "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+          "source_unchanged": true,
+          "cases": [
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 0,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                749,
+                1210
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1440,
+                960
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                14,
+                22
+              ],
+              "slot": 1,
+              "source_size": [
+                1440,
+                960
+              ]
+            }
+          ]
+        },
+        {
+          "input": "generated 1024x768 Bayer DNG",
+          "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+          "source_unchanged": true,
+          "cases": [
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "Apple",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawBilinear",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "LibRawAhd",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 0,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 0,
+              "output_size": [
+                599,
+                860
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 1,
+              "output_size": [
+                1024,
+                768
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Png16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            },
+            {
+              "engine": "TrueRenderer",
+              "format": "Tiff16",
+              "maximum_error_u16": 0,
+              "mode": 2,
+              "output_size": [
+                12,
+                15
+              ],
+              "slot": 1,
+              "source_size": [
+                1024,
+                768
+              ]
+            }
+          ]
+        }
+      ],
+      "frontend_binary_sha256": "c2b0d71dba59d5c778ee3e13dac6365749bf33f243fb7cf4b76007b04f945631",
+      "export_worker_binaries_identical_to_delivery": true,
+      "note": "Parity preceded the final UI gesture fixes. Canonical processing sources and all three decoder/export binaries are unchanged; final UI, surface and XPC checks use the delivered frontend."
+    },
+    "native_surfaces": {
+      "final-cpu": {
+        "application": "TrueRenderer",
+        "auto_actions": false,
+        "export": {
+          "file": "02_Paesaggio_analitico-export.png",
+          "passed": true,
+          "size": [
+            749,
+            1210
+          ]
+        },
+        "fixture": "02_Paesaggio_analitico.png",
+        "native_wb_analysis": null,
+        "output_proof_surface": {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            727,
+            1174
+          ]
+        },
+        "passed": true,
+        "platform": "macos",
+        "raw_wb_observed": false,
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 12.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": -15.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 8.0,
+                  "hue": 230.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 35.0,
+              "clarity": 12.0,
+              "dehaze": 0.0,
+              "luminance_noise": 25.0,
+              "radius": 1.399999976158142,
+              "sharpen": 35.0,
+              "texture": 15.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 3.0,
+              "ca": [
+                0.699999988079071,
+                -0.5
+              ],
+              "crop": [
+                0.11999999731779099,
+                0.07999999821186066,
+                0.8999999761581421,
+                0.9200000166893005
+              ],
+              "defringe": 20.0,
+              "distortion": 14.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                8.0,
+                -6.0
+              ],
+              "quarter_turns": 1,
+              "scale": 1.0,
+              "vignette": 15.0
+            },
+            "masks": [
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.5,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.5,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.5,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": -0.4000000059604645,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [
+                  [
+                    0.20000000298023224,
+                    0.30000001192092896
+                  ],
+                  [
+                    0.30000001192092896,
+                    0.4000000059604645
+                  ],
+                  [
+                    0.4000000059604645,
+                    0.4000000059604645
+                  ]
+                ],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Brush",
+                "warmth": 0.0
+              }
+            ]
+          },
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.25,
+          "highlights": 0.0,
+          "process_version": 3,
+          "raw_engine": "Apple",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "saved_generation": 1,
+        "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+        "screenshots": [
+          "develop-viewer.png",
+          "develop-grid.png"
+        ],
+        "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+        "source_unchanged": true,
+        "timeout_seconds": 90,
+        "version": "0.1.5"
+      },
+      "final-gpu": {
+        "application": "TrueRenderer",
+        "auto_actions": false,
+        "export": {
+          "file": "02_Paesaggio_analitico-export.png",
+          "passed": true,
+          "size": [
+            749,
+            1210
+          ]
+        },
+        "fixture": "02_Paesaggio_analitico.png",
+        "native_wb_analysis": null,
+        "output_proof_surface": {
+          "compute": "GPU",
+          "differing_channels": 34,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            727,
+            1174
+          ]
+        },
+        "passed": true,
+        "platform": "macos",
+        "raw_wb_observed": false,
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 12.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": -15.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 8.0,
+                  "hue": 230.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 35.0,
+              "clarity": 12.0,
+              "dehaze": 0.0,
+              "luminance_noise": 25.0,
+              "radius": 1.399999976158142,
+              "sharpen": 35.0,
+              "texture": 15.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 3.0,
+              "ca": [
+                0.699999988079071,
+                -0.5
+              ],
+              "crop": [
+                0.11999999731779099,
+                0.07999999821186066,
+                0.8999999761581421,
+                0.9200000166893005
+              ],
+              "defringe": 20.0,
+              "distortion": 14.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                8.0,
+                -6.0
+              ],
+              "quarter_turns": 1,
+              "scale": 1.0,
+              "vignette": 15.0
+            },
+            "masks": [
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.5,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.5,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.5,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": -0.4000000059604645,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [
+                  [
+                    0.20000000298023224,
+                    0.30000001192092896
+                  ],
+                  [
+                    0.30000001192092896,
+                    0.4000000059604645
+                  ],
+                  [
+                    0.4000000059604645,
+                    0.4000000059604645
+                  ]
+                ],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Brush",
+                "warmth": 0.0
+              }
+            ]
+          },
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.25,
+          "highlights": 0.0,
+          "process_version": 3,
+          "raw_engine": "Apple",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "saved_generation": 1,
+        "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+        "screenshots": [
+          "develop-viewer.png",
+          "develop-grid.png"
+        ],
+        "source_digest": "12d4d541a5fdf17172c04010c47cfd27bb5ef601aa5bddce2f83149db981394e",
+        "source_unchanged": true,
+        "timeout_seconds": 90,
+        "version": "0.1.5"
+      },
+      "final-raw": {
+        "application": "TrueRenderer",
+        "auto_actions": false,
+        "export": {
+          "file": "bayer-export.png",
+          "passed": true,
+          "size": [
+            599,
+            860
+          ]
+        },
+        "fixture": "bayer.dng",
+        "native_wb_analysis": null,
+        "output_proof_surface": {
+          "compute": "GPU",
+          "differing_channels": 28,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            766,
+            1100
+          ]
+        },
+        "passed": true,
+        "platform": "macos",
+        "raw_wb_observed": true,
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 12.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": -15.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 8.0,
+                  "hue": 230.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 35.0,
+              "clarity": 12.0,
+              "dehaze": 0.0,
+              "luminance_noise": 25.0,
+              "radius": 1.399999976158142,
+              "sharpen": 35.0,
+              "texture": 15.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 3.0,
+              "ca": [
+                0.699999988079071,
+                -0.5
+              ],
+              "crop": [
+                0.11999999731779099,
+                0.07999999821186066,
+                0.8999999761581421,
+                0.9200000166893005
+              ],
+              "defringe": 20.0,
+              "distortion": 14.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                8.0,
+                -6.0
+              ],
+              "quarter_turns": 1,
+              "scale": 1.0,
+              "vignette": 15.0
+            },
+            "masks": [
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.5,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.5,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.5,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": -0.4000000059604645,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [
+                  [
+                    0.20000000298023224,
+                    0.30000001192092896
+                  ],
+                  [
+                    0.30000001192092896,
+                    0.4000000059604645
+                  ],
+                  [
+                    0.4000000059604645,
+                    0.4000000059604645
+                  ]
+                ],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Brush",
+                "warmth": 0.0
+              }
+            ]
+          },
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.25,
+          "highlights": 0.0,
+          "process_version": 3,
+          "raw_engine": "Apple",
+          "raw_wb": {
+            "apple_temperature": 4500,
+            "apple_tint": 12,
+            "blue": 1000,
+            "red": 1000
+          },
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "saved_generation": 1,
+        "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+        "screenshots": [
+          "develop-viewer.png",
+          "develop-grid.png"
+        ],
+        "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+        "source_unchanged": true,
+        "timeout_seconds": 90,
+        "version": "0.1.5"
+      }
+    },
+    "manual_controls": {
+      "passed": true,
+      "white_balance_drag_right_and_left_saved": true,
+      "precise_temperature_reopened": 4873,
+      "square_crop_reopened": [
+        768,
+        768
+      ],
+      "mask_controls_reviewed": true,
+      "local_exposure": 1.25,
+      "brush_points": 2,
+      "brush_last_source_point": [
+        0.5867933,
+        0.6943182
+      ],
+      "release_position_matches_viewport": true,
+      "source_unchanged": true,
+      "last_revision": 10,
+      "recipe": {
+        "advanced": {
+          "geometry": {
+            "crop": [
+              0.125,
+              0.0,
+              0.875,
+              1.0
+            ],
+            "quarter_turns": 0,
+            "flip_horizontal": false,
+            "flip_vertical": false,
+            "angle": 0.0,
+            "perspective": [
+              0.0,
+              0.0
+            ],
+            "scale": 1.0,
+            "distortion": 0.0,
+            "moustache": 0.0,
+            "vignette": 0.0,
+            "ca": [
+              0.0,
+              0.0
+            ],
+            "defringe": 0.0
+          },
+          "detail": {
+            "texture": 0.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "sharpen": 0.0,
+            "radius": 1.0,
+            "threshold": 0.0,
+            "luminance_noise": 0.0,
+            "chroma_noise": 0.0
+          },
+          "color": {
+            "bands": [
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              },
+              {
+                "hue": 0.0,
+                "saturation": 0.0,
+                "luminance": 0.0
+              }
+            ],
+            "grading": [
+              {
+                "hue": 0.0,
+                "amount": 0.0
+              },
+              {
+                "hue": 0.0,
+                "amount": 0.0
+              },
+              {
+                "hue": 0.0,
+                "amount": 0.0
+              }
+            ],
+            "monochrome": false,
+            "rgb_midtones": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "masks": [
+            {
+              "enabled": true,
+              "shape": "Brush",
+              "center": [
+                0.71790123,
+                0.60691285
+              ],
+              "radius": 0.25,
+              "feather": 0.5,
+              "angle": 0.0,
+              "invert": false,
+              "interval": [
+                0.25,
+                0.75
+              ],
+              "points": [
+                [
+                  0.45568538,
+                  0.5195076
+                ],
+                [
+                  0.5867933,
+                  0.6943182
+                ]
+              ],
+              "breaks": [],
+              "exposure": 1.25,
+              "warmth": 0.0,
+              "saturation": 0.0
+            }
+          ]
+        },
+        "raw_wb": {
+          "red": 1000,
+          "blue": 1000,
+          "apple_temperature": 4873,
+          "apple_tint": 0
+        },
+        "schema_version": 1,
+        "process_version": 3,
+        "raw_engine": "Apple",
+        "exposure_ev": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "highlights": 0.0,
+        "shadows": 0.0,
+        "whites": 0.0,
+        "blacks": 0.0,
+        "temperature": 0.0,
+        "tint": 0.0,
+        "saturation": 0.0,
+        "curve": []
+      },
+      "scope": "Native macOS controls on generated 1024x768 Bayer DNG. Actual mouse drags, numeric WB entry, 1:1 crop, radial placement, local exposure and brush; persisted recipe read back from a stable copy of the isolated SQLite database and WAL. No display colour or real-camera qualification."
+    },
+    "xpc": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-10-05T10:51:59.109943+00:00",
+      "bundle": "var/photo-tools-2026-10-05/TrueRenderer.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "39b7538a09a166655c4c2cbcf6f9e687c8f0c7181520afef7df0bd7ecbffdd7e",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "48211e3f0b326d73e1e84463a7f289fef685589fc2c4c96b88aceaa9847a9bca",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8e99509e7dbc46c93a8002b6be9364cac708b44759351316cec403bca505beb5"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "corrected_regressions": [
+      "First manual WB gesture lost widget identity when as-shot text changed.",
+      "Histogram availability or RGB-sample labels interrupted active slider gestures; explicit stable widget identities now preserve release/save.",
+      "Mask pointer input depended on an available rendered pixel and could lose motion or the release point; geometry-based input is now independent of render readiness.",
+      "A minimum 1% crop could fail validation from fp32 rounding.",
+      "Extreme residual CA could reverse a channel on tiny images; radial gain has a positive lower bound."
+    ]
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/photo-tools-2026-10-05/previous-distribution.app",
+    "bundle_manifest_sha256": "37c6a0a24368915cc4cd8777755d26572abbf9d387eec81e37556caf8773dae2",
+    "copied_files_match_qualified_bundle": true,
+    "previous_bundle_preserved": true,
+    "codesign_deep_strict": true,
+    "signature": "ad hoc development signature"
+  },
+  "limitations": [
+    "No R0-R4 or SF0-SF10 gate closed; assurance Standard/Reference unavailable.",
+    "Synthetic RGB and Bayer sources on macOS. No new Windows, calibrated-camera, monitor, 12/24/45 MP or physical-memory campaign.",
+    "Manual optical correction only; no automatic calibrated lens database or sensor-domain CA.",
+    "Preview filter radii and frame estimates are approximate; assess detail through native final rendering.",
+    "Initial masks: 16 groups and 512 brush points; extended combinations and retouch tools remain planned.",
+    "Selective colour samples, creative LUTs/profiles, durable presets and output sharpening remain separate increments.",
+    "Ad hoc signature is a development artifact, not a notarized release guarantee."
+  ],
+  "local_evidence_root": "var/photo-tools-2026-10-05"
+}

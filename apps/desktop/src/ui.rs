@@ -2137,6 +2137,7 @@ impl TrueRenderer {
             let ready = self.edited_thumbnail(&item.id, &digest, source.clone());
             let pending = ready.is_none() && edited && !self.editing.show_original;
             let shown = ready.unwrap_or_else(|| source.clone());
+            let edited_size = self.edited_source_size(&item.id, source.source_size());
             let rendered_edit = shown.id() != source.id();
             let histogram = if rendered_edit || pending {
                 self.edited_thumbnail_histogram(source.id())
@@ -2161,6 +2162,7 @@ impl TrueRenderer {
                         ui,
                         &lane,
                         &shown,
+                        edited_size,
                         rect,
                     );
                 } else {
@@ -2575,7 +2577,15 @@ impl TrueRenderer {
                 item.id, item.digest, digest, key.1, self.editing.show_original
             );
             if pending {
-                tr_render::presenter::fitted_pending(&mut self.presenter, ui, &lane, &shown, area);
+                let size = self.edited_source_size(&item.id, shown.source_size());
+                tr_render::presenter::fitted_pending(
+                    &mut self.presenter,
+                    ui,
+                    &lane,
+                    &shown,
+                    size,
+                    area,
+                );
             } else {
                 tr_render::presenter::fitted(&mut self.presenter, ui, lane, &shown, area);
             }
@@ -3069,14 +3079,20 @@ impl TrueRenderer {
             let sample_from_current_render =
                 !source.scientific() && !self.editing.show_original && !proof && image.is_some();
             let image = image.unwrap_or(source);
+            let editing_gesture = !image.scientific() && self.photo_gesture_active(&item.id);
+            let pending_size = pending.then(|| self.edited_source_size(&item.id, source_size));
             let (response, sample) = tr_render::viewport(
                 ui,
                 &mut self.presenter,
                 &image,
                 &mut self.state.transform,
                 &lane,
-                pending,
+                pending_size,
+                editing_gesture,
             );
+            if !image.scientific() {
+                self.local_mask_interaction(ui, item, &response, source_size);
+            }
             self.image_focus_ids.insert(response.id);
             if let Some(sample) = &sample {
                 self.capture_picker_areas(&image, sample.x, sample.y, sample_from_current_render);

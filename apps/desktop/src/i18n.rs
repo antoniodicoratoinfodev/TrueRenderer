@@ -16,6 +16,107 @@ impl Language {
             return source;
         }
         match source {
+            "Curva a punti" => "Point curve",
+            "Aggiungi punto" => "Add point",
+            "Punto" => "Point",
+            "Traccia linea per raddrizzare" => "Draw a line to straighten",
+
+            "Come scattato · il controllo manuale parte da 6500 K" => {
+                "As shot · manual adjustment starts at 6500 K"
+            }
+            "Ritaglio e geometria" => "Crop and geometry",
+            "Specchio orizzontale" => "Flip horizontally",
+            "Specchio verticale" => "Flip vertically",
+            "Rapporto ritaglio" => "Crop aspect ratio",
+            "Originale" => "Original",
+            "Bordo sinistro" => "Left edge",
+            "Bordo superiore" => "Top edge",
+            "Bordo destro" => "Right edge",
+            "Bordo inferiore" => "Bottom edge",
+            "Raddrizzamento (°)" => "Straighten (°)",
+            "Prospettiva orizzontale" => "Horizontal perspective",
+            "Prospettiva verticale" => "Vertical perspective",
+            "Scala geometria" => "Geometry scale",
+            "Elimina bordi vuoti" => "Remove empty borders",
+            "Ripristina geometria" => "Reset geometry",
+            "Ottica manuale" => "Manual optics",
+            "Correzioni manuali aggiuntive. Verifica quelle già applicate dal motore." => {
+                "Additional manual corrections. Check corrections already applied by the engine."
+            }
+            "Distorsione" => "Distortion",
+            "Distorsione a baffo" => "Moustache distortion",
+            "Vignettatura ottica" => "Optical vignetting",
+            "Defringe viola/verde" => "Purple/green defringe",
+            "CA residua rosso (px)" => "Residual red CA (px)",
+            "CA residua blu (px)" => "Residual blue CA (px)",
+            "CA residua sul render RGB; non riallinea i canali del sensore RAW." => {
+                "Residual CA on rendered RGB; does not realign RAW sensor channels."
+            }
+            "Ripristina ottica" => "Reset optics",
+            "Presenza e dettaglio" => "Presence and detail",
+            "Texture" => "Texture",
+            "Chiarezza" => "Clarity",
+            "Rimozione foschia" => "Dehaze",
+            "Nitidezza" => "Sharpening",
+            "Raggio nativo (px)" => "Native radius (px)",
+            "Soglia rumore" => "Noise threshold",
+            "Rumore luminanza" => "Luminance noise",
+            "Rumore cromatico" => "Chroma noise",
+            "Per valutare il dettaglio usa Verifica resa finale e zoom 100%." => {
+                "Use Verify final rendering and 100% zoom to assess detail."
+            }
+            "Ripristina sezione" => "Reset section",
+            "Colore avanzato" => "Advanced colour",
+            "Bianco e nero" => "Black and white",
+            "Arancio" => "Orange",
+            "Acquamarina" => "Aqua",
+            "Magenta" => "Magenta",
+            "Tonalità" => "Hue",
+            "Luminanza" => "Luminance",
+            "Grading ombre" => "Shadow grading",
+            "Grading mezzitoni" => "Midtone grading",
+            "Grading luci" => "Highlight grading",
+            "Tonalità (°)" => "Hue (°)",
+            "Intensità" => "Amount",
+            "Curva rosso" => "Red curve",
+            "Curva verde" => "Green curve",
+            "Curva blu" => "Blue curve",
+            "Maschere locali" => "Local masks",
+            "Aggiungi maschera" => "Add mask",
+            "Elimina maschera" => "Delete mask",
+            "Maschera" => "Mask",
+            "Attiva maschera" => "Enable mask",
+            "Radiale" => "Radial",
+            "Gradiente" => "Gradient",
+            "Pennello" => "Brush",
+            "Disegna sulla foto" => "Draw on photo",
+            "Mostra area maschera" => "Show mask area",
+            "Trascina sulla foto; disattiva Disegna per spostare la vista." => {
+                "Drag on the photo; disable Draw to pan the view."
+            }
+            "Centro X" => "Centre X",
+            "Centro Y" => "Centre Y",
+            "Raggio maschera" => "Mask radius",
+            "Angolo gradiente" => "Gradient angle",
+            "Cancella pennellate" => "Clear brush strokes",
+            "Intervallo minimo" => "Range start",
+            "Intervallo massimo" => "Range end",
+            "Sfumatura" => "Feather",
+            "Inverti maschera" => "Invert mask",
+            "Esposizione locale (EV)" => "Local exposure (EV)",
+            "Temperatura locale" => "Local warmth",
+            "Saturazione locale" => "Local saturation",
+            "Maschere salvate con la foto, prima di ritaglio e rotazione." => {
+                "Masks are saved with the photo, before crop and rotation."
+            }
+            "Massimo 512 punti di pennello per ricetta" => "Maximum 512 brush points per recipe",
+            "Auto: ripristinare prima geometria, dettaglio, colore avanzato e maschere" => {
+                "Auto: first reset geometry, detail, advanced colour and masks"
+            }
+            "Contagocce RGB: ripristinare prima gli strumenti avanzati" => {
+                "RGB picker: first reset advanced tools"
+            }
+
             "Informazioni" => "Information",
             "Istogramma" => "Histogram",
             "Azioni" => "Actions",

@@ -791,7 +791,16 @@ impl DecodePool {
                                 metadata.source_width,
                                 metadata.source_height,
                             )?
-                            .max(pixels * 20 + output_limit * 2);
+                            .max(pixels * 20 + output_limit * 2)
+                            .max(
+                                pixels * 16
+                                    + job.recipe.as_ref().map_or(0, |r| {
+                                        r.scratch_bytes(
+                                            metadata.source_width,
+                                            metadata.source_height,
+                                        )
+                                    }),
+                            );
                             let _working = reserve(
                                 &cache,
                                 peak,

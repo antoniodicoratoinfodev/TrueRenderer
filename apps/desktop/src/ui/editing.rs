@@ -1,6 +1,10 @@
 use super::*;
 use tr_core::editing::{CurvePoint, EditRecipe, RgbAreaSample, sample_rgb_area};
 use tr_store::LoadedEdit;
+mod advanced;
+#[cfg(test)]
+mod controls_tests;
+mod curve;
 mod transfer;
 
 #[derive(Clone, Copy)]
@@ -65,7 +69,8 @@ fn adjustment<Num: egui::emath::Numeric>(
     suffix: &str,
     step: Option<f64>,
 ) -> egui::Response {
-    ui.push_id(label, |ui| {
+    let control_id = ui.make_persistent_id(label);
+    ui.scope_builder(egui::UiBuilder::new().id(control_id), |ui| {
         ui.spacing_mut().item_spacing.y = 2.;
         ui.spacing_mut().interact_size.y = 20.;
         ui.spacing_mut().button_padding.y = 2.;
@@ -96,7 +101,9 @@ fn adjustment<Num: egui::emath::Numeric>(
         let slider = ui
             .scope(|ui| {
                 ui.spacing_mut().slider_width = ui.available_width();
-                let mut slider = egui::Slider::new(value, range).show_value(false);
+                let mut slider = egui::Slider::new(value, range)
+                    .show_value(false)
+                    .logarithmic(suffix == " K");
                 if let Some(step) = step {
                     slider = slider.step_by(step);
                 }
@@ -106,6 +113,64 @@ fn adjustment<Num: egui::emath::Numeric>(
         number.union(slider)
     })
     .inner
+}
+
+fn apple_wb_controls(
+    ui: &mut egui::Ui,
+    lang: Language,
+    wb: &mut tr_core::decoder::RawWhiteBalance,
+) -> (bool, bool) {
+    let mut changed = false;
+    let mut commit = false;
+    let as_shot = wb.is_as_shot();
+    let mut kelvin = if as_shot { 6500 } else { wb.apple_temperature };
+    let mut tint = wb.apple_tint;
+    // Keep the row and widget IDs stable when the first drag leaves as-shot.
+    ui.add_sized(
+        [ui.available_width(), 32.],
+        egui::Label::new(lang.text(if as_shot {
+            "Come scattato · il controllo manuale parte da 6500 K"
+        } else {
+            "Personalizzato"
+        }))
+        .wrap(),
+    );
+    let temperature = adjustment(
+        ui,
+        lang.text("Temperatura"),
+        &mut kelvin,
+        2000..=50000,
+        " K",
+        Some(1.),
+    );
+    let tint_response = adjustment(
+        ui,
+        lang.text("Tinta RAW"),
+        &mut tint,
+        -150..=150,
+        "",
+        Some(1.),
+    );
+    if temperature.changed() || tint_response.changed() {
+        wb.apple_temperature = kelvin;
+        wb.apple_tint = tint;
+        changed = true;
+    }
+    for response in [temperature, tint_response] {
+        commit |= response.drag_stopped() || (response.changed() && !response.dragged());
+    }
+    if ui
+        .add_enabled(
+            !as_shot,
+            egui::Button::new(lang.text("WB RAW come scattato")),
+        )
+        .clicked()
+    {
+        *wb = Default::default();
+        changed = true;
+        commit = true;
+    }
+    (changed, commit)
 }
 
 fn adjustment_heading(
@@ -182,6 +247,7 @@ struct EditPreview {
     touched: u64,
 }
 pub(super) struct EditingUi {
+    pub(super) advanced: advanced::Controls,
     continuity: continuity_probe::Probe,
     clipboard: transfer::Clipboard,
     wb_pending: bool,
@@ -242,6 +308,7 @@ impl Default for EditingUi {
         let (tx, rx) = std::sync::mpsc::channel();
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
+            advanced: Default::default(),
             continuity: Default::default(),
             clipboard: transfer::Clipboard::default(),
             wb_pending: false,
@@ -526,6 +593,9 @@ impl TrueRenderer {
                     }
                     recipe.temperature = 25.;
                     recipe.tint = -8.;
+                    if args.iter().any(|a| a == "--advanced-edit-smoke") {
+                        recipe = crate::verify_advanced::recipe(recipe.raw_engine);
+                    }
                     if args.iter().any(|a| a == "--raw-wb-smoke") {
                         recipe.raw_wb = if recipe.raw_engine == tr_core::decoder::RawEngine::Apple {
                             tr_core::decoder::RawWhiteBalance {
@@ -1002,6 +1072,10 @@ impl TrueRenderer {
     }
 
     fn apply_edit_draft(&mut self, id: &str, draft: EditRecipe) {
+        if let Err(error) = draft.validate() {
+            self.status = format!("Regolazione non valida: {error}");
+            return;
+        }
         if !self.output_proof_for(id) {
             self.editing.verify_final = None;
         }
@@ -1081,7 +1155,11 @@ impl TrueRenderer {
     pub(super) fn editing_controls(&mut self, ui: &mut egui::Ui, item: &Item) {
         let lang = self.cache_settings.language;
         self.ensure_edit_loaded(item);
-        ui.push_id("photographic-edit", |ui| {
+        // A new RAW WB temporarily removes the preceding histogram. Use an
+        // explicit scope so its changing widget count cannot cancel a slider
+        // gesture or lose the release event that saves the finished draft.
+        let controls_id = ui.make_persistent_id(("photographic-edit", &item.id));
+        ui.scope_builder(egui::UiBuilder::new().id(controls_id), |ui| {
             let Some(entry) = self.editing.entries.get(&item.id) else {
                 ui.label(lang.text("Caricamento ricetta…"));
                 return;
@@ -1122,6 +1200,15 @@ impl TrueRenderer {
             let can_redo = saved.can_redo;
             let mut changed = false;
             let mut commit = false;
+            let native_size = self
+                .cache
+                .iter()
+                .find(|((id, request), _)| {
+                    id == &item.id
+                        && request.raw_engine == draft.raw_engine
+                        && request.raw_wb == draft.raw_wb
+                })
+                .map(|(_, cached)| cached.pyramid.source_size());
             let short = ui.ctx().content_rect().height() < 500.;
             let mut pasted = false;
             ui.horizontal_wrapped(|ui| {
@@ -1213,12 +1300,37 @@ impl TrueRenderer {
                     if ui.button(lang.text("Auto WB RAW")).clicked() {
                         analysis = Some(tr_core::raw_wb::Analysis::Auto);
                     }
-                    let point = self.sample.as_ref().filter(|_| {
-                        self.sample_item_id.as_deref() == Some(item.id.as_str())
-                            && self.sample_level == Some(0)
-                            && self.sample_from_current_render
-                            && !self.output_proof_for(&item.id)
-                    });
+                    let point = self
+                        .sample
+                        .as_ref()
+                        .filter(|_| {
+                            self.sample_item_id.as_deref() == Some(item.id.as_str())
+                                && self.sample_level == Some(0)
+                                && self.sample_from_current_render
+                                && !self.output_proof_for(&item.id)
+                        })
+                        .and_then(|point| {
+                            let native = native_size?;
+                            if let Some(a) = &draft.advanced {
+                                let output = a.geometry.output_size(native);
+                                let p = a.geometry.source_point(
+                                    [
+                                        (point.x as f64 + 0.5) / output[0] as f64,
+                                        (point.y as f64 + 0.5) / output[1] as f64,
+                                    ],
+                                    native,
+                                )?;
+                                if p.iter().any(|v| !(0. ..1.).contains(v)) {
+                                    return None;
+                                }
+                                Some((
+                                    (p[0] * native[0] as f64).floor() as u32,
+                                    (p[1] * native[1] as f64).floor() as u32,
+                                ))
+                            } else {
+                                Some((point.x, point.y))
+                            }
+                        });
                     if ui
                         .add_enabled(
                             point.is_some(),
@@ -1228,8 +1340,8 @@ impl TrueRenderer {
                     {
                         let point = point.unwrap();
                         analysis = Some(tr_core::raw_wb::Analysis::Patch {
-                            x: point.x,
-                            y: point.y,
+                            x: point.0,
+                            y: point.1,
                             side: 5,
                         });
                     }
@@ -1250,80 +1362,10 @@ impl TrueRenderer {
                     }
                     ui.label(RichText::new(lang.text("Bilanciamento del bianco RAW")).strong());
                     if engine == tr_core::decoder::RawEngine::Apple {
-                        // Presets resolve to the same durable native parameters as sliders.
-                        // Names describe starting points, not measured scene illuminants.
-                        let presets = [
-                            ("WB RAW come scattato", 0),
-                            ("Tungsteno · 3200 K", 3200),
-                            ("Luce diurna · 5500 K", 5500),
-                            ("Nuvoloso · 6500 K", 6500),
-                            ("Ombra · 7500 K", 7500),
-                        ];
-                        let selected = presets
-                            .iter()
-                            .find(|(_, kelvin)| {
-                                draft.raw_wb.apple_temperature == *kelvin
-                                    && draft.raw_wb.apple_tint == 0
-                            })
-                            .map_or("Personalizzato", |(label, _)| *label);
-                        egui::ComboBox::from_id_salt("apple-wb-preset")
-                            .selected_text(lang.text(selected))
-                            .show_ui(ui, |ui| {
-                                for (label, kelvin) in presets {
-                                    if ui
-                                        .selectable_label(selected == label, lang.text(label))
-                                        .clicked()
-                                    {
-                                        let wb = tr_core::decoder::RawWhiteBalance {
-                                            apple_temperature: kelvin,
-                                            ..Default::default()
-                                        };
-                                        if draft.raw_wb != wb {
-                                            draft.raw_wb = wb;
-                                            changed = true;
-                                            commit = true;
-                                        }
-                                    }
-                                }
-                            });
-                        ui.small(lang.text("Preset indicativi · tinta 0 · regolabili"));
-                        let mut custom = draft.raw_wb.apple_temperature != 0;
-                        if ui
-                            .checkbox(&mut custom, lang.text("WB Apple personalizzato"))
-                            .changed()
-                        {
-                            draft.raw_wb = Default::default();
-                            if custom {
-                                draft.raw_wb.apple_temperature = 6500;
-                            }
-                            changed = true;
-                            commit = true;
-                        }
-                        if custom {
-                            let temperature = adjustment(
-                                ui,
-                                lang.text("Temperatura"),
-                                &mut draft.raw_wb.apple_temperature,
-                                2000..=50000,
-                                " K",
-                                None,
-                            );
-                            let tint = adjustment(
-                                ui,
-                                lang.text("Tinta RAW"),
-                                &mut draft.raw_wb.apple_tint,
-                                -150..=150,
-                                "",
-                                None,
-                            );
-                            for response in [temperature, tint] {
-                                changed |= response.changed();
-                                commit |= response.drag_stopped()
-                                    || (response.changed() && !response.dragged());
-                            }
-                        } else {
-                            ui.label(lang.text("WB RAW come scattato"));
-                        }
+                        let (wb_changed, wb_commit) =
+                            apple_wb_controls(ui, lang, &mut draft.raw_wb);
+                        changed |= wb_changed;
+                        commit |= wb_commit;
                     } else {
                         ui.label(lang.text(
                             "Guadagni sensore relativi a come scattato · prima del demosaic",
@@ -1448,7 +1490,13 @@ impl TrueRenderer {
                     commit = true;
                 }
 
-                let mut mid = draft.curve.get(1).map_or(0.5, |p| p.y);
+                let mut mid = draft
+                    .curve
+                    .windows(2)
+                    .find(|p| p[0].x <= 0.5 && p[1].x >= 0.5)
+                    .map_or(0.5, |p| {
+                        p[0].y + (p[1].y - p[0].y) * (0.5 - p[0].x) / (p[1].x - p[0].x)
+                    });
                 let response = adjustment(
                     ui,
                     lang.text("Mezzitoni curva"),
@@ -1470,6 +1518,9 @@ impl TrueRenderer {
                     changed = true;
                 }
                 commit |= response.drag_stopped() || (response.changed() && !response.dragged());
+                let (curve_changed, curve_commit) = curve::controls(ui, lang, &mut draft.curve);
+                changed |= curve_changed;
+                commit |= curve_commit;
                 if adjustment_heading(
                     ui,
                     lang,
@@ -1502,7 +1553,7 @@ impl TrueRenderer {
                 let protection =
                     ui.checkbox(&mut draft.protect_warm, lang.text("Proteggi toni caldi"));
                 if response.changed() || protection.changed() {
-                    draft.process_version = 2;
+                    draft.process_version = draft.process_version.max(2);
                     changed = true;
                 }
                 commit |= response.drag_stopped()
@@ -1627,6 +1678,12 @@ impl TrueRenderer {
                 {
                     ui.colored_label(AMBER, lang.text(error));
                 }
+                let (advanced_changed, advanced_commit) =
+                    self.editing
+                        .advanced
+                        .show(ui, lang, &mut draft, native_size);
+                changed |= advanced_changed;
+                commit |= advanced_commit;
                 if ui.button(lang.text("Sviluppo originale")).clicked() {
                     draft = EditRecipe::neutral(saved.recipe.raw_engine);
                     changed = true;
@@ -1811,7 +1868,8 @@ impl TrueRenderer {
                 .position(|level| level.width.max(level.height) <= 512)
                 .unwrap_or(neutral.levels().len() - 1);
             let level = &neutral.levels()[index];
-            let bytes = preview_working_bytes(level.width, level.height);
+            let bytes = preview_working_bytes(level.width, level.height)
+                + recipe.scratch_bytes(level.width, level.height);
             if let Some(mut lease) = self.service.cache.memory.try_reserve(bytes) {
                 let tx = self.editing.thumbnail_tx.clone();
                 let wake = self.service.wake.clone();
@@ -1824,9 +1882,14 @@ impl TrueRenderer {
                 std::thread::spawn(move || {
                     let result = (|| -> anyhow::Result<_> {
                         let mut raster = neutral.levels()[index].clone();
-                        recipe.apply(&mut raster)?;
+                        let size = recipe.apply_preview(&mut raster, size, base)?;
+                        let opaque = raster.pixels.iter().all(|p| p[3] == 1.);
+                        let base = base.min(
+                            31 - size[0].max(size[1]).leading_zeros()
+                                + u32::from(!size[0].max(size[1]).is_power_of_two()),
+                        );
                         let mut image =
-                            ImageLevels::from_reference_mip(raster, size, base, neutral.opaque())?;
+                            ImageLevels::from_reference_mip(raster, size, base, opaque)?;
                         lease.shrink(image.byte_len() as u64);
                         image.attach_lease(lease);
                         let histogram = image.source().histogram();
@@ -1840,6 +1903,23 @@ impl TrueRenderer {
         }
         None
     }
+    pub(super) fn edited_source_size(&self, id: &str, native: [u32; 2]) -> [u32; 2] {
+        if self.editing.show_original {
+            return native;
+        }
+        self.editing
+            .entries
+            .get(id)
+            .and_then(|entry| {
+                entry
+                    .draft
+                    .as_ref()
+                    .or_else(|| entry.loaded.as_ref().map(|saved| &saved.recipe))
+            })
+            .and_then(|recipe| recipe.advanced.as_ref())
+            .map_or(native, |advanced| advanced.geometry.output_size(native))
+    }
+
     pub(super) fn edited_preview(
         &mut self,
         id: &str,
@@ -1875,7 +1955,16 @@ impl TrueRenderer {
             && ready.source == source
             && ready.proof == proof
             && ready.recipe == recipe
-            && ready.image.base_level() == base
+            && ready.image.base_level()
+                == recipe.advanced.as_ref().map_or(base, |a| {
+                    let edge = a
+                        .geometry
+                        .output_size(neutral.source_size())
+                        .into_iter()
+                        .max()
+                        .unwrap();
+                    base.min(31 - edge.leading_zeros() + u32::from(!edge.is_power_of_two()))
+                })
         {
             ready.touched = self.frame_number;
             return Some(ready.image.clone());
@@ -1891,7 +1980,8 @@ impl TrueRenderer {
         self.supersede_edit_preview_for(id);
         if self.editing.inflight.is_none() {
             let level = &neutral.levels()[index];
-            let bytes = preview_working_bytes(level.width, level.height);
+            let bytes = preview_working_bytes(level.width, level.height)
+                + recipe.scratch_bytes(level.width, level.height);
             if let Some(mut lease) = self.service.cache.memory.try_reserve(bytes) {
                 let tx = self.editing.tx.clone();
                 let wake = self.service.wake.clone();
@@ -1902,15 +1992,15 @@ impl TrueRenderer {
                 std::thread::spawn(move || {
                     let result = (|| -> anyhow::Result<Arc<ImageLevels>> {
                         let mut raster = neutral.levels()[index].clone();
-                        recipe.apply(&mut raster)?;
+                        let size = recipe.apply_preview(&mut raster, size, base)?;
                         if proof {
                             tr_core::export::proof_srgb16(&mut raster);
                         }
-                        let opaque = if proof {
-                            raster.pixels.iter().all(|p| p[3] == 1.)
-                        } else {
-                            neutral.opaque()
-                        };
+                        let opaque = raster.pixels.iter().all(|p| p[3] == 1.);
+                        let base = base.min(
+                            31 - size[0].max(size[1]).leading_zeros()
+                                + u32::from(!size[0].max(size[1]).is_power_of_two()),
+                        );
                         let mut image =
                             ImageLevels::from_reference_mip(raster, size, base, opaque)?;
                         // Filtering scratch is gone; only resident pixels remain.

@@ -6,6 +6,51 @@ use crate::{
 };
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
+pub mod color;
+pub mod detail;
+pub mod geometry;
+pub mod masks;
+#[cfg(test)]
+mod process3_tests;
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Advanced {
+    pub geometry: geometry::Geometry,
+    pub detail: detail::Detail,
+    pub color: color::Color,
+    pub masks: Vec<masks::Mask>,
+}
+impl Advanced {
+    pub fn is_neutral(&self) -> bool {
+        self.geometry == geometry::Geometry::default()
+            && !self.detail.active()
+            && self.color == color::Color::default()
+            && !self.masks.iter().any(masks::Mask::active)
+    }
+    pub fn validate(&self) -> Result<()> {
+        self.geometry.validate()?;
+        self.detail.validate()?;
+        self.color.validate()?;
+        ensure!(self.masks.len() <= 16, "Massimo 16 maschere per ricetta");
+        ensure!(
+            self.masks.iter().map(|m| m.points.len()).sum::<usize>() <= 512,
+            "Massimo 512 punti di pennello per ricetta"
+        );
+        for mask in &self.masks {
+            mask.validate()?;
+        }
+        Ok(())
+    }
+}
+
+fn range(v: f32, min: f32, max: f32, name: &str) -> Result<()> {
+    ensure!(
+        v.is_finite() && (min..=max).contains(&v),
+        "{name}: valore fuori scala"
+    );
+    Ok(())
+}
 
 pub const SCHEMA_VERSION: u32 = 1;
 pub const PROCESS_VERSION: u32 = 1;
@@ -98,6 +143,8 @@ pub struct CurvePoint {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditRecipe {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub advanced: Option<Box<Advanced>>,
     #[serde(
         default,
         skip_serializing_if = "crate::decoder::RawWhiteBalance::is_as_shot"
@@ -127,6 +174,7 @@ pub struct EditRecipe {
 impl EditRecipe {
     pub fn neutral(raw_engine: RawEngine) -> Self {
         Self {
+            advanced: None,
             raw_wb: Default::default(),
             schema_version: SCHEMA_VERSION,
             process_version: PROCESS_VERSION,
@@ -152,15 +200,19 @@ impl EditRecipe {
         neutral.curve = self.curve.clone();
         neutral.process_version = self.process_version;
         neutral.protect_warm = self.protect_warm;
-        self == &neutral && self.curve.iter().all(|p| p.x == p.y)
+        neutral.advanced = self.advanced.clone();
+        self == &neutral
+            && self.curve.iter().all(|p| p.x == p.y)
+            && self.advanced.as_ref().is_none_or(|a| a.is_neutral())
     }
 
     pub fn validate(&self) -> Result<()> {
         self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
             self.schema_version == SCHEMA_VERSION
-                && matches!(self.process_version, 1 | 2)
-                && (self.process_version == 2 || (self.vibrance == 0. && !self.protect_warm)),
+                && matches!(self.process_version, 1..=3)
+                && (self.process_version >= 2 || (self.vibrance == 0. && !self.protect_warm))
+                && (self.advanced.is_none() || self.process_version == 3),
             "Versione della ricetta fotografica non eseguibile"
         );
         ensure!(
@@ -206,8 +258,11 @@ impl EditRecipe {
                 );
             }
         }
+        if let Some(advanced) = &self.advanced {
+            advanced.validate()?;
+        }
         ensure!(
-            serde_json::to_vec(self)?.len() <= 1024 * 1024,
+            serde_json::to_vec(self)?.len() <= 48 * 1024,
             "Ricetta oltre quota"
         );
         Ok(())
@@ -216,18 +271,89 @@ impl EditRecipe {
     /// Apply in place. The caller owns a private raster and must validate the
     /// recipe before doing expensive work. Identity never rounds existing bits.
     pub fn apply(&self, image: &mut LinearImage) -> Result<()> {
+        self.apply_preview(image, [image.width, image.height], 0)
+            .map(|_| ())
+    }
+
+    /// Full-frame process or explicitly provisional mip, with canonical output
+    /// geometry. The result reports the edited native dimensions, not the input.
+    pub fn apply_preview(
+        &self,
+        image: &mut LinearImage,
+        native: [u32; 2],
+        base: u32,
+    ) -> Result<[u32; 2]> {
         self.validate()?;
+        ensure!(
+            native[0] > 0 && native[1] > 0 && base < 32,
+            "Dimensioni editing non valide"
+        );
+        let divisor = 1_u32 << base;
+        ensure!(
+            [image.width, image.height] == native.map(|v| v.div_ceil(divisor)),
+            "Scala editing incoerente"
+        );
         if self.is_neutral() {
-            return Ok(());
+            return Ok(native);
         }
-        for pixel in &mut image.pixels {
+        let (width, height) = (image.width, image.height);
+        for (i, pixel) in image.pixels.iter_mut().enumerate() {
+            if let Some(a) = &self.advanced
+                && a.geometry.vignette != 0.
+            {
+                a.geometry.optical_color(
+                    pixel,
+                    ((i % width as usize) as f32 + 0.5) / width as f32,
+                    ((i / width as usize) as f32 + 0.5) / height as f32,
+                );
+            }
             *pixel = self.transform_pixel(*pixel);
+        }
+        let mut output = native;
+        if let Some(a) = &self.advanced {
+            a.detail.apply(image, native);
+            detail::defringe(image, a.geometry.defringe);
+            let masks: Vec<_> = a
+                .masks
+                .iter()
+                .map(|m| masks::Prepared::new(m, native[1] as f32 / native[0] as f32))
+                .collect();
+            let (w, h) = (image.width, image.height);
+            for (i, p) in image.pixels.iter_mut().enumerate() {
+                if p[3] <= 0. {
+                    continue;
+                }
+                let xy = [
+                    ((i % w as usize) as f32 + 0.5) / w as f32,
+                    ((i / w as usize) as f32 + 0.5) / h as f32,
+                ];
+                let guide = detail::straight(*p);
+                let mut rgb = a.color.apply(guide);
+                for mask in &masks {
+                    mask.apply(&mut rgb, guide, xy);
+                }
+                for c in 0..3 {
+                    p[c] = rgb[c] * p[3];
+                }
+            }
+            output = a.geometry.apply(image, native, base)?;
         }
         ensure!(
             image.pixels.iter().all(|p| p.iter().all(|v| v.is_finite())),
             "Regolazione fotografica: risultato non finito"
         );
-        Ok(())
+        Ok(output)
+    }
+
+    pub fn scratch_bytes(&self, width: u32, height: u32) -> u64 {
+        self.advanced.as_ref().map_or(0, |a| {
+            let frames = if a.detail.active() || a.geometry.defringe != 0. {
+                2
+            } else {
+                u64::from(a.geometry.has_mapping())
+            };
+            u64::from(width) * u64::from(height) * 16 * frames + 1024 * 1024
+        })
     }
 
     pub fn apply_pixel(&self, pixel: Pixel) -> Pixel {
@@ -241,6 +367,10 @@ impl EditRecipe {
     /// Call only with the source developed under this recipe's RAW WB.
     fn analysis_samples(&self, image: &LinearImage) -> Result<Vec<Pixel>> {
         self.validate()?;
+        ensure!(
+            self.advanced.as_ref().is_none_or(|a| a.is_neutral()),
+            "Auto: ripristinare prima geometria, dettaglio, colore avanzato e maschere"
+        );
         let mut samples = Vec::with_capacity(4096);
         let nx = image.width.min(64);
         let ny = image.height.min(64);
@@ -322,6 +452,10 @@ impl EditRecipe {
     /// not camera white balance: it cannot recover clipped source channels.
     pub fn neutralize_render_sample(&mut self, pixel: Pixel) -> Result<()> {
         self.validate()?;
+        ensure!(
+            self.advanced.as_ref().is_none_or(|a| a.is_neutral()),
+            "Contagocce RGB: ripristinare prima gli strumenti avanzati"
+        );
         ensure!(
             self.saturation == 0. && self.vibrance == 0.,
             "Azzerare saturazione e vividezza prima del contagocce RGB"

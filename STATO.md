@@ -1,16 +1,168 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 4 ottobre 2026.
+Aggiornato: 5 ottobre 2026.
 
-Fonte unica per stato corrente, prossime attività, caselle operative e registro degli incrementi. Sostituisce i precedenti piano, avanzamento e documento di ripresa.
+Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
-- [Punto di ripresa](#punto-di-ripresa)
-- [Piano operativo](#piano-operativo)
-- [Sviluppo fotografico: regolazioni e correzioni ottiche](#piano-sviluppo-fotografico)
-- [Matrice dei requisiti e budget](#matrice-dei-requisiti-e-budget)
-- [Registro delle verifiche e degli incrementi](#registro-delle-verifiche-e-degli-incrementi)
+- [Situazione attuale](#situazione-attuale)
+- [Prossime consegne: ordine concordato](#piano-operativo)
+- [Sviluppo fotografico: requisiti e gate SF0–SF10](#piano-sviluppo-fotografico)
+- [Roadmap del prodotto R0–R4](#roadmap-del-prodotto)
+- [Registro degli incrementi](#punto-di-ripresa)
+- [Matrice storica dei requisiti](#matrice-dei-requisiti-e-budget)
+- [Regola di aggiornamento](#regola-di-aggiornamento)
 
-Specifica: [architettura](docs/TrueRenderer-Architettura.md). Evidenze dettagliate: [rapporti](STATO.md#registro-delle-verifiche-e-degli-incrementi). Decisioni e progetti: [indice documentale](docs/README.md). Vincoli di lavoro: [AGENTS.md](AGENTS.md).
+Specifica: [architettura](docs/TrueRenderer-Architettura.md). Decisioni: [indice documentale](docs/README.md). Vincoli: [AGENTS.md](AGENTS.md).
+
+## Situazione attuale
+
+L'app dispone di viewer/confronto, Esplora/Libreria, quattro motori RAW su macOS, anteprime/cache automatiche, sviluppo fotografico reversibile ed export. Alle regolazioni di luce, WB, colore, cronologia e copia selettiva si aggiungono **WB a slider continuo, curva a punti, ritaglio/geometria, ottica manuale, dettaglio/presenza, mixer/grading e maschere locali**. Il bundle corrente è in `dist/TrueRenderer.app`; prove e limiti sono nel [registro degli incrementi](#punto-di-ripresa).
+
+**Implementato non significa qualificato integralmente:** nessun gate R0–R4 o SF0–SF10 è concluso. Standard/Piena restano qualità di Anteprima; i modi di assurance Standard/Riferimento non sono disponibili. Le vecchie voci «mancante» nei resoconti descrivono la data della campagna e non sostituiscono questo piano.
+
+## Piano operativo
+
+Ordine richiesto dal titolare il 4 ottobre: **prima i punti 2, 3 e 4 della proposta, poi il punto 1**. La qualifica estesa di anteprime/memoria è rinviata al passo successivo; le verifiche di regressione necessarie alle modifiche fotografiche restano parte di ogni consegna.
+
+| Ordine | Consegna | Risultato richiesto | Stato |
+|---|---|---|---|
+| 2 | Fondamenta e Sviluppo iniziale (SF0–SF2) | Ricette precedenti conservate, undo/riapertura/backup, vista ed export coerenti; WB a slider continuo, senza selettore di preset Kelvin | Consegnato e verificato nel perimetro locale; gate SF aperti |
+| 3 | Geometria e ottica manuale (SF3) | Ritaglio, rotazioni/raddrizzamento, prospettiva e correzioni manuali condivise da vista ed export | Consegnato; geometria numerica e parità export verificate |
+| 4a | Ottica e dettaglio (SF4–SF5) | Correzioni ottiche dichiarate; nitidezza, rumore e presenza con parametri riproducibili | Consegnati controlli manuali e filtri; profili ottici automatici ancora da implementare e qualificare |
+| 4b | Colore avanzato e maschere (SF6–SF7) | Mixer colore, grading/monocromia e regolazioni locali durevoli | Consegnati mixer/grading, curve RGB e maschere; ritocco e combinazioni avanzate restano nel piano |
+| 1, successivo | Qualifica estesa anteprime e memoria | Cartelle grandi, altre fotocamere, pressione fisica, latenze p95/p99 e griglia | Rinviata su richiesta; nessuna conclusione anticipata |
+
+### Caselle della consegna corrente
+
+- [x] Riorganizzare il documento distinguendo priorità attuali, requisiti e registro storico, conservando resoconti e rimandi.
+- [x] Sostituire il selettore Kelvin con temperatura/tinta continue e ritorno a Come scattato; mantenere i modelli WB dei motori distinti.
+- [x] Completare le verifiche locali delle fondamenta fotografiche e registrare separatamente i gate che richiedono fotografie calibrate, hardware o Windows.
+- [x] Consegnare geometria/ottica manuale nel grafo comune, con coordinate e dimensioni coerenti.
+- [x] Consegnare dettaglio/presenza, colore avanzato e maschere con salvataggio, undo e parità di export.
+- [x] Eseguire suite, prova nativa, integrazione XPC e consegna del bundle verificato.
+- [x] Riesaminare la consegna e correggere i punti iniziali dei gesti pennello/raddrizzamento, con nuove regressioni e bundle verificato.
+- [ ] **Passo successivo, fuori da questa consegna:** campagna estesa di anteprime/memoria del punto 1.
+
+Restano aperti nel catalogo SF: profili ottici calibrati e correzione CA sul sensore; selezioni colore a campioni, LUT/profili creativi ed effetti aggiuntivi; combinazioni di maschere e ritocco; preset/versioni virtuali/batch completi; accelerazione dei nuovi nodi e qualifica fotografica estesa. I controlli manuali consegnati non chiudono questi requisiti. Perimetro numerico e prove effettive nel [rapporto del 5 ottobre](reports/photo-tools-macos-2026-10-05.json).
+
+<a id="piano-sviluppo-fotografico"></a>
+
+## Progetto di incremento — sviluppo fotografico, 23 settembre 2026
+
+Richiesta: progettare tutte le principali regolazioni fotografiche, confrontare gli altri programmi e conservare qui il lavoro futuro. **Progettato:** insieme dei controlli, valori neutri e scale iniziali, interazione, grafo di calcolo, capacità dei motori RAW, correzioni ottiche, dati durevoli, prestazioni, esportazione e criteri di accettazione. Contratto completo e fonti primarie nella [specifica sviluppo fotografico / ADR 0011](docs/progetto-sviluppo-fotografico.md). Le scale proposte sono TrueRenderer, non una promessa di equivalenza con i numeri di Lightroom.
+
+**Baseline della sessione di progettazione iniziale:** lettura dei contratti dell'architettura, del codice di colore/decoder/anteprime/export e della persistenza; consultazione della documentazione ufficiale dei prodotti; 327 collegamenti locali validi e diff senza errori di whitespace. Allora nessun controllo fotografico era stato implementato e nessuna campagna dell'editing era stata eseguita. Gli incrementi successivi sono nel registro; le caselle SF0–SF10 indicano ancora i gate non conclusi.
+
+### Controlli da consegnare
+
+| Area | Contenuto del progetto |
+|---|---|
+| Luce | Esposizione EV, luminosità dei mezzitoni, contrasto/pivot, alte luci, ombre, bianchi, neri, recupero RAW distinto dalla compressione tonale, Auto reversibile. |
+| WB e profili | Come scattato, temperatura/tinta, contagocce, preset e Auto; WB nativo quando qualificato, correzione relativa RGB distinta; profilo tecnico e look creativo separati. |
+| Curve e colore | Curve a punti/parametriche, livelli, saturazione, vividezza, mixer HSL, colore selettivo, grading di ombre/mezzitoni/luci, bianco e nero, profili/LUT qualificati. |
+| Presenza e dettaglio | Texture, chiarezza, rimozione foschia, nitidezza con raggio/dettaglio/mascheratura, rumore luminanza/cromatico, moiré; nitidezza d'uscita separata. |
+| Ottica | Distorsione a barilotto/cuscinetto e a baffo, profili/metadati/manuale, CA laterale, defringe viola/verde, vignettatura ottica; stato delle correzioni già applicate e nessuna duplicazione automatica. |
+| Geometria | Crop e rapporti, rotazione/specchio/raddrizzamento, prospettiva manuale/guidata/Auto, scala/offset e ritaglio all'area valida. |
+| Maschere e ritocco | Pennello/gomma, gradienti, intervalli colore/luminanza, combinazioni, regolazioni locali, polvere, clone/correttivo e occhi rossi. Selezioni automatiche e modelli in estensione successiva. |
+| Effetti e flusso | Vignetta creativa, grana, Prima/Dopo, cronologia/undo/redo, snapshot, versioni virtuali, preset e copia/batch selettivi. |
+| Salvataggio ed export | Ricetta per foto nella libreria durevole, stesso grafo in vista/export, dipendenze versionate, backup/restore; DNG RAW e DNG lineare mantengono contratti distinti dalle immagini con editing applicato. |
+
+### Ordine di realizzazione e gate
+
+Una verticale per volta, con copia applicativa separata e catalogo di prova. L'ordine indica dipendenze di questo ampliamento; non chiude R0–R4 né attribuisce una data di rilascio. Prima consegna utilizzabile: SF0–SF2 con regolazioni globali reversibili e export coerente. Ottica e filtri successivi entrano solo con i rispettivi confronti numerici/fotografici.
+
+- [ ] **SF0 — fondamenta:** fissare schema/processo, ricetta identità, capacità/provenienza per motore e grafo CPU comune a vista/export; introdurre revisioni, asset durevoli, migrazione/backup e undo minimo. Gate: identità rispetto alla baseline, round-trip della ricetta, crash/restore e nessuna perdita dopo pulizia cache; nessun risultato tardivo applicato a foto/revisione errata.
+- [ ] **SF1 — luce e curve di base:** pannello Sviluppo IT/EN, esposizione/luminosità/contrasto, luci/ombre/bianchi/neri, curve e clipping; bozza durante il gesto, salvataggio alla conclusione, Prima/Dopo e export della revisione congelata. Gate: rampe/campioni/alpha, CPU a piena risoluzione contro export lossless e zero variazioni degli originali.
+- [ ] **SF2 — WB e colore iniziale:** selezione come scattato/personalizzata/contagocce, adapter per WB nativo qualificato, correzione RGB relativa, saturazione/vividezza e Auto con parametri congelati. Gate: neutri e calibrazioni note, niente Kelvin inventati o clipping celato; capacità provate separatamente per Apple, bilineare, AHD e TrueRenderer.
+- [ ] **SF3 — geometria e ottica manuale:** crop/rotazioni/prospettiva guidata, distorsione e vignettatura manuali, CA laterale nello stadio corretto e defringe distinto; metadati su correzioni già eseguite. Gate: griglie/flat-field/canali disallineati, area valida, coordinate delle selezioni e assenza di doppia correzione.
+- [ ] **SF4 — profili ottici e automatismi:** decidere integrazione Lensfun/dati incorporati, versione/licenze/database, matching e profili manuali; quantità separate per distorsione/CA/vignettatura, aggiornamento volontario delle vecchie ricette. Gate: matrice corpo/ottica/focale/apertura, identificazioni ambigue e dati mancanti, riproduzione con vecchio profilo, licenze e parser confinato.
+- [ ] **SF5 — presenza e dettaglio:** scegliere/versionare filtri Texture, Chiarezza, Foschia, denoise e nitidezza, con dimensioni native/halo e previsione finale. Gate: aloni/rumore/alias, tile contro frame completo, confronto 1:1 e fit contro export; misure memoria su D750 e 12/24/45 MP.
+- [ ] **SF6 — colore avanzato ed effetti:** mixer HSL, campioni selettivi, grading, monocromia, curve RGB, profili creativi, grana/vignetta; DCP/ICC/LUT solo con il gate del rispettivo formato. Gate: dominio esteso, neutri/incarnati/saturi, nessun clamp implicito, seed stabile e dipendenze riproducibili.
+- [ ] **SF7 — maschere e ritocco:** pennelli, gradienti, intervalli, combinazioni e regolazioni locali; clone/correttivo/polvere/occhi rossi. Gate: coordinate dopo trasformazioni, ordine e sovrapposizioni, nessuna cucitura/ciclo, durabilità delle pennellate e limiti di risorse.
+- [ ] **SF8 — organizzazione e batch:** UI di snapshot/versioni virtuali, preset, copia selettiva, applicazione a più foto e default facoltativi per fotocamera; import/export ricetta. Gate: batch misto/cancellato, undo raggruppato, nessun profilo ottico copiato implicitamente fra obiettivi. XMP solo dopo round-trip, merge e scrittura sicura già previsti dall'architettura.
+- [ ] **SF9 — accelerazione e destinazioni colore:** qualificare ogni nodo GPU contro CPU; pianificazione/riuso/invalidazione e misure p95; nitidezza d'uscita, ICC aggiuntivi/soft proof quando qualificati. Gate: tolleranze per nodo e output, driver/device-loss/fallback, budget fisici e distinzione output/display. Nessuna conversione del progetto in HDR/EDR implicita.
+- [ ] **SF10 — qualifica della verticale:** suite completa, GUI Mac/Windows, XPC sul bundle, backup/restore, corpus ostile e fotografico autorizzato, ricette storiche, display/accessibilità ed export su tutti i motori pertinenti. Pubblicare una matrice precisa delle capacità e dei limiti; nessuna funzione marcata disponibile sulla base del solo pannello UI.
+
+Modelli locali per selezione soggetto/cielo/persone, denoise avanzato e profondità sono una successiva estensione con asset/versione/licenza e fallback manuale. HDR merge, panorami, focus stacking, rimozione generativa, tethering e stampa completa richiedono progetti propri e non bloccano le regolazioni richieste. I dettagli tecnici e le soglie iniziali sono nella [matrice di accettazione](docs/progetto-sviluppo-fotografico.md#matrice-di-accettazione); gli esiti futuri si registrano soltanto qui.
+
+## Roadmap del prodotto
+
+Le tappe seguenti descrivono i gate complessivi; non impongono di rinviare gli ampliamenti fotografici autorizzati. Le durate sono stime originarie da ricalibrare.
+
+## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
+
+Dipendenze: nessuna milestone precedente. Il prototipo corrente è una parte di R0.
+
+1. Corpus autorizzato con manifest, hardware di riferimento Win/mac e protocollo di misura.
+2. Finestra e device/coda condivisi, viewport opaco, shader, contratto sRGB della superficie.
+3. Input PNG ICC, alpha, CMYK, precisione di confine e confronto CPU/GPU quantitativo.
+4. Protocollo con framing, request ID, quote, handle e output del broker; fault injection e worker avversario.
+5. XPC firmato/App Sandbox su macOS; LPAC senza capacità e Job Object su Windows; test negativi filesystem/rete e memoria. Il solo processo separato **non** soddisfa questa voce.
+6. Snapshot/revisione sorgente sotto writer concorrente, nessuna promozione sul solo hash/stat.
+7. Griglia 100k, IME, focus, DnD, VoiceOver/NVDA, scala 200%, monitor con profili e scale differenti, device loss.
+8. ADR toolkit, minimi OS/GPU, licenze, canali; pacchetti interni sui due OS.
+9. Almeno cinque interviste e raccolta autorizzata dei casi difficili. Richiede persone reali.
+
+Uscita: tutti i gate di §4.4/§22.4 misurati. Mancando prove complete, egui e il colore restano provvisori. Le anteprime esterne macOS introdotte dalla 0.1.3 sono una deviazione esplicita di sviluppo (ADR 0004), non il superamento del gate.
+
+## R1 — viewer SDR (10–16 settimane, dopo R0)
+
+1. Bloccare backend nativi JPEG/PNG/TIFF, opzioni di compilazione, licenze e corpus per profilo.
+2. Campioni nativi 8/16 bit, EXIF qualificato e orientamento una volta; rifiuto dei contenuti non supportati.
+3. Little CMS isolato, ingressi RGB/GRAY/CMYK, ICC v2/v4, precedenza metadati colore, assegnazione esplicita.
+4. Working linear Rec.2020 fp32, alpha premoltiplicata, viewport opaco, clipping soltanto dichiarato in uscita.
+5. TileProvider, CPU reference, Lanczos3 a supporto adattato, pixel fisici 1:1 senza filtro, bordi e cuciture.
+6. Renderer wgpu/WGSL con budget GPU/CPU, LUT adattive qualificate, fallback selettivo, recovery.
+7. Istogramma/campionatore e provenance per stadio; badge Standard/Riferimento solo con criteri superati.
+8. Libreria ICC e monitor, qualifica XMP Toolkit round-trip; nessun sidecar scritto prima del gate.
+9. Viewer, loupe, confronto sincronizzato, tastiera e accessibilità provati sui due OS.
+
+Uscita: suite §§19.2–19.3, demo controllata e tutti i formati dichiarati verificati. Non è ancora alpha su archivi reali.
+
+## R2 — browser e dati durevoli (12–18 settimane, dopo R1)
+
+1. Scansione incrementale, watcher, volumi, identità distinta da percorso/digest, file mancanti e ambiguità.
+2. Schema completo separato index/library, migrazioni con backup, writer unico, proiezioni ricostruibili.
+3. Rating, label, keyword gerarchiche, raccolte statiche/intelligenti, filtri e ricerca con indici/FTS.
+4. Revisioni e journal transazionali, batch, undo come nuova revisione, recovery con errori disco/crash.
+5. XMP a tre vie, no-clobber/coordinamento filesystem, conflitti visibili e riconciliazione esiti incerti.
+6. Backup rotanti verificati, export portabile e restore; retention distinta dalla cache.
+7. Griglia 100k misurata, code/priorità/cancellazione/backpressure, quote cache/memoria.
+8. Solo dopo sandbox negativa e backup: pilot con 8–12 fotografi; almeno cinque utenti settimanali per quattro settimane.
+
+Uscita: workflow completo senza assistenza e gate prodotto §2.0. Se debole, ridurre o fermare RAW/gigapixel.
+
+## R3 — RAW e grandi immagini (16–24 settimane, dopo il pilot R2)
+
+1. Pin LibRaw/opzioni, distinta e matrice reale fotocamere/CFA; nessun supporto RAW generico.
+2. Ricetta nominata, preview incorporata separata dal render, WB/matrici e precisione dichiarati.
+3. Tile TIFF/BigTIFF, livelli con provenienza, piramide persistente per necessità e invalidazione revisionata.
+4. Preparazione sequenziale con progresso/cancellazione, spool coerente, quote, recovery e garbage collection.
+5. Prova 4 Gpx nei profili qualificati, residenza GPU, prefetch e priorità dei tile visibili.
+6. Misure cieche su RAW, CPU fallback e corpus colore/filtri/metadata sui due OS.
+
+Uscita: matrice RAW esplicita, grandi immagini entro budget reali. Nessun demosaicing proprietario in v1.
+
+## R4 — hardening e rilascio (12–18 settimane, dopo R3)
+
+1. Fuzzing, sanitizers, fault injection, sandbox negativa completa, input ostili e recovery.
+2. Benchmark p95 con almeno 100 prove, manifest hardware/corpus/cache e dispersione.
+3. SBOM, notices e licenze sulle versioni effettivamente linkate; aggiornamenti dipendenze.
+4. Installer Windows, bundle macOS, firma/notarizzazione, install/upgrade/rollback e smoke test puliti.
+5. Test display reali, profili monitor, screen reader, IME, multimonitor e driver difettosi.
+6. Manuale, privacy locale, matrice supporto, release candidate e bug triage; rilascio solo dopo gate.
+
+Firma e distribuzione richiedono un processo di rilascio dedicato e credenziali esterne al repository. Le prove Windows di sviluppo sono registrate; installazione pulita, firma e distribuzione restano da qualificare.
+
+## Post-v1
+
+Linux, Windows arm64, HDR/EDR, AVIF/JXL/EXR/PSD, Android, soft proof, conversione/export pixel, scrittura incorporata, confronto oltre due foto e demosaic proprio: ciascuno richiede ADR, prova di bisogno e gate specifico.
+
+L'ampliamento di sviluppo fotografico richiesto il 23 settembre ha ora un [piano dedicato SF0–SF10](#piano-sviluppo-fotografico) e ADR 0011. La lista storica sopra non ne costituisce un divieto: distingue lo scope originario del viewer dalle estensioni richieste e qualificate separatamente, come già per export/FITS.
+
+## Stime e aggiornamento
+
+Il documento stima 56–84 settimane di milestone, circa 64–105 con riserva; sono ipotesi per una persona, non una data promessa. Prima revisione delle stime dopo le misure R0. Per ogni incremento aggiornare questo documento. Aggiungere rapporti per nuove campagne di verifica; sincronizzare le architetture soltanto se cambiano le fonti della specifica anteprime.
 
 ## Regola di aggiornamento
 
@@ -19,6 +171,36 @@ Per ogni incremento aggiornare qui implementato, verificato, aperto e mancante, 
 Le architetture rimandano a questo file e non ne incorporano il contenuto. `python3 scripts/sync-docs.py` aggiorna i rimandi e l'appendice della specifica anteprime: serve quando cambiano le sue fonti, non a ogni aggiornamento di stato. Il backup originale v1.2 resta immutato.
 
 ## Punto di ripresa
+
+Registro in ordine cronologico inverso. Ogni esito vale per i sorgenti e il pacchetto indicati; le priorità storiche non cambiano l’ordine concordato nel piano operativo.
+
+### Revisione prima del commit dello sviluppo fotografico — 5 ottobre
+
+- **Corretto e riprodotto:** i gesti sulla foto potevano modificare maschere durante l'analisi WB, raddrizzare durante un salvataggio e agire sulla foto non selezionata nel confronto. Una protezione comune li limita alla foto selezionata e pronta. Il trascinamento della vista resta disponibile dopo il reset delle maschere anche se Disegna era attivo. Regressioni con pressione, movimento e rilascio verificano ricetta e salvataggi.
+- **Continuità dopo ritaglio:** durante un nuovo calcolo venivano usate le dimensioni originali per ripresentare il fotogramma modificato; la regressione aggiunta misurava soltanto **56,25%** di copertura. Viewer, filmstrip/griglia, ispettore e coordinate del pennello ora condividono le dimensioni modificate. Copertura **100%** durante bozze rapide con crop/rotazione, Fit/1:1 e working/anteprima export.
+- **Verificato:** `scripts/verify.sh --gui` sui sorgenti finali in `var/verify-JxPdabMM/`: **295 test ordinari + 14 integrazioni**, due controlli Python, otto IPC, 24 segnali, fmt/Clippy e superficie nativa passati. Passano 23 regressioni dello sviluppo, comprese otto dei controlli. La prima esecuzione nella sandbox del terminale non disponeva di Core Image per due test; la suite completa fuori da quel contesto passa senza esclusioni aggiuntive.
+- **Bundle finale:** viewer/griglia, salvataggio ed export PNG16 passati in CPU/GPU; errore schermo massimo **0/255 CPU** e **1/255 GPU**, sorgente sintetica invariata. Verificati entrambi i servizi XPC e la firma ad hoc. Aggiornato `dist/TrueRenderer.app`, identico al pacchetto qualificato; manifest `ce78b640e0ba69c3775cb30e35760ce9d023067cf398ffe23f420bb1ebbe4dbf`. Copia precedente ed evidenze in `var/commit-review-2026-10-05/`. [Rapporto della revisione pre-commit](reports/photo-tools-precommit-macos-2026-10-05.json).
+- **Perimetro pubblico e limiti:** sorgenti, documentazione e rapporti numerici controllati; dati durevoli, fotografie, toolchain e bundle restano esclusi da Git. Algoritmi fotografici e tre binari worker identici per hash alla matrice precedente di 96 export, non rieseguita. Architettura originale, licenza e dipendenze conservate. Nessuna nuova campagna RAW privata, Windows, display calibrati o memoria fisica; punto 1 rinviato e gate SF/R aperti.
+
+### Verifica della consegna fotografica e correzione dei gesti — 5 ottobre
+
+- **Revisione:** confermata prima delle modifiche la corrispondenza dei 18 sorgenti e dei 10 file del bundle con il rapporto della consegna. Riesaminati ricette, geometria, filtri, colore, maschere, memoria temporanea e integrazione della vista; la suite iniziale passava, ma un controllo aggiuntivo ha riprodotto la perdita del punto iniziale del pennello.
+- **Corretto:** il trascinamento riconosciuto dopo la soglia di movimento partiva dalla prima posizione spostata. Il pennello ora include la pressione iniziale e la prima posizione spostata, rispettando tratti separati e quota di 512 punti. La linea di raddrizzamento usa anch'essa la pressione iniziale; provato un gesto con un solo movimento fino all'estremo. Verificati crop, punto finale e rilascio fuori immagine.
+- **Verificato dopo la correzione:** `scripts/verify.sh --gui` in `var/verify-wPjFzpZn/`: **293 test ordinari + 14 integrazioni**, due controlli Python, otto IPC, 24 segnali, fmt/Clippy e superficie nativa passati. Sei regressioni dei controlli includono slider WB continuo e stabilità dei gesti. Sul nuovo bundle, viewer/griglia/salvataggio/export passati in CPU e GPU, errore schermo massimo rispettivamente **0/255** e **1/255**, sorgente invariata; entrambi i servizi XPC e firma ad hoc verificati.
+- **Consegna:** aggiornato `dist/TrueRenderer.app`, identico al pacchetto qualificato; manifest `b8bbaa1cd365d2d8eadd3fe3d144dcd402e444df21a2b1aac41fcad011a3f4ff`. Copia precedente ed evidenze in `var/photo-tools-review-2026-10-05/`. [Rapporto della revisione](reports/photo-tools-review-macos-2026-10-05.json).
+- **Perimetro:** cambiati soltanto gestione dei gesti e relativi test. Codice di elaborazione e tre binari worker identici per hash alla precedente matrice di 96 export; quella matrice non è stata rieseguita in questa revisione. Non eseguiti i tre test RAW privati né nuove campagne Windows/display. Il punto 1 resta rinviato al prossimo passo e i gate SF/R rimangono aperti. Architettura originale conservata.
+
+### Sviluppo fotografico, WB continuo e riordino del piano — 5 ottobre
+
+- **Priorità:** documento riorganizzato in situazione corrente, consegne, gate e registro storico. Realizzati gli strumenti dei punti 2–4 nel perimetro esplicito sopra; punto 1, qualifica estesa di anteprime/memoria, rinviato al passo successivo su richiesta. Conservati registro, rimandi e architettura originale.
+- **WB e fondamenta:** temperatura Apple RAW a slider logaritmico 2.000–50.000 K con passi di 1 K, tinta continua e ritorno a Come scattato. Il primo riferimento manuale di 6500 K è dichiarato, non stimato dalla foto; i motori LibRaw/TrueRenderer conservano i guadagni sensore distinti. Curve tonali a punti modificabili. Processo 3 esplicito con compatibilità delle ricette 1/2, undo/redo, riapertura e ripristino da backup senza sorgente/cache.
+- **Geometria, ottica e dettaglio:** crop/rapporti, rotazioni/specchi, linea di raddrizzamento, prospettiva/scala, ricerca del bordo valido, distorsione normale/a baffo, vignettatura e CA/defringe residui RGB. Texture, chiarezza, foschia, nitidezza e riduzione rumore luminanza/cromatico nel grafo CPU condiviso con export. Raggi nativi e limiti dichiarati nella specifica; nessun profilo ottico applicato implicitamente.
+- **Colore e regolazioni locali:** otto fasce HSL, grading su tre zone, monocromia e curve RGB; maschere radiali, gradienti, pennelli con tratti separati e intervalli luminanza/tonalità. Coordinate ancorate alla sorgente anche dopo crop/rotazione; esposizione, temperatura RGB e saturazione locali. Fino a 16 maschere e 512 punti complessivi, salvati nella revisione durevole, inclusi nel backup.
+- **Correzioni emerse dal collaudo:** gli aggiornamenti di istogramma e campione RGB potevano cambiare l'identità dei controlli e interrompere il trascinamento; ora gli slider conservano il gesto e salvano al rilascio. Il pennello non dipende più dalla disponibilità di un campione del render e conserva il punto finale, salvando anche al rilascio fuori immagine. Corrette la soglia del crop all'1% per arrotondamento e l'inversione di un canale con CA estrema su immagini minuscole. Regressioni conservate; nessuna revisione intermedia durante il gesto.
+- **Verifiche automatiche:** `scripts/verify.sh --gui` sui sorgenti finali in `var/verify-CYkt36mV/`: **292 test ordinari + 14 integrazioni**, due controlli Python, otto IPC, 24 segnali, fmt/Clippy e superficie nativa passati. I tre test con RAW privato non sono stati eseguiti. Su PNG e Bayer DNG generati: **96 confronti PNG16/TIFF16**, quattro motori × due worker × tre ricette × due formati × due sorgenti, errore massimo **0/65535** e sorgenti invariate. I decoder/export del bundle finale sono identici per hash a quelli della matrice numerica.
+- **Prove native finali:** viewer/griglia/export su RGB in CPU e GPU e su DNG Apple con WB personalizzato; errore schermo massimo **0/255 CPU**, **1/255 GPU**, export e salvataggio passati. Integrazione dei due servizi XPC e firma ad hoc verificate sul pacchetto finale. Nell'app provati trascinamento WB destra/sinistra, valore 4873 K e riapertura, crop 1:1, esposizione locale +1,25 EV, posizione radiale e pennello sulla foto ritagliata; ricetta e punto finale riletti dalla libreria isolata.
+- **Consegna:** installato `dist/TrueRenderer.app`, file identici al bundle qualificato; manifest `37c6a0a24368915cc4cd8777755d26572abbf9d387eec81e37556caf8773dae2`. Copia precedente conservata in `var/photo-tools-2026-10-05/previous-distribution.app`; evidenze della campagna nella stessa cartella. [Rapporto con hash, casi e limiti](reports/photo-tools-macos-2026-10-05.json).
+- **Aperto:** le anteprime ridotte dei filtri restano provvisorie; usare Verifica resa finale per il calcolo nativo. Profili ottici automatici, CA sensore, ritocco/combinazioni e le altre estensioni elencate nel piano non sono implementati in questa consegna. Mancano nuove campagne su fotocamere calibrate, RAW grandi, Windows, display e memoria fisica. Nessun gate R0–R4/SF chiuso e nessuna garanzia di rilascio derivata dalla firma ad hoc.
 
 ### Revisione del commit anteprime e cache — 4 ottobre
 
@@ -543,7 +725,9 @@ Corretti isolamento LPAC/quote, LibRaw 0.22.2, parsing delle preview, classifica
 
 Esteso il motore proprio al modello esatto D40 e corretto il cambio motore durante scansione: 66/66 sviluppi su 22 NEF a ISO 200 e regressione D750, senza ampliare implicitamente la matrice camere ([rapporto Windows](reports/raw-engines-d40-windows.json)). Su Mac: 120 sviluppi D750 sui quattro motori dopo il fix heap LibRaw/XPC, nove confronti centrali, 240 azioni PNG 12/24/45 MP, 20 sotto pressione renderer e 40 RAW ([rapporto](reports/large-pressure-raw-macos.json)). Ritagli allineati solo per traslazione intera ±16 pixel: Apple/AHD non sono riferimenti della scena. Rimane il superamento memoria 45 MP Full indicato in apertura; mancano pressione OS, decode RAW ridotto, colore misurato e p95/p99. Riproduzione: `scripts/test-large-navigation.py`, `scripts/compare-raw-patches.py` e `--verify-raw-engines`, esclusivamente con corpus autorizzato e dati separati.
 
-## Piano operativo
+## Piani e campagne precedenti
+
+Le sequenze seguenti sono storiche; per l’ordine di lavoro corrente usare il piano operativo iniziale.
 
 ### Preparazione automatica e impostazioni comprensibili — piano del 3–4 ottobre
 
@@ -568,46 +752,6 @@ Ordine di attuazione e criteri di accettazione:
 - [x] **8 — Verifica e consegna macOS:** ripetuti suite completa e GUI, quattro motori RAW, Piena/Standard, CPU/GPU, ricette salvate, cache disabilitata/ridotta/normale, svuotamento/rigenerazione, XPC e firma sul pacchetto corretto. Coperti esempio di memoria segnalato, crescita atomica oltre 8 GB, concorrenza, rilascio e ripresa dopo pressione simulata, migrazione/batteria e messaggi di visualizzazione. Confronto esplorativo completato senza attribuire un aumento di velocità; rapporto e documenti aggiornati, bundle precedente conservato, versione qualificata installata e aperta.
 
 - [ ] **Qualifica prestazionale estesa:** p95/p99 indipendenti sulle macchine di riferimento, scorrimento griglia, matrici RAW più ampie, pressione fisica, conteggi I/O/annullamenti e comportamento delle cartelle oltre la residenza di tutte le anteprime. La campagna locale dimostra maggiore residenza e minori picchi campionati, con più lavoro anticipato e tempi mediani pressoché invariati; non certifica un incremento generale di velocità.
-
-<a id="piano-sviluppo-fotografico"></a>
-
-## Progetto di incremento — sviluppo fotografico, 23 settembre 2026
-
-Richiesta: progettare tutte le principali regolazioni fotografiche, confrontare gli altri programmi e conservare qui il lavoro futuro. **Progettato:** insieme dei controlli, valori neutri e scale iniziali, interazione, grafo di calcolo, capacità dei motori RAW, correzioni ottiche, dati durevoli, prestazioni, esportazione e criteri di accettazione. Contratto completo e fonti primarie nella [specifica sviluppo fotografico / ADR 0011](docs/progetto-sviluppo-fotografico.md). Le scale proposte sono TrueRenderer, non una promessa di equivalenza con i numeri di Lightroom.
-
-**Baseline della sessione di progettazione iniziale:** lettura dei contratti dell'architettura, del codice di colore/decoder/anteprime/export e della persistenza; consultazione della documentazione ufficiale dei prodotti; 327 collegamenti locali validi e diff senza errori di whitespace. Allora nessun controllo fotografico era stato implementato e nessuna campagna dell'editing era stata eseguita. Lo stato successivo è nel punto di ripresa sopra; le caselle SF0–SF10 indicano ancora i gate non conclusi.
-
-### Controlli da consegnare
-
-| Area | Contenuto del progetto |
-|---|---|
-| Luce | Esposizione EV, luminosità dei mezzitoni, contrasto/pivot, alte luci, ombre, bianchi, neri, recupero RAW distinto dalla compressione tonale, Auto reversibile. |
-| WB e profili | Come scattato, temperatura/tinta, contagocce, preset e Auto; WB nativo quando qualificato, correzione relativa RGB distinta; profilo tecnico e look creativo separati. |
-| Curve e colore | Curve a punti/parametriche, livelli, saturazione, vividezza, mixer HSL, colore selettivo, grading di ombre/mezzitoni/luci, bianco e nero, profili/LUT qualificati. |
-| Presenza e dettaglio | Texture, chiarezza, rimozione foschia, nitidezza con raggio/dettaglio/mascheratura, rumore luminanza/cromatico, moiré; nitidezza d'uscita separata. |
-| Ottica | Distorsione a barilotto/cuscinetto e a baffo, profili/metadati/manuale, CA laterale, defringe viola/verde, vignettatura ottica; stato delle correzioni già applicate e nessuna duplicazione automatica. |
-| Geometria | Crop e rapporti, rotazione/specchio/raddrizzamento, prospettiva manuale/guidata/Auto, scala/offset e ritaglio all'area valida. |
-| Maschere e ritocco | Pennello/gomma, gradienti, intervalli colore/luminanza, combinazioni, regolazioni locali, polvere, clone/correttivo e occhi rossi. Selezioni automatiche e modelli in estensione successiva. |
-| Effetti e flusso | Vignetta creativa, grana, Prima/Dopo, cronologia/undo/redo, snapshot, versioni virtuali, preset e copia/batch selettivi. |
-| Salvataggio ed export | Ricetta per foto nella libreria durevole, stesso grafo in vista/export, dipendenze versionate, backup/restore; DNG RAW e DNG lineare mantengono contratti distinti dalle immagini con editing applicato. |
-
-### Ordine di realizzazione e gate
-
-Una verticale per volta, con copia applicativa separata e catalogo di prova. L'ordine indica dipendenze di questo ampliamento; non chiude R0–R4 né attribuisce una data di rilascio. Prima consegna utilizzabile: SF0–SF2 con regolazioni globali reversibili e export coerente. Ottica e filtri successivi entrano solo con i rispettivi confronti numerici/fotografici.
-
-- [ ] **SF0 — fondamenta:** fissare schema/processo, ricetta identità, capacità/provenienza per motore e grafo CPU comune a vista/export; introdurre revisioni, asset durevoli, migrazione/backup e undo minimo. Gate: identità rispetto alla baseline, round-trip della ricetta, crash/restore e nessuna perdita dopo pulizia cache; nessun risultato tardivo applicato a foto/revisione errata.
-- [ ] **SF1 — luce e curve di base:** pannello Sviluppo IT/EN, esposizione/luminosità/contrasto, luci/ombre/bianchi/neri, curve e clipping; bozza durante il gesto, salvataggio alla conclusione, Prima/Dopo e export della revisione congelata. Gate: rampe/campioni/alpha, CPU a piena risoluzione contro export lossless e zero variazioni degli originali.
-- [ ] **SF2 — WB e colore iniziale:** selezione come scattato/personalizzata/contagocce, adapter per WB nativo qualificato, correzione RGB relativa, saturazione/vividezza e Auto con parametri congelati. Gate: neutri e calibrazioni note, niente Kelvin inventati o clipping celato; capacità provate separatamente per Apple, bilineare, AHD e TrueRenderer.
-- [ ] **SF3 — geometria e ottica manuale:** crop/rotazioni/prospettiva guidata, distorsione e vignettatura manuali, CA laterale nello stadio corretto e defringe distinto; metadati su correzioni già eseguite. Gate: griglie/flat-field/canali disallineati, area valida, coordinate delle selezioni e assenza di doppia correzione.
-- [ ] **SF4 — profili ottici e automatismi:** decidere integrazione Lensfun/dati incorporati, versione/licenze/database, matching e profili manuali; quantità separate per distorsione/CA/vignettatura, aggiornamento volontario delle vecchie ricette. Gate: matrice corpo/ottica/focale/apertura, identificazioni ambigue e dati mancanti, riproduzione con vecchio profilo, licenze e parser confinato.
-- [ ] **SF5 — presenza e dettaglio:** scegliere/versionare filtri Texture, Chiarezza, Foschia, denoise e nitidezza, con dimensioni native/halo e previsione finale. Gate: aloni/rumore/alias, tile contro frame completo, confronto 1:1 e fit contro export; misure memoria su D750 e 12/24/45 MP.
-- [ ] **SF6 — colore avanzato ed effetti:** mixer HSL, campioni selettivi, grading, monocromia, curve RGB, profili creativi, grana/vignetta; DCP/ICC/LUT solo con il gate del rispettivo formato. Gate: dominio esteso, neutri/incarnati/saturi, nessun clamp implicito, seed stabile e dipendenze riproducibili.
-- [ ] **SF7 — maschere e ritocco:** pennelli, gradienti, intervalli, combinazioni e regolazioni locali; clone/correttivo/polvere/occhi rossi. Gate: coordinate dopo trasformazioni, ordine e sovrapposizioni, nessuna cucitura/ciclo, durabilità delle pennellate e limiti di risorse.
-- [ ] **SF8 — organizzazione e batch:** UI di snapshot/versioni virtuali, preset, copia selettiva, applicazione a più foto e default facoltativi per fotocamera; import/export ricetta. Gate: batch misto/cancellato, undo raggruppato, nessun profilo ottico copiato implicitamente fra obiettivi. XMP solo dopo round-trip, merge e scrittura sicura già previsti dall'architettura.
-- [ ] **SF9 — accelerazione e destinazioni colore:** qualificare ogni nodo GPU contro CPU; pianificazione/riuso/invalidazione e misure p95; nitidezza d'uscita, ICC aggiuntivi/soft proof quando qualificati. Gate: tolleranze per nodo e output, driver/device-loss/fallback, budget fisici e distinzione output/display. Nessuna conversione del progetto in HDR/EDR implicita.
-- [ ] **SF10 — qualifica della verticale:** suite completa, GUI Mac/Windows, XPC sul bundle, backup/restore, corpus ostile e fotografico autorizzato, ricette storiche, display/accessibilità ed export su tutti i motori pertinenti. Pubblicare una matrice precisa delle capacità e dei limiti; nessuna funzione marcata disponibile sulla base del solo pannello UI.
-
-Modelli locali per selezione soggetto/cielo/persone, denoise avanzato e profondità sono una successiva estensione con asset/versione/licenza e fallback manuale. HDR merge, panorami, focus stacking, rimozione generativa, tethering e stampa completa richiedono progetti propri e non bloccano le regolazioni richieste. I dettagli tecnici e le soglie iniziali sono nella [matrice di accettazione](docs/progetto-sviluppo-fotografico.md#matrice-di-accettazione); gli esiti futuri si registrano soltanto qui.
 
 <a id="piano-alta-precisione-fits"></a>
 
@@ -1005,82 +1149,9 @@ Pipeline sperimentale affiancata ai motori esistenti su Windows/macOS. Increment
 - [x] Revisione richiesta e D40: correggere scansione revocata dal cambio motore, aggiungere il modello esatto e verificare 66 sviluppi, UI/scansione e regressione D750. [Dettagli](STATO.md#campagne-raw-concluse).
 - [ ] Qualificare build/bundle macOS e XPC, confronto Apple e fedeltà cromatica sul target.
 
-## R0 — fattibilità (6–8 settimane nel documento, da ricalibrare)
-
-Dipendenze: nessuna milestone precedente. Il prototipo corrente è una parte di R0.
-
-1. Corpus autorizzato con manifest, hardware di riferimento Win/mac e protocollo di misura.
-2. Finestra e device/coda condivisi, viewport opaco, shader, contratto sRGB della superficie.
-3. Input PNG ICC, alpha, CMYK, precisione di confine e confronto CPU/GPU quantitativo.
-4. Protocollo con framing, request ID, quote, handle e output del broker; fault injection e worker avversario.
-5. XPC firmato/App Sandbox su macOS; LPAC senza capacità e Job Object su Windows; test negativi filesystem/rete e memoria. Il solo processo separato **non** soddisfa questa voce.
-6. Snapshot/revisione sorgente sotto writer concorrente, nessuna promozione sul solo hash/stat.
-7. Griglia 100k, IME, focus, DnD, VoiceOver/NVDA, scala 200%, monitor con profili e scale differenti, device loss.
-8. ADR toolkit, minimi OS/GPU, licenze, canali; pacchetti interni sui due OS.
-9. Almeno cinque interviste e raccolta autorizzata dei casi difficili. Richiede persone reali.
-
-Uscita: tutti i gate di §4.4/§22.4 misurati. Mancando prove complete, egui e il colore restano provvisori. Le anteprime esterne macOS introdotte dalla 0.1.3 sono una deviazione esplicita di sviluppo (ADR 0004), non il superamento del gate.
-
-## R1 — viewer SDR (10–16 settimane, dopo R0)
-
-1. Bloccare backend nativi JPEG/PNG/TIFF, opzioni di compilazione, licenze e corpus per profilo.
-2. Campioni nativi 8/16 bit, EXIF qualificato e orientamento una volta; rifiuto dei contenuti non supportati.
-3. Little CMS isolato, ingressi RGB/GRAY/CMYK, ICC v2/v4, precedenza metadati colore, assegnazione esplicita.
-4. Working linear Rec.2020 fp32, alpha premoltiplicata, viewport opaco, clipping soltanto dichiarato in uscita.
-5. TileProvider, CPU reference, Lanczos3 a supporto adattato, pixel fisici 1:1 senza filtro, bordi e cuciture.
-6. Renderer wgpu/WGSL con budget GPU/CPU, LUT adattive qualificate, fallback selettivo, recovery.
-7. Istogramma/campionatore e provenance per stadio; badge Standard/Riferimento solo con criteri superati.
-8. Libreria ICC e monitor, qualifica XMP Toolkit round-trip; nessun sidecar scritto prima del gate.
-9. Viewer, loupe, confronto sincronizzato, tastiera e accessibilità provati sui due OS.
-
-Uscita: suite §§19.2–19.3, demo controllata e tutti i formati dichiarati verificati. Non è ancora alpha su archivi reali.
-
-## R2 — browser e dati durevoli (12–18 settimane, dopo R1)
-
-1. Scansione incrementale, watcher, volumi, identità distinta da percorso/digest, file mancanti e ambiguità.
-2. Schema completo separato index/library, migrazioni con backup, writer unico, proiezioni ricostruibili.
-3. Rating, label, keyword gerarchiche, raccolte statiche/intelligenti, filtri e ricerca con indici/FTS.
-4. Revisioni e journal transazionali, batch, undo come nuova revisione, recovery con errori disco/crash.
-5. XMP a tre vie, no-clobber/coordinamento filesystem, conflitti visibili e riconciliazione esiti incerti.
-6. Backup rotanti verificati, export portabile e restore; retention distinta dalla cache.
-7. Griglia 100k misurata, code/priorità/cancellazione/backpressure, quote cache/memoria.
-8. Solo dopo sandbox negativa e backup: pilot con 8–12 fotografi; almeno cinque utenti settimanali per quattro settimane.
-
-Uscita: workflow completo senza assistenza e gate prodotto §2.0. Se debole, ridurre o fermare RAW/gigapixel.
-
-## R3 — RAW e grandi immagini (16–24 settimane, dopo il pilot R2)
-
-1. Pin LibRaw/opzioni, distinta e matrice reale fotocamere/CFA; nessun supporto RAW generico.
-2. Ricetta nominata, preview incorporata separata dal render, WB/matrici e precisione dichiarati.
-3. Tile TIFF/BigTIFF, livelli con provenienza, piramide persistente per necessità e invalidazione revisionata.
-4. Preparazione sequenziale con progresso/cancellazione, spool coerente, quote, recovery e garbage collection.
-5. Prova 4 Gpx nei profili qualificati, residenza GPU, prefetch e priorità dei tile visibili.
-6. Misure cieche su RAW, CPU fallback e corpus colore/filtri/metadata sui due OS.
-
-Uscita: matrice RAW esplicita, grandi immagini entro budget reali. Nessun demosaicing proprietario in v1.
-
-## R4 — hardening e rilascio (12–18 settimane, dopo R3)
-
-1. Fuzzing, sanitizers, fault injection, sandbox negativa completa, input ostili e recovery.
-2. Benchmark p95 con almeno 100 prove, manifest hardware/corpus/cache e dispersione.
-3. SBOM, notices e licenze sulle versioni effettivamente linkate; aggiornamenti dipendenze.
-4. Installer Windows, bundle macOS, firma/notarizzazione, install/upgrade/rollback e smoke test puliti.
-5. Test display reali, profili monitor, screen reader, IME, multimonitor e driver difettosi.
-6. Manuale, privacy locale, matrice supporto, release candidate e bug triage; rilascio solo dopo gate.
-
-Firma e distribuzione richiedono un processo di rilascio dedicato e credenziali esterne al repository. Le prove Windows di sviluppo sono registrate; installazione pulita, firma e distribuzione restano da qualificare.
-
-## Post-v1
-
-Linux, Windows arm64, HDR/EDR, AVIF/JXL/EXR/PSD, Android, soft proof, conversione/export pixel, scrittura incorporata, confronto oltre due foto e demosaic proprio: ciascuno richiede ADR, prova di bisogno e gate specifico.
-
-L'ampliamento di sviluppo fotografico richiesto il 23 settembre ha ora un [piano dedicato SF0–SF10](#piano-sviluppo-fotografico) e ADR 0011. La lista storica sopra non ne costituisce un divieto: distingue lo scope originario del viewer dalle estensioni richieste e qualificate separatamente, come già per export/FITS.
-
-## Stime e aggiornamento
-
-Il documento stima 56–84 settimane di milestone, circa 64–105 con riserva; sono ipotesi per una persona, non una data promessa. Prima revisione delle stime dopo le misure R0. Per ogni incremento aggiornare questo documento. Aggiungere rapporti per nuove campagne di verifica; sincronizzare le architetture soltanto se cambiano le fonti della specifica anteprime.
-
 ## Matrice dei requisiti e budget
+
+**Matrice storica di confronto con la proposta v1.2.** Non è una lista aggiornata delle funzioni mancanti: navigatore, editing, export e campagne successive sono descritti sopra. Conservata per tracciabilità dei requisiti; lo stato operativo è nel piano iniziale.
 
 ### Confronto completo con la proposta v1.2
 
@@ -1131,6 +1202,8 @@ Stati: **parziale** = esiste codice utilizzabile ma non tutto il requisito; **da
 
 
 ## Registro delle verifiche e degli incrementi
+
+Le sezioni seguenti conservano le campagne precedenti e i loro limiti.
 
 ### Accorpamento documentale — 17 settembre 2026
 
