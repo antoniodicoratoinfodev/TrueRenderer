@@ -23,6 +23,27 @@ Historical inventories retain their original scope.
 
 The later authorized camera checks use private copies of 30 Nikon D750 NEFs. The published RAW reports contain numerical verification results; those photographs and their working copies are not included in the repository. Generated corpus/format fixtures and the camera dataset are separate test inputs.
 
+## Photographs in the README screenshots
+
+The screenshots in `reports/readme-2026-10-06/` contain public-domain National
+Park Service photographs. They are separate from the generated test corpus.
+The project's proprietary license does not apply to these underlying photographs.
+
+- **Avalanche Lake, Glacier National Park** — NPS / David Restivo.
+  [Source and public-domain declaration](https://commons.wikimedia.org/wiki/File:Avalanche_Lake,_Glacier_National_Park.jpg).
+- **Grand Teton National Park** — NPS / David Restivo.
+  [Source and public-domain declaration](https://commons.wikimedia.org/wiki/File:Grand_Teton_National_Park_%2833106145651%29.jpg).
+- **Grand Teton in Winter** — National Park Service.
+  [Source and public-domain declaration](https://commons.wikimedia.org/wiki/File:Grand_Teton_in_Winter-NPS.jpg).
+- **The Watchman, Zion National Park** — NPS Photo.
+  [Source and public-domain declaration](https://npgallery.nps.gov/AssetDetail/98b15eba-155d-451f-6776-104114f96789).
+
+The photographs are displayed inside TrueRenderer; the Avalanche Lake photograph
+includes tonal adjustments made with the application. Use of these images does
+not imply endorsement by the National Park Service or the photographers.
+Source URLs, original-file hashes and screenshot hashes are recorded in the
+[capture report](reports/readme-showcase-macos-2026-10-06.json).
+
 ## Trademarks
 
 TrueRenderer is an independent project. It is not affiliated with, sponsored by, endorsed by, or certified by any of the companies or projects named in this repository.

@@ -45,6 +45,12 @@ Ordine richiesto dal titolare il 4 ottobre: **prima i punti 2, 3 e 4 della propo
 
 Restano aperti nel catalogo SF: profili ottici calibrati e correzione CA sul sensore; selezioni colore a campioni, LUT/profili creativi ed effetti aggiuntivi; combinazioni di maschere e ritocco; preset/versioni virtuali/batch completi; accelerazione dei nuovi nodi e qualifica fotografica estesa. I controlli manuali consegnati non chiudono questi requisiti. Perimetro numerico e prove effettive nel [rapporto del 5 ottobre](reports/photo-tools-macos-2026-10-05.json).
 
+### README e presentazione fotografica — 6 ottobre
+
+Riscritto il README da zero in inglese, con enfasi su flusso fotografico, fluidità CPU/GPU, quattro motori RAW su macOS, sviluppo reversibile, colore/maschere, confronto, gestione locale ed export. Istruzioni di compilazione raccolte in un blocco espandibile; nessuna cronologia o roadmap nel testo di presentazione. Quattro nuove schermate reali (sviluppo, colore, confronto, griglia), UI inglese e scala 100% verificata con una quinta cattura delle impostazioni. Fotografie NPS di pubblico dominio con crediti in NOTICE, fonti e impronte nel [rapporto di cattura](reports/readme-showcase-macos-2026-10-06.json); nessuna fotografia privata pubblicata. Screenshot storici conservati.
+
+Catture da una copia temporanea del bundle finale, con identità Launch Services separata per evitare di chiudere la sessione dell'utente; nessuna modifica ai sorgenti applicativi. Identità di firma del processo mantenuta coerente con i servizi XPC, firma e prova dei due decoder superate. Bundle finale, libreria principale, preferenze e backup invariati nelle impronte confrontate; l'indice derivato dell'app aperta è escluso da questa attestazione. Collegamenti Markdown, immagini e whitespace verificati; nessuna nuova campagna di qualifica fotografica o prestazionale.
+
 ### Pulizia progetto e controllo pubblicazione — 6 ottobre
 
 Su richiesta del titolare, rimosse 196 cache derivate marcate `TrueRenderer disposable cache v1` e non in uso, quattro file Finder `.DS_Store` e gli artefatti di compilazione con `scripts/cargo-local.sh clean`. Dimensione locale da circa 62 a 11 GiB secondo `du` (valori arrotondati). Conservati app finale, sorgenti, corpus sintetico, rapporti, toolchain e dati durevoli; 156 impronte di app, libreria, preferenze e backup identiche prima/dopo. `dist/TrueRenderer.app` resta l'unica app e la firma è valida.

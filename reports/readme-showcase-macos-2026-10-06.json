@@ -1,0 +1,139 @@
+{
+  "application": "TrueRenderer",
+  "captured_at": "2026-10-06T16:24:26.891069+00:00",
+  "source_commit": "c538ad547c62da337fef8f5d9737f1d817df6758",
+  "language": "en",
+  "ui_scale_percent": 100,
+  "ui_scale_evidence": "reports/readme-2026-10-06/interface-settings.jpg",
+  "image_zoom": "Fit for published photograph views; UI scale is independent of image magnification",
+  "capture_method": "Native application window captures via computer-use screenshot API. JPEG bytes saved as returned, without cropping, compositing, retouching or resizing.",
+  "isolated_library": true,
+  "private_photographs_published": false,
+  "preview_quality": "Full for all four README illustrations; Standard in initial settings evidence",
+  "bundle": {
+    "production_path": "dist/TrueRenderer.app",
+    "production_binary_sha256": "f25957fe144559df797a391c9fbb0bd1e1f49fb8bc53e996d1d561b97c96ab92",
+    "capture_binary_sha256": "09d3a94a49c7114de7cd7d5a3f6eb7c872a8c31c70e17490547e66d93957e51e",
+    "capture_packaging": "Temporary copy of the production app. CFBundleIdentifier, CFBundleName and CFBundleDisplayName changed for separate UI automation. Re-signed ad hoc with original code-signing identifier it.truerenderer.prototype required by the unchanged XPC services. No source code changes or recompilation.",
+    "xpc_qualification": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-10-06T16:17:07.751152+00:00",
+      "bundle": "var/readme-showcase-2026-10-06/TrueRenderer Showcase.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "09d3a94a49c7114de7cd7d5a3f6eb7c872a8c31c70e17490547e66d93957e51e",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "ca04dbe461abea2c9eecd6d6f7688c387492e61cc8f8d5ab2e62df8dba89583a",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "0252a4c7ee76d94c78db15aaa053beff264f42fd633e78105ddd3545d09e6894"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "temporary_capture_bundle_removed": true
+  },
+  "screenshots": [
+    {
+      "path": "reports/readme-2026-10-06/colour.jpg",
+      "sha256": "10f5a241c64b6d4ffd82ddbed3a2a04955b452be94fa369b88a578a420a6ec95",
+      "bytes": 178184,
+      "format": "JPEG",
+      "width": 1224,
+      "height": 768,
+      "role": "README illustration"
+    },
+    {
+      "path": "reports/readme-2026-10-06/compare.jpg",
+      "sha256": "31a873c4c0733a42c387679bfeb16d5e49e43008a9f0d385879ee2e3f3143add",
+      "bytes": 176400,
+      "format": "JPEG",
+      "width": 1224,
+      "height": 768,
+      "role": "README illustration"
+    },
+    {
+      "path": "reports/readme-2026-10-06/develop.jpg",
+      "sha256": "05f623e824de8ff726300872b13e874e234b1466c7aaf7ed8e123af2f60cc1ec",
+      "bytes": 216882,
+      "format": "JPEG",
+      "width": 1224,
+      "height": 768,
+      "role": "README illustration"
+    },
+    {
+      "path": "reports/readme-2026-10-06/interface-settings.jpg",
+      "sha256": "6bbd55cea609c71d04568c7a2fcb1588ca4c405be2866ea4d238a602104619bc",
+      "bytes": 156405,
+      "format": "JPEG",
+      "width": 1199,
+      "height": 768,
+      "role": "UI language and scale evidence"
+    },
+    {
+      "path": "reports/readme-2026-10-06/library.jpg",
+      "sha256": "56b4f1acbcbb71489a0549ed030cad060d31bb04353dc9f46cf725352c7fbb57",
+      "bytes": 167990,
+      "format": "JPEG",
+      "width": 1224,
+      "height": 768,
+      "role": "README illustration"
+    }
+  ],
+  "photographs": [
+    {
+      "filename": "Grand Teton - Sunrise.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Grand_Teton_National_Park_%2833106145651%29.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Grand_Teton_National_Park_(33106145651).jpg",
+      "credit": "NPS / David Restivo",
+      "rights": "Public domain; NPS employee work, as documented by source",
+      "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "bytes": 12187974
+    },
+    {
+      "filename": "Grand Teton - Winter.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/2/24/Grand_Teton_in_Winter-NPS.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Grand_Teton_in_Winter-NPS.jpg",
+      "credit": "National Park Service",
+      "rights": "Public domain; NPS employee work, as documented by source",
+      "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "bytes": 2213627
+    },
+    {
+      "filename": "Avalanche Lake.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/3/34/Avalanche_Lake%2C_Glacier_National_Park.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Avalanche_Lake,_Glacier_National_Park.jpg",
+      "credit": "NPS / David Restivo",
+      "rights": "Public domain; NPS employee work, as documented by source",
+      "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "bytes": 15800943
+    },
+    {
+      "filename": "Zion - The Watchman.jpg",
+      "download_url": "https://npgallery.nps.gov/GetAsset/98B15EBA-155D-451F-6776104114F96789/original.jpg",
+      "source_page": "https://npgallery.nps.gov/AssetDetail/98b15eba-155d-451f-6776-104114f96789",
+      "credit": "NPS Photo",
+      "rights": "Public domain: Full Granting Rights, as documented by source",
+      "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "bytes": 411633
+    }
+  ],
+  "photo_adjustments": {
+    "Avalanche Lake.jpg": {
+      "contrast": 8,
+      "highlights": -12,
+      "shadows": 20,
+      "rendering": "PNG/TIFF sRGB16 export preview shown in Develop screenshot"
+    }
+  },
+  "verification": {
+    "all_four_published_images_visually_reviewed": true,
+    "english_and_100_percent_ui_verified_in_settings": true,
+    "historical_screenshots_preserved": true,
+    "production_bundle_library_preferences_backups_unchanged": true,
+    "derived_index_excluded_from_unchanged_claim": true,
+    "performance_or_photographic_qualification_claimed": false
+  }
+}
