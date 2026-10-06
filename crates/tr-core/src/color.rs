@@ -1,6 +1,7 @@
 //! Analytic SDR reference: encoded sRGB -> premultiplied linear Rec.2020.
 //! No clipping in the working space. Quantization/clipping only at display output.
 use anyhow::{Result, ensure};
+use rayon::prelude::*;
 
 pub type Pixel = [f32; 4];
 pub const MAX_PIXELS: usize = 67_108_864;
@@ -103,10 +104,30 @@ impl LinearImage {
         })
     }
     pub fn to_display(&self) -> Vec<u8> {
-        self.pixels
-            .iter()
-            .flat_map(|p| display_pixel(*p, 119.0 / 255.0))
-            .collect()
+        let mut output = vec![0; self.pixels.len() * 4];
+        self.map_display(&mut output, |p| display_pixel(p, 119. / 255.));
+        output
+    }
+    /// Keep display encoding off the UI thread and on the same bounded pool as
+    /// filtering. Each pixel retains the scalar reference arithmetic.
+    pub fn map_display<const N: usize>(
+        &self,
+        output: &mut [u8],
+        encode: impl Fn(Pixel) -> [u8; N] + Sync + Send,
+    ) {
+        assert_eq!(output.len(), self.pixels.len() * N);
+        if self.pixels.len() >= 32768 {
+            crate::compute::install(|| {
+                output
+                    .par_chunks_exact_mut(N)
+                    .zip(&self.pixels)
+                    .for_each(|(out, p)| out.copy_from_slice(&encode(*p)))
+            });
+        } else {
+            for (out, p) in output.as_chunks_mut::<N>().0.iter_mut().zip(&self.pixels) {
+                out.copy_from_slice(&encode(*p));
+            }
+        }
     }
     pub fn histogram(&self) -> [[u32; 256]; 3] {
         let mut bins = [[0; 256]; 3];
@@ -224,5 +245,30 @@ mod tests {
         assert!(LinearImage::new(u32::MAX, u32::MAX, vec![]).is_err());
         assert!(LinearImage::new(1, 1, vec![[f32::NAN; 4]]).is_err());
         assert!(LinearImage::new(1, 1, vec![[0., 0., 0., 2.]]).is_err());
+    }
+    #[test]
+    fn parallel_display_keeps_scalar_bytes_for_alpha_and_extended_rgb() {
+        let image = LinearImage::new(
+            257,
+            257,
+            (0..257 * 257)
+                .map(|i| {
+                    let a = (i % 17) as f32 / 16.;
+                    [
+                        ((i % 193) as f32 / 97. - 0.2) * a,
+                        (i % 251) as f32 / 233. * a,
+                        (i % 73) as f32 / 47. * a,
+                        a,
+                    ]
+                })
+                .collect(),
+        )
+        .unwrap();
+        let scalar: Vec<_> = image
+            .pixels
+            .iter()
+            .flat_map(|p| display_pixel(*p, 119. / 255.))
+            .collect();
+        assert_eq!(image.to_display(), scalar);
     }
 }

@@ -5,6 +5,8 @@
 /dist/
 /.codex/
 /.agents/
+/.aws/
+/.ssh/
 
 # Credentials and local environment; sample configuration may be shared.
 .env
@@ -14,6 +16,26 @@
 *.key
 *.p12
 *.pfx
+*.pem
+*.p8
+.netrc
+.pypirc
+
+# Generated app packages, including copies outside dist/.
+*.app/
+*.dSYM/
+*.dmg
+*.pkg
+
+# Camera originals stay local; only the generated decoder fixtures are source.
+*.[nN][eE][fF]
+*.[aA][rR][wW]
+*.[cC][rR]2
+*.[cC][rR]3
+*.[rR][aA][fF]
+*.[rR][wW]2
+*.[dD][nN][gG]
+!/crates/tr-worker/tests/fixtures/*.dng
 
 # Local databases, raw diagnostics and editor/runtime leftovers.
 .DS_Store

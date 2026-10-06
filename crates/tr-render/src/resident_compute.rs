@@ -50,6 +50,7 @@ pub struct GpuFilter {
     device: wgpu::Device,
     layout: wgpu::BindGroupLayout,
     pipelines: [wgpu::ComputePipeline; 3],
+    editing: crate::editing_compute::EditingCompute,
     sources: HashMap<(u64, u32, u32), (Arc<Source>, u64)>,
     clock: u64,
 }
@@ -118,11 +119,13 @@ impl GpuFilter {
                 cache: None,
             })
         });
+        let editing = crate::editing_compute::EditingCompute::new(&device);
         Self {
             format,
             device,
             layout,
             pipelines,
+            editing,
             sources: HashMap::new(),
             clock: 0,
         }
@@ -138,8 +141,33 @@ impl GpuFilter {
         gpu: &MemoryBudget,
         working: &mut Lease,
     ) -> Result<GpuFrame> {
+        self.render_edit(image, region, memory, gpu, working, None)
+    }
+    pub fn render_edit(
+        &mut self,
+        image: &ImageLevels,
+        region: Region,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        working: &mut Lease,
+        edit: Option<&crate::live_edit::LiveEdit>,
+    ) -> Result<GpuFrame> {
         self.clock += 1;
-        let (level, region, opaque) = image.render_input(region)?;
+        let (level, region, opaque) = if let Some(edit) = edit {
+            ensure!(edit.gpu_supported(), "Nodo editing CPU");
+            let level = &image.levels()[edit.source_index(image)];
+            (
+                level,
+                crate::live_edit::scaled_region(
+                    region,
+                    [level.width, level.height],
+                    image.source_size(),
+                ),
+                level.pixels.iter().all(|p| p[3] == 1.),
+            )
+        } else {
+            image.render_input(region)?
+        };
         let source_bytes = level.pixels.len() as u64 * 16;
         ensure!(
             source_bytes <= self.device.limits().max_storage_buffer_binding_size,
@@ -167,7 +195,12 @@ impl GpuFilter {
         let scratch_bytes = output_bytes
             + horizontal_bytes
             + (xr.len() + xt.len() + yr.len() + yt.len()) as u64
-            + 32;
+            + 32
+            + if edit.is_some() {
+                source_bytes + 52 * 16
+            } else {
+                0
+            };
         ensure!(
             working.bytes()
                 >= scratch_bytes
@@ -279,6 +312,7 @@ impl GpuFilter {
         };
         let horizontal = buffer(horizontal_bytes);
         let output = buffer(output_bytes);
+        let edited = edit.map(|_| buffer(source_bytes));
         let xr = storage(&xr);
         let xt = storage(&xt);
         let yr = storage(&yr);
@@ -302,7 +336,7 @@ impl GpuFilter {
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
         let buffers = [
             &uniform,
-            &source.buffer,
+            edited.as_ref().unwrap_or(&source.buffer),
             &horizontal,
             &output,
             &xr,
@@ -330,6 +364,16 @@ impl GpuFilter {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+        if let Some(edit) = edit {
+            self.editing.encode(
+                &self.device,
+                &mut encoder,
+                &source.buffer,
+                edited.as_ref().unwrap(),
+                edit,
+                level.pixels.len() as u32,
+            );
+        }
         for (pipeline, height) in self
             .pipelines
             .iter()

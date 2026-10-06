@@ -539,7 +539,17 @@ impl TrueRenderer {
                             .as_ref()
                             .or_else(|| e.loaded.as_ref().map(|s| &s.recipe))
                     })
-                    .map_or(Default::default(), |r| r.raw_wb)
+                    .map_or(Default::default(), |r| {
+                        if self.edit_interactive(&item.id) && !self.output_proof_for(&item.id) {
+                            self.editing
+                                .raw_wb_anchor
+                                .get(&item.id)
+                                .copied()
+                                .unwrap_or(r.raw_wb)
+                        } else {
+                            r.raw_wb
+                        }
+                    })
             },
             raw_engine: self
                 .editing
@@ -567,7 +577,11 @@ impl TrueRenderer {
             .filter(|((id, cached_request), _)| {
                 id == &item.id
                     && cached_request.raw_engine == request.raw_engine
-                    && cached_request.raw_wb == request.raw_wb
+                    && (cached_request.raw_wb == request.raw_wb
+                        || (!self.editing.show_original
+                            && !self.output_proof_for(&item.id)
+                            && self.editing.raw_wb_anchor.get(&item.id)
+                                == Some(&cached_request.raw_wb)))
             })
             .max_by_key(|(_, cached)| cached.pyramid.source().width)
             .map(|(key, _)| key.clone())
@@ -2993,32 +3007,52 @@ impl TrueRenderer {
                 )
             })
         {
-            if completeness == tr_core::preview::Completeness::Refining {
-                ui.label(
-                    if self.state.transform.zoom == Some(1.)
-                        && key.1.quality == PreviewQuality::Full
-                    {
-                        lang.text("Preparazione dettaglio 1:1…")
-                    } else {
-                        lang.text("Raffinamento anteprima…")
-                    },
-                );
-            } else {
-                if key.1.quality == PreviewQuality::Standard && base > 0 {
-                    ui.label(localized_format!(
-                        lang,
-                        "Dettaglio limitato a {} × {} pixel",
-                        "Detail limited to {} × {} pixels",
-                        source.source().width,
-                        source.source().height
-                    ));
+            let detail_status = if completeness == tr_core::preview::Completeness::Refining {
+                if self.state.transform.zoom == Some(1.) && key.1.quality == PreviewQuality::Full {
+                    lang.text("Preparazione dettaglio 1:1…").to_owned()
+                } else {
+                    lang.text("Raffinamento anteprima…").to_owned()
                 }
+            } else if key.1.quality == PreviewQuality::Standard && base > 0 {
+                localized_format!(
+                    lang,
+                    "Dettaglio limitato a {} × {} pixel",
+                    "Detail limited to {} × {} pixels",
+                    source.source().width,
+                    source.source().height
+                )
+            } else {
+                String::new()
+            };
+            // A native mip arriving during a gesture must not resize the ROI:
+            // otherwise the retained frame leaves an uncovered strip at 1:1.
+            ui.add_sized(
+                [
+                    ui.available_width(),
+                    ui.text_style_height(&egui::TextStyle::Body),
+                ],
+                egui::Label::new(detail_status).truncate(),
+            );
+            let input_wb = selected.as_ref().unwrap().1.raw_wb;
+            let live_edit = self.live_edit_for(&item.id, &digest, &source, input_wb);
+            if !self.edit_interactive(&item.id)
+                && self
+                    .editing
+                    .entries
+                    .get(&item.id)
+                    .and_then(|e| e.draft.as_ref())
+                    .is_some_and(|r| r.raw_wb == input_wb)
+            {
+                self.editing.raw_wb_anchor.remove(&item.id);
             }
-            let image = if source.scientific() {
+            let wb_provisional = live_edit.as_ref().is_some_and(|e| e.input_gains != [1.; 3]);
+            let image = if source.scientific() || live_edit.is_some() {
                 Some(source.clone())
             } else {
                 self.edited_preview(&item.id, &digest, source.clone())
             };
+            let awaiting_edit = image.is_none();
+            let image = image.or_else(|| self.progressive_edit_preview(&item.id, source.id()));
             let edited = self
                 .editing
                 .entries
@@ -3026,6 +3060,7 @@ impl TrueRenderer {
                 .and_then(|e| e.draft.as_ref())
                 .is_some_and(|r| !r.is_neutral());
             let proof = self.output_proof_for(&item.id) && !self.editing.show_original;
+            let provisional = live_edit.is_some() || (awaiting_edit && (edited || proof));
             let pending = image.is_none() && (edited || proof);
             // Stable across RGB drafts; incompatible sources and display modes
             // have separate lanes and can never borrow these retained pixels.
@@ -3035,15 +3070,22 @@ impl TrueRenderer {
                 item.digest,
                 digest,
                 key.1.raw_engine,
-                key.1.raw_wb,
+                self.editing
+                    .display_wb
+                    .get(&item.id)
+                    .copied()
+                    .unwrap_or(key.1.raw_wb),
                 source_size,
                 self.editing.show_original
             );
-            let updating = pending
+            let updating = provisional
+                || pending
                 || image
                     .as_ref()
                     .is_some_and(|image| !self.presenter.source_is_current(&lane, image.id()));
-            let description = if proof {
+            let description = if wb_provisional {
+                lang.text("WB RAW provvisorio · raffinamento nativo al rilascio")
+            } else if proof {
                 if updating {
                     lang.text("Preparazione anteprima export dalla sorgente nativa…")
                 } else {
@@ -3076,19 +3118,33 @@ impl TrueRenderer {
             if let Some(error) = self.edited_preview_error(&item.id) {
                 ui.colored_label(AMBER, error);
             }
-            let sample_from_current_render =
-                !source.scientific() && !self.editing.show_original && !proof && image.is_some();
+            if wb_provisional
+                && let Some(error) = self.errors.get(&format!("{}:{:?}", item.id, key.1))
+            {
+                ui.colored_label(AMBER, lang.message(error));
+            }
+            let sample_from_current_render = !source.scientific()
+                && !self.editing.show_original
+                && !proof
+                && image.is_some()
+                && !provisional;
             let image = image.unwrap_or(source);
             let editing_gesture = !image.scientific() && self.photo_gesture_active(&item.id);
             let pending_size = pending.then(|| self.edited_source_size(&item.id, source_size));
-            let (response, sample) = tr_render::viewport(
+            let (response, sample) = tr_render::viewport_with_options(
                 ui,
                 &mut self.presenter,
                 &image,
                 &mut self.state.transform,
                 &lane,
-                pending_size,
-                editing_gesture,
+                tr_render::ViewportOptions {
+                    pending_size,
+                    editing_mask: editing_gesture,
+                    progressive: !image.scientific(),
+                    provisional,
+                    live_edit,
+                    photographic: edited || proof,
+                },
             );
             if !image.scientific() {
                 self.local_mask_interaction(ui, item, &response, source_size);
@@ -4711,11 +4767,14 @@ mod settings_regressions {
                 std::thread::sleep(Duration::from_millis(5));
             }
         };
+        app.apply_edit_draft(
+            &item.id,
+            app.editing.entries[&item.id].draft.clone().unwrap(),
+        );
         let quick = wait(&mut app);
         assert_eq!(quick.base_level(), 1);
         assert_eq!(quick.source().pixels[0][0], 0.5);
-        app.editing.verify_final = Some(item.id.clone());
-        app.clear_edit_preview();
+        std::thread::sleep(Duration::from_millis(140));
         let final_image = wait(&mut app);
         assert_eq!(final_image.base_level(), 0);
         assert_eq!(final_image.source().pixels[0], [0.5, 0.25, 1., 1.]);

@@ -41,10 +41,13 @@ impl Color {
         }
         Ok(())
     }
-    pub fn apply(&self, mut rgb: [f32; 3]) -> [f32; 3] {
+    pub fn apply(&self, rgb: [f32; 3]) -> [f32; 3] {
         if *self == Self::default() {
             return rgb;
         }
+        self.apply_active(rgb)
+    }
+    pub(super) fn apply_active(&self, mut rgb: [f32; 3]) -> [f32; 3] {
         let y = luma(rgb);
         let (h, chroma) = hue_chroma(rgb);
         if chroma > 1e-8 {

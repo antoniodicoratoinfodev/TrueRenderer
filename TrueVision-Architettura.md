@@ -5004,6 +5004,8 @@ La differenza iniziale fra le qualità riguarda risoluzione e percorso di svilup
 6. Un risultato Standard non soddisfa mai una richiesta Full. Può soltanto coprire temporaneamente la stessa regione, dichiarando il raffinamento.
 7. Istogramma e campionatore indicano lo stadio analizzato. Un istogramma del derivato non viene presentato come istogramma sorgente; il dettaglio tecnico può essere recuperato separatamente dai pixel pesanti.
 
+Durante le regolazioni fotografiche il viewer può mostrare una bozza ridotta e progressiva, con raffinamento al termine del gesto secondo Standard/Piena. La qualità globale non cambia. Il percorso GPU/CPU e l’eventuale ponte provvisorio del WB nativo seguono il [contratto dello sviluppo fotografico](docs/progetto-sviluppo-fotografico.md#prestazioni-e-parità-con-lesportazione); questi pixel transitori non qualificano una richiesta come definitiva e non entrano nella cache SSD.
+
 ##### 2.3 RAW e fedeltà
 
 La prima implementazione mantiene la scelta di ADR 0004: **nessun ripiego silenzioso sul JPEG incorporato nel RAW**. Standard significa inizialmente sviluppo ridotto o derivato dello sviluppo TrueRenderer. Scala, decoder, ricetta e dimensioni effettive sono registrati nella provenienza.

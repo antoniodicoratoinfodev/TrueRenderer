@@ -1,5 +1,7 @@
 //! Linear-light CPU filtering at the exact backing resolution; the GPU presents 1:1.
 pub mod diagnostic;
+mod editing_compute;
+pub mod live_edit;
 pub mod presenter;
 pub mod preview_compute;
 pub mod resident_compute;
@@ -44,10 +46,54 @@ pub fn viewport(
     pending_size: Option<[u32; 2]>,
     editing_mask: bool,
 ) -> (egui::Response, Option<Sample>) {
+    viewport_with_options(
+        ui,
+        presenter,
+        image,
+        transform,
+        id,
+        ViewportOptions {
+            pending_size,
+            editing_mask,
+            ..Default::default()
+        },
+    )
+}
+
+#[derive(Default)]
+pub struct ViewportOptions {
+    pub pending_size: Option<[u32; 2]>,
+    pub editing_mask: bool,
+    pub progressive: bool,
+    pub provisional: bool,
+    pub live_edit: Option<live_edit::LiveEdit>,
+    pub photographic: bool,
+}
+
+pub fn viewport_with_options(
+    ui: &mut egui::Ui,
+    presenter: &mut Presenter,
+    image: &Arc<tr_core::provider::ImageLevels>,
+    transform: &mut ViewTransform,
+    id: &str,
+    options: ViewportOptions,
+) -> (egui::Response, Option<Sample>) {
+    let ViewportOptions {
+        pending_size,
+        editing_mask,
+        progressive,
+        provisional,
+        live_edit,
+        photographic,
+    } = options;
     let raster = image.source();
     // During editing, `image` is the unedited source used only as an identity.
     // Keep the draft's geometry while presenting the retained edited frame.
-    let [source_width, source_height] = pending_size.unwrap_or_else(|| image.source_size());
+    let [source_width, source_height] = pending_size.unwrap_or_else(|| {
+        live_edit
+            .as_ref()
+            .map_or(image.source_size(), |edit| edit.source_size(image))
+    });
     let available = ui.available_size().max(Vec2::splat(20.0));
     let (rect, _) = ui.allocate_exact_size(available, Sense::hover());
     let response = ui.interact(rect, ui.id().with(id), Sense::click_and_drag());
@@ -106,8 +152,23 @@ pub fn viewport(
         if pending_size.is_some() {
             presenter.paint_pending(ui, id, image.id(), rect, region);
         } else {
-            presenter.paint(ui, id.to_owned(), image, rect, region);
-            current = presenter.is_current(id, image.id(), region);
+            if let Some(edit) = &live_edit {
+                presenter.paint_edit(ui, id.to_owned(), image, rect, region, edit.clone());
+            } else if progressive {
+                presenter.paint_progressive(
+                    ui,
+                    id.to_owned(),
+                    image,
+                    rect,
+                    region,
+                    provisional,
+                    photographic,
+                );
+            } else {
+                presenter.paint(ui, id.to_owned(), image, rect, region);
+            }
+            current =
+                !provisional && live_edit.is_none() && presenter.is_current(id, image.id(), region);
         }
     }
     let sample = response

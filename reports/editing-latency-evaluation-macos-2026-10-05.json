@@ -1,0 +1,5518 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-05",
+  "recorded_at": "2026-10-05T20:18:39.767828+00:00",
+  "assessment_completed": true,
+  "fluidity_qualified": false,
+  "runtime_changed": false,
+  "source_commit": "78e9ad1b7eb82026b3951f382671bc6d4a912255",
+  "scope": "Assessment of continuous slider editing. Current-source CPU-stage measurements and code review; historical native continuity reports reanalysed, not rerun. No optimized application or bundle delivered.",
+  "test_environment": {
+    "cpu": "Apple M4",
+    "logical_cpus": 10,
+    "physical_memory_bytes": 17179869184,
+    "os": "macOS 27.0.1",
+    "power_source": "AC power",
+    "cargo": "1.98.1 (797e8a9bc 2026-08-05)",
+    "build": "release (opt-level 3, thin LTO)",
+    "compute_threads": 9,
+    "background_load": "Not controlled; exploratory stage timings, not a statistically qualified interactive benchmark."
+  },
+  "source_files_sha256": {
+    "Cargo.lock": "0adc016f51c5f745f4aaef72b80e1bbf60854d696cb2d08a0ab522605d6a33cd",
+    "crates/tr-core/examples/profile-edit-preview.rs": "a46b782634c400ce5f989f095ba2a09b0ac43577b364f2e9e298b918634f450c",
+    "apps/desktop/src/ui.rs": "744aefa2782b5517f0c21001e037e2208313711e1491899970a88f0bba3c49f6",
+    "apps/desktop/src/ui/editing.rs": "c9fd59e1440516b9420398ab48e103c9efd73602699e45b5517cd0e52e07a3ac",
+    "apps/desktop/src/ui/editing/continuity_probe.rs": "3b3a3c32b9aba0c8f1eb5cbce5308e97dcee63504ae0bf28cf56048a3eefd4ee",
+    "crates/tr-core/src/editing.rs": "7acd014c11542cbbd7d7d826a54951f45b4742e40b1c3ab4d9e00db299c48dfb",
+    "crates/tr-core/src/editing/color.rs": "7c46aa31d7a5cf34f252f0cd2a338c7c4b5e9b39e1a05da9e147f634635155df",
+    "crates/tr-core/src/editing/detail.rs": "1d191757d8bbb27a7acc06a48ba22216d6e0ea19c204559878b77a54b6097393",
+    "crates/tr-core/src/editing/geometry.rs": "6ffcd15ee6029d69aa50e1e15b8297d6c47e5480c935d221aff508714a7ed6a0",
+    "crates/tr-core/src/editing/masks.rs": "4f783905db8d2f2e4f1a28f7789358550c58a1caa5f92d9dfddd539bcf53f779",
+    "crates/tr-core/src/provider.rs": "97f97ab355af61e9363a8756dd952cec2e3027345437ed520d64fdbd14bf294e",
+    "crates/tr-core/src/resample.rs": "17f7ae51d392e792d413dcd17c53380902046e6e5e7def55423e67426787e0e3",
+    "crates/tr-core/src/compute.rs": "18b435bf545f54c8d78141bff73728dca96c57f48488b574ade61d1a7c90a57d",
+    "crates/tr-render/src/presenter.rs": "c1e598231563c9477b4c577163d975bfbebf2aaed4edb4abdbe7b1a3ea07c3eb",
+    "crates/tr-render/src/resident_compute.rs": "844a0c3bb47a2f1bd9303d7e25be0cd4828140e0be358867e4be949cc2b1731f",
+    "crates/tr-worker/src/mosaic.rs": "9ca3336acee8c15cd894360de02355ce1df25a0bd3ea8c5df4caf17de992564d",
+    "crates/tr-worker/src/libraw.rs": "76d088ccbf1d8dff195aab23c2e0f3644835d482848119d9a6134c8c3e4fa123",
+    "native/libraw/tr_libraw.cpp": "d8a13696f9672fdc496bc98008f6b6b4b3fb26f3482d7c99c8fd7220d6e0bdf1",
+    "native/macos/image_decoder.m": "5860e87d93f9ed44e69e1109eb30de79172d2aab0eace784b90fd91680d33ee7"
+  },
+  "commands": {
+    "profile": "scripts/cargo-local.sh run --release -p tr-core --example profile-edit-preview -- var/edit-latency-evaluation-2026-10-05/cpu-stages.json 20",
+    "format": "scripts/cargo-local.sh fmt --all -- --check",
+    "clippy": "scripts/cargo-local.sh clippy -p tr-core --example profile-edit-preview -- -D warnings",
+    "documentation": "python3 scripts/check-doc-links.py"
+  },
+  "verification": {
+    "release_build_and_profile_run": true,
+    "clippy_warnings_denied": true,
+    "profile_shape_and_sample_counts": true,
+    "format_check": true,
+    "local_document_links": {
+      "checked": 384,
+      "failures": 0
+    },
+    "diff_whitespace": true,
+    "application_suite_rerun": false,
+    "native_ui_rerun": false,
+    "xpc_rerun": false,
+    "reason": "Only a standalone diagnostic and assessment records changed; production application, decoder and bundle untouched."
+  },
+  "findings": [
+    {
+      "id": "frame_delivery_starvation",
+      "evidence": [
+        "apps/desktop/src/ui/editing.rs: poll_edit_preview, apply_edit_draft, edited_preview",
+        "apps/desktop/src/ui.rs: eframe::App::ui (poll -> inspector -> viewer)",
+        "crates/tr-render/src/presenter.rs: supersede_sources"
+      ],
+      "observation": "Completed edit jobs must exactly match the latest draft; any new slider change removes an accepted preview and revokes its presentation work before the central viewer draws. A retained texture prevents blank frames but can remain unchanged throughout a gesture.",
+      "consequence": "Shorter CPU kernels alone cannot guarantee progress while new drafts arrive. Requested, computing and displayed revisions need separate lifetimes, with monotonic provisional presentation within the same valid interaction."
+    },
+    {
+      "id": "shared_cpu_graph",
+      "evidence": [
+        "crates/tr-core/src/editing.rs: apply_preview",
+        "crates/tr-core/src/editing/detail.rs",
+        "crates/tr-render/src/resident_compute.rs: GpuFilter"
+      ],
+      "observation": "Photographic edits run CPU pixel/filter loops, clone input and rebuild a complete mip tail. The viewer GPU receives edited pixels for resampling/display, keyed by the new image ID. Ordinary editing selects a <=1024-pixel mip in either Standard or Full; explicit final/output proof selects native input.",
+      "engine_scope": "Shared downstream of Apple, LibRaw bilinear, LibRaw AHD and TrueRenderer development. The microbenchmark uses synthetic working pixels, so it neither executes nor ranks those decoders."
+    },
+    {
+      "id": "native_wb_upstream",
+      "evidence": [
+        "apps/desktop/src/ui.rs: preview_request_for_mode",
+        "native/macos/image_decoder.m: tr_image_open_wb",
+        "native/libraw/tr_libraw.cpp: tr_libraw_develop_wb",
+        "crates/tr-worker/src/mosaic.rs: develop_with_wb"
+      ],
+      "observation": "A changed native RAW WB is a new decode identity. Apple selects full native scale with draft disabled; LibRaw reopens/unpacks/processes; TrueRenderer reads the mosaic and develops it for the new gains. Cached source snapshots do not constitute a retained developed sensor session.",
+      "measurement": "No new decode or native-WB latency campaign was run."
+    }
+  ],
+  "cpu_stage_profile_sha256": "fc8fe4ad2cbd1e8a43346515ed26c8d0d958753c32595725449ffb56671569bd",
+  "cpu_stage_profile": {
+    "arch": "aarch64",
+    "available_parallelism": 10,
+    "cases": [
+      {
+        "clone": {
+          "max_ms": 0.031124999999999996,
+          "median_ms": 0.023,
+          "min_ms": 0.019625,
+          "p95_ms": null,
+          "samples_ms": [
+            0.026375,
+            0.028125,
+            0.0205,
+            0.020125,
+            0.021625000000000002,
+            0.020999999999999998,
+            0.023459,
+            0.026,
+            0.031124999999999996,
+            0.025332999999999998,
+            0.02075,
+            0.021958,
+            0.021458,
+            0.028792,
+            0.023541,
+            0.026250000000000002,
+            0.022,
+            0.022541,
+            0.019625,
+            0.024083
+          ]
+        },
+        "edit": {
+          "max_ms": 0.434917,
+          "median_ms": 0.403667,
+          "min_ms": 0.374625,
+          "p95_ms": null,
+          "samples_ms": [
+            0.403084,
+            0.423541,
+            0.40425,
+            0.37962500000000005,
+            0.396167,
+            0.399041,
+            0.414041,
+            0.402708,
+            0.434917,
+            0.401167,
+            0.405333,
+            0.410334,
+            0.374625,
+            0.414458,
+            0.398167,
+            0.405625,
+            0.386875,
+            0.401375,
+            0.406416,
+            0.43124999999999997
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 1.675375,
+          "median_ms": 1.549896,
+          "min_ms": 1.505208,
+          "p95_ms": null,
+          "samples_ms": [
+            1.5805,
+            1.622584,
+            1.505208,
+            1.5510000000000002,
+            1.561875,
+            1.5234999999999999,
+            1.588916,
+            1.675375,
+            1.586875,
+            1.522792,
+            1.5644159999999998,
+            1.528208,
+            1.5206250000000001,
+            1.5096669999999999,
+            1.506083,
+            1.548792,
+            1.540708,
+            1.527666,
+            1.629417,
+            1.6241249999999998
+          ]
+        },
+        "mip_base": 4,
+        "name": "exposure",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.024416,
+          "median_ms": 0.023583,
+          "min_ms": 0.021542000000000002,
+          "p95_ms": null,
+          "samples_ms": [
+            0.024416,
+            0.023667,
+            0.023542,
+            0.023542,
+            0.023583,
+            0.023584,
+            0.023584,
+            0.02175,
+            0.022041,
+            0.023583,
+            0.023584,
+            0.023541,
+            0.021625000000000002,
+            0.021625000000000002,
+            0.023583,
+            0.023583,
+            0.021542000000000002,
+            0.023584,
+            0.023584,
+            0.023333
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.838084,
+          "median_ms": 0.7091665,
+          "min_ms": 0.6876249999999999,
+          "p95_ms": null,
+          "samples_ms": [
+            0.838084,
+            0.705083,
+            0.7006249999999999,
+            0.704917,
+            0.690083,
+            0.708458,
+            0.709875,
+            0.7245,
+            0.718167,
+            0.74225,
+            0.6876249999999999,
+            0.702584,
+            0.714709,
+            0.693417,
+            0.706584,
+            0.7385,
+            0.695292,
+            0.72425,
+            0.740833,
+            0.752375
+          ]
+        },
+        "recipe": {
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.5,
+          "highlights": 0.0,
+          "process_version": 1,
+          "raw_engine": "TrueRenderer",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 2029632,
+        "size": [
+          377,
+          252
+        ],
+        "worker_total": {
+          "max_ms": 1.291959,
+          "median_ms": 1.164688,
+          "min_ms": 1.1257089999999998,
+          "p95_ms": null,
+          "samples_ms": [
+            1.291959,
+            1.1804160000000001,
+            1.148917,
+            1.128209,
+            1.1314579999999999,
+            1.152083,
+            1.170959,
+            1.174958,
+            1.20625,
+            1.192333,
+            1.137292,
+            1.1584169999999998,
+            1.132417,
+            1.158292,
+            1.151875,
+            1.1939579999999999,
+            1.1257089999999998,
+            1.17175,
+            1.190458,
+            1.231041
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.029708000000000002,
+          "median_ms": 0.023229,
+          "min_ms": 0.021667000000000002,
+          "p95_ms": null,
+          "samples_ms": [
+            0.023458,
+            0.022541,
+            0.022708,
+            0.025125,
+            0.02325,
+            0.023417,
+            0.021667000000000002,
+            0.0245,
+            0.026875,
+            0.02275,
+            0.02275,
+            0.023917,
+            0.022291000000000002,
+            0.025375,
+            0.02225,
+            0.022,
+            0.023208,
+            0.023875,
+            0.022208000000000002,
+            0.029708000000000002
+          ]
+        },
+        "edit": {
+          "max_ms": 0.906833,
+          "median_ms": 0.7510414999999999,
+          "min_ms": 0.74375,
+          "p95_ms": null,
+          "samples_ms": [
+            0.748042,
+            0.744375,
+            0.752875,
+            0.749459,
+            0.747541,
+            0.7595,
+            0.7505,
+            0.7495419999999999,
+            0.75575,
+            0.7764580000000001,
+            0.7649999999999999,
+            0.752458,
+            0.744792,
+            0.751583,
+            0.7489169999999999,
+            0.74375,
+            0.7545,
+            0.7480829999999999,
+            0.759959,
+            0.906833
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 1.7195,
+          "median_ms": 1.6258750000000002,
+          "min_ms": 1.621042,
+          "p95_ms": null,
+          "samples_ms": [
+            1.622417,
+            1.62225,
+            1.62725,
+            1.622333,
+            1.62725,
+            1.622417,
+            1.627417,
+            1.630292,
+            1.621042,
+            1.633125,
+            1.632,
+            1.621458,
+            1.6314579999999999,
+            1.6238750000000002,
+            1.622792,
+            1.621583,
+            1.651667,
+            1.6254170000000001,
+            1.7195,
+            1.626333
+          ]
+        },
+        "mip_base": 4,
+        "name": "exposure_with_neutral_advanced",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.023958999999999998,
+          "median_ms": 0.0232085,
+          "min_ms": 0.023125,
+          "p95_ms": null,
+          "samples_ms": [
+            0.023291000000000003,
+            0.023209,
+            0.02325,
+            0.02325,
+            0.023209,
+            0.023167,
+            0.023208,
+            0.023208,
+            0.023209,
+            0.023125,
+            0.023875,
+            0.023542,
+            0.023208,
+            0.023125,
+            0.023208,
+            0.023208,
+            0.02325,
+            0.023208,
+            0.023166000000000003,
+            0.023958999999999998
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.7771250000000001,
+          "median_ms": 0.7391045,
+          "min_ms": 0.715917,
+          "p95_ms": null,
+          "samples_ms": [
+            0.7395,
+            0.73025,
+            0.759125,
+            0.72575,
+            0.7515,
+            0.741333,
+            0.775167,
+            0.7771250000000001,
+            0.7364160000000001,
+            0.75225,
+            0.7387090000000001,
+            0.7315,
+            0.715917,
+            0.742375,
+            0.717,
+            0.74825,
+            0.73575,
+            0.7331669999999999,
+            0.7363339999999999,
+            0.75825
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.5,
+          "highlights": 0.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 2029632,
+        "size": [
+          377,
+          252
+        ],
+        "worker_total": {
+          "max_ms": 1.71875,
+          "median_ms": 1.5419585,
+          "min_ms": 1.506208,
+          "p95_ms": null,
+          "samples_ms": [
+            1.5342909999999998,
+            1.520375,
+            1.557958,
+            1.5235839999999998,
+            1.5455,
+            1.547417,
+            1.570542,
+            1.574375,
+            1.54225,
+            1.574583,
+            1.550334,
+            1.531417,
+            1.506208,
+            1.542458,
+            1.511375,
+            1.537208,
+            1.536708,
+            1.528333,
+            1.5416670000000001,
+            1.71875
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.029875000000000002,
+          "median_ms": 0.024125,
+          "min_ms": 0.02175,
+          "p95_ms": null,
+          "samples_ms": [
+            0.024875,
+            0.022792,
+            0.022041,
+            0.025375,
+            0.022333000000000002,
+            0.027292,
+            0.029583,
+            0.023292,
+            0.025625,
+            0.025167000000000002,
+            0.029875000000000002,
+            0.023458,
+            0.024624999999999998,
+            0.025209,
+            0.023666,
+            0.022291000000000002,
+            0.024584,
+            0.02175,
+            0.022875,
+            0.023334
+          ]
+        },
+        "edit": {
+          "max_ms": 3.324083,
+          "median_ms": 3.078396,
+          "min_ms": 3.016459,
+          "p95_ms": null,
+          "samples_ms": [
+            3.0733330000000003,
+            3.08175,
+            3.0665,
+            3.113167,
+            3.07425,
+            3.324083,
+            3.097917,
+            3.097208,
+            3.087625,
+            3.228041,
+            3.066334,
+            3.0418749999999997,
+            3.019958,
+            3.03825,
+            3.016459,
+            3.117292,
+            3.075583,
+            3.108584,
+            3.0812090000000003,
+            3.07475
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 1.676375,
+          "median_ms": 1.6244165000000002,
+          "min_ms": 1.6120830000000002,
+          "p95_ms": null,
+          "samples_ms": [
+            1.627458,
+            1.6120830000000002,
+            1.637792,
+            1.6496659999999999,
+            1.676375,
+            1.642209,
+            1.6303750000000001,
+            1.645459,
+            1.6406669999999999,
+            1.6124589999999999,
+            1.6120830000000002,
+            1.634917,
+            1.614625,
+            1.615625,
+            1.621375,
+            1.620125,
+            1.615458,
+            1.613917,
+            1.632291,
+            1.614417
+          ]
+        },
+        "mip_base": 4,
+        "name": "tone_color_curve",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.026959,
+          "median_ms": 0.02325,
+          "min_ms": 0.023167,
+          "p95_ms": null,
+          "samples_ms": [
+            0.023334,
+            0.02325,
+            0.023334,
+            0.023291000000000003,
+            0.025332999999999998,
+            0.02325,
+            0.02325,
+            0.023167,
+            0.023208,
+            0.026959,
+            0.023375,
+            0.023292,
+            0.02325,
+            0.023208,
+            0.023291000000000003,
+            0.023208,
+            0.02325,
+            0.02325,
+            0.02325,
+            0.0235
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.783208,
+          "median_ms": 0.7284790000000001,
+          "min_ms": 0.7022079999999999,
+          "p95_ms": null,
+          "samples_ms": [
+            0.73425,
+            0.783208,
+            0.741708,
+            0.727959,
+            0.725292,
+            0.7282080000000001,
+            0.763166,
+            0.7022079999999999,
+            0.72875,
+            0.7364160000000001,
+            0.752375,
+            0.7526660000000001,
+            0.7256250000000001,
+            0.716,
+            0.712292,
+            0.724625,
+            0.7476670000000001,
+            0.725958,
+            0.7112499999999999,
+            0.7630830000000001
+          ]
+        },
+        "recipe": {
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 2,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 2029632,
+        "size": [
+          377,
+          252
+        ],
+        "worker_total": {
+          "max_ms": 4.102833,
+          "median_ms": 3.868146,
+          "min_ms": 3.775708,
+          "p95_ms": null,
+          "samples_ms": [
+            3.8557919999999997,
+            3.9110000000000005,
+            3.853583,
+            3.889792,
+            3.847208,
+            4.102833,
+            3.913916,
+            3.845875,
+            3.865208,
+            4.016583,
+            3.871959,
+            3.841291,
+            3.7934579999999998,
+            3.802667,
+            3.775708,
+            3.887416,
+            3.8710839999999997,
+            3.8795420000000003,
+            3.838584,
+            3.884667
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.03175,
+          "median_ms": 0.025312499999999998,
+          "min_ms": 0.023,
+          "p95_ms": null,
+          "samples_ms": [
+            0.027167,
+            0.023833,
+            0.0235,
+            0.029124999999999998,
+            0.026167,
+            0.029625,
+            0.025875,
+            0.029124999999999998,
+            0.0285,
+            0.031416,
+            0.023375,
+            0.024749999999999998,
+            0.0235,
+            0.023,
+            0.024,
+            0.024083,
+            0.023458,
+            0.023125,
+            0.03175,
+            0.031542
+          ]
+        },
+        "edit": {
+          "max_ms": 7.1097920000000006,
+          "median_ms": 6.5606045,
+          "min_ms": 6.449458,
+          "p95_ms": null,
+          "samples_ms": [
+            6.494916,
+            6.470167,
+            6.823875,
+            6.650167000000001,
+            6.871375,
+            6.618708,
+            6.833708,
+            6.599875,
+            6.73325,
+            6.52075,
+            6.475334,
+            6.478542,
+            6.459625,
+            6.4515839999999995,
+            6.449458,
+            6.507042,
+            6.521334,
+            6.647042,
+            6.660374999999999,
+            7.1097920000000006
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 1.858167,
+          "median_ms": 1.6257915,
+          "min_ms": 1.609208,
+          "p95_ms": null,
+          "samples_ms": [
+            1.627083,
+            1.61075,
+            1.614333,
+            1.649875,
+            1.6802080000000001,
+            1.640125,
+            1.633459,
+            1.68525,
+            1.63525,
+            1.616375,
+            1.6145420000000001,
+            1.6245,
+            1.6126669999999999,
+            1.613417,
+            1.614625,
+            1.6120839999999999,
+            1.6576250000000001,
+            1.858167,
+            1.667125,
+            1.609208
+          ]
+        },
+        "mip_base": 4,
+        "name": "tone_and_detail",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.028125,
+          "median_ms": 0.02325,
+          "min_ms": 0.023167,
+          "p95_ms": null,
+          "samples_ms": [
+            0.02325,
+            0.023292,
+            0.02325,
+            0.024417,
+            0.028125,
+            0.023208,
+            0.023375,
+            0.023333,
+            0.023334,
+            0.023334,
+            0.023208,
+            0.02325,
+            0.023167,
+            0.023208,
+            0.02325,
+            0.02325,
+            0.023208,
+            0.023916,
+            0.023208,
+            0.027291
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.7928339999999999,
+          "median_ms": 0.7386665000000001,
+          "min_ms": 0.7126250000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            0.770709,
+            0.7388330000000001,
+            0.746292,
+            0.759541,
+            0.750625,
+            0.755542,
+            0.732833,
+            0.7445839999999999,
+            0.713291,
+            0.73425,
+            0.7288330000000001,
+            0.731833,
+            0.7385,
+            0.7215,
+            0.734458,
+            0.734958,
+            0.7126250000000001,
+            0.744625,
+            0.7928339999999999,
+            0.771417
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 20.0,
+              "clarity": 20.0,
+              "dehaze": 10.0,
+              "luminance_noise": 20.0,
+              "radius": 1.0,
+              "sharpen": 40.0,
+              "texture": 20.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 2029632,
+        "size": [
+          377,
+          252
+        ],
+        "worker_total": {
+          "max_ms": 7.940041999999999,
+          "median_ms": 7.356479500000001,
+          "min_ms": 7.219292,
+          "p95_ms": null,
+          "samples_ms": [
+            7.316042,
+            7.256125000000001,
+            7.616917,
+            7.46325,
+            7.676292,
+            7.4270830000000005,
+            7.615791000000001,
+            7.396917,
+            7.498375,
+            7.30975,
+            7.25075,
+            7.258375,
+            7.244792,
+            7.219292,
+            7.231166,
+            7.289333,
+            7.280625,
+            7.438707999999999,
+            7.508166999999999,
+            7.940041999999999
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.031124999999999996,
+          "median_ms": 0.023813,
+          "min_ms": 0.020709,
+          "p95_ms": null,
+          "samples_ms": [
+            0.026292,
+            0.025833000000000002,
+            0.022583,
+            0.021625000000000002,
+            0.021707999999999998,
+            0.021832999999999998,
+            0.023709,
+            0.028458,
+            0.0285,
+            0.0305,
+            0.031124999999999996,
+            0.021958,
+            0.021041999999999998,
+            0.023917,
+            0.021540999999999998,
+            0.025083,
+            0.021584,
+            0.020709,
+            0.030083,
+            0.030375
+          ]
+        },
+        "edit": {
+          "max_ms": 9.675457999999999,
+          "median_ms": 9.4265205,
+          "min_ms": 9.147916,
+          "p95_ms": null,
+          "samples_ms": [
+            9.675457999999999,
+            9.53425,
+            9.581,
+            9.516874999999999,
+            9.497416999999999,
+            9.422625,
+            9.430416000000001,
+            9.402709,
+            9.306083,
+            9.508249999999999,
+            9.309666,
+            9.2735,
+            9.147916,
+            9.321291,
+            9.179875000000001,
+            9.399292,
+            9.618583,
+            9.488166,
+            9.272958,
+            9.634625000000002
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 1.6919170000000001,
+          "median_ms": 1.581229,
+          "min_ms": 1.49875,
+          "p95_ms": null,
+          "samples_ms": [
+            1.646208,
+            1.618708,
+            1.609,
+            1.614708,
+            1.606916,
+            1.609,
+            1.573833,
+            1.552,
+            1.557959,
+            1.604541,
+            1.5050000000000001,
+            1.513083,
+            1.508375,
+            1.499708,
+            1.533542,
+            1.626625,
+            1.49875,
+            1.505042,
+            1.588625,
+            1.6919170000000001
+          ]
+        },
+        "mip_base": 4,
+        "name": "tone_and_color_4_masks",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.031833,
+          "median_ms": 0.023271,
+          "min_ms": 0.021334,
+          "p95_ms": null,
+          "samples_ms": [
+            0.023208,
+            0.02325,
+            0.02875,
+            0.02325,
+            0.023292,
+            0.0235,
+            0.021875,
+            0.023666,
+            0.023875,
+            0.024083999999999998,
+            0.023625,
+            0.021583,
+            0.021459,
+            0.022542,
+            0.021417,
+            0.023541,
+            0.023542,
+            0.021500000000000002,
+            0.021334,
+            0.031833
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.804209,
+          "median_ms": 0.7280005,
+          "min_ms": 0.677958,
+          "p95_ms": null,
+          "samples_ms": [
+            0.739667,
+            0.738792,
+            0.804209,
+            0.714125,
+            0.72025,
+            0.726834,
+            0.709209,
+            0.767875,
+            0.7128329999999999,
+            0.748,
+            0.745042,
+            0.729167,
+            0.677958,
+            0.722042,
+            0.7225,
+            0.740125,
+            0.7355830000000001,
+            0.708167,
+            0.71925,
+            0.799042
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 20.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 15.0,
+                  "hue": 220.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": [
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.20000000298023224,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.4000000059604645,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.6000000238418579,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.800000011920929,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              }
+            ]
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 2029632,
+        "size": [
+          377,
+          252
+        ],
+        "worker_total": {
+          "max_ms": 10.495875,
+          "median_ms": 10.20875,
+          "min_ms": 9.868375,
+          "p95_ms": null,
+          "samples_ms": [
+            10.464625,
+            10.322125,
+            10.436542,
+            10.275875000000001,
+            10.262667,
+            10.194792,
+            10.185209,
+            10.222708,
+            10.071291,
+            10.310834,
+            10.109458,
+            10.046208,
+            9.868375,
+            10.089792000000001,
+            9.945333000000002,
+            10.188041,
+            10.399291999999999,
+            10.238541999999999,
+            10.043625,
+            10.495875
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.032417,
+          "median_ms": 0.0195625,
+          "min_ms": 0.016958,
+          "p95_ms": null,
+          "samples_ms": [
+            0.027625,
+            0.024749999999999998,
+            0.018375,
+            0.018375,
+            0.018958,
+            0.019208,
+            0.024208,
+            0.017833,
+            0.019167,
+            0.019875,
+            0.017207999999999998,
+            0.016958,
+            0.020542,
+            0.032417,
+            0.018917,
+            0.019958,
+            0.028666999999999998,
+            0.024,
+            0.020874999999999998,
+            0.01925
+          ]
+        },
+        "edit": {
+          "max_ms": 6.103625,
+          "median_ms": 5.755417,
+          "min_ms": 5.6511249999999995,
+          "p95_ms": null,
+          "samples_ms": [
+            5.863042,
+            5.82225,
+            5.6511249999999995,
+            5.736709,
+            5.707167,
+            5.74075,
+            5.752041999999999,
+            5.7695419999999995,
+            5.658708,
+            5.791125,
+            5.702167,
+            5.700584,
+            6.061249999999999,
+            5.693458000000001,
+            5.806875000000001,
+            6.103625,
+            5.955165999999999,
+            5.661791,
+            5.940583,
+            5.758792000000001
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 1.647458,
+          "median_ms": 1.5120205000000002,
+          "min_ms": 1.483458,
+          "p95_ms": null,
+          "samples_ms": [
+            1.483458,
+            1.5349160000000002,
+            1.519333,
+            1.5130000000000001,
+            1.500916,
+            1.507417,
+            1.499291,
+            1.511041,
+            1.500625,
+            1.4962499999999999,
+            1.550541,
+            1.616292,
+            1.528417,
+            1.5043330000000001,
+            1.5087080000000002,
+            1.585041,
+            1.514334,
+            1.529584,
+            1.505042,
+            1.647458
+          ]
+        },
+        "mip_base": 4,
+        "name": "tone_and_geometry",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 4.2e-05,
+          "median_ms": 4.1e-05,
+          "min_ms": 0.0,
+          "p95_ms": null,
+          "samples_ms": [
+            0.0,
+            4.2e-05,
+            0.0,
+            4.1e-05,
+            0.0,
+            4.2e-05,
+            4.1e-05,
+            0.0,
+            4.2e-05,
+            4.2e-05,
+            4.1e-05,
+            4.1e-05,
+            4.1e-05,
+            0.0,
+            4.2e-05,
+            0.0,
+            4.2e-05,
+            4.2e-05,
+            4.2e-05,
+            0.0
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.3135,
+          "median_ms": 0.242834,
+          "min_ms": 0.227458,
+          "p95_ms": null,
+          "samples_ms": [
+            0.260375,
+            0.241375,
+            0.28591700000000003,
+            0.23333399999999999,
+            0.238125,
+            0.300125,
+            0.244209,
+            0.238417,
+            0.255792,
+            0.258583,
+            0.241459,
+            0.23525,
+            0.28841700000000003,
+            0.23283399999999999,
+            0.232708,
+            0.23895899999999998,
+            0.29120799999999997,
+            0.227458,
+            0.24825,
+            0.3135
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 2.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 10.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 20.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 2029632,
+        "size": [
+          377,
+          252
+        ],
+        "worker_total": {
+          "max_ms": 6.37025,
+          "median_ms": 6.042167,
+          "min_ms": 5.913291,
+          "p95_ms": null,
+          "samples_ms": [
+            6.1510419999999995,
+            6.088417,
+            5.955417,
+            5.988459,
+            5.96425,
+            6.060125,
+            6.0205,
+            6.025792,
+            5.9337089999999995,
+            6.069625,
+            5.960875,
+            5.952833,
+            6.37025,
+            5.958709000000001,
+            6.058542,
+            6.3625419999999995,
+            6.2750829999999995,
+            5.913291,
+            6.20975,
+            6.0915420000000005
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.461292,
+          "median_ms": 0.3850215,
+          "min_ms": 0.371041,
+          "p95_ms": null,
+          "samples_ms": [
+            0.39266700000000004,
+            0.384084,
+            0.37479199999999996,
+            0.385959,
+            0.377541,
+            0.461292,
+            0.377917,
+            0.372958,
+            0.377417,
+            0.378209,
+            0.371041,
+            0.441833,
+            0.380709,
+            0.389125,
+            0.378084,
+            0.40087500000000004,
+            0.40850000000000003,
+            0.395959,
+            0.430417,
+            0.411917
+          ]
+        },
+        "edit": {
+          "max_ms": 2.0048340000000002,
+          "median_ms": 1.7796250000000002,
+          "min_ms": 1.626458,
+          "p95_ms": null,
+          "samples_ms": [
+            1.6432499999999999,
+            1.630333,
+            1.634625,
+            1.626458,
+            1.6380839999999999,
+            1.709,
+            1.757875,
+            2.0048340000000002,
+            1.670375,
+            1.6730829999999999,
+            1.85875,
+            1.7895420000000002,
+            1.769708,
+            1.835708,
+            1.855708,
+            1.882625,
+            1.834416,
+            1.9533329999999998,
+            1.9260410000000001,
+            1.913542
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 7.929042000000001,
+          "median_ms": 7.123104,
+          "min_ms": 6.51025,
+          "p95_ms": null,
+          "samples_ms": [
+            6.561459,
+            6.512791,
+            6.51025,
+            6.6078339999999995,
+            7.34575,
+            6.848,
+            6.949625,
+            6.724792,
+            6.831625,
+            6.689833,
+            7.00025,
+            7.245958,
+            7.309375,
+            7.44175,
+            7.384499999999999,
+            7.493416,
+            7.754292,
+            7.741582999999999,
+            7.929042000000001,
+            7.837541
+          ]
+        },
+        "mip_base": 3,
+        "name": "exposure",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.12300000000000001,
+          "median_ms": 0.10614599999999999,
+          "min_ms": 0.093958,
+          "p95_ms": null,
+          "samples_ms": [
+            0.095333,
+            0.115,
+            0.095166,
+            0.093958,
+            0.095458,
+            0.100458,
+            0.104875,
+            0.12300000000000001,
+            0.102833,
+            0.096708,
+            0.120917,
+            0.10216599999999999,
+            0.110417,
+            0.106417,
+            0.106208,
+            0.113417,
+            0.106084,
+            0.113125,
+            0.11141699999999999,
+            0.11283299999999999
+          ]
+        },
+        "pyramid": {
+          "max_ms": 2.119208,
+          "median_ms": 1.916917,
+          "min_ms": 1.8152920000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            1.850625,
+            1.8152920000000001,
+            1.82875,
+            1.83,
+            2.119208,
+            2.041959,
+            1.933208,
+            1.817833,
+            1.903625,
+            1.913459,
+            1.822333,
+            1.935959,
+            1.9552910000000001,
+            1.932917,
+            1.999375,
+            1.8591669999999998,
+            1.911666,
+            1.920375,
+            1.965708,
+            2.007292
+          ]
+        },
+        "recipe": {
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.5,
+          "highlights": 0.0,
+          "process_version": 1,
+          "raw_engine": "TrueRenderer",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 8109888,
+        "size": [
+          754,
+          504
+        ],
+        "worker_total": {
+          "max_ms": 4.445584,
+          "median_ms": 4.2431874999999994,
+          "min_ms": 3.9333329999999997,
+          "p95_ms": null,
+          "samples_ms": [
+            3.981875,
+            3.944709,
+            3.9333329999999997,
+            3.936375,
+            4.230290999999999,
+            4.312709,
+            4.173875,
+            4.318625000000001,
+            4.05425,
+            4.061459,
+            4.173041,
+            4.2695,
+            4.216125,
+            4.2641670000000005,
+            4.339375,
+            4.256084,
+            4.260666,
+            4.382792,
+            4.433583,
+            4.445584
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.45641699999999996,
+          "median_ms": 0.425354,
+          "min_ms": 0.399125,
+          "p95_ms": null,
+          "samples_ms": [
+            0.399125,
+            0.439458,
+            0.45641699999999996,
+            0.41508300000000004,
+            0.411958,
+            0.439917,
+            0.43270800000000004,
+            0.41933299999999996,
+            0.42666600000000005,
+            0.428875,
+            0.42812500000000003,
+            0.415458,
+            0.42612500000000003,
+            0.429542,
+            0.42458300000000004,
+            0.41933299999999996,
+            0.41875,
+            0.431125,
+            0.423417,
+            0.412667
+          ]
+        },
+        "edit": {
+          "max_ms": 3.779292,
+          "median_ms": 3.6846255,
+          "min_ms": 3.513708,
+          "p95_ms": null,
+          "samples_ms": [
+            3.635292,
+            3.684209,
+            3.513708,
+            3.74625,
+            3.541167,
+            3.729833,
+            3.5412920000000003,
+            3.779292,
+            3.5448749999999998,
+            3.542917,
+            3.564917,
+            3.6825,
+            3.7243749999999998,
+            3.711458,
+            3.764542,
+            3.5361670000000003,
+            3.6850419999999997,
+            3.736,
+            3.719042,
+            3.745708
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 8.27925,
+          "median_ms": 8.0755215,
+          "min_ms": 7.696291,
+          "p95_ms": null,
+          "samples_ms": [
+            8.134458,
+            8.102917,
+            8.022542000000001,
+            8.08625,
+            8.268125,
+            7.847375,
+            8.124875,
+            8.017042,
+            7.696291,
+            8.007792,
+            8.092749999999999,
+            8.27925,
+            8.026583,
+            8.095125,
+            7.7195409999999995,
+            8.071709,
+            8.065417,
+            8.081916999999999,
+            7.713375,
+            8.079334000000001
+          ]
+        },
+        "mip_base": 3,
+        "name": "exposure_with_neutral_advanced",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.13012500000000002,
+          "median_ms": 0.115521,
+          "min_ms": 0.1105,
+          "p95_ms": null,
+          "samples_ms": [
+            0.112083,
+            0.115625,
+            0.110958,
+            0.122,
+            0.111583,
+            0.125334,
+            0.110833,
+            0.13012500000000002,
+            0.111375,
+            0.117041,
+            0.111167,
+            0.11641699999999999,
+            0.11541699999999999,
+            0.116792,
+            0.116458,
+            0.110792,
+            0.1105,
+            0.11645900000000001,
+            0.116291,
+            0.114834
+          ]
+        },
+        "pyramid": {
+          "max_ms": 2.079666,
+          "median_ms": 1.9828125,
+          "min_ms": 1.9219169999999999,
+          "p95_ms": null,
+          "samples_ms": [
+            1.961417,
+            2.050958,
+            1.9716669999999998,
+            1.9823750000000002,
+            1.995458,
+            1.936875,
+            1.991333,
+            1.9832500000000002,
+            1.9937090000000002,
+            1.9304999999999999,
+            2.061666,
+            2.0604579999999997,
+            1.9219169999999999,
+            2.00525,
+            1.9980839999999997,
+            2.079666,
+            1.950958,
+            1.9603329999999999,
+            1.94875,
+            1.951041
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.5,
+          "highlights": 0.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 8109888,
+        "size": [
+          754,
+          504
+        ],
+        "worker_total": {
+          "max_ms": 6.312,
+          "median_ms": 6.197667,
+          "min_ms": 6.019333,
+          "p95_ms": null,
+          "samples_ms": [
+            6.107917,
+            6.2902499999999995,
+            6.05275,
+            6.265708,
+            6.060166,
+            6.231959,
+            6.076166,
+            6.312,
+            6.076625000000001,
+            6.019333,
+            6.165875000000001,
+            6.274832999999999,
+            6.187834,
+            6.2630419999999996,
+            6.303667,
+            6.145958,
+            6.1652499999999995,
+            6.243917,
+            6.2075000000000005,
+            6.22425
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.622417,
+          "median_ms": 0.423458,
+          "min_ms": 0.405416,
+          "p95_ms": null,
+          "samples_ms": [
+            0.436333,
+            0.405416,
+            0.42575,
+            0.425458,
+            0.41604199999999997,
+            0.413583,
+            0.423,
+            0.409291,
+            0.434167,
+            0.42283400000000004,
+            0.431208,
+            0.43679199999999996,
+            0.42595900000000003,
+            0.41925,
+            0.419709,
+            0.41612499999999997,
+            0.44325000000000003,
+            0.419208,
+            0.42391599999999996,
+            0.622417
+          ]
+        },
+        "edit": {
+          "max_ms": 15.22925,
+          "median_ms": 14.4065625,
+          "min_ms": 14.138917000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            15.22925,
+            14.551124999999999,
+            14.312042,
+            14.512042,
+            14.289708,
+            14.568625,
+            14.573083,
+            14.404375,
+            14.205874999999999,
+            14.202,
+            14.268958,
+            14.498833,
+            14.217832999999999,
+            14.138917000000001,
+            14.185458,
+            14.661959000000001,
+            14.724791,
+            14.401167,
+            14.603833999999999,
+            14.40875
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 8.022958000000001,
+          "median_ms": 7.688124500000001,
+          "min_ms": 7.647084,
+          "p95_ms": null,
+          "samples_ms": [
+            7.77,
+            7.696959,
+            7.664583,
+            7.660374999999999,
+            7.8594159999999995,
+            7.70675,
+            7.773166,
+            7.68625,
+            7.687916,
+            7.647084,
+            7.66225,
+            7.719875,
+            7.656874999999999,
+            7.663834,
+            7.986708,
+            8.022958000000001,
+            7.711749999999999,
+            7.6746669999999995,
+            7.664583,
+            7.688333
+          ]
+        },
+        "mip_base": 3,
+        "name": "tone_color_curve",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.11758400000000001,
+          "median_ms": 0.11210400000000001,
+          "min_ms": 0.110375,
+          "p95_ms": null,
+          "samples_ms": [
+            0.111834,
+            0.11529199999999999,
+            0.110542,
+            0.112083,
+            0.112125,
+            0.11479199999999999,
+            0.112583,
+            0.11758400000000001,
+            0.112,
+            0.110708,
+            0.110375,
+            0.114083,
+            0.110625,
+            0.110708,
+            0.110625,
+            0.112958,
+            0.111459,
+            0.112333,
+            0.117041,
+            0.114541
+          ]
+        },
+        "pyramid": {
+          "max_ms": 2.092208,
+          "median_ms": 1.9476040000000001,
+          "min_ms": 1.9088340000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            2.092208,
+            1.955708,
+            2.0322080000000002,
+            1.921458,
+            2.0045420000000003,
+            1.930625,
+            1.951584,
+            1.913666,
+            1.9468750000000001,
+            1.940208,
+            1.909542,
+            1.9088340000000001,
+            1.948333,
+            1.931875,
+            1.9750420000000002,
+            1.9715000000000003,
+            1.92725,
+            1.954042,
+            1.937334,
+            2.019459
+          ]
+        },
+        "recipe": {
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 2,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 8109888,
+        "size": [
+          754,
+          504
+        ],
+        "worker_total": {
+          "max_ms": 17.869625,
+          "median_ms": 16.922646,
+          "min_ms": 16.60075,
+          "p95_ms": null,
+          "samples_ms": [
+            17.869625,
+            17.027541,
+            16.880542,
+            16.971041,
+            16.822416999999998,
+            17.027625,
+            17.06025,
+            16.844916,
+            16.698917,
+            16.67575,
+            16.720083,
+            16.958542,
+            16.702749999999998,
+            16.60075,
+            16.690834000000002,
+            17.162542,
+            17.20675,
+            16.88675,
+            17.082125,
+            17.165167
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.540041,
+          "median_ms": 0.414917,
+          "min_ms": 0.38579199999999997,
+          "p95_ms": null,
+          "samples_ms": [
+            0.415875,
+            0.424542,
+            0.411667,
+            0.429667,
+            0.41395899999999997,
+            0.401084,
+            0.39837500000000003,
+            0.39875,
+            0.405541,
+            0.417167,
+            0.46945899999999996,
+            0.40058299999999997,
+            0.540041,
+            0.430583,
+            0.409708,
+            0.404167,
+            0.38579199999999997,
+            0.420375,
+            0.425458,
+            0.419916
+          ]
+        },
+        "edit": {
+          "max_ms": 34.301708,
+          "median_ms": 32.866729,
+          "min_ms": 31.858459,
+          "p95_ms": null,
+          "samples_ms": [
+            34.134541,
+            34.301708,
+            33.611333,
+            33.391958,
+            32.986041,
+            32.87675,
+            32.997458,
+            32.612207999999995,
+            32.455625000000005,
+            32.810041,
+            32.834333,
+            32.856708,
+            33.157959,
+            31.858459,
+            33.211042000000006,
+            32.789249999999996,
+            33.146042,
+            32.849792,
+            32.364416999999996,
+            32.75725
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 7.636375,
+          "median_ms": 7.3491040000000005,
+          "min_ms": 7.234458,
+          "p95_ms": null,
+          "samples_ms": [
+            7.597833,
+            7.61075,
+            7.636375,
+            7.4910000000000005,
+            7.324709,
+            7.333832999999999,
+            7.351917,
+            7.305958,
+            7.484125000000001,
+            7.378333,
+            7.346291,
+            7.332667,
+            7.234458,
+            7.284209,
+            7.2990829999999995,
+            7.509,
+            7.365458,
+            7.331125,
+            7.327,
+            7.363916
+          ]
+        },
+        "mip_base": 3,
+        "name": "tone_and_detail",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.13325,
+          "median_ms": 0.10877049999999999,
+          "min_ms": 0.103166,
+          "p95_ms": null,
+          "samples_ms": [
+            0.110875,
+            0.110667,
+            0.106958,
+            0.1065,
+            0.13325,
+            0.108958,
+            0.111667,
+            0.108583,
+            0.108,
+            0.11479199999999999,
+            0.106792,
+            0.108542,
+            0.11587499999999999,
+            0.121,
+            0.103166,
+            0.108542,
+            0.114708,
+            0.111333,
+            0.10375,
+            0.106584
+          ]
+        },
+        "pyramid": {
+          "max_ms": 2.063209,
+          "median_ms": 1.892125,
+          "min_ms": 1.823375,
+          "p95_ms": null,
+          "samples_ms": [
+            1.8687090000000002,
+            1.887,
+            1.94425,
+            2.063209,
+            1.89725,
+            1.8602919999999998,
+            1.907708,
+            1.991167,
+            1.879917,
+            1.823375,
+            1.9601250000000001,
+            1.878625,
+            1.9976249999999998,
+            1.907041,
+            1.872334,
+            1.882166,
+            1.879542,
+            1.8992499999999999,
+            1.860625,
+            1.9573749999999999
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 20.0,
+              "clarity": 20.0,
+              "dehaze": 10.0,
+              "luminance_noise": 20.0,
+              "radius": 1.0,
+              "sharpen": 40.0,
+              "texture": 20.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 8109888,
+        "size": [
+          754,
+          504
+        ],
+        "worker_total": {
+          "max_ms": 36.723917,
+          "median_ms": 35.325729499999994,
+          "min_ms": 34.317083,
+          "p95_ms": null,
+          "samples_ms": [
+            36.53,
+            36.723917,
+            36.074208000000006,
+            35.991334,
+            35.430499999999995,
+            35.247084,
+            35.415208,
+            35.110707999999995,
+            34.849083,
+            35.165375,
+            35.370709,
+            35.244458,
+            35.8115,
+            34.317083,
+            35.596250000000005,
+            35.184124999999995,
+            35.526084,
+            35.28075,
+            34.75425,
+            35.241125
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.41895899999999997,
+          "median_ms": 0.4030205,
+          "min_ms": 0.375375,
+          "p95_ms": null,
+          "samples_ms": [
+            0.40254100000000004,
+            0.41895899999999997,
+            0.375375,
+            0.413125,
+            0.397209,
+            0.408958,
+            0.398416,
+            0.409584,
+            0.390083,
+            0.40850000000000003,
+            0.40070900000000004,
+            0.405041,
+            0.397708,
+            0.410834,
+            0.396625,
+            0.417,
+            0.40349999999999997,
+            0.418709,
+            0.395125,
+            0.395709
+          ]
+        },
+        "edit": {
+          "max_ms": 42.060708000000005,
+          "median_ms": 41.4859165,
+          "min_ms": 40.461375000000004,
+          "p95_ms": null,
+          "samples_ms": [
+            41.601125,
+            42.060708000000005,
+            41.481457999999996,
+            41.674,
+            41.403916,
+            41.765042,
+            41.412125,
+            41.355791,
+            41.377667,
+            41.490375,
+            41.317291,
+            41.344,
+            40.461375000000004,
+            41.255541,
+            41.194625,
+            41.722584,
+            41.611166,
+            41.758708,
+            41.51825,
+            41.911708
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 7.393333,
+          "median_ms": 7.135083,
+          "min_ms": 7.045708,
+          "p95_ms": null,
+          "samples_ms": [
+            7.290667,
+            7.0498330000000005,
+            7.3399160000000006,
+            7.0555829999999995,
+            7.303958,
+            7.073792,
+            7.054,
+            7.230417,
+            7.264041,
+            7.073875,
+            7.066167,
+            7.085833,
+            7.048208000000001,
+            7.1843330000000005,
+            7.315958,
+            7.045708,
+            7.303416,
+            7.055625,
+            7.287167,
+            7.393333
+          ]
+        },
+        "mip_base": 3,
+        "name": "tone_and_color_4_masks",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.17041699999999999,
+          "median_ms": 0.10681299999999999,
+          "min_ms": 0.101917,
+          "p95_ms": null,
+          "samples_ms": [
+            0.106834,
+            0.103833,
+            0.108834,
+            0.17041699999999999,
+            0.111709,
+            0.104292,
+            0.107709,
+            0.106792,
+            0.11591699999999999,
+            0.104708,
+            0.108,
+            0.103834,
+            0.101917,
+            0.104625,
+            0.106584,
+            0.107458,
+            0.11029199999999999,
+            0.106333,
+            0.108459,
+            0.105333
+          ]
+        },
+        "pyramid": {
+          "max_ms": 2.159084,
+          "median_ms": 1.896333,
+          "min_ms": 1.858209,
+          "p95_ms": null,
+          "samples_ms": [
+            1.8957080000000002,
+            1.9797090000000002,
+            1.90675,
+            1.9016250000000001,
+            1.898083,
+            2.014583,
+            1.8879579999999998,
+            1.896958,
+            1.8855,
+            2.159084,
+            1.8735,
+            2.1085000000000003,
+            1.860417,
+            1.860834,
+            1.875375,
+            1.972417,
+            1.900292,
+            1.858209,
+            1.891791,
+            1.863209
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 20.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 15.0,
+                  "hue": 220.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": [
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.20000000298023224,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.4000000059604645,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.6000000238418579,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.800000011920929,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              }
+            ]
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 8109888,
+        "size": [
+          754,
+          504
+        ],
+        "worker_total": {
+          "max_ms": 44.563209,
+          "median_ms": 43.9375,
+          "min_ms": 42.821417000000004,
+          "p95_ms": null,
+          "samples_ms": [
+            44.006208,
+            44.563209,
+            43.872417,
+            44.159167,
+            43.810916999999996,
+            44.292875,
+            43.806208,
+            43.769125,
+            43.769166999999996,
+            44.162667000000006,
+            43.6995,
+            43.961375,
+            42.821417000000004,
+            43.631834,
+            43.573209,
+            44.219459,
+            44.02525,
+            44.141959,
+            43.913624999999996,
+            44.27595899999999
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 0.427667,
+          "median_ms": 0.375146,
+          "min_ms": 0.34650000000000003,
+          "p95_ms": null,
+          "samples_ms": [
+            0.416333,
+            0.385666,
+            0.373709,
+            0.38995799999999997,
+            0.40900000000000003,
+            0.407916,
+            0.427667,
+            0.387625,
+            0.376583,
+            0.359208,
+            0.364958,
+            0.3635,
+            0.352375,
+            0.354667,
+            0.34650000000000003,
+            0.356791,
+            0.360041,
+            0.36562500000000003,
+            0.379708,
+            0.398875
+          ]
+        },
+        "edit": {
+          "max_ms": 25.670292,
+          "median_ms": 24.5299585,
+          "min_ms": 24.150250000000003,
+          "p95_ms": null,
+          "samples_ms": [
+            25.670292,
+            24.902667,
+            24.469458,
+            24.439584,
+            24.461417,
+            24.38175,
+            24.375833,
+            24.660833,
+            24.64825,
+            24.723708000000002,
+            24.695833,
+            24.626541,
+            24.590459,
+            24.405083,
+            24.265334,
+            24.9015,
+            24.641334,
+            24.416166,
+            24.398458,
+            24.150250000000003
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 6.940875,
+          "median_ms": 6.6189374999999995,
+          "min_ms": 6.482375,
+          "p95_ms": null,
+          "samples_ms": [
+            6.940875,
+            6.742,
+            6.813208,
+            6.8618749999999995,
+            6.75425,
+            6.7227500000000004,
+            6.692209,
+            6.646083,
+            6.625208,
+            6.593709,
+            6.584167,
+            6.588875,
+            6.612667,
+            6.482375,
+            6.494541000000001,
+            6.5050419999999995,
+            6.542875,
+            6.511792,
+            6.539916,
+            6.675416
+          ]
+        },
+        "mip_base": 3,
+        "name": "tone_and_geometry",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 4.2e-05,
+          "median_ms": 0.0,
+          "min_ms": 0.0,
+          "p95_ms": null,
+          "samples_ms": [
+            0.0,
+            0.0,
+            4.2e-05,
+            0.0,
+            0.0,
+            0.0,
+            4.2e-05,
+            0.0,
+            0.0,
+            4.2e-05,
+            0.0,
+            4.2e-05,
+            4.1e-05,
+            4.2e-05,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            4.2e-05,
+            0.0
+          ]
+        },
+        "pyramid": {
+          "max_ms": 0.647167,
+          "median_ms": 0.6017710000000001,
+          "min_ms": 0.566833,
+          "p95_ms": null,
+          "samples_ms": [
+            0.631708,
+            0.602458,
+            0.59475,
+            0.566833,
+            0.597958,
+            0.5970840000000001,
+            0.615916,
+            0.593334,
+            0.584459,
+            0.5802080000000001,
+            0.6058749999999999,
+            0.604625,
+            0.6237499999999999,
+            0.5878749999999999,
+            0.611,
+            0.6192920000000001,
+            0.5855,
+            0.63175,
+            0.647167,
+            0.601084
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 2.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 10.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 20.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 8109888,
+        "size": [
+          754,
+          504
+        ],
+        "worker_total": {
+          "max_ms": 26.718333,
+          "median_ms": 25.5175,
+          "min_ms": 25.150209,
+          "p95_ms": null,
+          "samples_ms": [
+            26.718333,
+            25.890791,
+            25.437959,
+            25.396375,
+            25.468375,
+            25.38675,
+            25.419458,
+            25.641792,
+            25.609292,
+            25.663166,
+            25.666666000000003,
+            25.594708,
+            25.566625,
+            25.347667,
+            25.222834,
+            25.877582999999998,
+            25.586875,
+            25.413541000000002,
+            25.425375,
+            25.150209
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 1.6520000000000001,
+          "median_ms": 1.557084,
+          "min_ms": 1.46075,
+          "p95_ms": null,
+          "samples_ms": [
+            1.48325,
+            1.46075,
+            1.536667,
+            1.596125,
+            1.5528339999999998,
+            1.6520000000000001,
+            1.602959,
+            1.5725419999999999,
+            1.5273750000000001,
+            1.522459,
+            1.6381670000000002,
+            1.5485419999999999,
+            1.602458,
+            1.561334,
+            1.551959,
+            1.5853329999999999,
+            1.590292,
+            1.580667,
+            1.521958,
+            1.5514999999999999
+          ]
+        },
+        "edit": {
+          "max_ms": 8.170167000000001,
+          "median_ms": 7.8027915,
+          "min_ms": 6.808792,
+          "p95_ms": null,
+          "samples_ms": [
+            6.808792,
+            7.082625,
+            7.453041,
+            7.912040999999999,
+            7.794041,
+            8.096666,
+            8.110916,
+            8.074166,
+            7.783875,
+            7.819583,
+            8.149,
+            7.810417,
+            7.784667000000001,
+            7.794708,
+            7.758208,
+            7.8285420000000006,
+            8.170167000000001,
+            7.795166,
+            7.769792,
+            7.962959000000001
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 33.600291999999996,
+          "median_ms": 31.866083,
+          "min_ms": 28.583667,
+          "p95_ms": null,
+          "samples_ms": [
+            28.583667,
+            29.996125,
+            30.929042,
+            31.030917000000002,
+            32.551542000000005,
+            32.54375,
+            32.533833,
+            31.851958,
+            32.423291,
+            32.486292,
+            30.971249999999998,
+            32.482125,
+            30.915292,
+            31.880208,
+            31.717209000000004,
+            32.56525,
+            31.812167000000002,
+            31.06675,
+            33.600291999999996,
+            32.260625000000005
+          ]
+        },
+        "mip_base": 2,
+        "name": "exposure",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.476625,
+          "median_ms": 0.44695850000000004,
+          "min_ms": 0.39575,
+          "p95_ms": null,
+          "samples_ms": [
+            0.39575,
+            0.447125,
+            0.42612500000000003,
+            0.4455,
+            0.445125,
+            0.476625,
+            0.44875,
+            0.454084,
+            0.44466599999999995,
+            0.44958299999999995,
+            0.467916,
+            0.447208,
+            0.4545,
+            0.444875,
+            0.444917,
+            0.446792,
+            0.473791,
+            0.446125,
+            0.443958,
+            0.448583
+          ]
+        },
+        "pyramid": {
+          "max_ms": 7.223417,
+          "median_ms": 6.808771,
+          "min_ms": 6.569167,
+          "p95_ms": null,
+          "samples_ms": [
+            6.885708,
+            6.831083,
+            6.79975,
+            6.569167,
+            6.710624999999999,
+            6.837667000000001,
+            6.632959,
+            6.87225,
+            6.783459000000001,
+            6.82275,
+            7.223417,
+            6.691083,
+            7.1100829999999995,
+            6.817792,
+            6.700165999999999,
+            6.715,
+            6.628,
+            6.9610840000000005,
+            6.7972079999999995,
+            6.939667
+          ]
+        },
+        "recipe": {
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.5,
+          "highlights": 0.0,
+          "process_version": 1,
+          "raw_engine": "TrueRenderer",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 32430912,
+        "size": [
+          1508,
+          1008
+        ],
+        "worker_total": {
+          "max_ms": 17.4785,
+          "median_ms": 16.595021,
+          "min_ms": 15.573500000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            15.573500000000001,
+            15.821583,
+            16.215583,
+            16.522833000000002,
+            16.502625,
+            17.062958,
+            16.795583999999998,
+            16.973042,
+            16.539375,
+            16.614375,
+            17.4785,
+            16.49725,
+            16.951708,
+            16.618709,
+            16.45525,
+            16.575667,
+            16.86225,
+            16.783042000000002,
+            16.532916,
+            16.902708999999998
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 1.644084,
+          "median_ms": 1.5625205,
+          "min_ms": 1.4885,
+          "p95_ms": null,
+          "samples_ms": [
+            1.5648330000000001,
+            1.572916,
+            1.503208,
+            1.554792,
+            1.564333,
+            1.589708,
+            1.55075,
+            1.510833,
+            1.542708,
+            1.553917,
+            1.560708,
+            1.576375,
+            1.5785420000000001,
+            1.644084,
+            1.610458,
+            1.556792,
+            1.566375,
+            1.575584,
+            1.519917,
+            1.4885
+          ]
+        },
+        "edit": {
+          "max_ms": 14.719792,
+          "median_ms": 14.389896,
+          "min_ms": 13.887500000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            14.306709000000001,
+            14.399709,
+            14.250625,
+            14.326125000000001,
+            14.413917,
+            14.206875,
+            14.580041,
+            14.448708,
+            14.446875,
+            14.348041,
+            14.452625,
+            14.719792,
+            14.380083,
+            13.887500000000001,
+            14.457625,
+            14.326458,
+            14.406542,
+            14.123583,
+            14.425417,
+            14.166875000000001
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 36.07325,
+          "median_ms": 31.858396,
+          "min_ms": 30.881124999999997,
+          "p95_ms": null,
+          "samples_ms": [
+            32.192584000000004,
+            32.307375,
+            30.936041,
+            32.236000000000004,
+            32.521959,
+            36.07325,
+            31.759708999999997,
+            32.466625,
+            31.920499999999997,
+            30.889,
+            31.291542,
+            31.346583999999996,
+            30.891291000000002,
+            30.881124999999997,
+            32.429458000000004,
+            31.478667,
+            30.887666,
+            32.307750000000006,
+            31.796291999999998,
+            32.078292000000005
+          ]
+        },
+        "mip_base": 2,
+        "name": "exposure_with_neutral_advanced",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.53025,
+          "median_ms": 0.446396,
+          "min_ms": 0.42612500000000003,
+          "p95_ms": null,
+          "samples_ms": [
+            0.444833,
+            0.5037079999999999,
+            0.53025,
+            0.44533300000000003,
+            0.445375,
+            0.444709,
+            0.479875,
+            0.445084,
+            0.456167,
+            0.44629199999999997,
+            0.447584,
+            0.447,
+            0.444,
+            0.42612500000000003,
+            0.510334,
+            0.445125,
+            0.446708,
+            0.444958,
+            0.4465,
+            0.4665
+          ]
+        },
+        "pyramid": {
+          "max_ms": 17.547583,
+          "median_ms": 6.862208,
+          "min_ms": 6.576459,
+          "p95_ms": null,
+          "samples_ms": [
+            6.753083,
+            6.8194170000000005,
+            7.120334,
+            6.590709,
+            6.832040999999999,
+            17.547583,
+            7.218125,
+            6.957625,
+            6.870291,
+            6.9484580000000005,
+            6.695541,
+            6.987291,
+            7.368584,
+            6.841291,
+            6.854125,
+            6.884125,
+            7.043959,
+            6.576459,
+            6.785165999999999,
+            6.847625000000001
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 0.0,
+          "contrast": 0.0,
+          "curve": [],
+          "exposure_ev": 0.5,
+          "highlights": 0.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 0.0,
+          "schema_version": 1,
+          "shadows": 0.0,
+          "temperature": 0.0,
+          "tint": 0.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 32430912,
+        "size": [
+          1508,
+          1008
+        ],
+        "worker_total": {
+          "max_ms": 33.788875000000004,
+          "median_ms": 23.296229,
+          "min_ms": 22.720584,
+          "p95_ms": null,
+          "samples_ms": [
+            23.069458,
+            23.29575,
+            23.404417,
+            22.916959000000002,
+            23.255666,
+            33.788875000000004,
+            23.828791,
+            23.36225,
+            23.316041,
+            23.296708,
+            23.156458,
+            23.730458,
+            23.771209000000002,
+            22.799,
+            23.432542,
+            23.212500000000002,
+            23.463584,
+            22.720584,
+            23.177,
+            22.9695
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 1.806875,
+          "median_ms": 1.529833,
+          "min_ms": 1.46275,
+          "p95_ms": null,
+          "samples_ms": [
+            1.5198749999999999,
+            1.505958,
+            1.46275,
+            1.4969160000000001,
+            1.487875,
+            1.493125,
+            1.486458,
+            1.5354999999999999,
+            1.581916,
+            1.5250000000000001,
+            1.514,
+            1.579084,
+            1.528375,
+            1.806875,
+            1.6451250000000002,
+            1.531291,
+            1.538667,
+            1.589208,
+            1.566792,
+            1.649875
+          ]
+        },
+        "edit": {
+          "max_ms": 57.746542,
+          "median_ms": 55.7304795,
+          "min_ms": 54.407834,
+          "p95_ms": null,
+          "samples_ms": [
+            56.289249999999996,
+            55.217166999999996,
+            55.333875,
+            54.946124999999995,
+            54.953791,
+            54.678042000000005,
+            54.708,
+            54.582125000000005,
+            54.407834,
+            55.453959,
+            56.253458,
+            56.007,
+            55.146208,
+            56.941208,
+            56.713333999999996,
+            57.746542,
+            56.693792,
+            56.999959000000004,
+            56.189707999999996,
+            56.753667
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 31.312541,
+          "median_ms": 30.7822085,
+          "min_ms": 29.414708,
+          "p95_ms": null,
+          "samples_ms": [
+            29.527583,
+            30.086624999999998,
+            29.414708,
+            29.450541,
+            29.485750000000003,
+            29.622667,
+            29.433583,
+            29.450542,
+            30.739625,
+            30.823708,
+            30.794249999999998,
+            30.916458000000002,
+            30.948957999999998,
+            31.043167,
+            31.312541,
+            30.85525,
+            30.878958,
+            30.770167,
+            30.80975,
+            30.816416
+          ]
+        },
+        "mip_base": 2,
+        "name": "tone_color_curve",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.587584,
+          "median_ms": 0.43077049999999995,
+          "min_ms": 0.412125,
+          "p95_ms": null,
+          "samples_ms": [
+            0.433375,
+            0.5061249999999999,
+            0.436333,
+            0.433375,
+            0.432875,
+            0.428083,
+            0.431125,
+            0.42633299999999996,
+            0.412125,
+            0.43041599999999997,
+            0.587584,
+            0.426083,
+            0.43158399999999997,
+            0.429,
+            0.42841599999999996,
+            0.462417,
+            0.55,
+            0.426416,
+            0.42624999999999996,
+            0.42700000000000005
+          ]
+        },
+        "pyramid": {
+          "max_ms": 7.132083,
+          "median_ms": 6.662,
+          "min_ms": 6.3004999999999995,
+          "p95_ms": null,
+          "samples_ms": [
+            6.4094169999999995,
+            6.3004999999999995,
+            7.056167,
+            6.518584,
+            6.503209,
+            6.553958000000001,
+            6.578625000000001,
+            6.65475,
+            7.132083,
+            6.565917,
+            6.66925,
+            6.69525,
+            6.552208,
+            6.6825,
+            6.785084,
+            6.784125,
+            6.881833,
+            6.801375,
+            6.830084,
+            6.45425
+          ]
+        },
+        "recipe": {
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 2,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 32430912,
+        "size": [
+          1508,
+          1008
+        ],
+        "worker_total": {
+          "max_ms": 66.52437499999999,
+          "median_ms": 64.47052099999999,
+          "min_ms": 63.153208,
+          "p95_ms": null,
+          "samples_ms": [
+            64.651917,
+            63.52974999999999,
+            64.289125,
+            63.39500000000001,
+            63.37775,
+            63.153208,
+            63.204208,
+            63.198708,
+            63.533958,
+            63.975292,
+            65.024292,
+            64.707417,
+            63.65837500000001,
+            65.859583,
+            65.57195899999999,
+            66.52437499999999,
+            65.664292,
+            65.816958,
+            65.01283400000001,
+            65.284792
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 1.709709,
+          "median_ms": 1.5315625000000002,
+          "min_ms": 1.458792,
+          "p95_ms": null,
+          "samples_ms": [
+            1.560334,
+            1.546167,
+            1.5397500000000002,
+            1.4879170000000002,
+            1.6238750000000002,
+            1.52275,
+            1.458792,
+            1.5286250000000001,
+            1.5048329999999999,
+            1.4605,
+            1.5054580000000002,
+            1.5385,
+            1.549959,
+            1.532458,
+            1.55725,
+            1.5332919999999999,
+            1.530667,
+            1.512667,
+            1.52325,
+            1.709709
+          ]
+        },
+        "edit": {
+          "max_ms": 138.695042,
+          "median_ms": 134.96445799999998,
+          "min_ms": 125.19949999999999,
+          "p95_ms": null,
+          "samples_ms": [
+            129.226166,
+            132.53504099999998,
+            135.044041,
+            135.3525,
+            125.552458,
+            125.19949999999999,
+            128.107291,
+            132.763666,
+            132.583583,
+            132.406875,
+            134.884875,
+            138.695042,
+            137.840083,
+            136.31525,
+            136.362667,
+            137.767542,
+            137.39575000000002,
+            137.434125,
+            135.22383399999998,
+            130.639375
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 30.864541,
+          "median_ms": 29.533729,
+          "min_ms": 28.29475,
+          "p95_ms": null,
+          "samples_ms": [
+            29.505125,
+            29.438125,
+            29.397541,
+            28.356708,
+            28.29475,
+            29.480333,
+            29.544458,
+            29.523,
+            29.546708000000002,
+            30.71225,
+            30.823083,
+            30.831208,
+            30.735708,
+            30.792875000000002,
+            30.757083,
+            30.864541,
+            30.733957999999998,
+            29.373208,
+            29.417875,
+            29.443625
+          ]
+        },
+        "mip_base": 2,
+        "name": "tone_and_detail",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 0.425542,
+          "median_ms": 0.412729,
+          "min_ms": 0.387375,
+          "p95_ms": null,
+          "samples_ms": [
+            0.387375,
+            0.39325,
+            0.407792,
+            0.422125,
+            0.39087500000000003,
+            0.388042,
+            0.394709,
+            0.416084,
+            0.415209,
+            0.413042,
+            0.412292,
+            0.423333,
+            0.425542,
+            0.414333,
+            0.416583,
+            0.41241599999999995,
+            0.417833,
+            0.412291,
+            0.414958,
+            0.39408299999999996
+          ]
+        },
+        "pyramid": {
+          "max_ms": 6.8059590000000005,
+          "median_ms": 6.4607915,
+          "min_ms": 6.318333,
+          "p95_ms": null,
+          "samples_ms": [
+            6.484125000000001,
+            6.34175,
+            6.592917,
+            6.50125,
+            6.7129579999999995,
+            6.590417,
+            6.461083,
+            6.318333,
+            6.353625,
+            6.4605,
+            6.402,
+            6.8059590000000005,
+            6.4055,
+            6.677,
+            6.407292,
+            6.382209,
+            6.449334,
+            6.552792,
+            6.514625,
+            6.381792
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 20.0,
+              "clarity": 20.0,
+              "dehaze": 10.0,
+              "luminance_noise": 20.0,
+              "radius": 1.0,
+              "sharpen": 40.0,
+              "texture": 20.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 32430912,
+        "size": [
+          1508,
+          1008
+        ],
+        "worker_total": {
+          "max_ms": 147.462834,
+          "median_ms": 143.3945625,
+          "min_ms": 133.700709,
+          "p95_ms": null,
+          "samples_ms": [
+            137.65800000000002,
+            140.816208,
+            143.5845,
+            143.763792,
+            134.280166,
+            133.700709,
+            136.421875,
+            141.026708,
+            140.85725,
+            140.740917,
+            143.204625,
+            147.462834,
+            146.221084,
+            144.939041,
+            144.743792,
+            146.095459,
+            145.793584,
+            145.911875,
+            143.676667,
+            139.124959
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 1.61,
+          "median_ms": 1.5235414999999999,
+          "min_ms": 1.4408750000000001,
+          "p95_ms": null,
+          "samples_ms": [
+            1.531625,
+            1.509334,
+            1.50625,
+            1.53775,
+            1.527625,
+            1.4732910000000001,
+            1.526792,
+            1.445375,
+            1.45225,
+            1.458959,
+            1.545917,
+            1.4573749999999999,
+            1.509708,
+            1.526875,
+            1.560959,
+            1.529375,
+            1.520291,
+            1.560541,
+            1.61,
+            1.4408750000000001
+          ]
+        },
+        "edit": {
+          "max_ms": 169.622041,
+          "median_ms": 168.3155625,
+          "min_ms": 159.55675,
+          "p95_ms": null,
+          "samples_ms": [
+            168.182,
+            169.622041,
+            169.32037499999998,
+            163.828208,
+            166.189,
+            167.884709,
+            166.188208,
+            168.934042,
+            167.381542,
+            167.30754100000001,
+            169.0075,
+            168.72324999999998,
+            168.609667,
+            168.94466699999998,
+            159.55675,
+            164.497959,
+            169.31175000000002,
+            169.593584,
+            165.02704200000002,
+            168.449125
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 30.418083,
+          "median_ms": 29.449062500000004,
+          "min_ms": 27.00375,
+          "p95_ms": null,
+          "samples_ms": [
+            29.651166999999997,
+            29.856375,
+            29.50425,
+            29.472792000000002,
+            29.40425,
+            29.348708000000002,
+            29.795709,
+            29.425333000000002,
+            29.350709,
+            30.418083,
+            29.504417,
+            30.05225,
+            29.676875,
+            29.005958,
+            29.408334,
+            29.398125,
+            30.099083,
+            29.339166,
+            27.998166,
+            27.00375
+          ]
+        },
+        "mip_base": 2,
+        "name": "tone_and_color_4_masks",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 1.062625,
+          "median_ms": 0.410104,
+          "min_ms": 0.38620800000000005,
+          "p95_ms": null,
+          "samples_ms": [
+            0.398875,
+            0.42154200000000003,
+            0.412625,
+            0.386375,
+            0.408833,
+            0.40049999999999997,
+            0.392625,
+            0.412,
+            0.460625,
+            0.400292,
+            0.412083,
+            0.400417,
+            0.411375,
+            0.416583,
+            0.466916,
+            0.38620800000000005,
+            0.399917,
+            0.411916,
+            0.40254199999999996,
+            1.062625
+          ]
+        },
+        "pyramid": {
+          "max_ms": 10.57975,
+          "median_ms": 6.6919375,
+          "min_ms": 6.300417,
+          "p95_ms": null,
+          "samples_ms": [
+            6.733208,
+            6.805125,
+            6.568917,
+            6.692375,
+            6.632958,
+            6.747000000000001,
+            6.4077079999999995,
+            6.357125,
+            6.352458,
+            6.300417,
+            6.399583000000001,
+            6.619,
+            6.833125,
+            6.899667,
+            6.6915000000000004,
+            6.8135,
+            6.715625,
+            7.225709,
+            6.585500000000001,
+            10.57975
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 20.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 15.0,
+                  "hue": 220.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 0.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 0.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 0.0
+            },
+            "masks": [
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.20000000298023224,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.4000000059604645,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.6000000238418579,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              },
+              {
+                "angle": 0.0,
+                "breaks": [],
+                "center": [
+                  0.800000011920929,
+                  0.5
+                ],
+                "enabled": true,
+                "exposure": 0.30000001192092896,
+                "feather": 0.5,
+                "interval": [
+                  0.25,
+                  0.75
+                ],
+                "invert": false,
+                "points": [],
+                "radius": 0.25,
+                "saturation": 0.0,
+                "shape": "Radial",
+                "warmth": 10.0
+              }
+            ]
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 32430912,
+        "size": [
+          1508,
+          1008
+        ],
+        "worker_total": {
+          "max_ms": 181.532375,
+          "median_ms": 176.99712499999998,
+          "min_ms": 168.276125,
+          "p95_ms": null,
+          "samples_ms": [
+            176.845708,
+            178.35804199999998,
+            177.808167,
+            172.444708,
+            174.758416,
+            176.5055,
+            174.515333,
+            177.148542,
+            175.646875,
+            175.46720900000003,
+            177.365083,
+            177.200042,
+            177.363875,
+            177.787792,
+            168.276125,
+            173.227042,
+            177.94758299999998,
+            178.79175,
+            173.62508400000002,
+            181.532375
+          ]
+        }
+      },
+      {
+        "clone": {
+          "max_ms": 1.502708,
+          "median_ms": 1.3886045,
+          "min_ms": 1.341292,
+          "p95_ms": null,
+          "samples_ms": [
+            1.3921249999999998,
+            1.4232909999999999,
+            1.443083,
+            1.3775,
+            1.404542,
+            1.3882919999999999,
+            1.502708,
+            1.401792,
+            1.341292,
+            1.398708,
+            1.375416,
+            1.365875,
+            1.371541,
+            1.388917,
+            1.358417,
+            1.3932090000000001,
+            1.384958,
+            1.36625,
+            1.4213330000000002,
+            1.3553330000000001
+          ]
+        },
+        "edit": {
+          "max_ms": 98.106792,
+          "median_ms": 96.272667,
+          "min_ms": 94.696,
+          "p95_ms": null,
+          "samples_ms": [
+            98.08841699999999,
+            98.106792,
+            96.997792,
+            95.601625,
+            96.03904100000001,
+            96.464166,
+            96.282917,
+            96.59679200000001,
+            95.918042,
+            95.090209,
+            95.336334,
+            95.79675,
+            95.712167,
+            94.696,
+            96.44291700000001,
+            96.551916,
+            97.371042,
+            96.676625,
+            96.262417,
+            95.302292
+          ]
+        },
+        "histogram_separate": {
+          "max_ms": 26.969333000000002,
+          "median_ms": 25.935707999999998,
+          "min_ms": 25.522333,
+          "p95_ms": null,
+          "samples_ms": [
+            26.209542,
+            26.969333000000002,
+            25.929582999999997,
+            26.264417,
+            25.809874999999998,
+            25.977666,
+            26.420208000000002,
+            25.587540999999998,
+            26.303583,
+            25.961792000000003,
+            25.738625000000003,
+            26.014540999999998,
+            25.522333,
+            26.288292000000002,
+            25.775541999999998,
+            25.941833000000003,
+            25.705708,
+            25.719709,
+            25.694125000000003,
+            25.907083
+          ]
+        },
+        "mip_base": 2,
+        "name": "tone_and_geometry",
+        "native_geometry": [
+          6032,
+          4032
+        ],
+        "opacity": {
+          "max_ms": 8.4e-05,
+          "median_ms": 0.0,
+          "min_ms": 0.0,
+          "p95_ms": null,
+          "samples_ms": [
+            0.0,
+            4.2e-05,
+            0.0,
+            0.0,
+            0.0,
+            4.2e-05,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            4.2e-05,
+            0.0,
+            4.1e-05,
+            8.4e-05,
+            0.0,
+            4.1e-05,
+            4.2e-05,
+            0.0
+          ]
+        },
+        "pyramid": {
+          "max_ms": 2.521625,
+          "median_ms": 2.3879375,
+          "min_ms": 2.309917,
+          "p95_ms": null,
+          "samples_ms": [
+            2.3605,
+            2.521625,
+            2.3378330000000003,
+            2.348625,
+            2.518209,
+            2.389542,
+            2.4612499999999997,
+            2.343375,
+            2.460833,
+            2.386333,
+            2.3374580000000003,
+            2.437542,
+            2.4537080000000002,
+            2.4347079999999997,
+            2.309917,
+            2.447958,
+            2.323708,
+            2.366375,
+            2.39925,
+            2.3565
+          ]
+        },
+        "recipe": {
+          "advanced": {
+            "color": {
+              "bands": [
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                },
+                {
+                  "hue": 0.0,
+                  "luminance": 0.0,
+                  "saturation": 0.0
+                }
+              ],
+              "grading": [
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                },
+                {
+                  "amount": 0.0,
+                  "hue": 0.0
+                }
+              ],
+              "monochrome": false,
+              "rgb_midtones": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "detail": {
+              "chroma_noise": 0.0,
+              "clarity": 0.0,
+              "dehaze": 0.0,
+              "luminance_noise": 0.0,
+              "radius": 1.0,
+              "sharpen": 0.0,
+              "texture": 0.0,
+              "threshold": 0.0
+            },
+            "geometry": {
+              "angle": 2.0,
+              "ca": [
+                0.0,
+                0.0
+              ],
+              "crop": [
+                0.0,
+                0.0,
+                1.0,
+                1.0
+              ],
+              "defringe": 0.0,
+              "distortion": 10.0,
+              "flip_horizontal": false,
+              "flip_vertical": false,
+              "moustache": 0.0,
+              "perspective": [
+                0.0,
+                0.0
+              ],
+              "quarter_turns": 0,
+              "scale": 1.0,
+              "vignette": 20.0
+            },
+            "masks": []
+          },
+          "blacks": 0.0,
+          "brightness": 12.0,
+          "contrast": 15.0,
+          "curve": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 0.5,
+              "y": 0.550000011920929
+            },
+            {
+              "x": 1.0,
+              "y": 1.0
+            }
+          ],
+          "exposure_ev": 0.5,
+          "highlights": -20.0,
+          "process_version": 3,
+          "raw_engine": "TrueRenderer",
+          "saturation": 12.0,
+          "schema_version": 1,
+          "shadows": 20.0,
+          "temperature": 10.0,
+          "tint": 0.0,
+          "vibrance": 15.0,
+          "whites": 0.0
+        },
+        "retained_bytes": 32430912,
+        "size": [
+          1508,
+          1008
+        ],
+        "worker_total": {
+          "max_ms": 102.05175,
+          "median_ms": 100.097167,
+          "min_ms": 98.519625,
+          "p95_ms": null,
+          "samples_ms": [
+            101.841042,
+            102.05175,
+            100.778708,
+            99.32775000000001,
+            99.96179199999999,
+            100.242042,
+            100.246875,
+            100.34195899999999,
+            99.720167,
+            98.87525,
+            99.049208,
+            99.600167,
+            99.537458,
+            98.519625,
+            100.111292,
+            100.393167,
+            101.07970800000001,
+            100.409291,
+            100.08304199999999,
+            99.01412499999999
+          ]
+        }
+      }
+    ],
+    "compute_pool_threads": 9,
+    "debug_assertions": false,
+    "input": "Generated independently at each mip geometry; no RAW decoding, source photography or catalog access.",
+    "os": "macos",
+    "sample_count_per_case": 20,
+    "schema": 1,
+    "scope": "CPU edit-worker stages on synthetic opaque linear Rec.2020 pixels; not UI/GPU/RAW or physical-display latency. Base 3 matches the ordinary <=1024px edit mip for the stated geometry in both preview qualities; bases 4/2 explore size cost only. No quality equivalence between mips is claimed.",
+    "warmups_per_case": 2
+  },
+  "historical_continuity_reanalysis": {
+    "original_campaign_date": "2026-10-03",
+    "scope": "Four engines x CPU/GPU x provisional edit preview/native output proof. This is not Standard/Full and has no 60 Hz input schedule or physical display timestamps.",
+    "result": "All 16 traces passed their original coverage criterion yet retained only one displayed image through the 40 moving steps, then showed the final image.",
+    "cases": [
+      {
+        "case": "Apple-Cpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/Apple-Cpu-preview/reports/edit-continuity.json",
+        "sha256": "329e026716a5bfcc982b8d99d46d0164e2070e8224c0f14d156af04c131be277",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 45
+      },
+      {
+        "case": "Apple-Cpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/Apple-Cpu-proof/reports/edit-continuity.json",
+        "sha256": "2a8f862593ba258782155e7507b6171ed86ea7e7b1adfd2644204b3084ad208f",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 110
+      },
+      {
+        "case": "Apple-Gpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/Apple-Gpu-preview/reports/edit-continuity.json",
+        "sha256": "c5a2c0b3a10488e4c463eac76e3140dde3b3f8ebe16ca5cd8246e872d8bf8358",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 43
+      },
+      {
+        "case": "Apple-Gpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/Apple-Gpu-proof/reports/edit-continuity.json",
+        "sha256": "79aa245223a38cf23127db710715b669419f1d536af70bcd6db25e063b3e939b",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 108
+      },
+      {
+        "case": "LibRawAhd-Cpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Cpu-preview/reports/edit-continuity.json",
+        "sha256": "29320da38ff65349b93b35bf4b25378c1150215079b4fa47033499a290c403d7",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 45
+      },
+      {
+        "case": "LibRawAhd-Cpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Cpu-proof/reports/edit-continuity.json",
+        "sha256": "7a715da4ee7735915613b14fca2374f1016b4d1beeded2b1a05fd34831b8da7f",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 111
+      },
+      {
+        "case": "LibRawAhd-Gpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Gpu-preview/reports/edit-continuity.json",
+        "sha256": "adf4b5364f4a461ee08b36ce2835473054689d3188f03038e4cbc3365876ed6d",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 43
+      },
+      {
+        "case": "LibRawAhd-Gpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawAhd-Gpu-proof/reports/edit-continuity.json",
+        "sha256": "3924868c7a9590ab69bf8baaa1808fcb7644d60f72cb2d665e472a88e4d552c5",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 108
+      },
+      {
+        "case": "LibRawBilinear-Cpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Cpu-preview/reports/edit-continuity.json",
+        "sha256": "b477f73a4d5e1264d873519a2f8d685a544fe804a02a7f3b9e022faee9980814",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 45
+      },
+      {
+        "case": "LibRawBilinear-Cpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Cpu-proof/reports/edit-continuity.json",
+        "sha256": "05a6ca9bdac3455e59c6157aabec2f17c838b87ebb6092f035f1980e6e364776",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 110
+      },
+      {
+        "case": "LibRawBilinear-Gpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Gpu-preview/reports/edit-continuity.json",
+        "sha256": "8262575082c2ba31374c149eec0453f61b9923cc23df932aa1acae38d0840b6c",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 43
+      },
+      {
+        "case": "LibRawBilinear-Gpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/LibRawBilinear-Gpu-proof/reports/edit-continuity.json",
+        "sha256": "49640b69e466452004fd9f420849edc00211a38f90b990c70a88a877e9bf89ed",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 108
+      },
+      {
+        "case": "TrueRenderer-Cpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Cpu-preview/reports/edit-continuity.json",
+        "sha256": "e279d0ec153a37638066fda6089c490740217aa5f057584968b6345cd7925fa4",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 45
+      },
+      {
+        "case": "TrueRenderer-Cpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Cpu-proof/reports/edit-continuity.json",
+        "sha256": "bd10b48542c2ca74728dd3ded32d6f600d60d6f3fb0cd4f076f5634fd43dffa8",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 112
+      },
+      {
+        "case": "TrueRenderer-Gpu-preview",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Gpu-preview/reports/edit-continuity.json",
+        "sha256": "66b0193c2efbc62e5cb9b701d9a4a377f033635fe0377776b8bbd70a5ec03b49",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 43
+      },
+      {
+        "case": "TrueRenderer-Gpu-proof",
+        "evidence_path": "var/edit-continuity-engines-2026-10-03/TrueRenderer-Gpu-proof/reports/edit-continuity.json",
+        "sha256": "617163a3586cb2b02aa40583fb749242a70b6c687da6b92a0729f11cc1a80508",
+        "historical_test_passed": true,
+        "moving_draw_count": 40,
+        "distinct_displayed_images_while_moving": 1,
+        "distinct_displayed_images_total": 2,
+        "total_draw_count": 109
+      }
+    ]
+  },
+  "recommended_order": [
+    "Measure frame freshness; separate requested, computing and displayed revisions. Keep one active job and one replaceable latest pending draft; show monotonic intermediate frames only within a compatible interaction.",
+    "Prioritize visible editing over thumbnails/histograms. Prepare coefficients, skip neutral work, use the bounded shared CPU pool where valid, reuse scratch and avoid unneeded mip construction. Measure adaptive interaction resolution.",
+    "Resident GPU editing graph shared after all four RAW engines: point operations first, then geometry/spatial filters/masks; qualify every node against CPU before enabling it. Refine selected Standard/Full on gesture release.",
+    "Qualify bounded native WB sessions inside XPC workers per engine. Apple filter/scale reuse and LibRaw unpack reuse are candidates, not measured improvements. Account retained memory, cancellations, source epochs and worker recovery.",
+    "Validate four engines x two qualities x CPU/GPU with actual slider gestures, final export parity, late-result rejection, memory and XPC where affected."
+  ],
+  "proposed_interaction_targets": {
+    "warm_common_controls_updates_per_second": 60,
+    "heavy_controls_adaptive_updates_per_second": 30,
+    "status": "Design targets to qualify, not achieved rates. Existing photo-spec command-to-frame targets remain in force.",
+    "measure": [
+      "input-to-frame age",
+      "distinct displayed revisions",
+      "inter-update gaps",
+      "discarded work",
+      "release-to-final convergence",
+      "memory"
+    ]
+  },
+  "primary_design_references": [
+    {
+      "url": "https://developer.apple.com/library/archive/documentation/GraphicsImaging/Conceptual/CoreImaging/ci_performance/ci_performance.html",
+      "supports": "Reuse contexts, choose output pixel count and avoid unnecessary CPU/GPU texture transfers. TrueRenderer deliberately bounds large context lifetime today; any reuse must requalify memory. Color management is retained."
+    },
+    {
+      "url": "https://developer.apple.com/documentation/coreimage/cirawfilter/scalefactor",
+      "supports": "CIRAWFilter exposes a smaller output scale as a performance option. TrueRenderer compatibility and fidelity remain to be measured."
+    },
+    {
+      "url": "https://www.libraw.org/docs/API-CXX.html#free_image",
+      "supports": "LibRaw can retain unpacked state while freeing postprocessing output for another processing call with different settings. A bounded XPC session remains application work to design and test."
+    },
+    {
+      "url": "https://docs.rs/wgpu/30.0.1/wgpu/struct.Queue.html#method.write_buffer",
+      "supports": "Queue writes stage updates until submission; persistent image data with small parameter updates is feasible, with explicit staging and completion lifetimes."
+    }
+  ],
+  "limitations": [
+    "20 timed samples per case; no p95/p99 claim. 360 samples plus 36 warmups across 18 cases.",
+    "Stage timings exclude UI events, thread launch/wake, presentation, upload, GPU completion, display, RAW decode, cache IO and concurrent thumbnail work.",
+    "The 754x504 raster uses native geometry metadata 6032x4032. No 24-megapixel source was decoded. Each tested mip is generated independently; different scales were not compared for photographic equivalence.",
+    "Histogram timing is separate and at each tested raster size; production thumbnails use <=512 pixels and their own work.",
+    "Historical continuity traces refer to older builds and are not a fresh native or Standard/Full qualification.",
+    "No user photography/catalog accessed by the profiler; no bundle replaced; no application speedup, RAW/color/Windows qualification or R/SF gate completion claimed."
+  ]
+}

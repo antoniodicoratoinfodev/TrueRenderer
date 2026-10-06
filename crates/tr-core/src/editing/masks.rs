@@ -140,12 +140,16 @@ impl Mask {
         self.apply_weight(rgb, weight);
     }
     fn apply_weight(&self, rgb: &mut [f32; 3], weight: f32) {
-        let exposure = self.exposure.exp2();
-        let gains = [
+        self.apply_prepared(rgb, weight, self.exposure.exp2(), self.gains());
+    }
+    fn gains(&self) -> [f32; 3] {
+        [
             (self.warmth * 0.0018).exp(),
             1.,
             (-self.warmth * 0.0018).exp(),
-        ];
+        ]
+    }
+    fn apply_prepared(&self, rgb: &mut [f32; 3], weight: f32, exposure: f32, gains: [f32; 3]) {
         let mut edited = std::array::from_fn(|c| rgb[c] * exposure * gains[c]);
         let y = luma(edited);
         for c in 0..3 {
@@ -161,6 +165,8 @@ pub(super) struct Prepared<'a> {
     mask: &'a Mask,
     brush: Option<Node>,
     aspect: f32,
+    exposure: f32,
+    gains: [f32; 3],
 }
 impl<'a> Prepared<'a> {
     pub fn new(mask: &'a Mask, aspect: f32) -> Self {
@@ -180,6 +186,8 @@ impl<'a> Prepared<'a> {
             mask,
             brush,
             aspect,
+            exposure: mask.exposure.exp2(),
+            gains: mask.gains(),
         }
     }
     pub fn apply(&self, rgb: &mut [f32; 3], guide: [f32; 3], p: [f32; 2]) {
@@ -198,9 +206,16 @@ impl<'a> Prepared<'a> {
                 .sqrt();
             let t = ((d / mask.radius - (1. - mask.feather)) / mask.feather).clamp(0., 1.);
             let weight = 1. - t * t * (3. - 2. * t);
-            mask.apply_weight(rgb, if mask.invert { 1. - weight } else { weight });
+            mask.apply_prepared(
+                rgb,
+                if mask.invert { 1. - weight } else { weight },
+                self.exposure,
+                self.gains,
+            );
         } else {
-            self.mask.apply(rgb, guide, p, self.aspect);
+            let weight = self.mask.weight(p, guide, self.aspect);
+            self.mask
+                .apply_prepared(rgb, weight, self.exposure, self.gains);
         }
     }
 }

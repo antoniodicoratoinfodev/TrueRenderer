@@ -54,6 +54,8 @@ and saturation. **Vibrance** selectively adjusts less saturated colours; optiona
 Using these controls opts that revision into photographic process 2; existing
 recipes retain their previous rendering.
 
+Slider previews update progressively in Standard and Full. Common light and colour adjustments use the GPU when enabled and its startup check passes; other tools use the shared CPU pool. While dragging, the preview can use less detail, then refines automatically when you stop. Native RAW white balance uses a labelled temporary RGB preview during the gesture and finishes with the selected engine’s exact development. Final verification and export use the full photographic recipe.
+
 #### History and reusable adjustments
 
 Edits are saved as versioned recipes in the local library;
@@ -261,6 +263,12 @@ TrueRenderer is currently a development preview available from source. Follow th
 ## Build and run
 
 The repository pins Rust 1.98.1 and uses Python 3 for fixtures and verification. Run commands from the repository root.
+
+Builds (`target/`), app packages (`dist/`), the local toolchain (`.tools/`),
+application data (`var/`) and generated preview caches stay outside Git.
+`var/library.sqlite` and `var/backups/` are durable data: do not delete `var/`
+to clean a build. `./scripts/cargo-local.sh clean` removes build artifacts while
+preserving the packaged app in `dist/`.
 
 ### macOS
 

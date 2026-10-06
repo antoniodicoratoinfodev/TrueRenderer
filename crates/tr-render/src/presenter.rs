@@ -20,6 +20,8 @@ struct Key {
     high_precision: bool,
     source: u64,
     region: Region,
+    edit: Option<crate::live_edit::LiveEdit>,
+    photographic: bool,
 }
 struct Job {
     lane: String,
@@ -108,6 +110,8 @@ impl Drop for FrameTexture {
 pub struct ComputeStatistics {
     pub cpu_frames: u64,
     pub gpu_frames: u64,
+    pub cpu_edit_frames: u64,
+    pub gpu_edit_frames: u64,
     pub fallbacks: u64,
     pub last_fallback: String,
     pub wide_frames: usize,
@@ -129,6 +133,7 @@ pub struct PaintCoverage {
     pub lane: String,
     pub source: u64,
     pub displayed_source: Option<u64>,
+    pub displayed_revision: Option<u64>,
     pub fraction: f32,
     pub exact: bool,
 }
@@ -227,16 +232,18 @@ impl Presenter {
                 let gpu = if verified.load(Ordering::Acquire)
                     && !job.image.scientific()
                     && choice != 1
-                    && (choice == 2 || pixels >= 512 * 1024)
+                    && job.key.edit.as_ref().is_none_or(|e| e.gpu_supported())
+                    && (choice == 2 || job.key.edit.is_some() || pixels >= 512 * 1024)
                     && let Some(filter) = &mut filter
                 {
                     filter
-                        .render(
+                        .render_edit(
                             &job.image,
                             job.key.region,
                             &worker_memory,
                             &worker_gpu_memory,
                             &mut job.lease,
+                            job.key.edit.as_ref(),
                         )
                         .map_err(|e| {
                             fallback = Some(format!("{e:#}"));
@@ -250,26 +257,25 @@ impl Presenter {
                 let result = if let Some(frame) = gpu {
                     Ok(Rendered::Gpu(frame))
                 } else {
-                    job.image
-                        .render(job.key.region)
+                    job.key
+                        .edit
+                        .as_ref()
+                        .map_or_else(
+                            || job.image.render(job.key.region),
+                            |edit| edit.render(&job.image, job.key.region),
+                        )
                         .map(|mut image| {
                             if job.image.scientific() {
                                 job.key.stretch.apply(&mut image);
                             }
                             if high_precision {
-                                Rendered::Cpu16(
-                                    image
-                                        .pixels
-                                        .iter()
-                                        .flat_map(|p| {
-                                            tr_core::color::display_float(*p, 119. / 255.)
-                                                .into_iter()
-                                                .flat_map(|v| {
-                                                    half::f16::from_f32(v).to_bits().to_le_bytes()
-                                                })
-                                        })
-                                        .collect(),
-                                )
+                                let mut bytes = vec![0; image.pixels.len() * 8];
+                                image.map_display(&mut bytes, |p| {
+                                    let values = tr_core::color::display_float(p, 119. / 255.)
+                                        .map(|v| half::f16::from_f32(v).to_bits().to_le_bytes());
+                                    std::array::from_fn::<_, 8, _>(|i| values[i / 2][i % 2])
+                                });
+                                Rendered::Cpu16(bytes)
                             } else {
                                 Rendered::Cpu(image.to_display())
                             }
@@ -289,6 +295,13 @@ impl Presenter {
                 }
                 if !is_gpu {
                     state.statistics.cpu_frames += 1;
+                }
+                if job.key.edit.is_some() {
+                    if is_gpu {
+                        state.statistics.gpu_edit_frames += 1;
+                    } else {
+                        state.statistics.cpu_edit_frames += 1;
+                    }
                 }
                 if let Some(error) = fallback {
                     state.statistics.fallbacks += 1;
@@ -347,6 +360,16 @@ impl Presenter {
         ] = self.wide_peak;
         stats
     }
+    pub fn interactive_edit_edge(&self, edit: &crate::live_edit::LiveEdit) -> u32 {
+        if self.compute_verified.load(Ordering::Acquire)
+            && self.compute_mode.load(Ordering::Acquire) != 1
+            && edit.gpu_supported()
+        {
+            2048
+        } else {
+            1024
+        }
+    }
     pub fn set_scientific_stretch(&mut self, stretch: tr_core::science::Stretch) {
         if self.stretch != stretch {
             self.stretch = stretch;
@@ -402,17 +425,20 @@ impl Presenter {
         }
     }
     fn install(&mut self, lane: String, entry: Entry) {
-        if self
-            .wide
-            .get(&lane)
-            .is_some_and(|old| source_area(old.key.region) <= source_area(entry.key.region))
-        {
+        if self.wide.get(&lane).is_some_and(|old| {
+            source_area(old.key.region) <= source_area(entry.key.region)
+                || ((old.key.photographic || entry.key.photographic)
+                    && (old.key.source != entry.key.source || old.key.edit != entry.key.edit))
+        }) {
             let old = self.wide.remove(&lane).unwrap();
             self.retire(old);
         }
         if let Some(old) = self.entries.remove(&lane) {
             let retain = lane.starts_with("view:")
                 && !old.superseded
+                && (old.key.source == entry.key.source
+                    || (!old.key.photographic && !entry.key.photographic))
+                && old.key.edit == entry.key.edit
                 && !self.pressure.load(Ordering::Acquire)
                 && source_area(old.key.region) > source_area(entry.key.region)
                 && self
@@ -686,6 +712,54 @@ impl Presenter {
         rect: Rect,
         region: Region,
     ) {
+        self.paint_frame(ui, lane, image, rect, region, None, None, false);
+    }
+    #[allow(clippy::too_many_arguments)]
+    pub fn paint_progressive(
+        &mut self,
+        ui: &egui::Ui,
+        lane: String,
+        image: &Arc<ImageLevels>,
+        rect: Rect,
+        region: Region,
+        provisional: bool,
+        photographic: bool,
+    ) {
+        self.paint_frame(
+            ui,
+            lane,
+            image,
+            rect,
+            region,
+            Some(provisional),
+            None,
+            photographic,
+        );
+    }
+    #[allow(clippy::too_many_arguments)]
+    pub fn paint_edit(
+        &mut self,
+        ui: &egui::Ui,
+        lane: String,
+        image: &Arc<ImageLevels>,
+        rect: Rect,
+        region: Region,
+        edit: crate::live_edit::LiveEdit,
+    ) {
+        self.paint_frame(ui, lane, image, rect, region, Some(true), Some(edit), true);
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn paint_frame(
+        &mut self,
+        ui: &egui::Ui,
+        lane: String,
+        image: &Arc<ImageLevels>,
+        rect: Rect,
+        region: Region,
+        progressive: Option<bool>,
+        edit: Option<crate::live_edit::LiveEdit>,
+        photographic: bool,
+    ) {
         let key = Key {
             stretch: if image.scientific() {
                 self.stretch
@@ -695,6 +769,8 @@ impl Presenter {
             high_precision: self.high_precision,
             source: image.id(),
             region,
+            edit,
+            photographic,
         };
         if let Some(entry) = self
             .entries
@@ -707,8 +783,9 @@ impl Presenter {
                     lane: lane.clone(),
                     source: image.id(),
                     displayed_source: Some(image.id()),
+                    displayed_revision: entry.key.edit.as_ref().map(|e| e.revision),
                     fraction: 1.,
-                    exact: true,
+                    exact: progressive != Some(true),
                 });
                 self.captures.push(Capture {
                     compute: if matches!(&entry.texture, FrameTexture::Gpu { .. }) {
@@ -742,18 +819,26 @@ impl Presenter {
             return;
         }
         self.errors.remove(&lane);
+        // One admitted render per lane. Keep it publishable while the next
+        // draft changes; the following paint observes only the latest request.
+        if progressive.is_some() && self.waiting.contains_key(&lane) {
+            return;
+        }
         self.enqueue(ui, lane, image, rect, key);
     }
 
     pub(crate) fn is_current(&self, lane: &str, source: u64, region: Region) -> bool {
-        self.entries
-            .get(lane)
-            .is_some_and(|e| !e.superseded && e.key.source == source && e.key.region == region)
+        self.entries.get(lane).is_some_and(|e| {
+            !e.superseded
+                && e.key.source == source
+                && e.key.region == region
+                && e.key.edit.is_none()
+        })
     }
     pub fn source_is_current(&self, lane: &str, source: u64) -> bool {
         self.entries
             .get(lane)
-            .is_some_and(|e| !e.superseded && e.key.source == source)
+            .is_some_and(|e| !e.superseded && e.key.source == source && e.key.edit.is_none())
     }
 
     /// While the CPU edit is pending, draw only the last complete frame. Never
@@ -792,6 +877,7 @@ impl Presenter {
     ) {
         let mut covered = 0.;
         let mut displayed_source = None;
+        let mut displayed_revision = None;
         let wide_is_better = self
             .wide
             .get(lane)
@@ -815,6 +901,7 @@ impl Presenter {
             if let Some((coverage, uv)) = reproject(entry.key.region, region, rect) {
                 covered = coverage.intersect(rect).area() / rect.area();
                 displayed_source = Some(entry.key.source);
+                displayed_revision = entry.key.edit.as_ref().map(|e| e.revision);
                 ui.painter()
                     .image(entry.texture.id(), coverage, uv, Color32::WHITE);
             }
@@ -824,6 +911,7 @@ impl Presenter {
                 lane: lane.into(),
                 source,
                 displayed_source,
+                displayed_revision,
                 fraction: covered,
                 exact: false,
             });
@@ -842,7 +930,9 @@ impl Presenter {
         if self.waiting.get(&lane) != Some(&key) {
             let pixels = region.size[0] as u64 * region.size[1] as u64;
             let display_bytes = pixels * if self.high_precision { 8 } else { 4 };
-            let required = pixels * 80 + 4 * 1024 * 1024;
+            let required = pixels * 80
+                + 4 * 1024 * 1024
+                + key.edit.as_ref().map_or(0, |e| e.working_bytes(image));
             if required > self.memory.usage().limit || display_bytes > self.gpu_memory.usage().limit
             {
                 self.errors.insert(
@@ -1041,6 +1131,8 @@ mod tests {
             key: Key {
                 source,
                 region,
+                edit: None,
+                photographic: false,
                 high_precision: false,
                 stretch: Default::default(),
             },
@@ -1286,6 +1378,8 @@ mod tests {
                     high_precision: false,
                     source: image.id(),
                     region,
+                    edit: None,
+                    photographic: false,
                 },
                 texture: FrameTexture::Cpu(texture),
                 touched: 0,

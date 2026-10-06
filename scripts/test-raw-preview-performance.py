@@ -39,7 +39,8 @@ def main():
         target = folder / f'{index:03}.nef'
         shutil.copyfile(path, target)
         assert digest(target) == before[index]
-    shutil.copytree(ROOT / 'corpus', root / 'corpus')
+    shutil.copytree(ROOT / 'corpus', root / 'corpus',
+                    ignore=shutil.ignore_patterns('.truerenderer-cache', '.DS_Store'))
     bundle = root / 'TrueRenderer.app'
     shutil.copytree(args.bundle.resolve(), bundle)
     binary_paths = ['Contents/MacOS/TrueRenderer', 'Contents/MacOS/tr-worker'] + [

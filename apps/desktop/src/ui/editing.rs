@@ -261,6 +261,15 @@ pub(super) struct EditingUi {
     pub output_proof: bool,
     previews: HashMap<String, EditPreview>,
     inflight: Option<(String, u64, EditRecipe)>,
+    preview_epoch: u64,
+    inflight_epoch: u64,
+    refinement_cancel: Option<Arc<std::sync::atomic::AtomicBool>>,
+    interactive_millis: Arc<std::sync::atomic::AtomicU64>,
+    changed_at: HashMap<String, Instant>,
+    revision: u64,
+    pub(super) raw_wb_anchor: HashMap<String, tr_core::decoder::RawWhiteBalance>,
+    pub(super) display_wb: HashMap<String, tr_core::decoder::RawWhiteBalance>,
+    thumbnail_started: HashMap<String, Instant>,
     tx: std::sync::mpsc::Sender<PreviewOutcome>,
     rx: std::sync::mpsc::Receiver<PreviewOutcome>,
     preview_errors: HashMap<String, PreviewFailure>,
@@ -322,6 +331,15 @@ impl Default for EditingUi {
             output_proof: false,
             previews: HashMap::new(),
             inflight: None,
+            preview_epoch: 0,
+            inflight_epoch: 0,
+            refinement_cancel: None,
+            interactive_millis: Arc::new(std::sync::atomic::AtomicU64::new(0)),
+            changed_at: HashMap::new(),
+            revision: 0,
+            raw_wb_anchor: HashMap::new(),
+            display_wb: HashMap::new(),
+            thumbnail_started: HashMap::new(),
             tx,
             rx,
             preview_errors: HashMap::new(),
@@ -533,6 +551,9 @@ impl TrueRenderer {
                     id: item.id.clone(),
                     extend: false,
                 });
+                if args.iter().any(|arg| arg == "--edit-zoom-smoke") {
+                    self.state.transform.set_zoom(1.);
+                }
                 self.smoke_stage = 1;
             }
             1 => {
@@ -852,6 +873,10 @@ impl TrueRenderer {
         }
     }
     pub(super) fn clear_edit_preview(&mut self) {
+        self.cancel_edit_refinement();
+        self.editing.raw_wb_anchor.clear();
+        self.editing.display_wb.clear();
+        self.editing.preview_epoch = self.editing.preview_epoch.wrapping_add(1);
         let sources = self
             .editing
             .previews
@@ -862,6 +887,8 @@ impl TrueRenderer {
         self.editing.preview_errors.clear();
     }
     fn clear_edit_preview_for(&mut self, id: &str) {
+        self.cancel_edit_refinement();
+        self.editing.preview_epoch = self.editing.preview_epoch.wrapping_add(1);
         if let Some(preview) = self.editing.previews.remove(id) {
             self.presenter
                 .invalidate_sources(&HashSet::from([preview.image.id()]));
@@ -869,6 +896,8 @@ impl TrueRenderer {
         self.editing.preview_errors.remove(id);
     }
     fn supersede_edit_preview_for(&mut self, id: &str) {
+        self.cancel_edit_refinement();
+        self.editing.preview_epoch = self.editing.preview_epoch.wrapping_add(1);
         if let Some(preview) = self.editing.previews.remove(id) {
             self.presenter
                 .supersede_sources(&HashSet::from([preview.image.id()]));
@@ -986,6 +1015,8 @@ impl TrueRenderer {
         // A save acknowledgement of the same draft must not invalidate its
         // preview. History/reloads do replace the draft and revoke older work.
         if entry.draft != previous {
+            self.editing.display_wb.remove(&id);
+            self.editing.raw_wb_anchor.remove(&id);
             self.supersede_edit_preview_for(&id);
             self.supersede_edit_thumbnails(&id);
         }
@@ -1071,7 +1102,7 @@ impl TrueRenderer {
         true
     }
 
-    fn apply_edit_draft(&mut self, id: &str, draft: EditRecipe) {
+    pub(super) fn apply_edit_draft(&mut self, id: &str, draft: EditRecipe) {
         if let Err(error) = draft.validate() {
             self.status = format!("Regolazione non valida: {error}");
             return;
@@ -1080,13 +1111,42 @@ impl TrueRenderer {
             self.editing.verify_final = None;
         }
         self.editing.picker_error = None;
+        let compatible = self
+            .editing
+            .entries
+            .get(id)
+            .and_then(|e| e.draft.as_ref())
+            .is_some_and(|old| old.raw_engine == draft.raw_engine && old.raw_wb == draft.raw_wb);
+        self.cancel_edit_refinement();
+        if !compatible || draft.is_neutral() {
+            self.supersede_edit_preview_for(id);
+        }
+        if let Some(old) = self.editing.entries.get(id).and_then(|e| e.draft.as_ref())
+            && old.raw_engine == draft.raw_engine
+            && old.raw_wb != draft.raw_wb
+        {
+            self.editing
+                .raw_wb_anchor
+                .entry(id.into())
+                .or_insert(old.raw_wb);
+            self.editing
+                .display_wb
+                .entry(id.into())
+                .or_insert(old.raw_wb);
+        }
+        self.editing.revision = self.editing.revision.wrapping_add(1);
+        self.editing.changed_at.insert(id.into(), Instant::now());
         self.editing.entries.get_mut(id).unwrap().draft = Some(draft);
         self.sample = None;
         self.sample_item_id = None;
         self.sample_level = None;
         self.sample_from_current_render = false;
-        self.supersede_edit_preview_for(id);
-        self.supersede_edit_thumbnails(id);
+        // Keep the complete prior preview and any admitted presentation alive.
+        // A new pointer event must not revoke a frame before it can be drawn.
+        self.editing.preview_errors.remove(id);
+        self.editing
+            .thumbnail_errors
+            .retain(|_, (photo, _, _)| photo != id);
     }
 
     fn step_edit(&mut self, id: &str, undo: bool) {
@@ -1721,17 +1781,52 @@ impl TrueRenderer {
         while let Ok((generation, id, source, base, proof, recipe, result)) =
             self.editing.rx.try_recv()
         {
-            self.editing.inflight = None;
-            if generation != self.generation
-                || self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe)
+            let active = self
+                .editing
+                .inflight
+                .as_ref()
+                .is_some_and(|(photo, input, requested)| {
+                    photo == &id && *input == source && *requested == recipe
+                });
+            let revoked = active && self.editing.inflight_epoch != self.editing.preview_epoch;
+            let cancelled = active
+                && self
+                    .editing
+                    .refinement_cancel
+                    .as_ref()
+                    .is_some_and(|cancel| cancel.load(Ordering::Acquire));
+            let intermediate = active
+                && self.editing.inflight_epoch == self.editing.preview_epoch
+                && self
+                    .editing
+                    .entries
+                    .get(&id)
+                    .and_then(|e| e.draft.as_ref())
+                    .is_some_and(|latest| {
+                        latest.raw_engine == recipe.raw_engine
+                            && latest.raw_wb == recipe.raw_wb
+                            && !latest.is_neutral()
+                    });
+            if active {
+                self.editing.inflight = None;
+                self.editing.refinement_cancel = None;
+            }
+            if cancelled
+                || revoked
+                || (!active && result.is_ok())
+                || generation != self.generation
+                || (!intermediate
+                    && self.editing.entries.get(&id).and_then(|e| e.draft.as_ref())
+                        != Some(&recipe))
                 || self.output_proof_for(&id) != proof
             {
                 continue;
             }
             match result {
                 Ok(image) => {
-                    self.supersede_edit_preview_for(&id);
+                    self.editing.preview_errors.remove(&id);
                     if self.editing.previews.len() >= 2
+                        && !self.editing.previews.contains_key(&id)
                         && let Some(oldest) = self
                             .editing
                             .previews
@@ -1753,6 +1848,10 @@ impl TrueRenderer {
                     );
                 }
                 Err(error) => {
+                    if self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe)
+                    {
+                        continue;
+                    }
                     self.editing.preview_errors.insert(
                         id,
                         PreviewFailure {
@@ -1859,6 +1958,18 @@ impl TrueRenderer {
             return None;
         }
         self.editing.thumbnail_errors.remove(&source);
+        if self.edit_interactive(id) && self.editing.raw_wb_anchor.contains_key(id) {
+            return None;
+        }
+        if self.edit_interactive(id)
+            && self
+                .editing
+                .thumbnail_started
+                .get(id)
+                .is_some_and(|started| started.elapsed() < Duration::from_millis(120))
+        {
+            return None;
+        }
         if self.editing.thumbnail_inflight.len() < 2
             && !self.editing.thumbnail_inflight.contains(&source)
         {
@@ -1871,6 +1982,9 @@ impl TrueRenderer {
             let bytes = preview_working_bytes(level.width, level.height)
                 + recipe.scratch_bytes(level.width, level.height);
             if let Some(mut lease) = self.service.cache.memory.try_reserve(bytes) {
+                self.editing
+                    .thumbnail_started
+                    .insert(id.into(), Instant::now());
                 let tx = self.editing.thumbnail_tx.clone();
                 let wake = self.service.wake.clone();
                 let id = id.to_owned();
@@ -1940,14 +2054,20 @@ impl TrueRenderer {
             return None; // A reduced source cannot simulate output before filtering.
         }
         let source = neutral.id();
-        let index = if self.editing.verify_final.as_deref() == Some(id) && neutral.base_level() == 0
-        {
+        let interactive =
+            self.edit_interactive(id) && !proof && self.editing.verify_final.as_deref() != Some(id);
+        let edge = if self.editing.interactive_millis.load(Ordering::Relaxed) > 24 {
+            512
+        } else {
+            1024
+        };
+        let index = if !interactive {
             0
         } else {
             neutral
                 .levels()
                 .iter()
-                .position(|l| l.width.max(l.height) <= 1024)
+                .position(|l| l.width.max(l.height) <= edge)
                 .unwrap_or(neutral.levels().len() - 1)
         };
         let base = neutral.base_level() + index as u32;
@@ -1977,7 +2097,6 @@ impl TrueRenderer {
         }) {
             return None;
         }
-        self.supersede_edit_preview_for(id);
         if self.editing.inflight.is_none() {
             let level = &neutral.levels()[index];
             let bytes = preview_working_bytes(level.width, level.height)
@@ -1988,11 +2107,25 @@ impl TrueRenderer {
                 let id = id.to_owned();
                 let size = neutral.source_size();
                 self.editing.inflight = Some((id.clone(), source, recipe.clone()));
+                self.editing.inflight_epoch = self.editing.preview_epoch;
+                let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
+                if !interactive && !proof {
+                    self.editing.refinement_cancel = Some(cancel.clone());
+                }
+                let timing = self.editing.interactive_millis.clone();
                 let generation = self.generation;
                 std::thread::spawn(move || {
+                    let started = Instant::now();
+                    let cancelled = || cancel.load(Ordering::Acquire);
                     let result = (|| -> anyhow::Result<Arc<ImageLevels>> {
+                        anyhow::ensure!(!cancelled(), "Editing annullato");
                         let mut raster = neutral.levels()[index].clone();
-                        let size = recipe.apply_preview(&mut raster, size, base)?;
+                        let size = recipe.apply_preview_cancellable(
+                            &mut raster,
+                            size,
+                            base,
+                            &cancelled,
+                        )?;
                         if proof {
                             tr_core::export::proof_srgb16(&mut raster);
                         }
@@ -2001,14 +2134,18 @@ impl TrueRenderer {
                             31 - size[0].max(size[1]).leading_zeros()
                                 + u32::from(!size[0].max(size[1]).is_power_of_two()),
                         );
-                        let mut image =
-                            ImageLevels::from_reference_mip(raster, size, base, opaque)?;
+                        let mut image = ImageLevels::from_reference_mip_cancellable(
+                            raster, size, base, opaque, &cancelled,
+                        )?;
                         // Filtering scratch is gone; only resident pixels remain.
                         lease.shrink(image.byte_len() as u64);
                         image.attach_lease(lease);
                         Ok(Arc::new(image))
                     })()
                     .map_err(|e| format!("{e:#}"));
+                    if interactive && result.is_ok() {
+                        timing.store(started.elapsed().as_millis() as u64, Ordering::Relaxed);
+                    }
                     let _ = tx.send((generation, id, source, base, proof, recipe, result));
                     wake.request_repaint();
                 });
@@ -2027,11 +2164,106 @@ impl TrueRenderer {
         }
         None
     }
+    fn cancel_edit_refinement(&mut self) {
+        if let Some(cancel) = &self.editing.refinement_cancel {
+            cancel.store(true, Ordering::Release);
+        }
+    }
+    pub(super) fn edit_interactive(&self, id: &str) -> bool {
+        let active = self.editing.changed_at.get(id).is_some_and(|changed| {
+            changed.elapsed() < Duration::from_millis(120)
+                || self.context.input(|i| i.pointer.any_down())
+        });
+        if active {
+            self.context
+                .request_repaint_after(Duration::from_millis(125));
+        }
+        active
+    }
+    pub(super) fn live_edit_for(
+        &self,
+        id: &str,
+        digest: &str,
+        source: &ImageLevels,
+        input_wb: tr_core::decoder::RawWhiteBalance,
+    ) -> Option<tr_render::live_edit::LiveEdit> {
+        let entry = self.editing.entries.get(id)?;
+        let saved = entry.loaded.as_ref()?;
+        let recipe = entry.draft.as_ref()?;
+        if self.editing.show_original
+            || self.output_proof_for(id)
+            || source.scientific()
+            || !self.edit_source_matches(id, &saved.source_digest, digest, source.id())
+            || (!self.edit_interactive(id) && input_wb == recipe.raw_wb)
+            || (recipe.is_neutral() && input_wb == recipe.raw_wb)
+        {
+            return None;
+        }
+        let input_gains = wb_draft_gains(recipe.raw_engine, input_wb, recipe.raw_wb);
+        let mut edit = tr_render::live_edit::LiveEdit {
+            recipe: recipe.clone(),
+            input_gains,
+            max_edge: 1024,
+            revision: self.editing.revision,
+        };
+        edit.max_edge = self
+            .presenter
+            .interactive_edit_edge(&edit)
+            .min(self.viewer_prefetch_edge.clamp(512, 2048));
+        Some(edit)
+    }
+    // Only the display may consume an intermediate complete draft. Samplers,
+    // export and exact verification continue to use edited_preview's strict key.
+    pub(super) fn progressive_edit_preview(
+        &self,
+        id: &str,
+        source: u64,
+    ) -> Option<Arc<ImageLevels>> {
+        let current = self.editing.entries.get(id)?.draft.as_ref()?;
+        let preview = self.editing.previews.get(id)?;
+        (preview.source == source
+            && preview.proof == self.output_proof_for(id)
+            && preview.recipe.raw_engine == current.raw_engine
+            && preview.recipe.raw_wb == current.raw_wb
+            && !self.editing.show_original)
+            .then(|| preview.image.clone())
+    }
     pub(super) fn edited_preview_error(&self, id: &str) -> Option<&str> {
         self.editing
             .preview_errors
             .get(id)
             .map(|failure| failure.message.as_str())
+    }
+}
+
+// Display-only approximation between two native WB requests. Sensor-space
+// gains and Apple's illuminant model are not equivalent to working-space RGB;
+// these pixels are explicitly provisional and never sampled or exported.
+fn wb_draft_gains(
+    engine: tr_core::decoder::RawEngine,
+    from: tr_core::decoder::RawWhiteBalance,
+    to: tr_core::decoder::RawWhiteBalance,
+) -> [f32; 3] {
+    if from == to {
+        return [1.; 3];
+    }
+    if engine == tr_core::decoder::RawEngine::Apple {
+        let temperature = |wb: tr_core::decoder::RawWhiteBalance| {
+            if wb.is_as_shot() {
+                6500.
+            } else {
+                wb.apple_temperature as f32
+            }
+        };
+        let warm = (temperature(to) / temperature(from)).powf(0.8);
+        let tint = ((to.apple_tint as f32 - from.apple_tint as f32) / 300.).exp();
+        [warm * tint, 1. / tint, tint / warm].map(|v| v.clamp(0.05, 20.))
+    } else {
+        [
+            to.red as f32 / from.red as f32,
+            1.,
+            to.blue as f32 / from.blue as f32,
+        ]
     }
 }
 
@@ -2056,6 +2288,102 @@ mod smoke_deadline_tests {
         assert!(elapsed > ordinary);
         assert!(elapsed < native);
         assert_eq!(native - ordinary, tr_platform::RAW_WB_TIMEOUT);
+    }
+}
+
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod progressive_tests {
+    use super::*;
+    use crate::ui::settings_regressions::{app, settle};
+    #[test]
+    fn raw_wb_gesture_coalesces_native_requests_and_keeps_saved_recipe_exact() {
+        for engine in tr_core::decoder::RawEngine::choices() {
+            let (_dir, ctx, mut app) = app();
+            settle(&mut app, &ctx, true);
+            let item = app.state.items[0].clone();
+            let neutral = EditRecipe::neutral(engine);
+            app.editing.entries.insert(
+                item.id.clone(),
+                EditEntry {
+                    loaded: Some(LoadedEdit {
+                        asset_id: item.id.clone(),
+                        source_digest: item.digest.clone(),
+                        generation: 1,
+                        revision: 1,
+                        recipe: neutral.clone(),
+                        can_undo: false,
+                        can_redo: false,
+                    }),
+                    draft: Some(neutral.clone()),
+                    ..Default::default()
+                },
+            );
+            let source = ImageLevels::from_source(
+                tr_core::color::LinearImage::new(64, 32, vec![[0.2, 0.3, 0.4, 1.]; 2048]).unwrap(),
+                PreviewRequest::full(),
+            )
+            .unwrap();
+            let mut draft = neutral.clone();
+            for step in 1..=12 {
+                if engine == tr_core::decoder::RawEngine::Apple {
+                    draft.raw_wb.apple_temperature = 4000 + step * 100;
+                } else {
+                    draft.raw_wb.red = 1000 + step * 40;
+                }
+                app.apply_edit_draft(&item.id, draft.clone());
+                assert_eq!(app.preview_request(&item, 0).raw_wb, neutral.raw_wb);
+                let live = app
+                    .live_edit_for(&item.id, &item.digest, &source, neutral.raw_wb)
+                    .unwrap();
+                assert_ne!(live.input_gains, [1.; 3]);
+                assert_eq!(live.recipe, draft);
+                assert_eq!(
+                    app.editing.entries[&item.id]
+                        .loaded
+                        .as_ref()
+                        .unwrap()
+                        .recipe,
+                    neutral
+                );
+            }
+            app.editing
+                .changed_at
+                .insert(item.id.clone(), Instant::now() - Duration::from_secs(1));
+            assert_eq!(app.preview_request(&item, 0).raw_wb, draft.raw_wb);
+            assert!(
+                app.live_edit_for(&item.id, &item.digest, &source, neutral.raw_wb)
+                    .is_some()
+            );
+            assert!(
+                app.live_edit_for(&item.id, &item.digest, &source, draft.raw_wb)
+                    .is_none()
+            );
+            app.editing.show_original = true;
+            assert!(
+                app.live_edit_for(&item.id, &item.digest, &source, neutral.raw_wb)
+                    .is_none()
+            );
+            assert_eq!(app.preview_request(&item, 0).raw_wb, neutral.raw_wb);
+            app.editing.show_original = false;
+            app.request_final_preview(&item.id, true);
+            assert_eq!(app.preview_request(&item, 0).raw_wb, draft.raw_wb);
+            assert!(
+                app.live_edit_for(&item.id, &item.digest, &source, neutral.raw_wb)
+                    .is_none()
+            );
+            if engine == tr_core::decoder::RawEngine::Apple {
+                draft.raw_wb.apple_temperature += 100;
+            } else {
+                draft.raw_wb.red += 100;
+            }
+            app.apply_edit_draft(&item.id, draft.clone());
+            assert!(app.edit_interactive(&item.id));
+            assert_eq!(
+                app.preview_request(&item, 0).raw_wb,
+                draft.raw_wb,
+                "Output proof must never borrow a different native WB input"
+            );
+        }
     }
 }
 
@@ -2100,6 +2428,10 @@ mod reset_tests {
             if !accepted {
                 app.start_cache_action(false);
                 assert!(app.editing.previews.is_empty() && app.editing.thumbnails.is_empty());
+            }
+            if accepted {
+                app.editing.inflight = Some((item.id.clone(), image.id(), recipe.clone()));
+                app.editing.inflight_epoch = app.editing.preview_epoch;
             }
             app.editing
                 .tx

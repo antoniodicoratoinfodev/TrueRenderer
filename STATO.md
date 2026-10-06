@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 5 ottobre 2026.
+Aggiornato: 6 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
@@ -44,6 +44,47 @@ Ordine richiesto dal titolare il 4 ottobre: **prima i punti 2, 3 e 4 della propo
 - [ ] **Passo successivo, fuori da questa consegna:** campagna estesa di anteprime/memoria del punto 1.
 
 Restano aperti nel catalogo SF: profili ottici calibrati e correzione CA sul sensore; selezioni colore a campioni, LUT/profili creativi ed effetti aggiuntivi; combinazioni di maschere e ritocco; preset/versioni virtuali/batch completi; accelerazione dei nuovi nodi e qualifica fotografica estesa. I controlli manuali consegnati non chiudono questi requisiti. Perimetro numerico e prove effettive nel [rapporto del 5 ottobre](reports/photo-tools-macos-2026-10-05.json).
+
+### Pulizia progetto e controllo pubblicazione — 6 ottobre
+
+Su richiesta del titolare, rimosse 196 cache derivate marcate `TrueRenderer disposable cache v1` e non in uso, quattro file Finder `.DS_Store` e gli artefatti di compilazione con `scripts/cargo-local.sh clean`. Dimensione locale da circa 62 a 11 GiB secondo `du` (valori arrotondati). Conservati app finale, sorgenti, corpus sintetico, rapporti, toolchain e dati durevoli; 156 impronte di app, libreria, preferenze e backup identiche prima/dopo. `dist/TrueRenderer.app` resta l'unica app e la firma è valida.
+
+Corretto il motivo dell'accumulo: `verify.sh`, la prova di fluidità e la campagna prestazioni RAW ora escludono `.truerenderer-cache` e `.DS_Store` dalla copia del corpus. Conservate le prove storiche; le cache eliminate erano rigenerabili. Rafforzato `.gitignore` per credenziali locali, pacchetti app fuori `dist/` e originali RAW, con eccezione esplicita per i DNG sintetici dei test. Nessun file già tracciato risulta erroneamente ignorato; licenze, codice terze parti, `Cargo.lock`, fixture e rapporti restano nel repository.
+
+Verifica precommit: 1.215 file candidati alla pubblicazione, di cui 1.157 testuali controllati per firme di credenziali senza riscontri; nessun percorso di dati/build/toolchain nel set pubblico. Quindici casi di esclusione e otto di inclusione superati. Dopo la correzione degli script, suite completa con 297 test ordinari e 14 integrazioni, prova grafica nativa e due casi di fluidità CPU/GPU superati; tre test con fotografie private non eseguiti. Rimandi locali e whitespace verificati. Il renderer e il bundle non sono cambiati rispetto alla campagna di fluidità sottostante; non sono state eliminate fotografie o ricette per recuperare spazio.
+
+### Fluidità degli slider — consegnato il 6 ottobre
+
+Richiesta: risposta fotografica continua durante il trascinamento in **Standard e Piena**, con Apple, LibRaw bilineare, LibRaw AHD e TrueRenderer, usando CPU e GPU. La [valutazione iniziale](#valutazione-della-fluidità-durante-lediting--5-ottobre) aveva individuato lo scarto continuo dei risultati intermedi. Nel bundle consegnato il viewer conserva l'ultima immagine completa, ammette un lavoro alla volta e prende poi la bozza più recente. I risultati provvisori non alimentano campionatore, salvataggio fotografico o export.
+
+**Implementato:** coefficienti preparati una volta, eliminazione dei passaggi neutri, nodi e conversione display paralleli nel pool CPU comune; editing diretto del mip durante il gesto, senza ricostruire ogni volta la piramide; luce/WB RGB/curve/colore avanzato sulla GPU con sorgente lineare residente e controllo numerico all'avvio. Geometria, dettaglio e maschere usano CPU. La scala interattiva dipende da viewport e percorso disponibile, fino a 1024 px CPU e 2048 px GPU; dopo 120 ms senza variazioni si raffina dalla sorgente disponibile per Standard/Piena. Miniature/istogramma hanno cadenza inferiore. WB RAW: ponte RGB esplicitamente provvisorio, richieste accorpate durante il gesto, sviluppo nativo esatto dello stesso motore al termine. La prova export richiede sempre il WB corrente. Corretta anche la variazione di altezza della riga di dettaglio, che lasciava una fascia scoperta all'arrivo del nativo a 1:1.
+
+**Verificato sul binario consegnato:** Apple M4, 10 CPU logiche/16 GiB, macOS 27.0.1, rete elettrica, profilo Prestazioni e 9 thread di calcolo. 56/56 casi nativi con DNG Bayer generati e cataloghi isolati; una sequenza di 120 variazioni per configurazione. Tutte convergono alla ricetta finale, senza ritorno all'originale o copertura inferiore a 0,999. Le immagini distinte includono il fotogramma iniziale: non si contano come aggiornamenti le ripresentazioni identiche.
+
+| Prova | Casi | Immagini distinte durante 120 variazioni | Intervallo mediano fra immagini nuove |
+|---|---:|---:|---:|
+| 12 MP, Adatta, quattro motori × Standard/Piena × CPU/GPU | 16/16 | 119–120 | 16,6–33,3 ms |
+| 24 MP, 1:1, stessa matrice | 16/16 | 119–120 | 16,6–33,3 ms |
+| WB RAW 12 MP, quattro motori × Standard/Piena, GPU | 8/8 | 119 | 16,7–16,8 ms |
+| Grafo pesante 24 MP, quattro motori × Standard/Piena, calcolo editing CPU | 8/8 | 63–68 | 33,3–33,4 ms |
+| 45,44 MP, 1:1, quattro motori × Piena × CPU/GPU | 8/8 | 119–120 | 16,6–16,7 ms |
+
+La prima presentazione di una revisione ha età mediana circa 33 ms per le regolazioni comuni e 50,5 ms per il grafo pesante. Dopo l'ultima variazione la convergenza nelle prove WB richiede circa 0,80–1,03 s; negli altri casi 0,17–0,53 s. Picco RSS aggregato campionato fino a circa 3,4 GiB nella matrice 45 MP: può contare due volte pagine condivise e non costituisce misura di footprint né garanzia di limite fisico. I timestamp misurano evento programmato→comando di disegno, non input del mouse→display fisico; nessuna qualifica p95/p99 o garanzia di 60 fps.
+
+Confronto CPU su dati lineari generati: **18/18 impronte fp32 identiche** alla baseline. Sul raster 754×504, mediana del lavoro completo: tono/colore 16,95→4,77 ms, dettaglio 35,32→11,88 ms, quattro maschere 44,96→8,67 ms, geometria 24,70→5,97 ms; 20 campioni per caso, non distribuzioni p95. Qualifica Metal: 12 ricette, 102.960 componenti lineari, nessun superamento di `1e-5 + 1e-4·|CPU|`, scarto display massimo un livello su 255. Due tentativi intermedi si erano fermati in attesa della cattura grafica pur completando il rendering; con display attivo e `caffeinate`, lo stesso candidato ha completato tutte le schermate della matrice. La causa ambientale non è stata provata separatamente.
+
+**Consegna:** `dist/TrueRenderer.app`, identico file per file al candidato della campagna al momento della consegna. Superati `scripts/verify.sh --gui` (297 test ordinari, 14 integrazioni, 2 controlli Python, 8 prove protocollo, 24 casi ricampionamento e catture native), XPC su candidato e bundle distribuito, 48 confronti esatti PNG16/TIFF16 sui quattro motori e due worker, più quattro prove native di resa finale ed export con WB RAW personalizzato. Tre test su fotografie private non eseguiti. Impronte dei sorgenti/binari, misure per configurazione e limiti nel [rapporto del 6 ottobre](reports/editing-fluidity-macos-2026-10-06.json). Le prove non qualificano la fedeltà di fotocamere o display.
+
+**Pulizia richiesta dal titolare il 6 ottobre:** conservata soltanto l’ultima app in `dist/TrueRenderer.app`; rimosse 12 copie precedenti o di prova sotto `var/`, inclusa la copia candidata già identica al distribuito. Impronte del bundle e firma ricontrollate dopo la rimozione. Rapporti e sorgenti conservati; libreria, fotografie e backup dei dati non modificati. I percorsi delle copie nei rapporti storici documentano la campagna e non indicano copie ancora presenti.
+
+- [x] Consegna continua delle bozze, isolamento delle revisioni e cancellazione dei raffinamenti superati, con regressioni su errori, reset, Prima/Dopo, geometria e prova export.
+- [x] CPU parallela e scala interattiva limitata; raffinamento automatico e miniature/istogramma accorpati.
+- [x] GPU residente per regolazioni comuni, con confronto CPU e percorso CPU disponibile.
+- [x] WB continuo sui quattro motori con ponte provvisorio e convergenza nativa, senza cambiare il protocollo o l'isolamento dei decoder.
+- [x] Matrici temporali Adatta/1:1, 12/24/45 MP, CPU/GPU, WB e filtri pesanti sullo stesso binario finale.
+- [x] Suite completa, parità export, integrazione XPC e sostituzione del bundle distribuito con il candidato verificato.
+- [ ] **Estensioni aperte:** GPU per geometria/dettaglio/maschere, cache degli stadi e scala adattata al tempo misurato; eventuali sessioni RAW riusabili solo dopo qualifica di memoria. Non sono necessarie al percorso interattivo consegnato.
+- [ ] **Qualifica estesa aperta:** almeno 100 gesti indipendenti per distribuzione p95, fotografie e altre fotocamere, Windows/altre GPU, device loss sotto carico, profili energetici e pressione fisica. Nessun gate R0–R4/SF0–SF10 concluso; il punto 1 del piano resta distinto.
 
 <a id="piano-sviluppo-fotografico"></a>
 
@@ -173,6 +214,14 @@ Le architetture rimandano a questo file e non ne incorporano il contenuto. `pyth
 ## Punto di ripresa
 
 Registro in ordine cronologico inverso. Ogni esito vale per i sorgenti e il pacchetto indicati; le priorità storiche non cambiano l’ordine concordato nel piano operativo.
+
+### Valutazione della fluidità durante l'editing — 5 ottobre
+
+- **Diagnosi sul codice corrente:** le bozze vengono calcolate da un solo lavoro CPU; `poll_edit_preview` accetta soltanto la ricetta ancora identica all'ultima bozza. Inoltre l'ispettore aggiorna gli slider prima del viewer e `apply_edit_draft` rimuove il derivato appena pronto e revoca il relativo lavoro di presentazione. Durante il movimento continuo questo può impedire di mostrare risultati intermedi anche quando il singolo calcolo è veloce. La texture precedente evita lampeggiamenti, ma non rende fluida la modifica.
+- **Percorso condiviso:** luce, curve, colore, geometria, dettaglio e maschere passano dal grafo CPU, con cicli di editing seriali, nuova copia del raster e ricostruzione della coda mip. La GPU attuale filtra/presenta l'immagine già modificata. Il viewer fotografico ordinario seleziona un mip con lato massimo 1024 in entrambe le qualità; il nativo è richiesto dalla verifica finale/prova export. Il WB RAW segue invece la chiave di decode e può richiedere nuovo sviluppo completo con ciascuno dei quattro motori: nessuna latenza WB nuova misurata in questa valutazione.
+- **Rilettura delle prove storiche:** nei 16 rapporti nativi del 3 ottobre (quattro motori × CPU/GPU × anteprima/prova export), tutti formalmente passati, i 40 aggiornamenti rapidi mantengono **una sola immagine distinta durante il movimento**, poi mostrano il risultato finale. Quei controlli verificavano copertura e assenza di ritorno all'originale, non freschezza o frequenza delle modifiche. Hash e conteggi nel nuovo rapporto; non sono prove native ripetute sul bundle odierno né una matrice Standard/Piena.
+- **Nuova misura esplorativa:** aggiunto [diagnostico riproducibile](crates/tr-core/examples/profile-edit-preview.rs), eseguito in release su Apple M4, 16 GiB, macOS 27.0.1, alimentazione AC, pool a 9 thread. Sei ricette × tre geometrie, **360 campioni dopo 36 riscaldamenti**, solo raster sintetici; istogramma misurato separatamente. Sul mip 754×504, associato a coordinate native 6032×4032, mediane del lavoro CPU: **4,24 ms** esposizione; **16,92 ms** luce/colore/curva; **35,33 ms** con dettaglio; **43,94 ms** con colore e quattro maschere; **25,52 ms** con geometria. A 377×252 gli ultimi quattro casi scendono a 3,87/7,36/10,21/6,04 ms: indicazione del costo dei pixel, non qualifica della resa ridotta. I tempi escludono decode, UI, upload, GPU e display e non sono p95 né frequenze osservate sullo schermo. [Campioni, hash, fonti e limiti](reports/editing-latency-evaluation-macos-2026-10-05.json).
+- **Esito e perimetro:** priorità alla consegna continua dei risultati, poi CPU/GPU e percorso WB dedicato; piano operativo sopra. Aggiunto soltanto il diagnostico, senza modificare gli algoritmi applicativi o consegnare un nuovo bundle. Build release/esecuzione del diagnostico e Clippy con warning negati passati; verifica documentale riportata nel rapporto. L'incremento di velocità e la fluidità sui RAW reali restano da implementare e misurare; nessun gate R/SF chiuso.
 
 ### Revisione prima del commit dello sviluppo fotografico — 5 ottobre
 

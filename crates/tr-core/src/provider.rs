@@ -98,8 +98,18 @@ impl ImageLevels {
         base: u32,
         opaque: bool,
     ) -> Result<Self> {
+        Self::from_reference_mip_cancellable(source, source_size, base, opaque, &|| false)
+    }
+    pub fn from_reference_mip_cancellable(
+        source: LinearImage,
+        source_size: [u32; 2],
+        base: u32,
+        opaque: bool,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<Self> {
         let mut levels = vec![source];
         while levels.last().is_some_and(|l| l.width > 1 || l.height > 1) {
+            ensure!(!cancelled(), "Editing annullato");
             let source = levels.last().unwrap();
             let size = [source.width.div_ceil(2), source.height.div_ceil(2)];
             levels.push(crate::resample::filter(
@@ -108,6 +118,7 @@ impl ImageLevels {
                 opaque,
             )?);
         }
+        ensure!(!cancelled(), "Editing annullato");
         Self::restore(source_size, base, opaque, levels)
     }
     pub fn from_pyramid(pyramid: Pyramid, request: PreviewRequest) -> Result<Self> {

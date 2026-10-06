@@ -13,6 +13,7 @@ use tr_core::{
 
 #[derive(serde::Serialize)]
 pub struct ComputeCheck {
+    pub editing: crate::editing_compute::EditingCheck,
     pub cases: usize,
     pub display_channels: usize,
     pub display_failures: usize,
@@ -206,6 +207,7 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
         "Device lacks filter bindings"
     );
     let mut result = ComputeCheck {
+        editing: Default::default(),
         cases: 0,
         display_channels: 0,
         display_failures: 0,
@@ -313,11 +315,14 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
         memory.usage().reserved == 0 && gpu.usage().reserved == 0,
         "GPU credits leaked after completion"
     );
+    result.editing = crate::editing_compute::check(device, queue)?;
+    result.failures += result.editing.failures;
+    result.display_failures += result.editing.display_failures;
     Ok(result)
 }
 
 /// Readback is restricted to verification; the interactive renderer shares textures.
-fn read_display(
+pub(crate) fn read_display(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
     frame: &crate::resident_compute::GpuFrame,

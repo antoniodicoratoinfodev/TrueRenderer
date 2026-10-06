@@ -19,7 +19,7 @@ esac
 # Keep each campaign separate from historical reports and durable user data.
 mkdir -p "$TR_ROOT/var"
 TR_VERIFY_ROOT=$(mktemp -d "$TR_ROOT/var/verify-XXXXXXXX")
-cp -R "$TR_ROOT/corpus" "$TR_VERIFY_ROOT/corpus"
+"$TR_PYTHON" -c 'import shutil,sys; shutil.copytree(sys.argv[1],sys.argv[2],ignore=shutil.ignore_patterns(".truerenderer-cache", ".DS_Store"))' "$TR_ROOT/corpus" "$TR_VERIFY_ROOT/corpus"
 mkdir -p "$TR_VERIFY_ROOT/reports"
 printf 'Verification artifacts: %s\n' "$TR_VERIFY_ROOT"
 export TR_WORKER_BINARY="$TR_ROOT/target/debug/tr-worker$TR_EXE"

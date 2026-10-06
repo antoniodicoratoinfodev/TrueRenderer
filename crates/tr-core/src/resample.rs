@@ -252,7 +252,8 @@ fn axis(length: u32, count: u32, origin: f64, step: f64, opaque: bool) -> Vec<Ta
         .collect()
 }
 
-pub(crate) fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
+/// Parallel reference filtering of an already selected linear mip.
+pub fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
     filter_mode(source, region, opaque, true, usize::MAX)
 }
 /// Scalar reference retained for equivalence and A/B measurements.

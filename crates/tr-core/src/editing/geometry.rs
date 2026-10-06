@@ -83,6 +83,14 @@ impl Geometry {
     }
     /// Inverse map from the output rectangle to the pre-geometry source.
     pub fn source_point(&self, p: [f64; 2], source: [u32; 2]) -> Option<[f64; 2]> {
+        self.source_point_with_rotation(p, source, (self.angle as f64).to_radians().sin_cos())
+    }
+    fn source_point_with_rotation(
+        &self,
+        p: [f64; 2],
+        source: [u32; 2],
+        (sin, cos): (f64, f64),
+    ) -> Option<[f64; 2]> {
         let [w, h] = self.rotated_size(source).map(f64::from);
         let unit = w.max(h) / 2.;
         let mut x = ((self.crop[0] as f64 + p[0] * (self.crop[2] - self.crop[0]) as f64) * w
@@ -100,7 +108,6 @@ impl Geometry {
         }
         x /= divisor;
         y /= divisor;
-        let (sin, cos) = (self.angle as f64).to_radians().sin_cos();
         (x, y) = (cos * x + sin * y, -sin * x + cos * y);
         let (u, v) = (x * unit / w + 0.5, y * unit / h + 0.5);
         let (mut u, mut v) = match self.quarter_turns {
@@ -145,39 +152,39 @@ impl Geometry {
                 .ok_or_else(|| anyhow::anyhow!("Livello non valido"))?;
             let [w, h] = output.map(|v| v.div_ceil(divisor));
             let mut pixels = vec![[0.; 4]; w as usize * h as usize];
-            for y in 0..h {
-                for x in 0..w {
-                    let target = &mut pixels[(y * w + x) as usize];
-                    let Some(p) = self.source_point(
-                        [(x as f64 + 0.5) / w as f64, (y as f64 + 0.5) / h as f64],
-                        native,
-                    ) else {
-                        continue;
-                    };
-                    *target = sample(image, p);
-                    // Lateral CA samples each colour in source space. Intersect
-                    // coverages so a missing channel never becomes a valid pixel.
-                    if self.ca != [0.; 2] && target[3] > 0. {
-                        let mut colors = [*target; 3];
-                        for (c, amount) in [(0, self.ca[0]), (2, self.ca[1])] {
-                            // Tiny inputs must not collapse or reverse a channel
-                            // at offsets larger than their own half-width.
-                            let gain = (1. + 2. * amount as f64 / native[0].max(native[1]) as f64)
-                                .max(0.05);
-                            colors[c] = sample(image, p.map(|v| 0.5 + (v - 0.5) * gain));
-                        }
-                        let a = colors.iter().map(|p| p[3]).fold(1_f32, f32::min);
-                        for c in 0..3 {
-                            target[c] = if colors[c][3] > 0. {
-                                colors[c][c] / colors[c][3] * a
-                            } else {
-                                0.
-                            };
-                        }
-                        target[3] = a;
+            let rotation = (self.angle as f64).to_radians().sin_cos();
+            super::pixels_mut(&mut pixels, |i, target| {
+                let (x, y) = (i % w as usize, i / w as usize);
+                let Some(p) = self.source_point_with_rotation(
+                    [(x as f64 + 0.5) / w as f64, (y as f64 + 0.5) / h as f64],
+                    native,
+                    rotation,
+                ) else {
+                    return;
+                };
+                *target = sample(image, p);
+                // Lateral CA samples each colour in source space. Intersect
+                // coverages so a missing channel never becomes a valid pixel.
+                if self.ca != [0.; 2] && target[3] > 0. {
+                    let mut colors = [*target; 3];
+                    for (c, amount) in [(0, self.ca[0]), (2, self.ca[1])] {
+                        // Tiny inputs must not collapse or reverse a channel
+                        // at offsets larger than their own half-width.
+                        let gain =
+                            (1. + 2. * amount as f64 / native[0].max(native[1]) as f64).max(0.05);
+                        colors[c] = sample(image, p.map(|v| 0.5 + (v - 0.5) * gain));
                     }
+                    let a = colors.iter().map(|p| p[3]).fold(1_f32, f32::min);
+                    for c in 0..3 {
+                        target[c] = if colors[c][3] > 0. {
+                            colors[c][c] / colors[c][3] * a
+                        } else {
+                            0.
+                        };
+                    }
+                    target[3] = a;
                 }
-            }
+            });
             *image = LinearImage::new(w, h, pixels)?;
         }
         Ok(output)

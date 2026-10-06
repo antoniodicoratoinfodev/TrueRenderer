@@ -198,6 +198,9 @@ impl Language {
             "Modificata" => "Edited",
             "In calcolo" => "Rendering",
             "Aggiornamento regolazioni…" => "Updating adjustments…",
+            "WB RAW provvisorio · raffinamento nativo al rilascio" => {
+                "Provisional RAW WB · native refinement on release"
+            }
             "Istogramma precedente · aggiornamento regolazioni…" => {
                 "Previous histogram · updating adjustments…"
             }

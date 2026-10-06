@@ -182,6 +182,33 @@ fn editing_keeps_the_last_frame_through_rapid_drafts_and_presentation() {
                 );
             }
         }
+        // Poll before the next input, matching the actual UI ordering. The old
+        // scheduler discarded every freshly completed image at this boundary.
+        let mut displayed = HashSet::new();
+        let mut last_revision = 0;
+        for step in 21..=60 {
+            app.poll_edit_preview();
+            app.presenter.poll(&ctx);
+            recipe.exposure_ev = step as f32 / 40.;
+            recipe.brightness = step as f32 / 4.;
+            app.apply_edit_draft(&item.id, recipe.clone());
+            assert_eq!(draw(&mut app, &ctx, &item), (1., false));
+            let frame = &app.presenter.coverage()[0];
+            displayed.insert((frame.displayed_source, frame.displayed_revision));
+            if let Some(revision) = frame.displayed_revision {
+                assert!(
+                    revision >= last_revision,
+                    "An older draft rolled back the view"
+                );
+                last_revision = revision;
+            }
+            std::thread::sleep(Duration::from_millis(8));
+        }
+        assert!(
+            displayed.len() >= 8,
+            "Continuous editing froze: {} distinct frames",
+            displayed.len()
+        );
         converge(&mut app, &ctx, &item, true);
         let final_image = app.editing.previews[&item.id].image.clone();
         // A late CPU result from an earlier gesture must not roll back the view.

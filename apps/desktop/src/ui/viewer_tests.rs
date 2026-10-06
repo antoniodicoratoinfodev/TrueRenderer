@@ -72,7 +72,7 @@ fn render(app: &mut TrueRenderer, ctx: &egui::Context, item: &Item, continuous: 
         let (coverage, exact) = draw(app, ctx, item, "single");
         if continuous {
             assert!(
-                coverage > 0.,
+                coverage > 0.999,
                 "Refinement discarded the previous image frame"
             );
         }

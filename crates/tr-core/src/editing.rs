@@ -5,6 +5,7 @@ use crate::{
     decoder::RawEngine,
 };
 use anyhow::{Result, ensure};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 pub mod color;
 pub mod detail;
@@ -54,6 +55,56 @@ fn range(v: f32, min: f32, max: f32, name: &str) -> Result<()> {
 
 pub const SCHEMA_VERSION: u32 = 1;
 pub const PROCESS_VERSION: u32 = 1;
+
+// All pixel-independent stages share the application's bounded CPU pool.
+// Each pixel keeps the scalar arithmetic order (including premultiplication).
+pub(super) fn pixels_mut(pixels: &mut [Pixel], apply: impl Fn(usize, &mut Pixel) + Sync + Send) {
+    if pixels.len() >= 32768 {
+        crate::compute::install(|| {
+            pixels
+                .par_iter_mut()
+                .enumerate()
+                .for_each(|(i, p)| apply(i, p));
+        });
+    } else {
+        for (i, p) in pixels.iter_mut().enumerate() {
+            apply(i, p);
+        }
+    }
+}
+
+struct Parameters {
+    exposure: f32,
+    gains: [f32; 3],
+    gamma: f32,
+    exposure_only: bool,
+}
+impl Parameters {
+    fn new(recipe: &EditRecipe) -> Self {
+        let t = recipe.temperature / 100.;
+        let tint = recipe.tint / 100.;
+        Self {
+            exposure: recipe.exposure_ev.exp2(),
+            gains: [
+                (0.18 * t + 0.07 * tint).exp(),
+                (-0.14 * tint).exp(),
+                (-0.18 * t + 0.07 * tint).exp(),
+            ],
+            gamma: (recipe.contrast / 100.).exp(),
+            exposure_only: recipe.temperature == 0.
+                && recipe.tint == 0.
+                && recipe.brightness == 0.
+                && recipe.contrast == 0.
+                && recipe.highlights == 0.
+                && recipe.shadows == 0.
+                && recipe.whites == 0.
+                && recipe.blacks == 0.
+                && recipe.saturation == 0.
+                && recipe.vibrance == 0.
+                && recipe.curve.is_empty(),
+        }
+    }
+}
 
 /// Bounded picker estimate, not a camera-WB or statistical confidence estimate.
 #[derive(Clone, Debug)]
@@ -283,6 +334,19 @@ impl EditRecipe {
         native: [u32; 2],
         base: u32,
     ) -> Result<[u32; 2]> {
+        self.apply_preview_cancellable(image, native, base, &|| false)
+    }
+
+    /// Cancellation is for superseded background refinements. The caller must
+    /// discard the private raster on error; no partially edited image is valid.
+    pub fn apply_preview_cancellable(
+        &self,
+        image: &mut LinearImage,
+        native: [u32; 2],
+        base: u32,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<[u32; 2]> {
+        ensure!(!cancelled(), "Editing annullato");
         self.validate()?;
         ensure!(
             native[0] > 0 && native[1] > 0 && base < 32,
@@ -297,7 +361,8 @@ impl EditRecipe {
             return Ok(native);
         }
         let (width, height) = (image.width, image.height);
-        for (i, pixel) in image.pixels.iter_mut().enumerate() {
+        let parameters = Parameters::new(self);
+        pixels_mut(&mut image.pixels, |i, pixel| {
             if let Some(a) = &self.advanced
                 && a.geometry.vignette != 0.
             {
@@ -307,37 +372,50 @@ impl EditRecipe {
                     ((i / width as usize) as f32 + 0.5) / height as f32,
                 );
             }
-            *pixel = self.transform_pixel(*pixel);
-        }
+            *pixel = self.transform_prepared(*pixel, &parameters);
+        });
         let mut output = native;
+        ensure!(!cancelled(), "Editing annullato");
         if let Some(a) = &self.advanced {
-            a.detail.apply(image, native);
+            a.detail.apply_cancellable(image, native, cancelled)?;
             detail::defringe(image, a.geometry.defringe);
+            ensure!(!cancelled(), "Editing annullato");
             let masks: Vec<_> = a
                 .masks
                 .iter()
+                .filter(|m| m.active())
                 .map(|m| masks::Prepared::new(m, native[1] as f32 / native[0] as f32))
                 .collect();
             let (w, h) = (image.width, image.height);
-            for (i, p) in image.pixels.iter_mut().enumerate() {
+            let color_active = a.color != color::Color::default();
+            pixels_mut(&mut image.pixels, |i, p| {
                 if p[3] <= 0. {
-                    continue;
+                    return;
+                }
+                if !color_active && masks.is_empty() && p[3] == 1. {
+                    return;
                 }
                 let xy = [
                     ((i % w as usize) as f32 + 0.5) / w as f32,
                     ((i / w as usize) as f32 + 0.5) / h as f32,
                 ];
                 let guide = detail::straight(*p);
-                let mut rgb = a.color.apply(guide);
+                let mut rgb = if color_active {
+                    a.color.apply_active(guide)
+                } else {
+                    guide
+                };
                 for mask in &masks {
                     mask.apply(&mut rgb, guide, xy);
                 }
                 for c in 0..3 {
                     p[c] = rgb[c] * p[3];
                 }
-            }
+            });
+            ensure!(!cancelled(), "Editing annullato");
             output = a.geometry.apply(image, native, base)?;
         }
+        ensure!(!cancelled(), "Editing annullato");
         ensure!(
             image.pixels.iter().all(|p| p.iter().all(|v| v.is_finite())),
             "Regolazione fotografica: risultato non finito"
@@ -473,23 +551,15 @@ impl EditRecipe {
     }
 
     fn transform_pixel(&self, pixel: Pixel) -> Pixel {
+        self.transform_prepared(pixel, &Parameters::new(self))
+    }
+    fn transform_prepared(&self, pixel: Pixel, parameters: &Parameters) -> Pixel {
         let alpha = pixel[3];
         if alpha == 0. {
             return pixel;
         }
-        if self.temperature == 0.
-            && self.tint == 0.
-            && self.brightness == 0.
-            && self.contrast == 0.
-            && self.highlights == 0.
-            && self.shadows == 0.
-            && self.whites == 0.
-            && self.blacks == 0.
-            && self.saturation == 0.
-            && self.vibrance == 0.
-            && self.curve.is_empty()
-        {
-            let factor = self.exposure_ev.exp2();
+        if parameters.exposure_only {
+            let factor = parameters.exposure;
             return [
                 pixel[0] * factor,
                 pixel[1] * factor,
@@ -498,14 +568,8 @@ impl EditRecipe {
             ];
         }
         let mut rgb = [pixel[0] / alpha, pixel[1] / alpha, pixel[2] / alpha];
-        let ev = self.exposure_ev.exp2();
-        let t = self.temperature / 100.;
-        let tint = self.tint / 100.;
-        let gains = [
-            (0.18 * t + 0.07 * tint).exp(),
-            (-0.14 * tint).exp(),
-            (-0.18 * t + 0.07 * tint).exp(),
-        ];
+        let ev = parameters.exposure;
+        let gains = parameters.gains;
         for c in 0..3 {
             rgb[c] *= ev * gains[c];
         }
@@ -530,7 +594,7 @@ impl EditRecipe {
                 y = tone(y, self.blacks / 200., (1. - y).powi(4));
                 y = tone(y, self.whites / 200., y.powi(4));
             }
-            let gamma = (self.contrast / 100.).exp();
+            let gamma = parameters.gamma;
             y = 0.18 * (y / 0.18).powf(gamma);
             if !self.curve.is_empty() {
                 y = curve(y, &self.curve);
