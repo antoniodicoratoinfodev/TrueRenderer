@@ -16,6 +16,7 @@ use tr_core::{
 };
 
 mod cache_actions;
+mod comparison;
 mod editing;
 mod explorer;
 mod export;
@@ -56,6 +57,7 @@ pub struct Startup {
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
+    comparison: comparison::Comparison,
     editing: editing::EditingUi,
     science: science::ScienceUi,
     photo_export: export::ExportUi,
@@ -330,6 +332,7 @@ impl TrueRenderer {
             source_monitor,
             context: ctx.clone(),
             watched_sources: HashSet::new(),
+            comparison: Default::default(),
             source_status: HashMap::new(),
         };
         if let Some(path) = open {
@@ -882,15 +885,16 @@ impl TrueRenderer {
         watched.extend(self.cache.keys().map(|(id, _)| id.clone()));
         self.source_monitor.watch(
             self.generation,
-            self.state
-                .items
-                .iter()
+            self.known_items()
                 .filter(|item| watched.contains(&item.id))
                 .map(|item| crate::source_monitor::Watch {
                     id: item.id.clone(),
                     path: item.path.clone(),
                     observation: item.observation.clone(),
                 })
+                .map(|watch| (watch.id.clone(), watch))
+                .collect::<HashMap<_, _>>()
+                .into_values()
                 .collect(),
         );
         self.pending_images.retain(|key| self.demand.contains(key));
@@ -1097,28 +1101,11 @@ impl TrueRenderer {
         }
         if self.state.view == ViewMode::Compare {
             self.quality_overrides.extend(
-                self.state
-                    .selected
-                    .iter()
-                    .cloned()
-                    .map(|id| (id, PreviewQuality::Full)),
+                self.comparison_items()
+                    .into_iter()
+                    .flatten()
+                    .map(|item| (item.id, PreviewQuality::Full)),
             );
-            if self
-                .state
-                .selected
-                .iter()
-                .all(|id| Some(id) == self.state.current.as_ref())
-                && let Some(item) = self.state.current_item()
-                && let Some(index) = self
-                    .state
-                    .visible
-                    .iter()
-                    .position(|i| self.state.items[*i].id == item.id)
-                && let Some(next) = self.state.visible.get(index + 1)
-            {
-                self.quality_overrides
-                    .insert(self.state.items[*next].id.clone(), PreviewQuality::Full);
-            }
         }
         self.state.transform.set_zoom(1.);
     }
@@ -1152,29 +1139,29 @@ impl TrueRenderer {
         self.sample_level = None;
         self.sample_from_current_render = false;
         for change in changes {
-            let Some(item) = self
+            for item in self
                 .state
                 .items
                 .iter_mut()
-                .find(|item| item.id == change.id)
-            else {
-                continue;
-            };
-            item.observation.clone_from(&change.observation);
-            item.bytes = change.bytes;
-            // External sources retain the broker's unverified-token contract.
-            // The pipe corpus retains its pinned digest and never gains authority.
-            if item.digest.starts_with("unverified:") && change.available {
-                item.digest.clone_from(&change.observation);
+                .chain(self.comparison.slots.iter_mut().flatten())
+                .filter(|item| item.id == change.id)
+            {
+                item.observation.clone_from(&change.observation);
+                item.bytes = change.bytes;
+                // External sources retain the broker's unverified-token contract.
+                // The pipe corpus retains its pinned digest and never gains authority.
+                if item.digest.starts_with("unverified:") && change.available {
+                    item.digest.clone_from(&change.observation);
+                }
+                item.approved = change.available
+                    && change.bytes <= tr_core::protocol::MAX_SOURCE as u64
+                    && (tr_platform::CorpusPolicy::default().approves(&item.digest)
+                        || std::env::current_exe()
+                            .ok()
+                            .is_some_and(|p| tr_platform::external_decoding_available(&p)));
             }
-            item.approved = change.available
-                && change.bytes <= tr_core::protocol::MAX_SOURCE as u64
-                && (tr_platform::CorpusPolicy::default().approves(&item.digest)
-                    || std::env::current_exe()
-                        .ok()
-                        .is_some_and(|p| tr_platform::external_decoding_available(&p)));
             self.source_status.insert(
-                item.id.clone(),
+                change.id.clone(),
                 if change.available {
                     "Sorgente modificata · aggiornamento anteprima…".into()
                 } else {
@@ -2183,13 +2170,15 @@ impl TrueRenderer {
             } else {
                 source_histogram
             };
+            let grid_preview =
+                page == InspectorPage::Information && self.state.view == ViewMode::Grid && !short;
             let mut preview = |ui: &mut egui::Ui| {
                 // Portraits should not push all metadata below the first screen.
                 let width = ui.available_width();
                 let height = width * cached_info.source_height as f32
                     / cached_info.source_width.max(1) as f32;
                 let size = Vec2::new(width, height.min(220.));
-                let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+                let (rect, response) = ui.allocate_exact_size(size, egui::Sense::click());
                 let lane = format!(
                     "inspector:{}:{}:{}:{:?}:{}",
                     item.id, item.digest, digest, key.1, self.editing.show_original
@@ -2206,9 +2195,10 @@ impl TrueRenderer {
                 } else {
                     tr_render::presenter::fitted(&mut self.presenter, ui, lane, &shown, rect);
                 }
+                self.photo_context_menu(&response, item);
                 ui.add_space(4.);
             };
-            if page == InspectorPage::Information && self.state.view == ViewMode::Grid && !short {
+            if grid_preview {
                 preview(ui);
             } else if page == InspectorPage::Information {
                 egui::CollapsingHeader::new(lang.text("Anteprima immagine"))
@@ -2713,6 +2703,7 @@ impl TrueRenderer {
         if response.double_clicked() {
             self.command(Command::SetView(ViewMode::Preview));
         }
+        self.photo_context_menu(&response, item);
         let tooltip = self
             .errors
             .get(&format!("{}:{:?}", item.id, key.1))
@@ -2952,11 +2943,11 @@ impl TrueRenderer {
     }
 
     fn preview(&mut self, ui: &mut egui::Ui) {
-        let lang = self.cache_settings.language;
-        let Some(item) = self.state.current_item().cloned() else {
-            return;
-        };
-        if self.show_filmstrip && ui.available_height() >= 240. {
+        let current = self.state.current_item().cloned();
+        if self.show_filmstrip
+            && ui.available_height() >= 240.
+            && let Some(item) = &current
+        {
             egui::Panel::bottom("filmstrip")
                 .exact_size(121.)
                 .frame(egui::Frame::new().fill(PANEL).inner_margin(8))
@@ -2977,36 +2968,8 @@ impl TrueRenderer {
                 });
         }
         if self.state.view == ViewMode::Compare {
-            let second = self
-                .state
-                .selected
-                .iter()
-                .find(|id| **id != item.id)
-                .and_then(|id| self.state.items.iter().find(|i| &i.id == id))
-                .cloned()
-                .or_else(|| {
-                    self.state
-                        .visible
-                        .iter()
-                        .position(|i| self.state.items[*i].id == item.id)
-                        .and_then(|p| self.state.visible.get(p + 1))
-                        .map(|i| self.state.items[*i].clone())
-                });
-            if let Some(second) = second {
-                let bottom = ui.available_rect_before_wrap().bottom();
-                ui.columns(2, |columns| {
-                    for column in columns.iter_mut() {
-                        column.set_max_height((bottom - column.cursor().min.y).max(20.));
-                    }
-                    columns[0].label(RichText::new(format!("A · {}", item.name)).small());
-                    self.paint_view(&mut columns[0], &item, "A");
-                    columns[1].label(RichText::new(format!("B · {}", second.name)).small());
-                    self.paint_view(&mut columns[1], &second, "B");
-                });
-            } else {
-                ui.label(lang.text("Seleziona due immagini con Cmd/Ctrl + clic nella griglia."));
-            }
-        } else {
+            self.comparison_view(ui);
+        } else if let Some(item) = current {
             self.paint_view(ui, &item, "single");
         }
     }
@@ -3092,7 +3055,8 @@ impl TrueRenderer {
             };
             let input_wb = selected.as_ref().unwrap().1.raw_wb;
             let live_edit = self.live_edit_for(&item.id, &digest, &source, input_wb);
-            if !self.edit_interactive(&item.id)
+            if !self.editing.show_original
+                && !self.edit_interactive(&item.id)
                 && self
                     .editing
                     .entries
@@ -3164,7 +3128,9 @@ impl TrueRenderer {
                 ""
             };
             self.viewer_status(id, &detail_status, description);
-            if let Some(error) = self.edited_preview_error(&item.id) {
+            if !self.editing.show_original
+                && let Some(error) = self.edited_preview_error(&item.id)
+            {
                 ui.colored_label(AMBER, error);
             }
             if wb_provisional
@@ -3178,7 +3144,9 @@ impl TrueRenderer {
                 && image.is_some()
                 && !provisional;
             let image = image.unwrap_or(source);
-            let editing_gesture = !image.scientific() && self.photo_gesture_active(&item.id);
+            let editing_gesture = !image.scientific()
+                && !self.editing.show_original
+                && self.photo_gesture_active(&item.id);
             let pending_size = pending.then(|| self.edited_source_size(&item.id, source_size));
             let (response, sample) = tr_render::viewport_with_options(
                 ui,
@@ -3195,9 +3163,10 @@ impl TrueRenderer {
                     photographic: edited || proof,
                 },
             );
-            if !image.scientific() {
+            if !image.scientific() && !self.editing.show_original {
                 self.local_mask_interaction(ui, item, &response, source_size);
             }
+            self.photo_context_menu(&response, item);
             self.image_focus_ids.insert(response.id);
             if let Some(sample) = &sample {
                 self.capture_picker_areas(&image, sample.x, sample.y, sample_from_current_render);
@@ -3216,11 +3185,17 @@ impl TrueRenderer {
                 self.sample_from_current_render = sample_from_current_render;
             }
         } else {
-            egui::Frame::new().fill(Color32::from_gray(119)).show(ui,|ui|{
+            let frame = egui::Frame::new().fill(Color32::from_gray(119)).show(ui,|ui|{
                 ui.set_min_size(ui.available_size());ui.centered_and_justified(|ui|{
                     ui.label(lang.message(self.errors.get(&format!("{}:{:?}", item.id, key.1)).map(String::as_str).unwrap_or(if item.approved{lang.text("Preparazione dell'immagine…")}else{lang.text("Aprire il bundle macOS con decoder XPC.\nLimite: 268.435456 MB per file, 64 Mi pixel.")})));
                 });
             });
+            let response = ui.interact(
+                frame.response.rect,
+                ui.id().with(("photo-placeholder", id)),
+                egui::Sense::click(),
+            );
+            self.photo_context_menu(&response, item);
         }
     }
     fn folder_label(&self) -> &str {
@@ -3914,7 +3889,10 @@ impl eframe::App for TrueRenderer {
                     });
                 } else if self.scanning && self.state.visible.is_empty() {
                     ui.label(lang.text("Lettura dei file…"));
-                } else if self.state.visible.is_empty() {
+                } else if self.state.visible.is_empty()
+                    && !(self.state.view == ViewMode::Compare
+                        && self.comparison.slots.iter().any(Option::is_some))
+                {
                     ui.add_space((ui.available_height() * 0.2).min(70.));
                     ui.vertical_centered(|ui| {
                         ui.heading(lang.text("Nessuna immagine da mostrare"));
@@ -3948,6 +3926,7 @@ impl eframe::App for TrueRenderer {
         self.temporary_panel(&ctx);
         self.settings_window(&ctx);
         self.export_window(&ctx);
+        self.process_comparison_action();
         self.trim_images(false);
         self.smoke_tick(&ctx);
         self.background_demand(&ctx);

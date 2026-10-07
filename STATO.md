@@ -45,6 +45,18 @@ Ordine richiesto dal titolare il 4 ottobre: **prima i punti 2, 3 e 4 della propo
 
 Restano aperti nel catalogo SF: profili ottici calibrati e correzione CA sul sensore; selezioni colore a campioni, LUT/profili creativi ed effetti aggiuntivi; combinazioni di maschere e ritocco; preset/versioni virtuali/batch completi; accelerazione dei nuovi nodi e qualifica fotografica estesa. I controlli manuali consegnati non chiudono questi requisiti. Perimetro numerico e prove effettive nel [rapporto del 5 ottobre](reports/photo-tools-macos-2026-10-05.json).
 
+### Confronto dal menu contestuale — consegnato il 7 ottobre
+
+Menu comune in griglia, filmstrip, viewer (anche durante il caricamento), anteprima dell'ispettore ed Esplora: **Usa come confronto A**, **Usa come confronto B**, **Confronta Prima/Dopo**. L'azione usa la foto cliccata anche se non selezionata. Assegnazioni di sessione conservate tra cartelle e filtri; scegliere una foto già nell'altro riquadro scambia i riferimenti conservando la coppia. Prima usa lo sviluppo iniziale del motore, WB Come scattato e geometria iniziale; Dopo usa la ricetta corrente. I titoli consentono il focus nell'ispettore mantenendo zoom/pan. Nessuna nuova revisione fotografica per cambiare confronto.
+
+- [x] Completare menu IT/EN, assegnazioni, Prima/Dopo e invalidazione delle sorgenti anche fuori cartella, rispettando l'autorizzazione del decoder.
+- [x] Cinque regressioni nuove: eventi reali del menu in 12 combinazioni, indipendenza dalla selezione, navigazione asincrona/cancellazione, conservazione di A tra cartelle, focus/zoom, richieste RAW Prima/Dopo, geometria/pixel e ricette invariate.
+- [x] `scripts/verify.sh --gui`: 327 test ordinari e 14 integrazioni, fmt/Clippy, due test Python, otto controlli protocollo, 24 casi ricampionamento, campionamento nativo e otto schermate smoke; build release e due XPC passati su candidato e distribuito. Tre test diretti su fotografie private esclusi come previsto. I primi tentativi nativi non ricevevano schermate; la suite finale completa è passata, senza attribuire una causa non accertata ai tentativi precedenti.
+- [x] Prova manuale dei menu nelle cinque superfici; sul candidato finale in italiano, scambio A/B senza duplicazioni e Prima/Dopo a 1:1 con esposizione +1 EV soltanto nel catalogo sintetico isolato. Navigazione tra cartelle coperta dai test di stato/servizio; la sequenza manuale estesa non è stata completata.
+- [x] Consegnato `dist/TrueRenderer.app`, 15 file identici al candidato. Nell'app distribuita: file 12 assegnato ad A dal viewer e file 26 a B da Esplora, TrueRenderer/Piena, cieli corretti visivamente in Adatta. Originali e righe durevoli di regolazioni, cronologia e annotazioni invariati; catalogo salvato prima della sostituzione. App lasciata nel confronto A12/B26.
+
+[Rapporto e impronte della consegna](reports/comparison-context-macos-2026-10-07.json). Fotografie, schermate private e cataloghi esclusi dalla pubblicazione. Assegnazioni non persistenti al riavvio; snapshot/versioni virtuali e qualifica estesa restano aperti. Nessun gate R0–R4/SF0–SF10 concluso. README e contratti aggiornati; fonti dell'appendice anteprime invariate. Incremento verificato per commit e pubblicazione su `main`, richiesti dal titolare.
+
 ### Revisione complessiva prima del commit e push — 7 ottobre
 
 Riesaminato l'intero incremento successivo a `854ba09`: editor ed estremi della curva, processo 4 CPU/GPU/export, toolbar, reset, foto campione, verifiche WB e correzione delle alte luci. Corretto un riferimento della specifica al vecchio comando «Sviluppo originale» e resi relativi due percorsi locali nei rapporti destinati al repository pubblico.

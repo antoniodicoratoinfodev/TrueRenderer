@@ -1,0 +1,294 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-07",
+  "scope": "Contextual A/B assignments and side-by-side initial/current development; local macOS verification",
+  "passed": true,
+  "source_base_commit": "e47b702767502675b39e52a9eabf08256a6d51b2",
+  "source_sha256": {
+    "apps/desktop/src/ui/comparison.rs": "aa110445b029b624d6ddd790716521953cec89a344d813601877dcfd28ac4225",
+    "apps/desktop/src/ui.rs": "73e16a6e19f79e5b3a1961cb68c380799181c87cfe7aacb34318bc2df196dc82",
+    "apps/desktop/src/ui/editing.rs": "a20d648a4ce436d83d2b837d658c8bd9a58b5891e5f536b4b338830317f7a376",
+    "apps/desktop/src/ui/explorer.rs": "8209f8757a7545eff31ef9da2470f27862d952bc9ab254cfaeb500a6c410b1d2",
+    "apps/desktop/src/i18n.rs": "4594adadcbce996079ca015f4d2aaaee5f26d8338440658ed481748568a3dafb"
+  },
+  "behavior": {
+    "surfaces": [
+      "grid",
+      "filmstrip",
+      "viewer and loading placeholder",
+      "inspector image preview",
+      "Explorer image row",
+      "comparison header"
+    ],
+    "actions": [
+      "Use as comparison A",
+      "Use as comparison B",
+      "Compare Before/After"
+    ],
+    "target": "clicked photograph, without prior selection",
+    "bindings": "session-only; retained across filters, selections and folders",
+    "before": "initial engine development, as-shot RAW white balance and original geometry",
+    "after": "current recipe",
+    "revisions_created_by_view_action": false
+  },
+  "regressions": {
+    "new_tests": 5,
+    "menu_event_combinations": 12,
+    "menu_event_matrix": "3 actions x 2 surfaces (thumbnail/viewer placeholder) x 2 languages (IT/EN)",
+    "covered": [
+      "target differs from selection",
+      "swap preserves the other photograph",
+      "visible target does not suspend filters",
+      "pinned images survive folder and filter changes",
+      "full quality and source invalidation outside folder",
+      "later navigation cancels pending assignment",
+      "first B assignment from another folder preserves A",
+      "cross-folder header focus preserves zoom and pan",
+      "separate native RAW WB requests for Before and After",
+      "initial/current geometry and exposure pixels",
+      "recipe and revision unchanged"
+    ]
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "passed": true,
+    "ordinary_rust_tests": 327,
+    "integration_tests": 14,
+    "private_direct_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "native_surface_sampling": true,
+    "native_smoke": {
+      "adapter": "Apple M4 · Metal",
+      "application": "TrueRenderer",
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 80,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 6,
+        "last_fallback": "",
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8446692,
+        "wide_peak_frames": 2,
+        "wide_peak_gpu_bytes": 12286692,
+        "wide_peak_memory_bytes": 36860076,
+        "wide_reprojections": 1
+      },
+      "decode_errors": {},
+      "elapsed_seconds": 4.221074104309082,
+      "frames": 236,
+      "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
+      "images": 12,
+      "passed": true,
+      "pixels_per_point": 2.0,
+      "presentation_errors": false,
+      "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+      "scope": "native R0 corpus smoke; not color/display/sandbox qualification",
+      "screenshots": [
+        "05-radial-fit",
+        "08-grid-large",
+        "03-compare",
+        "06-radial-37percent",
+        "01-grid",
+        "07-grid-small",
+        "04-radial-1to1",
+        "02-preview"
+      ],
+      "sqlite": "3.53.2",
+      "status": "Cartella pronta · Anteprima",
+      "surface": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "version": "0.1.5",
+      "worker_pids": [],
+      "worker_transports": [
+        "Cache disco · fp32 · Anteprima",
+        "Processo su pipe · corpus R0"
+      ]
+    },
+    "gpu_cpu": {
+      "application": "TrueRenderer",
+      "check": {
+        "cases": 9,
+        "cpu_seconds": 0.006618125000000001,
+        "display_channels": 1593672,
+        "display_failures": 0,
+        "display_max_error": 1,
+        "editing": {
+          "cases": 16,
+          "display_failures": 0,
+          "display_max_error": 1,
+          "failures": 0,
+          "max_error": 0.0001220703125,
+          "samples": 137280,
+          "worst_ratio": 0.04324108362197876
+        },
+        "failures": 0,
+        "gpu_seconds": 0.019208373999999997,
+        "max_error": 6.103515625e-05,
+        "samples": 1593672,
+        "worst_ratio": 0.7426846027374268
+      },
+      "display_threshold_levels": 1,
+      "linear_threshold": "1e-5 + 1e-4 * abs(cpu)",
+      "passed": true,
+      "scope": "Separable WGSL with canonical coefficients and persistent display pipeline, odd sizes, alpha, boundaries, 1:1 and signed linear values up to 1000. GPU timing includes qualification compilation/upload/readback; not an interactive speed claim.",
+      "version": "0.1.5"
+    },
+    "log_sha256": "fffff5907f1341e759d07defeb3869d3598ce41b779d61a5157e2b560c5ad8a2",
+    "earlier_attempts": "Initial full GUI run and a separate debug smoke retry received no screenshot callbacks; the final full GUI run passed. Cause not established."
+  },
+  "manual": {
+    "early_candidate_english": [
+      "grid right-click on unselected photograph",
+      "viewer Before/After with +1 EV in isolated catalog",
+      "filmstrip assignment to B",
+      "Explorer assignment to B",
+      "inspector image-preview context menu"
+    ],
+    "final_candidate_italian": [
+      "A assignment swaps and preserves B without duplicate photograph or unnecessary filter banner",
+      "Before/After at physical 1:1, original on A and +1 EV on B"
+    ],
+    "isolated_review_app_identity": {
+      "executable_prefix_excluding_signature_identical": true,
+      "sha256": "a0726fa957d8af660e035dee692b23772cc0b8d754363a1c7a11f984199f48e3",
+      "bytes": 23425424
+    },
+    "isolated_review_app_note": "Separate Launch Services identity and private synthetic catalog; executable prefix excluding code signature identical to final candidate. +1 EV applied only to test photograph/catalog.",
+    "cross_folder_manual_scope": "Extended cross-folder native sequence not completed; coverage is the state/service regression. Review app ceased to be available to automation; cause not established.",
+    "delivered_app": [
+      "right-click viewer nikon_d750_12.nef -> A",
+      "right-click Explorer nikon_d750_26.nef -> B",
+      "A remains file 12; B is file 26; TrueRenderer/Piena, as-shot relative WB 1/1 and exposure 0",
+      "white clipped sky and blue glazing retained visually in Fit"
+    ],
+    "private_screenshots_published": false
+  },
+  "delivery": {
+    "path": "dist/TrueRenderer.app",
+    "release_build": "scripts/cargo-local.sh build --release --workspace --locked --offline",
+    "release_build_passed": true,
+    "candidate_and_delivered_identical": true,
+    "bundle_file_count": 15,
+    "bundle_sha256": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/_CodeSignature/CodeResources": "baef96c2660952aa3a648f6d9443926e4f4ddb284f225fa5b88f754c5c397665",
+      "Contents/MacOS/tr-worker": "0a966691ca7ec014b43c21601879ed0b0ebc784cd2c8d9193c8a7458011e24ef",
+      "Contents/MacOS/TrueRenderer": "2a2c78ea4ac459aaa1ce86d15b7074a9348b3074a2c6b76a4915776fc98cd2d3",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "dffcd88f5585a824aac55e90e5abe22995217ff89b60b216e45092d2aba695e5",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8391a07e7cf603d4ac4a9e6c32be1346cbe69408d1fa65e4d10d352b7d6f3da8"
+    },
+    "xpc_candidate": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-10-07T16:39:22.295752+00:00",
+      "bundle": "candidate bundle (same 15 files as delivered)",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "2a2c78ea4ac459aaa1ce86d15b7074a9348b3074a2c6b76a4915776fc98cd2d3",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "dffcd88f5585a824aac55e90e5abe22995217ff89b60b216e45092d2aba695e5",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8391a07e7cf603d4ac4a9e6c32be1346cbe69408d1fa65e4d10d352b7d6f3da8"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "xpc_delivered": {
+      "application": "TrueRenderer",
+      "version": "0.1.5",
+      "passed": true,
+      "checked_at": "2026-10-07T16:45:56.884236+00:00",
+      "bundle": "dist/TrueRenderer.app",
+      "binary_sha256": {
+        "Contents/MacOS/TrueRenderer": "2a2c78ea4ac459aaa1ce86d15b7074a9348b3074a2c6b76a4915776fc98cd2d3",
+        "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "dffcd88f5585a824aac55e90e5abe22995217ff89b60b216e45092d2aba695e5",
+        "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8391a07e7cf603d4ac4a9e6c32be1346cbe69408d1fa65e4d10d352b7d6f3da8"
+      },
+      "integration_report": "xpc-integration-macos.json",
+      "production_rejects_fault_injection": true,
+      "production_rejection_exit_code": 1,
+      "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+      "memory_growth_report": null,
+      "full_sandbox_gate_passed": false
+    },
+    "xpc_delivered_integration": {
+      "application": "TrueRenderer",
+      "corpus_images_checked": 12,
+      "edited_export_checked_slots": 2,
+      "edited_export_native_match_slots": 2,
+      "edited_export_source_unchanged": true,
+      "elapsed_seconds": 20.915970416,
+      "first_before_stop": {
+        "completed_jobs": 1,
+        "forced_stops": 1,
+        "peak_footprint_bytes": 7930312,
+        "peak_rss_bytes": 14532608,
+        "starts": 1,
+        "worker_pid": 92563
+      },
+      "first_pid": 92563,
+      "full_sandbox_gate_passed": false,
+      "lifecycle_api": "Mach task/audit token + dynamically resolved libproc SPI; no PID-only signal",
+      "memory_before_stop": {
+        "completed_jobs": 1,
+        "forced_stops": 1,
+        "peak_footprint_bytes": 7897544,
+        "peak_rss_bytes": 14499840,
+        "starts": 1,
+        "worker_pid": 92592
+      },
+      "memory_limit_is_hard_kernel_cap": false,
+      "other_isolate_survived": true,
+      "passed": true,
+      "recovered_pid": 92592,
+      "same_pixels": true,
+      "scope": "integrated XPC R0 corpus, two processes, timeout and memory supervision; full sandbox/release gate open",
+      "second": {
+        "completed_jobs": 14,
+        "forced_stops": 0,
+        "peak_footprint_bytes": 67699192,
+        "peak_rss_bytes": 74334208,
+        "starts": 1,
+        "worker_pid": 92564
+      },
+      "second_pid": 92564,
+      "suspended_worker_timeout_ms": 205,
+      "two_distinct_processes": true,
+      "version": "0.1.5"
+    }
+  },
+  "integrity": {
+    "durable_rows_unchanged": true,
+    "originals_unchanged": true,
+    "bundle_unchanged": true,
+    "durable_sha256": {
+      "photo_edit_head": "3fa37fd2fc81f1ea1b1f3ed4107e256b172a35867cabbf988fe9d8c46ecbb7a3",
+      "photo_edit_revision": "cd437c23057b4fc26aa10806a8cc9cd86b480ee866f4aa0855b4932f643b3534",
+      "asset_revision": "e5984c7dfc91c465e2f2b6c9b20c3820929b5ad438eb67b20fffe3c55e565343",
+      "asset_annotations": "65e499ad76a147e63f68d71405ef4bddc7b69b16d400d7f4eaabc6357e6c9745"
+    }
+  },
+  "limits": [
+    "A/B bindings do not persist across app restarts",
+    "No snapshots, virtual versions or comparison with camera JPEG",
+    "No new numerical RAW/colorimetry qualification or extended performance/Windows campaign",
+    "Ad hoc signing and XPC checks do not close release or full sandbox qualification",
+    "No R0-R4 or SF0-SF10 gate closed",
+    "Original photographs, private screenshots, databases and backups excluded from publication"
+  ]
+}

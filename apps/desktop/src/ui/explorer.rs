@@ -288,6 +288,8 @@ impl TrueRenderer {
         }
     }
     pub(super) fn navigate(&mut self, path: PathBuf, view: Option<ViewMode>) {
+        self.comparison.pending = None;
+        self.comparison.pending_transform = None;
         self.browser.going = None;
         let path = if path.is_absolute() {
             path
@@ -405,6 +407,11 @@ impl TrueRenderer {
                             self.status = format!("Posizione non disponibile: {error}");
                         }
                         Ok((folder, photo)) => {
+                            if let Some((path, _)) = &mut self.comparison.pending
+                                && let Some(photo) = &photo
+                            {
+                                path.clone_from(photo);
+                            }
                             self.browser.temporary = false;
                             if folder == self.folder
                                 && self.browser.cursor.is_some()
@@ -1263,6 +1270,10 @@ impl TrueRenderer {
                         egui::Popup::context_menu(&response)
                             .at_position(response.rect.left_bottom())
                             .show(|ui| {
+                                if row.entry.kind == Kind::Image {
+                                    self.comparison_menu(ui, &row.entry.path);
+                                    ui.separator();
+                                }
                                 if matches!(
                                     row.entry.kind,
                                     Kind::Directory | Kind::Image | Kind::Link

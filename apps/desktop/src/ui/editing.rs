@@ -507,9 +507,7 @@ impl TrueRenderer {
         // A source change invalidates the cache and advances the epoch first.
         recorded.starts_with("unverified:")
             && self
-                .state
-                .items
-                .iter()
+                .known_items()
                 .any(|item| item.id == id && item.digest == recorded)
             && self.cache.iter().any(|((photo, _), cached)| {
                 photo == id && cached.digest == digest && cached.pyramid.id() == source
@@ -1363,12 +1361,25 @@ impl TrueRenderer {
                 if ui
                     .add(
                         egui::Button::new(lang.text("Prima/Dopo"))
-                            .frame_when_inactive(self.editing.show_original)
-                            .selected(self.editing.show_original),
+                            .frame_when_inactive(
+                                self.editing.show_original
+                                    || (self.state.view == ViewMode::Compare
+                                        && self.comparison.before_after),
+                            )
+                            .selected(
+                                self.editing.show_original
+                                    || (self.state.view == ViewMode::Compare
+                                        && self.comparison.before_after),
+                            ),
                     )
                     .clicked()
                 {
-                    self.editing.show_original = !self.editing.show_original;
+                    if self.state.view == ViewMode::Compare && self.comparison.before_after {
+                        self.state.view = ViewMode::Preview;
+                        self.editing.show_original = false;
+                    } else {
+                        self.editing.show_original = !self.editing.show_original;
+                    }
                     self.sample = None;
                     self.sample_item_id = None;
                     self.sample_level = None;

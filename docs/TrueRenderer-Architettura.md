@@ -3624,7 +3624,17 @@ con controlli in una seconda finestra è post-v1.
 finestra ridimensionabile, e campionamento nearest per ispezionare i campioni raster. Si attiva
 cliccando sull'anteprima.
 
-**Confronto.** La v1 affianca due immagini; da 3 a 9 è post-v1. Il nucleo prevede:
+**Confronto.** La v1 affianca due immagini; da 3 a 9 è post-v1.
+
+Il menu contestuale della fotografia in griglia, filmstrip, viewer, anteprima dell'ispettore
+ed Esplora offre «Usa come confronto A», «Usa come confronto B» e «Confronta Prima/Dopo».
+L'azione riguarda la foto cliccata, anche non selezionata, e apre il confronto. A e B sono
+assegnazioni esplicite di sessione, conservate tra cartelle e indipendenti dai filtri e dalla
+selezione corrente. Le sorgenti fuori cartella restano soggette a verifica e invalidazione.
+Prima/Dopo usa la stessa foto: A è lo sviluppo iniziale del motore con WB Come scattato e
+geometria iniziale, B applica la ricetta corrente. Non crea ricette o revisioni nuove. I titoli
+distinguono A/Prima e B/Dopo; scegliere un titolo porta la foto nell'ispettore conservando
+zoom/pan. Non include snapshot o versioni virtuali. Il nucleo prevede inoltre:
 
 - zoom e pan **sincronizzati**, che è la funzione che rende utile il confronto;
 - sovrapposizione con dissolvenza e con "tendina" per il confronto A/B;

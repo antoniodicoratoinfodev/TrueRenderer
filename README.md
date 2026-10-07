@@ -51,6 +51,8 @@ TrueRenderer fp32 neutralizes sensor-clipped highlights to prevent false magenta
 
 Compare photographs side by side with synchronized navigation. Judge composition, exposure, colour and fine detail in context, then move to **physical 1:1** for a closer inspection.
 
+Right-click a photograph in the grid, filmstrip, viewer, inspector preview or Explorer to assign it to **A** or **B**, or choose **Compare Before/After** for its initial development and current adjustments. A/B assignments stay in place across folders for the current session.
+
 ![Two Grand Teton photographs side by side in TrueRenderer](reports/readme-2026-10-06/compare.jpg)
 
 Histograms, a pixel sampler and camera metadata put useful evidence alongside the image. Check shutter speed, aperture, ISO, focal length and lens information as you decide which frame deserves the final edit.

@@ -421,6 +421,13 @@ impl Language {
                 "Usable memory is below the starting budget: the app leaves room for the system and other apps."
             }
             "Caricamento cartella" => "Folder loading",
+            "Usa come confronto A" => "Use as comparison A",
+            "Usa come confronto B" => "Use as comparison B",
+            "Confronta Prima/Dopo" => "Compare Before/After",
+            "Dopo" => "After",
+            "Tasto destro su una foto per assegnarla ad A o B." => {
+                "Right-click a photo to assign it to A or B."
+            }
             "Conteggio file…" => "Counting files…",
             "Cartella" => "Folder",
             "Annullato" => "Cancelled",
