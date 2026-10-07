@@ -25,8 +25,8 @@ The later authorized camera checks use private copies of 30 Nikon D750 NEFs. The
 
 ## Photographs in the README screenshots
 
-The screenshots in `reports/readme-2026-10-06/` contain public-domain National
-Park Service photographs. They are separate from the generated test corpus.
+The photographs in `sample-photos/` and the screenshots in
+`reports/readme-2026-10-06/` contain public-domain National Park Service photographs. They are separate from the generated test corpus.
 The project's proprietary license does not apply to these underlying photographs.
 
 - **Avalanche Lake, Glacier National Park** — NPS / David Restivo.

@@ -1,4 +1,5 @@
 use super::*;
+use std::path::Path;
 
 #[derive(Default)]
 struct Shapes {
@@ -515,4 +516,117 @@ fn resetting_masks_restores_panning_even_if_draw_mode_was_left_on() {
     assert!(app.state.transform.center[1] < original_center[1]);
     assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&recipe));
     assert!(!app.editing.entries[&item.id].pending);
+}
+
+#[test]
+fn double_click_slider_resets_explicit_default_but_disabled_controls_do_not() {
+    for (initial, default, range) in [
+        (3., 0., -10. ..=10.),
+        (2., 1., 0.25..=4.),
+        (0.8, 0.5, 0. ..=1.),
+    ] {
+        for enabled in [true, false] {
+            let ctx = egui::Context::default();
+            let mut value = initial;
+            let mut resets = 0;
+            let mut draw = |ui: &mut egui::Ui| {
+                ui.add_enabled_ui(enabled, |ui| {
+                    let (r, reset) = adjustment_default(
+                        ui,
+                        "Test",
+                        &mut value,
+                        range.clone(),
+                        "",
+                        None,
+                        default,
+                    );
+                    if reset {
+                        assert!(r.changed() && !r.dragged());
+                        resets += 1;
+                    }
+                });
+            };
+            let shapes = frame(&ctx, vec![], &mut draw);
+            let pos = shapes.knobs[0];
+            for pressed in [true, false, true, false] {
+                frame(&ctx, click(pos, pressed), &mut draw);
+            }
+            assert_eq!(value, if enabled { default } else { initial });
+            assert_eq!(resets, usize::from(enabled));
+        }
+    }
+}
+
+#[test]
+fn double_click_apple_wb_sliders_returns_to_as_shot() {
+    for slider in 0..2 {
+        let ctx = egui::Context::default();
+        let mut wb = tr_core::decoder::RawWhiteBalance {
+            apple_temperature: 4500,
+            apple_tint: 35,
+            ..Default::default()
+        };
+        let mut draw = |ui: &mut egui::Ui| {
+            apple_wb_controls(ui, Language::Italian, &mut wb);
+        };
+        let shapes = frame(&ctx, vec![], &mut draw);
+        let pos = shapes.knobs[slider];
+        for pressed in [true, false, true, false] {
+            frame(&ctx, click(pos, pressed), &mut draw);
+        }
+        assert!(wb.is_as_shot(), "slider {slider}: {wb:?}");
+    }
+}
+
+#[test]
+fn reset_all_button_restores_wb_geometry_masks_and_curve_with_durable_undo() {
+    for enabled in [true, false] {
+        let ctx = egui::Context::default();
+        let mut recipe = crate::verify_advanced::recipe(tr_core::decoder::RawEngine::TrueRenderer);
+        recipe.raw_wb.red = 1500;
+        recipe.process_version = 4;
+        recipe.curve = vec![
+            CurvePoint { x: 0.1, y: 0.2 },
+            CurvePoint { x: 0.9, y: 0.85 },
+        ];
+        let original = recipe.clone();
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(Path::new("synthetic.dng"), "synthetic", 4)
+            .unwrap();
+        let saved = catalog.save_edit(&item.id, 0, &original).unwrap();
+        let mut commits = 0;
+        let mut draw = |ui: &mut egui::Ui| {
+            ui.add_enabled_ui(enabled, |ui| {
+                commits += usize::from(reset_all_button(ui, Language::English, &mut recipe));
+            });
+        };
+        let shapes = frame(&ctx, vec![], &mut draw);
+        let pos = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == "Reset all")
+            .unwrap()
+            .1
+            .center();
+        frame(&ctx, click(pos, true), &mut draw);
+        frame(&ctx, click(pos, false), &mut draw);
+        if enabled {
+            assert_eq!(commits, 1);
+            assert_eq!(recipe, EditRecipe::neutral(original.raw_engine));
+            let reset = catalog
+                .save_edit(&item.id, saved.generation, &recipe)
+                .unwrap();
+            let undo = catalog.step_edit(&item.id, reset.generation, true).unwrap();
+            assert_eq!(undo.recipe, original);
+            drop(catalog);
+            let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+            let redo = catalog.step_edit(&item.id, undo.generation, false).unwrap();
+            assert_eq!(redo.recipe, recipe);
+        } else {
+            assert_eq!(commits, 0);
+            assert_eq!(recipe, original);
+        }
+    }
 }

@@ -62,9 +62,18 @@ pub fn run(root: &Path, worker: &Path, folder: &Path, limit: usize) -> Result<()
                 // Only the first file produces private visual artifacts. Each
                 // crop is 1:1; no claimed alignment between different crops/OS.
                 if index == 0 {
+                    let preview = raster.reduced(1200);
+                    image::save_buffer(
+                        output.join(format!("{engine:?}-overview.png")),
+                        &preview.to_display(),
+                        preview.width,
+                        preview.height,
+                        image::ColorType::Rgba8,
+                    )?;
                     for (region, fx, fy) in [
                         ("center", 0.5, 0.5),
                         ("upper-left", 0.25, 0.25),
+                        ("upper-right", 0.95, 0.02),
                         ("lower-right", 0.75, 0.75),
                     ] {
                         let edge = 512.min(raster.width).min(raster.height);

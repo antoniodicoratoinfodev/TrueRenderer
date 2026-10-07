@@ -973,6 +973,75 @@ mod tests {
         assert_eq!(disk.trim(u64::MAX, 1).unwrap().1, 0);
     }
     #[test]
+    fn pre_highlight_recipe_cannot_supply_cached_true_renderer_pixels() {
+        use tr_core::decoder::RawEngine;
+        let folder = tempfile::tempdir().unwrap();
+        let cache = manager();
+        let (info, preview, mut request) = fixture();
+        request.raw_engine = RawEngine::TrueRenderer;
+        let digest = "sensor-highlight-regression";
+        cache
+            .store_preview(folder.path(), digest, request, &info, &preview, &|| false)
+            .unwrap();
+        let current = cache.preview_key(digest, request);
+        // The actual persisted v1 recipe key, including the otherwise identical
+        // fingerprint. Keep a complete, valid old descriptor and pixel blocks.
+        let old = format!(
+            "{:x}",
+            Sha256::digest(
+                serde_json::to_vec(&(
+                    "tr-preview-v3-engines",
+                    "LibRaw-0.22.2-TR-directional-f32-v1",
+                    digest,
+                    &cache.fingerprint,
+                    request,
+                    "full-decode-reference-mips",
+                    "fp32-le-premultiplied-linear-Rec2020",
+                    "applied-orientation-source-centers"
+                ))
+                .unwrap()
+            )
+        );
+        assert_ne!(old, current);
+        {
+            let disk = Folder::open(folder.path(), true, true).unwrap();
+            let file = disk
+                .entries
+                .open_file(&format!("{current}.tvc"), false, false, false)
+                .unwrap();
+            let mut header: Descriptor =
+                serde_json::from_slice(&read_record(&file, HEADER_LIMIT, &|| false).unwrap())
+                    .unwrap();
+            header.key.clone_from(&old);
+            let record = EncodedRecord::new(old.clone(), &serde_json::to_vec(&header).unwrap());
+            let mut file = disk
+                .entries
+                .open_file(&format!("{old}.tvc"), true, true, true)
+                .unwrap();
+            file.write_all(&record.bytes).unwrap();
+            disk.entries.remove(&format!("{current}.tvc")).unwrap();
+        }
+        for edge in [request.edge, 64] {
+            assert!(matches!(
+                cache.load_preview(
+                    folder.path(),
+                    digest,
+                    PreviewRequest { edge, ..request },
+                    &cache.memory,
+                    &|| false
+                ),
+                Lookup::Missing
+            ));
+        }
+        cache
+            .store_preview(folder.path(), digest, request, &info, &preview, &|| false)
+            .unwrap();
+        assert!(matches!(
+            cache.load_preview(folder.path(), digest, request, &cache.memory, &|| false),
+            Lookup::Hit(..)
+        ));
+    }
+    #[test]
     fn engines_have_independent_cache_entries_and_legacy_cannot_supply_another_engine() {
         use tr_core::decoder::RawEngine;
         let folder = tempfile::tempdir().unwrap();

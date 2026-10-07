@@ -33,13 +33,19 @@ From a subtle tonal correction to a distinctive creative treatment, the Develop 
 
 ![TrueRenderer's creative colour controls beside a mountain photograph](reports/readme-2026-10-06/colour.jpg)
 
-Experiment freely. **Undo, Redo and Before/After** keep decisions reversible, while saved editing recipes preserve your work in the local library. Copy selected light, tone-curve and RGB colour adjustments between photographs to build a consistent look.
+Click in the tone-curve graph to add anchor points, then drag them to shape the tones. Select a point to refine its Input and Output with sliders or numeric values; use **Delete point** to remove it. Neighbouring anchors stay in place, and the midtone slider preserves your custom points. The black and white endpoints can also move horizontally and vertically to set input and output levels.
+
+Double-click a photographic slider to restore its default. The **Reset all** button beside Undo/Redo restores all adjustments, including as-shot RAW white balance, and can itself be undone. Double-clicking either Apple RAW WB slider restores the complete as-shot white balance.
+
+Experiment freely. **Undo, Redo, Reset all and Before/After** keep decisions reversible, while saved editing recipes preserve your work in the local library. Copy selected light, tone-curve and RGB colour adjustments between photographs to build a consistent look.
 
 ## Choose the RAW rendering that suits the photograph
 
 The RAW engine is part of the creative decision. On macOS, choose **Apple RAW, LibRaw bilinear, LibRaw AHD or TrueRenderer fp32** for supported cameras. The active engine stays visible in the toolbar, and native white-balance controls work with the selected engine.
 
-Start from as-shot white balance, adjust it manually, estimate it automatically or sample a neutral area. A floating-point processing pipeline provides room for demanding tonal and colour adjustments before the final output conversion.
+Start from as-shot white balance, adjust it manually, estimate it automatically or sample a neutral area. Apple uses native RAW temperature/tint; the other three engines adjust red/blue sensor gains relative to as-shot before demosaicing. A floating-point processing pipeline provides room for demanding tonal and colour adjustments before the final output conversion.
+
+TrueRenderer fp32 neutralizes sensor-clipped highlights to prevent false magenta skies and reflections. It preserves unclipped channels and floating-point headroom; colour and detail lost in a fully saturated sensor cannot be recovered.
 
 ## See the differences that matter
 
@@ -68,6 +74,8 @@ Exports apply the saved photographic recipe to the native source. The final-rend
 For scientific imagery, TrueRenderer also opens **2D FITS images**, with linear or asinh display, a histogram and native-value inspection.
 
 ## Get started
+
+Try the four public-domain landscape photographs shown here from **Library → Sample photos**, beside the test corpus. Their original files and credits are included in [`sample-photos/`](sample-photos/manifest.json); the macOS bundle includes them for offline use.
 
 Open an image or a folder, choose a photograph and switch to **Develop**. Use **Settings → Previews and RAW** to choose preview quality and a RAW engine. English and Italian interfaces are available, with 100%, 150% and 200% UI scaling.
 

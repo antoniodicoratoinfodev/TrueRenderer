@@ -33,6 +33,9 @@ impl Groups {
         }
         if self.curve {
             result.curve.clone_from(&source.curve);
+            if tr_core::editing::curve_has_adjusted_endpoints(&result.curve) {
+                result.process_version = result.process_version.max(4);
+            }
         }
         if self.color {
             result.temperature = source.temperature;
@@ -171,6 +174,23 @@ mod tests {
             collect(&shape.shape, &mut text);
         }
         (pasted, text)
+    }
+
+    #[test]
+    fn copying_movable_endpoints_upgrades_only_the_required_process() {
+        let mut source = EditRecipe::neutral(RawEngine::Apple);
+        source.process_version = 4;
+        source.curve = vec![CurvePoint { x: 0.1, y: 0.2 }, CurvePoint { x: 0.9, y: 0.8 }];
+        let destination = EditRecipe::neutral(RawEngine::Apple);
+        let copied = Groups {
+            light: false,
+            curve: true,
+            color: false,
+        }
+        .merge(&source, &destination)
+        .unwrap();
+        assert_eq!(copied.process_version, 4);
+        assert_eq!(copied.curve, source.curve);
     }
 
     #[test]

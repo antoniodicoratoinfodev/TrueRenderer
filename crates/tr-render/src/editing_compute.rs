@@ -121,6 +121,7 @@ fn parameters(edit: &LiveEdit) -> Vec<u8> {
         u32::from(exposure_only) as f32,
     ];
     p[5][..3].copy_from_slice(&edit.input_gains);
+    p[5][3] = u32::from(tr_core::editing::curve_has_adjusted_endpoints(&r.curve)) as f32;
     for (out, point) in p[8..40].iter_mut().zip(&r.curve) {
         *out = [point.x, point.y, 0., 0.];
     }
@@ -174,6 +175,8 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
                     3 => [0., 0., 1.],
                     4 => [-0.25, 0.2, 2.],
                     5 => [1000., -1000., 0.5],
+                    6 => [0., 0., 0.],
+                    7 => [1e-10, 1e-10, 1e-10],
                     _ => [
                         (i % 67) as f32 / 67.,
                         (i % 31) as f32 / 31.,
@@ -214,7 +217,7 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
     let memory = tr_core::budget::MemoryBudget::new(64 * 1024 * 1024);
     let gpu = tr_core::budget::MemoryBudget::new(64 * 1024 * 1024);
     let mut renderer = crate::resident_compute::GpuFilter::new(device.clone());
-    for case in 0..12 {
+    for case in 0..16 {
         let mut recipe = EditRecipe::neutral(Default::default());
         recipe.process_version = 3;
         match case {
@@ -268,6 +271,15 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
                 recipe.advanced = Some(Box::new(a));
                 recipe.exposure_ev = 0.35;
                 recipe.brightness = 24.;
+            }
+            12..=15 => {
+                recipe.process_version = 4;
+                recipe.curve = match case {
+                    12 => vec![CurvePoint { x: 0., y: 0.2 }, CurvePoint { x: 1., y: 0.85 }],
+                    13 => vec![CurvePoint { x: 0.2, y: 0. }, CurvePoint { x: 0.7, y: 1. }],
+                    14 => vec![CurvePoint { x: 0.2, y: 0.2 }, CurvePoint { x: 0.8, y: 0.8 }],
+                    _ => vec![CurvePoint { x: 0.1, y: 0.4 }, CurvePoint { x: 0.9, y: 0.4 }],
+                };
             }
             _ => {}
         }

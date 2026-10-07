@@ -28,6 +28,8 @@ def main():
     contents = bundle / "Contents"
     (contents / "MacOS").mkdir(parents=True, exist_ok=True)
     (contents / "Resources").mkdir(exist_ok=True)
+    shutil.copytree(ROOT / "sample-photos", contents / "Resources/SamplePhotos",
+                    dirs_exist_ok=True, ignore=shutil.ignore_patterns(".truerenderer-cache", ".DS_Store"))
     shutil.copy2(build / "truerenderer", contents / "MacOS/TrueRenderer")
     shutil.copy2(build / "tr-worker", contents / "MacOS/tr-worker")
     shutil.copy2(ROOT / "scripts/Info.plist", contents / "Info.plist")

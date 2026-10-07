@@ -1,4 +1,4 @@
-use super::{EditRecipe, adjustment};
+use super::{EditRecipe, adjustment_default};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::masks::{Mask, Shape};
@@ -18,11 +18,11 @@ fn slider(
     lang: Language,
     label: &str,
     value: &mut f32,
-    min: f32,
-    max: f32,
+    range: std::ops::RangeInclusive<f32>,
+    default: f32,
     commit: &mut bool,
 ) {
-    let r = adjustment(ui, lang.text(label), value, min..=max, "", None);
+    let r = adjustment_default(ui, lang.text(label), value, range, "", None, default).0;
     *commit |= r.drag_stopped() || (r.changed() && !r.dragged());
 }
 fn reset<T: Default + PartialEq>(
@@ -123,8 +123,8 @@ impl Controls {
                         lang,
                         label,
                         &mut percent,
-                        min * 100.,
-                        max * 100.,
+                        min * 100. ..=max * 100.,
+                        if i < 2 { 0. } else { 100. },
                         &mut commit,
                     );
                     if previous != percent {
@@ -136,8 +136,8 @@ impl Controls {
                     lang,
                     "Raddrizzamento (°)",
                     &mut g.angle,
-                    -45.,
-                    45.,
+                    -45. ..=45.,
+                    0.,
                     &mut commit,
                 );
                 if ui
@@ -157,8 +157,8 @@ impl Controls {
                     lang,
                     "Prospettiva orizzontale",
                     &mut g.perspective[0],
-                    -100.,
-                    100.,
+                    -100. ..=100.,
+                    0.,
                     &mut commit,
                 );
                 slider(
@@ -166,8 +166,8 @@ impl Controls {
                     lang,
                     "Prospettiva verticale",
                     &mut g.perspective[1],
-                    -100.,
-                    100.,
+                    -100. ..=100.,
+                    0.,
                     &mut commit,
                 );
                 slider(
@@ -175,8 +175,8 @@ impl Controls {
                     lang,
                     "Scala geometria",
                     &mut g.scale,
+                    1. ..=4.,
                     1.,
-                    4.,
                     &mut commit,
                 );
                 if ui
@@ -241,7 +241,7 @@ impl Controls {
                     ("Vignettatura ottica", &mut g.vignette, -100., 100.),
                     ("Defringe viola/verde", &mut g.defringe, 0., 100.),
                 ] {
-                    slider(ui, lang, label, v, min, max, &mut commit);
+                    slider(ui, lang, label, v, min..=max, 0., &mut commit);
                 }
                 ui.small(
                     lang.text("CA residua sul render RGB; non riallinea i canali del sensore RAW."),
@@ -251,8 +251,8 @@ impl Controls {
                     lang,
                     "CA residua rosso (px)",
                     &mut g.ca[0],
-                    -10.,
-                    10.,
+                    -10. ..=10.,
+                    0.,
                     &mut commit,
                 );
                 slider(
@@ -260,8 +260,8 @@ impl Controls {
                     lang,
                     "CA residua blu (px)",
                     &mut g.ca[1],
-                    -10.,
-                    10.,
+                    -10. ..=10.,
+                    0.,
                     &mut commit,
                 );
                 if ui.button(lang.text("Ripristina ottica")).clicked() {
@@ -286,7 +286,19 @@ impl Controls {
                     ("Rumore luminanza", &mut a.detail.luminance_noise, 0., 100.),
                     ("Rumore cromatico", &mut a.detail.chroma_noise, 0., 100.),
                 ] {
-                    slider(ui, lang, label, v, min, max, &mut commit);
+                    slider(
+                        ui,
+                        lang,
+                        label,
+                        v,
+                        min..=max,
+                        if label == "Raggio nativo (px)" {
+                            tr_core::editing::detail::Detail::default().radius
+                        } else {
+                            0.
+                        },
+                        &mut commit,
+                    );
                 }
                 ui.small(
                     lang.text("Per valutare il dettaglio usa Verifica resa finale e zoom 100%."),
@@ -321,7 +333,7 @@ impl Controls {
                                 ("Saturazione", &mut b.saturation),
                                 ("Luminanza", &mut b.luminance),
                             ] {
-                                slider(ui, lang, name, v, -100., 100., &mut commit);
+                                slider(ui, lang, name, v, -100. ..=100., 0., &mut commit);
                             }
                         });
                 }
@@ -337,8 +349,8 @@ impl Controls {
                                 lang,
                                 "Tonalità (°)",
                                 &mut a.color.grading[i].hue,
+                                0. ..=360.,
                                 0.,
-                                360.,
                                 &mut commit,
                             );
                             slider(
@@ -346,8 +358,8 @@ impl Controls {
                                 lang,
                                 "Intensità",
                                 &mut a.color.grading[i].amount,
+                                0. ..=100.,
                                 0.,
-                                100.,
                                 &mut commit,
                             );
                         });
@@ -361,8 +373,8 @@ impl Controls {
                         lang,
                         label,
                         &mut a.color.rgb_midtones[i],
-                        -100.,
-                        100.,
+                        -100. ..=100.,
+                        0.,
                         &mut commit,
                     );
                 }
@@ -435,15 +447,31 @@ impl Controls {
                     ui.small(
                         lang.text("Trascina sulla foto; disattiva Disegna per spostare la vista."),
                     );
-                    slider(ui, lang, "Centro X", &mut m.center[0], 0., 1., &mut commit);
-                    slider(ui, lang, "Centro Y", &mut m.center[1], 0., 1., &mut commit);
+                    slider(
+                        ui,
+                        lang,
+                        "Centro X",
+                        &mut m.center[0],
+                        0. ..=1.,
+                        Mask::default().center[0],
+                        &mut commit,
+                    );
+                    slider(
+                        ui,
+                        lang,
+                        "Centro Y",
+                        &mut m.center[1],
+                        0. ..=1.,
+                        Mask::default().center[1],
+                        &mut commit,
+                    );
                     slider(
                         ui,
                         lang,
                         "Raggio maschera",
                         &mut m.radius,
-                        0.005,
-                        1.,
+                        0.005..=1.,
+                        Mask::default().radius,
                         &mut commit,
                     );
                     if m.shape == Shape::Linear {
@@ -452,8 +480,8 @@ impl Controls {
                             lang,
                             "Angolo gradiente",
                             &mut m.angle,
-                            -180.,
-                            180.,
+                            -180. ..=180.,
+                            0.,
                             &mut commit,
                         );
                     }
@@ -472,8 +500,8 @@ impl Controls {
                         lang,
                         "Intervallo minimo",
                         &mut m.interval[0],
-                        0.,
-                        hi - 0.001,
+                        0. ..=hi - 0.001,
+                        Mask::default().interval[0],
                         &mut commit,
                     );
                     slider(
@@ -481,12 +509,20 @@ impl Controls {
                         lang,
                         "Intervallo massimo",
                         &mut m.interval[1],
-                        lo + 0.001,
-                        1.,
+                        lo + 0.001..=1.,
+                        Mask::default().interval[1],
                         &mut commit,
                     );
                 }
-                slider(ui, lang, "Sfumatura", &mut m.feather, 0.01, 1., &mut commit);
+                slider(
+                    ui,
+                    lang,
+                    "Sfumatura",
+                    &mut m.feather,
+                    0.01..=1.,
+                    Mask::default().feather,
+                    &mut commit,
+                );
                 commit |= ui
                     .checkbox(&mut m.invert, lang.text("Inverti maschera"))
                     .changed();
@@ -495,8 +531,8 @@ impl Controls {
                     lang,
                     "Esposizione locale (EV)",
                     &mut m.exposure,
-                    -5.,
-                    5.,
+                    -5. ..=5.,
+                    0.,
                     &mut commit,
                 );
                 slider(
@@ -504,8 +540,8 @@ impl Controls {
                     lang,
                     "Temperatura locale",
                     &mut m.warmth,
-                    -100.,
-                    100.,
+                    -100. ..=100.,
+                    0.,
                     &mut commit,
                 );
                 slider(
@@ -513,8 +549,8 @@ impl Controls {
                     lang,
                     "Saturazione locale",
                     &mut m.saturation,
-                    -100.,
-                    100.,
+                    -100. ..=100.,
+                    0.,
                     &mut commit,
                 );
                 ui.small(lang.text("Maschere salvate con la foto, prima di ritaglio e rotazione."));
@@ -522,7 +558,7 @@ impl Controls {
         let changed = a != before;
         if changed {
             recipe.advanced = Some(a);
-            recipe.process_version = 3;
+            recipe.process_version = recipe.process_version.max(3);
         }
         (changed, commit)
     }
@@ -635,7 +671,7 @@ impl super::TrueRenderer {
                         {
                             let a = recipe.advanced.get_or_insert_with(Default::default);
                             a.geometry.angle = (a.geometry.angle - correction).clamp(-45., 45.);
-                            recipe.process_version = 3;
+                            recipe.process_version = recipe.process_version.max(3);
                             self.apply_edit_draft(&id, recipe);
                             self.commit_edit(&id);
                         }

@@ -5,6 +5,7 @@ mod filesystem_browser;
 mod graphics;
 mod i18n;
 mod photo_export;
+mod sample_photos;
 mod service;
 mod size_units;
 mod source_monitor;
@@ -20,6 +21,7 @@ mod verify_precision;
 mod verify_previews;
 mod verify_raw_engines;
 mod verify_resampling;
+mod verify_wb_camera;
 mod verify_xpc;
 mod wake;
 use anyhow::{Context, Result};
@@ -172,6 +174,13 @@ fn run() -> Result<()> {
     }
     if args.iter().any(|a| a == "--verify-cache") {
         return verify_cache::run(&root, &worker);
+    }
+    if let Some(folder) = option("--verify-wb-camera") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "WB camera probe requires isolated --root"
+        );
+        return verify_wb_camera::run(&root, &worker, &folder);
     }
     if let Some(source) = option("--verify-advanced-editing") {
         anyhow::ensure!(

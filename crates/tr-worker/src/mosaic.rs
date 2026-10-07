@@ -70,7 +70,7 @@ fn describe(bytes: &[u8]) -> Result<Info> {
 fn provenance(info: &Info) -> (RasterInfo, ColorSource) {
     let (width, height) = demosaic::oriented_size(info.width, info.height, info.flip);
     let color = ColorSource::Developed(format!(
-        "Rec.2020 fp32; WB as-shot {:.3}/{:.3}/{:.3}/{:.3}; nero {:.0}/{:.0}/{:.0}/{:.0}, bianco {:.0}; matrice LibRaw; nessun clamp RGB",
+        "Rec.2020 fp32; WB as-shot {:.3}/{:.3}/{:.3}/{:.3}; nero {:.0}/{:.0}/{:.0}/{:.0}, bianco {:.0}; saturi sensore neutri v1 98-100%; matrice LibRaw; no clamp RGB",
         info.wb[0],
         info.wb[1],
         info.wb[2],
@@ -239,13 +239,14 @@ pub fn develop_with_wb(
         })
         .collect();
     drop(samples);
-    let working = demosaic::develop(
+    let working = demosaic::develop_with_highlights(
         &mosaic,
         info.width,
         info.height,
         info.cfa,
         info.matrix,
         info.flip,
+        info.wb,
     )?;
     drop(mosaic);
     let image = if max_edge > 0 && working.width.max(working.height) > max_edge {
@@ -265,6 +266,38 @@ pub fn develop_with_wb(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn saturated_neutral_highlights_do_not_acquire_white_balance_color() {
+        use tr_core::decoder::RawWhiteBalance;
+        for (red, blue) in [(2246, 1234), (800, 1800), (4000, 250)] {
+            let wb = RawWhiteBalance {
+                red,
+                blue,
+                ..Default::default()
+            };
+            let gains = wb.gains();
+            for exposure in [0.1_f32, 0.5, 0.99, 1.1, 1.5, 2.5, 5.] {
+                let mut bytes = fixture(512, true, "Synthetic DNG", 1);
+                let start = bytes.len() - 32 * 24 * 2;
+                for i in 0..32 * 24 {
+                    let c = [0, 1, 1, 2][(i / 32 % 2) * 2 + i % 2];
+                    let value =
+                        (512. + (exposure / gains[c]).min(1.) * (4095. - 512.)).round() as u16;
+                    bytes[start + i * 2..start + i * 2 + 2].copy_from_slice(&value.to_le_bytes());
+                }
+                let (_, _, image) = develop_with_wb(&bytes, 0, wb).unwrap();
+                let expected = exposure.min(gains.into_iter().fold(0., f32::max));
+                for p in image.pixels {
+                    for value in &p[..3] {
+                        assert!(
+                            (value - expected).abs() < 0.003,
+                            "WB {red}/{blue}, exposure {exposure}: {p:?}, expected {expected}"
+                        );
+                    }
+                }
+            }
+        }
+    }
     #[test]
     #[ignore = "requires TR_RAW_SAMPLE pointing to an authorized read-only Nikon sample"]
     fn real_raw_export_preserves_every_active_sample() {
@@ -423,6 +456,122 @@ mod tests {
             bytes.extend(value.to_le_bytes());
         }
         bytes
+    }
+
+    #[test]
+    fn raw_wb_matches_changed_camera_metadata_with_identical_sensor_samples() {
+        use crate::WhiteBalanced;
+        use tr_core::decoder::{Decoder, RawWhiteBalance, Trust};
+        let bytes = fixture(1512, true, "Synthetic DNG", 1);
+        for (red, blue) in [(1500_u16, 750_u16), (800, 1250), (1250, 1500)] {
+            let wb = RawWhiteBalance {
+                red,
+                blue,
+                ..Default::default()
+            };
+            let mut camera = bytes.clone();
+            let count = u16::from_le_bytes(camera[8..10].try_into().unwrap()) as usize;
+            let entry = (0..count)
+                .map(|i| 10 + i * 12)
+                .find(|i| u16::from_le_bytes(camera[*i..*i + 2].try_into().unwrap()) == 50728)
+                .unwrap();
+            let offset =
+                u32::from_le_bytes(camera[entry + 8..entry + 12].try_into().unwrap()) as usize;
+            for (c, denominator) in [red, 1000, blue].into_iter().enumerate() {
+                camera[offset + c * 8..offset + c * 8 + 4].copy_from_slice(&1000_u32.to_le_bytes());
+                camera[offset + c * 8 + 4..offset + c * 8 + 8]
+                    .copy_from_slice(&u32::from(denominator).to_le_bytes());
+            }
+            assert_eq!(
+                export_mosaic(&bytes).unwrap().samples,
+                export_mosaic(&camera).unwrap().samples
+            );
+            for engine in [
+                RawEngine::LibRawBilinear,
+                RawEngine::LibRawAhd,
+                RawEngine::TrueRenderer,
+            ] {
+                let base = crate::select_engine(Trust::External, engine).unwrap();
+                let (_, _, edited) = WhiteBalanced { base, engine, wb }
+                    .decode(&bytes, 0)
+                    .unwrap();
+                let (_, _, metadata) = base.decode(&camera, 0).unwrap();
+                let maximum = edited
+                    .pixels
+                    .iter()
+                    .zip(&metadata.pixels)
+                    .flat_map(|(a, b)| a.iter().zip(b).map(|(a, b)| (a - b).abs()))
+                    .fold(0_f32, f32::max);
+                assert!(maximum < 2e-5, "{engine:?}, {wb:?}: {maximum}");
+            }
+        }
+    }
+
+    #[test]
+    fn custom_raw_wb_metadata_survives_probe_full_and_mip_transport() {
+        use tr_core::{
+            decoder::RawWhiteBalance,
+            protocol::{self, DecodeIntent, DecodeRequest},
+        };
+        let bytes = fixture(1512, true, "Synthetic DNG", 1);
+        for engine in [
+            RawEngine::TrueRenderer,
+            RawEngine::LibRawBilinear,
+            RawEngine::LibRawAhd,
+        ] {
+            for (red, blue) in [(1000, 1000), (1500, 750), (250, 4000), (4000, 250)] {
+                for intent in [
+                    DecodeIntent::Probe,
+                    DecodeIntent::FullSource,
+                    DecodeIntent::ReferenceMip { cpu_threads: 1 },
+                ] {
+                    let mut request = vec![];
+                    protocol::write_control(
+                        &mut request,
+                        protocol::REQUEST,
+                        1,
+                        &DecodeRequest {
+                            raw_engine: engine,
+                            raw_wb: RawWhiteBalance {
+                                red,
+                                blue,
+                                ..Default::default()
+                            },
+                            source_len: bytes.len(),
+                            max_edge: if matches!(intent, DecodeIntent::ReferenceMip { .. }) {
+                                16
+                            } else {
+                                0
+                            },
+                            intent,
+                            edit: None,
+                            maximum_output_bytes: 1024 * 1024,
+                        },
+                    )
+                    .unwrap();
+                    request.extend(&bytes);
+                    let mut output = vec![];
+                    assert!(
+                        crate::serve_with_policy(request.as_slice(), &mut output, true).is_err()
+                    );
+                    let mut reader = output.as_slice();
+                    let (kind, id, control) = protocol::read_control(&mut reader).unwrap();
+                    assert_eq!((kind, id), (protocol::RESPONSE, 1));
+                    let info: RasterInfo = protocol::parse(&control).unwrap();
+                    protocol::validate_info(&info).unwrap_or_else(|error| {
+                        panic!("{engine:?} {red}/{blue} {intent:?}: {error}; {info:?}")
+                    });
+                    if intent != DecodeIntent::Probe {
+                        protocol::read_raster(&mut reader, &info).unwrap();
+                    }
+                    assert!(reader.is_empty());
+                    assert_eq!(info.input_color.matches("sviluppo RAW").count(), 1);
+                    if red != 1000 || blue != 1000 {
+                        assert!(info.input_color.contains("WB sensore relativo as-shot"));
+                    }
+                }
+            }
+        }
     }
 
     #[test]

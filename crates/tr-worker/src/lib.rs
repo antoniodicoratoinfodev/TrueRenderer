@@ -800,7 +800,13 @@ impl Decoder for WhiteBalanced<'_> {
                     self.wb.gains()[2]
                 )
             };
-            color = ColorSource::Developed(format!("{}; {note}", color.provenance()));
+            // Append to the recipe itself: wrapping the rendered provenance
+            // repeats its suffix and can exceed the bounded IPC colour field.
+            let description = match color {
+                ColorSource::Developed(recipe) => recipe,
+                other => other.provenance(),
+            };
+            color = ColorSource::Developed(format!("{description}; {note}"));
             info.input_color = color.provenance();
         }
         Ok((info, color))
@@ -2004,6 +2010,60 @@ mod tests {
         }
         assert!(changed, "esposizione non applicata ai pixel esportati");
     }
+    #[test]
+    fn endpoint_curve_export_matches_cpu_pixels_and_preserves_alpha() {
+        use tr_core::editing::{CurvePoint, EditRecipe};
+        let source = include_bytes!("../../../corpus/05_Trasparenza.png");
+        let mut recipe = EditRecipe::neutral(RawEngine::default());
+        recipe.process_version = 4;
+        recipe.curve = vec![
+            CurvePoint { x: 0.15, y: 0.2 },
+            CurvePoint { x: 0.85, y: 0.8 },
+        ];
+        for format in [
+            tr_core::export::Format::Png16,
+            tr_core::export::Format::Tiff16,
+        ] {
+            let options = tr_core::export::Options {
+                format,
+                ..Default::default()
+            };
+            let mut request = vec![];
+            protocol::write_control(
+                &mut request,
+                protocol::REQUEST,
+                1,
+                &DecodeRequest {
+                    raw_wb: Default::default(),
+                    raw_engine: RawEngine::default(),
+                    source_len: source.len(),
+                    max_edge: 0,
+                    intent: protocol::DecodeIntent::Export(options),
+                    edit: Some(recipe.clone()),
+                    maximum_output_bytes: 16 * 1024 * 1024,
+                },
+            )
+            .unwrap();
+            request.extend_from_slice(source);
+            let mut response = vec![];
+            assert!(serve(request.as_slice(), &mut response).is_err());
+            let mut reader = response.as_slice();
+            let (kind, id, control) = protocol::read_control(&mut reader).unwrap();
+            assert_eq!((kind, id), (protocol::RESPONSE, 1));
+            let info: tr_core::export::Info = protocol::parse(&control).unwrap();
+            assert_eq!(reader.len(), info.bytes as usize);
+            let (_, mut expected) = decode(source, 0).unwrap();
+            let alpha: Vec<_> = expected.pixels.iter().map(|p| p[3]).collect();
+            recipe.apply(&mut expected).unwrap();
+            assert!(expected.pixels.iter().zip(alpha).all(|(p, a)| p[3] == a));
+            let (_, encoded) = export::render(expected, options, 16 * 1024 * 1024).unwrap();
+            assert_eq!(
+                image::load_from_memory(reader).unwrap().to_rgba16(),
+                image::load_from_memory(&encoded).unwrap().to_rgba16()
+            );
+        }
+    }
+
     #[test]
     fn native_sixteen_bit_samples_are_not_reduced_to_eight() {
         let source = image::ImageBuffer::<image::Rgba<u16>, Vec<u16>>::from_raw(

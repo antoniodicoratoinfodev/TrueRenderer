@@ -196,3 +196,73 @@ fn engine_and_quality_remain_adjacent_with_loading_and_long_names() {
         }
     }
 }
+
+#[test]
+fn viewer_status_stays_in_chrome_without_resizing_the_photo() {
+    let (_dir, ctx, mut app) = test_app();
+    settle(&mut app, &ctx, true);
+    for language in [Language::English, Language::Italian] {
+        app.set_language(language);
+        for width in [550., 1100., 1440.] {
+            for view in [ViewMode::Preview, ViewMode::Compare] {
+                app.state.view = view;
+                let text = frame(&mut app, &ctx, Vec2::new(width, 720.));
+                let quality = text
+                    .iter()
+                    .find(|(text, _)| text.starts_with(language.text("Solo questa foto")))
+                    .unwrap()
+                    .1;
+                let status = app.viewer_status_area.unwrap().0;
+                assert!((status.center().y - quality.center().y).abs() < 3.);
+                let mut previous = None;
+                for detail in [
+                    "",
+                    "Detail limited to 1280 × 800 pixels",
+                    "Refining preview…",
+                ] {
+                    let mut output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                egui::vec2(width, 720.),
+                            )),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            app.toolbar(ui);
+                            app.location_bar(ui);
+                            let status = app.viewer_status_area.unwrap().0;
+                            assert!(status.width() > 40., "{width}: {status:?}");
+                            assert!(status.right() <= width);
+                            egui::CentralPanel::default().show(ui, |ui| {
+                                let photo = ui.available_rect_before_wrap();
+                                assert!(status.bottom() < photo.top());
+                                app.viewer_status(
+                                    if view == ViewMode::Compare {
+                                        "A"
+                                    } else {
+                                        "single"
+                                    },
+                                    detail,
+                                    "",
+                                );
+                                if view == ViewMode::Compare {
+                                    app.viewer_status("B", "Preparing 1:1 detail…", "");
+                                }
+                                assert_eq!(photo, ui.available_rect_before_wrap());
+                                if let Some(previous) = previous {
+                                    assert_eq!(photo, previous);
+                                }
+                                previous = Some(photo);
+                            });
+                        },
+                    );
+                    output.textures_delta.clear();
+                }
+            }
+        }
+    }
+    app.state.view = ViewMode::Grid;
+    frame(&mut app, &ctx, Vec2::new(1440., 940.));
+    assert!(app.viewer_status_area.is_none());
+}

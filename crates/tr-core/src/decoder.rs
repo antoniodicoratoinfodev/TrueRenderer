@@ -44,7 +44,7 @@ impl RawEngine {
             Self::Apple => "Apple-TR-linear-v1",
             Self::LibRawBilinear => "LibRaw-0.22.2-TR-libraw-linear-v1",
             Self::LibRawAhd => "LibRaw-0.22.2-TR-ahd-rec2020-v1",
-            Self::TrueRenderer => "LibRaw-0.22.2-TR-directional-f32-v1",
+            Self::TrueRenderer => "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
         }
     }
     pub const fn label(self) -> &'static str {

@@ -514,6 +514,31 @@ mod tests {
     use super::*;
 
     #[test]
+    fn movable_curve_endpoints_survive_undo_reopen_and_redo() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(Path::new("/synthetic/curve.png"), "curve-source", 4)
+            .unwrap();
+        let mut r = EditRecipe::neutral(RawEngine::Apple);
+        r.process_version = 4;
+        r.curve = vec![
+            tr_core::editing::CurvePoint { x: 0.1, y: 0.2 },
+            tr_core::editing::CurvePoint { x: 0.9, y: 0.8 },
+        ];
+        let saved = catalog.save_edit(&item.id, 0, &r).unwrap();
+        let undone = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+        assert_eq!(undone.recipe.process_version, 1);
+        drop(catalog);
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let reopened = catalog.load_edit(&item.id, RawEngine::Apple).unwrap();
+        let redone = catalog
+            .step_edit(&item.id, reopened.generation, false)
+            .unwrap();
+        assert_eq!(redone.recipe, r);
+    }
+
+    #[test]
     fn spatial_edit_and_vector_strokes_survive_backup_without_any_source_or_cache() {
         let dir = tempfile::tempdir().unwrap();
         let mut catalog = Catalog::open(dir.path()).unwrap();

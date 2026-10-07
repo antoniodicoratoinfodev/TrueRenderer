@@ -16,6 +16,26 @@ impl Language {
             return source;
         }
         match source {
+            "Azzera tutto" => "Reset all",
+            "Foto campione" => "Sample photos",
+            "Ripristina tutte le regolazioni e il WB come scattato. Annullabile con Undo." => {
+                "Reset all adjustments and restore as-shot WB. Reversible with Undo."
+            }
+            "Curva a punti · luminanza lineare" => "Point curve · linear luminance",
+            "Clic per aggiungere, trascina per modificare. I punti vicini restano ancorati." => {
+                "Click to add, drag to adjust. Neighbouring points stay anchored."
+            }
+            "Elimina punto" => "Delete point",
+            "Frecce: regolazione fine · Maiusc: passo maggiore · Canc: elimina" => {
+                "Arrows: fine adjustment · Shift: larger step · Delete: remove"
+            }
+            "Estremo modificabile · non eliminabile" => "Editable endpoint · cannot be deleted",
+            "Seleziona un punto per regolare Ingresso e Uscita." => {
+                "Select a point to adjust Input and Output."
+            }
+            "Contagocce RGB: azzerare prima l'uscita del nero nella curva" => {
+                "RGB picker: reset the curve's black output first"
+            }
             "Curva a punti" => "Point curve",
             "Aggiungi punto" => "Add point",
             "Punto" => "Point",

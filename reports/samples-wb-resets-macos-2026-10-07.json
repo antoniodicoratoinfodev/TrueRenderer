@@ -1,0 +1,1054 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-07",
+  "passed": true,
+  "delivery": "dist/TrueRenderer.app",
+  "candidate": "var/samples-wb-resets-2026-10-07/TrueRenderer.app",
+  "previous_distribution": "var/samples-wb-resets-2026-10-07/previous-distribution.app",
+  "source_sha256": {
+    "apps/desktop/src/sample_photos.rs": "441441b97441cbb6125cd48aa5e4f45603eea448b6ef59d2b815fc31fe32a597",
+    "apps/desktop/src/ui.rs": "788132377748ef5be5f0f9d96c13cec10ff59f69e371d9392d4df2b3426911f1",
+    "apps/desktop/src/ui/editing.rs": "e451e2d11800689f46fd856aae987e952e88422d7e294a038c7899f6e90c0206",
+    "apps/desktop/src/ui/editing/advanced.rs": "0c30e84150127676cc9132f37b3eb7f85112b8f84f8f19f75fdaf804b88aeae7",
+    "apps/desktop/src/ui/editing/curve.rs": "8541d451bf67e82e11bce47cd1b9e8a861b907fcbe84e20e164a0841aadb7ac0",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "e9b3f2fd4ba900d6ab2a5c43d49b9b688d523b253d8ab9ee731d01646b0d9ee5",
+    "apps/desktop/src/verify_wb_camera.rs": "61ad9a70a8e23070676739d3b72ca20bda000e7a8bbe7f7940bac7ac759405e8",
+    "crates/tr-worker/src/mosaic.rs": "02803ccc2d8dda363d6217d4266b87de5c18f56b494cc7b1c626b97fb921f690",
+    "native/macos/image_decoder.m": "5860e87d93f9ed44e69e1109eb30de79172d2aab0eace784b90fd91680d33ee7",
+    "native/libraw/tr_libraw.cpp": "d8a13696f9672fdc496bc98008f6b6b4b3fb26f3482d7c99c8fd7220d6e0bdf1",
+    "scripts/generate-wb-camera-fixtures.py": "a35528258cf857015a84248597300e8b145b5c1988073dc26e4d18d70d109168",
+    "scripts/package-macos.py": "d2d4cc24bda284829c2c90c7064b54d8c3c39dc9c36948567e87fda1add0cdce",
+    "sample-photos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0"
+  },
+  "binary_sha256": {
+    "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+    "Contents/_CodeSignature/CodeResources": "9cdd04f505bb55d1288adc99ecde2742e12d21937cd8f2ec9e2d9b2ede452108",
+    "Contents/MacOS/tr-worker": "24da9614ebd405b7bc498e495376107d4a1e49ecc4a315fa8e433eaa5f63a8d0",
+    "Contents/MacOS/TrueRenderer": "ec506f72c288b36797b92f7697c0c5f738448c474867b3feaa9ce2ebf381e62a",
+    "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+    "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+    "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+    "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+    "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+    "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+    "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "55dc044b4240e5af563ced6cc971ac47892c046f98adda15462a6f5c467eb248",
+    "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+    "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "eeafbf5b6277b2b22d7d8cc7c9ff31524f91e9c62f957423018b3771cc73086a"
+  },
+  "sample_photos": {
+    "navigation": "Library → Sample photos / Libreria → Foto campione",
+    "count": 4,
+    "manifest": "sample-photos/manifest.json",
+    "repository_bundle_and_isolated_copies_hashes_match": true,
+    "source_bytes_unchanged": true,
+    "signed_resources_not_used_for_cache": true,
+    "qa_bundle_signature_still_valid_after_use": true,
+    "provenance": [
+      {
+        "filename": "Grand Teton - Sunrise.jpg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Grand_Teton_National_Park_%2833106145651%29.jpg",
+        "source_page": "https://commons.wikimedia.org/wiki/File:Grand_Teton_National_Park_(33106145651).jpg",
+        "credit": "NPS / David Restivo",
+        "rights": "Public domain; NPS employee work, as documented by source",
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "bytes": 12187974
+      },
+      {
+        "filename": "Grand Teton - Winter.jpg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/2/24/Grand_Teton_in_Winter-NPS.jpg",
+        "source_page": "https://commons.wikimedia.org/wiki/File:Grand_Teton_in_Winter-NPS.jpg",
+        "credit": "National Park Service",
+        "rights": "Public domain; NPS employee work, as documented by source",
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "bytes": 2213627
+      },
+      {
+        "filename": "Avalanche Lake.jpg",
+        "download_url": "https://upload.wikimedia.org/wikipedia/commons/3/34/Avalanche_Lake%2C_Glacier_National_Park.jpg",
+        "source_page": "https://commons.wikimedia.org/wiki/File:Avalanche_Lake,_Glacier_National_Park.jpg",
+        "credit": "NPS / David Restivo",
+        "rights": "Public domain; NPS employee work, as documented by source",
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "bytes": 15800943
+      },
+      {
+        "filename": "Zion - The Watchman.jpg",
+        "download_url": "https://npgallery.nps.gov/GetAsset/98B15EBA-155D-451F-6776104114F96789/original.jpg",
+        "source_page": "https://npgallery.nps.gov/AssetDetail/98b15eba-155d-451f-6776-104114f96789",
+        "credit": "NPS Photo",
+        "rights": "Public domain: Full Granting Rights, as documented by source",
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "bytes": 411633
+      }
+    ]
+  },
+  "native_ui": {
+    "isolated_catalog": "var/samples-wb-resets-2026-10-07/ui-data",
+    "screenshots": [
+      "reports/samples-resets-macos-2026-10-07.jpg",
+      "reports/slider-default-macos-2026-10-07.jpg"
+    ],
+    "four_photos_loaded_offline_from_bundle": true,
+    "reset_all_beside_undo_redo": true,
+    "reset_all_from": {
+      "exposure_ev": 1.25,
+      "brightness": 20
+    },
+    "reset_all_to": {
+      "exposure_ev": 0,
+      "brightness": 0
+    },
+    "undo_restored_both_values": true,
+    "redo_restored_reset": true,
+    "double_click_exposure_to_zero": true,
+    "radius_drag_from": 1,
+    "radius_drag_to": 2.16,
+    "radius_double_click_to": 1,
+    "radius_reset_one_saved_revision": true,
+    "qa_closed": true,
+    "notes": "Some single clicks on slider tracks did not move a value under automation; dragging radius changed it and double clicking at the same position restored 1 px. Accessibility tree did not reflect scrolling; screenshots and isolated SQLite revisions verified the radius result."
+  },
+  "automated_checks": {
+    "rust_ordinary": 314,
+    "rust_integration": 14,
+    "private_photo_tests_not_run": 3,
+    "new_regressions": [
+      "metadata-only WB equivalence on three sensor engines",
+      "bundle samples extracted outside signed resources; existing copies never overwritten",
+      "double-click defaults including disabled controls",
+      "Apple WB double-click returns as-shot",
+      "full reset of WB, geometry, masks and curve; undo/redo across catalog reopen"
+    ],
+    "fmt": true,
+    "clippy": true,
+    "python_reporting_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_graphics_smoke": true,
+    "verification_root": "var/verify-pIrA78IP"
+  },
+  "wb_camera_equivalence": {
+    "cases": [
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1500-750.dng",
+        "engine": "LibRawBilinear",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1500-750.dng",
+        "engine": "LibRawBilinear",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1500-750.dng",
+        "engine": "LibRawAhd",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1500-750.dng",
+        "engine": "LibRawAhd",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1500-750.dng",
+        "engine": "TrueRenderer",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1500-750.dng",
+        "engine": "TrueRenderer",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 750,
+          "red": 1500
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-800-1250.dng",
+        "engine": "LibRawBilinear",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1250,
+          "red": 800
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-800-1250.dng",
+        "engine": "LibRawBilinear",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1250,
+          "red": 800
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-800-1250.dng",
+        "engine": "LibRawAhd",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1250,
+          "red": 800
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-800-1250.dng",
+        "engine": "LibRawAhd",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1250,
+          "red": 800
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-800-1250.dng",
+        "engine": "TrueRenderer",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1250,
+          "red": 800
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-800-1250.dng",
+        "engine": "TrueRenderer",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1250,
+          "red": 800
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1250-1500.dng",
+        "engine": "LibRawBilinear",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1500,
+          "red": 1250
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1250-1500.dng",
+        "engine": "LibRawBilinear",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1500,
+          "red": 1250
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1250-1500.dng",
+        "engine": "LibRawAhd",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1500,
+          "red": 1250
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1250-1500.dng",
+        "engine": "LibRawAhd",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1500,
+          "red": 1250
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1250-1500.dng",
+        "engine": "TrueRenderer",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1500,
+          "red": 1250
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "sensor-1250-1500.dng",
+        "engine": "TrueRenderer",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 0.0,
+        "mean_error_fp32": 0.0,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 0,
+          "apple_tint": 0,
+          "blue": 1500,
+          "red": 1250
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "apple-3500--20.dng",
+        "engine": "Apple",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 5.245208740234375e-06,
+        "mean_error_fp32": 1.004281630893426e-06,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 3500,
+          "apple_tint": -20,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "apple-3500--20.dng",
+        "engine": "Apple",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 5.245208740234375e-06,
+        "mean_error_fp32": 1.004281630893426e-06,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 3500,
+          "apple_tint": -20,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "apple-6500-0.dng",
+        "engine": "Apple",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 1.3709068298339844e-06,
+        "mean_error_fp32": 3.396585981363387e-07,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 6500,
+          "apple_tint": 0,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "apple-6500-0.dng",
+        "engine": "Apple",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 1.3709068298339844e-06,
+        "mean_error_fp32": 3.396585981363387e-07,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 6500,
+          "apple_tint": 0,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "apple-9000-25.dng",
+        "engine": "Apple",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 6.079673767089844e-06,
+        "mean_error_fp32": 1.3352534864452537e-06,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 0,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 9000,
+          "apple_tint": 25,
+          "blue": 1000,
+          "red": 1000
+        }
+      },
+      {
+        "as_shot_reset_exact": true,
+        "camera": "apple-9000-25.dng",
+        "engine": "Apple",
+        "exports": [
+          {
+            "format": "Png16",
+            "maximum_error_u16": 0
+          },
+          {
+            "format": "Tiff16",
+            "maximum_error_u16": 0
+          }
+        ],
+        "maximum_error_fp32": 6.079673767089844e-06,
+        "mean_error_fp32": 1.3352534864452537e-06,
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ],
+        "slot": 1,
+        "tolerance": 1.9999999494757503e-05,
+        "wb": {
+          "apple_temperature": 9000,
+          "apple_tint": 25,
+          "blue": 1000,
+          "red": 1000
+        }
+      }
+    ],
+    "passed": true,
+    "scope": "Same generated single-illuminant Bayer samples, only AsShotNeutral changes; native fp32 Rec2020 comparison, both isolated workers, exact PNG/TIFF16 parity, as-shot reset. Not a camera JPEG match or camera calibration qualification.",
+    "source_digest": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+    "source_unchanged": true
+  },
+  "wb_fixture_manifest": {
+    "source": "original.dng",
+    "source_sha256": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+    "only_changed_tag": "AsShotNeutral (50728)",
+    "sensor_samples_identical": true,
+    "cases": [
+      {
+        "engine": "LibRawBilinear",
+        "camera": "sensor-1500-750.dng",
+        "wb": {
+          "red": 1500,
+          "blue": 750
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "87bee0ee62ddba5f336f3d0d86a20c78397ea43aaa55337b419ca4f04efcd45d"
+      },
+      {
+        "engine": "LibRawAhd",
+        "camera": "sensor-1500-750.dng",
+        "wb": {
+          "red": 1500,
+          "blue": 750
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "87bee0ee62ddba5f336f3d0d86a20c78397ea43aaa55337b419ca4f04efcd45d"
+      },
+      {
+        "engine": "TrueRenderer",
+        "camera": "sensor-1500-750.dng",
+        "wb": {
+          "red": 1500,
+          "blue": 750
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "87bee0ee62ddba5f336f3d0d86a20c78397ea43aaa55337b419ca4f04efcd45d"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "camera": "sensor-800-1250.dng",
+        "wb": {
+          "red": 800,
+          "blue": 1250
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "864b5ef5fe9a10009db21ff48ab9d988f07472ac5a5c39a37a9d9ac17737b01f"
+      },
+      {
+        "engine": "LibRawAhd",
+        "camera": "sensor-800-1250.dng",
+        "wb": {
+          "red": 800,
+          "blue": 1250
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "864b5ef5fe9a10009db21ff48ab9d988f07472ac5a5c39a37a9d9ac17737b01f"
+      },
+      {
+        "engine": "TrueRenderer",
+        "camera": "sensor-800-1250.dng",
+        "wb": {
+          "red": 800,
+          "blue": 1250
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "864b5ef5fe9a10009db21ff48ab9d988f07472ac5a5c39a37a9d9ac17737b01f"
+      },
+      {
+        "engine": "LibRawBilinear",
+        "camera": "sensor-1250-1500.dng",
+        "wb": {
+          "red": 1250,
+          "blue": 1500
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "88cb3a0b2b31e79cb6321a4201c803dfe9056490d3bc46e4eff7cf7cc0af0485"
+      },
+      {
+        "engine": "LibRawAhd",
+        "camera": "sensor-1250-1500.dng",
+        "wb": {
+          "red": 1250,
+          "blue": 1500
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "88cb3a0b2b31e79cb6321a4201c803dfe9056490d3bc46e4eff7cf7cc0af0485"
+      },
+      {
+        "engine": "TrueRenderer",
+        "camera": "sensor-1250-1500.dng",
+        "wb": {
+          "red": 1250,
+          "blue": 1500
+        },
+        "tolerance": 2e-05,
+        "camera_sha256": "88cb3a0b2b31e79cb6321a4201c803dfe9056490d3bc46e4eff7cf7cc0af0485"
+      },
+      {
+        "engine": "Apple",
+        "camera": "apple-3500--20.dng",
+        "wb": {
+          "red": 1000,
+          "blue": 1000,
+          "apple_temperature": 3500,
+          "apple_tint": -20
+        },
+        "metadata_native_wb": [
+          3500,
+          -20
+        ],
+        "tolerance": 2e-05,
+        "camera_sha256": "2722ae88102266bd3f9fad670d5f452b7ae22c5c317be68281c821fc3ac83723"
+      },
+      {
+        "engine": "Apple",
+        "camera": "apple-6500-0.dng",
+        "wb": {
+          "red": 1000,
+          "blue": 1000,
+          "apple_temperature": 6500,
+          "apple_tint": 0
+        },
+        "metadata_native_wb": [
+          6499.99854,
+          1.37720917e-05
+        ],
+        "tolerance": 2e-05,
+        "camera_sha256": "077d373bb3e24cfbe6e599efe49bae7b16c5a04ebfd0e1ccd29d6c0c5fa193cd"
+      },
+      {
+        "engine": "Apple",
+        "camera": "apple-9000-25.dng",
+        "wb": {
+          "red": 1000,
+          "blue": 1000,
+          "apple_temperature": 9000,
+          "apple_tint": 25
+        },
+        "metadata_native_wb": [
+          8999.99902,
+          25
+        ],
+        "tolerance": 2e-05,
+        "camera_sha256": "d893fe63cc4dae31ad0a70bc8486686557690f61b12c4db04287d574aea9e148"
+      }
+    ]
+  },
+  "xpc_candidate": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-07T12:10:40.154950+00:00",
+    "bundle": "var/samples-wb-resets-2026-10-07/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "ec506f72c288b36797b92f7697c0c5f738448c474867b3feaa9ce2ebf381e62a",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "55dc044b4240e5af563ced6cc971ac47892c046f98adda15462a6f5c467eb248",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "eeafbf5b6277b2b22d7d8cc7c9ff31524f91e9c62f957423018b3771cc73086a"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "xpc_delivery": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-07T12:14:48.522164+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "ec506f72c288b36797b92f7697c0c5f738448c474867b3feaa9ce2ebf381e62a",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "55dc044b4240e5af563ced6cc971ac47892c046f98adda15462a6f5c467eb248",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "eeafbf5b6277b2b22d7d8cc7c9ff31524f91e9c62f957423018b3771cc73086a"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "scope_limits": [
+    "Generated 1024×768 Bayer DNG with single illuminant; only AsShotNeutral changed, sensor samples identical. Not a qualification of additional cameras, illuminants, dual-illuminant profiles or Windows.",
+    "Apple metadata was fitted numerically to integer native Kelvin/tint to avoid UI quantization mismatch; tolerance fixed at 2e-5 before running, observed maximum 6.0796738e-6. Three sensor engines were fp32 identical.",
+    "Native WB changes RAW development, not a post-render RGB warmth filter. Camera JPEG processing and Kelvin scales of other converters are not claimed identical.",
+    "Interactive RAW WB preview may use the explicitly provisional RGB bridge; final native decode and export use the chosen engine and WB.",
+    "No R0–R4 or SF0–SF10 gate closed; ad-hoc signature and XPC checks do not constitute a release sandbox guarantee."
+  ],
+  "references": [
+    "https://developer.apple.com/documentation/coreimage/cirawfilter/neutraltint",
+    "https://www.libraw.org/node/31",
+    "https://github.com/LibRaw/LibRaw/blob/master/doc/API-notes.html"
+  ]
+}

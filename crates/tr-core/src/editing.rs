@@ -253,6 +253,7 @@ impl EditRecipe {
         neutral.protect_warm = self.protect_warm;
         neutral.advanced = self.advanced.clone();
         self == &neutral
+            && !curve_has_adjusted_endpoints(&self.curve)
             && self.curve.iter().all(|p| p.x == p.y)
             && self.advanced.as_ref().is_none_or(|a| a.is_neutral())
     }
@@ -261,9 +262,9 @@ impl EditRecipe {
         self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
             self.schema_version == SCHEMA_VERSION
-                && matches!(self.process_version, 1..=3)
+                && matches!(self.process_version, 1..=4)
                 && (self.process_version >= 2 || (self.vibrance == 0. && !self.protect_warm))
-                && (self.advanced.is_none() || self.process_version == 3),
+                && (self.advanced.is_none() || self.process_version >= 3),
             "Versione della ricetta fotografica non eseguibile"
         );
         ensure!(
@@ -291,9 +292,8 @@ impl EditRecipe {
         if !self.curve.is_empty() {
             ensure!(
                 self.curve.len() >= 2
-                    && self.curve[0] == CurvePoint { x: 0., y: 0. }
-                    && self.curve[self.curve.len() - 1] == CurvePoint { x: 1., y: 1. },
-                "Curva: ancoraggi 0 e 1 richiesti"
+                    && (self.process_version >= 4 || !curve_has_adjusted_endpoints(&self.curve)),
+                "Curva: almeno due punti; estremi mobili richiedono processo 4"
             );
             for pair in self.curve.windows(2) {
                 ensure!(
@@ -301,6 +301,8 @@ impl EditRecipe {
                         && pair[0].y.is_finite()
                         && pair[1].x.is_finite()
                         && pair[1].y.is_finite()
+                        && (0. ..=1.).contains(&pair[0].x)
+                        && (0. ..=1.).contains(&pair[1].x)
                         && pair[0].x < pair[1].x
                         && pair[0].y <= pair[1].y
                         && (0. ..=1.).contains(&pair[0].y)
@@ -538,6 +540,10 @@ impl EditRecipe {
             self.saturation == 0. && self.vibrance == 0.,
             "Azzerare saturazione e vividezza prima del contagocce RGB"
         );
+        ensure!(
+            self.curve.first().is_none_or(|p| p.y == 0.),
+            "Contagocce RGB: azzerare prima l'uscita del nero nella curva"
+        );
         let [r, g, b] = picker_rgb(pixel)?;
         let temperature = self.temperature - 100. * (r / b).ln() / 0.36;
         let tint = self.tint + 100. * (g / (r * b).sqrt()).ln() / 0.21;
@@ -599,9 +605,23 @@ impl EditRecipe {
             if !self.curve.is_empty() {
                 y = curve(y, &self.curve);
             }
-            let ratio = y / old_y;
+            if curve_has_adjusted_endpoints(&self.curve) {
+                let black = self.curve[0].y;
+                let ratio = (y - black) / old_y;
+                for value in &mut rgb {
+                    *value = *value * ratio + black;
+                }
+            } else {
+                let ratio = y / old_y;
+                for value in &mut rgb {
+                    *value *= ratio;
+                }
+            }
+        } else if curve_has_adjusted_endpoints(&self.curve) {
+            // Neutral lift at zero/negative luminance, without a division by zero.
+            let offset = curve(old_y, &self.curve) - old_y;
             for value in &mut rgb {
-                *value *= ratio;
+                *value += offset;
             }
         }
         let y = luminance(rgb);
@@ -648,11 +668,34 @@ fn is_false(value: &bool) -> bool {
     !*value
 }
 
-fn curve(x: f32, points: &[CurvePoint]) -> f32 {
-    if x <= 0. {
+pub fn curve_has_adjusted_endpoints(points: &[CurvePoint]) -> bool {
+    !points.is_empty()
+        && (points.first() != Some(&CurvePoint { x: 0., y: 0. })
+            || points.last() != Some(&CurvePoint { x: 1., y: 1. }))
+}
+
+/// The same piecewise-linear mapping used by rendering and the curve editor.
+/// Validated process-4 curves may move their endpoints inside the unit square.
+pub fn tone_curve_value(x: f32, points: &[CurvePoint]) -> f32 {
+    if points.is_empty() {
         return x;
     }
-    if x >= 1. {
+    if curve_has_adjusted_endpoints(points) {
+        let first = points[0];
+        let last = points[points.len() - 1];
+        if x < 0. {
+            return x + first.y;
+        }
+        if x > 1. {
+            return x + last.y - 1.;
+        }
+        if x <= first.x {
+            return first.y;
+        }
+        if x >= last.x {
+            return last.y;
+        }
+    } else if x <= 0. || x >= 1. {
         return x;
     }
     let right = points
@@ -663,9 +706,81 @@ fn curve(x: f32, points: &[CurvePoint]) -> f32 {
     a.y + (x - a.x) * (b.y - a.y) / (b.x - a.x)
 }
 
+fn curve(x: f32, points: &[CurvePoint]) -> f32 {
+    tone_curve_value(x, points)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn movable_endpoints_require_process4_and_preserve_old_curves_exactly() {
+        let mut old = EditRecipe::neutral(Default::default());
+        old.curve = vec![
+            CurvePoint { x: 0., y: 0. },
+            CurvePoint { x: 0.4, y: 0.6 },
+            CurvePoint { x: 1., y: 1. },
+        ];
+        old.contrast = 24.;
+        old.brightness = -30.;
+        let mut new = old.clone();
+        new.process_version = 4;
+        for rgb in [
+            [0., 0., 0.],
+            [-0.2, 0.1, 1.2],
+            [0.4, 0.2, 0.1],
+            [2., 3., 4.],
+        ] {
+            for a in [0., 0.3, 1.] {
+                let pixel = [rgb[0] * a, rgb[1] * a, rgb[2] * a, a];
+                assert_eq!(old.apply_pixel(pixel), new.apply_pixel(pixel));
+            }
+        }
+        new.curve[0] = CurvePoint { x: 0.1, y: 0.2 };
+        new.curve[2] = CurvePoint { x: 0.9, y: 0.8 };
+        new.validate().unwrap();
+        for version in 1..=3 {
+            new.process_version = version;
+            assert!(new.validate().is_err());
+        }
+        new.process_version = 4;
+        new.curve[0].x = -0.1;
+        assert!(new.validate().is_err());
+        new.curve[0].x = new.curve[1].x;
+        assert!(new.validate().is_err());
+    }
+
+    #[test]
+    fn endpoint_curve_maps_black_white_alpha_and_extended_values() {
+        let mut r = EditRecipe::neutral(Default::default());
+        r.process_version = 4;
+        r.curve = vec![CurvePoint { x: 0.2, y: 0.2 }, CurvePoint { x: 0.8, y: 0.8 }];
+        assert!(!r.is_neutral());
+        r.validate().unwrap();
+        for (x, y) in [
+            (-0.5, -0.3),
+            (0., 0.2),
+            (0.1, 0.2),
+            (0.5, 0.5),
+            (0.9, 0.8),
+            (1., 0.8),
+            (2., 1.8),
+        ] {
+            assert!((tone_curve_value(x, &r.curve) - y).abs() < 1e-6);
+            for a in [0.25, 1.] {
+                let out = r.apply_pixel([x * a, x * a, x * a, a]);
+                assert_eq!(out[3], a);
+                for c in &out[..3] {
+                    assert!((*c - y * a).abs() < 1e-5, "{x}: {out:?}");
+                }
+            }
+        }
+        assert_eq!(r.apply_pixel([0.; 4]), [0.; 4]);
+        assert!(r.neutralize_render_sample([0.5, 0.5, 0.5, 1.]).is_err());
+        let encoded = serde_json::to_string(&r).unwrap();
+        assert_eq!(serde_json::from_str::<EditRecipe>(&encoded).unwrap(), r);
+    }
+
     #[test]
     fn vibrance_versioning_preserves_old_pixels_and_rejects_implicit_upgrade() {
         let mut old = EditRecipe::neutral(RawEngine::default());

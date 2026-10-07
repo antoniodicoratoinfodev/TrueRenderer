@@ -60,6 +60,27 @@ fn reset_group_button(
     }
 }
 
+fn reset_all_button(ui: &mut egui::Ui, lang: Language, draft: &mut EditRecipe) -> bool {
+    let neutral = EditRecipe::neutral(draft.raw_engine);
+    if ui
+        .add_enabled(
+            *draft != neutral,
+            egui::Button::new(lang.text("Azzera tutto")).frame_when_inactive(false),
+        )
+        .on_hover_text(
+            lang.text(
+                "Ripristina tutte le regolazioni e il WB come scattato. Annullabile con Undo.",
+            ),
+        )
+        .clicked()
+    {
+        *draft = neutral;
+        true
+    } else {
+        false
+    }
+}
+
 // Keep the numeric field and slider in one response so a drag still commits once.
 fn adjustment<Num: egui::emath::Numeric>(
     ui: &mut egui::Ui,
@@ -69,6 +90,18 @@ fn adjustment<Num: egui::emath::Numeric>(
     suffix: &str,
     step: Option<f64>,
 ) -> egui::Response {
+    adjustment_default(ui, label, value, range, suffix, step, Num::from_f64(0.)).0
+}
+
+fn adjustment_default<Num: egui::emath::Numeric>(
+    ui: &mut egui::Ui,
+    label: &str,
+    value: &mut Num,
+    range: std::ops::RangeInclusive<Num>,
+    suffix: &str,
+    step: Option<f64>,
+    default: Num,
+) -> (egui::Response, bool) {
     let control_id = ui.make_persistent_id(label);
     ui.scope_builder(egui::UiBuilder::new().id(control_id), |ui| {
         ui.spacing_mut().item_spacing.y = 2.;
@@ -101,7 +134,7 @@ fn adjustment<Num: egui::emath::Numeric>(
         let slider = ui
             .scope(|ui| {
                 ui.spacing_mut().slider_width = ui.available_width();
-                let mut slider = egui::Slider::new(value, range)
+                let mut slider = egui::Slider::new(value, range.clone())
                     .show_value(false)
                     .logarithmic(suffix == " K");
                 if let Some(step) = step {
@@ -110,7 +143,25 @@ fn adjustment<Num: egui::emath::Numeric>(
                 ui.add(slider).labelled_by(label_id)
             })
             .inner;
-        number.union(slider)
+        // egui sliders have drag-only Sense; Response::double_clicked is false.
+        // The pointer reports the double click on release, inside this slider.
+        let reset = ui.is_enabled()
+            && slider.contains_pointer()
+            && ui.input(|input| {
+                input
+                    .pointer
+                    .button_double_clicked(egui::PointerButton::Primary)
+            });
+        let mut response = number.union(slider);
+        if reset {
+            *value = Num::from_f64(
+                default
+                    .to_f64()
+                    .clamp(range.start().to_f64(), range.end().to_f64()),
+            );
+            response.mark_changed();
+        }
+        (response, reset)
     })
     .inner
 }
@@ -135,23 +186,29 @@ fn apple_wb_controls(
         }))
         .wrap(),
     );
-    let temperature = adjustment(
+    let (temperature, reset_temperature) = adjustment_default(
         ui,
         lang.text("Temperatura"),
         &mut kelvin,
         2000..=50000,
         " K",
         Some(1.),
+        6500,
     );
-    let tint_response = adjustment(
+    let (tint_response, reset_tint) = adjustment_default(
         ui,
         lang.text("Tinta RAW"),
         &mut tint,
         -150..=150,
         "",
         Some(1.),
+        0,
     );
-    if temperature.changed() || tint_response.changed() {
+    if reset_temperature || reset_tint {
+        *wb = Default::default();
+        changed = true;
+        commit = true;
+    } else if temperature.changed() || tint_response.changed() {
         wb.apple_temperature = kelvin;
         wb.apple_tint = tint;
         changed = true;
@@ -1295,6 +1352,15 @@ impl TrueRenderer {
                     self.step_edit(&item.id, false);
                 }
                 if ui
+                    .add_enabled_ui(!pending, |ui| reset_all_button(ui, lang, &mut draft))
+                    .inner
+                {
+                    changed = true;
+                    commit = true;
+                    self.editing.show_original = false;
+                    self.editing.advanced = Default::default();
+                }
+                if ui
                     .add(
                         egui::Button::new(lang.text("Prima/Dopo"))
                             .frame_when_inactive(self.editing.show_original)
@@ -1435,14 +1501,16 @@ impl TrueRenderer {
                             ("Blu RAW", &mut draft.raw_wb.blue),
                         ] {
                             let mut gain = f32::from(*value) / 1000.;
-                            let response = adjustment(
+                            let response = adjustment_default(
                                 ui,
                                 lang.text(label),
                                 &mut gain,
                                 0.25..=4.,
                                 " ×",
                                 Some(0.001),
-                            );
+                                1.,
+                            )
+                            .0;
                             if response.changed() {
                                 *value = (gain * 1000.).round() as u16;
                                 changed = true;
@@ -1550,37 +1618,21 @@ impl TrueRenderer {
                     commit = true;
                 }
 
-                let mut mid = draft
-                    .curve
-                    .windows(2)
-                    .find(|p| p[0].x <= 0.5 && p[1].x >= 0.5)
-                    .map_or(0.5, |p| {
-                        p[0].y + (p[1].y - p[0].y) * (0.5 - p[0].x) / (p[1].x - p[0].x)
-                    });
-                let response = adjustment(
-                    ui,
-                    lang.text("Mezzitoni curva"),
-                    &mut mid,
-                    0. ..=1.,
-                    "",
-                    None,
-                );
-                if response.changed() {
-                    draft.curve = if (mid - 0.5).abs() < 1e-6 {
-                        vec![]
-                    } else {
-                        vec![
-                            CurvePoint { x: 0., y: 0. },
-                            CurvePoint { x: 0.5, y: mid },
-                            CurvePoint { x: 1., y: 1. },
-                        ]
-                    };
-                    changed = true;
-                }
-                commit |= response.drag_stopped() || (response.changed() && !response.dragged());
-                let (curve_changed, curve_commit) = curve::controls(ui, lang, &mut draft.curve);
+                let (mid_changed, mid_commit) = curve::midtone(&mut draft.curve, ui, lang);
+                changed |= mid_changed;
+                commit |= mid_commit;
+                let (curve_changed, curve_commit) = ui
+                    .push_id((&item.id, "curve-editor"), |ui| {
+                        curve::controls(ui, lang, &mut draft.curve)
+                    })
+                    .inner;
                 changed |= curve_changed;
                 commit |= curve_commit;
+                if (curve_changed || mid_changed)
+                    && tr_core::editing::curve_has_adjusted_endpoints(&draft.curve)
+                {
+                    draft.process_version = draft.process_version.max(4);
+                }
                 if adjustment_heading(
                     ui,
                     lang,
@@ -1744,11 +1796,6 @@ impl TrueRenderer {
                         .show(ui, lang, &mut draft, native_size);
                 changed |= advanced_changed;
                 commit |= advanced_commit;
-                if ui.button(lang.text("Sviluppo originale")).clicked() {
-                    draft = EditRecipe::neutral(saved.recipe.raw_engine);
-                    changed = true;
-                    commit = true;
-                }
             });
             if changed {
                 self.apply_edit_draft(&item.id, draft);

@@ -1,0 +1,41 @@
+{
+  "description": "Public-domain photographs used in the TrueRenderer README; source files without editing recipes.",
+  "photographs": [
+    {
+      "filename": "Grand Teton - Sunrise.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Grand_Teton_National_Park_%2833106145651%29.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Grand_Teton_National_Park_(33106145651).jpg",
+      "credit": "NPS / David Restivo",
+      "rights": "Public domain; NPS employee work, as documented by source",
+      "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "bytes": 12187974
+    },
+    {
+      "filename": "Grand Teton - Winter.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/2/24/Grand_Teton_in_Winter-NPS.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Grand_Teton_in_Winter-NPS.jpg",
+      "credit": "National Park Service",
+      "rights": "Public domain; NPS employee work, as documented by source",
+      "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "bytes": 2213627
+    },
+    {
+      "filename": "Avalanche Lake.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/3/34/Avalanche_Lake%2C_Glacier_National_Park.jpg",
+      "source_page": "https://commons.wikimedia.org/wiki/File:Avalanche_Lake,_Glacier_National_Park.jpg",
+      "credit": "NPS / David Restivo",
+      "rights": "Public domain; NPS employee work, as documented by source",
+      "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "bytes": 15800943
+    },
+    {
+      "filename": "Zion - The Watchman.jpg",
+      "download_url": "https://npgallery.nps.gov/GetAsset/98B15EBA-155D-451F-6776104114F96789/original.jpg",
+      "source_page": "https://npgallery.nps.gov/AssetDetail/98b15eba-155d-451f-6776-104114f96789",
+      "credit": "NPS Photo",
+      "rights": "Public domain: Full Granting Rights, as documented by source",
+      "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "bytes": 411633
+    }
+  ]
+}

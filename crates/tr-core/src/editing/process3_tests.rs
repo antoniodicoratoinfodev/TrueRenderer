@@ -233,7 +233,7 @@ fn recipes_reject_bad_coordinates_and_future_processes_before_work() {
     assert!(r.validate().is_err());
     let mut old = recipe();
     old.advanced = None;
-    old.process_version = 4;
+    old.process_version = 5;
     assert!(old.validate().is_err());
 }
 

@@ -1,0 +1,229 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-07T04:32:55.534540+00:00",
+  "base_commit": "854ba09c2fe2aa04d45fef45869dde4c0297eb03",
+  "scope": "Movable black/white tone-curve endpoints (process 4), stable curve keyboard focus, and detail/editing status in the existing top control row outside the photograph.",
+  "source_sha256": {
+    "apps/desktop/src/i18n.rs": "9359af2957ac5065adbc2a66ca12d61c72e4dea697f8ff725ca9e12ebcd2c734",
+    "apps/desktop/src/ui.rs": "4b51b43543a13ce89259f60477e3c0b34800264ab8074639653c90c90487f7ec",
+    "apps/desktop/src/ui/editing.rs": "91482285ad6d08c3baec99bca1f64ec6f9c51e1dd2545c51a47c326fd0f9b110",
+    "apps/desktop/src/ui/editing/advanced.rs": "4adb6533e582a92dc081a8d802ddc81a6d6c397237bfd54735d4e93bac7a69bb",
+    "apps/desktop/src/ui/editing/curve.rs": "b38a1ade7cf7086fd15a85d15fb0b53ab23298fe39d3dae51a310b463b5f27a0",
+    "apps/desktop/src/ui/editing/transfer.rs": "b17fa3067e750050fae096c13fbf3e16e684bdae67f53a0434774ebf63092233",
+    "apps/desktop/src/ui/toolbar_tests.rs": "a6c6d97b58d34ffbc963b8fd3839a767d7cba173ec229d24d88a585f7e260d20",
+    "crates/tr-core/src/editing.rs": "94a41787df852bfb664cb081618a2423875d322c33a0f8329f0ca2e0cf5b77c9",
+    "crates/tr-core/src/editing/process3_tests.rs": "597b02e1598980c508f44b3158c79795627a55a811cbea95172c8a52a07b8f3b",
+    "crates/tr-render/src/editing_compute.rs": "6edb58328946b98f51d74ef1db439998bd279506f226c15462e7a1245d7632db",
+    "crates/tr-render/src/editing_compute.wgsl": "94ad254d0c05d9f494e1558626cfbae77bc96417b08a72ba91cf4cc365516bc5",
+    "crates/tr-store/src/lib.rs": "73bc74a570a5f4d8f8929a56d58da104b126d6bbb4644444e2d377243ee3840b",
+    "crates/tr-worker/src/lib.rs": "bf59b60e3d58c0109d782c5a36904811451a4013d2a682d0bd321977039ff4b0"
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_workspace_all_targets_deny_warnings": true,
+    "ordinary_tests_passed": 309,
+    "integration_tests_passed": 14,
+    "private_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_sampling_smoke": true,
+    "release_build": true,
+    "layout_languages": [
+      "en",
+      "it"
+    ],
+    "layout_widths": [
+      550,
+      1100,
+      1440
+    ],
+    "curve_pointer_test_widths": [
+      200,
+      248,
+      328
+    ],
+    "cpu_gpu_editing": {
+      "cases": 16,
+      "display_failures": 0,
+      "display_max_error": 1,
+      "failures": 0,
+      "max_error": 0.0001220703125,
+      "samples": 137280,
+      "worst_ratio": 0.04324108362197876
+    },
+    "linear_threshold": "1e-5 + 1e-4 * abs(cpu)",
+    "display_threshold_levels": 1
+  },
+  "native_ui": {
+    "isolated_library": true,
+    "fixture": "generated horizontal sRGB ramp, 2560 x 1600",
+    "fixture_sha256": "61862b9dd7fe20c90b4e7269ee3a70009dc902e821b84bb9dc1b13d817865273",
+    "verified": [
+      "Detail limited to 1280 x 800 pixels appears alongside photo quality, outside the photograph",
+      "black endpoint: keyboard Input/Output and successful native drag",
+      "white endpoint: keyboard Input and numeric Output to 0.8, black anchor unchanged",
+      "successive arrow edits retain curve focus after save",
+      "Undo and Redo buttons restore the prior/final white output; catalog cursor/generation checked"
+    ],
+    "saved_revisions": [
+      {
+        "revision": 0,
+        "process_version": 1,
+        "curve": []
+      },
+      {
+        "revision": 1,
+        "process_version": 4,
+        "curve": [
+          {
+            "x": 0.0,
+            "y": 0.01
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      },
+      {
+        "revision": 2,
+        "process_version": 4,
+        "curve": [
+          {
+            "x": 0.01,
+            "y": 0.01
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      },
+      {
+        "revision": 3,
+        "process_version": 4,
+        "curve": [
+          {
+            "x": 0.19741668,
+            "y": 0.19806124
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      },
+      {
+        "revision": 4,
+        "process_version": 4,
+        "curve": [
+          {
+            "x": 0.19741668,
+            "y": 0.19806124
+          },
+          {
+            "x": 1.0,
+            "y": 0.99
+          }
+        ]
+      },
+      {
+        "revision": 5,
+        "process_version": 4,
+        "curve": [
+          {
+            "x": 0.19741668,
+            "y": 0.19806124
+          },
+          {
+            "x": 0.99,
+            "y": 0.99
+          }
+        ]
+      },
+      {
+        "revision": 6,
+        "process_version": 4,
+        "curve": [
+          {
+            "x": 0.19741668,
+            "y": 0.19806124
+          },
+          {
+            "x": 0.99,
+            "y": 0.8
+          }
+        ]
+      }
+    ],
+    "undo": [
+      5,
+      7,
+      "[6]"
+    ],
+    "redo": [
+      6,
+      8,
+      "[]"
+    ],
+    "screenshot": "reports/curve-endpoints-toolbar-macos-2026-10-07.jpg",
+    "screenshot_sha256": "710d511d0a964a26ceeff3f9501a69629b321b4360ba328e32c95c152241d472",
+    "automation_notes": "Some native drag attempts did not change the curve; successful black drag confirmed in revision 3. White dragging covered by egui pointer regression, with white numeric/keyboard interaction verified natively. The capture app has a separate Launch Services identity with original signing identifier retained for XPC."
+  },
+  "regression": {
+    "problem": "Curve auto ID changed with preceding UI; disabling controls during save also surrendered focus.",
+    "before": "focused arrow sequence failed the new regression",
+    "after": "persistent graph ID, keyboard focus retained while disabled, edits disabled during save; regression and native successive arrow sequence pass",
+    "logs": [
+      "var/session-resume-2026-10-07/focus-before.log",
+      "var/session-resume-2026-10-07/focus-after.log"
+    ]
+  },
+  "bundle": "dist/TrueRenderer.app",
+  "candidate_xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-06T23:36:05.717191+00:00",
+    "bundle": "var/session-resume-2026-10-07/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "54710e80e52ab3b1f3633a2518a2e34bdae1a29bcd1c14ad302769441c2508e7",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "55dc044b4240e5af563ced6cc971ac47892c046f98adda15462a6f5c467eb248",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "eeafbf5b6277b2b22d7d8cc7c9ff31524f91e9c62f957423018b3771cc73086a"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "installed_xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-07T04:31:54.828848+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "54710e80e52ab3b1f3633a2518a2e34bdae1a29bcd1c14ad302769441c2508e7",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "55dc044b4240e5af563ced6cc971ac47892c046f98adda15462a6f5c467eb248",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "eeafbf5b6277b2b22d7d8cc7c9ff31524f91e9c62f957423018b3771cc73086a"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "candidate_and_installed_file_manifests_identical": true,
+  "previous_bundle": "var/session-resume-2026-10-07/previous-distribution.app",
+  "verification_root": "var/verify-IL08TnIv",
+  "local_logs": "var/session-resume-2026-10-07",
+  "limitations": [
+    "No photographic fidelity, performance percentile, Windows, other GPU, accessibility or release sandbox qualification.",
+    "R0-R4 and SF0-SF10 gates remain open; ad-hoc signature only.",
+    "Changes remain local, after the initial README commit/push from the recovered session."
+  ]
+}

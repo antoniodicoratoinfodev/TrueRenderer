@@ -1,0 +1,231 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-07",
+  "passed": true,
+  "source_sha256": "bc40194d5af8eb000dda0fda1b3992e994aa3865d374aec8909d806dd3f0117b",
+  "recipe": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
+  "no_further_decoder_change": true,
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "c8961ced953b51c6c4f45632c39ff7268af79aa27511f3760f96b66f2c1ae924",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a34fdcd1648c244f498ff58bb5b6856dbfd2362b47646bbcb9a6fea97f7e1127",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "54436c865ed16a17ea740569b075f74bfeaabcba509d9ae7b245aad29a54ac73"
+  },
+  "full_developments": 4,
+  "full_development_info": {
+    "decoder": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2 \u00b7 Nikon D750",
+    "filter": "nessuno (campioni LOD 0)",
+    "format": "RAW",
+    "height": 4032,
+    "input_color": "Rec.2020 fp32; WB as-shot 1.879/1.000/1.000/1.418; nero 600/600/600/600, bianco 16383; alte luci: neutralizzazione canali saturi sensore v1 (98\u2013100%); matrice LibRaw; nessun clamp RGB \u00b7 sviluppo RAW",
+    "native_bits": 0,
+    "orientation": "LibRaw flip 0 applicato una volta da TrueRenderer",
+    "shooting": {
+      "aperture": {
+        "source": "EXIF primary \u00b7 FNumber \u00b7 kamadak-exif 0.6.1 \u00b7 TR shooting v1",
+        "text": "f/11"
+      },
+      "camera": {
+        "source": "EXIF primary \u00b7 Make/Model \u00b7 kamadak-exif 0.6.1 \u00b7 TR shooting v1",
+        "text": "NIKON CORPORATION NIKON D750"
+      },
+      "exposure": {
+        "source": "EXIF primary \u00b7 ExposureTime \u00b7 kamadak-exif 0.6.1 \u00b7 TR shooting v1",
+        "text": "1/25 s"
+      },
+      "focal_length": {
+        "source": "EXIF primary \u00b7 FocalLength \u00b7 kamadak-exif 0.6.1 \u00b7 TR shooting v1",
+        "text": "24 mm"
+      },
+      "iso": {
+        "source": "EXIF primary \u00b7 PhotographicSensitivity \u00b7 kamadak-exif 0.6.1 \u00b7 TR shooting v1",
+        "text": "110"
+      },
+      "lens": null
+    },
+    "source_height": 4032,
+    "source_width": 6032,
+    "width": 6032
+  },
+  "export_checks_before": 25,
+  "export_checks_after": 25,
+  "sensor": {
+    "white": 16383,
+    "black": 600,
+    "wb_from_exported_neutral": [
+      1.8789045986190052,
+      1.0,
+      1.4179690712586177
+    ],
+    "clipped_block_origin": [
+      2590,
+      1384
+    ],
+    "clipped_block": [
+      16383,
+      16383,
+      16383,
+      16383
+    ],
+    "export_samples_bit_exact": true
+  },
+  "measurements": [
+    {
+      "engine": "Apple",
+      "float_raster_identical": true
+    },
+    {
+      "engine": "LibRawBilinear",
+      "float_raster_identical": true
+    },
+    {
+      "engine": "LibRawAhd",
+      "float_raster_identical": true
+    },
+    {
+      "engine": "TrueRenderer",
+      "float_raster_identical": false,
+      "dimensions": [
+        1024,
+        684
+      ],
+      "changed_float_pixels": 19190,
+      "unchanged_float_pixels": 681226,
+      "samples": [
+        {
+          "region": "clipped_sky",
+          "point": [
+            440,
+            235
+          ],
+          "before_rec2020": [
+            1.7727887630462646,
+            0.7943231463432312,
+            1.536200761795044
+          ],
+          "after_rec2020": [
+            1.8789054155349731,
+            1.878902792930603,
+            1.8789057731628418
+          ],
+          "before_srgb8": [
+            255,
+            213,
+            255
+          ],
+          "after_srgb8": [
+            255,
+            255,
+            255
+          ],
+          "before_minus_2ev_srgb8": [
+            202,
+            113,
+            170
+          ],
+          "after_minus_2ev_srgb8": [
+            182,
+            182,
+            182
+          ]
+        },
+        {
+          "region": "partly_clipped_sky",
+          "point": [
+            450,
+            250
+          ],
+          "before_rec2020": [
+            1.6973131895065308,
+            0.7984907627105713,
+            1.5345194339752197
+          ],
+          "after_rec2020": [
+            1.8013869524002075,
+            1.801384449005127,
+            1.8013875484466553
+          ],
+          "before_srgb8": [
+            255,
+            215,
+            255
+          ],
+          "after_srgb8": [
+            255,
+            255,
+            255
+          ],
+          "before_minus_2ev_srgb8": [
+            197,
+            115,
+            170
+          ],
+          "after_minus_2ev_srgb8": [
+            179,
+            179,
+            179
+          ]
+        },
+        {
+          "region": "unclipped_blue_sky",
+          "point": [
+            340,
+            45
+          ],
+          "before_rec2020": [
+            0.36774349212646484,
+            0.4732445478439331,
+            0.7151253819465637
+          ],
+          "after_rec2020": [
+            0.36774349212646484,
+            0.4732445478439331,
+            0.7151253819465637
+          ],
+          "before_srgb8": [
+            144,
+            185,
+            224
+          ],
+          "after_srgb8": [
+            144,
+            185,
+            224
+          ],
+          "before_minus_2ev_srgb8": [
+            75,
+            98,
+            120
+          ],
+          "after_minus_2ev_srgb8": [
+            75,
+            98,
+            120
+          ]
+        }
+      ]
+    }
+  ],
+  "original_unchanged": true,
+  "no_photo_edit_revisions": true,
+  "native_ui": {
+    "verified": true,
+    "selected_photo": "nikon_d750_12.nef",
+    "engine": "TrueRenderer",
+    "quality": "Full",
+    "view": "Fit",
+    "relative_raw_wb": [
+      1,
+      1
+    ],
+    "exposure_ev": 0,
+    "sky_visually_neutral": true,
+    "folder_preparation": "30/30",
+    "left_open_on_verified_photo": true
+  },
+  "limits": [
+    "Colour observations apply to the selected clipped and unclipped sky samples, with native viewer inspection. This is not a whole-camera colour qualification.",
+    "Analytic minus-2-EV samples come from unbounded float export, without modifying the user recipe.",
+    "Prior 120-decode campaign verified completion and range; this separate campaign explicitly compares the colour defect on the second photograph.",
+    "No decoder code, recipe or bundle changed in this follow-up; no need to reattribute prior suite/XPC runs as newly executed."
+  ]
+}

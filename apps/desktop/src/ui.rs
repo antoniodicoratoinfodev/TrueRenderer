@@ -80,6 +80,7 @@ pub struct TrueRenderer {
     recently_viewed: VecDeque<String>,
     primary_demand: HashSet<String>,
     viewer_prefetch_edge: u32,
+    viewer_status_area: Option<(egui::Rect, egui::LayerId)>,
     requested_at: HashMap<(String, PreviewRequest), Instant>,
     recent_latencies: VecDeque<u64>,
 
@@ -268,6 +269,7 @@ impl TrueRenderer {
             recently_viewed: VecDeque::new(),
             primary_demand: HashSet::new(),
             viewer_prefetch_edge: 2048,
+            viewer_status_area: None,
             requested_at: HashMap::new(),
             recent_latencies: VecDeque::new(),
             demand_jobs: Vec::new(),
@@ -1589,6 +1591,7 @@ impl TrueRenderer {
         }
     }
     fn toolbar(&mut self, ui: &mut egui::Ui) {
+        self.viewer_status_area = None;
         let lang = self.cache_settings.language;
         let compact = ui.available_width() < 1320.;
         let narrow = ui.available_width() < 760.;
@@ -1891,6 +1894,27 @@ impl TrueRenderer {
         {
             self.reset_filters();
             self.open_folder(self.root.join("corpus"));
+        }
+        if let Ok(executable) = std::env::current_exe()
+            && let Some(source) = crate::sample_photos::source(&self.root, &executable)
+        {
+            let available = tr_platform::external_decoding_available(&executable);
+            let samples = crate::sample_photos::destination(&self.root, &source);
+            if ui
+                .add_enabled_ui(available, |ui| {
+                    nav(ui, lang.text("Foto campione"), "4", self.folder == samples)
+                })
+                .inner
+                .clicked()
+            {
+                match crate::sample_photos::prepare(&self.root, &source) {
+                    Ok(folder) => {
+                        self.reset_filters();
+                        self.open_folder(folder);
+                    }
+                    Err(error) => self.status = format!("{error:#}"),
+                }
+            }
         }
         ui.add_space(12.);
         section(ui, lang.text("Selezione"));
@@ -2796,7 +2820,49 @@ impl TrueRenderer {
             });
             ui.separator();
             self.photo_quality_control(ui);
+            // Reserve chrome space now; fill it from the actual source selected
+            // by paint_view later in this frame, without resizing the photo ROI.
+            let (rect, _) = ui.allocate_exact_size(
+                egui::vec2(ui.available_size_before_wrap().x.max(0.), 28.),
+                egui::Sense::hover(),
+            );
+            self.viewer_status_area = Some((rect.intersect(ui.clip_rect()), ui.layer_id()));
         });
+    }
+
+    fn viewer_status(&mut self, lane: &str, detail: &str, description: &str) {
+        let Some((mut rect, layer)) = self.viewer_status_area else {
+            return;
+        };
+        if self.state.view == ViewMode::Compare {
+            let middle = rect.center().x;
+            if lane == "B" {
+                rect.min.x = middle + 4.;
+            } else {
+                rect.max.x = middle - 4.;
+            }
+        }
+        let message = [detail, description]
+            .into_iter()
+            .filter(|s| !s.is_empty())
+            .collect::<Vec<_>>()
+            .join(" · ");
+        let message = if self.state.view == ViewMode::Compare && !message.is_empty() {
+            format!("{lane} · {message}")
+        } else {
+            message
+        };
+        let mut status = egui::Ui::new(
+            self.context.clone(),
+            egui::Id::new(("viewer-status", lane)),
+            egui::UiBuilder::new()
+                .layer_id(layer)
+                .max_rect(rect)
+                .layout(egui::Layout::left_to_right(egui::Align::Center)),
+        );
+        status
+            .add(egui::Label::new(RichText::new(&message).small().color(MUTED)).truncate())
+            .on_hover_text(message);
     }
 
     /// One applied value and one action for the toolbar and preferences window.
@@ -3024,15 +3090,6 @@ impl TrueRenderer {
             } else {
                 String::new()
             };
-            // A native mip arriving during a gesture must not resize the ROI:
-            // otherwise the retained frame leaves an uncovered strip at 1:1.
-            ui.add_sized(
-                [
-                    ui.available_width(),
-                    ui.text_style_height(&egui::TextStyle::Body),
-                ],
-                egui::Label::new(detail_status).truncate(),
-            );
             let input_wb = selected.as_ref().unwrap().1.raw_wb;
             let live_edit = self.live_edit_for(&item.id, &digest, &source, input_wb);
             if !self.edit_interactive(&item.id)
@@ -3106,15 +3163,7 @@ impl TrueRenderer {
             } else {
                 ""
             };
-            // A fixed single status row prevents fit/centering from jumping as
-            // the first edit starts or an asynchronous proof finishes.
-            ui.add_sized(
-                [
-                    ui.available_width(),
-                    ui.text_style_height(&egui::TextStyle::Body),
-                ],
-                egui::Label::new(description).truncate(),
-            );
+            self.viewer_status(id, &detail_status, description);
             if let Some(error) = self.edited_preview_error(&item.id) {
                 ui.colored_label(AMBER, error);
             }

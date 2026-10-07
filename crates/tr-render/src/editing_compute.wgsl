@@ -24,8 +24,15 @@ fn hue_rgb(degrees: f32) -> vec3<f32> {
     }
 }
 fn curve(x: f32) -> f32 {
-    if x <= 0. || x >= 1. { return x; }
     let count = u32(params.data[3].x);
+    if params.data[5].w != 0. {
+        let first = params.data[8];
+        let last = params.data[7u + count];
+        if x < 0. { return x + first.y; }
+        if x > 1. { return x + last.y - 1.; }
+        if x <= first.x { return first.y; }
+        if x >= last.x { return last.y; }
+    } else if x <= 0. || x >= 1. { return x; }
     var right = 1u;
     while right + 1u < count && params.data[8u + right].x < x { right += 1u; }
     let a = params.data[7u + right];
@@ -93,7 +100,12 @@ fn edit(@builtin(global_invocation_id) id: vec3<u32>) {
             }
             y = 0.18 * pow(y / 0.18, params.data[2].y);
             if params.data[3].x != 0. { y = curve(y); }
-            rgb *= y / old_y;
+            if params.data[5].w != 0. {
+                let black = params.data[8].y;
+                rgb = rgb * ((y - black) / old_y) + vec3(black);
+            } else { rgb *= y / old_y; }
+        } else if params.data[5].w != 0. {
+            rgb += vec3(curve(old_y) - old_y);
         }
         if params.data[2].z != 1. {
             let y = luma(rgb);

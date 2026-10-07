@@ -1,0 +1,184 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-06T22:06:03.593734+00:00",
+  "base_commit": "854ba09",
+  "scope": "Interactive editor for the existing monotone linear-luminance point curve; no rendering formulas or saved recipe schema changed.",
+  "implementation": [
+    "Click to add up to 32 points; drag with fixed neighboring anchors and fixed black/white endpoints",
+    "Selected-point Input/Output sliders and numeric fields; Delete point and keyboard adjustments",
+    "Midtone slider preserves custom anchors",
+    "One saved revision at gesture release, including the final release position"
+  ],
+  "source_sha256": {
+    "apps/desktop/src/ui/editing/curve.rs": "24490afa4c293cf2db7bc2d55ae6ae6a11ed03bd020e910950d8d0ab15488f09",
+    "apps/desktop/src/ui/editing.rs": "bf3bf2bb6468740dfa280625a0bcff15212a71693036071ef721f5f4ede08f75",
+    "apps/desktop/src/i18n.rs": "d637ac2991a936227f88b4c6b4111e1ef6b7d98db7ae58ecf2c8959e89bf5659"
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_workspace_all_targets_deny_warnings": true,
+    "ordinary_tests_passed": 301,
+    "integration_tests_passed": 14,
+    "private_camera_tests_skipped": 3,
+    "new_curve_tests": 4,
+    "curve_ui_test_widths": [
+      200,
+      248,
+      328
+    ],
+    "curve_slider_languages": [
+      "it",
+      "en"
+    ],
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_sampling_smoke": true,
+    "release_build": true
+  },
+  "native_ui": {
+    "isolated_library": true,
+    "fixture": "02_Paesaggio_analitico.png",
+    "screenshot": "reports/curve-editor-macos-2026-10-07.jpg",
+    "screenshot_sha256": "d8650abb94111aebb71602fbe7e9ad4dbeaae47af0b706e77a604b7e49afe98f",
+    "checked": [
+      "add two points",
+      "drag with neighboring anchor unchanged",
+      "Input/Output reflect selected point",
+      "reopen saved curve",
+      "Undo/Redo",
+      "one catalog revision for final native drag"
+    ],
+    "saved_revisions": [
+      {
+        "revision": 0,
+        "curve": []
+      },
+      {
+        "revision": 1,
+        "curve": [
+          {
+            "x": 0.0,
+            "y": 0.0
+          },
+          {
+            "x": 0.2543493,
+            "y": 0.25044274
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      },
+      {
+        "revision": 2,
+        "curve": [
+          {
+            "x": 0.0,
+            "y": 0.0
+          },
+          {
+            "x": 0.2543493,
+            "y": 0.25044274
+          },
+          {
+            "x": 0.7546002,
+            "y": 0.750694
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      },
+      {
+        "revision": 3,
+        "curve": [
+          {
+            "x": 0.0,
+            "y": 0.0
+          },
+          {
+            "x": 0.2543493,
+            "y": 0.25044274
+          },
+          {
+            "x": 0.72714746,
+            "y": 0.81780076
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      },
+      {
+        "revision": 4,
+        "curve": [
+          {
+            "x": 0.0,
+            "y": 0.0
+          },
+          {
+            "x": 0.2543493,
+            "y": 0.25044274
+          },
+          {
+            "x": 0.55327964,
+            "y": 0.65181506
+          },
+          {
+            "x": 1.0,
+            "y": 1.0
+          }
+        ]
+      }
+    ],
+    "capture_bundle_note": "Copy of final release executable with separate Launch Services identity and ad-hoc signing identifier preserved for XPC; signing changes the executable hash."
+  },
+  "bundle": "dist/TrueRenderer.app",
+  "host_sha256": "6aa5c714e4a8f21340a0eefe6123fc75d47be48e3728829eda52befb01b926e0",
+  "candidate_xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-06T22:04:51.359493+00:00",
+    "bundle": "var/curve-editor-2026-10-06/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "6aa5c714e4a8f21340a0eefe6123fc75d47be48e3728829eda52befb01b926e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "ca04dbe461abea2c9eecd6d6f7688c387492e61cc8f8d5ab2e62df8dba89583a",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "0252a4c7ee76d94c78db15aaa053beff264f42fd633e78105ddd3545d09e6894"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "verification_root": "var/verify-WK2zkjyG",
+  "local_logs": "var/curve-editor-2026-10-06",
+  "limitations": [
+    "Curves remain monotone piecewise-linear luminance curves, with endpoints fixed; no new RGB point curves or splines",
+    "No new photographic, performance, Windows or accessibility qualification; R0-R4 and SF gates remain open"
+  ],
+  "initial_attempt": "Two worker tests lacked Core Image in terminal sandbox; full native rerun outside it passed.",
+  "installed_xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-06T22:05:44.815417+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "6aa5c714e4a8f21340a0eefe6123fc75d47be48e3728829eda52befb01b926e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "ca04dbe461abea2c9eecd6d6f7688c387492e61cc8f8d5ab2e62df8dba89583a",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "0252a4c7ee76d94c78db15aaa053beff264f42fd633e78105ddd3545d09e6894"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  }
+}
