@@ -1,0 +1,123 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-07",
+  "passed": true,
+  "scope": "Additional visual inspection of the distributed macOS app for the reported purple-sky defect in D750 files 12 and 26; this is not exhaustive pixel, camera, display or performance qualification.",
+  "source_commit": "a2dcede0f59ee436e68a30e525e39ad9095e98b6",
+  "follow_up_to": "reports/precommit-macos-2026-10-07.json",
+  "bundle": "dist/TrueRenderer.app",
+  "bundle_file_count": 15,
+  "bundle_identical_to_precommit_and_unchanged": true,
+  "executables_sha256": {
+    "Contents/MacOS/tr-worker": "0a966691ca7ec014b43c21601879ed0b0ebc784cd2c8d9193c8a7458011e24ef",
+    "Contents/MacOS/TrueRenderer": "b952bfc67d87482003491bf06cddaea89dddfb6b6e1f8ad4855e236d6deba1dd",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "dffcd88f5585a824aac55e90e5abe22995217ff89b60b216e45092d2aba695e5",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "8391a07e7cf603d4ac4a9e6c32be1346cbe69408d1fa65e4d10d352b7d6f3da8"
+  },
+  "method": {
+    "surface": "Native app, accessibility controls and directly inspected screenshots through UI automation",
+    "engine": "TrueRenderer fp32",
+    "quality": "Piena (Full preview)",
+    "recipe": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
+    "raw_wb_relative": [
+      1.0,
+      1.0
+    ],
+    "exposure_ev": 0.0,
+    "output_proof": "Verifica resa finale, sRGB16 PNG/TIFF, native dimensions",
+    "photographic_controls_changed": false,
+    "screenshots_published": false
+  },
+  "photographs": [
+    {
+      "file": "nikon_d750_12.nef",
+      "sha256": "bc40194d5af8eb000dda0fda1b3992e994aa3865d374aec8909d806dd3f0117b",
+      "oriented_native_dimensions": [
+        6032,
+        4032
+      ],
+      "extended_fp32": {
+        "fit": true,
+        "native_1_to_1_center": true
+      },
+      "srgb16_proof": {
+        "completed": true,
+        "fit": true,
+        "native_1_to_1_center": true
+      },
+      "observations": [
+        "The bright exterior opening at the end of the covered street is white, with pale cyan/blue areas, without the former broad magenta cast.",
+        "Unsaturated sky visible through the upper roof glazing retains blue in Fit.",
+        "The central native detail shows the bright opening, structural borders, street and surrounding buildings; no broad purple-sky cast was observed.",
+        "Thin coloured fringes remain visible at some high-contrast borders; their cause was not diagnosed by this visual inspection and their removal is not claimed."
+      ]
+    },
+    {
+      "file": "nikon_d750_26.nef",
+      "sha256": "b40e2d5d4b0ec5bfe147b3aded723cf0bae5da1af08c7533e3a2823f1b7aa6e0",
+      "oriented_native_dimensions": [
+        4032,
+        6032
+      ],
+      "extended_fp32": {
+        "fit": true,
+        "native_1_to_1_center": true
+      },
+      "srgb16_proof": {
+        "completed": true,
+        "fit": true,
+        "native_1_to_1_center": false
+      },
+      "observations": [
+        "The overexposed sky band at the upper/right side of the portrait image is white in Fit, in both the extended render and completed sRGB16 proof.",
+        "Blue glazing in the background building retains its blue appearance; the foreground facade retains its grey and warm tones.",
+        "Central facade details were inspected at 1:1 in the extended render. The upper sky was inspected in Fit, not as a separate 1:1 crop."
+      ]
+    }
+  ],
+  "folder_preparation": {
+    "initial_session": {
+      "processed": 30,
+      "total": 30,
+      "errors": 2,
+      "unsupported": 0
+    },
+    "reopened_folder": {
+      "processed": 30,
+      "total": 30,
+      "errors": 0,
+      "unsupported": 0
+    },
+    "cache_cleared": false,
+    "interpretation": "The initial warning did not reproduce after reopening the folder. Its original cause was not established; this does not certify that all folder-loading failure modes are fixed."
+  },
+  "integrity": {
+    "original_photographs_unchanged": true,
+    "bundle_unchanged": true,
+    "durable_catalogue_rows_unchanged": true,
+    "durable_row_counts": {
+      "photo_edit_head": 10,
+      "photo_edit_revision": 116,
+      "asset_revision": 194,
+      "asset_annotations": 194
+    },
+    "comparison": "SHA-256 of originals and all 15 bundle files; SHA-256 of ordered SQL rows for edits, revisions and asset annotations, read from a consistent SQLite transaction."
+  },
+  "final_view": {
+    "file": "nikon_d750_12.nef",
+    "mode": "extended fp32",
+    "zoom": "Fit",
+    "quality": "Full",
+    "raw_wb_relative": [
+      1.0,
+      1.0
+    ],
+    "exposure_ev": 0.0
+  },
+  "limits": [
+    "Two automated drag attempts did not visibly pan the file 12 viewport; a native-resolution inspection of the upper roof is not claimed.",
+    "The observed absence of a broad magenta cast is a visual check, not a calibrated colour measurement or recovered clipped detail.",
+    "No source, decoder, bundle, saved photographic recipe or original file was changed for this follow-up.",
+    "No new automated suite, export or XPC campaign was run for this visual follow-up; previous numerical results remain in their original reports. No R0-R4/SF0-SF10 gate is closed."
+  ]
+}
