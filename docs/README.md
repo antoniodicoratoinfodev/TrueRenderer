@@ -13,6 +13,7 @@ Indice delle specifiche, delle decisioni e delle evidenze. Stato corrente e atti
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
 | [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md) | ADR 0010: formati di uscita, DNG distinti, superficie e dati scientifici |
 | [Sviluppo fotografico non distruttivo](progetto-sviluppo-fotografico.md) | Progetto dei controlli e ADR 0011: luce/WB/colore, dettaglio, ottica, maschere, ricette e parità vista/export; attività in STATO.md |
+| [Color e livelli](color%20e%20livelli.md) | Ricerca funzionale e progetto esteso: strumenti colore, selezioni, maschere, livelli, composizione e interfaccia; dipendenze e criteri di accettazione, senza attribuire nuove capacità al bundle |
 | [Navigatore filesystem commutabile](progetto-navigatore-filesystem.md) | Requisiti, decisioni, schede Libreria/Esplora, preferiti e matrice di accettazione; avanzamento in STATO.md |
 
 ## Decisioni integrate per argomento

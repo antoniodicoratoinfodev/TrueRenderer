@@ -293,13 +293,22 @@ pub(super) fn controls(
     lang: Language,
     curve: &mut Vec<CurvePoint>,
 ) -> (bool, bool) {
+    controls_with_label(ui, lang, curve, "Curva a punti · luminanza lineare")
+}
+
+pub(super) fn controls_with_label(
+    ui: &mut egui::Ui,
+    lang: Language,
+    curve: &mut Vec<CurvePoint>,
+    label: &str,
+) -> (bool, bool) {
     let before = curve.clone();
     let id = ui.make_persistent_id("curve-selection");
     let mut selection = ui
         .data_mut(|d| d.get_temp::<Selection>(id))
         .unwrap_or_default();
     selection.point = selection.point.filter(|i| *i < points(curve).len());
-    ui.label(lang.text("Curva a punti · luminanza lineare"));
+    ui.label(lang.text(label));
     let (_, mut commit) = graph(ui, curve, &mut selection);
     ui.small(
         lang.text("Clic per aggiungere, trascina per modificare. I punti vicini restano ancorati."),

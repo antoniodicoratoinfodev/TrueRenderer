@@ -34,7 +34,7 @@ impl Groups {
         if self.curve {
             result.curve.clone_from(&source.curve);
             if tr_core::editing::curve_has_adjusted_endpoints(&result.curve) {
-                result.process_version = result.process_version.max(4);
+                result.require_process(4);
             }
         }
         if self.color {
@@ -46,7 +46,7 @@ impl Groups {
             // Process 2 adds vibrance without changing the earlier operations.
             // Never downgrade an existing destination or import a RAW recipe.
             if result.vibrance != 0. || result.protect_warm {
-                result.process_version = result.process_version.max(2);
+                result.require_process(2);
             }
         }
         result.validate()?;
@@ -55,16 +55,16 @@ impl Groups {
 }
 
 #[derive(Default)]
-pub(super) struct Clipboard {
+pub(in crate::ui) struct Clipboard {
     copied: Option<(String, EditRecipe)>,
     groups: Groups,
 }
 impl Clipboard {
-    pub(super) fn copy(&mut self, name: &str, recipe: &EditRecipe) {
+    pub(in crate::ui) fn copy(&mut self, name: &str, recipe: &EditRecipe) {
         self.copied = Some((name.into(), recipe.clone()));
     }
 
-    pub(super) fn paste(&self, destination: &EditRecipe) -> Option<EditRecipe> {
+    pub(in crate::ui) fn paste(&self, destination: &EditRecipe) -> Option<EditRecipe> {
         let (_, source) = self.copied.as_ref()?;
         self.groups
             .merge(source, destination)
@@ -72,8 +72,21 @@ impl Clipboard {
             .filter(|r| r != destination)
     }
 
+    pub(in crate::ui) fn menu(&mut self, ui: &mut egui::Ui, lang: Language) -> bool {
+        ui.checkbox(&mut self.groups.light, lang.text("Luce"));
+        ui.checkbox(&mut self.groups.curve, lang.text("Curva tonale"));
+        ui.checkbox(&mut self.groups.color, lang.text("Colore RGB"));
+        ui.small(
+            lang.text("Solo questa sessione. Motore e WB RAW della destinazione sono conservati."),
+        );
+        ui.add_enabled(
+            self.copied.is_some() && (self.groups.light || self.groups.curve || self.groups.color),
+            egui::Button::new(lang.text("Incolla gruppi selezionati")),
+        )
+        .clicked()
+    }
     /// Session-local snapshot; never reads or changes the system clipboard.
-    pub(super) fn controls(
+    pub(in crate::ui) fn controls(
         &mut self,
         ui: &mut egui::Ui,
         lang: Language,

@@ -61,19 +61,27 @@ impl Controls {
                 let g = &mut a.geometry;
                 ui.horizontal_wrapped(|ui| {
                     if ui.button("↶ 90°").clicked() {
-                        g.quarter_turns = (g.quarter_turns + 3) % 4;
+                        g.rotate_crop(3);
                         commit = true;
                     }
                     if ui.button("↷ 90°").clicked() {
-                        g.quarter_turns = (g.quarter_turns + 1) % 4;
+                        g.rotate_crop(1);
                         commit = true;
                     }
-                    commit |= ui
-                        .checkbox(&mut g.flip_horizontal, lang.text("Specchio orizzontale"))
-                        .changed();
-                    commit |= ui
-                        .checkbox(&mut g.flip_vertical, lang.text("Specchio verticale"))
-                        .changed();
+                    for (horizontal, label) in [
+                        (true, "Specchio orizzontale"),
+                        (false, "Specchio verticale"),
+                    ] {
+                        let mut reflected = if horizontal != (g.quarter_turns % 2 == 1) {
+                            g.flip_horizontal
+                        } else {
+                            g.flip_vertical
+                        };
+                        if ui.checkbox(&mut reflected, lang.text(label)).changed() {
+                            g.reflect_crop(horizontal);
+                            commit = true;
+                        }
+                    }
                 });
                 ui.label(lang.text("Rapporto ritaglio"));
                 ui.horizontal_wrapped(|ui| {
@@ -558,14 +566,14 @@ impl Controls {
         let changed = a != before;
         if changed {
             recipe.advanced = Some(a);
-            recipe.process_version = recipe.process_version.max(3);
+            recipe.require_process(3);
         }
         (changed, commit)
     }
 }
 
 impl super::TrueRenderer {
-    fn photo_edit_ready(&self, id: &str) -> bool {
+    pub(super) fn photo_edit_ready(&self, id: &str) -> bool {
         self.state.current.as_deref() == Some(id)
             && !self.editing.show_original
             && !self.editing.wb_pending
@@ -575,6 +583,12 @@ impl super::TrueRenderer {
     }
 
     pub(in crate::ui) fn photo_gesture_active(&self, id: &str) -> bool {
+        if self.photo_edit_ready(id) && self.editing.layers.view_layers {
+            return self.editing.entries[id]
+                .draft
+                .as_ref()
+                .is_some_and(|r| self.editing.layers.gesture_active(id, r));
+        }
         self.photo_edit_ready(id)
             && (self.editing.advanced.horizon
                 || (self.editing.advanced.paint
@@ -598,6 +612,9 @@ impl super::TrueRenderer {
         // Match the Develop panel's busy state and target only its selected
         // photo. The other comparison pane must remain a view, not an editor.
         if !self.photo_edit_ready(&item.id) {
+            return;
+        }
+        if self.editing.layers.view_layers {
             return;
         }
         // Gesture coordinates depend on geometry and the viewport, never on
@@ -671,7 +688,7 @@ impl super::TrueRenderer {
                         {
                             let a = recipe.advanced.get_or_insert_with(Default::default);
                             a.geometry.angle = (a.geometry.angle - correction).clamp(-45., 45.);
-                            recipe.process_version = recipe.process_version.max(3);
+                            recipe.require_process(3);
                             self.apply_edit_draft(&id, recipe);
                             self.commit_edit(&id);
                         }

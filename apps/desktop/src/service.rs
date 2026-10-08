@@ -17,6 +17,10 @@ use tr_render::PreparedImage;
 use tr_store::Catalog;
 
 pub enum Request {
+    ContextPhoto {
+        token: u64,
+        path: PathBuf,
+    },
     ViewDemand {
         wanted: Vec<(String, PreviewRequest)>,
         jobs: Vec<Job>,
@@ -28,6 +32,8 @@ pub enum Request {
     },
     ScanHidden(bool),
     Favorite(tr_store::FavoriteEdit),
+    ListLooks,
+    EditLook(tr_store::LookEdit),
     BrowserSession(crate::browser_session::Session),
     Save {
         id: String,
@@ -39,6 +45,11 @@ pub enum Request {
         engine: tr_core::decoder::RawEngine,
     },
     SaveEdit {
+        id: String,
+        expected_generation: u64,
+        recipe: tr_core::editing::EditRecipe,
+    },
+    DiscardEditDraft {
         id: String,
         expected_generation: u64,
         recipe: tr_core::editing::EditRecipe,
@@ -69,6 +80,10 @@ pub struct PreviewDecoded {
     pub worker_pid: Option<u32>,
 }
 pub enum Event {
+    ContextPhoto {
+        token: u64,
+        result: Result<Item, String>,
+    },
     RawWhiteBalance {
         job: Box<crate::photo_export::WbJob>,
         result: Result<tr_core::decoder::RawWhiteBalance, String>,
@@ -82,8 +97,14 @@ pub enum Event {
         id: String,
         result: Result<tr_store::LoadedEdit, String>,
     },
+    RecoveredEditDraft {
+        id: String,
+        generation: u64,
+        recipe: tr_core::editing::EditRecipe,
+    },
     BrowserSessionSaved(Result<crate::browser_session::Session, String>),
     Favorites(Result<Vec<tr_core::location::Favorite>, String>),
+    Looks(Result<Vec<tr_store::SavedLook>, String>),
     ScanBatch {
         items: Vec<Item>,
         generation: u64,
@@ -180,6 +201,7 @@ impl Service {
             send(Event::Favorites(
                 catalog.favorites().map_err(|e| e.to_string()),
             ));
+            send(Event::Looks(catalog.looks().map_err(|e| e.to_string())));
             let mut scan_id = 0;
             let mut scan_folder = PathBuf::new();
             let mut scan_items = Vec::new();
@@ -203,6 +225,30 @@ impl Service {
                         if let Ok(event) = scans.try_recv() {
                             use crate::filesystem_browser::ScanEvent;
                             match event {
+                                ScanEvent::Photo { id, result } => {
+                                    let result = result.and_then(|o| {
+                                        catalog
+                                            .observe(&o.path, &o.digest, o.bytes)
+                                            .map(|asset| Item {
+                                                id: asset.id,
+                                                name: o
+                                                    .path
+                                                    .file_name()
+                                                    .unwrap_or_default()
+                                                    .to_string_lossy()
+                                                    .into(),
+                                                path: o.path,
+                                                bytes: o.bytes,
+                                                digest: o.digest,
+                                                observation: o.observation,
+                                                approved: o.approved,
+                                                annotation: asset.annotation,
+                                                revision: asset.revision,
+                                            })
+                                            .map_err(|e| e.to_string())
+                                    });
+                                    send(Event::ContextPhoto { token: id, result });
+                                }
                                 ScanEvent::Batch { id, observations } if id == scan_id => {
                                     let mut items = Vec::new();
                                     for observation in observations {
@@ -277,9 +323,23 @@ impl Service {
                     Err(mpsc::RecvTimeoutError::Disconnected) => break,
                 };
                 match request {
+                    Request::ContextPhoto { token, path } => {
+                        if !fs.photo(token, path, corpus.clone(), external) {
+                            send(Event::ContextPhoto {
+                                token,
+                                result: Err("Coda filesystem occupata".into()),
+                            });
+                        }
+                    }
                     Request::ScanHidden(value) => hidden = value,
                     Request::Favorite(edit) => send(Event::Favorites(
                         catalog.edit_favorite(edit).map_err(|e| e.to_string()),
+                    )),
+                    Request::ListLooks => {
+                        send(Event::Looks(catalog.looks().map_err(|e| e.to_string())))
+                    }
+                    Request::EditLook(edit) => send(Event::Looks(
+                        catalog.edit_look(edit).map_err(|e| e.to_string()),
                     )),
                     Request::BrowserSession(session) => {
                         let result = session
@@ -356,6 +416,35 @@ impl Service {
                     }
                     Request::LoadEdit { id, engine } => {
                         let result = catalog.load_edit(&id, engine).map_err(|e| format!("{e:#}"));
+                        let ok = result.is_ok();
+                        send(Event::Edit {
+                            id: id.clone(),
+                            result,
+                        });
+                        if ok {
+                            match catalog.recover_edit_draft(&id) {
+                                Ok(Some((generation, recipe))) => send(Event::RecoveredEditDraft {
+                                    id,
+                                    generation,
+                                    recipe,
+                                }),
+                                Ok(None) => (),
+                                Err(error) => send(Event::Edit {
+                                    id,
+                                    result: Err(format!("{error:#}")),
+                                }),
+                            }
+                        }
+                    }
+                    Request::DiscardEditDraft {
+                        id,
+                        expected_generation,
+                        recipe,
+                    } => {
+                        let result = catalog
+                            .discard_edit_draft(&id, expected_generation, &recipe)
+                            .and_then(|()| catalog.load_edit(&id, Default::default()))
+                            .map_err(|e| format!("{e:#}"));
                         send(Event::Edit { id, result });
                     }
                     Request::SaveEdit {
@@ -568,6 +657,7 @@ mod tests {
             match service.events.recv_timeout(Duration::from_secs(5)).unwrap() {
                 Event::Scanned { items, .. } => break items,
                 Event::Favorites(_) | Event::ScanBatch { .. } => {}
+                Event::Looks(result) => assert!(result.unwrap().is_empty()),
                 _ => panic!("scan failed"),
             }
         };
@@ -645,6 +735,7 @@ mod tests {
             {
                 Event::Scanned { items, .. } => break items,
                 Event::Favorites(_) | Event::ScanBatch { .. } => {}
+                Event::Looks(result) => assert!(result.unwrap().is_empty()),
                 _ => panic!("expected completed scan"),
             }
         };

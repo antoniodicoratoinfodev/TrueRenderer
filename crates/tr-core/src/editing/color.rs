@@ -105,7 +105,7 @@ pub(super) fn hue_chroma(rgb: [f32; 3]) -> (f32, f32) {
     };
     (h * 60., c)
 }
-fn hue_rgb(h: f32) -> [f32; 3] {
+pub(super) fn hue_rgb(h: f32) -> [f32; 3] {
     let h = h.rem_euclid(360.) / 60.;
     let x = 1. - (h.rem_euclid(2.) - 1.).abs();
     match h as u32 {

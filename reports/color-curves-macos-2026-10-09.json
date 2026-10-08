@@ -1,0 +1,328 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-09",
+  "passed": true,
+  "scope": "Fourth photographic CL1 increment: versioned levels analysis with frozen Auto parameters, black/gray/white pickers, luminance point curves and parametric RGB/luminance curves in the existing process-5 stack. No complete CL/SF/R gate claim.",
+  "previous_campaign": "reports/color-selective-macos-2026-10-08.json",
+  "source_base_commit": "f420fd02004589f07b303f957e4f15176594eb9e",
+  "source_sha256": {
+    "crates/tr-core/src/editing.rs": "b2a2fbebd5c57c4710cff27de58e38b455c4776cbc701c8597375e5df193f4d0",
+    "crates/tr-core/src/editing/layers.rs": "9cc65b00dd72c41fb0ba062788d54e6b2ed9dc66d2642c6d4182e634b23600f7",
+    "crates/tr-core/src/editing/layers/levels.rs": "33cb7803994bb870b4d676579f49777e8fbd4658f36caf4538f239405e34a62d",
+    "crates/tr-core/src/editing/layers/curves.rs": "9b8a96adba8ebf85d8f90cdbf6e959a065317b4b0e0dca54615f49b885528c94",
+    "crates/tr-core/src/editing/curves_levels_tests.rs": "cec4d35e3f6a54913c4013ae35bfd1876bcf4d01638bb72c416760d9e60dc726",
+    "apps/desktop/src/ui/editing.rs": "b3af5f14d18e26374385cae2ba3619c329de67e0265f446b9343e99f29ba5af0",
+    "apps/desktop/src/ui/editing/layers.rs": "d8e6900f7f6c9c35c5becc20292b24ce06141c958acc35f873aee7c389e51a04",
+    "apps/desktop/src/ui/editing/layers/curves.rs": "a52551945c297ecbf2c0643426c7e4b73348fb569a0439513afe896a414fe1c6",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "b5611431074726f4398d7fcbd80662098b5e10c424d248803aacebf853d4e254",
+    "apps/desktop/src/ui/editing/curve.rs": "5a1b104ba3f7637bc094c15ec7942bae4a976dc774a27b8213fece9767596840",
+    "apps/desktop/src/i18n.rs": "f02590b141d22bc4de336879750c765a0a9663eb555208f32da717193c3fc23f",
+    "apps/desktop/src/verify_advanced.rs": "114f2dbcbac775ff00f52b2e1dd65c855208ce64952bc5d14812b2f2ddba177d",
+    "crates/tr-worker/src/lib.rs": "c6567a83df4d139170ffc675f95e334d2d9be9f1e9e6614630a285e38c70a856"
+  },
+  "implemented": [
+    "Three version-1 payloads: TonalLevels with optional analysis provenance, LuminanceCurve and ParametricCurve. Legacy Levels remains readable and retains its arithmetic; promotion occurs only for an explicit successful Auto/picker action. All versions are validated even when neutral.",
+    "Bounded analysis of at most 32768 uniformly distributed positions on the native input to the exact operator, after current crop/geometry and all preceding operators; target layer mask and opacity excluded. A 64-bin histogram accompanies RGB composite and per-channel controls.",
+    "Auto composite and independent channels freeze black/white values at the 1st/99th percentiles; existing gamma and output limits remain. Statistics exclude alpha below .95 and non-finite samples; insufficient opaque samples or degenerate ranges produce an atomic rejection.",
+    "Black, gray and white pickers address the selected channel and actual operator index. Gray solves signed-gamma parameters from an eligible positive sample toward its current luminance. Invalid gamma, range, coordinates and unavailable native pixels are rejected without a partial edit.",
+    "Analysis provenance records source SHA256, projected input recipe SHA256, geometry, dimensions, counts and optional picked position/RGB. Input/source changes invalidate the temporary cache; saved values never silently reanalyse on export.",
+    "Luminance point curves reuse the process-4 monotone point evaluator and add C(Y)-Y to each linear RGB channel. Parametric curves have four adjustable zones with quartic lifts, C1 boundaries, monotone response and RGB or additive-luminance application; extended negative/HDR tails are preserved.",
+    "Searchable IT/EN controls, targeted channel reset, explicit native analysis and completion/Esc, stale-input checks, exact neutral bypass, masked layer intensity and durable reopen/Undo/Redo through the existing recipe journal."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "artifacts": "var/verify-SYFlMBth",
+    "ordinary_rust_tests": 406,
+    "integration_tests": 14,
+    "total_rust_tests_passed": 420,
+    "core_tests": 100,
+    "desktop_tests": 216,
+    "worker_tests": 55,
+    "private_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_surface_sampling": true,
+    "native_smoke": true,
+    "debug_and_release_build": true,
+    "new_ordinary_tests": 16,
+    "new_test_breakdown": {
+      "core": 7,
+      "desktop_analysis_and_invalidation": 4,
+      "desktop_panels_persistence_and_native_picker": 4,
+      "worker_export_curves_and_levels_with_alpha": 1
+    },
+    "evidence": "var/color-curves-20261008/reports",
+    "full_suite_log_sha256": "5a3256e930d8aaec901205557d6a351a5990c4e461e311ab65604a12eaa74e90",
+    "final_checks": {
+      "fmt": "passed",
+      "clippy_workspace_all_targets_warnings_denied": "passed",
+      "documentation": "Checked 434 local links; 0 failures",
+      "diff": "passed"
+    }
+  },
+  "export": {
+    "cases": 288,
+    "new_operator_combination_cases": 64,
+    "all_process_5_cases": 192,
+    "maximum_error_u16": 0,
+    "fixtures": [
+      {
+        "fixture": "01_Studio_cromatico.png",
+        "cases": 144,
+        "new_operator_cases": 32,
+        "process_5_cases": 96,
+        "auto_actions": [
+          "AutoChannels",
+          "AutoComposite"
+        ],
+        "parametric_spaces": [
+          "Luminance",
+          "Rgb"
+        ],
+        "valid_auto_samples_range": [
+          32768,
+          32768
+        ],
+        "engines": [
+          "Apple",
+          "LibRawAhd",
+          "LibRawBilinear",
+          "TrueRenderer"
+        ],
+        "formats": [
+          "Png16",
+          "Tiff16"
+        ],
+        "slots": [
+          0,
+          1
+        ],
+        "maximum_error_u16": 0,
+        "source_unchanged": true,
+        "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+        "evidence": "var/color-curves-20261008/parity-color/reports/advanced-editing.json"
+      },
+      {
+        "fixture": "curves-alpha.png",
+        "cases": 144,
+        "new_operator_cases": 32,
+        "process_5_cases": 96,
+        "auto_actions": [
+          "AutoChannels",
+          "AutoComposite"
+        ],
+        "parametric_spaces": [
+          "Luminance",
+          "Rgb"
+        ],
+        "valid_auto_samples_range": [
+          20853,
+          20853
+        ],
+        "engines": [
+          "Apple",
+          "LibRawAhd",
+          "LibRawBilinear",
+          "TrueRenderer"
+        ],
+        "formats": [
+          "Png16",
+          "Tiff16"
+        ],
+        "slots": [
+          0,
+          1
+        ],
+        "maximum_error_u16": 0,
+        "source_unchanged": true,
+        "source_digest": "caf1cc34dfdf9081e63ef0531278c3ad92e6cda46cf0ee488a5fa761ff8caa02",
+        "evidence": "var/color-curves-20261008/parity-alpha-mixed/reports/advanced-editing.json"
+      }
+    ],
+    "same_executable_as_delivered": true,
+    "alpha_fixture": {
+      "fixture": "var/color-curves-20261008/fixtures/curves-alpha.png",
+      "size": [
+        1200,
+        800
+      ],
+      "mode": "RGBA",
+      "source_sha256": "caf1cc34dfdf9081e63ef0531278c3ad92e6cda46cf0ee488a5fa761ff8caa02",
+      "method": "Deterministic synthetic raster: u=x/1199; v=y/799; R=.05+.9u; G=.08+.82v; B=.1+.8(.65u+.35v); A=1 for u<=.6, max(0,1-(u-.6)/.3) otherwise. Each component rounded to 8-bit. No user photograph or corpus original modified.",
+      "initial_probe": {
+        "fixture": "05_Trasparenza.png",
+        "exit_code": 1,
+        "message": "TrueRenderer: Auto livelli: campioni opachi insufficienti",
+        "expected_rejection": "Fewer than 25% native input samples have alpha >= .95; Auto requires opaque statistics. The source also has constant RGB."
+      }
+    }
+  },
+  "native_ui": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "01_Studio_cromatico-export.png",
+      "passed": true,
+      "size": [
+        624,
+        1008
+      ]
+    },
+    "fixture": "01_Studio_cromatico.png",
+    "native_wb_analysis": null,
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 24,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        711,
+        1148
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": false,
+    "saved_generation": 1,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+    "source_unchanged": true,
+    "timeout_seconds": 90,
+    "version": "0.1.5"
+  },
+  "native_levels_smoke": {
+    "evidence": "var/color-curves-20261008/reports/develop-ui.json",
+    "analysis": {
+      "action": "AutoComposite",
+      "channel": 0,
+      "considered_samples": 32768,
+      "geometry": {
+        "angle": 3.0,
+        "ca": [
+          0.699999988079071,
+          -0.5
+        ],
+        "crop": [
+          0.11999999731779099,
+          0.07999999821186066,
+          0.8999999761581421,
+          0.9200000166893005
+        ],
+        "defringe": 20.0,
+        "distortion": 14.0,
+        "flip_horizontal": false,
+        "flip_vertical": false,
+        "moustache": 0.0,
+        "perspective": [
+          8.0,
+          -6.0
+        ],
+        "quarter_turns": 1,
+        "scale": 1.0,
+        "vignette": 15.0
+      },
+      "image_size": [
+        624,
+        1008
+      ],
+      "input_recipe_hash": "97e481779bebc3556959130b848d9b1cb28c67ba34706f93eaa40195d2f48371",
+      "sample_rgb": null,
+      "sample_xy": null,
+      "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+      "valid_samples": 32768
+    },
+    "automation_note": "The explicit --levels-auto-smoke helper freezes levels with the same native input projection/statistics before saving the fixture. This is not a manual click-through of the Auto/picker UI. The native report auto_actions field describes historical WB/tonal Auto actions, not this levels helper."
+  },
+  "native_visual_review": [
+    "Italian screenshot inspected: layer selection, layer intensity, parametric tool title, Luminance/RGB selector and curve graph are visible with the developed preview. The lower controls require vertical scrolling.",
+    "No full manual interaction campaign for the three new panels is claimed. Automated egui tests cover both languages, control opening without changes, channel-scoped reset, picker cancellation/selection, native-pixel eligibility and persistence."
+  ],
+  "xpc_candidate": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T22:17:13.636415+00:00",
+    "bundle": "var/color-curves-20261008/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "c547962b1fc14c463df5f5214e3b046ce58b5cc08e9fdf4bfa74f2018ae69644",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7b9d906c936a90c58a3c97b40e075c8f2ac6b61abf19fb1b1f998e661a8acb89",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "6a6835bdc122c1c62c6d9ceeb582095c7634235987cf3df071c2504862983120"
+    },
+    "integration_report": "var/color-curves-20261008/reports/xpc-candidate-integration.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "xpc_distribution": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T22:18:56.721152+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "c547962b1fc14c463df5f5214e3b046ce58b5cc08e9fdf4bfa74f2018ae69644",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7b9d906c936a90c58a3c97b40e075c8f2ac6b61abf19fb1b1f998e661a8acb89",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "6a6835bdc122c1c62c6d9ceeb582095c7634235987cf3df071c2504862983120"
+    },
+    "integration_report": "var/color-curves-20261008/reports/xpc-distribution-integration.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "candidate": "var/color-curves-20261008/TrueRenderer.app",
+    "candidate_equals_distribution": true,
+    "bundle_manifest": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "c547962b1fc14c463df5f5214e3b046ce58b5cc08e9fdf4bfa74f2018ae69644",
+      "Contents/MacOS/tr-worker": "02ac57c0e88cd5eb2662db0845734d1895f3cd2fee3ce0eadc7de06704f756f2",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "7b9d906c936a90c58a3c97b40e075c8f2ac6b61abf19fb1b1f998e661a8acb89",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "6a6835bdc122c1c62c6d9ceeb582095c7634235987cf3df071c2504862983120",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "406e25c8d9df12bfec3f22e206ca3fe3d4baf5618fcc1f51c382f89d3ad50a77"
+    },
+    "durable_backup": "var/color-curves-20261008/durable-before",
+    "previous_bundle": "var/color-curves-20261008/previous-distribution.app",
+    "catalog_integrity": "ok",
+    "catalog_schema": 3,
+    "catalog_logically_matches_backup": true,
+    "configuration_unchanged": true,
+    "durable_backup_files": 159,
+    "durable_backups_unchanged": true,
+    "synthetic_originals_unchanged": true,
+    "previous_bundle_unchanged": true
+  },
+  "limitations": [
+    "Partial CL1 implementation. Direct photo interaction for curve points, curve neutralization/chroma variants, reusable looks and later packages remain open.",
+    "Levels Auto analyses the entire native developed crop excluding the target layer mask. The 1/99 percentile cutoffs and sampling bound are fixed; area pickers and configurable percentile policies are not provided.",
+    "Single-pixel gray neutralization rejects black/non-positive or out-of-range samples and unsupported gamma rather than silently clamping. Independent-channel Auto can change chromatic balance; the UI states this.",
+    "New operators and analysis run on CPU. GPU in the native surface report refers to presentation, not shader acceleration of these operators.",
+    "Synthetic PNG fixtures and four selected engine values do not qualify RAW camera decoding or calibrated colour. The first transparency probe was rejected for insufficient opaque pixels; the completed alpha matrix uses the explicitly documented new synthetic gradient.",
+    "Automated native screenshots/export are Italian; IT/EN interaction coverage is from egui regression tests. Full manual accessibility/VoiceOver and display-scale matrices remain unqualified.",
+    "No calibrated photographic/colorimetric, Windows, high-megapixel memory or latency campaign in this increment.",
+    "Ad hoc signing and XPC checks do not close release sandbox/assurance gates. Advanced selections, raster compositor/assets, retouching, models, batch and external-asset journal support remain separate future work."
+  ],
+  "cl1_complete": false,
+  "gate_r0_r4_closed": false,
+  "additional_sf_gates_closed": false,
+  "commits_or_pushes": false,
+  "checked_at": "2026-10-08T22:20:40.573415+00:00"
+}

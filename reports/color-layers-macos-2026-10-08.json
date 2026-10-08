@@ -1,0 +1,283 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-08",
+  "scope": "First recommended photographic color/layer vertical from docs/color e livelli.md; parts of CL0-CL2, not the complete inventory.",
+  "passed": true,
+  "source_base_commit": "f420fd02004589f07b303f957e4f15176594eb9e",
+  "source_sha256": {
+    "Cargo.lock": "1e7728e042e1fe4cef200adb8e2cd4ed916c351033a81696398bf7eeaa883241",
+    "crates/tr-core/Cargo.toml": "17609a7fe57ec45e6ede6efdd53194b5d412f2e34733d180156d91cba3cb46c6",
+    "crates/tr-core/src/editing.rs": "aad0cfec58657c5e47fb3c8123c3f23a34eca7d348fb97be590ac7fe6b2dc4a8",
+    "crates/tr-core/src/editing/layers.rs": "57ce14aca733b53325db11ec8880292c94f38a677ee72a44856ca2f96eaaa3ef",
+    "crates/tr-core/src/editing/layers_tests.rs": "7043e3da6864679e5a243ace35ef51b454ab001542b2379967d2bca45dc696e9",
+    "crates/tr-core/src/editing/color.rs": "557ad6ca3397223ca20a504b4d2c6d652b4e25174a510869109000b120836911",
+    "crates/tr-core/src/editing/masks.rs": "fc5617ef8da8d8b44da3350cadec027c76b32ee2e21d383b2cbc4ee13fd8d0a2",
+    "crates/tr-store/src/lib.rs": "38d8501469f1b596576591bcf267fec9a666491abdab476f8ab7b04fc8ee223e",
+    "crates/tr-render/src/live_edit.rs": "821c89f3e0ae97e238d63a1ee6fda795b5abe1a7b2e2563a4e07a756fedd26bc",
+    "crates/tr-worker/src/lib.rs": "29de622b7c83983a8238075f103cc276b9efe83afe781953a2ff3fd17dba0d72",
+    "apps/desktop/src/service.rs": "9e0ed392e2f30a0a125b613a75969042f4c938e3b68d040d8ed1164ba50551cb",
+    "apps/desktop/src/ui.rs": "23ac607d632a6639e8e76c481d8e95d4150d15bee706ff24e33851b4e254afa9",
+    "apps/desktop/src/i18n.rs": "1dbb58daaec8ed8ba6435a64d303f06e4f0639dc308fe536b6787621d62b8b1e",
+    "apps/desktop/src/ui/editing.rs": "b0feb5c05f171162cc0d39c0e515de0ff75d6dd05376fb35f750ceda6fea948b",
+    "apps/desktop/src/ui/editing/layers.rs": "6d41b0c07c8afe1f1b14d740585745fea6b86a2630ad05eee8846063243216ad",
+    "apps/desktop/src/ui/editing/curve.rs": "5a1b104ba3f7637bc094c15ec7942bae4a976dc774a27b8213fece9767596840",
+    "apps/desktop/src/ui/editing/advanced.rs": "14ea91bcd205ba30cd4d71e01257b44a2677e0630462fa31d531adb68cda7ac9",
+    "apps/desktop/src/ui/editing/crop.rs": "8f29370a95d25848085f058c98b11e44d20e92381c0329a802208f66a7653956",
+    "apps/desktop/src/ui/editing/transfer.rs": "cba97859dec682489be24139ea1f00ed00633f0f3e0f851d9bbc96944a91d6a5",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "fe6f5e465a66de125a9aa1dbbe4a303317131ae851e6cae37d9942b21868a360",
+    "apps/desktop/src/ui/photo_menu.rs": "4d3fc0debc42c689a63c7b88c0924331da4c9a6c7990ecd4fd8b76859d3e8447",
+    "apps/desktop/src/verify_advanced.rs": "8d14005962847b7b5b2a8ce660d3e1a03dd207acd0a9665f61ef5561bfc70f20"
+  },
+  "implemented": [
+    "Schema 2/process 5 preserves the historical base evaluator (processes 1-4), then evaluates photographic adjustment layers before one final geometry pass.",
+    "Stable UUIDs, name, visibility, edit lock, intensity, independent duplication, reorder and removal; normal adjustment blending preserves alpha.",
+    "Named layers with sampled color selection, smooth circular hue/chroma/luminance ranges, color corrections and separate hue/chroma/luminance uniformity.",
+    "Six searchable IT/EN tools: sampled color, light/RGB color, composite and channel point curves, tonal levels, family color mixer, channel matrix.",
+    "Parametric brush, radial, linear, luminance and color mask components with editable add/subtract/intersect/invert graph; source coordinates and bounded prepared evaluator.",
+    "Input-stage pixel picker and provisional selection overlay; source-mapped brush/gradient interaction; release commits and Escape restores the interrupted gesture.",
+    "Library schema 4 draft journal with migration backup, separate durable staging, generation checks, recover/retry/discard, no-op save and existing undo/redo."
+  ],
+  "regressions": {
+    "core_tests": 78,
+    "store_tests": 11,
+    "desktop_tests": 201,
+    "new_ordinary_tests": 14,
+    "contracts": [
+      "Historical processes 1-4 pixel identity including alpha and crop",
+      "Neutral operators preserve exact values; extended working values and hue seam",
+      "Layer order, intensity and normal alpha semantics",
+      "Mask graph validation, soft algebra and separate prepared brush strokes",
+      "Independent UUID duplication, graph removal and recipe round trip",
+      "Source-mapped layer brush and Escape without a save",
+      "Extended saved UI values and IT/EN photo binding",
+      "Injected revision failure leaves a recoverable journal; backup restores without source/cache; retry, undo/redo, stale generation and no-op behavior",
+      "Active new layers bypass unsupported live-edit shaders",
+      "Worker export shares the canonical layered CPU recipe"
+    ],
+    "findings_fixed": [
+      "Compact inspector initially pushed exposure outside its visible panel",
+      "Discard of a stale draft initially retained an error and invalidated a pending reload"
+    ],
+    "evidence": "var/color-layers-20261008/reports"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "artifacts": "var/verify-uoB1a7AH",
+    "ordinary_rust_tests": 366,
+    "integration_tests": 14,
+    "rust_tests_passed": 380,
+    "private_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_surface_sampling": true,
+    "native_smoke_passed": true,
+    "native_smoke_screenshots": 8,
+    "debug_and_release_build": true,
+    "final_ui_only_change_rechecked": [
+      "201 desktop tests",
+      "fmt",
+      "Clippy with warnings denied",
+      "release bundle",
+      "native layers viewer/grid/export and surface",
+      "both XPC processes on distribution and preserved copy"
+    ],
+    "delivery_checks": {
+      "fmt": "passed",
+      "documentation": "Checked 431 local links; 0 failures",
+      "diff": "passed"
+    },
+    "clippy_warnings_denied": true
+  },
+  "export": {
+    "cases": 128,
+    "new_process_5_cases": 32,
+    "maximum_error_u16": 0,
+    "fixtures": [
+      {
+        "fixture": "01_Studio_cromatico.png",
+        "passed": true,
+        "cases": 64,
+        "new_process_cases": 16,
+        "formats": [
+          "Png16",
+          "Tiff16"
+        ],
+        "engines": [
+          "Apple",
+          "LibRawAhd",
+          "LibRawBilinear",
+          "TrueRenderer"
+        ],
+        "slots": [
+          0,
+          1
+        ],
+        "maximum_error_u16": 0,
+        "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+        "source_unchanged": true,
+        "detailed_evidence": "var/color-layers-20261008/parity-color/reports/advanced-editing.json"
+      },
+      {
+        "fixture": "05_Trasparenza.png",
+        "passed": true,
+        "cases": 64,
+        "new_process_cases": 16,
+        "formats": [
+          "Png16",
+          "Tiff16"
+        ],
+        "engines": [
+          "Apple",
+          "LibRawAhd",
+          "LibRawBilinear",
+          "TrueRenderer"
+        ],
+        "slots": [
+          0,
+          1
+        ],
+        "maximum_error_u16": 0,
+        "source_digest": "eda5d0d51461f24f6f1efa05fbb65f89195441ed74fdfdbe2b0a4d91a9a00868",
+        "source_unchanged": true,
+        "detailed_evidence": "var/color-layers-20261008/parity-alpha/reports/advanced-editing.json"
+      }
+    ],
+    "parity_bundle_before_final_ui_layout_only_change": {
+      "Contents/MacOS/TrueRenderer": "efa7ea75b8a646c9f4cf574347a31f9b8cd657af6eaf03dbf921167659ea3e1c",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "8020de46d64af5a73f8b64e35690eadfe44598a3510bafd8ce8f0c752b11e51b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "36455eafa11dcd88af37be753553214465ac9006e0c7fedfc1061e44d1387446"
+    },
+    "decoder_binaries_unchanged_after_layout_change": true
+  },
+  "native_layers_ui": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "01_Studio_cromatico-export-1.png",
+      "passed": true,
+      "size": [
+        624,
+        1008
+      ]
+    },
+    "fixture": "01_Studio_cromatico.png",
+    "native_wb_analysis": null,
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 25,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        711,
+        1148
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": false,
+    "saved_generation": 2,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+    "source_unchanged": true,
+    "timeout_seconds": 90,
+    "version": "0.1.5"
+  },
+  "native_ui_evidence": "var/color-layers-20261008/reports",
+  "native_visual_inspection": [
+    "Italian layers inspector with two named layers, scope, intensity and sampled-color entry controls visible",
+    "Final compact action menu avoids duplicating the photo title and secondary actions"
+  ],
+  "xpc_distribution": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T19:59:38.662805+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "f8aa665cd8d7af8900af21c33d509f42b209f7a759df056c50822faeb7c527fa",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "8020de46d64af5a73f8b64e35690eadfe44598a3510bafd8ce8f0c752b11e51b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "36455eafa11dcd88af37be753553214465ac9006e0c7fedfc1061e44d1387446"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "xpc_preserved_copy": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T20:03:17.242998+00:00",
+    "bundle": "var/color-layers-20261008/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "f8aa665cd8d7af8900af21c33d509f42b209f7a759df056c50822faeb7c527fa",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "8020de46d64af5a73f8b64e35690eadfe44598a3510bafd8ce8f0c752b11e51b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "36455eafa11dcd88af37be753553214465ac9006e0c7fedfc1061e44d1387446"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "delivery": {
+    "catalog_integrity": "ok",
+    "catalog_matches_backup": true,
+    "catalog_matches_previous_campaign": true,
+    "catalog_version": 3,
+    "durable_backup_files": 159,
+    "backups_match_previous_campaign": true,
+    "settings_sha256": {
+      "settings.json": "d71816efa7d074258ce3121bd19feecc1979fd4d53935dca877fb1b2802fbd53",
+      "browser-state.json": "d654819e9dbd56938c1c0737ff6585d0feafa32b43953cdcad5902498d68d575",
+      "cache-folders.json": "b71ccd10b8b5247f8dd81e03bf71879d1314638c27fcf24396d27eb9044b3ed5"
+    },
+    "prior_bundle_verified": true,
+    "prior_bundle": "var/crop-ux-audit-2026-10-08/TrueRenderer.app",
+    "verified_bundle_copy_matches_distribution": true,
+    "durable_backup": "var/color-layers-20261008/durable-before-first-open",
+    "backup_scope": "Snapshot made after compilation, before any use of the new version with the real catalog; test runs use isolated catalogs.",
+    "bundle": "dist/TrueRenderer.app",
+    "bundle_manifest": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/_CodeSignature/CodeResources": "fcc03dab837f8cca6dc518ef3f84ff527da9392970ed70b2bfdb934a315f9425",
+      "Contents/MacOS/tr-worker": "2bbee2357bbbdc6ef1de0043fdf0a4ea2a566682e2a3c3ce2d8bf7be3b21c096",
+      "Contents/MacOS/TrueRenderer": "f8aa665cd8d7af8900af21c33d509f42b209f7a759df056c50822faeb7c527fa",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "8020de46d64af5a73f8b64e35690eadfe44598a3510bafd8ce8f0c752b11e51b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "36455eafa11dcd88af37be753553214465ac9006e0c7fedfc1061e44d1387446"
+    }
+  },
+  "limitations": [
+    "The full 93-capability inventory and CL0-CL10 are not implemented; this report qualifies the first recommended vertical and six point adjustment tools only.",
+    "No raster assets/manifest, pixel layers, groups, advanced blends, advanced manual selections, retouching, models, generative services or layer batch transfer.",
+    "Color range and uniformity use declared extended linear Rec.2020 hue/chroma/luminance; no perceptual Lab/HSL or universal photographic calibration claim.",
+    "Active process-5 layer evaluation is CPU; GPU in the surface result means display presentation only.",
+    "The journal covers recipes received by the writer; an unfinished unsent gesture remains in RAM. Multi-instance simultaneous draft ownership is not qualified.",
+    "Automated native UI/exports use synthetic PNG fixtures. Selecting four RAW engine values on PNG does not qualify those camera decoders.",
+    "Overlay is provisional at 48 by 48 cells and excluded from export. New operators do not include every variant described in the inventory.",
+    "Windows, physical memory/performance at large megapixel sizes, broad manual IT/EN keyboard/VoiceOver and device/camera/display matrix remain unqualified.",
+    "Local ad hoc signature and XPC checks do not complete release sandbox or R/SF gates."
+  ],
+  "gate_r0_r4_closed": false,
+  "additional_sf_gates_closed": false,
+  "cl0_cl2_complete": false,
+  "commits_or_pushes": false,
+  "checked_at": "2026-10-08T20:04:48.301103+00:00"
+}

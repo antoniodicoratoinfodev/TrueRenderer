@@ -51,6 +51,7 @@ impl LiveEdit {
     }
     pub fn gpu_supported(&self) -> bool {
         self.recipe.validate().is_ok()
+            && self.recipe.layers.as_ref().is_none_or(|s| s.is_neutral())
             && self
                 .input_gains
                 .iter()
@@ -71,5 +72,34 @@ pub(crate) fn scaled_region(region: Region, raster: [u32; 2], native: [u32; 2]) 
         size: region.size,
         origin: [region.origin[0] * ratio[0], region.origin[1] * ratio[1]],
         step: [region.step[0] * ratio[0], region.step[1] * ratio[1]],
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn active_new_layers_never_use_the_historical_shader() {
+        use tr_core::editing::{
+            EditRecipe,
+            layers::{Layer, Operator},
+        };
+        let mut live = super::LiveEdit {
+            recipe: EditRecipe::neutral(Default::default()),
+            input_gains: [1.; 3],
+            max_edge: 1024,
+            revision: 1,
+        };
+        live.recipe.layer_stack().layers.push(Layer::new(
+            "exposure",
+            Operator::Light {
+                exposure: 1.,
+                temperature: 0.,
+                tint: 0.,
+                saturation: 0.,
+            },
+        ));
+        assert!(!live.gpu_supported());
+        live.recipe.layers.as_mut().unwrap().layers[0].enabled = false;
+        assert!(live.gpu_supported());
     }
 }

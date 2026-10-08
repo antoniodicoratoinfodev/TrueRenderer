@@ -1,0 +1,176 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-08",
+  "scope": "Crop panel and tool menu redesign; direct manipulation, ratios, keyboard and rapid drag handling",
+  "passed": true,
+  "previous_campaign": "crop-menu-review-macos-2026-10-08.json",
+  "source_base_commit": "f420fd02004589f07b303f957e4f15176594eb9e",
+  "source_sha256": {
+    "apps/desktop/src/filesystem_browser.rs": "d353ef42a4f0b16265891caea6494a85c96071c8ef5a28a03d68a0893ef4732d",
+    "apps/desktop/src/i18n.rs": "554fae64cf012b492a1e9f12e935b104616c910ecc30ed1106dcae9b8b349c0c",
+    "apps/desktop/src/service.rs": "17aa2984f47b3a9a0c77b82035957d89978ebe7c2b05c490a830fa491e609187",
+    "apps/desktop/src/ui.rs": "570cb89266c51c4ba8abef09357f10dccedd3b2370bdf813ed8884478dd083d9",
+    "apps/desktop/src/ui/comparison.rs": "aaebbe7e2522f4c9ceace3d68eda2fe51c1a55d0bd8a87349753f8b944c3f288",
+    "apps/desktop/src/ui/editing.rs": "d60170e350a5c5d0a1b5498966c41feb0df20ab1217cea4ddc1f5f8401960908",
+    "apps/desktop/src/ui/editing/advanced.rs": "718d008c38018d79ef1a1f2b93fc07e0c46fbf59b5db1b353d58143d8ffec49a",
+    "apps/desktop/src/ui/editing/transfer.rs": "81b1b86305d7bffe97a0c281e0beeb474fd2f56a57406bf60bebd002052d3bb3",
+    "apps/desktop/src/ui/explorer.rs": "2dbfe08cc8383101cd388fa2f90d4db6995f58b90ab718844c259a31f7941ac4",
+    "apps/desktop/src/ui/export.rs": "4bc900468d4b4053a6be7713c0d22e7f193b030bdc80b5fd34ff0b422844caea",
+    "apps/desktop/src/ui/loading/retention_tests.rs": "6b9293079739116b0a099989b6f44d36fe9bf21eb4605fb5f3dcd4e81b390653",
+    "crates/tr-core/src/editing/geometry.rs": "e01d267abe3e6924c0181344f62a85dc7d9b8905d48cb04dacd1975758d47ed5",
+    "apps/desktop/src/ui/editing/crop.rs": "a3c1593e3bfc1b4912e4aa693741be3dd2d885f7673d5f03d2ec00df3ce0852b",
+    "apps/desktop/src/ui/photo_menu.rs": "c0993424f1e7f41585524d62b5c07796f9f9640f196a4e47111b3095aaf154da"
+  },
+  "implemented": [
+    "Compact panel without numeric crop-edge coordinates; single aspect selector; custom width and height shown only for Custom",
+    "Coherent free/locked ratios; orientation swap keeps physical area and center when it fits; disabled for square or infeasible frames",
+    "Explicit frame/photo movement; all edge and corner handles work in either mode; optional thirds grid and directional cursors",
+    "Visible Apply action, Cancel, Center and Full image; contextual recovery/loading/navigation messages and collapsible interaction help",
+    "Keyboard arrows, Shift, plus/minus, X and Enter in photo focus; existing Escape semantics and text/menu focus guards retained",
+    "Crop context menu shared with panel state; photographic submenu retains frozen targets, comparison A/B and Before/After; right click and Shift+F10",
+    "Initial pointer press retained through final release; quick/coalesced gestures no longer disappear"
+  ],
+  "regressions": {
+    "new_tests": [
+      "crop_orientation_and_lock_preserve_framing_without_repeated_shrinkage",
+      "crop_panel_is_compact_localized_and_only_custom_ratios_show_numbers",
+      "crop_keyboard_moves_resizes_and_swaps_without_navigating_or_saving_until_enter",
+      "crop_context_menu_opens_from_keyboard_and_keeps_the_photo_menu_reachable",
+      "crop_fast_drag_keeps_the_press_origin_when_motion_and_release_share_a_frame"
+    ],
+    "extended_test": "pointer_modes_separate_crop_movement_image_movement_and_view_pan",
+    "rapid_drag_failed_before_fix": true,
+    "layout_finding": "Initial panel spacing exceeded the compact layout budget; reduced and rechecked in both languages",
+    "native_finding": "Orientation glyph missing in the installed font; replaced by localized text"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "artifacts": "var/verify-j4s2KyWk",
+    "ordinary_rust_tests": 349,
+    "desktop_ordinary_tests": 196,
+    "integration_tests": 14,
+    "private_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "debug_and_release_build": true,
+    "native_surface_sampling": true,
+    "native_smoke_passed": true,
+    "native_smoke_screenshots": 8,
+    "local_document_links_checked": 281,
+    "diff_check": true
+  },
+  "manual": {
+    "platform": "macOS arm64",
+    "sources": "Generated corpus in an isolated catalog",
+    "languages": [
+      "it",
+      "en"
+    ],
+    "executed": [
+      "Compact panel, no edge-coordinate fields; custom ratio fields appear only when requested",
+      "Custom 4:5, swap to 5:4, apply; viewer and thumbnail show cropped result",
+      "After restart in English, reopen saved crop over the full source",
+      "Final binary: rapid side drag expands frame; corner resize works in Move the photo mode",
+      "Final binary: interior drag moves image while frame stays fixed",
+      "Center, X, minus and Shift+Right; crop remains a draft",
+      "Shift+F10 opens crop menu; photographic submenu exposes comparison A/B and Before/After",
+      "First Escape closes the menu while retaining draft",
+      "Navigation to another photo retains draft; Return to crop photo restores the session",
+      "Full image restores all available source in draft; Escape returns to saved 5:4 crop",
+      "Undo restores uncropped photo; Redo restores saved crop",
+      "Right click opens tool menu; Cancel crop from menu creates no revision"
+    ],
+    "integrity": "ok",
+    "confirmed_revisions": 1,
+    "cancelled_sessions_added_no_revisions": true,
+    "saved_crop": [
+      0.25,
+      0.19999996,
+      0.75,
+      0.8000001
+    ],
+    "other_adjustments_unchanged": true,
+    "synthetic_originals_unchanged": true,
+    "undo_redo_restores_saved_revision": true
+  },
+  "xpc_candidate": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T16:14:00.791307+00:00",
+    "bundle": "var/crop-ux-2026-10-08/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "bd330106369fba167fdcdfe4164c8a6102188d78f8e371e3f935e99ee90dbb6d",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "catalog_integrity": "ok",
+    "catalog_logically_matches_backup": true,
+    "catalog_unchanged": true,
+    "backups_unchanged": true,
+    "durable_backup_files": 159,
+    "settings_unchanged": true,
+    "previous_bundle_verified": true,
+    "candidate_equals_distribution": true,
+    "bundle_manifest": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "bd330106369fba167fdcdfe4164c8a6102188d78f8e371e3f935e99ee90dbb6d",
+      "Contents/MacOS/tr-worker": "cfa8ed99d46b66cf5aaa4dd37d36a4894b47ecfbafa1a225f483c4efb826e4d7",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "479282c98c34468f8bbce062b57e033cf8532316472d90fe208e16a94233fd84"
+    },
+    "final_source_and_bundle_hashes_verified": true,
+    "final_durable_data_matches_backup": true
+  },
+  "limitations": [
+    "Local macOS qualification on generated images; Windows and a VoiceOver campaign not run",
+    "Camera/display/optical calibration and full sandbox release gates remain open; ad hoc signature is a local packaging check",
+    "No new export-format campaign in this UI increment; existing rendering/export regressions ran and earlier export qualification remains separately recorded",
+    "Grid, movement mode and ratio lock are session controls; the saved crop rectangle persists in the recipe",
+    "Later menu increments remain open: virtual versions, stacks, collections, external editors, sidecars, HDR and panoramas"
+  ],
+  "gate_r0_r4_closed": false,
+  "additional_sf_gates_closed": false,
+  "commits_or_pushes": false,
+  "xpc_distribution": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T16:16:40.125443+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "bd330106369fba167fdcdfe4164c8a6102188d78f8e371e3f935e99ee90dbb6d",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "superseded_by": "crop-ux-audit-macos-2026-10-08.json"
+}

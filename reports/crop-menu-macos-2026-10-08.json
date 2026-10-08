@@ -1,0 +1,249 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-08",
+  "scope": "Interactive nondestructive crop and photographic context menu increment 1; local macOS verification",
+  "passed": true,
+  "source_base_commit": "f420fd02004589f07b303f957e4f15176594eb9e",
+  "source_sha256": {
+    "apps/desktop/src/filesystem_browser.rs": "77578b591086daa1db5f7951394388cf88d58a5ae73b75e2c1e41e0a86650730",
+    "apps/desktop/src/i18n.rs": "cc99e2ee34ee2479c3a870a98480aad15b0e12de0ae76e486fe5ae3d916759c7",
+    "apps/desktop/src/service.rs": "17aa2984f47b3a9a0c77b82035957d89978ebe7c2b05c490a830fa491e609187",
+    "apps/desktop/src/ui.rs": "9b016fab383b0cb439be7388738b90216fbab3134a449a1bfe58275b88b66273",
+    "apps/desktop/src/ui/comparison.rs": "aaebbe7e2522f4c9ceace3d68eda2fe51c1a55d0bd8a87349753f8b944c3f288",
+    "apps/desktop/src/ui/editing.rs": "76b1f89097b5629281a2ba8a950654b2c0e77ae70782b5e23716ae7bd777de9f",
+    "apps/desktop/src/ui/editing/advanced.rs": "718d008c38018d79ef1a1f2b93fc07e0c46fbf59b5db1b353d58143d8ffec49a",
+    "apps/desktop/src/ui/editing/transfer.rs": "81b1b86305d7bffe97a0c281e0beeb474fd2f56a57406bf60bebd002052d3bb3",
+    "apps/desktop/src/ui/explorer.rs": "2dbfe08cc8383101cd388fa2f90d4db6995f58b90ab718844c259a31f7941ac4",
+    "apps/desktop/src/ui/export.rs": "4bc900468d4b4053a6be7713c0d22e7f193b030bdc80b5fd34ff0b422844caea",
+    "crates/tr-core/src/editing/geometry.rs": "e01d267abe3e6924c0181344f62a85dc7d9b8905d48cb04dacd1975758d47ed5",
+    "apps/desktop/src/ui/editing/crop.rs": "d5434d3f7d1b81f23b9a089cfc2aace8bd4dbcb557a1f435653aa3ffee1d0874",
+    "apps/desktop/src/ui/photo_menu.rs": "411d331e9d28f15be74bd4b6d345bb77e5cfe4148e678ae7c47ceb3fc8ba31cf"
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "artifact_root": "var/verify-b8nhaIa8",
+    "ordinary_rust_tests": 338,
+    "integration_tests": 14,
+    "private_direct_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "native_surface_sampling": true,
+    "native_smoke": {
+      "adapter": "Apple M4 · Metal",
+      "application": "TrueRenderer",
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 93,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 5,
+        "last_fallback": "",
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8446692,
+        "wide_peak_frames": 2,
+        "wide_peak_gpu_bytes": 12286692,
+        "wide_peak_memory_bytes": 36860076,
+        "wide_reprojections": 1
+      },
+      "decode_errors": {},
+      "elapsed_seconds": 4.113214492797852,
+      "frames": 229,
+      "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
+      "images": 12,
+      "passed": true,
+      "pixels_per_point": 2.0,
+      "presentation_errors": false,
+      "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+      "scope": "native R0 corpus smoke; not color/display/sandbox qualification",
+      "screenshots": [
+        "05-radial-fit",
+        "08-grid-large",
+        "07-grid-small",
+        "03-compare",
+        "01-grid",
+        "06-radial-37percent",
+        "02-preview",
+        "04-radial-1to1"
+      ],
+      "sqlite": "3.53.2",
+      "status": "Cartella pronta · Anteprima",
+      "surface": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "version": "0.1.5",
+      "worker_pids": [],
+      "worker_transports": [
+        "Processo su pipe · corpus R0"
+      ]
+    },
+    "release_build": true
+  },
+  "new_regressions": {
+    "crop": 5,
+    "context_menu": 5,
+    "geometry": 1,
+    "coverage": [
+      "Explicit crop session, no-op confirmation, expand/recenter, cancel, selective reset, undo/redo, reopened catalog and other adjustments preserved",
+      "All eight handles and move, free/locked ratios, quarter turns and valid area",
+      "20 crop/reset cycles restore original pixels exactly",
+      "Failed crop save keeps draft and session",
+      "Escape with focused crop control",
+      "Selected/unselected/multiple and viewer B target rules",
+      "Batch edits, undo/redo, declared export targets and later navigation",
+      "Offline, filtered, outside-folder and stale identity results",
+      "Asynchronous Explorer resolution without selection/navigation",
+      "Focused Shift+F10 in IT/EN",
+      "Rotations/reflections preserve source coordinates with off-center crop, perspective and straightening"
+    ]
+  },
+  "advanced_export_parity": {
+    "cases": 48,
+    "formats": [
+      "PNG16",
+      "TIFF16"
+    ],
+    "engines": 4,
+    "xpc_slots": 2,
+    "maximum_error_u16": 0,
+    "source_unchanged": true,
+    "report_local": "var/crop-menu-2026-10-07/reports/advanced-editing.json"
+  },
+  "manual": {
+    "sources": "Generated corpus only; isolated catalog",
+    "earlier_candidate": [
+      "Right-click unselected photo retains selection until action",
+      "Drag crop side, 1:1 ratio, numeric border, confirm",
+      "Reopen exposes excluded sun; expand, recenter, confirm",
+      "Undo/redo, reset then Escape; viewer/grid/inspector thumbnail inspected",
+      "Export dialog opened for photo 02; select photo 03 before starting; only photo 02 exported"
+    ],
+    "final_candidate": [
+      "Restart retained crop [0.15,0.21429814,0.85,0.7857019] and displayed full source on reopening",
+      "Shift+F10 opens photographic menu on focused grid photo in Italian and English",
+      "Reset only crop confirmed, then Undo restores previous crop",
+      "2:3 ratio, navigate to another photo with draft retained, return and Escape discard",
+      "Three-star rating through context menu saved only to photo 02; per-photo result displayed",
+      "Before/After inspected: full initial image versus cropped current recipe"
+    ],
+    "persisted_crop_revisions": [
+      {
+        "revision": 1,
+        "crop": [
+          0.25,
+          0.21429816,
+          0.6309358,
+          0.7857019
+        ]
+      },
+      {
+        "revision": 2,
+        "crop": [
+          0.15,
+          0.21429814,
+          0.85,
+          0.7857019
+        ]
+      },
+      {
+        "revision": 3,
+        "crop": [
+          0.0,
+          0.0,
+          1.0,
+          1.0
+        ]
+      }
+    ],
+    "persisted_rating": 3,
+    "jpeg_export": {
+      "name": "02_Paesaggio_analitico-export.jpg",
+      "size": [
+        1008,
+        549
+      ],
+      "sha256": "e67ade45a3238cb147d33065cc404d649044dd7b47afdf5d46473ba4187cfff9",
+      "other_photo_exported": false
+    },
+    "matrix_limits": "Offline, filters, cross-folder references, viewer B differing from current and pending-action navigation are regression-tested; not all repeated manually. Image move/Space-pan and every handle are not individually qualified on physical input devices."
+  },
+  "negative_evidence": [
+    {
+      "finding": "Compact inspector regression after adding a separate crop row",
+      "resolution": "Crop access moved to secondary actions; full suite passed"
+    },
+    {
+      "finding": "Native Shift+F10 initially did not open after selecting photo",
+      "resolution": "Explicit focus on photographic response; regression and native IT/EN passed"
+    },
+    {
+      "finding": "CoreImage backend unavailable in terminal sandbox during initial verify",
+      "resolution": "Native verification rerun outside additional terminal sandbox and passed"
+    },
+    {
+      "finding": "One delivery run failed automatic_neighbors_expand_without_pinning_rebuilding_or_overfilling_the_queue",
+      "resolution": "Exact isolated test and subsequent complete verify passed; cause not established",
+      "log_local": "var/crop-menu-2026-10-07/logs/tr-verify-delivery.log"
+    }
+  ],
+  "xpc": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T10:17:48.553593+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "fa13aaa997711abfac6f2e33ff75067b5b8787b75f6896a332e45a0d83fdad2e",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "delivery": {
+    "catalog_integrity": "ok",
+    "catalog_bytes_unchanged": true,
+    "backups_unchanged": true,
+    "backup_count": 159,
+    "previous_bundle": "var/crop-menu-2026-10-07/previous-distribution.app",
+    "durable_backup": "var/crop-menu-2026-10-07/durable-before",
+    "bundle": "dist/TrueRenderer.app",
+    "bundle_files": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "fa13aaa997711abfac6f2e33ff75067b5b8787b75f6896a332e45a0d83fdad2e",
+      "Contents/MacOS/tr-worker": "cfa8ed99d46b66cf5aaa4dd37d36a4894b47ecfbafa1a225f483c4efb826e4d7",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "479282c98c34468f8bbce062b57e033cf8532316472d90fe208e16a94233fd84"
+    },
+    "candidate_equals_distribution": true
+  },
+  "originals": {
+    "copied_corpus_matches_repository": true,
+    "private_photographs_used": false
+  },
+  "limits": [
+    "Later menu increments remain open: virtual versions, stacks, collections, external editors, sidecars, HDR/panorama",
+    "Paste supports Light, Tone curve and RGB Color only; RAW WB transfer not added",
+    "Valid-area constraint samples inverse-map edges; no universal optical qualification",
+    "No new Windows, VoiceOver, calibrated-camera/color or physical-memory qualification",
+    "Three private camera tests deliberately excluded",
+    "No R0–R4 or SF0–SF10 gate closed; ad-hoc signing and XPC checks do not establish full release/sandbox qualification"
+  ],
+  "commit_or_push_performed": false,
+  "superseded_by": "crop-menu-review-macos-2026-10-08.json",
+  "review_note": "Follow-up audit reproduced and corrected async context-command defects outside the original test coverage; see the review report for the current delivered binary."
+}

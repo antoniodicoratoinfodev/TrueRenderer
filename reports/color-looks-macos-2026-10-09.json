@@ -1,0 +1,302 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-09",
+  "passed": true,
+  "scope": "Fifth photographic increment: reusable versioned layer looks, durable library, temporary trial and independent append to the current photo. Partial reuse work across the CL plan; no complete CL/SF/R gate claim.",
+  "previous_campaign": "reports/color-curves-macos-2026-10-09.json",
+  "source_base_commit": "f420fd02004589f07b303f957e4f15176594eb9e",
+  "source_sha256": {
+    "crates/tr-core/src/editing.rs": "1ad935d7a7140bfa2b58453b2af1c23f5908d12de2cb08e0b5c282eb8e830e97",
+    "crates/tr-core/src/editing/looks.rs": "db0a917f64d0ca5ff6cc4980918d489c32a0b388e6ed2d149bef8a4500b381e3",
+    "crates/tr-store/src/lib.rs": "5da668ddaca9e5f3b3a0a95414530a36b5832eb13fabb1e7b1b17c75320758a3",
+    "crates/tr-store/src/looks.rs": "6f8dd917965ef50760aa05cc2dc4cd2cb26947d5fdb6ab6be5fc590505d7584d",
+    "apps/desktop/src/service.rs": "3cfa92a92917310b9b53494d9e35983b1c475049a3213eda16e63c335cd22d63",
+    "apps/desktop/src/ui.rs": "ace1dbad9f5dca3307fd3c7e5d88e2c8a9faaa035465263c8a9e4541f9ea9b82",
+    "apps/desktop/src/ui/editing.rs": "1d9c9f8eade8ee52c78220c6249fe7f948263555c837952a959731dadc875740",
+    "apps/desktop/src/ui/editing/crop.rs": "2d38d1b5076287228b2c67c9bac0c18ea486ea62077d7ca4207a02e8fc8925e1",
+    "apps/desktop/src/ui/editing/looks.rs": "2f02ee7b8d1a39ead26543dcd28e123f563ff952a9d9d765d18c66f5b201dbf2",
+    "apps/desktop/src/i18n.rs": "4ed4fb9ae18118254cd9db73e690a3c32c2bcc67f9134e0dee156f9fd95f8519",
+    "apps/desktop/src/verify_advanced.rs": "8e9aa458808e7a1effe559f7a7b5d70304bd5b9566da668afcc7b06b6c047f5b"
+  },
+  "implemented": [
+    "Look version 1 captures selected photographic layers in source stack order, with independent layer/mask UUIDs and editable unlocked copies. Operators, resolved numerical parameters, visibility and per-layer opacity are preserved.",
+    "Masks are excluded by default and require explicit capture/use choices. Levels analysis provenance is removed without changing resolved values. RAW engine/WB, historical base, crop/geometry, original paths and external assets are outside the look payload.",
+    "Applying selected look layers appends independent copies to the destination. Amount 0..100% multiplies each selected layer opacity; zero returns the exact unchanged recipe. Destination base, RAW settings, geometry and existing layers stay intact. Combined recipe quotas are validated before applying any result.",
+    "Library schema 5 adds photo_look with a verified pre-migration backup. A single background writer persists creation, revision-checked rename and reversible archive/restore. The collection is included in SQLite backup/restore, with bounds of 128 entries including archived and 48 KiB per payload.",
+    "IT/EN saved-look panel with search, per-layer selection, mask choices, intensity, naming and management. The compact inspector exposes looks through Actions, retaining visible Exposure and Before/After controls.",
+    "Temporary trial has With/Without comparison, explicit Apply and Cancel/Esc. It leaves the draft, history and confirmed export unchanged until confirmation. Changes to photo/source observation, recipe/look revision or view/inspector context revoke the trial; confirming creates one undoable saved edit."
+  ],
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "artifacts": "var/verify-9Sx0zAmu",
+    "ordinary_rust_tests": 416,
+    "integration_tests": 14,
+    "total_rust_tests_passed": 430,
+    "core_tests": 103,
+    "store_tests": 14,
+    "desktop_tests": 220,
+    "worker_tests": 55,
+    "private_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_surface_sampling": true,
+    "native_smoke": true,
+    "debug_and_release_build": true,
+    "new_ordinary_tests": 10,
+    "new_test_breakdown": {
+      "core": 3,
+      "store": 3,
+      "desktop_look_controls_and_lifecycle": 4
+    },
+    "evidence": "var/color-looks-20261009/reports",
+    "full_suite_log_sha256": "f87510a3f69f3ed8929471ab466da632ad2ce11068fc3b6024263a8387fc4bf8",
+    "regressions_and_adjustments": [
+      {
+        "test": "ui::inspector_tests::short_inspector_exposes_metadata_and_edit_actions_without_scrolling",
+        "initial_result": "failed: the added row pushed Exposure below the 550x360 compact viewport",
+        "resolution": "Moved access to Saved looks into Actions below 500 logical pixels of window height; final IT/EN regression passed."
+      },
+      {
+        "tests": [
+          "service::tests::annotation_save_remains_available_while_decoder_is_stalled",
+          "service::tests::asynchronous_scan_save_undo_and_invalid_mutation"
+        ],
+        "initial_result": "existing test event loops rejected the newly introduced startup Looks event",
+        "resolution": "Both loops now validate the initial empty look collection before receiving the scan. Final ordinary and integration tests passed."
+      }
+    ],
+    "final_checks": {
+      "fmt": "passed",
+      "clippy_workspace_all_targets_warnings_denied": "passed",
+      "documentation": "Checked 435 local links; 0 failures",
+      "diff": "passed"
+    }
+  },
+  "export": {
+    "cases": 352,
+    "new_look_cases": 64,
+    "all_process_5_cases": 256,
+    "maximum_error_u16": 0,
+    "fixtures": [
+      {
+        "fixture": "01_Studio_cromatico.png",
+        "cases": 176,
+        "new_look_cases": 32,
+        "process_5_cases": 128,
+        "mask_variants": [
+          "included",
+          "excluded"
+        ],
+        "per_layer_look_amount": 0.65,
+        "engines": [
+          "Apple",
+          "LibRawAhd",
+          "LibRawBilinear",
+          "TrueRenderer"
+        ],
+        "formats": [
+          "Png16",
+          "Tiff16"
+        ],
+        "slots": [
+          0,
+          1
+        ],
+        "maximum_error_u16": 0,
+        "source_unchanged": true,
+        "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+        "evidence": "var/color-looks-20261009/parity-color/reports/advanced-editing.json"
+      },
+      {
+        "fixture": "curves-alpha.png",
+        "cases": 176,
+        "new_look_cases": 32,
+        "process_5_cases": 128,
+        "mask_variants": [
+          "included",
+          "excluded"
+        ],
+        "per_layer_look_amount": 0.65,
+        "engines": [
+          "Apple",
+          "LibRawAhd",
+          "LibRawBilinear",
+          "TrueRenderer"
+        ],
+        "formats": [
+          "Png16",
+          "Tiff16"
+        ],
+        "slots": [
+          0,
+          1
+        ],
+        "maximum_error_u16": 0,
+        "source_unchanged": true,
+        "source_digest": "caf1cc34dfdf9081e63ef0531278c3ad92e6cda46cf0ee488a5fa761ff8caa02",
+        "evidence": "var/color-looks-20261009/parity-alpha/reports/advanced-editing.json"
+      }
+    ],
+    "same_executable_as_delivered": true,
+    "alpha_fixture": {
+      "fixture": "var/color-looks-20261009/fixtures/curves-alpha.png",
+      "size": [
+        1200,
+        800
+      ],
+      "mode": "RGBA",
+      "source_sha256": "caf1cc34dfdf9081e63ef0531278c3ad92e6cda46cf0ee488a5fa761ff8caa02",
+      "method": "Deterministic synthetic raster: u=x/1199; v=y/799; R=.05+.9u; G=.08+.82v; B=.1+.8(.65u+.35v); A=1 for u<=.6, max(0,1-(u-.6)/.3) otherwise. Each component rounded to 8-bit. No user photograph or corpus original modified."
+    }
+  },
+  "native_ui": {
+    "application": "TrueRenderer",
+    "auto_actions": false,
+    "export": {
+      "file": "01_Studio_cromatico-export.png",
+      "passed": true,
+      "size": [
+        1200,
+        800
+      ]
+    },
+    "fixture": "01_Studio_cromatico.png",
+    "look_actions": {
+      "cancel_preserved_recipe": true,
+      "confirmed_generation": 1,
+      "independent_applied_layers": 1,
+      "passed": true,
+      "saved_looks": 1,
+      "scope": "Automated service/control workflow, not manual pointer interaction. Reopen, backup restore and Undo/Redo are covered by separate regressions.",
+      "trial_without_revision": true
+    },
+    "native_wb_analysis": null,
+    "output_proof_surface": {
+      "compute": "GPU",
+      "differing_channels": 45,
+      "maximum_error_u8": 1,
+      "passed": true,
+      "size": [
+        1722,
+        1148
+      ]
+    },
+    "passed": true,
+    "platform": "macos",
+    "raw_wb_observed": false,
+    "saved_generation": 1,
+    "scope": "Native UI with isolated library and generated or explicit source; saved recipe, edited viewer/grid, optional RAW WB and Auto actions. Surface and export scope are reported separately. No universal RAW colour or physical display qualification.",
+    "screenshots": [
+      "develop-viewer.png",
+      "develop-grid.png"
+    ],
+    "source_digest": "1f5bd81c5cdec4d910b4a4c2721bcc89f8632039243789449b399598ddccc3f7",
+    "source_unchanged": true,
+    "timeout_seconds": 90,
+    "version": "0.1.5"
+  },
+  "native_look_storage": {
+    "catalog_schema": 5,
+    "saved_look_count": 1,
+    "name": "Curve riutilizzabili",
+    "revision": 0,
+    "archived": false,
+    "payload_version": 1,
+    "payload_sha256": "a52d84747595989e01bc22dcf2a5a675e5c3450842b34e355544c65630576a43",
+    "payload_bytes": 984,
+    "independent_layer_and_mask_ids": true,
+    "source_bound_analysis_absent": true,
+    "confirmed_photo_generation": 1
+  },
+  "native_visual_review": [
+    "Italian viewer screenshot inspected: search/list, selected look and layer, intensity, saved-mask choice and Try on photo are visible; management and capture sections are reachable in the same inspector.",
+    "Native CLI exercised the actual service/control workflow: save look, trial without history, cancel preserving recipe, confirm as generation 1, saved viewer/grid and PNG16 export. It did not simulate manual pointer input for the whole workflow.",
+    "Automated egui interaction regressions cover IT/EN, trial action readiness, Esc, With/Without state, invalidation, one commit, reopen and Undo/Redo. Full manual accessibility and scale campaigns remain open."
+  ],
+  "xpc_candidate": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T22:47:48.921497+00:00",
+    "bundle": "var/color-looks-20261009/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "b937e05b0658c28a5fc51e4aada0c810f7bbbf1a656f9ac1d29e645855b76732",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "630e35f79432bb05239af202cfbd7d6c4c9cf2d9e9b313fb15f78b1d9b2668aa",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "6b1f889f5a374a363f268033a14dea7c23ed8e649e211b9c3ee95907e264917a"
+    },
+    "integration_report": "var/color-looks-20261009/reports/xpc-candidate-integration.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "xpc_distribution": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T22:50:25.698972+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "b937e05b0658c28a5fc51e4aada0c810f7bbbf1a656f9ac1d29e645855b76732",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "630e35f79432bb05239af202cfbd7d6c4c9cf2d9e9b313fb15f78b1d9b2668aa",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "6b1f889f5a374a363f268033a14dea7c23ed8e649e211b9c3ee95907e264917a"
+    },
+    "integration_report": "var/color-looks-20261009/reports/xpc-distribution-integration.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "candidate": "var/color-looks-20261009/TrueRenderer.app",
+    "candidate_equals_distribution": true,
+    "bundle_manifest": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "b937e05b0658c28a5fc51e4aada0c810f7bbbf1a656f9ac1d29e645855b76732",
+      "Contents/MacOS/tr-worker": "b572634396108c72bff969adb8de0ccac35b858c4cb20d56bd9955b459ad151f",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "630e35f79432bb05239af202cfbd7d6c4c9cf2d9e9b313fb15f78b1d9b2668aa",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "6b1f889f5a374a363f268033a14dea7c23ed8e649e211b9c3ee95907e264917a",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "fbcf191c24cc74356e759de512e4c00621f287d241397de49a4edd4aeef3d929"
+    },
+    "durable_backup": "var/color-looks-20261009/durable-before",
+    "previous_bundle": "var/color-looks-20261009/previous-distribution.app",
+    "catalog_integrity": "ok",
+    "catalog_schema": 3,
+    "catalog_logically_matches_backup": true,
+    "configuration_unchanged": true,
+    "durable_backup_files": 159,
+    "durable_backups_unchanged": true,
+    "synthetic_originals_unchanged": true,
+    "previous_bundle_unchanged": true
+  },
+  "limitations": [
+    "This collection stores supported photographic layer parameters. It does not implement external look/preset import/export, LUT/profile assets, content-aware matching, replacing existing layers, virtual versions or batch application.",
+    "Look intensity multiplies each layer opacity, not a raster group blend. Visibility is captured, masks use normalized source-relative coordinates and the destination base affects appearance.",
+    "Frozen Auto values are reused without reanalysis. Photo-specific analysis provenance is deliberately absent from portable looks.",
+    "Collection quota includes archived entries. Archive/restore is supported; permanent purging is not exposed in this increment.",
+    "Temporary trials use the current Preview/Develop context. Confirmed export and saved thumbnails do not include an unconfirmed trial.",
+    "Rendering uses the existing canonical CPU operators. GPU in the native report refers to display presentation.",
+    "The matrix uses synthetic PNG fixtures; four engine selections do not qualify RAW camera decoding. No calibrated colour/photography, Windows, high-megapixel memory or latency campaign is claimed.",
+    "Native visual inspection was Italian. Automated IT/EN checks do not constitute full manual VoiceOver/accessibility or display-scale qualification.",
+    "Ad hoc signing and two-XPC qualification do not close release sandbox/assurance gates. Advanced curve variants and later CL packages remain open."
+  ],
+  "cl1_complete": false,
+  "cl8_complete": false,
+  "gate_r0_r4_closed": false,
+  "additional_sf_gates_closed": false,
+  "commits_or_pushes": false,
+  "checked_at": "2026-10-08T22:52:29.985816+00:00"
+}

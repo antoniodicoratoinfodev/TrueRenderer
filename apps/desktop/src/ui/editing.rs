@@ -4,7 +4,10 @@ use tr_store::LoadedEdit;
 mod advanced;
 #[cfg(test)]
 mod controls_tests;
+mod crop;
 mod curve;
+mod layers;
+mod looks;
 mod transfer;
 
 #[derive(Clone, Copy)]
@@ -259,7 +262,7 @@ pub(super) struct EditEntry {
     pub error: Option<String>,
 }
 impl EditEntry {
-    fn dirty(&self) -> bool {
+    pub(in crate::ui) fn dirty(&self) -> bool {
         self.loaded
             .as_ref()
             .zip(self.draft.as_ref())
@@ -305,9 +308,12 @@ struct EditPreview {
 }
 pub(super) struct EditingUi {
     pub(super) advanced: advanced::Controls,
+    pub(super) layers: layers::Controls,
+    pub(in crate::ui) looks: looks::Controls,
     continuity: continuity_probe::Probe,
-    clipboard: transfer::Clipboard,
-    wb_pending: bool,
+    pub(in crate::ui) clipboard: transfer::Clipboard,
+    pub(in crate::ui) crop: Option<crop::Session>,
+    pub(in crate::ui) wb_pending: bool,
     pub(super) wb_cancel: Option<Arc<std::sync::atomic::AtomicBool>>,
     wb_error: Option<(String, String)>,
     wb_smoke_started: bool,
@@ -375,8 +381,11 @@ impl Default for EditingUi {
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
             advanced: Default::default(),
+            layers: Default::default(),
+            looks: Default::default(),
             continuity: Default::default(),
             clipboard: transfer::Clipboard::default(),
+            crop: None,
             wb_pending: false,
             wb_cancel: None,
             wb_error: None,
@@ -613,6 +622,15 @@ impl TrueRenderer {
             }
             1 => {
                 self.ensure_edit_loaded(&item);
+                if args.iter().any(|a| a == "--looks-edit-smoke") {
+                    if self.look_smoke_step(&item) {
+                        if proof_smoke {
+                            self.request_final_preview(&item.id, true);
+                        }
+                        self.smoke_stage = 2;
+                    }
+                    return;
+                }
                 if args.iter().any(|a| a == "--native-wb-smoke") {
                     if !self.editing.wb_smoke_started {
                         // Selection starts preview reads that own snapshot slots.
@@ -672,6 +690,35 @@ impl TrueRenderer {
                     if args.iter().any(|a| a == "--advanced-edit-smoke") {
                         recipe = crate::verify_advanced::recipe(recipe.raw_engine);
                     }
+                    if args.iter().any(|a| {
+                        matches!(
+                            a.as_str(),
+                            "--layers-edit-smoke"
+                                | "--toning-edit-smoke"
+                                | "--selective-edit-smoke"
+                                | "--curves-edit-smoke"
+                                | "--levels-auto-smoke"
+                        )
+                    }) {
+                        recipe = if args
+                            .iter()
+                            .any(|a| a == "--curves-edit-smoke" || a == "--levels-auto-smoke")
+                        {
+                            crate::verify_advanced::curves_recipe(recipe.raw_engine, false)
+                        } else if args.iter().any(|a| a == "--selective-edit-smoke") {
+                            crate::verify_advanced::selective_recipe(recipe.raw_engine, false)
+                        } else if args.iter().any(|a| a == "--toning-edit-smoke") {
+                            crate::verify_advanced::toning_recipe(recipe.raw_engine)
+                        } else {
+                            crate::verify_advanced::layered_recipe(recipe.raw_engine)
+                        };
+                        self.editing.layers.bind(&item.id);
+                        self.editing.layers.view_layers = true;
+                        self.editing.layers.selected = recipe
+                            .layers
+                            .as_ref()
+                            .and_then(|s| s.layers.first().map(|l| l.id));
+                    }
                     if args.iter().any(|a| a == "--raw-wb-smoke") {
                         recipe.raw_wb = if recipe.raw_engine == tr_core::decoder::RawEngine::Apple {
                             tr_core::decoder::RawWhiteBalance {
@@ -688,6 +735,29 @@ impl TrueRenderer {
                         };
                     }
 
+                    if args.iter().any(|a| a == "--levels-auto-smoke") {
+                        let source = self
+                            .cache
+                            .iter()
+                            .find(|((id, _), cached)| {
+                                id == &item.id && cached.pyramid.base_level() == 0
+                            })
+                            .map(|(_, cached)| cached.pyramid.clone());
+                        let Some(source) = source else {
+                            self.request_final_preview(&item.id, false);
+                            return;
+                        };
+                        if let Err(error) = crate::verify_advanced::freeze_levels_auto(
+                            &mut recipe,
+                            source.source(),
+                            &item.digest,
+                            false,
+                        ) {
+                            self.status = error.to_string();
+                            self.fatal = true;
+                            return;
+                        }
+                    }
                     if args.iter().any(|a| a == "--auto-smoke") {
                         let source = self
                             .cache
@@ -894,6 +964,7 @@ impl TrueRenderer {
                     "native_wb_analysis":self.editing.wb_smoke_result,
                     "timeout_seconds":timeout.as_secs(),
                     "auto_actions":args.iter().any(|a|a=="--auto-smoke"),
+                    "look_actions":self.editing.looks.smoke_result,
                     "output_proof_surface":self.editing.smoke_proof_result,
                     "export":self.editing.smoke_export_result,
                     "fixture":item.name,
@@ -1107,6 +1178,10 @@ impl TrueRenderer {
     }
     /// Called only from the image keyboard context, after modal/focus guards.
     pub(super) fn editing_keyboard(&mut self, ctx: &egui::Context) -> bool {
+        if self.editing.crop.is_some() {
+            self.crop_keyboard(ctx);
+            return true;
+        }
         let m = ctx.input(|i| i.modifiers);
         let key = ctx.input(|i| {
             [egui::Key::Z, egui::Key::C, egui::Key::V]
@@ -1162,6 +1237,7 @@ impl TrueRenderer {
             self.status = format!("Regolazione non valida: {error}");
             return;
         }
+        self.finish_look_preview(false);
         if !self.output_proof_for(id) {
             self.editing.verify_final = None;
         }
@@ -1204,7 +1280,7 @@ impl TrueRenderer {
             .retain(|_, (photo, _, _)| photo != id);
     }
 
-    fn step_edit(&mut self, id: &str, undo: bool) {
+    pub(in crate::ui) fn step_edit(&mut self, id: &str, undo: bool) {
         let Some(entry) = self.editing.entries.get(id) else {
             return;
         };
@@ -1246,6 +1322,18 @@ impl TrueRenderer {
         ready: bool,
     ) -> bool {
         let lang = self.cache_settings.language;
+        if ui.ctx().content_rect().height() < 500.
+            && ui.button(lang.text("Look salvati…")).clicked()
+        {
+            self.toggle_looks(item);
+            ui.close();
+        }
+        if ui
+            .add_enabled(ready, egui::Button::new(lang.text("Ritaglio…")))
+            .clicked()
+        {
+            self.start_crop(item);
+        }
         let pasted = self
             .editing
             .clipboard
@@ -1269,7 +1357,25 @@ impl TrueRenderer {
 
     pub(super) fn editing_controls(&mut self, ui: &mut egui::Ui, item: &Item) {
         let lang = self.cache_settings.language;
+        self.editing.layers.bind(&item.id);
         self.ensure_edit_loaded(item);
+        if self.editing.crop.is_some() {
+            ui.label(
+                lang.text("Conferma o annulla il ritaglio prima di modificare le regolazioni."),
+            );
+            return;
+        }
+        if (ui.ctx().content_rect().height() >= 500. || self.editing.looks.open)
+            && ui
+                .selectable_label(self.editing.looks.open, lang.text("Look salvati…"))
+                .clicked()
+        {
+            self.toggle_looks(item);
+        }
+        if self.editing.looks.open {
+            self.look_controls(ui, item);
+            return;
+        }
         // A new RAW WB temporarily removes the preceding histogram. Use an
         // explicit scope so its changing widget count cannot cancel a slider
         // gesture or lose the release event that saves the finished draft.
@@ -1300,9 +1406,19 @@ impl TrueRenderer {
                     && ui
                         .button(lang.text("Scarta bozza e ricarica ricetta"))
                         .clicked()
+                    && let Some(saved) = &saved
                 {
-                    self.editing.entries.remove(&item.id);
-                    self.ensure_edit_loaded(item);
+                    let request = Request::DiscardEditDraft {
+                        id: item.id.clone(),
+                        expected_generation: saved.generation,
+                        recipe: existing_draft.clone().unwrap(),
+                    };
+                    if self.request(request) {
+                        let e = self.editing.entries.get_mut(&item.id).unwrap();
+                        e.draft = Some(saved.recipe.clone());
+                        e.pending = true;
+                        e.error = None;
+                    }
                 }
                 return;
             }
@@ -1385,7 +1501,7 @@ impl TrueRenderer {
                     self.sample_level = None;
                     self.sample_from_current_render = false;
                 }
-                if short {
+                if short || self.editing.layers.view_layers {
                     let ready = !pending
                         && draft == saved.recipe
                         && !self.editing.entries[&item.id].pending;
@@ -1394,9 +1510,25 @@ impl TrueRenderer {
                         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
                         pasted = self.secondary_edit_actions(ui, item, &mut draft, ready);
                     });
+                    if short
+                        && ui
+                            .add_enabled(
+                                !pending,
+                                egui::Button::new(lang.text("Livelli"))
+                                    .selected(self.editing.layers.view_layers),
+                            )
+                            .clicked()
+                    {
+                        self.editing.layers.view_layers = !self.editing.layers.view_layers;
+                        self.editing.layers.pick = false;
+                        self.editing.layers.paint = false;
+                        self.editing.layers.overlay = false;
+                        self.editing.advanced.paint = false;
+                        self.editing.advanced.horizon = false;
+                    }
                 }
             });
-            if !short {
+            if !short && !self.editing.layers.view_layers {
                 let ready =
                     !pending && draft == saved.recipe && !self.editing.entries[&item.id].pending;
                 pasted = self.secondary_edit_actions(ui, item, &mut draft, ready);
@@ -1417,6 +1549,48 @@ impl TrueRenderer {
                 }
             }
             ui.add_enabled_ui(!pending, |ui| {
+                if !short {
+                    ui.horizontal_wrapped(|ui| {
+                        if ui
+                            .selectable_value(
+                                &mut self.editing.layers.view_layers,
+                                false,
+                                lang.text("Regolazioni"),
+                            )
+                            .clicked()
+                        {
+                            self.editing.layers.pick = false;
+                            self.editing.layers.paint = false;
+                            self.editing.layers.overlay = false;
+                        }
+                        if ui
+                            .selectable_value(
+                                &mut self.editing.layers.view_layers,
+                                true,
+                                lang.text("Livelli"),
+                            )
+                            .clicked()
+                        {
+                            self.editing.advanced.paint = false;
+                            self.editing.advanced.horizon = false;
+                        }
+                    });
+                }
+                if self.editing.layers.view_layers {
+                    self.editing
+                        .layers
+                        .set_analysis_source(&saved.source_digest);
+                    let (c, k) = self.editing.layers.show(ui, lang, &mut draft);
+                    changed |= c;
+                    commit |= k;
+                    if self.editing.layers.take_native_request() {
+                        self.request_final_preview(&item.id, false);
+                    }
+                    return;
+                }
+                if !short {
+                    ui.small(lang.text("Modifica: foto intera"));
+                }
                 let engine = self.preview_request(item, 0).raw_engine;
                 let is_raw = self.cache.iter().any(|((id, request), cached)| {
                     id == &item.id && request.raw_engine == engine && cached.info.format == "RAW"
@@ -1642,7 +1816,7 @@ impl TrueRenderer {
                 if (curve_changed || mid_changed)
                     && tr_core::editing::curve_has_adjusted_endpoints(&draft.curve)
                 {
-                    draft.process_version = draft.process_version.max(4);
+                    draft.require_process(4);
                 }
                 if adjustment_heading(
                     ui,
@@ -1676,7 +1850,7 @@ impl TrueRenderer {
                 let protection =
                     ui.checkbox(&mut draft.protect_warm, lang.text("Proteggi toni caldi"));
                 if response.changed() || protection.changed() {
-                    draft.process_version = draft.process_version.max(2);
+                    draft.require_process(2);
                     changed = true;
                 }
                 commit |= response.drag_stopped()
@@ -1836,6 +2010,7 @@ impl TrueRenderer {
         });
     }
     pub(super) fn poll_edit_preview(&mut self) {
+        self.reconcile_look_preview();
         while let Ok((generation, id, source, base, proof, recipe, result)) =
             self.editing.rx.try_recv()
         {
@@ -1873,9 +2048,7 @@ impl TrueRenderer {
                 || revoked
                 || (!active && result.is_ok())
                 || generation != self.generation
-                || (!intermediate
-                    && self.editing.entries.get(&id).and_then(|e| e.draft.as_ref())
-                        != Some(&recipe))
+                || (!intermediate && self.view_recipe(&id).as_ref() != Some(&recipe))
                 || self.output_proof_for(&id) != proof
             {
                 continue;
@@ -1906,8 +2079,7 @@ impl TrueRenderer {
                     );
                 }
                 Err(error) => {
-                    if self.editing.entries.get(&id).and_then(|e| e.draft.as_ref()) != Some(&recipe)
-                    {
+                    if self.view_recipe(&id).as_ref() != Some(&recipe) {
                         continue;
                     }
                     self.editing.preview_errors.insert(
@@ -2082,14 +2254,9 @@ impl TrueRenderer {
         self.editing
             .entries
             .get(id)
-            .and_then(|entry| {
-                entry
-                    .draft
-                    .as_ref()
-                    .or_else(|| entry.loaded.as_ref().map(|saved| &saved.recipe))
-            })
-            .and_then(|recipe| recipe.advanced.as_ref())
-            .map_or(native, |advanced| advanced.geometry.output_size(native))
+            .and_then(|e| e.draft.as_ref())
+            .and_then(|r| r.advanced.as_ref())
+            .map_or(native, |a| a.geometry.output_size(native))
     }
 
     pub(super) fn edited_preview(
@@ -2103,7 +2270,7 @@ impl TrueRenderer {
         if !self.edit_source_matches(id, &saved.source_digest, digest, neutral.id()) {
             return None;
         }
-        let recipe = entry.draft.as_ref().unwrap_or(&saved.recipe).clone();
+        let recipe = self.view_recipe(id)?;
         let proof = self.output_proof_for(id);
         if (recipe.is_neutral() && !proof) || self.editing.show_original {
             return Some(neutral);
@@ -2247,8 +2414,9 @@ impl TrueRenderer {
     ) -> Option<tr_render::live_edit::LiveEdit> {
         let entry = self.editing.entries.get(id)?;
         let saved = entry.loaded.as_ref()?;
-        let recipe = entry.draft.as_ref()?;
-        if self.editing.show_original
+        let recipe = self.view_recipe(id)?;
+        if self.crop_active(id)
+            || self.editing.show_original
             || self.output_proof_for(id)
             || source.scientific()
             || !self.edit_source_matches(id, &saved.source_digest, digest, source.id())
@@ -2277,12 +2445,19 @@ impl TrueRenderer {
         id: &str,
         source: u64,
     ) -> Option<Arc<ImageLevels>> {
-        let current = self.editing.entries.get(id)?.draft.as_ref()?;
+        let current = self.view_recipe(id)?;
         let preview = self.editing.previews.get(id)?;
+        let crop = |recipe: &EditRecipe| {
+            recipe
+                .advanced
+                .as_ref()
+                .map_or([0., 0., 1., 1.], |a| a.geometry.crop)
+        };
         (preview.source == source
             && preview.proof == self.output_proof_for(id)
             && preview.recipe.raw_engine == current.raw_engine
             && preview.recipe.raw_wb == current.raw_wb
+            && crop(&preview.recipe) == crop(&current)
             && !self.editing.show_original)
             .then(|| preview.image.clone())
     }

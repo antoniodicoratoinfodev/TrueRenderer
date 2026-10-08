@@ -10,6 +10,8 @@ use tr_core::decoder::RawEngine;
 use tr_core::editing::EditRecipe;
 use tr_core::location::{Favorite, Location};
 use uuid::Uuid;
+mod looks;
+pub use looks::{LookEdit, SavedLook};
 
 pub struct Catalog {
     pub library: Connection,
@@ -80,7 +82,7 @@ impl Catalog {
         let library = Connection::open(root.join("library.sqlite"))?;
         let version: u32 = library.query_row("PRAGMA user_version", [], |r| r.get(0))?;
         ensure!(
-            version <= 3,
+            version <= 5,
             "Libreria di una versione più recente: apertura interrotta"
         );
         configure(&library, true)?;
@@ -137,6 +139,35 @@ impl Catalog {
                     PRIMARY KEY(asset_id,revision)
                 );
                 PRAGMA user_version=3;
+                COMMIT;",
+            )?;
+        }
+        if version <= 3 {
+            backup_connection(&library, root)?;
+            library.execute_batch(
+                "BEGIN IMMEDIATE;
+                CREATE TABLE photo_edit_draft (
+                    asset_id TEXT PRIMARY KEY REFERENCES asset(id),
+                    source_digest TEXT NOT NULL,
+                    expected_generation INTEGER NOT NULL CHECK(expected_generation>=0),
+                    recipe TEXT NOT NULL CHECK(length(recipe)<=49152)
+                );
+                PRAGMA user_version=4;
+                COMMIT;",
+            )?;
+        }
+        if version <= 4 {
+            backup_connection(&library, root)?;
+            library.execute_batch(
+                "BEGIN IMMEDIATE;
+                CREATE TABLE photo_look (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL CHECK(length(name)<=128),
+                    revision INTEGER NOT NULL CHECK(revision>=0),
+                    archived INTEGER NOT NULL CHECK(archived IN (0,1)),
+                    payload TEXT NOT NULL CHECK(length(payload)<=49152)
+                );
+                PRAGMA user_version=5;
                 COMMIT;",
             )?;
         }
@@ -290,6 +321,13 @@ impl Catalog {
             before.generation == expected_generation,
             "Conflitto: ricetta fotografica aggiornata altrove"
         );
+        // A separate FULL-synchronous transaction makes a completed gesture
+        // recoverable if the revision transaction fails or the process stops.
+        self.stage_edit(id, expected_generation, recipe)?;
+        if before.recipe == *recipe {
+            self.discard_edit_draft(id, expected_generation, recipe)?;
+            return Ok(before);
+        }
         let next_generation = before
             .generation
             .checked_add(1)
@@ -320,8 +358,60 @@ impl Catalog {
             changed == 1,
             "Conflitto: ricetta fotografica aggiornata altrove"
         );
+        tx.execute("DELETE FROM photo_edit_draft WHERE asset_id=?1 AND expected_generation=?2 AND recipe=?3", params![id,i64::try_from(expected_generation)?,serde_json::to_string(recipe)?])?;
         tx.commit()?;
         self.load_edit(id, recipe.raw_engine)
+    }
+
+    pub fn stage_edit(
+        &self,
+        id: &str,
+        expected_generation: u64,
+        recipe: &EditRecipe,
+    ) -> Result<()> {
+        recipe.validate()?;
+        let tx = self.library.unchecked_transaction()?;
+        let saved = self.load_edit(id, recipe.raw_engine)?;
+        ensure!(
+            saved.generation == expected_generation,
+            "Conflitto: bozza fotografica obsoleta"
+        );
+        tx.execute("INSERT INTO photo_edit_draft(asset_id,source_digest,expected_generation,recipe) VALUES (?1,?2,?3,?4)
+            ON CONFLICT(asset_id) DO UPDATE SET source_digest=excluded.source_digest,expected_generation=excluded.expected_generation,recipe=excluded.recipe",
+            params![id,saved.source_digest,i64::try_from(expected_generation)?,serde_json::to_string(recipe)?])?;
+        tx.commit()?;
+        Ok(())
+    }
+
+    pub fn recover_edit_draft(&self, id: &str) -> Result<Option<(u64, EditRecipe)>> {
+        let row:Option<(String,i64,String)>=self.library.query_row(
+            "SELECT source_digest,expected_generation,recipe FROM photo_edit_draft WHERE asset_id=?1",[id],
+            |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?))).optional()?;
+        let Some((digest, generation, json)) = row else {
+            return Ok(None);
+        };
+        let recipe: EditRecipe = serde_json::from_str(&json)?;
+        recipe.validate()?;
+        let saved = self.load_edit(id, recipe.raw_engine)?;
+        ensure!(
+            saved.source_digest == digest && saved.generation == u64::try_from(generation)?,
+            "Bozza incompatibile con la revisione corrente: conservata nella libreria"
+        );
+        Ok((recipe != saved.recipe).then_some((saved.generation, recipe)))
+    }
+
+    pub fn discard_edit_draft(
+        &self,
+        id: &str,
+        expected_generation: u64,
+        recipe: &EditRecipe,
+    ) -> Result<()> {
+        let tx = self.library.unchecked_transaction()?;
+        // Discarding our stale draft must still permit reloading a newer head,
+        // and must not erase a different draft written by another instance.
+        tx.execute("DELETE FROM photo_edit_draft WHERE asset_id=?1 AND expected_generation=?2 AND recipe=?3", params![id,i64::try_from(expected_generation)?,serde_json::to_string(recipe)?])?;
+        tx.commit()?;
+        Ok(())
     }
     pub fn step_edit(
         &mut self,
@@ -511,6 +601,70 @@ fn backup_connection(library: &Connection, root: &Path) -> Result<PathBuf> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn interrupted_layer_commit_recovers_independently_of_source_and_caches() {
+        use tr_core::editing::layers::{Layer, Operator, SampleColor};
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = super::Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(
+                std::path::Path::new("/synthetic/offline-color.png"),
+                "color-source",
+                4,
+            )
+            .unwrap();
+        let mut recipe = super::EditRecipe::neutral(Default::default());
+        recipe.layer_stack().layers.push(Layer::new(
+            "Blue jacket",
+            Operator::SampleColor(SampleColor {
+                correction: [25., -10., 0.],
+                ..Default::default()
+            }),
+        ));
+        catalog.library.execute_batch("CREATE TRIGGER fail_revision BEFORE INSERT ON photo_edit_revision BEGIN SELECT RAISE(ABORT,'injected revision failure'); END;").unwrap();
+        assert!(catalog.save_edit(&item.id, 0, &recipe).is_err());
+        assert!(
+            catalog
+                .load_edit(&item.id, Default::default())
+                .unwrap()
+                .recipe
+                .is_neutral()
+        );
+        assert_eq!(
+            catalog.recover_edit_draft(&item.id).unwrap(),
+            Some((0, recipe.clone()))
+        );
+        catalog
+            .library
+            .execute_batch("DROP TRIGGER fail_revision;")
+            .unwrap();
+        let backup = catalog.backup().unwrap();
+        drop(catalog);
+        let restored = tempfile::tempdir().unwrap();
+        std::fs::copy(backup, restored.path().join("library.sqlite")).unwrap();
+        let mut catalog = super::Catalog::open(restored.path()).unwrap();
+        assert_eq!(
+            catalog.recover_edit_draft(&item.id).unwrap(),
+            Some((0, recipe.clone()))
+        );
+        let saved = catalog.save_edit(&item.id, 0, &recipe).unwrap();
+        assert!(catalog.recover_edit_draft(&item.id).unwrap().is_none());
+        let same = catalog
+            .save_edit(&item.id, saved.generation, &recipe)
+            .unwrap();
+        assert_eq!(same.generation, saved.generation);
+        let undone = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+        assert!(undone.recipe.layers.is_none());
+        let redone = catalog
+            .step_edit(&item.id, undone.generation, false)
+            .unwrap();
+        assert_eq!(redone.recipe, recipe);
+        assert!(
+            catalog
+                .stage_edit(&item.id, saved.generation, &recipe)
+                .is_err()
+        );
+    }
     use super::*;
 
     #[test]

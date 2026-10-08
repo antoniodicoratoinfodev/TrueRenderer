@@ -2013,13 +2013,140 @@ mod tests {
     #[test]
     fn endpoint_curve_export_matches_cpu_pixels_and_preserves_alpha() {
         use tr_core::editing::{CurvePoint, EditRecipe};
-        let source = include_bytes!("../../../corpus/05_Trasparenza.png");
         let mut recipe = EditRecipe::neutral(RawEngine::default());
         recipe.process_version = 4;
         recipe.curve = vec![
             CurvePoint { x: 0.15, y: 0.2 },
             CurvePoint { x: 0.85, y: 0.8 },
         ];
+        assert_edited_export_matches_cpu(recipe);
+    }
+    #[test]
+    fn photographic_layers_export_matches_cpu_pixels_and_preserves_alpha() {
+        use tr_core::editing::{
+            EditRecipe,
+            layers::{Combine, Layer, MaskKind, Operator, SampleColor},
+        };
+        let mut recipe = EditRecipe::neutral(RawEngine::default());
+        let mut l = Layer::new(
+            "sample",
+            Operator::SampleColor(SampleColor {
+                correction: [35., -25., 15.],
+                ..Default::default()
+            }),
+        );
+        l.mask.append(MaskKind::Constant(0.75), Combine::Add);
+        l.mask.append(MaskKind::Constant(0.25), Combine::Subtract);
+        recipe.layer_stack().layers.push(l);
+        assert_edited_export_matches_cpu(recipe);
+    }
+    #[test]
+    fn grading_monochrome_filter_and_gradient_export_match_cpu_with_partial_alpha() {
+        use tr_core::editing::{EditRecipe, layers::*};
+        let mut recipe = EditRecipe::neutral(RawEngine::default());
+        let mut grading = Grading::default();
+        grading.zones[0] = GradingZone {
+            hue: 220.,
+            amount: 35.,
+            exposure: 0.25,
+        };
+        grading.zones[2] = GradingZone {
+            hue: 35.,
+            amount: 20.,
+            exposure: -0.15,
+        };
+        let mut layer = Layer::new("Creative", Operator::Grading(grading));
+        layer.operators.extend([
+            Operator::BlackAndWhite(BlackAndWhite {
+                amount: 40.,
+                bands: [30.; 8],
+                ..Default::default()
+            }),
+            Operator::ColorFilter(ColorFilter {
+                density: 25.,
+                ..Default::default()
+            }),
+            Operator::GradientMap(GradientMap {
+                amount: 35.,
+                reverse: true,
+                ..Default::default()
+            }),
+        ]);
+        layer.mask.append(MaskKind::Constant(0.65), Combine::Add);
+        layer.opacity = 0.8;
+        recipe.layer_stack().layers.push(layer);
+        assert_edited_export_matches_cpu(recipe);
+    }
+    #[test]
+    fn selective_colorize_tone_gamma_export_match_cpu_with_partial_alpha() {
+        use tr_core::editing::{EditRecipe, layers::*};
+        for method in [SelectiveMethod::Relative, SelectiveMethod::Absolute] {
+            let mut recipe = EditRecipe::neutral(RawEngine::default());
+            let mut layer = Layer::new(
+                "Selective",
+                Operator::SelectiveColor(SelectiveColor {
+                    method,
+                    adjustments: [[10., -8., 6., 3.]; 9],
+                    ..Default::default()
+                }),
+            );
+            layer.operators.extend([
+                Operator::Colorize(Colorize {
+                    amount: 30.,
+                    ..Default::default()
+                }),
+                Operator::TonalAdjustments(TonalAdjustments {
+                    exposure: 0.2,
+                    brightness: 12.,
+                    contrast: 8.,
+                    shadows: 15.,
+                    highlights: -18.,
+                    blacks: -10.,
+                    whites: 6.,
+                    ..Default::default()
+                }),
+                Operator::ExposureGamma(ExposureGamma {
+                    exposure: -0.1,
+                    offset: -0.02,
+                    gamma: 1.1,
+                    ..Default::default()
+                }),
+            ]);
+            layer.mask.append(MaskKind::Constant(0.65), Combine::Add);
+            layer.opacity = 0.8;
+            recipe.layer_stack().layers.push(layer);
+            assert_edited_export_matches_cpu(recipe);
+        }
+    }
+    #[test]
+    fn luminance_parametric_and_versioned_levels_export_match_cpu_with_partial_alpha() {
+        use tr_core::editing::{CurvePoint, EditRecipe, layers::*};
+        let mut recipe = EditRecipe::neutral(RawEngine::default());
+        let mut g = LevelAdjustments::default();
+        g.channels[0].gamma = 1.12;
+        g.channels[2].black = -0.01;
+        let mut layer = Layer::new("Curves", Operator::TonalLevels(Box::new(g)));
+        layer.operators.extend([
+            Operator::LuminanceCurve(LuminanceCurve {
+                points: vec![
+                    CurvePoint { x: 0., y: 0.01 },
+                    CurvePoint { x: 0.4, y: 0.5 },
+                    CurvePoint { x: 1., y: 0.98 },
+                ],
+                ..Default::default()
+            }),
+            Operator::ParametricCurve(ParametricCurve {
+                amounts: [40., -30., 20., -10.],
+                ..Default::default()
+            }),
+        ]);
+        layer.opacity = 0.8;
+        layer.mask.append(MaskKind::Constant(0.65), Combine::Add);
+        recipe.layer_stack().layers.push(layer);
+        assert_edited_export_matches_cpu(recipe);
+    }
+    fn assert_edited_export_matches_cpu(recipe: tr_core::editing::EditRecipe) {
+        let source = include_bytes!("../../../corpus/05_Trasparenza.png");
         for format in [
             tr_core::export::Format::Png16,
             tr_core::export::Format::Tiff16,

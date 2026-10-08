@@ -8,11 +8,21 @@ use anyhow::{Result, ensure};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 pub mod color;
+#[cfg(test)]
+mod curves_levels_tests;
 pub mod detail;
 pub mod geometry;
+pub mod layers;
+#[cfg(test)]
+mod layers_tests;
+pub mod looks;
 pub mod masks;
 #[cfg(test)]
 mod process3_tests;
+#[cfg(test)]
+mod selective_tests;
+#[cfg(test)]
+mod toning_tests;
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -195,6 +205,8 @@ pub struct CurvePoint {
 #[serde(deny_unknown_fields)]
 pub struct EditRecipe {
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub layers: Option<Box<layers::LayerStack>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub advanced: Option<Box<Advanced>>,
     #[serde(
         default,
@@ -225,6 +237,7 @@ pub struct EditRecipe {
 impl EditRecipe {
     pub fn neutral(raw_engine: RawEngine) -> Self {
         Self {
+            layers: None,
             advanced: None,
             raw_wb: Default::default(),
             schema_version: SCHEMA_VERSION,
@@ -248,6 +261,8 @@ impl EditRecipe {
 
     pub fn is_neutral(&self) -> bool {
         let mut neutral = Self::neutral(self.raw_engine);
+        neutral.schema_version = self.schema_version;
+        neutral.layers = self.layers.clone();
         neutral.curve = self.curve.clone();
         neutral.process_version = self.process_version;
         neutral.protect_warm = self.protect_warm;
@@ -256,15 +271,47 @@ impl EditRecipe {
             && !curve_has_adjusted_endpoints(&self.curve)
             && self.curve.iter().all(|p| p.x == p.y)
             && self.advanced.as_ref().is_none_or(|a| a.is_neutral())
+            && self.layers.as_ref().is_none_or(|s| s.is_neutral())
+    }
+
+    pub fn base_process(&self) -> u32 {
+        self.layers
+            .as_ref()
+            .map_or(self.process_version, |s| s.base_process)
+    }
+
+    /// Only a user edit calls this. Opening a photo never promotes a recipe.
+    pub fn require_process(&mut self, process: u32) {
+        if let Some(stack) = &mut self.layers {
+            stack.base_process = stack.base_process.max(process);
+        } else {
+            self.process_version = self.process_version.max(process);
+        }
+    }
+
+    pub fn layer_stack(&mut self) -> &mut layers::LayerStack {
+        let base_process = self.base_process();
+        self.schema_version = 2;
+        self.process_version = 5;
+        self.layers.get_or_insert_with(|| {
+            Box::new(layers::LayerStack {
+                base_process,
+                layers: vec![],
+            })
+        })
     }
 
     pub fn validate(&self) -> Result<()> {
         self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
-            self.schema_version == SCHEMA_VERSION
+            ((self.schema_version == SCHEMA_VERSION
                 && matches!(self.process_version, 1..=4)
-                && (self.process_version >= 2 || (self.vibrance == 0. && !self.protect_warm))
-                && (self.advanced.is_none() || self.process_version >= 3),
+                && self.layers.is_none())
+                || (self.schema_version == 2
+                    && self.process_version == 5
+                    && self.layers.is_some()))
+                && (self.base_process() >= 2 || (self.vibrance == 0. && !self.protect_warm))
+                && (self.advanced.is_none() || self.base_process() >= 3),
             "Versione della ricetta fotografica non eseguibile"
         );
         ensure!(
@@ -292,7 +339,7 @@ impl EditRecipe {
         if !self.curve.is_empty() {
             ensure!(
                 self.curve.len() >= 2
-                    && (self.process_version >= 4 || !curve_has_adjusted_endpoints(&self.curve)),
+                    && (self.base_process() >= 4 || !curve_has_adjusted_endpoints(&self.curve)),
                 "Curva: almeno due punti; estremi mobili richiedono processo 4"
             );
             for pair in self.curve.windows(2) {
@@ -313,6 +360,17 @@ impl EditRecipe {
         }
         if let Some(advanced) = &self.advanced {
             advanced.validate()?;
+        }
+        if let Some(stack) = &self.layers {
+            stack.validate()?;
+            let historical = self
+                .advanced
+                .as_ref()
+                .map_or(0, |a| a.masks.iter().map(|m| m.points.len()).sum::<usize>());
+            ensure!(
+                historical + stack.point_count() <= 512,
+                "Massimo 512 punti di pennello per ricetta"
+            );
         }
         ensure!(
             serde_json::to_vec(self)?.len() <= 48 * 1024,
@@ -415,6 +473,33 @@ impl EditRecipe {
                 }
             });
             ensure!(!cancelled(), "Editing annullato");
+        }
+        // Historical color and guides remain untouched. New guides read only
+        // their own layer input, over the full oriented source before geometry.
+        if let Some(stack) = &self.layers
+            && !stack.is_neutral()
+        {
+            let aspect = native[1] as f32 / native[0] as f32;
+            let prepared = stack.prepare(aspect);
+            pixels_mut(&mut image.pixels, |i, p| {
+                if p[3] <= 0. {
+                    return;
+                }
+                let xy = [
+                    ((i % width as usize) as f32 + 0.5) / width as f32,
+                    ((i / width as usize) as f32 + 0.5) / height as f32,
+                ];
+                let mut rgb = detail::straight(*p);
+                for layer in &prepared {
+                    rgb = layer.apply(rgb, xy);
+                }
+                for c in 0..3 {
+                    p[c] = rgb[c] * p[3];
+                }
+            });
+        }
+        ensure!(!cancelled(), "Editing annullato");
+        if let Some(a) = &self.advanced {
             output = a.geometry.apply(image, native, base)?;
         }
         ensure!(!cancelled(), "Editing annullato");
@@ -426,13 +511,18 @@ impl EditRecipe {
     }
 
     pub fn scratch_bytes(&self, width: u32, height: u32) -> u64 {
-        self.advanced.as_ref().map_or(0, |a| {
+        let historical = self.advanced.as_ref().map_or(0, |a| {
             let frames = if a.detail.active() || a.geometry.defringe != 0. {
                 2
             } else {
                 u64::from(a.geometry.has_mapping())
             };
             u64::from(width) * u64::from(height) * 16 * frames + 1024 * 1024
+        });
+        historical.max(if self.layers.as_ref().is_some_and(|s| !s.is_neutral()) {
+            1024 * 1024
+        } else {
+            0
         })
     }
 
@@ -448,7 +538,8 @@ impl EditRecipe {
     fn analysis_samples(&self, image: &LinearImage) -> Result<Vec<Pixel>> {
         self.validate()?;
         ensure!(
-            self.advanced.as_ref().is_none_or(|a| a.is_neutral()),
+            self.advanced.as_ref().is_none_or(|a| a.is_neutral())
+                && self.layers.as_ref().is_none_or(|s| s.is_neutral()),
             "Auto: ripristinare prima geometria, dettaglio, colore avanzato e maschere"
         );
         let mut samples = Vec::with_capacity(4096);
@@ -533,7 +624,8 @@ impl EditRecipe {
     pub fn neutralize_render_sample(&mut self, pixel: Pixel) -> Result<()> {
         self.validate()?;
         ensure!(
-            self.advanced.as_ref().is_none_or(|a| a.is_neutral()),
+            self.advanced.as_ref().is_none_or(|a| a.is_neutral())
+                && self.layers.as_ref().is_none_or(|s| s.is_neutral()),
             "Contagocce RGB: ripristinare prima gli strumenti avanzati"
         );
         ensure!(

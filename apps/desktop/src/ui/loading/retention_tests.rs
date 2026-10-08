@@ -376,6 +376,9 @@ fn neighbors_refine_during_folder_loading_despite_a_ready_filmstrip() {
 fn automatic_neighbors_expand_without_pinning_rebuilding_or_overfilling_the_queue() {
     let (_dir, ctx, mut app) = app();
     settle(&mut app, &ctx, true);
+    // This test injects pressure. The live service polls the OS on its own
+    // manager and must not overwrite the synthetic value between assertions.
+    app.service.cache = Arc::new(crate::cache::Manager::new(app.cache_settings.clone()));
     app.cancel_folder_preparation();
     let template = app.state.items[0].clone();
     let items: Vec<_> = (0..30)
@@ -543,6 +546,7 @@ fn preparation_recovers_after_a_large_request_or_pressure_reduces_the_budget() {
         for foreground in [false, true] {
             let (_dir, ctx, mut app) = app();
             settle(&mut app, &ctx, true);
+            app.service.cache = Arc::new(crate::cache::Manager::new(app.cache_settings.clone()));
             app.cache.clear();
             app.service
                 .cache

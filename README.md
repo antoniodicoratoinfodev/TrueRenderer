@@ -30,6 +30,8 @@ From a subtle tonal correction to a distinctive creative treatment, the Develop 
 | Strengthen the composition | Crop, aspect ratios, rotation, flips, straightening and perspective controls |
 | Correct the optics | Manual distortion, vignette, chromatic aberration and defringe adjustments |
 | Guide attention locally | Brush, radial and linear gradients, luminance and hue masks, with feathering and inversion |
+| Adjust a chosen colour | Sampled colour ranges, hue/chroma/luminance corrections and separate uniformity controls |
+| Organize local adjustments | Named photographic layers, intensity, visibility, duplication, ordering and editable combined masks |
 
 ![TrueRenderer's creative colour controls beside a mountain photograph](reports/readme-2026-10-06/colour.jpg)
 
@@ -37,7 +39,21 @@ Click in the tone-curve graph to add anchor points, then drag them to shape the 
 
 Double-click a photographic slider to restore its default. The **Reset all** button beside Undo/Redo restores all adjustments, including as-shot RAW white balance, and can itself be undone. Double-clicking either Apple RAW WB slider restores the complete as-shot white balance.
 
-Experiment freely. **Undo, Redo, Reset all and Before/After** keep decisions reversible, while saved editing recipes preserve your work in the local library. Copy selected light, tone-curve and RGB colour adjustments between photographs to build a consistent look.
+Open **Crop…** from the Develop actions or the photograph’s right-click menu. Choose a ratio in the compact panel, swap its orientation, then drag the edges or corners to resize. Choose **Move the frame** or **Move the photo** for the interior gesture; the optional thirds grid helps composition. **Full image** resets only the crop. **Apply crop** saves one reversible change; **Cancel crop** or Escape restores the starting crop. Reopening the tool shows the full available image again, including previously excluded areas. Space-drag pans the view independently. With the photo focused, arrows move, +/− resize, X swaps orientation and Enter applies; Shift gives a larger step. Right-click or Shift+F10 opens crop commands, with **Photo menu** giving access to the usual photographic actions. A crop draft stays open when you navigate elsewhere and must be confirmed or cancelled before closing the app.
+
+In **Develop → Layers**, choose **Add adjustment** and search for sampled colour, local light, RGB point curves, tonal levels, the colour mixer or the channel mixer. **Sample on photo** temporarily shows the input to that layer; use the final rendering for a native sample. Adjust the colour or its uniformity, then add, subtract or intersect brush, gradient, luminance and colour masks. Layer intensity controls the result independently of the mask overlay. The stack runs from bottom to top and its masks follow the source through crop and rotation. These photographic layers use CPU processing; image compositing and assisted selections are separate planned extensions.
+
+The same selector includes **Four-wheel grading**, **Black and white mixer**, **Color filter** and **Gradient map**. Grade shadows, midtones, highlights and the whole image with hue/chroma wheels, zone luminance, balance and overlap. The wheels and sliders share their values; arrows make fine changes, Shift increases the step and Home resets hue/chroma. Use **Convert to B&W** and the eight family sliders to shape a monochrome image, then add grading for a split tone. Choose a filter colour and density, or build a gradient palette with editable stops, amount and reversal. Each tool starts neutral and supports the layer’s mask, intensity and undo history.
+
+**Selective color** adjusts C/M/Y/K components across six colour families plus whites, neutrals and blacks. Choose **Relative** for a percentage of the RGB signal or **Absolute** for a linear offset; **Reset family** affects only the selected family. This is a creative RGB adjustment. **Colorize** adds a common hue to colour or monochrome images, with separate amount, chroma and brightness. **Tonal controls** adds local exposure, brightness, contrast, shadows, highlights, whites and blacks, with an adjustable pivot under **Tonal transitions**. **Exposure, offset and gamma** provides the three technical operations in that order, including signed gamma for negative values. All four are available from **Develop → Layers** and start neutral.
+
+In **Tonal levels**, choose **Analyze input** to load the native adjustment input and its histogram, then **Auto composite** or **Auto independent channels**. Auto freezes the 1st/99th-percentile black and white points; independent channels may change colour balance. Analysis covers the entire developed crop, before the layer mask and intensity. **Pick black**, **Pick gray** and **Pick white** work on the selected composite/channel; gray on RGB aligns the three channels while retaining their black/white points. **Reset channel** affects only the selected channel. **Finish analysis** or Esc restores the full preview without applying a new analysis. Results and their source/region references survive reopening and undo; recalculation is explicit.
+
+**Luminance curve** provides a point editor on linear Y, preserving channel differences. **Parametric curves** offers four tonal zones and three adjustable boundaries, with a choice of luminance or RGB mapping and a live curve graph. Both tools start neutral and use the layer's existing mask and intensity.
+
+Experiment freely. **Undo, Redo, Reset all and Before/After** keep decisions reversible, while saved editing recipes preserve your work in the local library. Interrupted recipe saves can recover a draft with explicit Retry or Discard. Copy selected light, tone-curve and RGB colour adjustments between photographs to build a consistent look; that transfer does not include the new layer stack.
+
+Use **Develop → Saved looks** to save selected photographic layers in your library and reuse them on another photo; in compact windows, open **Actions → Saved looks**. Select the destination in Preview, choose the layers, intensity and whether to include saved masks, then **Try on photo** to compare with and without the look. **Apply look** appends independent editable layers; **Cancel preview** or Esc leaves the photo unchanged. RAW settings, base adjustments and crop stay with the destination. Saved Auto values remain fixed. Looks can be renamed, archived and restored, and are included in library backups.
 
 ## Choose the RAW rendering that suits the photograph
 
@@ -51,7 +67,7 @@ TrueRenderer fp32 neutralizes sensor-clipped highlights to prevent false magenta
 
 Compare photographs side by side with synchronized navigation. Judge composition, exposure, colour and fine detail in context, then move to **physical 1:1** for a closer inspection.
 
-Right-click a photograph in the grid, filmstrip, viewer, inspector preview or Explorer to assign it to **A** or **B**, or choose **Compare Before/After** for its initial development and current adjustments. A/B assignments stay in place across folders for the current session.
+Right-click a photograph in the grid, filmstrip, viewer, inspector preview or Explorer to assign it to **A** or **B**, or choose **Compare Before/After** for its initial development and current adjustments. A/B assignments stay in place across folders for the current session. The same menu provides ratings, colour labels, keywords, supported adjustment transfer, geometry, export, final-output preview, file reveal and path copying. In the grid and filmstrip, group commands use the selection only when it includes the clicked photo; the menu shows the target count. Viewer commands refer to the clicked pane. Shift+F10 opens the menu for a focused photograph.
 
 ![Two Grand Teton photographs side by side in TrueRenderer](reports/readme-2026-10-06/compare.jpg)
 

@@ -26,6 +26,7 @@ struct Shared {
 }
 #[derive(Clone, PartialEq, Eq)]
 enum Key {
+    Photo(u64),
     Resolve,
     Scan,
     List(PathBuf),
@@ -33,6 +34,12 @@ enum Key {
     Reveal,
 }
 enum Work {
+    Photo {
+        id: u64,
+        path: PathBuf,
+        corpus: PathBuf,
+        external: bool,
+    },
     Resolve {
         id: u64,
         path: PathBuf,
@@ -79,6 +86,10 @@ pub struct Observation {
     pub approved: bool,
 }
 pub enum ScanEvent {
+    Photo {
+        id: u64,
+        result: Result<Observation, String>,
+    },
     Batch {
         id: u64,
         observations: Vec<Observation>,
@@ -144,6 +155,46 @@ impl Filesystem {
                     };
                     if !cancelled() {
                         match job.work {
+                            Work::Photo {
+                                id,
+                                path,
+                                corpus,
+                                external,
+                            } => {
+                                let result = (|| -> Result<Observation, String> {
+                                    let path = path.canonicalize().map_err(|e| e.to_string())?;
+                                    let metadata =
+                                        std::fs::metadata(&path).map_err(|e| e.to_string())?;
+                                    if !metadata.is_file() {
+                                        return Err("Sorgente non disponibile".into());
+                                    }
+                                    let observation =
+                                        tr_platform::observation_token(&path, &metadata);
+                                    let (digest, approved) =
+                                        if path.parent() == Some(corpus.as_path()) {
+                                            let (_, hash) = tr_platform::snapshot(&path)
+                                                .map_err(|e| e.to_string())?;
+                                            let approved = tr_platform::CorpusPolicy::default()
+                                                .approves(&hash);
+                                            (hash, approved)
+                                        } else {
+                                            (
+                                                observation.clone(),
+                                                external
+                                                    && metadata.len()
+                                                        <= tr_core::protocol::MAX_SOURCE as u64,
+                                            )
+                                        };
+                                    Ok(Observation {
+                                        path,
+                                        bytes: metadata.len(),
+                                        digest,
+                                        observation,
+                                        approved,
+                                    })
+                                })();
+                                send(&scan_tx, ScanEvent::Photo { id, result }, &cancelled, &wake);
+                            }
                             Work::Resolve { id, path } => {
                                 let result = resolve(&path).map_err(|e| e.to_string());
                                 send(
@@ -478,6 +529,18 @@ impl Client {
         self.0.changed.notify_one();
         true
     }
+    pub fn photo(&self, id: u64, path: PathBuf, corpus: PathBuf, external: bool) -> bool {
+        self.submit(
+            Key::Photo(id),
+            Work::Photo {
+                id,
+                path,
+                corpus,
+                external,
+            },
+            true,
+        )
+    }
     pub fn resolve(&self, id: u64, path: PathBuf) -> bool {
         self.submit(Key::Resolve, Work::Resolve { id, path }, true)
     }
@@ -547,6 +610,29 @@ impl Drop for Filesystem {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn independent_photo_checks_never_cancel_each_other() {
+        // A stalled filesystem read and a queued check must both retain their
+        // completion when another context menu requests a photograph.
+        let shared = Arc::new(Shared {
+            queue: Mutex::new(VecDeque::new()),
+            changed: Condvar::new(),
+            stopped: AtomicBool::new(false),
+            active: Mutex::new(vec![]),
+        });
+        let client = Client(shared.clone());
+        assert!(client.photo(1, "first.png".into(), "corpus".into(), false));
+        let active = shared.queue.lock().unwrap().pop_front().unwrap();
+        shared
+            .active
+            .lock()
+            .unwrap()
+            .push((active.key, active.cancelled.clone()));
+        assert!(client.photo(2, "second.png".into(), "corpus".into(), false));
+        assert!(client.photo(3, "third.png".into(), "corpus".into(), false));
+        assert!(!active.cancelled.load(Ordering::Acquire));
+        assert_eq!(shared.queue.lock().unwrap().len(), 2);
+    }
     #[test]
     fn mixed_listing_is_lazy_bounded_and_never_opens_special_files() {
         let directory = tempfile::tempdir().unwrap();

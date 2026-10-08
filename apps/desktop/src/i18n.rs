@@ -16,6 +16,413 @@ impl Language {
             return source;
         }
         match source {
+            "Look salvati…" => "Saved looks…",
+            "I look aggiungono copie indipendenti dei livelli. RAW, base e ritaglio restano quelli della foto." => {
+                "Looks append independent copies of layers. RAW, base adjustments and crop stay with the photo."
+            }
+            "Aggiorna elenco" => "Refresh list",
+            "Mostra archiviati" => "Show archived",
+            "Caricamento look…" => "Loading looks…",
+            "Cerca look…" => "Search looks…",
+            "Nessun look salvato. Crea il primo dai livelli di questa foto." => {
+                "No saved looks. Create your first from this photo’s layers."
+            }
+            "Look archiviato" => "Archived look",
+            "Intensità look" => "Look intensity",
+            "Usa maschere salvate" => "Use saved masks",
+            "Le maschere usano coordinate relative alla sorgente; i valori Auto restano fissi." => {
+                "Masks use source-relative coordinates; Auto values remain fixed."
+            }
+            "Prova sulla foto" => "Try on photo",
+            "Gestisci look" => "Manage look",
+            "Nome look" => "Look name",
+            "Ripristina look" => "Restore look",
+            "Archivia look" => "Archive look",
+            "I look archiviati si possono ripristinare. Le foto già modificate restano indipendenti." => {
+                "Archived looks can be restored. Previously edited photos remain independent."
+            }
+            "Salva dai livelli della foto" => "Save from photo layers",
+            "Includi maschere nel look" => "Include masks in look",
+            "Salva nuovo look" => "Save new look",
+            "Solo i livelli selezionati; le regolazioni della base non fanno parte del look." => {
+                "Selected layers only; base adjustments are outside the look."
+            }
+            "La foto o il look sono cambiati: ripeti la prova" => {
+                "The photo or look changed: try the preview again"
+            }
+            "Prova temporanea · nessuna modifica salvata" => "Temporary preview · no edits saved",
+            "Senza look" => "Without look",
+            "Con look" => "With look",
+            "Applica look" => "Apply look",
+            "Annulla prova" => "Cancel preview",
+            "Conferma per aggiungere i livelli. Esc annulla; l’export usa la ricetta confermata." => {
+                "Confirm to append layers. Esc cancels; export uses the confirmed recipe."
+            }
+            "Selezione look vuota o duplicata" => "Empty or duplicate look selection",
+            "Livello del look non disponibile" => "Look layer unavailable",
+            "Versione look non supportata" => "Unsupported look version",
+            "Look senza livelli" => "Look has no layers",
+            "Look oltre 48 KiB" => "Look exceeds 48 KiB",
+            "Il look contiene riferimenti a una foto" => {
+                "The look contains photo-specific references"
+            }
+            "Intensità look non valida" => "Invalid look intensity",
+            "Nome look non valido" => "Invalid look name",
+            "Identità look non valida" => "Invalid look identity",
+            "Massimo 128 look salvati, inclusi gli archiviati" => {
+                "Maximum 128 saved looks, including archived looks"
+            }
+            "Look non disponibile" => "Look unavailable",
+            "Look cambiato: aggiorna l’elenco" => "Look changed: refresh the list",
+            "Curva di luminanza" => "Luminance curve",
+            "Curva a punti su Y, con differenze cromatiche conservate" => {
+                "Point curve on Y, preserving channel differences"
+            }
+            "Curve parametriche" => "Parametric curves",
+            "Quattro zone e tre confini, luminanza o RGB" => {
+                "Four zones and three boundaries, luminance or RGB"
+            }
+            "Analizza ingresso" => "Analyze input",
+            "Fine analisi" => "Finish analysis",
+            "Ingresso della regolazione · intero ritaglio · maschera esclusa" => {
+                "Adjustment input · entire crop · mask excluded"
+            }
+            "Istogramma Y lineare 0–1 · code ai bordi" => {
+                "Linear Y histogram 0–1 · tails at edges"
+            }
+            "Istogramma canale dopo composito · 0–1" => {
+                "Channel histogram after composite · 0–1"
+            }
+            "Preparazione ingresso nativo…" => "Preparing native input…",
+            "Auto composito" => "Auto composite",
+            "Auto canali indipendenti" => "Auto independent channels",
+            "Auto 1–99% · canali indipendenti possono cambiare il colore" => {
+                "Auto 1–99% · independent channels may change color"
+            }
+            "Campiona nero" => "Pick black",
+            "Campiona grigio" => "Pick gray",
+            "Campiona bianco" => "Pick white",
+            "Clic sull'ingresso nativo · Esc annulla · grigio RGB allinea i canali" => {
+                "Click native input · Esc cancels · RGB gray aligns channels"
+            }
+            "Ripristina canale" => "Reset channel",
+            "Analisi salvata · ricalcolo solo su richiesta" => {
+                "Analysis saved · recalculation on request only"
+            }
+            "Y lineare · differenze fra i canali conservate" => {
+                "Linear Y · channel differences preserved"
+            }
+            "Zone lineari 0–1 · estremi e valori estesi conservati" => {
+                "Linear zones 0–1 · endpoints and extended values preserved"
+            }
+            "Toni scuri" => "Dark tones",
+            "Toni chiari" => "Light tones",
+            "Confini delle zone" => "Zone boundaries",
+            "Confine ombre" => "Shadow boundary",
+            "Confine mezzitoni" => "Midtone boundary",
+            "Confine luci" => "Highlight boundary",
+            "Analisi livelli superata" => "Levels analysis is outdated",
+            "Auto livelli: intervallo utile insufficiente o fuori scala" => {
+                "Auto levels: useful range too small or out of bounds"
+            }
+            "Auto livelli: campioni opachi insufficienti" => {
+                "Auto levels: not enough opaque samples"
+            }
+            "Grigio livelli: campione fuori dai mezzitoni utili" => {
+                "Gray levels: sample outside useful midtones"
+            }
+            "Colore selettivo" => "Selective color",
+            "Componenti C/M/Y/K in nove famiglie, relativo o assoluto" => {
+                "C/M/Y/K in nine families, relative or absolute"
+            }
+            "Colorizza" => "Colorize",
+            "Tonalità comune, cromia e luminosità separate" => {
+                "Common hue with separate chroma and brightness"
+            }
+            "Controlli tonali" => "Tonal controls",
+            "Luce, contrasto, ombre, luci, bianchi e neri sul livello" => {
+                "Light, contrast, shadows, highlights, whites and blacks on the layer"
+            }
+            "Esposizione, offset e gamma" => "Exposure, offset and gamma",
+            "Guadagno, offset e potenza dei canali RGB" => {
+                "Gain, offset and power of the RGB channels"
+            }
+            "Rossi" => "Reds",
+            "Gialli" => "Yellows",
+            "Verdi" => "Greens",
+            "Ciani" => "Cyans",
+            "Neutri" => "Neutrals",
+            "Relativo" => "Relative",
+            "Assoluto" => "Absolute",
+            "Relativo: percentuale del segnale RGB" => "Relative: percentage of the RGB signal",
+            "Assoluto: offset nel segnale RGB lineare" => {
+                "Absolute: offset in the linear RGB signal"
+            }
+            "Ciano (C)" => "Cyan (C)",
+            "Magenta (M)" => "Magenta (M)",
+            "Giallo (Y)" => "Yellow (Y)",
+            "Nero (K)" => "Black (K)",
+            "Ripristina famiglia" => "Reset family",
+            "Regolazione creativa RGB" => "Creative RGB adjustment",
+            "Quantità Colorizza" => "Colorize amount",
+            "Luminosità Colorizza (EV)" => "Colorize brightness (EV)",
+            "Luminanza conservata prima della luminosità" => {
+                "Luminance preserved before brightness"
+            }
+            "Pivot tonale" => "Tonal pivot",
+            "Luminosità: mezzitoni · esposizione: tutto il segnale" => {
+                "Brightness: midtones · exposure: the entire signal"
+            }
+            "Ordine: esposizione → offset → gamma" => "Order: exposure → offset → gamma",
+            "Gamma con segno · valori negativi conservati" => {
+                "Signed gamma · negative values preserved"
+            }
+            "Mezzitoni" => "Midtones",
+            "Luci" => "Highlights",
+            "Grading a quattro ruote" => "Four-wheel grading",
+            "Ombre, mezzitoni, luci e globale con bilanciamento" => {
+                "Shadows, midtones, highlights and global with balance"
+            }
+            "Mixer bianco e nero" => "Black and white mixer",
+            "Conversione e luminosità di otto famiglie cromatiche" => {
+                "Conversion and brightness of eight color families"
+            }
+            "Filtro cromatico" => "Color filter",
+            "Tinta, densità e conservazione della luminanza" => {
+                "Tint, density and luminance preservation"
+            }
+            "Mappa gradiente" => "Gradient map",
+            "Associa la luminanza a una tavolozza modificabile" => {
+                "Map luminance to an editable palette"
+            }
+            "Ruota cromatica" => "Color wheel",
+            "Trascina: tonalità e cromia. Frecce: regolazione fine; Maiusc: passo 10; Home o doppio clic: azzera." => {
+                "Drag: hue and chroma. Arrows: fine adjustment; Shift: step 10; Home or double-click: reset."
+            }
+            "Cromia" => "Chroma",
+            "Luminanza zona (EV)" => "Zone luminance (EV)",
+            "Ripristina zona" => "Reset zone",
+            "Transizioni tonali" => "Tonal transitions",
+            "Bilanciamento" => "Balance",
+            "Negativo: più ombre · positivo: più luci" => {
+                "Negative: more shadows · positive: more highlights"
+            }
+            "Sovrapposizione" => "Overlap",
+            "Converti in B&N" => "Convert to B&W",
+            "Ripristina famiglie" => "Reset families",
+            "Quantità B&N" => "B&W amount",
+            "Luminosità delle famiglie · neutri protetti" => {
+                "Family brightness · neutrals protected"
+            }
+            "Saturazione filtro" => "Filter saturation",
+            "Densità filtro" => "Filter density",
+            "Conserva luminanza" => "Preserve luminance",
+            "Quantità mappa gradiente" => "Gradient map amount",
+            "Inverti tavolozza" => "Reverse palette",
+            "Posizione" => "Position",
+            "Colore del punto · RGB lineari" => "Stop color · linear RGB",
+            "Intervallo luminanza" => "Luminance range",
+            "I toni esterni proseguono linearmente oltre i colori estremi." => {
+                "Outside tones continue linearly beyond the endpoint colors."
+            }
+            "Versione operatore cromatico non supportata" => "Unsupported color operator version",
+            "Intervallo gradiente troppo piccolo" => "Gradient range is too small",
+            "Numero punti gradiente non valido" => "Invalid gradient stop count",
+            "Il gradiente richiede gli estremi 0 e 1" => {
+                "The gradient requires endpoints at 0 and 1"
+            }
+            "Punti gradiente troppo vicini o fuori ordine" => {
+                "Gradient stops are too close or out of order"
+            }
+            "Livelli" => "Layers",
+            "Modifica: foto intera" => "Editing: whole photo",
+            "Aggiungi regolazione" => "Add adjustment",
+            "Cerca strumento…" => "Search tools…",
+            "Aggiungi una regolazione per creare un livello fotografico." => {
+                "Add an adjustment to create a photographic layer."
+            }
+            "Colore a campioni" => "Sampled color",
+            "Correggi e uniforma un intervallo cromatico" => "Adjust and unify a color range",
+            "Luce e colore locale" => "Local light and color",
+            "Esposizione, temperatura, tinta e saturazione" => {
+                "Exposure, temperature, tint and saturation"
+            }
+            "Curve RGB a punti" => "RGB point curves",
+            "Curva composita e curve separate R/G/B" => "Composite curve and separate R/G/B curves",
+            "Livelli tonali" => "Tonal levels",
+            "Nero, bianco, gamma e intervallo di uscita" => "Black, white, gamma and output range",
+            "Mixer e monocromia" => "Mixer and monochrome",
+            "Otto famiglie cromatiche e bianco e nero" => {
+                "Eight color families and black and white"
+            }
+            "Mixer dei canali" => "Channel mixer",
+            "Matrice RGB e offset per canale" => "RGB matrix and per-channel offset",
+            "Visibilità livello" => "Layer visibility",
+            "Blocca modifiche" => "Lock edits",
+            "Duplica livello" => "Duplicate layer",
+            "Sposta sopra" => "Move up",
+            "Sposta sotto" => "Move down",
+            "Elimina livello" => "Delete layer",
+            "Base fotografica · sorgente in sola lettura" => "Photo base · read-only source",
+            "Modifica livello" => "Editing layer",
+            "Intensità livello" => "Layer intensity",
+            "Fusione normale · prima di ritaglio e rotazione" => {
+                "Normal blending · before crop and rotation"
+            }
+            "Campiona sulla foto" => "Sample on photo",
+            "Mostra area" => "Show area",
+            "Clic sulla foto: campione all'ingresso del livello. Esc annulla." => {
+                "Click the photo to sample the layer input. Esc cancels."
+            }
+            "Intervallo: tonalità, cromia e luminanza Rec.2020 lineari" => {
+                "Range: hue, chroma and luminance in linear Rec.2020"
+            }
+            "Intervallo del campione" => "Sample range",
+            "Ampiezza tonalità (°)" => "Hue width (°)",
+            "Ampiezza cromia" => "Chroma width",
+            "Ampiezza luminanza" => "Luminance width",
+            "Uniformità verso il campione" => "Uniformity toward sample",
+            "Uniformità tonalità" => "Hue uniformity",
+            "Uniformità cromia" => "Chroma uniformity",
+            "Uniformità luminanza" => "Luminance uniformity",
+            "RGB lineare · interpolazione monotona a tratti" => {
+                "Linear RGB · monotonic piecewise interpolation"
+            }
+            "Curva a punti · RGB lineare" => "Point curve · linear RGB",
+            "Nero ingresso" => "Input black",
+            "Bianco ingresso" => "Input white",
+            "Nero uscita" => "Output black",
+            "Bianco uscita" => "Output white",
+            "Coefficienti RGB · valori negativi conservati" => {
+                "RGB coefficients · negative values preserved"
+            }
+            "Azioni regolazione" => "Adjustment actions",
+            "Maschera del livello" => "Layer mask",
+            "Aggiungi" => "Add",
+            "Sottrai" => "Subtract",
+            "Interseca" => "Intersect",
+            "Maschera bianca · foto intera" => "White mask · whole photo",
+            "Copertura" => "Coverage",
+            "Elimina componente" => "Delete component",
+            "Fine selezione" => "Finish selection",
+            "Overlay provvisorio sull'ingresso del livello · escluso dall'export" => {
+                "Provisional overlay on layer input · excluded from export"
+            }
+            "Campione non pronto: usa Verifica resa finale e una zona non trasparente." => {
+                "Sample not ready: use Verify final rendering and a nontransparent area."
+            }
+            "Bozza recuperata dopo un salvataggio interrotto." => {
+                "Draft recovered after an interrupted save."
+            }
+            "Torna alla bozza" => "Return to draft",
+            "Esporta ricetta…" => "Export recipe…",
+            "Ricetta esportata" => "Recipe exported",
+            "Navigazione cambiata: operazione annullata" => {
+                "Navigation changed: operation cancelled"
+            }
+            "Sorgente cambiata o non disponibile" => "Source changed or unavailable",
+            "Foto o revisione cambiata" => "Photo or revision changed",
+            "Ricetta occupata o non disponibile" => "Recipe busy or unavailable",
+            "Azione non disponibile" => "Action unavailable",
+            "Salvataggio non avviato; bozza conservata" => "Save not started; draft retained",
+            "Coda occupata" => "Queue busy",
+            "Conferma o annulla il ritaglio prima di chiudere." => {
+                "Confirm or cancel the crop before closing."
+            }
+            "Attendo il salvataggio delle modifiche prima di chiudere…" => {
+                "Waiting for changes to be saved before closing…"
+            }
+            "Nessuna revisione disponibile" => "No revision available",
+            "Sorgente o ricetta non disponibile" => "Source or recipe unavailable",
+
+            "Ritaglio" => "Crop",
+            "Ritaglio…" => "Crop…",
+            "La bozza resta aperta durante la navigazione. Conferma o Annulla per chiudere." => {
+                "The draft stays open while navigating. Confirm or Cancel to close."
+            }
+            "Torna alla foto del ritaglio" => "Return to crop photo",
+            "Libero" => "Free",
+            "Rapporto attuale" => "Current ratio",
+            "Proporzioni" => "Aspect ratio",
+            "Rapporto" => "Ratio",
+            "Larghezza del rapporto" => "Ratio width",
+            "Altezza del rapporto" => "Ratio height",
+            "Rapporto limitato dall’area minima del ritaglio." => {
+                "Ratio limited by the minimum crop area."
+            }
+            "Inverti" => "Swap",
+            "Inverti orientamento" => "Swap orientation",
+            "Il riquadro è quadrato o troppo stretto per invertirlo." => {
+                "The frame is square or too narrow to swap orientation."
+            }
+            "Inverti orientamento · X" => "Swap orientation · X",
+            "Trascina all’interno per" => "Drag inside to",
+            "Spostare il riquadro" => "Move the frame",
+            "Spostare la foto" => "Move the photo",
+            "Trascina i bordi per ridimensionare." => "Drag the edges to resize.",
+            "Griglia dei terzi" => "Rule of thirds grid",
+            "Immagine intera" => "Full image",
+            "Rimuove solo il ritaglio. Le altre regolazioni restano applicate." => {
+                "Removes only the crop. Keeps all other adjustments."
+            }
+            "Mouse e tastiera" => "Mouse and keyboard",
+            "Rotella: zoom · Spazio + trascina: sposta la vista." => {
+                "Wheel: zoom · Space + drag: pan the view."
+            }
+            "Con la foto attiva: frecce per spostare, +/− per ridimensionare. Maiusc: passo maggiore." => {
+                "With the photo focused: arrows to move, +/− to resize. Shift: larger step."
+            }
+            "X: inverti orientamento · Invio: applica · Esc: annulla." => {
+                "X: swap orientation · Enter: apply · Esc: cancel."
+            }
+            "Applica ritaglio" => "Apply crop",
+            "Bozza conservata su questa foto." => "Draft retained for this photo.",
+            "Caricamento dell’immagine…" => "Loading image…",
+            "Menu fotografia" => "Photo menu",
+            "Applica rapporto" => "Apply ratio",
+            "Blocca proporzioni" => "Lock aspect ratio",
+            "Sposta immagine nel riquadro" => "Move image within crop",
+            "Trascina lati, angoli o interno. Spazio + trascina: pan vista; rotella: zoom." => {
+                "Drag edges, corners or inside. Space + drag: pan view; wheel: zoom."
+            }
+            "Ricentra ritaglio" => "Center crop",
+            "Ripristina solo ritaglio" => "Reset crop only",
+            "Conferma ritaglio" => "Confirm crop",
+            "Annulla ritaglio" => "Cancel crop",
+            "Conferma o annulla il ritaglio prima di modificare le regolazioni." => {
+                "Confirm or cancel the crop before adjusting the recipe."
+            }
+            "Operazione in corso" => "Operation in progress",
+            "Sorgente o ricetta non disponibile; attendere caricamento/salvataggio." => {
+                "Source or recipe unavailable; wait for loading/saving."
+            }
+            "Apri in Anteprima" => "Open in Preview",
+            "Valutazione e metadati" => "Rating and metadata",
+            "Scarta" => "Reject",
+            "Rimuovi valutazione/scarto" => "Clear rating/rejection",
+            "Etichetta colore" => "Color label",
+            "Modifica parole chiave…" => "Edit keywords…",
+            "Regolazioni" => "Adjustments",
+            "Incolla regolazioni…" => "Paste adjustments…",
+            "Azzera regolazioni" => "Reset adjustments",
+            "Ruota 90° a sinistra" => "Rotate 90° left",
+            "Ruota 90° a destra" => "Rotate 90° right",
+            "Annulla regolazioni" => "Undo adjustments",
+            "Ripeti regolazioni" => "Redo adjustments",
+            "File e uscita" => "File and output",
+            "Esporta foto…" => "Export photo…",
+            "Completato" => "Completed",
+            "Esiti per foto" => "Results by photo",
+            "Annulla operazioni rimanenti" => "Cancel remaining operations",
+            "Regolazioni: Annulla dalla foto. Annotazioni: Annulla modifica dal menu." => {
+                "Adjustments: Undo in the photo. Annotations: Undo edit in the menu."
+            }
+            "Vincola all’area valida" => "Constrain to valid area",
+            "Bordi esterni alla sorgente: trasparenti nel risultato." => {
+                "Edges outside the source: transparent in the result."
+            }
+            "Sorgente cambiata: bozza conservata." => "Source changed: draft retained.",
+
             "Azzera tutto" => "Reset all",
             "Foto campione" => "Sample photos",
             "Ripristina tutte le regolazioni e il WB come scattato. Annullabile con Undo." => {
@@ -1011,6 +1418,10 @@ mod tests {
 
     #[test]
     fn translated_messages_preserve_paths_and_unknown_diagnostics() {
+        assert_eq!(
+            Language::English.message("Conferma o annulla il ritaglio prima di chiudere."),
+            "Confirm or cancel the crop before closing."
+        );
         let path = "/foto/Scartate/è una foto.png";
         let source = format!("Backup verificato: {path}");
         assert_eq!(

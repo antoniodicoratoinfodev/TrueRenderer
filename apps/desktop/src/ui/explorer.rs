@@ -288,6 +288,7 @@ impl TrueRenderer {
         }
     }
     pub(super) fn navigate(&mut self, path: PathBuf, view: Option<ViewMode>) {
+        self.photo_menu.navigation += 1;
         self.comparison.pending = None;
         self.comparison.pending_transform = None;
         self.browser.going = None;
@@ -362,6 +363,7 @@ impl TrueRenderer {
         }
     }
     pub(super) fn browser_user_selection(&mut self) {
+        self.photo_menu.navigation += 1;
         self.pending_selection = None;
         self.browser.restore = None;
     }
@@ -1267,50 +1269,56 @@ impl TrueRenderer {
                         {
                             egui::Popup::open_id(ui.ctx(), popup_id);
                         }
-                        egui::Popup::context_menu(&response)
-                            .at_position(response.rect.left_bottom())
-                            .show(|ui| {
-                                if row.entry.kind == Kind::Image {
-                                    self.comparison_menu(ui, &row.entry.path);
-                                    ui.separator();
-                                }
-                                if matches!(
-                                    row.entry.kind,
-                                    Kind::Directory | Kind::Image | Kind::Link
-                                ) && ui.button(lang.text("Apri destinazione")).clicked()
-                                {
-                                    self.navigate(
-                                        row.entry.path.clone(),
-                                        if row.entry.kind == Kind::Image {
-                                            Some(ViewMode::Preview)
-                                        } else {
-                                            None
-                                        },
-                                    );
-                                    ui.close();
-                                }
-                                if row.entry.kind == Kind::Directory {
-                                    if ui.button(lang.text("Aggiungi ai preferiti")).clicked() {
-                                        self.pin(row.entry.path.clone());
+                        if row.entry.kind == Kind::Image {
+                            if has_focus
+                                && self.browser.model.focused.as_ref() == Some(&row.entry.path)
+                                && ui.input(|i| i.modifiers.shift && i.key_pressed(egui::Key::F10))
+                            {
+                                response.request_focus();
+                            }
+                            self.photo_menu_path(&response, &row.entry.path, None, false);
+                        } else {
+                            egui::Popup::context_menu(&response)
+                                .at_position(response.rect.left_bottom())
+                                .show(|ui| {
+                                    if matches!(
+                                        row.entry.kind,
+                                        Kind::Directory | Kind::Image | Kind::Link
+                                    ) && ui.button(lang.text("Apri destinazione")).clicked()
+                                    {
+                                        self.navigate(
+                                            row.entry.path.clone(),
+                                            if row.entry.kind == Kind::Image {
+                                                Some(ViewMode::Preview)
+                                            } else {
+                                                None
+                                            },
+                                        );
                                         ui.close();
                                     }
-                                    if ui.button(lang.text("Rileggi questo ramo")).clicked() {
-                                        self.expand_branch(row.entry.path.clone(), true);
+                                    if row.entry.kind == Kind::Directory {
+                                        if ui.button(lang.text("Aggiungi ai preferiti")).clicked() {
+                                            self.pin(row.entry.path.clone());
+                                            ui.close();
+                                        }
+                                        if ui.button(lang.text("Rileggi questo ramo")).clicked() {
+                                            self.expand_branch(row.entry.path.clone(), true);
+                                            ui.close();
+                                        }
+                                    }
+                                    if ui.button(lang.text("Copia percorso")).clicked() {
+                                        ui.ctx().copy_text(row.entry.path.to_string_lossy().into());
                                         ui.close();
                                     }
-                                }
-                                if ui.button(lang.text("Copia percorso")).clicked() {
-                                    ui.ctx().copy_text(row.entry.path.to_string_lossy().into());
-                                    ui.close();
-                                }
-                                if ui.button(lang.text("Mostra nel sistema")).clicked() {
-                                    self.service
-                                        .filesystem
-                                        .client
-                                        .reveal(row.entry.path.clone());
-                                    ui.close();
-                                }
-                            });
+                                    if ui.button(lang.text("Mostra nel sistema")).clicked() {
+                                        self.service
+                                            .filesystem
+                                            .client
+                                            .reveal(row.entry.path.clone());
+                                        ui.close();
+                                    }
+                                });
+                        }
                     });
                 });
             }

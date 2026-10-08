@@ -170,7 +170,7 @@ pub(super) struct Prepared<'a> {
 }
 impl<'a> Prepared<'a> {
     pub fn new(mask: &'a Mask, aspect: f32) -> Self {
-        let brush = if mask.active() && mask.shape == Shape::Brush && !mask.points.is_empty() {
+        let brush = if mask.shape == Shape::Brush && !mask.points.is_empty() {
             let point = |p: [f32; 2]| [p[0], p[1] * aspect];
             let mut segments: Vec<_> = mask.points.iter().map(|p| [point(*p); 2]).collect();
             for (i, pair) in mask.points.windows(2).enumerate() {
@@ -194,6 +194,10 @@ impl<'a> Prepared<'a> {
         if !self.mask.active() {
             return;
         }
+        self.mask
+            .apply_prepared(rgb, self.weight(p, guide), self.exposure, self.gains);
+    }
+    pub fn weight(&self, p: [f32; 2], guide: [f32; 3]) -> f32 {
         if let Some(brush) = &self.brush {
             let mask = self.mask;
             let inner = mask.radius * (1. - mask.feather);
@@ -206,16 +210,9 @@ impl<'a> Prepared<'a> {
                 .sqrt();
             let t = ((d / mask.radius - (1. - mask.feather)) / mask.feather).clamp(0., 1.);
             let weight = 1. - t * t * (3. - 2. * t);
-            mask.apply_prepared(
-                rgb,
-                if mask.invert { 1. - weight } else { weight },
-                self.exposure,
-                self.gains,
-            );
+            if mask.invert { 1. - weight } else { weight }
         } else {
-            let weight = self.mask.weight(p, guide, self.aspect);
-            self.mask
-                .apply_prepared(rgb, weight, self.exposure, self.gains);
+            self.mask.weight(p, guide, self.aspect)
         }
     }
 }

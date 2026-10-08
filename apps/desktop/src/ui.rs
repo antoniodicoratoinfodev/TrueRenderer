@@ -23,6 +23,7 @@ mod export;
 mod inspector_probe;
 mod loading;
 pub(crate) mod navigation;
+mod photo_menu;
 mod preferences;
 pub(crate) mod raw_previews;
 mod science;
@@ -58,6 +59,7 @@ pub struct Startup {
 }
 pub struct TrueRenderer {
     comparison: comparison::Comparison,
+    photo_menu: photo_menu::PhotoMenu,
     editing: editing::EditingUi,
     science: science::ScienceUi,
     photo_export: export::ExportUi,
@@ -333,6 +335,7 @@ impl TrueRenderer {
             context: ctx.clone(),
             watched_sources: HashSet::new(),
             comparison: Default::default(),
+            photo_menu: Default::default(),
             source_status: HashMap::new(),
         };
         if let Some(path) = open {
@@ -492,6 +495,9 @@ impl TrueRenderer {
         self.status = "Lettura della cartella…".into();
     }
     fn command(&mut self, command: Command) {
+        if matches!(command, Command::SetView(_)) {
+            self.photo_menu.navigation += 1;
+        }
         if matches!(&command, Command::Select { .. } | Command::Move(_)) {
             if let Some(id) = self.state.current.clone() {
                 self.commit_edit(&id);
@@ -1144,6 +1150,7 @@ impl TrueRenderer {
                 .items
                 .iter_mut()
                 .chain(self.comparison.slots.iter_mut().flatten())
+                .chain(self.photo_menu.extra.values_mut())
                 .filter(|item| item.id == change.id)
             {
                 item.observation.clone_from(&change.observation);
@@ -1178,6 +1185,11 @@ impl TrueRenderer {
         self.status = "Sorgenti cambiate: anteprime invalidate; annotazioni conservate".into();
     }
     fn poll(&mut self, ctx: &egui::Context) {
+        if self.editing.looks.previewing()
+            && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
+        {
+            self.finish_look_preview(false);
+        }
         self.poll_edit_preview();
         self.poll_browser(ctx);
         while let Ok((generation, changes)) = self.source_monitor.changes.try_recv() {
@@ -1233,7 +1245,36 @@ impl TrueRenderer {
             .configure_compute(self.gpu_passed, settings.compute.code());
         while let Ok(event) = self.service.events.try_recv() {
             match event {
-                Event::Edit { id, result } => self.edit_result(id, result),
+                Event::ContextPhoto { token, result } => self.context_photo_result(token, result),
+                Event::RecoveredEditDraft {
+                    id,
+                    generation,
+                    recipe,
+                } => {
+                    if self.editing.entries.get(&id).is_some_and(|e| {
+                        !e.dirty()
+                            && e.loaded
+                                .as_ref()
+                                .is_some_and(|s| s.generation == generation)
+                    }) {
+                        self.apply_edit_draft(&id, recipe);
+                        if let Some(e) = self.editing.entries.get_mut(&id) {
+                            e.error = Some(
+                                self.cache_settings
+                                    .language
+                                    .text("Bozza recuperata dopo un salvataggio interrotto.")
+                                    .into(),
+                            );
+                        }
+                    }
+                }
+                Event::Edit { id, result } => {
+                    self.finish_context_photo(
+                        &id,
+                        result.as_ref().map(|_| ()).map_err(Clone::clone),
+                    );
+                    self.edit_result(id, result);
+                }
                 Event::PhotoExport(result) => {
                     self.record_develop_export(&result);
                     self.export_result(result);
@@ -1251,6 +1292,7 @@ impl TrueRenderer {
                         Err(error) => self.status = format!("Preferiti: {error}"),
                     }
                 }
+                Event::Looks(result) => self.editing.looks.receive(result),
                 Event::ScanBatch { items, generation } => {
                     if generation == self.browser.scan {
                         self.state.reconcile(items, false);
@@ -1350,6 +1392,19 @@ impl TrueRenderer {
                     revision,
                     undo_available,
                 } => {
+                    self.finish_context_photo(&id, Ok(()));
+                    for photo in self
+                        .comparison
+                        .slots
+                        .iter_mut()
+                        .flatten()
+                        .chain(self.photo_menu.extra.values_mut())
+                    {
+                        if photo.id == id {
+                            photo.annotation = annotation.clone();
+                            photo.revision = revision;
+                        }
+                    }
                     self.state.dispatch(Command::Commit {
                         id,
                         annotation,
@@ -1360,6 +1415,7 @@ impl TrueRenderer {
                         "Annotazioni salvate nella libreria · XMP non attivo in R0".into();
                 }
                 Event::SaveFailed { id, error } => {
+                    self.finish_context_photo(&id, Err(error.clone()));
                     self.state.dispatch(Command::Failed(id));
                     self.status = format!("Modifica NON salvata: {error}");
                 }
@@ -1440,6 +1496,10 @@ impl TrueRenderer {
         // Menus and quality selectors own keyboard input until they close.
         // In particular, Escape must not also leave the viewer behind a popup.
         if self.photo_export.open || egui::Popup::is_any_open(ctx) {
+            return;
+        }
+        if self.editing.crop.is_some() && ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.finish_crop(false);
             return;
         }
         if self.browser_keyboard(ctx) {
@@ -2703,7 +2763,7 @@ impl TrueRenderer {
         if response.double_clicked() {
             self.command(Command::SetView(ViewMode::Preview));
         }
-        self.photo_context_menu(&response, item);
+        self.photo_menu_for(&response, item, true);
         let tooltip = self
             .errors
             .get(&format!("{}:{:?}", item.id, key.1))
@@ -3086,7 +3146,8 @@ impl TrueRenderer {
             // Stable across RGB drafts; incompatible sources and display modes
             // have separate lanes and can never borrow these retained pixels.
             let lane = format!(
-                "view:{id}:{}:{}:{}:{:?}:{:?}:{:?}:{}:{proof}",
+                "view:{id}:crop={}:{}:{}:{}:{:?}:{:?}:{:?}:{}:{proof}",
+                self.crop_active(&item.id),
                 item.id,
                 item.digest,
                 digest,
@@ -3141,13 +3202,16 @@ impl TrueRenderer {
             let sample_from_current_render = !source.scientific()
                 && !self.editing.show_original
                 && !proof
+                && !self.crop_active(&item.id)
                 && image.is_some()
                 && !provisional;
             let image = image.unwrap_or(source);
             let editing_gesture = !image.scientific()
                 && !self.editing.show_original
                 && self.photo_gesture_active(&item.id);
-            let pending_size = pending.then(|| self.edited_source_size(&item.id, source_size));
+            let pending_size = pending.then(|| self.view_source_size(&item.id, source_size));
+            let crop_gesture =
+                self.crop_active(&item.id) && !ui.input(|i| i.key_down(egui::Key::Space));
             let (response, sample) = tr_render::viewport_with_options(
                 ui,
                 &mut self.presenter,
@@ -3156,7 +3220,7 @@ impl TrueRenderer {
                 &lane,
                 tr_render::ViewportOptions {
                     pending_size,
-                    editing_mask: editing_gesture,
+                    editing_mask: editing_gesture || crop_gesture,
                     progressive: !image.scientific(),
                     provisional,
                     live_edit,
@@ -3164,9 +3228,25 @@ impl TrueRenderer {
                 },
             );
             if !image.scientific() && !self.editing.show_original {
-                self.local_mask_interaction(ui, item, &response, source_size);
+                if self.crop_active(&item.id) {
+                    self.crop_interaction(ui, item, &response, source_size);
+                } else {
+                    self.layer_interaction(
+                        ui,
+                        item,
+                        &response,
+                        source_size,
+                        sample_from_current_render.then_some(image.as_ref()),
+                        sample.as_ref(),
+                    );
+                    self.local_mask_interaction(ui, item, &response, source_size);
+                }
             }
-            self.photo_context_menu(&response, item);
+            if self.crop_active(&item.id) {
+                self.crop_menu_for(&response, item);
+            } else {
+                self.photo_context_menu(&response, item);
+            }
             self.image_focus_ids.insert(response.id);
             if let Some(sample) = &sample {
                 self.capture_picker_areas(&image, sample.x, sample.y, sample_from_current_render);
@@ -3858,14 +3938,25 @@ impl eframe::App for TrueRenderer {
         }
         self.image_focus_ids.clear();
         if ctx.input(|i| i.viewport().close_requested())
-            && (!self.state.pending.is_empty() || self.edits_have_pending())
+            && (!self.state.pending.is_empty()
+                || self.edits_have_pending()
+                || self.editing.crop.is_some())
         {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.closing = true;
             self.commit_all_edits();
-            self.status = "Attendo il salvataggio delle modifiche prima di chiudere…".into();
+            self.status = if self.editing.crop.is_some() {
+                "Conferma o annulla il ritaglio prima di chiudere."
+            } else {
+                "Attendo il salvataggio delle modifiche prima di chiudere…"
+            }
+            .into();
         }
-        if self.closing && self.state.pending.is_empty() && !self.edits_have_pending() {
+        if self.closing
+            && self.state.pending.is_empty()
+            && !self.edits_have_pending()
+            && self.editing.crop.is_none()
+        {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
         self.toolbar(ui);
@@ -3926,7 +4017,9 @@ impl eframe::App for TrueRenderer {
         self.temporary_panel(&ctx);
         self.settings_window(&ctx);
         self.export_window(&ctx);
+        self.crop_window(&ctx);
         self.process_comparison_action();
+        self.process_photo_actions(&ctx);
         self.trim_images(false);
         self.smoke_tick(&ctx);
         self.background_demand(&ctx);

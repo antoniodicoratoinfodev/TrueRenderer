@@ -5,6 +5,7 @@ use tr_core::export::{Compression, Format, Options};
 #[derive(Default)]
 pub(super) struct ExportUi {
     pub open: bool,
+    pub targets: Option<Vec<Item>>,
     options: Options,
     destination: Option<PathBuf>,
     remaining: VecDeque<(Item, tr_store::LoadedEdit)>,
@@ -74,13 +75,14 @@ impl TrueRenderer {
             return;
         }
         let lang = self.cache_settings.language;
-        let selected: Vec<_> = self
-            .state
-            .items
-            .iter()
-            .filter(|item| self.state.selected.contains(&item.id))
-            .cloned()
-            .collect();
+        let selected: Vec<_> = self.photo_export.targets.clone().unwrap_or_else(|| {
+            self.state
+                .items
+                .iter()
+                .filter(|item| self.state.selected.contains(&item.id))
+                .cloned()
+                .collect()
+        });
         for item in &selected {
             self.ensure_edit_loaded(item);
         }
@@ -125,6 +127,7 @@ impl TrueRenderer {
                 ui.label(lang.text("Nuovi file: nessun originale o export esistente viene sostituito."));
                 ui.add_enabled_ui(!state.active && state.remaining.is_empty(), |ui| {
                     ui.label(localized_format!(lang, "{} fotografie selezionate · sviluppo nativo, non miniature", "{} selected photos · native development, not thumbnails", selected.len()));
+                    egui::ScrollArea::vertical().id_salt("export-targets").max_height(72.).show(ui,|ui| {for item in &selected {ui.small(&item.name);}});
                     egui::ComboBox::from_id_salt("export-format").selected_text(lang.text(state.options.format.label())).show_ui(ui, |ui| {
                         for format in Format::ALL { ui.selectable_value(&mut state.options.format, format, lang.text(format.label())); }
                     });
@@ -176,6 +179,9 @@ impl TrueRenderer {
                 }
             });
         state.open = open;
+        if !open {
+            state.targets = None;
+        }
         if start {
             state.remaining = frozen;
             state.total = state.remaining.len();

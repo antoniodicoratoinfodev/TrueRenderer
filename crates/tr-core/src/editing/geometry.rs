@@ -39,6 +39,30 @@ impl Default for Geometry {
     }
 }
 impl Geometry {
+    /// Rotate the existing framing in the oriented source domain, without
+    /// reinterpreting previously saved recipes or using a cropped raster.
+    pub fn rotate_crop(&mut self, turns: u8) {
+        for _ in 0..turns % 4 {
+            let [l, t, r, b] = self.crop;
+            self.crop = [1. - b, l, 1. - t, r];
+            self.perspective = [-self.perspective[1], self.perspective[0]];
+            self.quarter_turns = (self.quarter_turns + 1) % 4;
+        }
+    }
+    /// Reflect the output frame, preserving its selected source area.
+    pub fn reflect_crop(&mut self, horizontal: bool) {
+        let axis = usize::from(!horizontal);
+        let previous = self.crop;
+        self.crop[axis] = 1. - previous[axis + 2];
+        self.crop[axis + 2] = 1. - previous[axis];
+        self.perspective[axis] = -self.perspective[axis];
+        self.angle = -self.angle;
+        if horizontal != (self.quarter_turns % 2 == 1) {
+            self.flip_horizontal = !self.flip_horizontal;
+        } else {
+            self.flip_vertical = !self.flip_vertical;
+        }
+    }
     pub fn validate(&self) -> Result<()> {
         ensure!(
             self.crop
@@ -222,4 +246,48 @@ fn sample(image: &LinearImage, p: [f64; 2]) -> Pixel {
     std::array::from_fn(|i| {
         (a[i] + (b[i] - a[i]) * fx) * (1. - fy) + (c[i] + (d[i] - c[i]) * fx) * fy
     })
+}
+
+#[cfg(test)]
+mod framing_tests {
+    use super::*;
+    #[test]
+    fn rotating_and_reflecting_off_center_crops_preserves_source_samples() {
+        for quarter_turns in 0..4 {
+            for flips in 0..4 {
+                let original = Geometry {
+                    crop: [0.1, 0.2, 0.7, 0.9],
+                    quarter_turns,
+                    flip_horizontal: flips & 1 != 0,
+                    flip_vertical: flips & 2 != 0,
+                    angle: 13.,
+                    perspective: [12., -8.],
+                    distortion: 10.,
+                    ..Default::default()
+                };
+                for action in 0..3 {
+                    let mut transformed = original.clone();
+                    match action {
+                        0 => transformed.rotate_crop(1),
+                        1 => transformed.reflect_crop(true),
+                        _ => transformed.reflect_crop(false),
+                    }
+                    transformed.validate().unwrap();
+                    for p in [[0.1, 0.2], [0.4, 0.5], [0.9, 0.8]] {
+                        let old = match action {
+                            0 => [p[1], 1. - p[0]],
+                            1 => [1. - p[0], p[1]],
+                            _ => [p[0], 1. - p[1]],
+                        };
+                        let a = original.source_point(old, [800, 600]).unwrap();
+                        let b = transformed.source_point(p, [800, 600]).unwrap();
+                        assert!(
+                            (a[0] - b[0]).abs() < 1e-6 && (a[1] - b[1]).abs() < 1e-6,
+                            "q={quarter_turns} flips={flips} action={action}: {a:?} {b:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
 }

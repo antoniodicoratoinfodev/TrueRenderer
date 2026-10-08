@@ -1,0 +1,254 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-08",
+  "scope": "Follow-up audit requested by owner: asynchronous context targeting, cancellation, source invalidation, queue errors and crop interactions",
+  "passed": true,
+  "original_report": "crop-menu-macos-2026-10-08.json",
+  "source_base_commit": "f420fd02004589f07b303f957e4f15176594eb9e",
+  "source_sha256": {
+    "apps/desktop/src/filesystem_browser.rs": "d353ef42a4f0b16265891caea6494a85c96071c8ef5a28a03d68a0893ef4732d",
+    "apps/desktop/src/i18n.rs": "de45d65c8fe4db4e188dd9e4df4da717546340a5fa4b61e6147b40280ab9c205",
+    "apps/desktop/src/service.rs": "17aa2984f47b3a9a0c77b82035957d89978ebe7c2b05c490a830fa491e609187",
+    "apps/desktop/src/ui.rs": "85c40781366be3ca8c83a386387016f456611270a52ff3a89f92a36a04eb4fb1",
+    "apps/desktop/src/ui/comparison.rs": "aaebbe7e2522f4c9ceace3d68eda2fe51c1a55d0bd8a87349753f8b944c3f288",
+    "apps/desktop/src/ui/editing.rs": "76b1f89097b5629281a2ba8a950654b2c0e77ae70782b5e23716ae7bd777de9f",
+    "apps/desktop/src/ui/editing/advanced.rs": "718d008c38018d79ef1a1f2b93fc07e0c46fbf59b5db1b353d58143d8ffec49a",
+    "apps/desktop/src/ui/editing/transfer.rs": "81b1b86305d7bffe97a0c281e0beeb474fd2f56a57406bf60bebd002052d3bb3",
+    "apps/desktop/src/ui/explorer.rs": "2dbfe08cc8383101cd388fa2f90d4db6995f58b90ab718844c259a31f7941ac4",
+    "apps/desktop/src/ui/export.rs": "4bc900468d4b4053a6be7713c0d22e7f193b030bdc80b5fd34ff0b422844caea",
+    "apps/desktop/src/ui/loading/retention_tests.rs": "6b9293079739116b0a099989b6f44d36fe9bf21eb4605fb5f3dcd4e81b390653",
+    "crates/tr-core/src/editing/geometry.rs": "e01d267abe3e6924c0181344f62a85dc7d9b8905d48cb04dacd1975758d47ed5",
+    "apps/desktop/src/ui/editing/crop.rs": "548be38d3f74fe557ad0b69855ee5426ed7a1b1086133310a0d1a481f1495326",
+    "apps/desktop/src/ui/photo_menu.rs": "0248cf70e840c9154de46867dc93850cfa33a8e654f43abf0c8ee7ece7b6f7c6"
+  },
+  "findings_fixed": [
+    {
+      "finding": "Opening another Explorer menu could cancel an outstanding source check without delivering its result, leaving a context operation busy",
+      "correction": "Filesystem photo requests have independent token keys within the existing bounded queue",
+      "regression": "independent_photo_checks_never_cancel_each_other",
+      "failed_before_fix": true
+    },
+    {
+      "finding": "Undo/Redo request rejected by a full service queue left the context batch active with no result pending",
+      "correction": "Report queue failure and finish the affected photo operation",
+      "regression": "rejected_history_request_finishes_the_context_operation",
+      "failed_before_fix": true
+    },
+    {
+      "finding": "Deferred navigation retained only a path, allowing a replacement photograph at that path to receive the requested view/crop action",
+      "correction": "Retain Item identity in PendingView and recheck id, path, digest and observation after navigation; terminal unavailability produces an explicit result",
+      "regression": "deferred_crop_rejects_a_replaced_photo_at_the_same_path",
+      "failed_before_fix": true
+    },
+    {
+      "finding": "Navigation cancellation waited for source verification I/O to return, so an offline filesystem could keep the command busy",
+      "correction": "Revoke unsubmitted verification immediately; ignore its late result; accepted writes still finish on original targets",
+      "regression": "navigation_releases_a_verification_without_waiting_for_filesystem_io",
+      "failed_before_fix": true
+    }
+  ],
+  "additional_corrections": [
+    "Source monitor updates photographs retained outside the current folder",
+    "Undo/Redo disabled when none of the targets has applicable history",
+    "Unresolved photographs keep identity-dependent commands disabled until observation completes",
+    "Result instructions distinguish per-photo adjustment undo from annotation undo in the menu",
+    "Explicit crop-close prompt localized in Italian and English",
+    "Synthetic pressure tests use a separate manager so the live OS poll cannot overwrite injected pressure; production memory policy unchanged"
+  ],
+  "regressions": {
+    "new_tests": 6,
+    "initially_failing_tests": 4,
+    "additional_tests": [
+      "unavailable_deferred_crop_and_external_source_watch_release_busy_state",
+      "pointer_modes_separate_crop_movement_image_movement_and_view_pan"
+    ],
+    "modified_existing_tests": [
+      "Two synthetic-pressure retention tests",
+      "English crop-close message assertion"
+    ]
+  },
+  "verification": {
+    "command": "scripts/verify.sh --gui",
+    "artifacts": "var/verify-DGfjYOU8",
+    "ordinary_rust_tests": 344,
+    "desktop_tests": 191,
+    "integration_tests": 14,
+    "private_direct_camera_tests_skipped": 3,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "debug_and_release_build": true,
+    "native_surface_sampling": true,
+    "native_smoke": {
+      "adapter": "Apple M4 · Metal",
+      "application": "TrueRenderer",
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 77,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 6,
+        "last_fallback": "",
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8446692,
+        "wide_peak_frames": 2,
+        "wide_peak_gpu_bytes": 12286692,
+        "wide_peak_memory_bytes": 36860076,
+        "wide_reprojections": 1
+      },
+      "decode_errors": {},
+      "elapsed_seconds": 4.229253768920898,
+      "frames": 237,
+      "gpu": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati",
+      "images": 12,
+      "passed": true,
+      "pixels_per_point": 2.0,
+      "presentation_errors": false,
+      "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+      "scope": "native R0 corpus smoke; not color/display/sandbox qualification",
+      "screenshots": [
+        "02-preview",
+        "04-radial-1to1",
+        "07-grid-small",
+        "03-compare",
+        "08-grid-large",
+        "05-radial-fit",
+        "01-grid",
+        "06-radial-37percent"
+      ],
+      "sqlite": "3.53.2",
+      "status": "Cartella pronta · Anteprima",
+      "surface": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgba16Float, color_spaces: SurfaceColorSpaces(SRGB | EXTENDED_SRGB_LINEAR | DISPLAY_P3 | BT2100_PQ | BT2100_HLG | EXTENDED_SRGB | EXTENDED_DISPLAY_P3) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB | DISPLAY_P3 | BT2100_PQ | BT2100_HLG) }])",
+      "version": "0.1.5",
+      "worker_pids": [],
+      "worker_transports": [
+        "Processo su pipe · corpus R0"
+      ]
+    },
+    "local_links_checked": 395,
+    "diff_check": true
+  },
+  "manual": {
+    "sources": "Generated corpus and isolated catalog only",
+    "review_candidate": [
+      "Right-click on unselected photo leaves existing selection until action",
+      "Undo/Redo disabled on photo without edit history",
+      "Crop entered from context menu; full image, handles and excluded zones visible",
+      "1:1 crop; Move image within crop shifts image while frame remains fixed on screen",
+      "Zoom to 215 percent keeps crop coordinates unchanged; Fit restores view",
+      "Closing with draft cancels window close; Cancel crop then closes without creating revisions"
+    ],
+    "final_candidate": [
+      "Crop entered from Develop panel",
+      "Close with edited 1:1 draft displays Confirm or cancel the crop before closing. in English",
+      "Cancel crop completes closure with no saved crop revision"
+    ],
+    "catalog_integrity": "ok",
+    "revisions_created_by_cancelled_sessions": 0,
+    "tool_transient": "One native pipe connection closed after application restart; reconnect succeeded and final inspection completed"
+  },
+  "xpc_candidate_and_distribution_passed": true,
+  "xpc_distribution": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-08T10:46:01.491608+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "acfedf01a9a67f75a609e363ed968da6b574768e2deaf58c48e2ab6615d3918b",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non è una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  },
+  "xpc_integration": {
+    "application": "TrueRenderer",
+    "corpus_images_checked": 12,
+    "edited_export_checked_slots": 2,
+    "edited_export_native_match_slots": 2,
+    "edited_export_source_unchanged": true,
+    "elapsed_seconds": 20.915289375,
+    "first_before_stop": {
+      "completed_jobs": 1,
+      "forced_stops": 1,
+      "peak_footprint_bytes": 7766472,
+      "peak_rss_bytes": 14368768,
+      "starts": 1,
+      "worker_pid": 11589
+    },
+    "first_pid": 11589,
+    "full_sandbox_gate_passed": false,
+    "lifecycle_api": "Mach task/audit token + dynamically resolved libproc SPI; no PID-only signal",
+    "memory_before_stop": {
+      "completed_jobs": 1,
+      "forced_stops": 1,
+      "peak_footprint_bytes": 7799264,
+      "peak_rss_bytes": 14385152,
+      "starts": 1,
+      "worker_pid": 11596
+    },
+    "memory_limit_is_hard_kernel_cap": false,
+    "other_isolate_survived": true,
+    "passed": true,
+    "recovered_pid": 11596,
+    "same_pixels": true,
+    "scope": "integrated XPC R0 corpus, two processes, timeout and memory supervision; full sandbox/release gate open",
+    "second": {
+      "completed_jobs": 14,
+      "forced_stops": 0,
+      "peak_footprint_bytes": 44220896,
+      "peak_rss_bytes": 50872320,
+      "starts": 1,
+      "worker_pid": 11588
+    },
+    "second_pid": 11588,
+    "suspended_worker_timeout_ms": 207,
+    "two_distinct_processes": true,
+    "version": "0.1.5"
+  },
+  "delivery": {
+    "catalog_integrity": "ok",
+    "catalog_rows_and_bytes_unchanged": true,
+    "backups_unchanged": true,
+    "backup_count": 159,
+    "previous_bundle": "var/crop-menu-review-2026-10-08/previous-distribution.app",
+    "durable_backup": "var/crop-menu-review-2026-10-08/durable-before",
+    "bundle": "dist/TrueRenderer.app",
+    "bundle_files": {
+      "Contents/Info.plist": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+      "Contents/MacOS/TrueRenderer": "acfedf01a9a67f75a609e363ed968da6b574768e2deaf58c48e2ab6615d3918b",
+      "Contents/MacOS/tr-worker": "cfa8ed99d46b66cf5aaa4dd37d36a4894b47ecfbafa1a225f483c4efb826e4d7",
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+      "Contents/Resources/SamplePhotos/manifest.json": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "5649bee906a78bd14be532474d48f7ca714e4caea6863137144ca79626d1b36e",
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2ce4c1b1e020a244a85a46fef1cfa1cb29e71b371332b0a7b4fb59d59f251625",
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+      "Contents/_CodeSignature/CodeResources": "479282c98c34468f8bbce062b57e033cf8532316472d90fe208e16a94233fd84"
+    },
+    "candidate_equals_distribution": true
+  },
+  "originals_unchanged": true,
+  "limits": [
+    "Asynchronous races and unavailable-source matrix reproduced in automated regressions; no exhaustive manual offline/network-filesystem campaign",
+    "Space-pan separation regression-tested; native image movement and zoom inspected",
+    "No new full 48-case advanced-export parity campaign in this follow-up; prior report remains scoped to prior binary. Current XPC suite includes edited-export checks",
+    "Windows, VoiceOver, calibrated cameras/color and physical-memory qualification remain open",
+    "Later menu increments 2–4 remain open: versions, stacks, collections, external editors, sidecars, HDR/panorama",
+    "No R0–R4 or SF0–SF10 gate closed; ad-hoc signature and XPC tests are not full release/sandbox qualification"
+  ],
+  "commit_or_push_performed": false,
+  "superseded_by": "crop-ux-macos-2026-10-08.json"
+}

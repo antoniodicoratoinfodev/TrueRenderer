@@ -14,19 +14,24 @@ pub(super) struct Comparison {
     pub slots: [Option<Item>; 2],
     pub before_after: bool,
     queued: Option<(PathBuf, Action)>,
+    expected: Option<Item>,
     pub pending: Option<(PathBuf, Action)>,
     pub pending_transform: Option<ViewTransform>,
 }
 
 impl TrueRenderer {
     pub(super) fn known_items(&self) -> impl Iterator<Item = &Item> {
-        self.state.items.iter().chain(
-            self.comparison
-                .slots
-                .iter()
-                .flatten()
-                .filter(|item| !self.state.items.iter().any(|current| current.id == item.id)),
-        )
+        self.state
+            .items
+            .iter()
+            .chain(self.photo_menu.extra.values())
+            .chain(
+                self.comparison
+                    .slots
+                    .iter()
+                    .flatten()
+                    .filter(|item| !self.state.items.iter().any(|current| current.id == item.id)),
+            )
     }
 
     pub(super) fn comparison_items(&self) -> [Option<Item>; 2] {
@@ -69,7 +74,12 @@ impl TrueRenderer {
         })
     }
 
-    pub(super) fn comparison_menu(&mut self, ui: &mut egui::Ui, path: &std::path::Path) {
+    pub(super) fn comparison_menu(
+        &mut self,
+        ui: &mut egui::Ui,
+        path: &std::path::Path,
+        expected: Option<&Item>,
+    ) {
         let lang = self.cache_settings.language;
         for (label, action) in [
             ("Usa come confronto A", Action::A),
@@ -78,13 +88,14 @@ impl TrueRenderer {
         ] {
             if ui.button(lang.text(label)).clicked() {
                 self.comparison.queued = Some((path.to_owned(), action));
+                self.comparison.expected = expected.cloned();
                 ui.close();
             }
         }
     }
 
     pub(super) fn photo_context_menu(&mut self, response: &egui::Response, item: &Item) {
-        response.context_menu(|ui| self.comparison_menu(ui, &item.path));
+        self.photo_menu_for(response, item, false);
     }
 
     pub(super) fn apply_comparison(&mut self, item: Item, action: Action) {
@@ -146,6 +157,20 @@ impl TrueRenderer {
     pub(super) fn process_comparison_action(&mut self) {
         if let Some((path, action)) = self.comparison.queued.take() {
             let item = self.known_items().find(|item| item.path == path).cloned();
+            if let Some(expected) = self.comparison.expected.take()
+                && !item.as_ref().is_some_and(|p| {
+                    p.id == expected.id
+                        && p.digest == expected.digest
+                        && p.observation == expected.observation
+                })
+            {
+                self.status = self
+                    .cache_settings
+                    .language
+                    .text("Foto o revisione cambiata")
+                    .into();
+                return;
+            }
             if let Some(item) = item.filter(|item| {
                 action != Action::Focus || self.state.items.iter().any(|i| i.id == item.id)
             }) {

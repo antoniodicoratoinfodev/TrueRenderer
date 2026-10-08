@@ -1,6 +1,704 @@
 use super::*;
 use std::path::Path;
 
+#[test]
+fn curves_and_levels_panels_open_in_both_languages_without_rewriting_values() {
+    use tr_core::editing::layers::*;
+    for lang in [Language::Italian, Language::English] {
+        for op in crate::verify_advanced::curves_recipe(Default::default(), false)
+            .layers
+            .unwrap()
+            .layers
+            .remove(0)
+            .operators
+        {
+            let ctx = egui::Context::default();
+            let title = lang.text(op.tool().name).to_owned();
+            let mut r = EditRecipe::neutral(Default::default());
+            r.layer_stack().layers.push(Layer::new("Curves", op));
+            let before = r.clone();
+            let mut controls = super::layers::Controls::default();
+            controls.bind("A");
+            for _ in 0..2 {
+                let shapes = frame(&ctx, vec![], |ui| {
+                    assert_eq!(controls.show(ui, lang, &mut r), (false, false));
+                });
+                assert!(shapes.texts.iter().any(|(s, _)| s == &title));
+            }
+            assert_eq!(r, before);
+            r.validate().unwrap();
+        }
+    }
+}
+
+#[test]
+fn level_channel_reset_is_scoped_and_changing_channel_cancels_the_picker() {
+    use tr_core::editing::layers::*;
+    let mut g = LevelAdjustments::default();
+    g.channels[1].gamma = 1.2;
+    g.channels[2].black = -0.1;
+    let mut r = EditRecipe::neutral(Default::default());
+    r.layer_stack().layers.push(Layer::new(
+        "Levels",
+        Operator::TonalLevels(Box::new(g.clone())),
+    ));
+    let ctx = egui::Context::default();
+    let mut controls = super::layers::Controls::default();
+    controls.bind("A");
+    let mut commits = 0;
+    for (label, expected) in [
+        ("Red", 0),
+        ("Reset channel", 1),
+        ("Pick gray", 1),
+        ("Green", 1),
+    ] {
+        let mut draw = |ui: &mut egui::Ui| {
+            commits += usize::from(controls.show(ui, Language::English, &mut r).1);
+        };
+        let shapes = frame(&ctx, vec![], &mut draw);
+        let pos = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == label)
+            .unwrap()
+            .1
+            .center();
+        frame(&ctx, click(pos, true), &mut draw);
+        frame(&ctx, click(pos, false), &mut draw);
+        assert_eq!(commits, expected);
+        if label == "Pick gray" {
+            assert!(controls.pick && controls.take_native_request());
+        }
+    }
+    assert!(!controls.pick);
+    let Operator::TonalLevels(actual) = &r.layers.as_ref().unwrap().layers[0].operators[0] else {
+        panic!()
+    };
+    assert_eq!(actual.channels[1], TonalLevel::default());
+    assert_eq!(actual.channels[2], g.channels[2]);
+}
+
+#[test]
+fn frozen_auto_levels_and_curves_reopen_and_undo_redo_without_reanalysis() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    let digest = "a".repeat(64);
+    let item = catalog
+        .observe(Path::new("synthetic.png"), &digest, 4)
+        .unwrap();
+    let original = crate::verify_advanced::curves_recipe(Default::default(), false);
+    let first = catalog.save_edit(&item.id, 0, &original).unwrap();
+    let source = tr_core::color::LinearImage::new(
+        128,
+        96,
+        (0..128 * 96)
+            .map(|i| {
+                let v = 0.1 + (i % 128) as f32 / 160.;
+                [v, v * 0.8, v * 0.6, 1.]
+            })
+            .collect(),
+    )
+    .unwrap();
+    let mut analyzed = original.clone();
+    crate::verify_advanced::freeze_levels_auto(&mut analyzed, &source, &digest, true).unwrap();
+    let saved = catalog
+        .save_edit(&item.id, first.generation, &analyzed)
+        .unwrap();
+    drop(catalog);
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    assert_eq!(
+        catalog
+            .load_edit(&item.id, Default::default())
+            .unwrap()
+            .recipe,
+        analyzed
+    );
+    let undo = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+    assert_eq!(undo.recipe, original);
+    let redo = catalog.step_edit(&item.id, undo.generation, false).unwrap();
+    assert_eq!(redo.recipe, analyzed);
+    assert_eq!(
+        catalog
+            .save_edit(&item.id, redo.generation, &analyzed)
+            .unwrap()
+            .generation,
+        redo.generation
+    );
+}
+
+#[cfg(any(windows, target_os = "macos"))]
+#[test]
+fn level_picker_waits_for_native_pixels_and_rejects_transparent_clicks() {
+    use tr_core::editing::layers::*;
+    let (_dir, ctx, mut app) = crate::ui::settings_regressions::app();
+    crate::ui::settings_regressions::settle(&mut app, &ctx, true);
+    let item = app.state.items[0].clone();
+    let mut recipe = EditRecipe::neutral(Default::default());
+    let mut layer = Layer::new(
+        "Levels",
+        Operator::Light {
+            exposure: 1.,
+            temperature: 0.,
+            tint: 0.,
+            saturation: 0.,
+        },
+    );
+    layer
+        .operators
+        .push(Operator::Levels([TonalLevel::default(); 4]));
+    let id = layer.id;
+    recipe.layer_stack().layers.push(layer);
+    app.state.current = Some(item.id.clone());
+    app.editing.entries.insert(
+        item.id.clone(),
+        EditEntry {
+            loaded: Some(LoadedEdit {
+                asset_id: item.id.clone(),
+                source_digest: item.digest.clone(),
+                generation: 0,
+                revision: 0,
+                recipe: recipe.clone(),
+                can_undo: false,
+                can_redo: false,
+            }),
+            draft: Some(recipe.clone()),
+            ..Default::default()
+        },
+    );
+    app.editing.layers.bind(&item.id);
+    app.editing.layers.view_layers = true;
+    app.editing.layers.selected = Some(id);
+    app.editing.layers.set_analysis_source(&item.digest);
+    let mut panel = recipe.clone();
+    let mut draw = |ui: &mut egui::Ui| {
+        app.editing.layers.show(ui, Language::English, &mut panel);
+    };
+    let shapes = frame(&ctx, vec![], &mut draw);
+    let pos = shapes
+        .texts
+        .iter()
+        .find(|(s, _)| s == "Pick gray")
+        .unwrap()
+        .1
+        .center();
+    frame(&ctx, click(pos, true), &mut draw);
+    frame(&ctx, click(pos, false), &mut draw);
+    let image = ImageLevels::from_source(
+        tr_core::color::LinearImage::new(32, 16, vec![[0.2, 0.3, 0.4, 1.]; 512]).unwrap(),
+        PreviewRequest::full(),
+    )
+    .unwrap();
+    for stage in 0..3 {
+        let sample = tr_render::Sample {
+            x: 2,
+            y: 1,
+            working: if stage == 1 {
+                [0.; 4]
+            } else {
+                [0.2, 0.3, 0.4, 1.]
+            },
+            display: [0; 4],
+        };
+        let mut draw = |ui: &mut egui::Ui| {
+            let response = ui.interact(
+                egui::Rect::from_min_max(egui::pos2(10., 10.), egui::pos2(290., 290.)),
+                egui::Id::new("level-pick"),
+                egui::Sense::click(),
+            );
+            app.layer_interaction(
+                ui,
+                &item,
+                &response,
+                [32, 16],
+                (stage > 0).then_some(&image),
+                Some(&sample),
+            );
+        };
+        let p = egui::pos2(120., 120.);
+        frame(&ctx, vec![], &mut draw);
+        frame(&ctx, click(p, true), &mut draw);
+        frame(&ctx, click(p, false), &mut draw);
+        if stage < 2 {
+            assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&recipe));
+            assert!(app.editing.layers.pick);
+        }
+    }
+    assert!(!app.editing.layers.pick);
+    let actual = app.editing.entries[&item.id].draft.as_ref().unwrap();
+    assert_eq!(
+        actual.layers.as_ref().unwrap().layers[0].operators[0],
+        recipe.layers.as_ref().unwrap().layers[0].operators[0]
+    );
+    let Operator::TonalLevels(g) = &actual.layers.as_ref().unwrap().layers[0].operators[1] else {
+        panic!()
+    };
+    assert_eq!(g.analysis.as_ref().unwrap().sample_xy, Some([2, 1]));
+}
+
+#[test]
+fn color_wheel_drag_keyboard_reset_and_disabled_state_share_the_slider_values() {
+    fn run(
+        ctx: &egui::Context,
+        events: Vec<egui::Event>,
+        enabled: bool,
+        hue: &mut f32,
+        amount: &mut f32,
+    ) -> (egui::Rect, bool) {
+        let mut rect = egui::Rect::NOTHING;
+        let mut commit = false;
+        frame(ctx, events, |ui| {
+            ui.add_enabled_ui(enabled, |ui| {
+                let r = super::layers::color_wheel(ui, Language::English, hue, amount);
+                rect = r.rect;
+                commit = r.drag_stopped() || (r.changed() && !r.dragged());
+            });
+        });
+        (rect, commit)
+    }
+    for enabled in [true, false] {
+        let ctx = egui::Context::default();
+        let (mut hue, mut amount) = (20., 10.);
+        let (rect, _) = run(&ctx, vec![], enabled, &mut hue, &mut amount);
+        let start = rect.center() + egui::vec2(35., 0.);
+        let end = rect.center() + egui::vec2(0., -40.);
+        run(&ctx, click(start, true), enabled, &mut hue, &mut amount);
+        assert!(
+            !run(
+                &ctx,
+                vec![egui::Event::PointerMoved(end)],
+                enabled,
+                &mut hue,
+                &mut amount
+            )
+            .1
+        );
+        let committed = run(&ctx, click(end, false), enabled, &mut hue, &mut amount).1;
+        assert_eq!(committed, enabled);
+        if enabled {
+            assert!((hue - 90.).abs() < 1e-4 && amount > 60.);
+        } else {
+            assert_eq!((hue, amount), (20., 10.));
+        }
+        for (key, modifiers) in [
+            (egui::Key::ArrowRight, egui::Modifiers::SHIFT),
+            (egui::Key::Home, egui::Modifiers::NONE),
+        ] {
+            let event = egui::Event::Key {
+                key,
+                physical_key: Some(key),
+                pressed: true,
+                repeat: false,
+                modifiers,
+            };
+            let changed = run(&ctx, vec![event], enabled, &mut hue, &mut amount).1;
+            assert_eq!(changed, enabled);
+            if enabled {
+                if key == egui::Key::Home {
+                    assert_eq!((hue, amount), (0., 0.));
+                } else {
+                    assert!((hue - 100.).abs() < 1e-4);
+                }
+            } else {
+                assert_eq!((hue, amount), (20., 10.));
+            }
+        }
+    }
+}
+
+#[test]
+fn selective_and_tonal_panels_preserve_saved_values_in_both_languages() {
+    use tr_core::editing::layers::*;
+    for lang in [Language::Italian, Language::English] {
+        let mut operators = crate::verify_advanced::selective_recipe(Default::default(), true)
+            .layers
+            .unwrap()
+            .layers
+            .remove(0)
+            .operators;
+        operators.push(Operator::ExposureGamma(ExposureGamma {
+            exposure: -10.,
+            offset: -4.,
+            gamma: 0.25,
+            ..Default::default()
+        }));
+        operators.push(Operator::TonalAdjustments(TonalAdjustments {
+            pivot: 4.,
+            whites: 100.,
+            blacks: -100.,
+            ..Default::default()
+        }));
+        for op in operators {
+            let ctx = egui::Context::default();
+            let title = lang.text(op.tool().name).to_owned();
+            if lang == Language::English {
+                assert_ne!(title, op.tool().name);
+            }
+            let mut r = EditRecipe::neutral(Default::default());
+            r.layer_stack().layers.push(Layer::new("Local color", op));
+            let before = r.clone();
+            let mut controls = super::layers::Controls::default();
+            controls.bind("A");
+            for _ in 0..2 {
+                let shapes = frame(&ctx, vec![], |ui| {
+                    assert_eq!(controls.show(ui, lang, &mut r), (false, false));
+                });
+                assert!(shapes.texts.iter().any(|(s, _)| s == &title));
+            }
+            r.validate().unwrap();
+            assert_eq!(r, before);
+        }
+    }
+}
+
+#[test]
+fn selective_family_navigation_is_not_an_edit_and_reset_is_limited_to_that_family() {
+    use tr_core::editing::layers::*;
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut s = SelectiveColor::default();
+        s.adjustments[0] = [10., 20., 30., 40.];
+        s.adjustments[8] = [-10., -20., -30., -40.];
+        let mut r = EditRecipe::neutral(Default::default());
+        r.layer_stack()
+            .layers
+            .push(Layer::new("Selective", Operator::SelectiveColor(s.clone())));
+        let mut controls = super::layers::Controls::default();
+        controls.bind("A");
+        let mut commits = 0;
+        for (label, expected_commits) in [
+            (format!("{} •", lang.text("Neri")), 0),
+            (lang.text("Assoluto").into(), 1),
+            (lang.text("Ripristina famiglia").into(), 2),
+        ] {
+            let mut draw = |ui: &mut egui::Ui| {
+                commits += usize::from(controls.show(ui, lang, &mut r).1);
+            };
+            let shapes = frame(&ctx, vec![], &mut draw);
+            let pos = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == &label)
+                .unwrap()
+                .1
+                .center();
+            frame(&ctx, click(pos, true), &mut draw);
+            frame(&ctx, click(pos, false), &mut draw);
+            assert_eq!(commits, expected_commits);
+            let Operator::SelectiveColor(current) =
+                &r.layers.as_ref().unwrap().layers[0].operators[0]
+            else {
+                unreachable!()
+            };
+            assert_eq!(current.adjustments[0], s.adjustments[0]);
+            if expected_commits == 0 {
+                assert_eq!(current, &s);
+            }
+            if expected_commits == 2 {
+                assert_eq!(current.adjustments[8], [0.; 4]);
+                assert_eq!(current.method, SelectiveMethod::Absolute);
+            }
+        }
+    }
+}
+
+#[test]
+fn selective_recipe_methods_reopen_undo_redo_without_spurious_revisions() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    let item = catalog
+        .observe(Path::new("synthetic.png"), "synthetic", 4)
+        .unwrap();
+    let relative = crate::verify_advanced::selective_recipe(Default::default(), false);
+    let first = catalog.save_edit(&item.id, 0, &relative).unwrap();
+    let absolute = crate::verify_advanced::selective_recipe(Default::default(), true);
+    let saved = catalog
+        .save_edit(&item.id, first.generation, &absolute)
+        .unwrap();
+    drop(catalog);
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    assert_eq!(
+        catalog
+            .load_edit(&item.id, Default::default())
+            .unwrap()
+            .recipe,
+        absolute
+    );
+    let undo = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+    assert_eq!(undo.recipe, relative);
+    let redo = catalog.step_edit(&item.id, undo.generation, false).unwrap();
+    assert_eq!(redo.recipe, absolute);
+    assert_eq!(
+        catalog
+            .save_edit(&item.id, redo.generation, &absolute)
+            .unwrap()
+            .generation,
+        redo.generation
+    );
+}
+
+#[test]
+fn creative_panels_open_in_both_languages_without_changing_saved_values() {
+    use tr_core::editing::layers::*;
+    let recipe = crate::verify_advanced::toning_recipe(Default::default());
+    for lang in [Language::Italian, Language::English] {
+        for op in recipe.layers.as_ref().unwrap().layers[0].operators.clone() {
+            let ctx = egui::Context::default();
+            let mut r = EditRecipe::neutral(Default::default());
+            r.layer_stack().layers.push(Layer::new("Look", op));
+            let before = r.clone();
+            let mut controls = super::layers::Controls::default();
+            controls.bind("A");
+            for _ in 0..2 {
+                let shapes = frame(&ctx, vec![], |ui| {
+                    assert_eq!(controls.show(ui, lang, &mut r), (false, false));
+                });
+                let title = lang.text(
+                    before.layers.as_ref().unwrap().layers[0].operators[0]
+                        .tool()
+                        .name,
+                );
+                assert!(shapes.texts.iter().any(|(s, _)| s == title));
+            }
+            assert_eq!(r, before);
+            if lang == Language::English {
+                assert_ne!(
+                    lang.text(
+                        before.layers.as_ref().unwrap().layers[0].operators[0]
+                            .tool()
+                            .name
+                    ),
+                    before.layers.as_ref().unwrap().layers[0].operators[0]
+                        .tool()
+                        .name
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn gradient_stop_insert_remove_is_reversible_and_commits_once_per_click() {
+    use tr_core::editing::layers::*;
+    let ctx = egui::Context::default();
+    let original = GradientMap {
+        amount: 100.,
+        ..Default::default()
+    };
+    let mut recipe = EditRecipe::neutral(Default::default());
+    recipe.layer_stack().layers.push(Layer::new(
+        "Palette",
+        Operator::GradientMap(original.clone()),
+    ));
+    let before = recipe.clone();
+    let mut controls = super::layers::Controls::default();
+    controls.bind("A");
+    let mut commits = 0;
+    for label in ["Add point", "Delete point"] {
+        let mut draw = |ui: &mut egui::Ui| {
+            commits += usize::from(controls.show(ui, Language::English, &mut recipe).1);
+        };
+        let shapes = frame(&ctx, vec![], &mut draw);
+        let pos = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == label)
+            .unwrap()
+            .1
+            .center();
+        frame(&ctx, click(pos, true), &mut draw);
+        frame(&ctx, click(pos, false), &mut draw);
+        let Operator::GradientMap(g) = &recipe.layers.as_ref().unwrap().layers[0].operators[0]
+        else {
+            unreachable!()
+        };
+        assert_eq!(g.stops.len(), if label == "Add point" { 3 } else { 2 });
+        for t in [-1., 0., 0.3, 0.7, 1., 3.] {
+            assert_eq!(g.color_at(t), original.color_at(t));
+        }
+        recipe.validate().unwrap();
+    }
+    assert_eq!(commits, 2);
+    assert_eq!(recipe, before);
+}
+
+#[test]
+fn creative_recipe_reopens_and_undo_redo_preserve_all_operator_versions() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    let item = catalog
+        .observe(Path::new("synthetic.png"), "synthetic", 4)
+        .unwrap();
+    let historical = crate::verify_advanced::layered_recipe(Default::default());
+    let first = catalog.save_edit(&item.id, 0, &historical).unwrap();
+    let creative = crate::verify_advanced::toning_recipe(Default::default());
+    let saved = catalog
+        .save_edit(&item.id, first.generation, &creative)
+        .unwrap();
+    drop(catalog);
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    let loaded = catalog.load_edit(&item.id, Default::default()).unwrap();
+    assert_eq!(loaded.recipe, creative);
+    let undo = catalog.step_edit(&item.id, saved.generation, true).unwrap();
+    assert_eq!(undo.recipe, historical);
+    let redo = catalog.step_edit(&item.id, undo.generation, false).unwrap();
+    assert_eq!(redo.recipe, creative);
+    assert_eq!(
+        catalog
+            .save_edit(&item.id, redo.generation, &creative)
+            .unwrap()
+            .generation,
+        redo.generation
+    );
+}
+
+#[test]
+fn layer_panel_open_and_scope_changes_do_not_rewrite_extended_values() {
+    use tr_core::editing::layers::{Layer, Operator, TonalLevel};
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut levels = [TonalLevel::default(); 4];
+        levels[0].black = -5.;
+        levels[0].white = 8.;
+        levels[0].output = [-4., 12.];
+        let mut recipe = EditRecipe::neutral(Default::default());
+        recipe
+            .layer_stack()
+            .layers
+            .push(Layer::new("Extended", Operator::Levels(levels)));
+        let before = recipe.clone();
+        let mut controls = super::layers::Controls::default();
+        controls.bind("A");
+        for _ in 0..2 {
+            frame(&ctx, vec![], |ui| {
+                assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+            });
+        }
+        assert_eq!(recipe, before);
+        controls.pick = true;
+        controls.overlay = true;
+        controls.paint = true;
+        controls.bind("B");
+        assert!(
+            !controls.pick && !controls.overlay && !controls.paint && controls.selected.is_none()
+        );
+        let mut viewed = recipe.clone();
+        controls.preview_input("A", &mut viewed);
+        assert_eq!(viewed, recipe);
+    }
+}
+
+#[cfg(any(windows, target_os = "macos"))]
+#[test]
+fn layered_brush_is_source_anchored_and_escape_restores_the_whole_gesture() {
+    use tr_core::editing::{
+        Advanced,
+        layers::{Combine, Layer, MaskKind, Operator},
+        masks::{Mask, Shape},
+    };
+    for cancel in [false, true] {
+        let (_dir, ctx, mut app) = crate::ui::settings_regressions::app();
+        crate::ui::settings_regressions::settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        let mut recipe = EditRecipe::neutral(app.cache_settings.raw_engine);
+        recipe.require_process(3);
+        let mut a = Advanced::default();
+        a.geometry.crop = [0.125, 0., 0.875, 1.];
+        recipe.advanced = Some(Box::new(a));
+        let mut layer = Layer::new(
+            "Brush",
+            Operator::Light {
+                exposure: 1.,
+                temperature: 0.,
+                tint: 0.,
+                saturation: 0.,
+            },
+        );
+        let component = layer.mask.append(
+            MaskKind::Shape(Mask {
+                shape: Shape::Brush,
+                ..Default::default()
+            }),
+            Combine::Add,
+        );
+        let id = layer.id;
+        recipe.layer_stack().layers.push(layer);
+        app.state.current = Some(item.id.clone());
+        app.editing.entries.insert(
+            item.id.clone(),
+            EditEntry {
+                loaded: Some(LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: item.digest.clone(),
+                    generation: 0,
+                    revision: 0,
+                    recipe: recipe.clone(),
+                    can_undo: false,
+                    can_redo: false,
+                }),
+                draft: Some(recipe.clone()),
+                ..Default::default()
+            },
+        );
+        app.editing.layers.bind(&item.id);
+        app.editing.layers.view_layers = true;
+        app.editing.layers.selected = Some(id);
+        app.editing.layers.component = Some(component);
+        app.editing.layers.paint = true;
+        let mut draw = |ui: &mut egui::Ui| {
+            let response = ui.interact(
+                egui::Rect::from_min_max(egui::pos2(10., 10.), egui::pos2(290., 290.)),
+                egui::Id::new("layer-brush"),
+                egui::Sense::click_and_drag(),
+            );
+            app.layer_interaction(ui, &item, &response, [1024, 768], None, None);
+        };
+        frame(&ctx, vec![], &mut draw);
+        frame(&ctx, click(egui::pos2(60., 150.), true), &mut draw);
+        frame(
+            &ctx,
+            vec![egui::Event::PointerMoved(egui::pos2(240., 150.))],
+            &mut draw,
+        );
+        if cancel {
+            frame(
+                &ctx,
+                vec![egui::Event::Key {
+                    key: egui::Key::Escape,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                }],
+                &mut draw,
+            );
+        }
+        frame(&ctx, click(egui::pos2(260., 150.), false), &mut draw);
+        let entry = &app.editing.entries[&item.id];
+        if cancel {
+            assert_eq!(entry.draft.as_ref(), Some(&recipe));
+            assert!(!entry.pending);
+        } else {
+            assert!(entry.pending);
+            let MaskKind::Shape(m) = &entry
+                .draft
+                .as_ref()
+                .unwrap()
+                .layers
+                .as_ref()
+                .unwrap()
+                .layers[0]
+                .mask
+                .nodes[0]
+                .kind
+            else {
+                panic!("brush");
+            };
+            assert!((m.points[0][0] - (0.125 + 0.75 * 50. / 280.)).abs() < 1e-6);
+            assert!((m.points.last().unwrap()[0] - (0.125 + 0.75 * 250. / 280.)).abs() < 1e-6);
+        }
+    }
+}
+
 #[derive(Default)]
 struct Shapes {
     texts: Vec<(String, egui::Rect)>,
