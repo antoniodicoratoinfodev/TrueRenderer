@@ -1328,3 +1328,214 @@ fn reset_all_button_restores_wb_geometry_masks_and_curve_with_durable_undo() {
         }
     }
 }
+
+#[test]
+fn tools_create_layers_or_populate_selected_empty_layer_in_both_languages() {
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut controls = super::layers::Controls::default();
+        let mut recipe = EditRecipe::neutral(Default::default());
+        let mut commits = 0;
+        for label in [
+            "Nuovo livello vuoto",
+            "Applica uno strumento a questo livello",
+            "Luce e colore locale",
+        ] {
+            let mut draw = |ui: &mut egui::Ui| {
+                if controls.view_tools {
+                    commits += usize::from(controls.show_tools(ui, lang, &mut recipe));
+                } else {
+                    commits += usize::from(controls.show(ui, lang, &mut recipe).1);
+                }
+            };
+            let shapes = frame(&ctx, vec![], &mut draw);
+            let pos = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == lang.text(label))
+                .expect(label)
+                .1
+                .center();
+            frame(&ctx, click(pos, true), &mut draw);
+            frame(&ctx, click(pos, false), &mut draw);
+            if label == "Nuovo livello vuoto" {
+                assert!(
+                    recipe.layers.as_ref().unwrap().layers[0]
+                        .operators
+                        .is_empty()
+                );
+            }
+        }
+        assert_eq!(commits, 2);
+        let stack = recipe.layers.as_ref().unwrap();
+        assert_eq!(stack.layers.len(), 1);
+        assert_eq!(stack.layers[0].operators.len(), 1);
+        let id = stack.layers[0].id;
+        let shapes = frame(&ctx, vec![], |ui| {
+            controls.show(ui, lang, &mut recipe);
+        });
+        for label in ["Opacità", "Riempimento"] {
+            assert!(shapes.texts.iter().any(|(s, _)| s == lang.text(label)));
+        }
+        controls.open_tools(false);
+        let before = recipe.clone();
+        let shapes = frame(&ctx, vec![], |ui| {
+            assert!(!controls.show_tools(ui, lang, &mut recipe));
+        });
+        assert_eq!(recipe, before);
+        let pos = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == lang.text("Luce e colore locale"))
+            .unwrap()
+            .1
+            .center();
+        frame(&ctx, click(pos, true), |ui| {
+            controls.show_tools(ui, lang, &mut recipe);
+        });
+        frame(&ctx, click(pos, false), |ui| {
+            assert!(controls.show_tools(ui, lang, &mut recipe));
+        });
+        let stack = recipe.layers.as_mut().unwrap();
+        assert_eq!(stack.layers.len(), 2);
+        assert_eq!(stack.layers[0].id, id);
+        stack.layers[1].locked = true;
+        controls.open_tools(true);
+        let before = recipe.clone();
+        frame(&ctx, vec![], |ui| {
+            assert!(!controls.show_tools(ui, lang, &mut recipe));
+        });
+        frame(&ctx, click(pos, true), |ui| {
+            assert!(!controls.show_tools(ui, lang, &mut recipe));
+        });
+        frame(&ctx, click(pos, false), |ui| {
+            assert!(!controls.show_tools(ui, lang, &mut recipe));
+        });
+        assert_eq!(recipe, before);
+        recipe.validate().unwrap();
+    }
+}
+
+#[test]
+fn empty_layer_fill_and_later_tool_survive_catalog_reopen_and_undo() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    let item = catalog
+        .observe(Path::new("synthetic.png"), &"a".repeat(64), 4)
+        .unwrap();
+    let mut empty = EditRecipe::neutral(Default::default());
+    let mut layer = tr_core::editing::layers::Layer::empty("Empty");
+    layer.opacity = 0.4;
+    layer.fill = 0.6;
+    empty.layer_stack().layers.push(layer);
+    let first = catalog.save_edit(&item.id, 0, &empty).unwrap();
+    let mut populated = empty.clone();
+    populated.layers.as_mut().unwrap().layers[0]
+        .operators
+        .push(tr_core::editing::layers::TOOLS[1].operator());
+    let second = catalog
+        .save_edit(&item.id, first.generation, &populated)
+        .unwrap();
+    drop(catalog);
+    let mut catalog = tr_store::Catalog::open(dir.path()).unwrap();
+    assert_eq!(
+        catalog
+            .load_edit(&item.id, Default::default())
+            .unwrap()
+            .recipe,
+        populated
+    );
+    let undo = catalog
+        .step_edit(&item.id, second.generation, true)
+        .unwrap();
+    assert_eq!(undo.recipe, empty);
+    let redo = catalog.step_edit(&item.id, undo.generation, false).unwrap();
+    assert_eq!(redo.recipe, populated);
+}
+
+#[test]
+fn sampled_color_overlays_are_scoped_to_each_operator_and_separate_from_mask() {
+    use tr_core::editing::layers::*;
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut recipe = EditRecipe::neutral(Default::default());
+        let mut layer = Layer::new("Two samples", TOOLS[1].operator());
+        for reference in [[1., 0., 0.], [0., 0., 1.]] {
+            layer.operators.push(Operator::SampleColor(SampleColor {
+                range: ColorRange {
+                    reference,
+                    ..Default::default()
+                },
+                ..Default::default()
+            }));
+        }
+        layer.mask.append(MaskKind::Constant(0.5), Combine::Add);
+        layer.opacity = 0.2;
+        layer.fill = 0.3;
+        recipe.layer_stack().layers.push(layer);
+        let before = recipe.clone();
+        let mut controls = super::layers::Controls::default();
+        for (which, expected) in [(0, [0.5, 0.]), (1, [0., 0.5]), (2, [0.5, 0.5])] {
+            let mut draw = |ui: &mut egui::Ui| {
+                assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+            };
+            let shapes = frame(&ctx, vec![], &mut draw);
+            let pos = shapes
+                .texts
+                .iter()
+                .filter(|(s, _)| s == lang.text("Mostra area"))
+                .nth(which)
+                .unwrap()
+                .1
+                .center();
+            frame(&ctx, click(pos, true), &mut draw);
+            frame(&ctx, click(pos, false), &mut draw);
+            assert!(controls.overlay);
+            let layer = &recipe.layers.as_ref().unwrap().layers[0];
+            for (guide, expected) in [[1., 0., 0.], [0., 0., 1.]].into_iter().zip(expected) {
+                assert!(
+                    (controls.overlay_weight(layer, [0.5; 2], guide, 1.) - expected).abs() < 1e-6
+                );
+            }
+            assert_eq!(recipe, before);
+        }
+    }
+}
+
+#[test]
+fn tools_keyboard_cannot_apply_while_editing_is_disabled() {
+    let ctx = egui::Context::default();
+    let mut controls = super::layers::Controls::default();
+    controls.open_tools(false);
+    let mut recipe = EditRecipe::neutral(Default::default());
+    let original = recipe.clone();
+    let shapes = frame(&ctx, vec![], |ui| {
+        controls.show_tools(ui, Language::English, &mut recipe);
+    });
+    let pos = shapes
+        .texts
+        .iter()
+        .find(|(s, _)| s == "Search tools…")
+        .unwrap()
+        .1
+        .center();
+    for pressed in [true, false] {
+        frame(&ctx, click(pos, pressed), |ui| {
+            controls.show_tools(ui, Language::English, &mut recipe);
+        });
+    }
+    assert!(ctx.memory(|m| m.focused().is_some()));
+    let enter = egui::Event::Key {
+        key: egui::Key::Enter,
+        physical_key: None,
+        pressed: true,
+        repeat: false,
+        modifiers: egui::Modifiers::NONE,
+    };
+    frame(&ctx, vec![enter], |ui| {
+        ui.add_enabled_ui(false, |ui| {
+            assert!(!controls.show_tools(ui, Language::English, &mut recipe));
+        });
+    });
+    assert_eq!(recipe, original);
+}

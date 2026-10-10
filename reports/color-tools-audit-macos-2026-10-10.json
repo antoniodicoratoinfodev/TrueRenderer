@@ -1,0 +1,63 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-10",
+  "scope": "Review of photographic layers, tool selection and colour operators",
+  "passed": true,
+  "findings_fixed": [
+    "Sampled colour overlays incorrectly used only the first operator; each overlay now targets its own operator, including after another tool.",
+    "Layer mask overlay was inadvertently restricted by the first sampled colour operator; it now displays the mask independently."
+  ],
+  "additional_guard": "Enter in the tool search respects disabled editing while saving; regression passed.",
+  "verification": {
+    "command": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "ordinary_tests": 441,
+    "integration_tests": 14,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_gui": true,
+    "fmt": true,
+    "clippy": true,
+    "release_build": true,
+    "two_xpc_services": true,
+    "overlay_click_tests_languages": [
+      "IT",
+      "EN"
+    ]
+  },
+  "export": {
+    "source": "Synthetic 1200x800 RGB colour studio PNG",
+    "source_unchanged": true,
+    "cases": 240,
+    "formats": [
+      "PNG16",
+      "TIFF16"
+    ],
+    "recipe_count": 12,
+    "engine_settings": [
+      "Apple",
+      "LibRawAhd",
+      "LibRawBilinear",
+      "TrueRenderer",
+      "TrueRendererExperimental"
+    ],
+    "slots": [
+      0,
+      1
+    ],
+    "maximum_error_u16": 0,
+    "mixed_stack_opacity_fill_and_empty_layer_cases": 20
+  },
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "bd3f9e36eaeef62226535a47b0f9f9852d251ed8854d1a8328a245b35ce53ff6",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3f8c938bbd3a4ae4de6ed0609a939f0bf035a439d3584f70e23cacc8fab77a21",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2a24f58add36fc755b9ad3eb5eee2fffba4bca823b1e5b732ad62eb8d6e76390"
+  },
+  "limits": [
+    "Synthetic PNG does not exercise RAW decoders.",
+    "CPU/export agreement is not absolute colour accuracy or display calibration qualification.",
+    "Three private-camera tests excluded without TR_RAW_SAMPLE.",
+    "Normal photographic blending only; no raster compositing or new R/SF gate conclusion."
+  ]
+}

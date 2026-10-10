@@ -258,10 +258,12 @@ impl TrueRenderer {
         if self.editing.looks.open {
             let selected = self.editing.layers.selected;
             let view_layers = self.editing.layers.view_layers;
+            let view_tools = self.editing.layers.view_tools;
             self.editing.layers = Default::default();
             self.editing.layers.bind(&item.id);
             self.editing.layers.selected = selected;
             self.editing.layers.view_layers = view_layers;
+            self.editing.layers.view_tools = view_tools;
             self.editing.advanced = Default::default();
             self.clear_edit_preview_for(&item.id);
         }
@@ -446,6 +448,7 @@ impl TrueRenderer {
         if confirm && valid {
             self.editing.layers.bind(&p.item.id);
             self.editing.layers.view_layers = true;
+            self.editing.layers.view_tools = false;
             self.editing.layers.selected = p
                 .after
                 .layers

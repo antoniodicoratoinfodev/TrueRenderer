@@ -1,4 +1,4 @@
-use super::{Controls, color_wheel, slider};
+use super::{Controls, color_wheel, palette, slider};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::layers::{
@@ -26,7 +26,16 @@ impl Controls {
                 } else {
                     lang.text(name).into()
                 };
-                ui.selectable_value(&mut self.selective_family, i, label);
+                if palette::choice(
+                    ui,
+                    self.selective_family == i,
+                    &label,
+                    palette::family(name),
+                )
+                .clicked()
+                {
+                    self.selective_family = i;
+                }
             }
         });
         ui.horizontal(|ui| {

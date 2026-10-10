@@ -66,7 +66,7 @@ impl Format {
             Self::Tiff16 => "TIFF · sRGB 16 bit",
             Self::TiffFloat32 => "TIFF · Rec.2020 lineare float32",
             Self::DngLinear16 => "DNG lineare · RGB sviluppato 16 bit",
-            Self::DngRaw => "DNG RAW · mosaico area attiva originale",
+            Self::DngRaw => "DNG RAW · mosaico sensore originale",
         }
     }
 }

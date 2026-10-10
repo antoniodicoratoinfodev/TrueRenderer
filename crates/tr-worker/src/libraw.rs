@@ -78,6 +78,8 @@ fn failure(error: &[c_char; 512]) -> anyhow::Error {
 
 /// Metadata only. The mosaic is never unpacked here.
 fn describe(bytes: &[u8], engine: RawEngine) -> Result<Info> {
+    #[cfg(test)]
+    super::experimental::legacy_guard::check();
     let mut info = Info::default();
     let mut error = [0 as c_char; 512];
     // SAFETY: the buffer outlives the call, and both outputs are owned locals

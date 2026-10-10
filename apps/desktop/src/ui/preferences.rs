@@ -369,6 +369,9 @@ impl TrueRenderer {
         if self.cache_settings.raw_engine == tr_core::decoder::RawEngine::TrueRenderer {
             ui.label(RichText::new(lang.text("Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore.")).small().color(AMBER));
         }
+        if self.cache_settings.raw_engine == tr_core::decoder::RawEngine::TrueRendererExperimental {
+            ui.label(RichText::new(lang.text("Autonomo da LibRaw: sottoinsieme DNG Bayer, profili a matrici. Colore da qualificare; NEF e RAF non ancora disponibili.")).small().color(AMBER));
+        }
 
         ui.add_space(24.);
         section(ui, lang.text("Preparazione in background"));

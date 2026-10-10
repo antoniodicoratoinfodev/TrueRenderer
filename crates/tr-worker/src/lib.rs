@@ -1,4 +1,5 @@
 mod container;
+mod experimental;
 mod export;
 mod fits;
 #[cfg(windows)]
@@ -691,6 +692,9 @@ fn select_engine(trust: Trust, engine: RawEngine) -> Result<&'static dyn Decoder
         engine.available(),
         "Motore RAW non disponibile su questa piattaforma"
     );
+    if engine == RawEngine::TrueRendererExperimental {
+        return Ok(&experimental::Experimental);
+    }
     #[cfg(any(windows, target_os = "macos"))]
     match engine {
         RawEngine::LibRawAhd => return Ok(&EngineDecoder(RawEngine::LibRawAhd)),
@@ -782,6 +786,9 @@ impl Decoder for WhiteBalanced<'_> {
     }
     fn probe(&self, bytes: &[u8]) -> Result<(RasterInfo, ColorSource)> {
         self.wb.validate_for(self.engine)?;
+        if self.engine == RawEngine::TrueRendererExperimental && !self.wb.is_as_shot() {
+            return experimental::probe_with_wb(bytes, self.wb);
+        }
         let (mut info, mut color) = self.base.probe(bytes)?;
         if !self.wb.is_as_shot() {
             ensure!(
@@ -818,6 +825,9 @@ impl Decoder for WhiteBalanced<'_> {
     ) -> Result<(RasterInfo, ColorSource, LinearImage)> {
         if self.wb.is_as_shot() {
             return self.base.decode(bytes, max_edge);
+        }
+        if self.engine == RawEngine::TrueRendererExperimental {
+            return experimental::develop_with_wb(bytes, max_edge, self.wb);
         }
         let (_, color) = self.probe(bytes)?;
         #[cfg(target_os = "macos")]
@@ -1068,6 +1078,13 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                 options.validate()?;
                 ensure!(request.max_edge == 0, "Export richiede sviluppo nativo");
                 if options.format == tr_core::export::Format::DngRaw {
+                    if request.raw_engine == RawEngine::TrueRendererExperimental {
+                        return experimental::export_raw(
+                            &bytes,
+                            options,
+                            request.maximum_output_bytes,
+                        );
+                    }
                     #[cfg(any(windows, target_os = "macos"))]
                     return export::raw(&bytes, options, request.maximum_output_bytes);
                     #[cfg(not(any(windows, target_os = "macos")))]

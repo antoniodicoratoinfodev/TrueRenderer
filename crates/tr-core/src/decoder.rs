@@ -28,6 +28,7 @@ pub enum RawEngine {
     LibRawBilinear,
     LibRawAhd,
     TrueRenderer,
+    TrueRendererExperimental,
 }
 impl Default for RawEngine {
     fn default() -> Self {
@@ -45,6 +46,7 @@ impl RawEngine {
             Self::LibRawBilinear => "LibRaw-0.22.2-TR-libraw-linear-v1",
             Self::LibRawAhd => "LibRaw-0.22.2-TR-ahd-rec2020-v1",
             Self::TrueRenderer => "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
+            Self::TrueRendererExperimental => "TRExp-dng1-lj1-cal1-dir1-extended1",
         }
     }
     pub const fn label(self) -> &'static str {
@@ -53,6 +55,7 @@ impl RawEngine {
             Self::LibRawBilinear => "LibRaw bilineare (storico)",
             Self::LibRawAhd => "LibRaw AHD",
             Self::TrueRenderer => "TrueRenderer fp32 (sperimentale)",
+            Self::TrueRendererExperimental => "trueRendererExperimental (DNG)",
         }
     }
     pub fn available(self) -> bool {
@@ -64,6 +67,7 @@ impl RawEngine {
             Self::LibRawBilinear,
             Self::LibRawAhd,
             Self::TrueRenderer,
+            Self::TrueRendererExperimental,
         ]
         .into_iter()
         .filter(|engine| engine.available())

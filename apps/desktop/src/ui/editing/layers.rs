@@ -1,4 +1,4 @@
-use super::{EditRecipe, adjustment_default};
+use super::{EditRecipe, adjustment_default, palette};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::{
@@ -13,6 +13,8 @@ mod toning;
 pub(in crate::ui) struct Controls {
     pub photo: String,
     pub view_layers: bool,
+    pub view_tools: bool,
+    apply_selected: bool,
     pub selected: Option<Id>,
     pub component: Option<Id>,
     pub pick: bool,
@@ -25,6 +27,7 @@ pub(in crate::ui) struct Controls {
     pending_auto: Option<(usize, layers::LevelsAction)>,
     load_native: bool,
     pub overlay: bool,
+    overlay_operator: Option<usize>,
     pub paint: bool,
     search: String,
     search_index: usize,
@@ -179,6 +182,7 @@ impl Controls {
             *self = Self {
                 photo: photo.into(),
                 view_layers: self.view_layers,
+                view_tools: self.view_tools,
                 ..Default::default()
             };
         }
@@ -211,6 +215,188 @@ impl Controls {
             && recipe.layers.as_ref().and_then(|s| s.layers.iter().find(|l| Some(l.id)==self.selected))
             .is_some_and(|l| !l.locked && (self.pick || (self.paint && l.mask.nodes.iter().any(|n| Some(n.id)==self.component && matches!(&n.kind,MaskKind::Shape(m) if matches!(m.shape,Shape::Brush|Shape::Linear|Shape::Radial))))))
     }
+    fn overlay_control(&mut self, ui: &mut egui::Ui, lang: Language, operator: Option<usize>) {
+        let mut active = self.overlay && self.overlay_operator == operator;
+        if ui.checkbox(&mut active, lang.text("Mostra area")).changed() {
+            self.cancel_analysis();
+            self.pick = false;
+            self.paint = false;
+            self.overlay = active;
+            self.overlay_operator = operator;
+        }
+    }
+    pub(super) fn overlay_weight(
+        &self,
+        layer: &Layer,
+        xy: [f32; 2],
+        guide: [f32; 3],
+        aspect: f32,
+    ) -> f32 {
+        let mask = layer.mask.weight(xy, guide, aspect);
+        match self.overlay_operator {
+            Some(index) => match layer.operators.get(index) {
+                Some(Operator::SampleColor(s)) => mask * s.range.weight(guide),
+                _ => 0.,
+            },
+            None => mask,
+        }
+    }
+    fn select_layer(&mut self, id: Id) {
+        self.cancel_analysis();
+        self.selected = Some(id);
+        self.component = None;
+        self.paint = false;
+        self.pick = false;
+        self.overlay = false;
+    }
+    pub fn open_tools(&mut self, selected: bool) {
+        self.cancel_analysis();
+        self.view_layers = false;
+        self.view_tools = true;
+        self.apply_selected = selected;
+        self.paint = false;
+        self.pick = false;
+        self.overlay = false;
+    }
+    fn apply_tool(
+        &mut self,
+        recipe: &mut EditRecipe,
+        tool: &layers::Tool,
+        lang: Language,
+    ) -> anyhow::Result<()> {
+        let mut candidate = recipe.clone();
+        let id = if self.apply_selected {
+            let layer = candidate
+                .layers
+                .as_mut()
+                .and_then(|s| s.layers.iter_mut().find(|l| Some(l.id) == self.selected))
+                .ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "Seleziona un livello modificabile con spazio per uno strumento."
+                    )
+                })?;
+            anyhow::ensure!(
+                !layer.locked && layer.operators.len() < layers::MAX_OPERATORS,
+                "Seleziona un livello modificabile con spazio per uno strumento."
+            );
+            layer.operators.push(tool.operator());
+            layer.id
+        } else {
+            let layer = Layer::new(lang.text(tool.name), tool.operator());
+            let id = layer.id;
+            candidate.layer_stack().layers.push(layer);
+            id
+        };
+        candidate.validate()?;
+        *recipe = candidate;
+        self.select_layer(id);
+        self.view_tools = false;
+        self.view_layers = true;
+        self.error = None;
+        Ok(())
+    }
+    pub fn show_tools(
+        &mut self,
+        ui: &mut egui::Ui,
+        lang: Language,
+        recipe: &mut EditRecipe,
+    ) -> bool {
+        ui.horizontal_wrapped(|ui| {
+            ui.selectable_value(
+                &mut self.apply_selected,
+                false,
+                lang.text("Su un nuovo livello"),
+            );
+            ui.selectable_value(
+                &mut self.apply_selected,
+                true,
+                lang.text("Sul livello selezionato"),
+            );
+        });
+        let selected = recipe
+            .layers
+            .as_ref()
+            .and_then(|s| s.layers.iter().find(|l| Some(l.id) == self.selected));
+        let allowed = if self.apply_selected {
+            if let Some(layer) = selected {
+                ui.label(&layer.name);
+            }
+            selected.is_some_and(|l| !l.locked && l.operators.len() < layers::MAX_OPERATORS)
+        } else {
+            recipe.layers.as_ref().map_or(0, |s| s.layers.len()) < layers::MAX_LAYERS
+        };
+        if !allowed {
+            ui.label(lang.text(if self.apply_selected {
+                "Seleziona un livello modificabile con spazio per uno strumento."
+            } else {
+                "Massimo 16 livelli fotografici"
+            }));
+        }
+        let search = ui.add(
+            egui::TextEdit::singleline(&mut self.search).hint_text(lang.text("Cerca strumento…")),
+        );
+        if search.changed() {
+            self.search_index = 0;
+        }
+        let query = self.search.to_lowercase();
+        let matches: Vec<_> = TOOLS
+            .iter()
+            .filter(|tool| {
+                let haystack = format!("{} {} {}", tool.name, lang.text(tool.name), tool.keywords)
+                    .to_lowercase();
+                query.split_whitespace().all(|word| haystack.contains(word))
+            })
+            .collect();
+        if search.has_focus() {
+            if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
+                self.search_index = self.search_index.saturating_add(1);
+            }
+            if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
+                self.search_index = self.search_index.saturating_sub(1);
+            }
+        }
+        self.search_index = self.search_index.min(matches.len().saturating_sub(1));
+        let activate = ui.is_enabled()
+            && (search.has_focus() || search.lost_focus())
+            && ui.input(|i| i.key_pressed(egui::Key::Enter));
+        let mut chosen = None;
+        if matches.is_empty() {
+            ui.label(lang.text("Nessuno strumento trovato"));
+        }
+        ui.add_enabled_ui(allowed, |ui| {
+            for (i, tool) in matches.into_iter().enumerate() {
+                let response = ui
+                    .horizontal(|ui| {
+                        palette::icon(ui, tool.id);
+                        ui.add_sized(
+                            [ui.available_width(), 28.],
+                            egui::Button::new(lang.text(tool.name))
+                                .wrap()
+                                .selected(i == self.search_index),
+                        )
+                    })
+                    .inner
+                    .on_hover_text(format!(
+                        "{} · {}",
+                        lang.text(palette::tool(tool.id).1),
+                        lang.text(tool.description)
+                    ));
+                if response.clicked() || (allowed && activate && i == self.search_index) {
+                    chosen = Some(tool);
+                }
+            }
+        });
+        if let Some(tool) = chosen {
+            match self.apply_tool(recipe, tool, lang) {
+                Ok(()) => return true,
+                Err(error) => self.error = Some(error.to_string()),
+            }
+        }
+        if let Some(error) = &self.error {
+            ui.colored_label(super::AMBER, lang.text(error));
+        }
+        false
+    }
     pub fn show(
         &mut self,
         ui: &mut egui::Ui,
@@ -221,62 +407,26 @@ impl Controls {
         let before = recipe.clone();
         let mut commit = false;
         let count = recipe.layers.as_ref().map_or(0, |s| s.layers.len());
-        ui.add_enabled_ui(count < layers::MAX_LAYERS, |ui| {
-            ui.menu_button(lang.text("Aggiungi regolazione"), |ui| {
-                ui.set_min_width(280.);
-                let search = ui.add(
-                    egui::TextEdit::singleline(&mut self.search)
-                        .hint_text(lang.text("Cerca strumento…")),
-                );
-                if search.changed() {
-                    self.search_index = 0;
-                }
-                let query = self.search.to_lowercase();
-                let matches: Vec<_> = TOOLS
-                    .iter()
-                    .filter(|tool| {
-                        let haystack =
-                            format!("{} {} {}", tool.name, lang.text(tool.name), tool.keywords)
-                                .to_lowercase();
-                        query.split_whitespace().all(|word| haystack.contains(word))
-                    })
-                    .collect();
-                if search.has_focus() {
-                    if ui.input(|i| i.key_pressed(egui::Key::ArrowDown)) {
-                        self.search_index = self.search_index.saturating_add(1);
-                    }
-                    if ui.input(|i| i.key_pressed(egui::Key::ArrowUp)) {
-                        self.search_index = self.search_index.saturating_sub(1);
-                    }
-                }
-                self.search_index = self.search_index.min(matches.len().saturating_sub(1));
-                let activate = (search.has_focus() || search.lost_focus())
-                    && ui.input(|i| i.key_pressed(egui::Key::Enter));
-                for (i, tool) in matches.into_iter().enumerate() {
-                    if ui
-                        .selectable_label(i == self.search_index, lang.text(tool.name))
-                        .on_hover_text(lang.text(tool.description))
-                        .clicked()
-                        || (activate && i == self.search_index)
-                    {
-                        let layer = Layer::new(lang.text(tool.name), tool.operator());
-                        self.selected = Some(layer.id);
-                        self.component = None;
-                        self.paint = false;
-                        self.pick = false;
-                        self.overlay = false;
-                        recipe.layer_stack().layers.push(layer);
-                        commit = true;
-                        ui.close();
-                    }
-                }
-            });
-        });
+        if ui
+            .add_enabled(
+                count < layers::MAX_LAYERS,
+                egui::Button::new(lang.text("Nuovo livello vuoto")),
+            )
+            .clicked()
+        {
+            let layer = Layer::empty(lang.text("Livello vuoto"));
+            self.select_layer(layer.id);
+            recipe.layer_stack().layers.push(layer);
+            commit = true;
+        }
         if recipe.layers.is_none() {
-            ui.label(lang.text("Aggiungi una regolazione per creare un livello fotografico."));
+            ui.label(
+                lang.text("Crea un livello vuoto o scegli uno strumento nella scheda Strumenti."),
+            );
             return (false, false);
         }
         let stack = recipe.layers.as_mut().unwrap();
+        let count = stack.layers.len();
         if !stack.layers.iter().any(|l| Some(l.id) == self.selected) {
             self.cancel_analysis();
             self.selected = stack.layers.last().map(|l| l.id);
@@ -299,6 +449,22 @@ impl Controls {
                         [ui.available_width() - 34., 32.],
                         egui::Button::new(&layer.name).selected(self.selected == Some(layer.id)),
                     );
+                    let colors: Vec<_> = layer
+                        .operators
+                        .iter()
+                        .map(|op| palette::tool(op.tool().id).0)
+                        .collect();
+                    if let Some(first) = colors.first() {
+                        let mut colors = colors.clone();
+                        if colors.len() == 1 {
+                            colors.push(*first);
+                        }
+                        let rect = egui::Rect::from_min_max(
+                            egui::pos2(r.rect.left() + 5., r.rect.bottom() - 3.),
+                            egui::pos2(r.rect.right() - 5., r.rect.bottom() - 1.),
+                        );
+                        palette::strip(ui, rect, &colors);
+                    }
                     if r.clicked() && self.selected != Some(layer.id) {
                         self.cancel_analysis();
                         self.selected = Some(layer.id);
@@ -367,16 +533,44 @@ impl Controls {
                 slider(
                     ui,
                     lang,
-                    "Intensità livello",
+                    "Opacità",
                     &mut layer.opacity,
                     0. ..=1.,
                     1.,
                     &mut commit,
                 );
+                slider(
+                    ui,
+                    lang,
+                    "Riempimento",
+                    &mut layer.fill,
+                    0. ..=1.,
+                    1.,
+                    &mut commit,
+                );
                 ui.small(lang.text("Fusione normale · prima di ritaglio e rotazione"));
+                if ui
+                    .add_enabled(
+                        layer.operators.len() < layers::MAX_OPERATORS,
+                        egui::Button::new(lang.text("Applica uno strumento a questo livello")),
+                    )
+                    .clicked()
+                {
+                    self.open_tools(true);
+                }
+                if layer.operators.is_empty() {
+                    ui.label(lang.text("Livello vuoto"));
+                }
+
                 for (i, op) in layer.operators.iter_mut().enumerate() {
                     ui.push_id((layer.id, "operator", i), |ui| {
-                        ui.heading(lang.text(op.tool().name));
+                        let heading = ui.horizontal(|ui| {
+                            palette::icon(ui, op.tool().id);
+                            ui.heading(lang.text(op.tool().name));
+                        });
+                        if i == 0 && std::env::args().any(|a| a == "--color-controls-ui-smoke") {
+                            heading.response.scroll_to_me(Some(egui::Align::Min));
+                        }
                         self.operator(ui, lang, op, i, &mut commit);
                     });
                 }
@@ -423,9 +617,13 @@ impl Controls {
                         self.paint = false;
                         self.overlay = false;
                     }
-                    ui.checkbox(&mut self.overlay, lang.text("Mostra area"));
+                    self.overlay_control(ui, lang, Some(index));
                 });
-                if self.pick {
+                if self.pick
+                    && !self.pick_component
+                    && self.level_pick.is_none()
+                    && self.sample_operator == index
+                {
                     ui.label(
                         lang.text(
                             "Clic sulla foto: campione all'ingresso del livello. Esc annulla.",
@@ -540,11 +738,17 @@ impl Controls {
                 self.channel_selector(ui, lang);
                 ui.small(lang.text("RGB lineare · interpolazione monotona a tratti"));
                 ui.push_id(self.channel, |ui| {
-                    *commit |= super::curve::controls_with_label(
+                    *commit |= super::curve::controls_with_color(
                         ui,
                         lang,
                         &mut curves[self.channel],
                         "Curva a punti · RGB lineare",
+                        [
+                            egui::Color32::LIGHT_GRAY,
+                            palette::RED,
+                            palette::GREEN,
+                            palette::BLUE,
+                        ][self.channel],
                     )
                     .1;
                 });
@@ -578,7 +782,16 @@ impl Controls {
                     .into_iter()
                     .enumerate()
                     {
-                        ui.selectable_value(&mut self.band, i, lang.text(name));
+                        if palette::choice(
+                            ui,
+                            self.band == i,
+                            lang.text(name),
+                            palette::family(name),
+                        )
+                        .clicked()
+                        {
+                            self.band = i;
+                        }
                     }
                 });
                 let b = &mut m.bands[self.band];
@@ -632,7 +845,16 @@ impl Controls {
         let before = self.channel;
         ui.horizontal_wrapped(|ui| {
             for (i, name) in ["RGB", "Rosso", "Verde", "Blu"].into_iter().enumerate() {
-                ui.selectable_value(&mut self.channel, i, lang.text(name));
+                if palette::choice(
+                    ui,
+                    self.channel == i,
+                    lang.text(name),
+                    palette::family(name),
+                )
+                .clicked()
+                {
+                    self.channel = i;
+                }
             }
         });
         if before != self.channel && self.level_pick.is_some() {
@@ -698,6 +920,7 @@ impl Controls {
             self.component = Some(layer.mask.append(kind, combine));
             self.pick = false;
             self.overlay = true;
+            self.overlay_operator = None;
             *commit = true;
         }
         if layer.mask.nodes.is_empty() {
@@ -882,7 +1105,7 @@ impl Controls {
                 layer.mask.invert();
                 *commit = true;
             }
-            ui.checkbox(&mut self.overlay, lang.text("Mostra area"));
+            self.overlay_control(ui, lang, None);
             if ui.button(lang.text("Fine selezione")).clicked() {
                 self.cancel_analysis();
                 self.paint = false;
@@ -1051,14 +1274,12 @@ impl super::TrueRenderer {
                         continue;
                     }
                     let guide = std::array::from_fn(|c| p[c] / p[3]);
-                    let mut w = layer.mask.weight(
+                    let w = self.editing.layers.overlay_weight(
+                        layer,
                         xy.map(|v| v as f32),
                         guide,
                         native[1] as f32 / native[0] as f32,
                     );
-                    if let Some(Operator::SampleColor(s)) = layer.operators.first() {
-                        w *= s.range.weight(guide);
-                    }
                     if w > 0.01 {
                         painter.rect_filled(
                             egui::Rect::from_min_size(
@@ -1163,5 +1384,47 @@ impl super::TrueRenderer {
             self.editing.layers.anchor = None;
             self.commit_edit(&item.id);
         }
+    }
+}
+
+#[cfg(test)]
+mod tool_tests {
+    use super::*;
+
+    #[test]
+    fn tool_destination_respects_layer_and_operator_limits_atomically() {
+        let mut recipe = EditRecipe::neutral(Default::default());
+        for _ in 0..layers::MAX_LAYERS {
+            recipe.layer_stack().layers.push(Layer::empty("Empty"));
+        }
+        let mut controls = Controls {
+            selected: Some(recipe.layers.as_ref().unwrap().layers[0].id),
+            ..Default::default()
+        };
+        let before = recipe.clone();
+        assert!(
+            controls
+                .apply_tool(&mut recipe, &TOOLS[1], Language::English)
+                .is_err()
+        );
+        assert_eq!(recipe, before);
+        controls.open_tools(true);
+        for _ in 0..layers::MAX_OPERATORS {
+            controls
+                .apply_tool(&mut recipe, &TOOLS[1], Language::English)
+                .unwrap();
+        }
+        let before = recipe.clone();
+        assert!(
+            controls
+                .apply_tool(&mut recipe, &TOOLS[1], Language::English)
+                .is_err()
+        );
+        assert_eq!(recipe, before);
+        assert_eq!(
+            recipe.layers.as_ref().unwrap().layers.len(),
+            layers::MAX_LAYERS
+        );
+        recipe.validate().unwrap();
     }
 }

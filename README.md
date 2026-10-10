@@ -6,7 +6,7 @@
 
 ![A mountain lake photograph in TrueRenderer, with the Develop panel and filmstrip](reports/readme-2026-10-06/develop.jpg)
 
-**GPU-accelerated editing · Four RAW engines on macOS · Reversible adjustments · Local-first library**
+**GPU-accelerated editing · Five RAW engines on macOS · Reversible adjustments · Local-first library**
 
 ## Stay in the creative flow
 
@@ -31,7 +31,7 @@ From a subtle tonal correction to a distinctive creative treatment, the Develop 
 | Correct the optics | Manual distortion, vignette, chromatic aberration and defringe adjustments |
 | Guide attention locally | Brush, radial and linear gradients, luminance and hue masks, with feathering and inversion |
 | Adjust a chosen colour | Sampled colour ranges, hue/chroma/luminance corrections and separate uniformity controls |
-| Organize local adjustments | Named photographic layers, intensity, visibility, duplication, ordering and editable combined masks |
+| Organize local adjustments | Named photographic layers, empty layers, opacity, fill, visibility, duplication, ordering and editable combined masks |
 
 ![TrueRenderer's creative colour controls beside a mountain photograph](reports/readme-2026-10-06/colour.jpg)
 
@@ -41,7 +41,7 @@ Double-click a photographic slider to restore its default. The **Reset all** but
 
 Open **Crop…** from the Develop actions or the photograph’s right-click menu. Choose a ratio in the compact panel, swap its orientation, then drag the edges or corners to resize. Choose **Move the frame** or **Move the photo** for the interior gesture; the optional thirds grid helps composition. **Full image** resets only the crop. **Apply crop** saves one reversible change; **Cancel crop** or Escape restores the starting crop. Reopening the tool shows the full available image again, including previously excluded areas. Space-drag pans the view independently. With the photo focused, arrows move, +/− resize, X swaps orientation and Enter applies; Shift gives a larger step. Right-click or Shift+F10 opens crop commands, with **Photo menu** giving access to the usual photographic actions. A crop draft stays open when you navigate elsewhere and must be confirmed or cancelled before closing the app.
 
-In **Develop → Layers**, choose **Add adjustment** and search for sampled colour, local light, RGB point curves, tonal levels, the colour mixer or the channel mixer. **Sample on photo** temporarily shows the input to that layer; use the final rendering for a native sample. Adjust the colour or its uniformity, then add, subtract or intersect brush, gradient, luminance and colour masks. Layer intensity controls the result independently of the mask overlay. The stack runs from bottom to top and its masks follow the source through crop and rotation. These photographic layers use CPU processing; image compositing and assisted selections are separate planned extensions.
+In **Develop → Tools**, choose **On a new layer** or **On the selected layer**, then search for sampled colour, local light, RGB point curves, tonal levels, the colour mixer or the channel mixer. **Sample on photo** temporarily shows the input to that layer; use the final rendering for a native sample. Adjust the colour or its uniformity, then add, subtract or intersect brush, gradient, luminance and colour masks. In **Develop → Layers**, **New empty layer** creates a layer you can populate later with **Apply a tool to this layer**. Every layer has separate **Opacity** and **Fill** controls; with the current Normal blend, their product attenuates the effect independently of the mask overlay. Tool icons and accents follow tone, curves, colour and toning; RGB/CMYK indicators and warm/cool or green/magenta slider guides help identify controls. Labels and selection states remain visible independently of colour. The stack runs from bottom to top and its masks follow the source through crop and rotation. These photographic layers use CPU processing; image compositing and assisted selections are separate planned extensions.
 
 The same selector includes **Four-wheel grading**, **Black and white mixer**, **Color filter** and **Gradient map**. Grade shadows, midtones, highlights and the whole image with hue/chroma wheels, zone luminance, balance and overlap. The wheels and sliders share their values; arrows make fine changes, Shift increases the step and Home resets hue/chroma. Use **Convert to B&W** and the eight family sliders to shape a monochrome image, then add grading for a split tone. Choose a filter colour and density, or build a gradient palette with editable stops, amount and reversal. Each tool starts neutral and supports the layer’s mask, intensity and undo history.
 
@@ -57,9 +57,11 @@ Use **Develop → Saved looks** to save selected photographic layers in your lib
 
 ## Choose the RAW rendering that suits the photograph
 
-The RAW engine is part of the creative decision. On macOS, choose **Apple RAW, LibRaw bilinear, LibRaw AHD or TrueRenderer fp32** for supported cameras. The active engine stays visible in the toolbar, and native white-balance controls work with the selected engine.
+The RAW engine is part of the creative decision. On macOS, choose **Apple RAW, LibRaw bilinear, LibRaw AHD, TrueRenderer fp32 or trueRendererExperimental** for supported inputs. The active engine stays visible in the toolbar, and native white-balance controls work with the selected engine.
 
-Start from as-shot white balance, adjust it manually, estimate it automatically or sample a neutral area. Apple uses native RAW temperature/tint; the other three engines adjust red/blue sensor gains relative to as-shot before demosaicing. A floating-point processing pipeline provides room for demanding tonal and colour adjustments before the final output conversion.
+**trueRendererExperimental** has an independent DNG path without LibRaw calls: Bayer integer DNG, uncompressed or supported lossless JPEG, with one- or two-illuminant matrix profiles. Unsupported calibration features are rejected. Direct NEF/RAF decoding and measured camera colour qualification remain open; the other engines and platform defaults retain their existing behaviour. See the [Experimental contract](docs/progetto-truerenderer-experimental.md).
+
+Start from as-shot white balance, adjust it manually, estimate it automatically or sample a neutral area. Apple uses native RAW temperature/tint; the other engines adjust red/blue sensor gains relative to as-shot before demosaicing. Experimental resolves its DNG colour matrix with the selected white balance. A floating-point processing pipeline provides room for demanding tonal and colour adjustments before the final output conversion.
 
 TrueRenderer fp32 neutralizes sensor-clipped highlights to prevent false magenta skies and reflections. It preserves unclipped channels and floating-point headroom; colour and detail lost in a fully saturated sensor cannot be recovered.
 

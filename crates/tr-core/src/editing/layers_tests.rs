@@ -293,3 +293,72 @@ fn duplicate_and_removal_preserve_independence_and_roundtrip() {
     let json = serde_json::to_vec(&stack).unwrap();
     assert_eq!(stack, serde_json::from_slice(&json).unwrap());
 }
+
+#[test]
+fn empty_layers_and_fill_preserve_legacy_recipes_and_rendering() {
+    let mut recipe = EditRecipe::neutral(Default::default());
+    let mut layer = Layer::empty("Empty");
+    layer.opacity = 0.5;
+    layer.fill = 0.25;
+    let id = layer.id;
+    recipe.layer_stack().layers.push(layer);
+    recipe.validate().unwrap();
+    let original = image();
+    let mut out = original.clone();
+    recipe.apply(&mut out).unwrap();
+    assert_eq!(out.pixels, original.pixels);
+    let wire = serde_json::to_vec(&recipe).unwrap();
+    assert_eq!(serde_json::from_slice::<EditRecipe>(&wire).unwrap(), recipe);
+    recipe.layers.as_mut().unwrap().layers[0]
+        .operators
+        .push(light(1.));
+    let layer = &recipe.layers.as_ref().unwrap().layers[0];
+    assert_eq!(layer.id, id);
+    let rgb = [-0.25, 0.5, 2.];
+    let expected = rgb.map(|v| v * 1.125);
+    assert_eq!(layer.apply(rgb, [0.5; 2], 1.), expected);
+    assert_eq!(
+        recipe.layers.as_ref().unwrap().prepare(1.)[0].apply(rgb, [0.5; 2]),
+        expected
+    );
+    let mut out = original.clone();
+    recipe.apply(&mut out).unwrap();
+    for (before, after) in original.pixels.iter().zip(&out.pixels) {
+        assert_eq!(before[3], after[3]);
+        for c in 0..3 {
+            assert!((after[c] - before[c] * 1.125).abs() < 1e-6);
+        }
+    }
+    let layer = &mut recipe.layers.as_mut().unwrap().layers[0];
+    layer.fill = 0.;
+    assert!(!layer.active());
+    assert_eq!(layer.apply(rgb, [0.5; 2], 1.), rgb);
+    layer.fill = 1.;
+    let legacy = serde_json::to_vec(layer).unwrap();
+    assert!(!String::from_utf8_lossy(&legacy).contains("fill"));
+    let restored: Layer = serde_json::from_slice(&legacy).unwrap();
+    assert_eq!(restored.fill, 1.);
+    assert_eq!(serde_json::to_vec(&restored).unwrap(), legacy);
+    layer.fill = f32::NAN;
+    assert!(recipe.validate().is_err());
+}
+
+#[test]
+fn operator_analysis_ignores_fill_and_duplicate_preserves_it() {
+    let mut layer = Layer::new("Two tools", light(1.));
+    layer.operators.push(light(2.));
+    layer.opacity = 0.3;
+    layer.fill = 0.;
+    let copy = layer.duplicate();
+    assert_ne!(copy.id, layer.id);
+    assert_eq!(copy.fill, 0.);
+    assert_eq!(copy.opacity, 0.3);
+    let id = layer.id;
+    let mut stack = LayerStack {
+        base_process: 1,
+        layers: vec![layer],
+    };
+    stack.retain_before_operator(id, 1).unwrap();
+    assert_eq!(stack.layers[0].fill, 1.);
+    assert_eq!(stack.apply([0.25; 3], [0.5; 2], 1.), [0.5; 3]);
+}

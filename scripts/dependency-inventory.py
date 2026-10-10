@@ -56,6 +56,9 @@ report={"application":"TrueRenderer","version":app_version,"target":args.target,
 native=root/"third_party/libraw/manifest-truerenderer.json"
 if native.exists():
     report["native_dependencies_outside_cargo"]=[{"name":"LibRaw","manifest":str(native.relative_to(root)).replace("\\", "/"),"manifest_sha256":hashlib.sha256(native.read_bytes()).hexdigest(),"license":"CDDL-1.0"}]
+data_manifest=root/"third_party/colour-robertson/manifest.json"
+if data_manifest.exists():
+    report["data_dependencies_outside_cargo"]=[{"name":"Colour Robertson isotemperature table","manifest":data_manifest.relative_to(root).as_posix(),"manifest_sha256":hashlib.sha256(data_manifest.read_bytes()).hexdigest(),"license":"BSD-3-Clause","notice":"third_party/colour-robertson/LICENSE"}]
 (root/"reports"/(args.stem+".json")).write_text(json.dumps(report,indent=2)+"\n",encoding="utf8")
 with (root/"reports"/(args.stem+".csv")).open("w",newline="",encoding="utf8") as file:
     writer=csv.writer(file,lineterminator="\n");writer.writerow(["name","version","license","checksum_sha256","repository"])

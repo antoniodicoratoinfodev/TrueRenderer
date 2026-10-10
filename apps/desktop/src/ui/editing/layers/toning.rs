@@ -1,4 +1,4 @@
-use super::{Controls, color_wheel, slider};
+use super::{Controls, color_wheel, palette, slider};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::layers::{BlackAndWhite, ColorFilter, GradientMap, GradientStop, Grading};
@@ -16,7 +16,16 @@ impl Controls {
                 .into_iter()
                 .enumerate()
             {
-                ui.selectable_value(&mut self.grade_zone, i, lang.text(name));
+                if palette::choice(
+                    ui,
+                    self.grade_zone == i,
+                    lang.text(name),
+                    palette::family(name),
+                )
+                .clicked()
+                {
+                    self.grade_zone = i;
+                }
             }
         });
         let zone = &mut g.zones[self.grade_zone];

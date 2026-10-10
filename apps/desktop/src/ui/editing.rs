@@ -8,6 +8,7 @@ mod crop;
 mod curve;
 mod layers;
 mod looks;
+mod palette;
 mod transfer;
 
 #[derive(Clone, Copy)]
@@ -146,6 +147,14 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                 ui.add(slider).labelled_by(label_id)
             })
             .inner;
+        if let Some(colors) = palette::ramp(label) {
+            // A slim colour guide leaves the native handle, focus and hit target intact.
+            let rect = egui::Rect::from_min_max(
+                egui::pos2(slider.rect.left() + 5., slider.rect.bottom() - 2.),
+                egui::pos2(slider.rect.right() - 5., slider.rect.bottom()),
+            );
+            palette::strip(ui, rect, &colors);
+        }
         // egui sliders have drag-only Sense; Response::double_clicked is false.
         // The pointer reports the double click on release, inside this slider.
         let reset = ui.is_enabled()
@@ -608,7 +617,11 @@ impl TrueRenderer {
                 self.editing.smoke_source_digest = tr_platform::snapshot(&item.path)
                     .ok()
                     .map(|(_, digest)| digest);
-                self.set_language(Language::Italian);
+                self.set_language(if args.iter().any(|a| a == "--edit-ui-english") {
+                    Language::English
+                } else {
+                    Language::Italian
+                });
                 self.show_inspector = true;
                 self.state.view = ViewMode::Preview;
                 self.command(Command::Select {
@@ -714,6 +727,7 @@ impl TrueRenderer {
                         };
                         self.editing.layers.bind(&item.id);
                         self.editing.layers.view_layers = true;
+                        self.editing.layers.view_tools = false;
                         self.editing.layers.selected = recipe
                             .layers
                             .as_ref()
@@ -852,6 +866,9 @@ impl TrueRenderer {
                             ],
                             capture.compute,
                         ));
+                    }
+                    if args.iter().any(|a| a == "--tools-ui-smoke") {
+                        self.editing.layers.open_tools(false);
                     }
                     self.smoke_stage = 3;
                     self.capture_screenshot(ctx, "develop-viewer");
@@ -1501,7 +1518,7 @@ impl TrueRenderer {
                     self.sample_level = None;
                     self.sample_from_current_render = false;
                 }
-                if short || self.editing.layers.view_layers {
+                if short || self.editing.layers.view_layers || self.editing.layers.view_tools {
                     let ready = !pending
                         && draft == saved.recipe
                         && !self.editing.entries[&item.id].pending;
@@ -1510,25 +1527,35 @@ impl TrueRenderer {
                         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
                         pasted = self.secondary_edit_actions(ui, item, &mut draft, ready);
                     });
-                    if short
-                        && ui
-                            .add_enabled(
-                                !pending,
-                                egui::Button::new(lang.text("Livelli"))
-                                    .selected(self.editing.layers.view_layers),
-                            )
-                            .clicked()
-                    {
-                        self.editing.layers.view_layers = !self.editing.layers.view_layers;
-                        self.editing.layers.pick = false;
-                        self.editing.layers.paint = false;
-                        self.editing.layers.overlay = false;
-                        self.editing.advanced.paint = false;
-                        self.editing.advanced.horizon = false;
+                    if short {
+                        let page = if self.editing.layers.view_tools {
+                            "Strumenti"
+                        } else if self.editing.layers.view_layers {
+                            "Livelli"
+                        } else {
+                            "Regolazioni"
+                        };
+                        ui.add_enabled_ui(!pending, |ui| {
+                            ui.menu_button(lang.text(page), |ui| {
+                                for title in ["Regolazioni", "Livelli", "Strumenti"] {
+                                    if ui
+                                        .selectable_label(page == title, lang.text(title))
+                                        .clicked()
+                                    {
+                                        self.editing.layers.open_tools(false);
+                                        self.editing.layers.view_tools = title == "Strumenti";
+                                        self.editing.layers.view_layers = title == "Livelli";
+                                        self.editing.advanced.paint = false;
+                                        self.editing.advanced.horizon = false;
+                                        ui.close();
+                                    }
+                                }
+                            });
+                        });
                     }
                 }
             });
-            if !short && !self.editing.layers.view_layers {
+            if !short && !self.editing.layers.view_layers && !self.editing.layers.view_tools {
                 let ready =
                     !pending && draft == saved.recipe && !self.editing.entries[&item.id].pending;
                 pasted = self.secondary_edit_actions(ui, item, &mut draft, ready);
@@ -1552,29 +1579,43 @@ impl TrueRenderer {
                 if !short {
                     ui.horizontal_wrapped(|ui| {
                         if ui
-                            .selectable_value(
-                                &mut self.editing.layers.view_layers,
-                                false,
+                            .selectable_label(
+                                !self.editing.layers.view_layers && !self.editing.layers.view_tools,
                                 lang.text("Regolazioni"),
                             )
                             .clicked()
                         {
-                            self.editing.layers.pick = false;
-                            self.editing.layers.paint = false;
-                            self.editing.layers.overlay = false;
+                            self.editing.layers.open_tools(false);
+                            self.editing.layers.view_tools = false;
                         }
                         if ui
-                            .selectable_value(
-                                &mut self.editing.layers.view_layers,
-                                true,
-                                lang.text("Livelli"),
+                            .selectable_label(self.editing.layers.view_layers, lang.text("Livelli"))
+                            .clicked()
+                        {
+                            self.editing.layers.open_tools(false);
+                            self.editing.layers.view_tools = false;
+                            self.editing.layers.view_layers = true;
+                            self.editing.advanced.paint = false;
+                            self.editing.advanced.horizon = false;
+                        }
+                        if ui
+                            .selectable_label(
+                                self.editing.layers.view_tools,
+                                lang.text("Strumenti"),
                             )
                             .clicked()
                         {
+                            self.editing.layers.open_tools(false);
                             self.editing.advanced.paint = false;
                             self.editing.advanced.horizon = false;
                         }
                     });
+                }
+                if self.editing.layers.view_tools {
+                    let applied = self.editing.layers.show_tools(ui, lang, &mut draft);
+                    changed |= applied;
+                    commit |= applied;
+                    return;
                 }
                 if self.editing.layers.view_layers {
                     self.editing

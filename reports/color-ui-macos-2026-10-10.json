@@ -1,0 +1,51 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-10",
+  "scope": "Semantic colours in photographic tools and layers UI",
+  "passed": true,
+  "changes": [
+    "Vector tool icons and shared accents for tone, curves, colour, toning and monochrome",
+    "Full-width tool rows with wrapped names and an empty-search message",
+    "Matching accents in layer rows and operator headings",
+    "RGB/CMYK and colour-family indicators, tonal-zone indicators",
+    "Slim warm/cool, green/magenta, hue and family slider guides",
+    "RGB point-curve colour follows channel; neutral composite/luminance",
+    "Text, selection borders, focus, native slider handle and numerical input preserved; disabled cues desaturated"
+  ],
+  "verification": {
+    "ordinary_tests": 441,
+    "integration_tests": 14,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt": true,
+    "clippy_final": true,
+    "release_build": true,
+    "native_develop_panels": [
+      "Tools IT",
+      "Selective colour EN",
+      "Curves EN"
+    ],
+    "native_surface_sampling": true,
+    "native_sampling_screenshots": 8,
+    "xpc_two_services": true
+  },
+  "initial_native_failure": "First general debug smoke timed out without receiving screenshots; release bundle retry passed all eight captures and surface comparison. Initial develop harness forced Italian; final EN probes explicitly selected English.",
+  "screenshots": [
+    "color-ui-2026-10-10/tools-it.png",
+    "color-ui-2026-10-10/selective-en.png",
+    "color-ui-2026-10-10/curves-en.png"
+  ],
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "a4c7162a0104a519769b6f4ce22f9612cd29dc69b87297cfde4e0ac3ce5a3851",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3f8c938bbd3a4ae4de6ed0609a939f0bf035a439d3584f70e23cacc8fab77a21",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2a24f58add36fc755b9ad3eb5eee2fffba4bca823b1e5b732ad62eb8d6e76390"
+  },
+  "limits": [
+    "UI colours are symbolic guides, not colour-managed previews of adjustments.",
+    "No photographic formulas changed in this increment.",
+    "No complete screen-reader, colour-vision or Windows accessibility qualification.",
+    "Three private-camera tests excluded without TR_RAW_SAMPLE; no R/SF gate promoted."
+  ]
+}

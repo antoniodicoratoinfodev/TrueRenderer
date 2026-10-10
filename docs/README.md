@@ -11,6 +11,7 @@ Indice delle specifiche, delle decisioni e delle evidenze. Stato corrente e atti
 | [Architettura](TrueRenderer-Architettura.md) | Specifica; distinguere proposta e stato implementato |
 | [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md) | Fonte della specifica integrata, con requisiti ancora da qualificare |
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
+| [trueRendererExperimental](progetto-truerenderer-experimental.md) | ADR 0012: autonomia da LibRaw, responsabilità da sostituire, DNG prima dei NEF, calibrazione e criteri di fedeltà cromatica |
 | [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md) | ADR 0010: formati di uscita, DNG distinti, superficie e dati scientifici |
 | [Sviluppo fotografico non distruttivo](progetto-sviluppo-fotografico.md) | Progetto dei controlli e ADR 0011: luce/WB/colore, dettaglio, ottica, maschere, ricette e parità vista/export; attività in STATO.md |
 | [Color e livelli](color%20e%20livelli.md) | Ricerca funzionale e progetto esteso: strumenti colore, selezioni, maschere, livelli, composizione e interfaccia; dipendenze e criteri di accettazione, senza attribuire nuove capacità al bundle |
@@ -22,6 +23,7 @@ Specifiche e decisioni risiedono tutte direttamente in questa cartella, senza so
 
 - [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md): campionamento fisico (0003), cache per cartella (0005), residenza e compute (0006).
 - [Motori RAW](progetto-motori-raw.md): ricette e limiti, licenza e integrazione LibRaw (0008).
+- [trueRendererExperimental](progetto-truerenderer-experimental.md#adr-0012): nuovo percorso RAW autonomo, conservazione dello storico e qualifica cromatica (0012).
 - [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md): tre percorsi distinti (0010).
 - [Sviluppo fotografico non distruttivo](progetto-sviluppo-fotografico.md): ricetta reversibile condivisa da vista ed export, controlli e correzioni ottiche della futura estensione (0011).
 - [Isolamento decoder e formati](isolamento-decoder-e-formati.md): XPC macOS (0002), file esterni e pubblicazione (0004), LPAC Windows (0009).

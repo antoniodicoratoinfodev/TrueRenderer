@@ -251,6 +251,7 @@ fn creative_stack_mask_alpha_roundtrip_and_prepared_evaluator_agree() {
     let mut layer = Layer::new("Viraggio", creative_operators().remove(0));
     layer.operators = creative_operators();
     layer.opacity = 0.75;
+    layer.fill = 0.35;
     layer.mask.append(MaskKind::Constant(0.6), Combine::Add);
     let mut recipe = EditRecipe::neutral(Default::default());
     recipe.layer_stack().layers.push(layer);

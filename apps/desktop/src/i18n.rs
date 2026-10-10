@@ -235,6 +235,24 @@ impl Language {
                 "Gradient stops are too close or out of order"
             }
             "Livelli" => "Layers",
+            "Strumenti" => "Tools",
+            "Nessuno strumento trovato" => "No tools found",
+            "Tono" => "Tone",
+            "Viraggio" => "Toning",
+            "Nuovo livello vuoto" => "New empty layer",
+            "Livello vuoto" => "Empty layer",
+            "Opacità" => "Opacity",
+            "Riempimento" => "Fill",
+            "Su un nuovo livello" => "On a new layer",
+            "Sul livello selezionato" => "On the selected layer",
+            "Applica uno strumento a questo livello" => "Apply a tool to this layer",
+            "Crea un livello vuoto o scegli uno strumento nella scheda Strumenti." => {
+                "Create an empty layer or choose a tool in the Tools tab."
+            }
+            "Seleziona un livello modificabile con spazio per uno strumento." => {
+                "Select an unlocked layer with room for a tool."
+            }
+
             "Modifica: foto intera" => "Editing: whole photo",
             "Aggiungi regolazione" => "Add adjustment",
             "Cerca strumento…" => "Search tools…",
@@ -717,8 +735,8 @@ impl Language {
             "DNG RAW conserva il mosaico: le regolazioni fotografiche non vengono applicate." => {
                 "RAW DNG preserves the mosaic; photographic edits are not applied."
             }
-            "Per riaprire i DNG esportati scegliere LibRaw bilineare/AHD. Apple RAW e il motore mosaico TrueRenderer non sono compatibili con questi file." => {
-                "To reopen exported DNG files, select LibRaw bilinear/AHD. Apple RAW and the TrueRenderer mosaic engine are not compatible with these files."
+            "Per riaprire usare trueRendererExperimental o LibRaw bilineare/AHD, entro i rispettivi formati supportati." => {
+                "Reopen with trueRendererExperimental or LibRaw bilinear/AHD, within each engine's supported formats."
             }
             "FITS · dati scientifici" => "FITS · scientific data",
             "Prima immagine 2D idonea, sola lettura. Selezione di altri HDU, cubi, tabelle, compressione e WCS non disponibili." => {
@@ -771,11 +789,11 @@ impl Language {
             "Rec.2020 lineare ICC, RGBA float32 con alpha associata. Conserva negativi e valori oltre 1 del render; non compresso. Non è un RAW sensore né un export FITS." => {
                 "Linear Rec.2020 ICC, float32 RGBA with associated alpha. Preserves negative and above-1 rendered values; uncompressed. Not sensor RAW or FITS export."
             }
-            "Mosaico area attiva: Nikon D750/D40. Nessun demosaic, WB applicato o ridimensionamento." => {
-                "Active-area mosaic: Nikon D750/D40. No demosaic, applied WB or resize."
+            "Mosaico sensore senza WB o demosaic: DNG supportati con Experimental, Nikon D750/D40 con i motori storici." => {
+                "Sensor mosaic without WB or demosaic: supported DNGs with Experimental, Nikon D750/D40 with the legacy engines."
             }
-            "Conserva campioni, CFA, nero/bianco, WB e orientamento; matrice D65 LibRaw. Non include margini ottici, MakerNotes, EXIF/GPS o NEF compresso: conservare l'originale. Altre camere vengono rifiutate." => {
-                "Preserves samples, CFA, black/white levels, WB and orientation; LibRaw D65 matrix. Excludes optical margins, MakerNotes, EXIF/GPS and compressed NEF: keep the original. Other cameras are rejected."
+            "Experimental conserva anche LUT, calibrazione, margini e crop del DNG. Il percorso storico conserva l'area attiva e la matrice D65 LibRaw. EXIF, MakerNotes e RAW compresso sono esclusi: conservare l'originale." => {
+                "Experimental also retains DNG LUT, calibration, margins and crop. The legacy path retains the active area and LibRaw D65 matrix. EXIF, MakerNotes and compressed RAW are omitted: keep the original."
             }
             "Lato lungo (0 = originale)" => "Long edge (0 = original)",
             "Cartella destinazione…" => "Destination folder…",
@@ -786,7 +804,7 @@ impl Language {
             }
             "TIFF · Rec.2020 lineare float32" => "TIFF · linear Rec.2020 float32",
             "DNG lineare · RGB sviluppato 16 bit" => "Linear DNG · developed 16-bit RGB",
-            "DNG RAW · mosaico area attiva originale" => "RAW DNG · original active-area mosaic",
+            "DNG RAW · mosaico sensore originale" => "RAW DNG · original sensor mosaic",
             "Precisione di presentazione SDR" => "SDR presentation precision",
             "SDR 8 bit · compatibile" => "SDR 8-bit · compatible",
             "SDR 10 bit · sperimentale" => "SDR 10-bit · experimental",
@@ -1031,8 +1049,8 @@ impl Language {
             "Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali." => {
                 "Available: 8/16-bit PNG corpus, grid, preview, two-image comparison, physical 1:1 zoom, pointer sampling, ratings, labels, keywords, search, undo and local backups."
             }
-            "Il motore RAW si sceglie nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD e TrueRenderer fp32 sperimentale. Il motore proprio supporta attualmente Nikon D750 e D40 Bayer; compatibilità e resa dipendono dal motore. Il bundle Mac usa servizi XPC, il port Windows un worker confinato sperimentale. Massimo 268.435456 MB e 64 Mi pixel; il normale worker non confinato accetta soltanto il corpus." => {
-                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD and experimental TrueRenderer fp32. The custom engine currently supports Nikon D750 and D40 Bayer files; compatibility and rendering depend on the engine. The Mac bundle uses XPC services; Windows uses an experimental confined worker. Limits: 268.435456 MB and 64 Mi pixels; the unconfined worker accepts only the test corpus."
+            "Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, TrueRenderer fp32 o trueRendererExperimental. TrueRenderer fp32 supporta Nikon D750 e D40 Bayer. Experimental apre il sottoinsieme DNG dichiarato nelle impostazioni; NEF e RAF diretti non sono ancora supportati. Compatibilità e resa dipendono dal motore scelto." => {
+                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD, TrueRenderer fp32 or trueRendererExperimental. TrueRenderer fp32 supports Nikon D750 and D40 Bayer files. Experimental opens the DNG subset described in Settings; direct NEF and RAF decoding is not supported yet. Compatibility and rendering depend on the selected engine."
             }
             "Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima." => {
                 "Qualification remains open for XPC/App Sandbox and Windows, ICC/Little CMS, monitor presentation, filters and CPU/GPU, accessibility and performance. Format qualification, XMP and gigapixel support follow the roadmap. Assurance remains Preview."
@@ -1060,6 +1078,9 @@ impl Language {
             }
             "Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore." => {
                 "Experimental: Nikon D750 and D40 Bayer. Colour accuracy and superiority over other engines remain unqualified. Unsupported RAW files show an error."
+            }
+            "Autonomo da LibRaw: sottoinsieme DNG Bayer, profili a matrici. Colore da qualificare; NEF e RAF non ancora disponibili." => {
+                "Independent of LibRaw: Bayer DNG subset, matrix profiles. Colour remains unqualified; NEF and RAF are not available yet."
             }
             "Memoria automatica" => "Automatic memory",
             "Memoria richiesta (MB)" => "Requested memory (MB)",

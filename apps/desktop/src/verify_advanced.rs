@@ -346,9 +346,25 @@ pub fn run(root: &Path, worker: &Path, source: &Path) -> Result<()> {
             let snapshot = broker.prepare_snapshot(source, &digest, || false)?;
             let decoded = broker.decode(source, &digest, 0)?;
             let native_size = [decoded.raster.width, decoded.raster.height];
-            for mode in 0..11 {
+            for mode in 0..12 {
                 let mut r = recipe(engine);
-                if mode == 1 {
+                if mode == 11 {
+                    r = toning_recipe(engine);
+                    let stack = r.layer_stack();
+                    stack
+                        .layers
+                        .extend(selective_recipe(engine, true).layers.unwrap().layers);
+                    stack
+                        .layers
+                        .extend(curves_recipe(engine, false).layers.unwrap().layers);
+                    for layer in &mut stack.layers {
+                        layer.opacity = 0.6;
+                        layer.fill = 0.35;
+                    }
+                    stack
+                        .layers
+                        .push(tr_core::editing::layers::Layer::empty("Empty"));
+                } else if mode == 1 {
                     r.advanced.as_mut().unwrap().geometry = Default::default();
                     r.advanced.as_mut().unwrap().color.monochrome = true;
                 } else if mode == 2 {

@@ -133,6 +133,7 @@ fn graph(
     ui: &mut egui::Ui,
     curve: &mut Vec<CurvePoint>,
     selection: &mut Selection,
+    color: egui::Color32,
 ) -> (egui::Rect, bool) {
     let side = ui.available_width().clamp(100., 320.);
     let graph_id = ui.make_persistent_id("curve-graph");
@@ -259,7 +260,14 @@ fn graph(
     ));
     painter.add(egui::Shape::line(
         line,
-        egui::Stroke::new(2., egui::Color32::LIGHT_GRAY),
+        egui::Stroke::new(
+            2.,
+            if ui.is_enabled() {
+                color
+            } else {
+                egui::Color32::GRAY
+            },
+        ),
     ));
     for (i, p) in points(curve).iter().enumerate() {
         let selected = selection.point == Some(i);
@@ -302,6 +310,16 @@ pub(super) fn controls_with_label(
     curve: &mut Vec<CurvePoint>,
     label: &str,
 ) -> (bool, bool) {
+    controls_with_color(ui, lang, curve, label, egui::Color32::LIGHT_GRAY)
+}
+
+pub(super) fn controls_with_color(
+    ui: &mut egui::Ui,
+    lang: Language,
+    curve: &mut Vec<CurvePoint>,
+    label: &str,
+    color: egui::Color32,
+) -> (bool, bool) {
     let before = curve.clone();
     let id = ui.make_persistent_id("curve-selection");
     let mut selection = ui
@@ -309,7 +327,7 @@ pub(super) fn controls_with_label(
         .unwrap_or_default();
     selection.point = selection.point.filter(|i| *i < points(curve).len());
     ui.label(lang.text(label));
-    let (_, mut commit) = graph(ui, curve, &mut selection);
+    let (_, mut commit) = graph(ui, curve, &mut selection, color);
     ui.small(
         lang.text("Clic per aggiungere, trascina per modificare. I punti vicini restano ancorati."),
     );
@@ -457,7 +475,8 @@ mod tests {
                         ..Default::default()
                     },
                     |ui| {
-                        let (r, c) = graph(ui, &mut curve, &mut selection);
+                        let (r, c) =
+                            graph(ui, &mut curve, &mut selection, egui::Color32::LIGHT_GRAY);
                         rect = r;
                         commits += usize::from(c);
                     },
@@ -544,7 +563,7 @@ mod tests {
                     ..Default::default()
                 },
                 |ui| {
-                    rect = graph(ui, &mut curve, &mut selection).0;
+                    rect = graph(ui, &mut curve, &mut selection, egui::Color32::LIGHT_GRAY).0;
                 },
             );
             output.textures_delta.clear();
@@ -583,7 +602,8 @@ mod tests {
                     }
                     ui.add_enabled_ui(enabled, |ui| {
                         ui.push_id("asset-curve", |ui| {
-                            rect = graph(ui, &mut curve, &mut selection).0;
+                            rect =
+                                graph(ui, &mut curve, &mut selection, egui::Color32::LIGHT_GRAY).0;
                         });
                     });
                 },

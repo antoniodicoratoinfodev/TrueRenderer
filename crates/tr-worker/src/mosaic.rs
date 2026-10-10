@@ -46,6 +46,8 @@ unsafe extern "C" {
     ) -> i32;
 }
 fn describe(bytes: &[u8]) -> Result<Info> {
+    #[cfg(test)]
+    super::experimental::legacy_guard::check();
     let mut info = Info::default();
     let mut error = [0 as c_char; 512];
     // SAFETY: live input, correctly sized and exclusively owned output buffers.

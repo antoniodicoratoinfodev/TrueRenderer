@@ -1,0 +1,9 @@
+{
+  "name": "Colour Robertson 1968 isotemperature data",
+  "version": "0.4.6",
+  "license": "BSD-3-Clause",
+  "source": "https://github.com/colour-science/colour/blob/v0.4.6/colour/temperature/robertson1968.py",
+  "portion": "DATA_ISOTEMPERATURE_LINES_ROBERTSON1968, 31 rows, lines 61-93",
+  "destination": "crates/tr-raw/src/color.rs::ISOTHERMS",
+  "modification": "Data transcribed as a Rust f64 array; no Python implementation imported."
+}

@@ -1,0 +1,401 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "recipe": "TRExp-dng1-lj1-cal1-dir1-extended1",
+  "checked_at": "2026-10-09T21:56:39.965961+00:00",
+  "platform": {
+    "os": "macOS",
+    "version": "27.0.1",
+    "architecture": "arm64"
+  },
+  "passed": true,
+  "scope": "First autonomous DNG functional subset; not camera colour qualification or direct NEF/RAF support.",
+  "tests": {
+    "command": "scripts/verify.sh --gui",
+    "ordinary_passed": 434,
+    "integration_passed": 14,
+    "private_camera_tests_skipped_in_generic_suite": 3,
+    "autonomous_core_tests": 17,
+    "worker_guard": "LibRaw entry points forbidden during Experimental probe, decode, custom/Auto/patch WB, refusals and raw export.",
+    "core_link_check": [
+      {
+        "binary": "target/debug/deps/tr_raw-3611006684ad2574",
+        "sha256": "9a31cfbf6d8551dfa3eb8ef35f97c0ed20455a8509972b4aceab78c37cb5f3c1",
+        "libraw_symbols_defined_or_undefined": 0
+      },
+      {
+        "binary": "target/debug/deps/dng-82526de5f3587e3d",
+        "sha256": "ffc9b517be8072be4611d07cee4a412355313035aa16c1b3091916cbfa18a3e0",
+        "libraw_symbols_defined_or_undefined": 0
+      }
+    ],
+    "fmt_clippy_release": true,
+    "python_reporting_cases": 2,
+    "worker_protocol_cases": 8,
+    "resampling_cases": 24,
+    "native_gui": true
+  },
+  "authorized_corpus": {
+    "Nikon_D750_NEF": 30,
+    "Nikon_D800_NEF": 9,
+    "Fujifilm_X_T5_RAF": 1,
+    "D40_included": false,
+    "D850_found": false,
+    "legacy_probe_accepted": 39,
+    "legacy_X_Trans_refusal": true,
+    "experimental_explicit_refusals": 40,
+    "originals_unchanged": true,
+    "inventory_note": "Inventory/refusal campaign preceded final DNG-only calibration and diagnostic refinements. Direct-format capability did not change."
+  },
+  "dng_cases": [
+    {
+      "source_kind": "generated_fixture",
+      "case": 1,
+      "size": [
+        1024,
+        768
+      ],
+      "slots_pixels_exact": true,
+      "source_unchanged": true,
+      "slots": [
+        {
+          "slot": 0,
+          "seconds": 0.015808084,
+          "linear_min": 0.1011165976524353,
+          "linear_max": 0.748282253742218,
+          "repack_pixels_exact": true,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 36077568
+        },
+        {
+          "slot": 1,
+          "seconds": 0.014051917,
+          "linear_min": 0.1011165976524353,
+          "linear_max": 0.748282253742218,
+          "repack_pixels_exact": null,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 34553856
+        }
+      ]
+    },
+    {
+      "source_kind": "private_D750_derived_DNG",
+      "case": 1,
+      "size": [
+        6032,
+        4032
+      ],
+      "slots_pixels_exact": true,
+      "source_unchanged": true,
+      "slots": [
+        {
+          "slot": 0,
+          "seconds": 0.539538459,
+          "linear_min": -0.12024200707674026,
+          "linear_max": 2.234851837158203,
+          "repack_pixels_exact": true,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 646938624
+        },
+        {
+          "slot": 1,
+          "seconds": 0.534728583,
+          "linear_min": -0.12024200707674026,
+          "linear_max": 2.234851837158203,
+          "repack_pixels_exact": null,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 648036352
+        }
+      ]
+    },
+    {
+      "source_kind": "private_D750_derived_DNG",
+      "case": 2,
+      "size": [
+        6032,
+        4032
+      ],
+      "slots_pixels_exact": true,
+      "source_unchanged": true,
+      "slots": [
+        {
+          "slot": 0,
+          "seconds": 0.501697292,
+          "linear_min": -0.03331519663333893,
+          "linear_max": 1.5301494598388672,
+          "repack_pixels_exact": true,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 646758400
+        },
+        {
+          "slot": 1,
+          "seconds": 0.53161875,
+          "linear_min": -0.03331519663333893,
+          "linear_max": 1.5301494598388672,
+          "repack_pixels_exact": null,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 646889472
+        }
+      ]
+    },
+    {
+      "source_kind": "private_D750_derived_DNG",
+      "case": 3,
+      "size": [
+        6032,
+        4032
+      ],
+      "slots_pixels_exact": true,
+      "source_unchanged": true,
+      "slots": [
+        {
+          "slot": 0,
+          "seconds": 0.514745334,
+          "linear_min": -0.008644705638289452,
+          "linear_max": 1.9449183940887451,
+          "repack_pixels_exact": true,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 646955008
+        },
+        {
+          "slot": 1,
+          "seconds": 0.55187575,
+          "linear_min": -0.008644705638289452,
+          "linear_max": 1.9449183940887451,
+          "repack_pixels_exact": null,
+          "wb_probe_decode_match": true,
+          "rgb_exports": [
+            {
+              "format": "Png16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            },
+            {
+              "format": "Tiff16",
+              "long_edge": 1024,
+              "maximum_error_u16": 0
+            }
+          ],
+          "observed_peak_rss_bytes": 646938624
+        }
+      ]
+    }
+  ],
+  "dng_totals": {
+    "sources": 4,
+    "full_developments_both_slots": 8,
+    "raw_export_roundtrips_on_slot_0": 4,
+    "wb_probe_decode_pairs": 8,
+    "PNG16_TIFF16_export_comparisons": 16,
+    "maximum_RGB_export_error_u16": 0
+  },
+  "conversion_provenance": "Three authorized D750 NEFs converted to temporary DNG by historical TrueRenderer/LibRaw. Experimental then decodes and repacks them independently. Embedded camera matrices originate from LibRaw, not independent TrueRenderer camera measurement. Originals retained.",
+  "ui": {
+    "stages": [
+      "Apple",
+      "LibRawBilinear",
+      "LibRawAhd",
+      "TrueRenderer",
+      "TrueRendererExperimental",
+      "Apple"
+    ],
+    "selection_zoom_center_preserved": true,
+    "surface_checks": [
+      {
+        "checked_pixels": 191520,
+        "compute": "GPU",
+        "engine": "Apple",
+        "max_channel_error_u8": 1,
+        "passed": true,
+        "stage": 1
+      },
+      {
+        "checked_pixels": 191520,
+        "compute": "GPU",
+        "engine": "LibRawBilinear",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 2
+      },
+      {
+        "checked_pixels": 191520,
+        "compute": "GPU",
+        "engine": "LibRawAhd",
+        "max_channel_error_u8": 1,
+        "passed": true,
+        "stage": 3
+      },
+      {
+        "checked_pixels": 191520,
+        "compute": "GPU",
+        "engine": "TrueRenderer",
+        "max_channel_error_u8": 1,
+        "passed": true,
+        "stage": 4
+      },
+      {
+        "checked_pixels": 191520,
+        "compute": "GPU",
+        "engine": "TrueRendererExperimental",
+        "max_channel_error_u8": 1,
+        "passed": true,
+        "stage": 5
+      },
+      {
+        "checked_pixels": 191520,
+        "compute": "GPU",
+        "engine": "Apple",
+        "max_channel_error_u8": 1,
+        "passed": true,
+        "stage": 6
+      }
+    ],
+    "visual_inspection": "English settings screenshot, fifth engine and supported-subset message visible; generated image only.",
+    "limits": "No complete manual IT/EN accessibility campaign or physical display qualification."
+  },
+  "xpc": {
+    "integration_passed": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false,
+    "memory_growth_campaign_run": false
+  },
+  "preservation": {
+    "originals_read_only": true,
+    "catalog_logical_content_unchanged": true,
+    "catalog_schema_and_settings_unchanged": true,
+    "catalog_physical_file_hash_unchanged": false,
+    "catalog_comparison_method": "Read-only immutable SQLite dump/schema comparison with stable main-file hash before and after reading; no WAL present. Original snapshot created through SQLite backup.",
+    "catalog_restored_or_overwritten": false,
+    "backup_files_unchanged": 168,
+    "historical_demosaic_and_native_bridge_unchanged": true,
+    "original_architecture_unchanged": true,
+    "previous_bundle_preserved": true
+  },
+  "installation": {
+    "installed": true,
+    "bundle": "dist/TrueRenderer.app",
+    "candidate_binary_identity": true,
+    "previous_binary_inodes_preserved": true,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "8974415a420c2c98ed873f6ccd2b82935a6f5e7dea93806b6760ae63b5106bf7",
+      "Contents/MacOS/tr-worker": "2d6863b5d92504c718da3f74cc4981fbe85e7f84b87a8f61c653b085cc346aba",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "a05d5a19e8022eeae145034d2fc5cc3761ce4f035778ab163f60cd532943eda8",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "99798fb6a06f1029a1f372e45b15d887d6b5510b8e9f89571837535e3e8de9bb"
+    }
+  },
+  "source_sha256": {
+    "crates/tr-raw/src/color.rs": "825f601e228fbbfc56152cace12c54372de929ed52983f0ceefa1abbafd1e519",
+    "crates/tr-raw/src/dng.rs": "9c563d4e2f4a2762b10270d651ec7147cf1965be4158d61f7d7b7478cd9517e3",
+    "crates/tr-raw/src/jpeg.rs": "16eb05ce62ca6578a73bb95d5f75a6b28cfcfa0a64322771ffae26b5058ead6b",
+    "crates/tr-raw/src/lib.rs": "72ac330b8f30f40724c073e031487fc69a1f748184a2b743e44f548807dbfc27",
+    "crates/tr-raw/src/render.rs": "d46871ba4ccf6de2c48b85a540204892c76b0dd50ab8e3be98e674238748dd63",
+    "crates/tr-raw/src/tiff.rs": "8bf007e45ba312ccadfba56f7bd0645e566fbf69e4020157acc36026e86ce674",
+    "crates/tr-raw/tests/dng.rs": "64f02a0d1fa459e8fdc08a61378628097d87c6f0cb2a91e9768cb808f7854494",
+    "crates/tr-raw/tests/support/mod.rs": "84d92bf06404367f8a6b524722a8bac36a97d1bfad548fcf54b509796f601e76",
+    "crates/tr-worker/src/experimental.rs": "0884a4965e60f8051a2ba1cb7927ccce52874fa39248c7ef94e396286e361043",
+    "crates/tr-worker/src/lib.rs": "019ab2a1e55a4e318a791bcf5ddfd560b3b29742a557d8ecbc1d02e35d4e60ca",
+    "crates/tr-core/src/decoder.rs": "db9ea25a2eb54fe45a2181e550a145915cd40213b189fc99400b5ede4fd267cd",
+    "apps/desktop/src/verify_experimental.rs": "e7c14647fd3e980dab0d5534b7fefbd46a582fa420e7d831bb441a76a855cdf4",
+    "third_party/colour-robertson/manifest.json": "cd8deb2cb5d7ca6f9c4ea71e9740749a849949a72462884e68d0866421da65a1",
+    "third_party/colour-robertson/LICENSE": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076"
+  },
+  "dependency_inventory": "dependency-inventory-experimental-20261009.json",
+  "limits": [
+    "DNG matrix-profile Bayer subset only; no direct NEF, RAF/X-Trans, BigTIFF, linear/float RAW or unsupported opcodes/profile maps.",
+    "Lossless JPEG SOF3 validated with generated and hand-derived vectors; no camera-produced compressed DNG or independent DNG SDK interoperability campaign.",
+    "No measured camera DeltaE00, spectral characterization, superiority claim or qualified highlight reconstruction.",
+    "Auto/patch WB still uses the shared render estimator; robust CFA statistics and WB parameter precision remain open.",
+    "Observed decode timings are single trials per source/slot, not p95/p99; RSS observations do not close the memory/OS pressure gate.",
+    "No Windows runtime qualification; no R0-R4 or SF0-SF10 gate closed; Standard/Reference assurance modes unavailable."
+  ],
+  "campaign_corrections": [
+    "Legacy X-Trans probe refusal retained as a capability limit, not interpreted as image corruption.",
+    "Conversion broker releases its XPC lease before the independent two-slot DNG pass.",
+    "Initial UI invocation used a relative sample path and timed out at stage 0; rerun with absolute paths passed.",
+    "Raw repack is run on slot 0 only; slot 1 records null instead of claiming an unexecuted check."
+  ]
+}

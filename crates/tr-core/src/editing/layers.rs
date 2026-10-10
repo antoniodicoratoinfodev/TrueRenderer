@@ -26,6 +26,14 @@ pub use toning::{BlackAndWhite, ColorFilter, GradientMap, GradientStop, Grading,
 pub type Id = Uuid;
 
 pub const MAX_LAYERS: usize = 16;
+pub const MAX_OPERATORS: usize = 8;
+
+fn full_fill() -> f32 {
+    1.
+}
+fn is_full_fill(value: &f32) -> bool {
+    *value == 1.
+}
 pub const MAX_MASK_NODES: usize = 64;
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -45,19 +53,27 @@ pub struct Layer {
     pub enabled: bool,
     pub locked: bool,
     pub opacity: f32,
+    #[serde(default = "full_fill", skip_serializing_if = "is_full_fill")]
+    pub fill: f32,
     pub mask: MaskGraph,
     pub operators: Vec<Operator>,
 }
 impl Layer {
     pub fn new(name: impl Into<String>, operator: Operator) -> Self {
+        let mut layer = Self::empty(name);
+        layer.operators.push(operator);
+        layer
+    }
+    pub fn empty(name: impl Into<String>) -> Self {
         Self {
             id: Uuid::new_v4(),
             name: name.into(),
             enabled: true,
             locked: false,
             opacity: 1.,
+            fill: 1.,
             mask: MaskGraph::default(),
-            operators: vec![operator],
+            operators: Vec::new(),
         }
     }
     pub fn duplicate(&self) -> Self {
@@ -67,13 +83,16 @@ impl Layer {
         copy
     }
     pub fn active(&self) -> bool {
-        self.enabled && self.opacity != 0. && self.operators.iter().any(|o| !o.is_neutral())
+        self.enabled
+            && self.opacity != 0.
+            && self.fill != 0.
+            && self.operators.iter().any(|o| !o.is_neutral())
     }
     pub fn apply(&self, rgb: [f32; 3], xy: [f32; 2], aspect: f32) -> [f32; 3] {
         if !self.active() {
             return rgb;
         }
-        let w = self.opacity * self.mask.weight(xy, rgb, aspect);
+        let w = self.opacity * self.fill * self.mask.weight(xy, rgb, aspect);
         if w == 0. {
             return rgb;
         }
@@ -105,6 +124,7 @@ impl LayerStack {
             layer.operators.truncate(operator);
             layer.mask = Default::default();
             layer.opacity = 1.;
+            layer.fill = 1.;
             layer.enabled = true;
         }
         Ok(())
@@ -145,7 +165,7 @@ impl LayerStack {
                     })
                     .collect();
                 PreparedLayer {
-                    opacity: layer.opacity,
+                    opacity: layer.opacity * layer.fill,
                     operators: layer.operators.iter().filter(|o| !o.is_neutral()).collect(),
                     root: layer.mask.root.map(index),
                     nodes,
@@ -178,9 +198,10 @@ impl LayerStack {
                     && !layer.name.chars().any(char::is_control),
                 "Nome livello non valido"
             );
-            range(layer.opacity, 0., 1., "Intensità livello")?;
+            range(layer.opacity, 0., 1., "Opacità")?;
+            range(layer.fill, 0., 1., "Riempimento")?;
             ensure!(
-                !layer.operators.is_empty() && layer.operators.len() <= 8,
+                layer.operators.len() <= MAX_OPERATORS,
                 "Operatori fuori quota"
             );
             for operator in &layer.operators {

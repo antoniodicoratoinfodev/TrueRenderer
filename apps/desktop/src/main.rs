@@ -13,6 +13,7 @@ mod ui;
 mod verify_advanced;
 mod verify_cache;
 mod verify_develop;
+mod verify_experimental;
 mod verify_exports;
 mod verify_formats;
 mod verify_native_wb;
@@ -198,6 +199,13 @@ fn run() -> Result<()> {
             .transpose()?
             .unwrap_or(0);
         return verify_raw_engines::run(&root, &worker, &folder, limit);
+    }
+    if let Some(manifest) = option("--verify-experimental") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "Experimental campaign requires isolated --root"
+        );
+        return verify_experimental::run(&root, &worker, &manifest);
     }
     if let Some(folder) = option("--verify-raw-previews") {
         return ui::raw_previews::run(&root, &worker, &folder);

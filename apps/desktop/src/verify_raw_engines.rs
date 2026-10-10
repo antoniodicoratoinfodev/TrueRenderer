@@ -168,7 +168,9 @@ pub fn screenshots(root: &std::path::Path) -> anyhow::Result<()> {
         .as_array()
         .ok_or_else(|| anyhow::anyhow!("Missing UI stages"))?;
     ensure!(
-        ui["passed"] == true && (4..=5).contains(&stages.len()),
+        ui["passed"] == true
+            && (RawEngine::choices().count()..=RawEngine::choices().count() + 1)
+                .contains(&stages.len()),
         "UI smoke incomplete"
     );
     let mut checks = vec![];

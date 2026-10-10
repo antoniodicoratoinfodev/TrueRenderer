@@ -28,6 +28,9 @@ def main():
     contents = bundle / "Contents"
     (contents / "MacOS").mkdir(parents=True, exist_ok=True)
     (contents / "Resources").mkdir(exist_ok=True)
+    notices = contents / "Resources/ThirdPartyNotices"
+    notices.mkdir(exist_ok=True)
+    shutil.copy2(ROOT / "third_party/colour-robertson/LICENSE", notices / "Colour-Robertson-BSD-3-Clause.txt")
     shutil.copytree(ROOT / "sample-photos", contents / "Resources/SamplePhotos",
                     dirs_exist_ok=True, ignore=shutil.ignore_patterns(".truerenderer-cache", ".DS_Store"))
     shutil.copy2(build / "truerenderer", contents / "MacOS/TrueRenderer")

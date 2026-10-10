@@ -1,11 +1,12 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 9 ottobre 2026.
+Aggiornato: 10 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
 - [Situazione attuale](#situazione-attuale)
 - [Prossime consegne: ordine concordato](#piano-operativo)
+- [Ripresa di trueRendererExperimental](#ripresa-experimental-20261010)
 - [Sviluppo fotografico: requisiti e gate SF0–SF10](#piano-sviluppo-fotografico)
 - [Roadmap del prodotto R0–R4](#roadmap-del-prodotto)
 - [Registro degli incrementi](#punto-di-ripresa)
@@ -16,11 +17,131 @@ Specifica: [architettura](docs/TrueRenderer-Architettura.md). Decisioni: [indice
 
 ## Situazione attuale
 
-L'app dispone di viewer/confronto, Esplora/Libreria, quattro motori RAW su macOS, anteprime/cache automatiche, sviluppo fotografico reversibile ed export. Alle regolazioni di luce, WB, colore, cronologia e copia selettiva si aggiungono **WB a slider continuo, curve, ritaglio/geometria, ottica manuale, dettaglio/presenza, livelli fotografici, colore a campioni con uniformità, grading, look salvati riutilizzabili, colore selettivo, tono locale e maschere composte**. Gli incrementi colore e la qualifica dei rispettivi bundle sono descritti sotto. Il bundle corrente è in `dist/TrueRenderer.app`; prove e limiti sono nel [registro degli incrementi](#punto-di-ripresa).
+L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS (Experimental limitato al sottoinsieme DNG), anteprime/cache automatiche, sviluppo fotografico reversibile ed export. Alle regolazioni di luce, WB, colore, cronologia e copia selettiva si aggiungono **WB a slider continuo, curve, ritaglio/geometria, ottica manuale, dettaglio/presenza, livelli fotografici, colore a campioni con uniformità, grading, look salvati riutilizzabili, colore selettivo, tono locale e maschere composte**. Gli incrementi colore e la qualifica dei rispettivi bundle sono descritti sotto. Il bundle corrente è in `dist/TrueRenderer.app`; prove e limiti sono nel [registro degli incrementi](#punto-di-ripresa).
 
 **Implementato non significa qualificato integralmente:** nessun gate R0–R4 o SF0–SF10 è concluso. Standard/Piena restano qualità di Anteprima; i modi di assurance Standard/Riferimento non sono disponibili. Le vecchie voci «mancante» nei resoconti descrivono la data della campagna e non sostituiscono questo piano.
 
+## Strumenti e livelli separati — 10 ottobre 2026
+
+**Implementato:** scheda Strumenti accanto a Regolazioni e Livelli, con selettore a menu condiviso nell’ispettore compatto; catalogo ricercabile con destinazione esplicita nuovo livello o livello selezionato. Livelli vuoti con UUID stabile e successiva aggiunta di operatori, controlli separati Opacità/Riempimento per ogni livello, blocchi e quote conservati. Riempimento persistente con default 1 per le ricette precedenti e omissione del campo al default; nella fusione Normale fotografica il peso è opacità × riempimento × maschera, senza modificare alpha. Analisi degli operatori a piena intensità indipendente da entrambi i controlli. Specifica e istruzioni d’uso aggiornate.
+
+**Verificato:** `RUST_TEST_THREADS=1 scripts/verify.sh --gui` passato: **439 test ordinari + 14 integrazioni**, fmt/Clippy, due test Python, otto controlli protocollo, 24 casi di ricampionamento e smoke nativo con confronto della superficie. Build release, firma ad hoc e due servizi XPC passati sul bundle finale. Regressioni con clic IT/EN per creazione vuota, applicazione sullo stesso livello e nuovo livello da Strumenti; blocchi e quote; persistenza/riapertura/Annulla/Ripristina; default storico senza cambiamento della serializzazione; riempimento nel rendering diretto e preparato, alpha e ingresso dell’analisi. Tre test su fotografie private esclusi senza `TR_RAW_SAMPLE`.
+
+**Correzioni durante la verifica:** il primo tentativo nel sandbox del terminale non disponeva di Core Image; la corsa nativa ha superato quelle prove. La corsa parallela ha poi fallito nove controlli di servizio/caricamento, tutti passati nella suite seriale completa. Individuato e corretto il decimo fallimento: la nuova riga delle schede nascondeva l’esposizione a 550×360; nella vista compatta il selettore delle tre pagine occupa la barra esistente. La regressione di visibilità passa in entrambe le lingue.
+
+**Consegnato:** `dist/TrueRenderer.app` aggiornato, bundle precedente conservato in `var/tools-layers-20261010/previous.app`, senza chiudere la sessione dell’utente. Hash finali confrontati dopo lo spostamento e firma ricontrollata. [Rapporto](reports/tools-layers-macos-2026-10-10.json); log e prove isolate in `var/tools-layers-20261010/` e `var/verify-UKY4s6LO/`.
+
+**Aperto:** i livelli vuoti sono contenitori di regolazioni fotografiche, non asset raster; altri metodi di fusione, compositing e qualifica SF/R restano nei rispettivi gate. Originali e catalogo dell’utente non modificati dalle prove.
+
+### Revisione livelli e strumenti colore — 10 ottobre 2026
+
+**Rilevato e corretto:** con più operatori nello stesso livello, “Mostra area” usava soltanto il primo `SampleColor`, anche dall’overlay della maschera. Ora ogni controllo mostra l’intervallo del proprio operatore, moltiplicato per la maschera; il controllo della maschera mostra solo la maschera. Il cambio overlay termina contagocce, disegno e analisi concorrenti senza cambiare la ricetta. Il messaggio del contagocce compare soltanto presso il campione destinatario.
+
+**Verificato:** nuova regressione con clic IT/EN su un livello con Luce e due campioni rosso/blu, tre overlay distinti, maschera al 50%, opacità/riempimento ridotti e ricetta invariata. Aggiunta guardia e regressione per Invio nella ricerca durante editing disabilitato. Estese le regressioni colore/viraggio con riempimento non unitario. `RUST_TEST_THREADS=1 scripts/verify.sh --gui` passato: **441 test ordinari + 14 integrazioni**, fmt/Clippy, due test Python, otto controlli protocollo, 24 casi ricampionamento e smoke nativo con confronto superficie. Build release passata.
+
+**Campagna export:** **240 confronti PNG16/TIFF16**, errore massimo **0 u16** rispetto al grafo CPU, su studio cromatico sintetico 1200×800, entrambi i servizi XPC e cinque impostazioni motore. Dodici ricette coprono sviluppo, maschere, campioni, grading, filtro, B&N, gradiente, colore selettivo, tono, livelli/curve e look; venti confronti riguardano la nuova pila mista con opacità 0,6, riempimento 0,35 e livello vuoto. Sorgente invariata. Il PNG non esercita i decoder RAW e il riferimento CPU condiviso non misura la fedeltà cromatica assoluta. Tre test su fotografie private esclusi dalla suite senza `TR_RAW_SAMPLE`.
+
+**Consegnato:** bundle corretto in `dist/TrueRenderer.app`; precedente in `var/color-tools-audit-20261010/previous.app`. Firma e due XPC verificati sull’hash finale, mantenuto dopo lo spostamento. [Rapporto della revisione](reports/color-tools-audit-macos-2026-10-10.json), dati della campagna e log in `var/color-tools-audit-20261010/`, suite in `var/verify-E3DjLveH/`. Nessuna chiusura della sessione utente o modifica ai suoi originali/catalogo.
+
+**Aperto:** fedeltà cromatica assoluta, display, fotocamere, Windows, altri metodi di fusione e contenuti raster rimangono fuori da questa verifica; gate SF/R invariati.
+
+### Colori funzionali nell’interfaccia — piano e applicazione del 10 ottobre 2026
+
+**Piano concordato nella richiesta:** migliorare GUI/UI di strumenti e livelli con colori legati allo scopo. Ordine: (1) icone e accenti coerenti nel catalogo, negli operatori e nella pila; (2) indicatori delle famiglie e guide cromatiche RGB/CMYK, temperatura e tinta, curve nel colore del canale; (3) testo e stati selezionati leggibili indipendentemente dal colore, sfondo della fotografia neutro; (4) regressioni IT/EN e finestre compatte, ispezione visiva e verifica del bundle. Nessun cambiamento alle formule fotografiche.
+
+**Implementato:** palette UI dedicata, icone vettoriali di tono/curve/colore/viraggio, catalogo a righe con area cliccabile estesa e messaggio ricerca vuota, accenti nella pila e nelle intestazioni, indicatori su canali/famiglie/zone e sottili guide cromatiche sotto i cursori. Le guide sono indicative della funzione e non preview colorimetriche del risultato. Stati disabilitati desaturati; nomi, bordi/focus e valori numerici conservati.
+
+**Verificato:** **441 test ordinari + 14 integrazioni**, fmt, Clippy finale, due test Python, otto controlli protocollo e 24 casi ricampionamento. Passati i 28 test dei controlli di sviluppo, incluse interazioni e conservazione dei valori IT/EN; suite con finestre compatte e curve. Build release e prove native di catalogo, colore selettivo e curve, con schermate finali IT/EN ispezionate. Il primo smoke generale debug è terminato senza ricevere screenshot; ripetuto sul bundle release: otto catture e confronto della superficie passati. Il probe di sviluppo storico forzava l’italiano: aggiunta scelta inglese esplicita per le catture diagnostiche, senza cambiare la lingua dell’app ordinaria. Firma e due servizi XPC passati.
+
+**Consegnato:** `dist/TrueRenderer.app` aggiornato, precedente in `var/color-ui-20261010/previous.app`; hash verificati dopo lo spostamento. [Rapporto e schermate](reports/color-ui-macos-2026-10-10.json), log/corpus/cataloghi isolati in `var/color-ui-20261010/`; suite in `var/verify-7wxuCarK/`. Nessuna chiusura della sessione utente, nessuna modifica ai suoi originali o catalogo.
+
+**Aperto:** verifica completa con tecnologie assistive, deficit della visione cromatica e Windows. I colori UI sono simbolici; formule, qualifiche cromatiche e gate SF/R invariati. Nessuna nuova campagna RAW o promozione Standard/Riferimento.
+
 ## Piano operativo
+
+### trueRendererExperimental — piano e sviluppo del 9 ottobre
+
+Richiesta precisata dal titolare: progettare **trueRendererExperimental** come motore aggiuntivo basato su TrueRenderer, autonomo da LibRaw anche nelle funzioni oggi delegate alla libreria, con obiettivo di massima fedeltà cromatica misurabile. Priorità confermata durante la pianificazione: **DNG prima, poi Nikon D750, Fujifilm X-T5, Nikon D800 e D850**. Specifica tecnica, analisi del codice, alternative e criteri di accettazione in [trueRendererExperimental — ADR 0012](docs/progetto-truerenderer-experimental.md#adr-0012).
+
+Il piano preliminare faceva riferimento alla [conversazione condivisa](https://chatgpt.com/share/6ac82845-2784-83ed-9427-7be5c7146260), il cui testo non era stato acquisito. La richiesta attuale definisce direttamente obiettivo e priorità e consente di proseguire senza quel testo; non si attribuiscono alla conversazione contenuti non letti. **Implementazione autorizzata dal titolare dopo la pianificazione; D40 esclusa per ora.** Il corpus Download contiene 30 NEF D750, 9 NEF D800 e un RAF X-T5; D850 esclusa dalla campagna corrente su conferma del titolare («usa quelli che hai trovati»). Nessun supporto delle nuove camere è dedotto dalla sola identificazione.
+
+**Ricognizione completata.** TrueRenderer possiede già normalizzazione, WB applicato al mosaico, demosaic direzionale, trattamento delle alte luci, conversione fp32 in Rec.2020 e orientamento. LibRaw fornisce identificazione, parsing, unpack e curve del formato, crop/CFA, nero/bianco, WB as-shot e matrici camera. Individuate anche le dipendenze meno visibili: `EngineDecoder::is_raw`, il ramo WB e l'export DNG del mosaico, che chiama direttamente l'adattatore LibRaw. Il parser delle preview e i metadati fotografici esistenti non sono un parser RAW generale.
+
+**Scelte progettuali.** Nucleo Rust separato `tr-raw`, adattatore worker distinto, contratto esplicito sensore/profilo/ricetta e prova compilabile senza LibRaw. DNG Bayer non compresso come primo passo tecnico, seguito da JPEG lossless e DNG reali con calibrazione supportata; nessuna promessa di tutti i DNG. Dopo la verticale DNG: NEF D750/D800/D850 e RAF X-T5 qualificati per sottotipo. RawSpeed e Rawler valutati come alternative, senza nuova dipendenza introdotta. Base demosaic derivata da TrueRenderer, candidati RI/MLRI e poi ARI subordinati a misure; caratterizzazione per illuminante e prove colore hanno priorità rispetto alla sola complessità dell'interpolazione.
+
+Contratti conservati:
+
+- Identità serializzata, algoritmo, WB, matrice e alte luci di `RawEngine::TrueRenderer`, compresa `LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2`; altri motori e default di piattaforma invariati.
+- Variante `RawEngine::TrueRendererExperimental`, etichetta `trueRendererExperimental`, ricetta propria con versioni degli stadi e hash del profilo. Probe, decode, WB, cache ed export coerenti; nessun riuso fra motori o ripiego RAW implicito.
+- Rec.2020 lineare esteso fp32, orientamento una volta e grafo fotografico comune; nessun clamp intermedio dei campioni validi negativi o sopra uno. Il passaggio storico attraverso primarie sRGB in float non è di per sé un taglio del gamut.
+- Due servizi XPC nel bundle macOS, allowlist del worker su pipe, originali in sola lettura. Memoria pianificata per buffer vivi, prima delle allocazioni; supervisione RSS e firma ad hoc non diventano garanzie di rilascio.
+- LibRaw può restare nel prodotto per gli altri motori: l'autonomia richiesta è zero chiamate nel percorso Experimental, compresi riconoscimento, rifiuti ed export, con prova del nucleo senza collegamento alla libreria.
+
+Ordine operativo aggiornato, che sostituisce le fasi preliminari dipendenti dal testo condiviso:
+
+| Fase | Prossima consegna | Uscita richiesta |
+|---|---|---|
+| E0 | Contratti esecutivi dei singoli stadi, capacità DNG e protocollo delle misure | Formule/domìni/parametri e fixture determinati prima del relativo codice; obiettivo e architettura in ADR 0012 |
+| E1 | Banco indipendente e riferimento del motore storico | Golden riproducibili, dati isolati, build senza LibRaw e test di assenza delle chiamate predisposti |
+| E2 | DNG Bayer non compresso | Parsing autonomo, campioni/geometria esatti, calibrazione e rifiuti verificati |
+| E3 | Prima verticale DNG reale | JPEG lossless, colore uno/due illuminanti, pipeline derivata da TrueRenderer; autonomia dimostrata sul sottoinsieme dichiarato |
+| E4 | Qualifica e miglioramento colore | Dati misurati separati dal fit, ΔE00 e incertezza, confronto demosaic/rumore/alte luci; nessuna superiorità dedotta dai soli confronti con altri renderer |
+| E5–E6 | Integrazione e candidato DNG | Identità/WB/profili/cache/export, memoria, suite GUI e XPC su entrambi i servizi, bundle precedente recuperabile |
+| E7–E8 | Nikon D750, Fujifilm X-T5, Nikon D800/D850 | Parser/codec/metadati/profili indipendenti; stessi gate per ogni sottotipo, corpus autorizzato |
+| E9 | Ottimizzazione e ulteriori formati | SIMD/tile/GPU o ARI soltanto dopo qualità e costo misurati, equivalenza CPU e supporto esplicito |
+
+- [x] Leggere stato, architettura pertinente e implementazione; mappare le responsabilità LibRaw e i punti di integrazione.
+- [x] Chiarire l'autonomia richiesta e acquisire la priorità DNG → D750/Fujifilm/D800/D850.
+- [x] Consultare fonti primarie per DNG, LibRaw, RawSpeed/Rawler, metadati Nikon, demosaic residuale e caratterizzazione colorimetrica.
+- [x] Redigere specifica/ADR 0012 con perimetro, contratti, dipendenze, criteri di accettazione e ordine delle consegne; collegarla all'indice e al progetto RAW.
+- [x] Definire E0 esecutivo per la prima ricetta DNG: formule, domìni, limiti e rifiuti nel §12 dell'ADR; predisporre il banco E1 con riferimento del demosaic storico, fixture e build senza LibRaw.
+- [x] Implementare E2 e i componenti codec/calibrazione E3: 17 regressioni del nucleo, test di autonomia su probe/WB/decode/export e prima campagna XPC con DNG sintetico e tre DNG derivati dalla D750.
+- [ ] Completare E3 con DNG reali prodotti indipendentemente, JPEG lossless fotografici e interoperabilità DNG SDK/altro lettore; in Download non sono stati trovati DNG originali. I DNG derivati hanno conversione e profilo LibRaw dichiarati.
+- [ ] Misurare E4 su riferimenti colorimetrici calibrati, quantizzazione WB e rumore/saturi; confrontare i candidati residuali. Auto/contagocce usano per ora lo stimatore comune sul render Experimental, non ancora statistiche robuste CFA.
+- [x] Integrare e verificare E5–E6 nel sottoinsieme funzionale dichiarato: selettore, WB, cache, export, suite completa, GUI e due servizi XPC. Non equivale alla conclusione di E3/E4 o dei gate globali.
+- [ ] Avviare E7–E8 dopo DNG; aggiornare la stima in base alle modalità RAW e ai profili realmente disponibili. E9 resta subordinato alle misure.
+
+Disponibilità del target misurato, illuminanti e acquisizioni ripetute sono prerequisiti della qualifica cromatica, non del lavoro iniziale sui decoder. Le soglie ΔE della specifica sono obiettivi progettuali: nessun risultato fotografico nuovo, gate R0–R4/SF0–SF10 concluso o modo Standard/Riferimento disponibile. La conservazione dello storico si verifica sullo stesso percorso/build; fra piattaforme e GPU servono tolleranze dichiarate.
+
+**Implementato.** Nucleo `tr-raw` senza LibRaw, TIFF limitato, DNG Bayer uint8–16 packed/uncompressed e JPEG lossless SOF3, nero periodico con delta riga/colonna, LUT, crop dopo demosaic, otto orientamenti. Calibrazione uno/due illuminanti con firme UTF-8 esatte, AnalogBalance, ColorMatrix/ForwardMatrix, risoluzione iterativa del neutro e Bradford; normalizzazione del bianco FM entro una tolleranza dichiarata, rifiuto dei DNG output-referred. Rec.2020 esteso senza neutralizzazione automatica dei saturi. Adattatore distinto per probe, WB, sviluppo ed export DNG del dominio originale, con calibrazione e diritti del profilo conservati; selezione separata e rifiuti espliciti per NEF/RAF e trasformazioni non implementate. Il piano memoria comprende sensore, demosaic/output, tile ed export, più 64 MiB per copie dei metadati e strutture limitate. Riferimento numerico del demosaic confrontato campione per campione con lo storico; autonomia protetta anche da un test che vieta gli ingressi LibRaw.
+
+**Verificato:** `scripts/verify.sh --gui` passato con **434 test ordinari + 14 integrazioni**, fmt/Clippy, due test Python, otto controlli protocollo, 24 casi ricampionamento e prove native. Tre prove generiche su RAW privati escluse senza `TR_RAW_SAMPLE`; la campagna dedicata sotto è distinta. I 17 test `tr-raw` includono domini bit/endian, SOF3 con predittori/restart/point transform, CFA, nero/LUT, profili, orientamenti, export, IFD ciclici e 2048 mutazioni dell'header senza panic: non sono una campagna di fuzzing completa. Due eseguibili di test del nucleo compilati separatamente e privi di simboli LibRaw; guardia worker anche su WB Auto/contagocce e rifiuti. Le ultime correzioni di metadati diagnostici e budget hanno avuto test mirati, fmt/Clippy e build release; nessun cambiamento al calcolo dei pixel dopo la suite completa.
+
+**Campagna fotografica limitata:** ricognizione isolata dei 40 originali concordati: 39 NEF identificati dal probe storico; il RAF X-T5 conserva il rifiuto X-Trans del motore bilineare. Experimental rifiuta tutti i NEF/RAF direttamente, senza fallback. Un DNG generato e **tre DNG derivati da NEF D750, 6032×4032**, sviluppati sui due servizi XPC: otto render pieni identici fra slot, quattro riaperture dell'export RAW identiche al render iniziale sullo slot 0, otto coppie probe/decode con WB coerente e **16 confronti PNG16/TIFF16 con errore massimo 0 u16**. I DNG D750 sono preparati dal motore storico usando LibRaw; i loro profili provengono dalla tabella storica. La prova riguarda il successivo percorso DNG autonomo, non un decoder NEF indipendente o una calibrazione misurata.
+
+**Interfaccia:** cinque motori e ritorno ad Apple provati sul DNG sintetico, con selezione/zoom/centro conservati e superficie entro 1 u8 dal riferimento CPU. Ispezionata la schermata inglese del nuovo selettore e del messaggio sui limiti; IT/EN coperti dalle regressioni, nessuna campagna manuale completa di accessibilità. Il primo avvio della prova con percorso relativo non ha caricato il campione; ripetizione con percorsi assoluti passata. Corretto anche l'harness fotografico per rilasciare la lease XPC della conversione prima della prova autonoma e registrare come non eseguite le verifiche di repack non richieste allo slot 1.
+
+**Consegna:** bundle in `dist/TrueRenderer.app`, con versione precedente conservata in `var/experimental-20261009/previous.app` e relativi file in uso preservati in `previous-live.app`. Contenuto logico, schema e impostazioni del catalogo identici allo snapshot SQLite iniziale; impronta fisica del file variata durante la sessione dell'app, nessun ripristino o sovrascrittura del catalogo. Verificati invariati 168 file di backup, originali, demosaic storico, bridge nativo e architettura originale. Il nuovo motore compare al successivo avvio dell'app; nessuna chiusura forzata della sessione dell'utente. Dettagli aggregati, impronte e limiti nel [rapporto DNG](reports/experimental-dng-macos-2026-10-09.json); dati fotografici e rapporti con percorsi privati restano sotto `var/`.
+
+**Aperto:** decoder diretti D750/D800 e RAF/X-Trans, corpus DNG indipendente e interoperabilità, riferimenti colore misurati/ΔE00, miglioramenti demosaic/WB/alte luci, qualifica Windows e pressione fisica/RSS. I tempi osservati sono singole prove locali; nessun p95/p99 o gate memoria chiuso. Due tentativi iniziali Core Image dal sandbox del terminale non sono passati; la suite nativa successiva è stata eseguita fuori da quel sandbox. Nessun gate globale R/SF o Standard/Riferimento promosso.
+
+La precedente consegna documentale aveva verificato 457 collegamenti locali, impronte LibRaw e conservazione delle fonti storiche. Le verifiche del codice e del nuovo candidato sono registrate separatamente qui; fonti della specifica anteprime invariate, nessuna sincronizzazione dell’appendice E richiesta.
+
+<a id="ripresa-experimental-20261010"></a>
+
+#### Punto di ripresa salvato il 10 ottobre
+
+**Fermata corrente:** prima implementazione DNG autonoma integrata e consegnata; risultati e limiti sono quelli della campagna del 9 ottobre descritta sopra. Questo aggiornamento salva il passaggio di consegne, senza nuove modifiche al motore o nuove prove fotografiche. Non ricominciare la ricognizione LibRaw o l'integrazione del selettore: sono già eseguite. La sostituzione per i NEF/RAF originali è ancora da realizzare.
+
+| Ordine di ripresa | Lavoro ancora necessario | Evidenza richiesta prima di dichiararlo concluso |
+|---|---|---|
+| 1 — completare E3 | Ampliare la verifica DNG con file prodotti indipendentemente, JPEG lossless fotografici e un lettore di riferimento distinto; qualificare solo le funzioni effettivamente supportate | Unpack/crop/CFA/calibrazione corretti e interoperabilità; i tre DNG convertiti tramite LibRaw non bastano a questa qualifica |
+| 2 — E7, Nikon D750 | Censire nei 30 NEF autorizzati compressione, profondità, geometria e MakerNotes; definire il dominio dei codici e implementare parsing, codec, nero/bianco, WB e profilo senza chiamate LibRaw | Confronto dei campioni sensore con un controllo indipendente, provenienza dei profili, sviluppo diretto e stesso percorso per WB/cache/export sui due XPC |
+| 3 — E8 | Estendere ai sottotipi Fujifilm X-T5 e Nikon D800 presenti; per X-T5 servono anche codec RAF, CFA X-Trans e demosaic pertinente | Stessi controlli per ogni sottotipo; nessuna compatibilità dedotta dal solo modello o dal successo del decoder storico |
+| Trasversale — E4 | Procurare riferimenti colorimetrici misurati e separare fit/verifica; misurare ΔE00, illuminanti, esposizione e rumore. Implementare statistiche WB sui siti CFA e valutare RI/MLRI, poi ARI, e alte luci | Accuratezza e incertezza misurate; la parità export o il confronto con altri renderer non dimostrano maggiore fedeltà cromatica |
+| Successivo — E9 e qualifica | Fuzzing esteso, pressione fisica/RSS, tempi su corpus adeguato e Windows; ottimizzazioni soltanto dopo i confronti di qualità | Limiti di risorse e prestazioni verificati, equivalenza numerica degli eventuali percorsi ottimizzati |
+
+**Vincoli del corpus da mantenere:** usare i 30 D750, 9 D800 e un RAF X-T5 già trovati e autorizzati. D40 esclusa per ora; D850 non trovata ed esclusa dalla campagna corrente su conferma del titolare. La mancanza di target colore non impedisce di lavorare sui decoder, ma impedisce di dichiarare qualificata la fedeltà. Nessun fallback RAW implicito e nessuna modifica alla ricetta del TrueRenderer storico.
+
+**Dove riprendere nel codice e nelle prove:**
+
+- Contratti e criteri: [ADR 0012](docs/progetto-truerenderer-experimental.md#adr-0012), in particolare il contratto numerico della prima ricetta `TRExp-dng1-lj1-cal1-dir1-extended1`.
+- Nucleo autonomo: [API `tr-raw`](crates/tr-raw/src/lib.rs), moduli TIFF/DNG/JPEG/colore/demosaic e [regressioni DNG](crates/tr-raw/tests/dng.rs). Adattatore, WB e guardia contro chiamate LibRaw: [experimental.rs](crates/tr-worker/src/experimental.rs).
+- Campagna ripetibile: [verify_experimental.rs](apps/desktop/src/verify_experimental.rs). Manifest privati `var/experimental-20261009/input-manifest.json` (ricognizione completa e DNG) e `input-manifest-final.json` (sola campagna DNG); log, conversioni temporanee, snapshot e confronti del catalogo nello stesso spazio privato. Non aggiungerli a Git.
+- Risultati da conservare: [rapporto funzionale](reports/experimental-dng-macos-2026-10-09.json) e [inventario dipendenze](reports/dependency-inventory-experimental-20261009.json). La suite completa conta 434 test ordinari e 14 integrazioni; le ultime modifiche a diagnostica/budget hanno verifiche mirate e nuova campagna del bundle, come precisato sopra.
+- Per un nuovo incremento usare `scripts/cargo-local.sh`, test pertinenti e poi `scripts/verify.sh --gui`; dopo modifiche al decoder/bundle ripetere `scripts/test-xpc-integration.py`. Usare percorsi assoluti per le prove UI e dati isolati; gli originali esterni passano esclusivamente dai servizi confinati.
+
+**Salvataggio del lavoro:** sorgenti, specifica, stato e rapporti sono presenti nel workspace; modifiche ancora non committate, con nuovi file non tracciati. Nessun commit o push effettuato. Il bundle consegnato e le copie precedenti sono indicati sopra; `var/library.sqlite` e `var/backups` restano dati durevoli da preservare. Questo è il riferimento operativo per la prossima sessione; non duplicare il registro in altri Markdown.
 
 Ordine richiesto dal titolare il 4 ottobre: **prima i punti 2, 3 e 4 della proposta, poi il punto 1**. La qualifica estesa di anteprime/memoria è rinviata al passo successivo; le verifiche di regressione necessarie alle modifiche fotografiche restano parte di ogni consegna.
 

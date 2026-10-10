@@ -1,5 +1,7 @@
 # Motori RAW selezionabili — progetto sperimentale
 
+Il motore aggiuntivo **trueRendererExperimental**, autonomo da LibRaw e con priorità DNG → Nikon D750/Fujifilm X-T5/Nikon D800/D850, ha una [specifica dedicata e ADR 0012](progetto-truerenderer-experimental.md#adr-0012). Quel progetto conserva il TrueRenderer descritto qui; non ne cambia implicitamente ricette, dipendenze o capacità. Avanzamento nel [piano operativo](../STATO.md#truerendererexperimental--piano-e-sviluppo-del-9-ottobre).
+
 **Stato corrente, 15 settembre 2026:** incremento Windows pubblicato in `67146e3`, comprese le correzioni successive; 107 test Rust nella campagna [gamma/orientamento](../STATO.md#revisioni-windows-concluse). Il bundle Mac con i motori collegati è stato costruito e verificato per UI/corpus/XPC nel [restyling](../reports/toolbar-macos.json). La campagna Mac D750 è ora verificata sotto; restano altre fotocamere, confronto fotografico esteso e qualifica colore. Le misure del 12–13 settembre restano attribuite alle rispettive campagne.
 
 Progetto del 12 settembre 2026: motore proprio affiancato agli esistenti, selezionabile nelle impostazioni Windows/macOS. Anticipa un esperimento prima post-v1 (§7.3); non cambia i gate o la promessa della v1.

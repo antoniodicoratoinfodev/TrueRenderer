@@ -1,0 +1,45 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-10",
+  "scope": "Separate tool selection and photographic layers; empty layers; opacity and fill",
+  "passed": true,
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "af43105d4d7709e2267f53631079b1f220501cd8b99be3e1c34e12ed0a376b13",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "3f8c938bbd3a4ae4de6ed0609a939f0bf035a439d3584f70e23cacc8fab77a21",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2a24f58add36fc755b9ad3eb5eee2fffba4bca823b1e5b732ad62eb8d6e76390"
+  },
+  "verification": {
+    "command": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "ordinary_tests": 439,
+    "integration_tests": 14,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_gui": true,
+    "fmt": true,
+    "clippy": true,
+    "release_build": true,
+    "xpc_two_services": true
+  },
+  "regressions": [
+    "Tool selection creates a new layer or appends to selected empty layer, IT/EN clicks",
+    "Locked layers and layer/operator limits are respected atomically",
+    "Empty layers, opacity and fill persist through catalog reopen and undo/redo",
+    "Fill rendering preserves alpha and matches prepared evaluation",
+    "Legacy fill default preserves serialized representation",
+    "Analysis ignores opacity and fill; duplicates preserve both",
+    "Compact inspector retains exposure visibility"
+  ],
+  "initial_failures": [
+    "Terminal sandbox did not expose Core Image; native run passed",
+    "Parallel native suite failed 9 service/loading checks; serial full suite passed",
+    "Compact inspector exposure was pushed out of view; compact page menu fixed and regression passed"
+  ],
+  "limits": [
+    "Normal photographic blending only: opacity and fill multiply effect weight",
+    "No raster content compositing or new blend modes",
+    "Three private-camera tests skipped without TR_RAW_SAMPLE",
+    "No new R0\u2013R4 or SF gates closed"
+  ]
+}
