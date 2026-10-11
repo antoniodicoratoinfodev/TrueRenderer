@@ -10,6 +10,36 @@ use std::{collections::BTreeMap, f64::consts::TAU, fs, path::PathBuf};
 #[path = "directional.rs"]
 mod directional;
 
+#[path = "residual.rs"]
+mod residual;
+
+#[path = "chroma.rs"]
+mod chroma;
+
+#[path = "confidence.rs"]
+mod confidence;
+
+#[path = "photographic.rs"]
+mod photographic;
+
+#[path = "frame.rs"]
+mod frame;
+
+#[path = "refined.rs"]
+mod refined;
+
+#[path = "bounded.rs"]
+mod bounded;
+
+#[path = "bounded_constrained.rs"]
+mod bounded_constrained;
+#[path = "constrained.rs"]
+mod constrained;
+#[path = "residual_constrained.rs"]
+mod residual_constrained;
+#[path = "residual_refined.rs"]
+mod residual_refined;
+
 #[test]
 fn camera_rgb_refactor_is_bit_exact_with_frozen_e8() {
     let (w, h) = (29, 23);
@@ -148,14 +178,19 @@ impl Metrics {
     }
 }
 
+#[derive(Clone)]
 struct Scene {
     category: &'static str,
     name: String,
     truth: Vec<[f32; 3]>,
     sigma: f64,
+    noise_correlation: f64,
 }
 fn scenes(protocol: &Value, split: &str, w: usize, h: usize) -> Vec<Scene> {
     let q = &protocol["quality"];
+    let settings = &q[split];
+    let wave_phase = settings["wave_phase_radians"].as_f64().unwrap_or(0.);
+    let edge_offset = settings["edge_offset_pixels"].as_f64().unwrap_or(0.);
     let mut out = vec![];
     for angle in q[split]["angles_degrees"].as_array().unwrap() {
         let angle = angle.as_f64().unwrap();
@@ -173,7 +208,7 @@ fn scenes(protocol: &Value, split: &str, w: usize, h: usize) -> Vec<Scene> {
                 };
                 let truth = (0..w * h)
                     .map(|i| {
-                        let t = TAU * frequency * coordinate(i % w, i / w);
+                        let t = TAU * frequency * coordinate(i % w, i / w) + wave_phase;
                         if chromatic {
                             [
                                 (0.45 + 0.25 * t.sin()) as f32,
@@ -190,6 +225,7 @@ fn scenes(protocol: &Value, split: &str, w: usize, h: usize) -> Vec<Scene> {
                     name: format!("{category}-{angle}-{frequency}"),
                     truth,
                     sigma: 0.,
+                    noise_correlation: 0.,
                 });
             }
         }
@@ -197,7 +233,7 @@ fn scenes(protocol: &Value, split: &str, w: usize, h: usize) -> Vec<Scene> {
             let truth = (0..w * h)
                 .map(|i| {
                     // Linear pixel-integrated transition, fixed width one pixel.
-                    let v = (coordinate(i % w, i / w) + 0.5).clamp(0., 1.) as f32;
+                    let v = (coordinate(i % w, i / w) + 0.5 + edge_offset).clamp(0., 1.) as f32;
                     if chromatic {
                         [0.13 + 0.61 * v, 0.69 - 0.45 * v, 0.22 + 0.25 * v]
                     } else {
@@ -210,29 +246,116 @@ fn scenes(protocol: &Value, split: &str, w: usize, h: usize) -> Vec<Scene> {
                 name: format!("edge-{angle}-{chromatic}"),
                 truth,
                 sigma: 0.,
+                noise_correlation: 0.,
             });
         }
     }
-    for (id, rgb) in [[-0.1, 0.37, 1.4], [0., 0., 0.], [1.4; 3]]
-        .into_iter()
-        .enumerate()
-    {
+    let flats: [[f32; 3]; 3] = settings
+        .get("flat_rgb")
+        .map_or([[-0.1, 0.37, 1.4], [0.; 3], [1.4; 3]], |v| {
+            serde_json::from_value(v.clone()).expect("flat_rgb")
+        });
+    let noise_colors: [[f32; 3]; 2] = settings
+        .get("noise_rgb")
+        .map_or([[0.37; 3], [0.21, 0.43, 0.68]], |v| {
+            serde_json::from_value(v.clone()).expect("noise_rgb")
+        });
+    for (id, rgb) in flats.into_iter().enumerate() {
         out.push(Scene {
             category: "flat_extended",
             name: format!("flat-{id}"),
             truth: vec![rgb; w * h],
             sigma: 0.,
+            noise_correlation: 0.,
         });
     }
     for sigma in q["noise_sigma"].as_array().unwrap() {
         let sigma = sigma.as_f64().unwrap();
-        for (id, rgb) in [[0.37; 3], [0.21, 0.43, 0.68]].into_iter().enumerate() {
+        for (id, rgb) in noise_colors.into_iter().enumerate() {
             out.push(Scene {
                 category: "noise",
                 name: format!("noise-{sigma}-{id}"),
                 truth: vec![rgb; w * h],
                 sigma,
+                noise_correlation: 0.,
             });
+        }
+    }
+    if let Some(mixed) = q["mixed_noise"].as_array() {
+        let structured: Vec<_> = out
+            .iter()
+            .filter(|s| {
+                matches!(
+                    s.category,
+                    "achromatic_texture" | "chromatic_texture" | "edge"
+                )
+            })
+            .cloned()
+            .collect();
+        for scene in &structured {
+            for params in mixed {
+                let scale = params["contrast_scale"].as_f64().unwrap() as f32;
+                let sigma = params["sigma"].as_f64().unwrap();
+                out.push(Scene {
+                    category: match scene.category {
+                        "achromatic_texture" => "noisy_achromatic_texture",
+                        "chromatic_texture" => "noisy_chromatic_texture",
+                        _ => "noisy_edge",
+                    },
+                    name: format!("noisy-{}-scale{scale}-sigma{sigma}", scene.name),
+                    truth: scene
+                        .truth
+                        .iter()
+                        .map(|p| p.map(|v| 0.4 + scale * (v - 0.4)))
+                        .collect(),
+                    sigma,
+                    noise_correlation: 0.,
+                });
+            }
+        }
+    }
+    if q["spatial_stress"].as_bool().unwrap_or(false) {
+        for (id, frequency) in [
+            q[split]["frequencies"][1].as_f64().unwrap(),
+            q[split]["frequencies"][3].as_f64().unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            for chromatic in [false, true] {
+                out.push(Scene {
+                    category: "cross_texture",
+                    name: format!("cross-{id}-{chromatic}"),
+                    truth: (0..w * h)
+                        .map(|i| {
+                            let a = (TAU * frequency * (i % w) as f64 + wave_phase).sin() as f32;
+                            let b = (TAU * frequency * (i / w) as f64 - wave_phase).cos() as f32;
+                            if chromatic {
+                                [
+                                    0.4 + 0.16 * a + 0.13 * b,
+                                    0.4 + 0.12 * a - 0.15 * b,
+                                    0.4 - 0.17 * a + 0.11 * b,
+                                ]
+                            } else {
+                                [0.4 + 0.16 * a + 0.13 * b; 3]
+                            }
+                        })
+                        .collect(),
+                    sigma: 0.,
+                    noise_correlation: 0.,
+                });
+            }
+        }
+        for sigma in [0.012, 0.04] {
+            for (id, rgb) in noise_colors.into_iter().enumerate() {
+                out.push(Scene {
+                    category: "correlated_noise",
+                    name: format!("correlated-{sigma}-{id}"),
+                    truth: vec![rgb; w * h],
+                    sigma,
+                    noise_correlation: 0.6,
+                });
+            }
         }
     }
     out
@@ -291,6 +414,52 @@ fn evaluate(
 #[test]
 #[ignore = "offline research campaign; needs TR_QUALITY_LAB_ROOT and TR_QUALITY_SPLIT"]
 fn quality_research_campaign() -> Result<()> {
+    run_quality_campaign("DR1", include_str!("../tests/fixtures/research-v1.json"))
+}
+
+#[test]
+#[ignore = "offline DR2 research campaign; needs TR_QUALITY_LAB_ROOT and TR_QUALITY_SPLIT"]
+fn residual_quality_research_campaign() -> Result<()> {
+    run_quality_campaign("DR2", include_str!("../tests/fixtures/research-v2.json"))
+}
+
+#[test]
+#[ignore = "offline DR3 research campaign; needs TR_QUALITY_LAB_ROOT and TR_QUALITY_SPLIT"]
+fn chroma_quality_research_campaign() -> Result<()> {
+    run_quality_campaign("DR3", include_str!("../tests/fixtures/research-v3.json"))
+}
+
+#[test]
+#[ignore = "offline DR4 research campaign; needs TR_QUALITY_LAB_ROOT and TR_QUALITY_SPLIT"]
+fn confidence_quality_research_campaign() -> Result<()> {
+    run_quality_campaign("DR4", include_str!("../tests/fixtures/research-v4.json"))
+}
+
+#[test]
+#[ignore = "offline DR5 research campaign; needs TR_QUALITY_LAB_ROOT and TR_QUALITY_SPLIT"]
+fn refined_quality_research_campaign() -> Result<()> {
+    run_quality_campaign("DR5", include_str!("../tests/fixtures/research-v5.json"))
+}
+
+#[test]
+#[ignore = "DR5 regression on consumed v4 data; not an independent research campaign"]
+fn refined_previous_research_campaign() -> Result<()> {
+    run_quality_campaign("DR5", include_str!("../tests/fixtures/research-v4.json"))
+}
+
+#[test]
+#[ignore = "offline DR6 research campaign; needs TR_QUALITY_LAB_ROOT and TR_QUALITY_SPLIT"]
+fn constrained_quality_research_campaign() -> Result<()> {
+    run_quality_campaign("DR6", include_str!("../tests/fixtures/research-v6.json"))
+}
+
+#[test]
+#[ignore = "DR6 regression on consumed v5 data, not independent validation"]
+fn constrained_previous_research_campaign() -> Result<()> {
+    run_quality_campaign("DR6", include_str!("../tests/fixtures/research-v5.json"))
+}
+
+fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
     let root = PathBuf::from(
         std::env::var("TR_QUALITY_LAB_ROOT").context("TR_QUALITY_LAB_ROOT required")?,
     );
@@ -299,48 +468,89 @@ fn quality_research_campaign() -> Result<()> {
         matches!(split.as_str(), "development" | "validation"),
         "invalid split"
     );
-    let text = include_str!("../tests/fixtures/research-v1.json");
     let protocol: Value = serde_json::from_str(text)?;
     let q = &protocol["quality"];
-    let w = q["width"].as_u64().unwrap() as usize;
-    let h = q["height"].as_u64().unwrap() as usize;
+    let w = q[&split]["width"]
+        .as_u64()
+        .unwrap_or(q["width"].as_u64().unwrap()) as usize;
+    let h = q[&split]["height"]
+        .as_u64()
+        .unwrap_or(q["height"].as_u64().unwrap()) as usize;
     let border = q["border"].as_u64().unwrap() as usize;
     let cases = scenes(&protocol, &split, w, h);
     let mut details = vec![];
     let mut totals: BTreeMap<&str, [Metrics; 2]> = BTreeMap::new();
     let mut all_passed = true;
     let mut worst_ratios: BTreeMap<String, f64> = BTreeMap::new();
+    let mut worst_cases: BTreeMap<String, Value> = BTreeMap::new();
     for phase in 0..36 {
         let cfa = Cfa::new(6, &XTRANS)?.shifted(phase % 6, phase / 6);
         let mut per_phase: BTreeMap<&str, [Metrics; 2]> = BTreeMap::new();
         for (case, scene) in cases.iter().enumerate() {
             let mut seed = q[&split]["seed"].as_u64().unwrap() as u32
                 ^ (case as u32 * 1877 + phase as u32 * 8191);
+            let noise: Vec<_> = (0..w * h)
+                .map(|_| {
+                    (-2. * random(&mut seed).ln()).sqrt()
+                        * (TAU * random(&mut seed)).cos()
+                        * scene.sigma
+                })
+                .collect();
             let mosaic: Vec<_> = scene
                 .truth
                 .iter()
                 .enumerate()
                 .map(|(i, rgb)| {
-                    // Box-Muller from a fixed PRNG; identical source for both methods.
-                    let noise = (-2. * random(&mut seed).ln()).sqrt()
-                        * (TAU * random(&mut seed)).cos()
-                        * scene.sigma;
-                    (f64::from(rgb[cfa.color(i % w, i / w)]) + noise) as f32
+                    // Same measured sample for both methods. Optional fixed
+                    // six-site correlation is a stress input, never an algorithm parameter.
+                    let value = if scene.noise_correlation == 0. {
+                        noise[i]
+                    } else {
+                        let previous = i / w * w + (i % w + w - 6) % w;
+                        (noise[i] + scene.noise_correlation * noise[previous])
+                            / (1. + scene.noise_correlation.powi(2)).sqrt()
+                    };
+                    (f64::from(rgb[cfa.color(i % w, i / w)]) + value) as f32
                 })
                 .collect();
             let base = xtrans::CameraRgb::new(&mosaic, w, h, cfa);
             let a: Vec<_> = (0..w * h).map(|i| base.at(i % w, i / w)).collect();
-            let b = directional::reconstruct(&mosaic, w, h, cfa);
+            let b = match candidate {
+                "DR1" => directional::reconstruct(&mosaic, w, h, cfa),
+                "DR2" => residual::reconstruct(&mosaic, w, h, cfa),
+                "DR3" => chroma::reconstruct(&mosaic, w, h, cfa),
+                "DR4" => confidence::reconstruct(&mosaic, w, h, cfa),
+                "DR5" => refined::reconstruct(&mosaic, w, h, cfa),
+                "DR6" => constrained::reconstruct(&mosaic, w, h, cfa),
+                _ => anyhow::bail!("unknown candidate"),
+            };
             let metrics = [
                 evaluate(&a, scene, &mosaic, w, h, cfa, border),
                 evaluate(&b, scene, &mosaic, w, h, cfa, border),
             ];
-            for (i, m) in metrics.iter().enumerate() {
+            for m in &metrics {
                 ensure!(
                     m.mismatches == 0 && m.nonfinite == 0,
                     "{} phase {phase}: measured/nonfinite",
                     scene.name
                 );
+            }
+            let case_gate = gate(&metrics, scene.category, q);
+            for (name, ratio) in case_gate["ratios"].as_object().unwrap() {
+                let key = format!("{}/{name}", scene.category);
+                let value = ratio.as_f64().unwrap();
+                if worst_cases
+                    .get(&key)
+                    .is_none_or(|old| value > old["ratio"].as_f64().unwrap())
+                {
+                    worst_cases.insert(
+                        key,
+                        json!({"ratio":value,"scene":scene.name,"phase":phase,
+                        "baseline":metrics[0].value(),"candidate":metrics[1].value()}),
+                    );
+                }
+            }
+            for (i, m) in metrics.iter().enumerate() {
                 per_phase.entry(scene.category).or_default()[i].merge(m);
                 totals.entry(scene.category).or_default()[i].merge(m);
             }
@@ -358,12 +568,15 @@ fn quality_research_campaign() -> Result<()> {
             }
             details.push(json!({"phase":phase,"category":category,"baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate}));
         }
+        if matches!(candidate, "DR4" | "DR5" | "DR6") && (phase + 1) % 6 == 0 {
+            println!("{split}: {}/36 phases measured", phase + 1);
+        }
     }
     let categories:Vec<_>=totals.iter().map(|(category,pair)|json!({"category":category,"baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(pair,category,q)})).collect();
-    let report = json!({"protocol":"TRExp-research-v1","protocol_sha256":hash(text.as_bytes()),"candidate":"DR1","split":split,
+    let report = json!({"protocol":protocol["protocol"],"protocol_sha256":hash(text.as_bytes()),"candidate":candidate,"split":split,
         "scenes":cases.iter().map(|s|&s.name).collect::<Vec<_>>(),"scene_phase_cases":cases.len()*36,"width":w,"height":h,
         "synthetic_gates_passed":all_passed,"production_promoted":false,"photographic_ground_truth_available":false,
-        "categories":categories,"worst_phase_ratios":worst_ratios,"per_phase":details});
+        "categories":categories,"worst_phase_ratios":worst_ratios,"worst_scene_phase_cases":worst_cases,"per_phase":details});
     fs::write(
         root.join(format!("quality-{split}.json")),
         serde_json::to_vec_pretty(&report)?,
@@ -399,4 +612,170 @@ fn gate(pair: &[Metrics; 2], category: &str, q: &Value) -> Value {
         ratios.insert("chroma", chroma);
     }
     json!({"passed":passed,"ratios":ratios})
+}
+
+#[test]
+fn quality_gates_reject_chroma_and_detail_regressions_independently() {
+    let protocol: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/research-v2.json")).unwrap();
+    let q = &protocol["quality"];
+    let unit = Metric {
+        sse: 100.,
+        count: 100,
+    };
+    let baseline = Metrics {
+        missing: unit,
+        chroma: unit,
+        luma: unit,
+        gradient: unit,
+        border: unit,
+        ..Default::default()
+    };
+    let mut candidate = baseline.clone();
+    candidate.chroma.sse = 49.;
+    assert_eq!(
+        gate(
+            &[baseline.clone(), candidate.clone()],
+            "achromatic_texture",
+            q
+        )["passed"],
+        true
+    );
+    candidate.gradient.sse = 121.;
+    assert_eq!(
+        gate(
+            &[baseline.clone(), candidate.clone()],
+            "achromatic_texture",
+            q
+        )["passed"],
+        false
+    );
+    candidate.gradient = unit;
+    candidate.chroma.sse = 81.;
+    assert_eq!(
+        gate(&[baseline, candidate], "achromatic_texture", q)["passed"],
+        false
+    );
+    assert_eq!(
+        gate(
+            &[Metrics::default(), Metrics::default()],
+            "flat_extended",
+            q
+        )["passed"],
+        true
+    );
+}
+
+#[test]
+fn new_holdout_changes_every_scene_and_preserves_development_and_thresholds() {
+    let protocols: [Value; 6] = [
+        include_str!("../tests/fixtures/research-v1.json"),
+        include_str!("../tests/fixtures/research-v2.json"),
+        include_str!("../tests/fixtures/research-v3.json"),
+        include_str!("../tests/fixtures/research-v4.json"),
+        include_str!("../tests/fixtures/research-v5.json"),
+        include_str!("../tests/fixtures/research-v6.json"),
+    ]
+    .map(|text| serde_json::from_str(text).unwrap());
+    for (a, b) in [
+        (0, 1),
+        (0, 2),
+        (1, 2),
+        (0, 3),
+        (1, 3),
+        (2, 3),
+        (0, 4),
+        (1, 4),
+        (2, 4),
+        (3, 4),
+        (0, 5),
+        (1, 5),
+        (2, 5),
+        (3, 5),
+        (4, 5),
+    ] {
+        check_distinct_holdout(&protocols[a], &protocols[b]);
+    }
+}
+
+fn check_distinct_holdout(old: &Value, new: &Value) {
+    for key in [
+        "false_chroma_rmse_max_ratio",
+        "other_category_and_detail_rmse_max_ratio",
+        "absolute_rmse_floor",
+    ] {
+        assert_eq!(old["quality"][key], new["quality"][key]);
+    }
+    for split in ["development", "validation"] {
+        // Equal geometry here deliberately tests that scene content changes,
+        // rather than relying only on the new holdout's dimensions.
+        let a = scenes(old, split, 192, 144);
+        let b = scenes(new, split, 192, 144);
+        assert!(a.len() >= 57 && b.len() >= 57);
+        for (a, b) in a.iter().zip(&b) {
+            if split == "development" {
+                assert_eq!(a.truth, b.truth);
+                assert_eq!(a.sigma, b.sigma);
+            } else {
+                assert_ne!(a.truth, b.truth, "reused scene {}", a.name);
+            }
+        }
+        if split == "validation" {
+            for new in &b {
+                assert!(
+                    a.iter().all(|old| old.truth != new.truth),
+                    "reused held-out truth {}",
+                    new.name
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn noisy_structure_and_spatial_stress_do_not_dilute_the_original_categories() {
+    let protocol: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/research-v4.json")).unwrap();
+    for split in ["development", "validation"] {
+        let cases = scenes(&protocol, split, 192, 144);
+        assert_eq!(cases.len(), 209);
+        let mut counts = BTreeMap::new();
+        for s in cases {
+            *counts.entry(s.category).or_insert(0) += 1;
+        }
+        assert_eq!(
+            counts,
+            BTreeMap::from([
+                ("achromatic_texture", 20),
+                ("chromatic_texture", 20),
+                ("edge", 8),
+                ("flat_extended", 3),
+                ("noise", 6),
+                ("noisy_achromatic_texture", 60),
+                ("noisy_chromatic_texture", 60),
+                ("noisy_edge", 24),
+                ("cross_texture", 4),
+                ("correlated_noise", 4)
+            ])
+        );
+    }
+}
+
+#[test]
+fn stratified_protocols_expand_validation_without_changing_development_gates() {
+    for text in [
+        include_str!("../tests/fixtures/research-v5.json"),
+        include_str!("../tests/fixtures/research-v6.json"),
+    ] {
+        let p: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(scenes(&p, "development", 192, 144).len(), 209);
+        assert_eq!(scenes(&p, "validation", 216, 168).len(), 369);
+        assert_eq!(
+            p["quality"]["validation"]["frequencies"]
+                .as_array()
+                .unwrap()
+                .len(),
+            10
+        );
+    }
 }

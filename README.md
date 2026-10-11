@@ -2,13 +2,13 @@
 
 ### Your photographs. Your vision. Every detail under your control.
 
-**TrueRenderer brings powerful RAW development, expressive colour tools and fast photographic browsing into one native desktop workspace.** Select your best frames, shape light and colour, compare every decision and export the finished image—all with your originals untouched and your work stored locally.
+TrueRenderer brings powerful RAW development, expressive colour tools and fast photographic browsing into one native desktop workspace. Select your best frames, shape light and colour, compare every decision and export the finished image, with your originals untouched and your work stored locally.
 
 Our ambition is simple: **exceptional colour fidelity, precise image processing and performance that keeps pace with the photographer.** TrueRenderer combines a floating-point foundation with direct creative controls, putting both the technical detail and the final look in your hands.
 
 ![Avalanche Lake in TrueRenderer's Develop workspace, with tonal controls and filmstrip](reports/readme-2026-10-11/develop.jpg)
 
-**GPU-accelerated adjustments · Five RAW engines on macOS · Photographic layers and masks · Reversible editing · Local-first library**
+GPU acceleration, independent RAW development, photographic layers and masks, reversible editing and a local library.
 
 ## Power that keeps you in the creative flow
 
@@ -28,7 +28,7 @@ Start with a natural rendering or develop a distinctive style. Refine a sampled 
 |---|---|
 | Light and contrast | Exposure, brightness, contrast, highlights, shadows, whites and blacks; automatic exposure |
 | Tone shaping | Editable point curves, individual RGB curves, luminance and parametric curves; tonal levels with histograms and black/gray/white sampling |
-| White balance | As-shot, manual, automatic and neutral-area sampling for supported RAW engines |
+| White balance | As-shot, manual, automatic and neutral-area sampling for supported RAW files |
 | Colour refinement | Warmth, tint, saturation, vibrance, warm-tone protection, eight-band HSL and channel mixers |
 | Creative colour | Four-wheel grading, selective colour, colorize, colour filters, gradient maps and black-and-white mixing |
 | Targeted adjustments | Sampled hue/chroma/luminance corrections and separate uniformity controls |
@@ -48,13 +48,9 @@ Combine brush, radial and linear gradients, luminance and hue masks. Add, subtra
 
 **Undo, Redo, Reset all and Before/After** keep experimentation reversible. Editing recipes, looks and annotations stay in your local library and its backups. Double-click a photographic slider to restore its default; copy selected light, curve and RGB colour adjustments between photographs for a consistent series.
 
-## Choose your RAW rendering
+## Independent RAW development
 
-On macOS, choose **Apple RAW, LibRaw bilinear, LibRaw AHD, TrueRenderer fp32 or trueRendererExperimental**. The active engine stays visible in the toolbar, with white-balance controls for the selected renderer.
-
-**trueRendererExperimental** provides an independent decoding path with no calls or linking to the LibRaw library. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It also offers automatic and sampled white balance on sensor data, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
-
-**TrueRenderer fp32** combines directional demosaicing with floating-point processing and sensor-aware treatment of clipped highlights. Choose the rendering that suits your photograph and carry it through the same editing and export workflow.
+On macOS, **trueRendererExperimental** provides an independent RAW decoding and development path. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It also offers automatic and sampled white balance on sensor data, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
 
 ## See the differences that matter
 
@@ -82,16 +78,16 @@ For scientific imagery, TrueRenderer also opens **2D FITS images**, with linear 
 
 ## Make it your workspace
 
-Open an image or a folder, choose a photograph and switch to **Develop**. Use **Settings → Previews and RAW** to choose preview quality and a RAW engine. English and Italian interfaces, 100%/150%/200% UI scaling and adjustable panels help the workspace fit your screen.
+Open an image or a folder, choose a photograph and switch to **Develop**. Open **Settings**, then **Previews and RAW**, to choose preview quality and configure RAW development. English and Italian interfaces, 100%/150%/200% UI scaling and adjustable panels help the workspace fit your screen.
 
-Try the four public-domain landscapes in **Library → Sample photos**. Their originals and credits are included in [`sample-photos/`](sample-photos/manifest.json); the macOS bundle includes them for offline use.
+Try the four public-domain landscapes in **Library**, under **Sample photos**. Their originals and credits are included in [`sample-photos/`](sample-photos/manifest.json); the macOS bundle includes them for offline use.
 
 <details>
 <summary><strong>Build and run from source</strong></summary>
 
 Run these commands from the repository root. The repository pins Rust 1.98.1; Python 3 is required by the supporting scripts.
 
-**macOS** — Install Rust 1.98.1 and the Xcode Command Line Tools, then:
+**macOS.** Install Rust 1.98.1 and the Xcode Command Line Tools, then:
 
 ```sh
 ./scripts/cargo-local.sh fetch --locked
@@ -102,7 +98,7 @@ open dist/TrueRenderer.app --args --open "/path/to/photos"
 
 Use the macOS app bundle for external photographs: it includes the isolated decoder services.
 
-**Windows** — Install Rust 1.98.1 with rustfmt and Clippy, Visual Studio Build Tools with the Desktop development with C++ workload and Windows SDK, Python 3, and Git for Windows. In PowerShell:
+**Windows.** Install Rust 1.98.1 with rustfmt and Clippy, Visual Studio Build Tools with the Desktop development with C++ workload and Windows SDK, Python 3, and Git for Windows. In PowerShell:
 
 ```powershell
 .\scripts\dev-windows.ps1 fetch --locked
@@ -110,13 +106,11 @@ Use the macOS app bundle for external photographs: it includes the isolated deco
 .\target\debug\truerenderer.exe
 ```
 
-The [documentation index](docs/README.md) covers platform-specific formats, architecture and configuration. Apple RAW is macOS-specific; camera and file compatibility depend on the selected decoder and platform.
+The [documentation index](docs/README.md) covers platform-specific formats, architecture and configuration. Camera and file compatibility depend on the supported format, camera mode and platform.
 
 Keep `var/library.sqlite` and `var/backups/`: they contain durable library data. To remove compilation artifacts, use `./scripts/cargo-local.sh clean`.
 
 </details>
-
----
 
 TrueRenderer is proprietary software. See the [license](LICENSE) and [third-party notices](NOTICE.md).
 

@@ -1,0 +1,110 @@
+{
+  "protocol": "TRExp-research-v2",
+  "frozen_before_candidates": true,
+  "baseline_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1",
+  "quality": {
+    "width": 192,
+    "height": 144,
+    "phases": 36,
+    "border": 8,
+    "scale": "linear camera RGB, no WB, matrix, clipping, denoise or tone curve",
+    "development": {
+      "angles_degrees": [
+        0,
+        27,
+        59,
+        90
+      ],
+      "frequencies": [
+        0.015,
+        0.05,
+        0.12,
+        0.24,
+        0.38
+      ],
+      "seed": 1457261
+    },
+    "validation": {
+      "width": 198,
+      "height": 150,
+      "angles_degrees": [
+        7,
+        34,
+        68,
+        109
+      ],
+      "frequencies": [
+        0.027,
+        0.071,
+        0.157,
+        0.287,
+        0.417
+      ],
+      "seed": 72634129,
+      "wave_phase_radians": 0.37,
+      "edge_offset_pixels": 0.23,
+      "flat_rgb": [
+        [
+          -0.17,
+          0.29,
+          1.63
+        ],
+        [
+          -0.03,
+          -0.03,
+          -0.03
+        ],
+        [
+          1.27,
+          1.27,
+          1.27
+        ]
+      ],
+      "noise_rgb": [
+        [
+          0.31,
+          0.31,
+          0.31
+        ],
+        [
+          0.18,
+          0.39,
+          0.73
+        ]
+      ]
+    },
+    "noise_sigma": [
+      0.003,
+      0.012,
+      0.04
+    ],
+    "categories": [
+      "achromatic_texture",
+      "chromatic_texture",
+      "edge",
+      "noise",
+      "flat_extended"
+    ],
+    "metrics": [
+      "missing_channel_rmse",
+      "false_chroma_rmse_achromatic_only",
+      "luma_rmse",
+      "luma_gradient_rmse",
+      "border_rgb_rmse",
+      "measured_sites_bit_exact",
+      "finite_output"
+    ],
+    "false_chroma_rmse_max_ratio": 0.8,
+    "other_category_and_detail_rmse_max_ratio": 1.05,
+    "absolute_rmse_floor": 1e-06,
+    "aggregation": "sum squared error / sample count by category, split and phase; publish aggregate and worst phase; border separately; also report worst individual scene/phase as diagnostics, without changing the category/phase gates",
+    "promotion_requires": [
+      "all synthetic gates on development and held-out validation",
+      "independent photographic validation",
+      "measured sites exact and finite extended float on all 36 phases"
+    ],
+    "holdout_policy": "Do not tune a submitted candidate after inspecting validation. A later candidate requires a new independent holdout.",
+    "validation_limits": "New parameter holdout from the same analytic scene families; not independent photographic validation."
+  },
+  "candidate": "DR2"
+}
