@@ -1,0 +1,20 @@
+{
+  "name": "Bounded Fuji codec Rust adaptation and X-T5 matrix",
+  "version": "1",
+  "license": "CDDL-1.0",
+  "upstream_version": "LibRaw 0.22.2",
+  "portions": [
+    {
+      "source": "https://github.com/LibRaw/LibRaw/blob/0.22.2/src/decoders/fuji_compressed.cpp",
+      "sha256": "70155663033a535573403d2202d712fcddb7407af31300c956b95d4e2a0886ad",
+      "portion": "X-Trans lossy/lossless codec logic and bitstream layout"
+    },
+    {
+      "source": "https://github.com/LibRaw/LibRaw/blob/0.22.2/src/tables/colordata.cpp",
+      "sha256": "621d6a7e1a1904095d27087cf10ac7e935c6a984ec336816b79c273a8eaca768",
+      "portion": "X-T5 D65 matrix only; upstream Adobe attribution"
+    }
+  ],
+  "modification": "fuji.rs: memory-only bounded Rust adaptation of X-Trans 14-bit predictive codec, lossy/lossless; no FFI, file access, LibRaw calls or linkage. xt5.rs: nine constant matrix coefficients only. Not a clean-room implementation or measured TrueRenderer calibration.",
+  "source_distribution": "This entire directory with source, manifest and license is bundled."
+}

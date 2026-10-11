@@ -124,6 +124,7 @@ pub(crate) fn decode(
     width: usize,
     height: usize,
     bits_per_sample: u32,
+    legacy_category16: bool,
 ) -> Result<Vec<u16>> {
     ensure!(
         data.get(..2) == Some(&[255, 216]),
@@ -246,7 +247,7 @@ pub(crate) fn decode(
                 );
                 let effective = precision - point;
                 let initial = 1i32 << (effective - 1);
-                let mask = (1i32 << effective) - 1;
+                let maximum = (1i32 << effective) - 1;
                 let mut output = vec![0u16; width * height];
                 let mut stream = Bits::new(&data[at..]);
                 let mut restart_index = 0;
@@ -288,14 +289,13 @@ pub(crate) fn decode(
                             }
                         };
                         let category = selector.symbol(&mut stream)?;
-                        ensure!(
-                            category <= effective,
-                            "JPEG lossless: categoria oltre precisione"
-                        );
-                        // T.81 H.1.2.2: category 16 represents -32768 with no extra bits.
+                        // Predictors 4..6 can leave the sample range. Residual
+                        // categories are bounded by 16, not sample precision.
+                        // T.81 H.1.2.2: category 16 has no extra bits, except
+                        // the DNG 1.0 convention in DNG 1.7.1 Appendix A.
                         let delta = if category == 0 {
                             0
-                        } else if category == 16 {
+                        } else if category == 16 && !legacy_category16 {
                             -32768
                         } else {
                             let value = stream.take(category)? as i32;
@@ -305,7 +305,11 @@ pub(crate) fn decode(
                                 value
                             }
                         };
-                        output[i] = ((predicted + delta) & mask) as u16;
+                        // Lossless JPEG differences use modulo 2^16 arithmetic.
+                        // Masking to sample precision would hide corrupt codes.
+                        let value = (predicted + delta) & 0xffff;
+                        ensure!(value <= maximum, "JPEG lossless: campione oltre precisione");
+                        output[i] = value as u16;
                     }
                 }
                 stream.marker(0xd9)?;
@@ -414,27 +418,39 @@ mod tests {
     fn predictors_restarts_point_transform_and_components() {
         for (p, last) in [(1, 2), (2, 6), (3, 11), (4, -3), (5, 0), (6, 2), (7, 4)] {
             let bytes = stream(2, 2, 1, 8, 0, p, 0, &[-28, 5, 9, last]);
-            assert_eq!(decode(&bytes, 2, 2, 8).unwrap(), [100, 105, 109, 111]);
+            assert_eq!(
+                decode(&bytes, 2, 2, 8, false).unwrap(),
+                [100, 105, 109, 111]
+            );
             for end in 0..bytes.len() {
-                assert!(decode(&bytes[..end], 2, 2, 8).is_err());
+                assert!(decode(&bytes[..end], 2, 2, 8, false).is_err());
             }
         }
         let bytes = stream(2, 2, 1, 12, 4, 4, 0, &[-28, 5, 9, -3]);
-        assert_eq!(decode(&bytes, 2, 2, 12).unwrap(), [1600, 1680, 1744, 1776]);
+        assert_eq!(
+            decode(&bytes, 2, 2, 12, false).unwrap(),
+            [1600, 1680, 1744, 1776]
+        );
         let bytes = stream(2, 2, 1, 8, 0, 4, 2, &[-28, 5, -19, 2]);
-        assert_eq!(decode(&bytes, 2, 2, 8).unwrap(), [100, 105, 109, 111]);
+        assert_eq!(
+            decode(&bytes, 2, 2, 8, false).unwrap(),
+            [100, 105, 109, 111]
+        );
         let bytes = stream(2, 2, 2, 8, 0, 4, 0, &[-28, -78, 5, 5, 9, 10, -3, -3]);
         assert_eq!(
-            decode(&bytes, 4, 2, 8).unwrap(),
+            decode(&bytes, 4, 2, 8, false).unwrap(),
             [100, 50, 105, 55, 109, 60, 111, 62]
         );
         // DNG permits any JPEG geometry with the same flattened sample count.
         assert_eq!(
-            decode(&bytes, 2, 4, 8).unwrap(),
+            decode(&bytes, 2, 4, 8, false).unwrap(),
             [100, 50, 105, 55, 109, 60, 111, 62]
         );
         let bytes = stream(2, 2, 1, 16, 0, 1, 0, &[-32768, -1, -2, -1]);
-        assert_eq!(decode(&bytes, 2, 2, 16).unwrap(), [0, 65535, 65534, 65533]);
+        assert_eq!(
+            decode(&bytes, 2, 2, 16, false).unwrap(),
+            [0, 65535, 65534, 65533]
+        );
     }
     #[test]
     fn dng_lossless_integrates_without_a_native_decoder() {
@@ -446,5 +462,16 @@ mod tests {
         let bytes = fixture.bytes();
         assert_eq!(crate::unpack(&bytes).unwrap().2, vec![512; 120]);
         assert_eq!(crate::develop(&bytes, [1.; 3]).unwrap().pixels.len(), 120);
+    }
+
+    #[test]
+    fn invalid_samples_are_not_wrapped_to_the_declared_precision() {
+        // 128 + 200 = 328 is not an 8-bit sample. The old precision mask
+        // silently accepted it as 72. The same holds after point transform.
+        for (precision, point) in [(8, 0), (12, 4)] {
+            let bytes = stream(2, 2, 1, precision, point, 1, 0, &[200, 0, 0, 0]);
+            let error = decode(&bytes, 2, 2, u32::from(precision), false).unwrap_err();
+            assert!(error.to_string().contains("campione oltre precisione"));
+        }
     }
 }

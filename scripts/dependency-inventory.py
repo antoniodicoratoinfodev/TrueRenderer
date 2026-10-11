@@ -59,6 +59,15 @@ if native.exists():
 data_manifest=root/"third_party/colour-robertson/manifest.json"
 if data_manifest.exists():
     report["data_dependencies_outside_cargo"]=[{"name":"Colour Robertson isotemperature table","manifest":data_manifest.relative_to(root).as_posix(),"manifest_sha256":hashlib.sha256(data_manifest.read_bytes()).hexdigest(),"license":"BSD-3-Clause","notice":"third_party/colour-robertson/LICENSE"}]
+nikon_manifest=root/"third_party/nikon-reference-data/manifest.json"
+if nikon_manifest.exists():
+    report.setdefault("data_dependencies_outside_cargo", []).append({"name":"Nikon D750/D800 compatibility matrices and lossless Huffman data","manifest":nikon_manifest.relative_to(root).as_posix(),"manifest_sha256":hashlib.sha256(nikon_manifest.read_bytes()).hexdigest(),"license":"CDDL-1.0","notice":"third_party/nikon-reference-data/LICENSE.CDDL","source":"third_party/nikon-reference-data/nikon_d750.rs","runtime":"constant data only; no LibRaw linkage in tr-raw"})
+fuji_manifest=root/"third_party/fuji-codec/manifest.json"
+if fuji_manifest.exists():
+    report["source_dependencies_outside_cargo"]=[{"name":"Fuji codec Rust adaptation and X-T5 matrix","manifest":fuji_manifest.relative_to(root).as_posix(),"manifest_sha256":hashlib.sha256(fuji_manifest.read_bytes()).hexdigest(),"license":"CDDL-1.0","notice":"third_party/fuji-codec/LICENSE.CDDL","source":"third_party/fuji-codec/fuji.rs","runtime":"bounded Rust; no LibRaw linking or calls"}]
+fuji_candidate=root/"crates/tr-raw/research/fuji.rs"
+if fuji_candidate.exists():
+    report.setdefault("source_dependencies_outside_cargo", []).append({"name":"Fuji circular-row research candidate","source":fuji_candidate.relative_to(root).as_posix(),"source_sha256":hashlib.sha256(fuji_candidate.read_bytes()).hexdigest(),"license":"CDDL-1.0","notice":"third_party/fuji-codec/LICENSE.CDDL","contract":"docs/formato-fuji-experimental.md","runtime":"tests and offline tr-raw-lab only; not selected by desktop","provenance":"New implementation informed by the attributed CDDL format analysis; not qualified clean-room. Package-level proprietary license does not override this file's CDDL."})
 (root/"reports"/(args.stem+".json")).write_text(json.dumps(report,indent=2)+"\n",encoding="utf8")
 with (root/"reports"/(args.stem+".csv")).open("w",newline="",encoding="utf8") as file:
     writer=csv.writer(file,lineterminator="\n");writer.writerow(["name","version","license","checksum_sha256","repository"])

@@ -1019,6 +1019,9 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                         && u64::from(info.width) * u64::from(info.height) <= 48_000_000,
                     "WB RAW: formato o dimensioni non supportati (massimo 48 MP)"
                 );
+                if request.raw_engine == RawEngine::TrueRendererExperimental {
+                    return experimental::estimate_white_balance(&bytes, analysis);
+                }
                 tr_core::raw_wb::estimate(request.raw_engine, request.raw_wb, analysis, |wb| {
                     let decoder = WhiteBalanced {
                         base,

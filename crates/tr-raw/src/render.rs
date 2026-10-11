@@ -1,6 +1,6 @@
 //! Separate realization of TrueRenderer's directional green / colour-difference
 //! construction. Measured sites are preserved. Crop follows interpolation.
-use crate::color::Matrix;
+use crate::{cfa::Cfa, color::Matrix};
 use anyhow::Result;
 use tr_core::color::LinearImage;
 
@@ -22,13 +22,16 @@ pub(crate) fn develop(
     mosaic: &[f32],
     width: usize,
     height: usize,
-    cfa: [usize; 4],
+    cfa: Cfa,
     matrix: Matrix,
     crop: [usize; 4],
     orientation: u32,
 ) -> Result<LinearImage> {
+    if cfa.period == 6 {
+        return crate::xtrans::develop(mosaic, width, height, cfa, matrix, crop, orientation);
+    }
     let at = |x: isize, y: isize| reflect(y, height) * width + reflect(x, width);
-    let color = |x: usize, y: usize| cfa[(y % 2) * 2 + x % 2];
+    let color = |x: usize, y: usize| cfa.color(x, y);
     let mut green = vec![0.; mosaic.len()];
     for y in 0..height {
         for x in 0..width {
@@ -132,9 +135,18 @@ mod tests {
                 0,
             )
             .unwrap();
-            let new = develop(&mosaic, w, h, cfa, rec, [0, 0, w, h], 1).unwrap();
+            let new = develop(&mosaic, w, h, Cfa::bayer(cfa), rec, [0, 0, w, h], 1).unwrap();
             assert_eq!(old.pixels, new.pixels);
-            let camera = develop(&mosaic, w, h, cfa, crate::color::ID, [0, 0, w, h], 1).unwrap();
+            let camera = develop(
+                &mosaic,
+                w,
+                h,
+                Cfa::bayer(cfa),
+                crate::color::ID,
+                [0, 0, w, h],
+                1,
+            )
+            .unwrap();
             for i in 0..w * h {
                 let c = cfa[(i / w % 2) * 2 + i % w % 2];
                 assert_eq!(camera.pixels[i][c], mosaic[i]);

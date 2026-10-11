@@ -15,10 +15,16 @@ use tr_core::{
 struct Manifest {
     corpus: Vec<PathBuf>,
     dng: Vec<PathBuf>,
+    #[serde(default)]
+    nef: Vec<PathBuf>,
+    #[serde(default)]
+    raf: Vec<PathBuf>,
     convert_d750: Vec<PathBuf>,
+    #[serde(default)]
+    provenance: serde_json::Value,
 }
 
-fn check_dng(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serde_json::Value> {
+fn check_raw(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serde_json::Value> {
     let digest = tr_platform::snapshot(path)?.1;
     let mut cases = vec![];
     let mut reference = None;
@@ -60,8 +66,7 @@ fn check_dng(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
             .flat_map(|p| p[..3].iter())
             .copied()
             .fold(f32::NEG_INFINITY, f32::max);
-        let mut roundtrip = None;
-        if slot == 0 {
+        let (roundtrip, repacked_path, repacked_sha256) = {
             let (_, bytes) = broker.export_snapshot_bounded(
                 source.clone(),
                 Options {
@@ -73,7 +78,7 @@ fn check_dng(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
             )?;
             let copy = root
                 .join("var")
-                .join(format!("repacked-{}.dng", &digest[..12]));
+                .join(format!("repacked-{}-slot{slot}.dng", &digest[..12]));
             std::fs::write(&copy, bytes)?;
             let copy_digest = tr_platform::snapshot(&copy)?.1;
             let reopened = broker
@@ -82,7 +87,9 @@ fn check_dng(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
             let exact = reopened.pixels == image.pixels
                 && (reopened.width, reopened.height) == (image.width, image.height);
             ensure!(exact, "DNG repack changed rendered samples");
-            roundtrip = Some(exact);
+            (exact, copy, copy_digest)
+        };
+        if slot == 0 {
             let preview = image.reduced(1200);
             image::save_buffer(
                 root.join("var")
@@ -142,7 +149,40 @@ fn check_dng(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
             exports.push(serde_json::json!({"format":format,"long_edge":1024,"maximum_error_u16":maximum_error}));
         }
         broker.set_raw_white_balance(Default::default());
-        cases.push(serde_json::json!({"slot":slot,"worker_pid":decoded.worker_pid,"info":info,"seconds":elapsed,"linear_min":minimum,"linear_max":maximum,"repack_pixels_exact":roundtrip,"wb_probe_decode_match":true,"rgb_exports":exports,"observed_peak_rss_bytes":broker.statistics().peak_rss_bytes}));
+        let mut wb_estimates = vec![];
+        for analysis in [
+            tr_core::raw_wb::Analysis::Auto,
+            tr_core::raw_wb::Analysis::Patch {
+                x: info.width / 2,
+                y: info.height / 2,
+                side: 11,
+            },
+        ] {
+            let started = Instant::now();
+            let estimated = broker.estimate_raw_wb(source.clone(), analysis, || false);
+            let seconds = started.elapsed().as_secs_f64();
+            let copy = broker.prepare_snapshot(&repacked_path, &repacked_sha256, || false)?;
+            let reopened = broker.estimate_raw_wb(copy, analysis, || false);
+            let value = match (estimated, reopened) {
+                (Ok(wb), Ok(copy_wb)) => {
+                    ensure!(wb == copy_wb, "CFA WB differs after RAW repack");
+                    serde_json::json!({"analysis":analysis,"accepted":true,"wb":wb,"repack_exact":true,"seconds":seconds})
+                }
+                (Err(error), Err(copy_error)) => {
+                    let message = format!("{error:#}");
+                    ensure!(
+                        message.contains("WB CFA:")
+                            || message.contains("DNG: bianco")
+                            || message.contains("DNG: CCT"),
+                        "Unexpected WB failure: {message}"
+                    );
+                    serde_json::json!({"analysis":analysis,"accepted":false,"explicit_refusal":message,"repack_refusal":format!("{copy_error:#}"),"seconds":seconds})
+                }
+                _ => anyhow::bail!("CFA WB acceptance changed after repack"),
+            };
+            wb_estimates.push(value);
+        }
+        cases.push(serde_json::json!({"slot":slot,"worker_pid":decoded.worker_pid,"info":info,"seconds":elapsed,"linear_min":minimum,"linear_max":maximum,"repack_pixels_exact":roundtrip,"repacked_path":repacked_path,"repacked_sha256":repacked_sha256,"wb_probe_decode_match":true,"cfa_wb_estimates":wb_estimates,"rgb_exports":exports,"observed_peak_rss_bytes":broker.statistics().peak_rss_bytes}));
     }
     ensure!(tr_platform::snapshot(path)?.1 == digest, "Original changed");
     Ok(
@@ -159,7 +199,7 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
     std::fs::create_dir_all(root.join("reports"))?;
     let manifest: Manifest = serde_json::from_slice(&std::fs::read(manifest)?)?;
     let report = root.join("reports/experimental-private.json");
-    let mut results = serde_json::json!({"passed":false,"complete":false,"corpus":[],"dng":[],"converted_d750":[],"limits":"Functional subset only. D750 conversions use legacy LibRaw solely to create test DNG input; this is not autonomous NEF decoding or independent camera calibration. No measured colour accuracy, p95 or memory gate."});
+    let mut results = serde_json::json!({"passed":false,"complete":false,"corpus":[],"dng":[],"nef":[],"raf":[],"converted_d750":[],"input_provenance":manifest.provenance,"limits":"Functional subset only. The optional convert_d750 branch uses legacy LibRaw solely to create test DNG input. Provenance of supplied DNG files is declared by the input manifest, not inferred by this harness. Direct RAW checks apply only to the explicitly listed subtype. No measured colour accuracy, p95 or memory gate."});
     std::fs::write(&report, serde_json::to_vec_pretty(&results)?)?;
     for (index, path) in manifest.corpus.iter().enumerate() {
         eprintln!(
@@ -184,11 +224,35 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
         std::fs::write(&report, serde_json::to_vec_pretty(&results)?)?;
     }
     for path in manifest.dng {
-        eprintln!("Experimental generated DNG validation");
+        eprintln!("Experimental DNG validation");
         results["dng"]
             .as_array_mut()
             .unwrap()
-            .push(check_dng(root, worker, &path, true)?);
+            .push(check_raw(root, worker, &path, true)?);
+        std::fs::write(&report, serde_json::to_vec_pretty(&results)?)?;
+    }
+    for (index, path) in manifest.nef.iter().enumerate() {
+        eprintln!(
+            "Experimental direct NEF validation {}/{}",
+            index + 1,
+            manifest.nef.len()
+        );
+        results["nef"]
+            .as_array_mut()
+            .unwrap()
+            .push(check_raw(root, worker, path, true)?);
+        std::fs::write(&report, serde_json::to_vec_pretty(&results)?)?;
+    }
+    for (index, path) in manifest.raf.iter().enumerate() {
+        eprintln!(
+            "Experimental direct RAF validation {}/{}",
+            index + 1,
+            manifest.raf.len()
+        );
+        results["raf"]
+            .as_array_mut()
+            .unwrap()
+            .push(check_raw(root, worker, path, true)?);
         std::fs::write(&report, serde_json::to_vec_pretty(&results)?)?;
     }
     for (index, path) in manifest.convert_d750.into_iter().enumerate() {
@@ -211,7 +275,7 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
         drop(broker);
         let converted = root.join("var").join(format!("d750-derived-{index}.dng"));
         std::fs::write(&converted, bytes)?;
-        let mut value = check_dng(root, worker, &converted, true)?;
+        let mut value = check_raw(root, worker, &converted, true)?;
         value["input_conversion"] = serde_json::json!({"engine":RawEngine::TrueRenderer,"source_sha256":digest,"profile_source":"legacy LibRaw D65 table, embedded in generated DNG"});
         ensure!(
             tr_platform::snapshot(&path)?.1 == digest,

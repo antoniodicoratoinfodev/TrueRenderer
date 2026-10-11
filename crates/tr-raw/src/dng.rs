@@ -14,12 +14,13 @@ pub(crate) struct Dng<'a> {
     pub height: usize,
     bits: u32,
     compression: u32,
+    legacy_jpeg16: bool,
     chunks: Vec<(usize, usize)>,
     tile: [usize; 2],
     tiled: bool,
-    active: [usize; 4], // left, top, width, height
-    crop: [usize; 4],   // relative to ActiveArea
-    cfa: [usize; 4],    // origin is ActiveArea, per DNG 1.7.1 p22
+    active: [usize; 4],   // left, top, width, height
+    crop: [usize; 4],     // relative to ActiveArea
+    cfa: crate::cfa::Cfa, // origin is ActiveArea, per DNG 1.7.1 p22
     black_repeat: [usize; 2],
     black: Vec<f64>,
     delta_h: Vec<f64>,
@@ -72,8 +73,11 @@ impl<'a> Dng<'a> {
         let root = &tiff.ifds[0];
         let version = root
             .required(50706)
-            .context("Experimental: richiesto DNG; decoder NEF/RAF non ancora disponibile")?;
+            .context("Experimental: DNGVersion assente")?;
         let version = exact(version, 4, &[1])?;
+        // DNG 1.7.1 Appendix A, compatibility issue 2: DNGVersion (not
+        // DNGBackwardVersion) selects the pre-1.1 category-16 convention.
+        let legacy_jpeg16 = version.as_slice() < [1., 1., 0., 0.].as_slice();
         ensure!(
             version[0] == 1. && version[1] <= 7.,
             "Experimental: versione DNG non supportata"
@@ -131,25 +135,20 @@ impl<'a> Dng<'a> {
                 "Experimental: DNG tag {tag} fuori contratto"
             );
         }
+        let repeat = exact(raw.required(33421)?, 2, &[3])?;
         ensure!(
-            exact(raw.required(33421)?, 2, &[3])? == [2., 2.],
-            "Experimental: CFA DNG non Bayer 2x2"
+            repeat[0] == repeat[1] && matches!(repeat[0] as u32, 2 | 6),
+            "Experimental: periodo CFA DNG non supportato"
         );
         ensure!(
             values(raw, 50710, &[0., 1., 2.], &[1])? == [0., 1., 2.],
             "Experimental: piani CFA non RGB"
         );
-        let pattern = exact(raw.required(33422)?, 4, &[1])?;
-        let cfa: [usize; 4] = pattern
-            .iter()
-            .map(|v| *v as usize)
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap();
-        ensure!(
-            [[0, 1, 1, 2], [2, 1, 1, 0], [1, 0, 2, 1], [1, 2, 0, 1]].contains(&cfa),
-            "Experimental: pattern CFA non Bayer RGB"
-        );
+        let pattern = exact(raw.required(33422)?, (repeat[0] * repeat[1]) as usize, &[1])?;
+        let cfa = crate::cfa::Cfa::new(
+            repeat[0] as usize,
+            &pattern.iter().map(|v| *v as u8).collect::<Vec<_>>(),
+        )?;
         let area = sizes(values(
             raw,
             50829,
@@ -167,6 +166,10 @@ impl<'a> Dng<'a> {
             "DNG: ActiveArea invalida"
         );
         let active = [left, top, right - left, bottom - top];
+        ensure!(
+            cfa.period != 6 || (active[2] >= 6 && active[3] >= 6),
+            "DNG: area X-Trans troppo piccola"
+        );
         let origin = sizes(values(raw, 50719, &[0., 0.], &[3, 4, 5])?)?;
         let size = sizes(values(
             raw,
@@ -433,6 +436,7 @@ impl<'a> Dng<'a> {
             height,
             bits,
             compression,
+            legacy_jpeg16,
             chunks,
             tile,
             tiled,
@@ -471,6 +475,8 @@ impl<'a> Dng<'a> {
             width,
             height,
             camera: self.camera.clone(),
+            format: "DNG",
+            profile_source: "matrici incorporate",
             profile_hash: self.profile_hash.clone(),
             orientation: self.orientation,
             compression: self.compression,
@@ -500,7 +506,7 @@ impl<'a> Dng<'a> {
             );
             let data = self.tiff.slice(*at, *len)?;
             let decoded = if self.compression == 7 {
-                jpeg::decode(data, w, h, self.bits)?
+                jpeg::decode(data, w, h, self.bits, self.legacy_jpeg16)?
             } else {
                 self.unpacked_tile(data, w, h)?
             };
@@ -546,7 +552,9 @@ impl<'a> Dng<'a> {
     }
 
     pub fn develop(&self, relative: [f64; 3]) -> Result<LinearImage> {
-        let (gains, matrix) = self.calibration.resolve(relative)?;
+        self.mosaic()?.develop(relative)
+    }
+    pub fn mosaic(&self) -> Result<crate::wb::Mosaic> {
         let raw = self.unpack()?;
         let [left, top, w, h] = self.active;
         let mut mosaic = vec![0.; w * h];
@@ -563,12 +571,19 @@ impl<'a> Dng<'a> {
                     [(y % self.black_repeat[0]) * self.black_repeat[1] + x % self.black_repeat[1]]
                     + self.delta_h[x]
                     + self.delta_v[y];
-                let c = self.cfa[(y % 2) * 2 + x % 2];
-                mosaic[y * w + x] = ((f64::from(value) - black) * scale) as f32 * gains[c];
+                mosaic[y * w + x] = ((f64::from(value) - black) * scale) as f32;
             }
         }
         drop(raw);
-        render::develop(&mosaic, w, h, self.cfa, matrix, self.crop, self.orientation)
+        Ok(crate::wb::Mosaic {
+            values: mosaic,
+            width: w,
+            height: h,
+            cfa: self.cfa,
+            crop: self.crop,
+            orientation: self.orientation,
+            calibration: self.calibration.clone(),
+        })
     }
 
     pub fn validate_wb(&self, relative: [f64; 3]) -> Result<()> {
@@ -641,49 +656,8 @@ impl<'a> Dng<'a> {
         }
         let description=b"TrueRenderer Experimental: stored sensor codes repacked losslessly to uint16. Full supported matrix calibration, LUT, black maps, active area and default crop retained. No WB/demosaic applied. EXIF, MakerNotes, previews and original compressed bytes omitted. Keep the original.\0";
         fields.insert(270, (2, description.len() as u32, description.to_vec()));
-        let directory_end = 8 + 2 + fields.len() * 12 + 4;
-        let payload_bytes: usize = fields
-            .values()
-            .filter(|(_, _, v)| v.len() > 4)
-            .map(|(_, _, v)| (v.len() + 1) & !1)
-            .sum();
-        let sample_start = directory_end + payload_bytes;
-        let total = sample_start + self.width * self.height * 2;
-        ensure!(
-            total <= limit.min(crate::MAX_SOURCE_BYTES),
-            "DNG export oltre quota"
-        );
-        fields.insert(273, (4, 1, long(sample_start as u32).to_vec()));
-        let samples = self.unpack()?;
-        let mut output = Vec::with_capacity(total);
-        output.extend(if self.tiff.le {
-            b"II\x2a\0"
-        } else {
-            b"MM\0\x2a"
-        });
-        output.extend(long(8));
-        output.extend(short(fields.len() as u16));
-        let mut payload = Vec::with_capacity(payload_bytes);
-        for (tag, (kind, count, bytes)) in fields {
-            output.extend(short(tag));
-            output.extend(short(kind));
-            output.extend(long(count));
-            if bytes.len() <= 4 {
-                output.extend(&bytes);
-                output.resize(output.len() + 4 - bytes.len(), 0);
-            } else {
-                output.extend(long((directory_end + payload.len()) as u32));
-                payload.extend(bytes);
-                if payload.len() % 2 != 0 {
-                    payload.push(0);
-                }
-            }
-        }
-        output.extend(long(0));
-        output.extend(payload);
-        for sample in samples {
-            output.extend(short(sample));
-        }
-        Ok((self.width as u32, self.height as u32, output))
+        crate::export::sensor(fields, self.tiff.le, self.width, self.height, limit, || {
+            self.unpack()
+        })
     }
 }

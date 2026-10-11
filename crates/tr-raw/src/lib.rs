@@ -1,25 +1,33 @@
 //! Autonomous, bounded RAW stages. No filesystem access, LibRaw, or native FFI.
 //! The host must grant bytes inside its decoder sandbox before calling this API.
+mod cfa;
 mod color;
 mod dng;
+mod export;
 mod jpeg;
+mod nef;
+mod raf;
 mod render;
 #[cfg(test)]
 #[path = "../tests/support/mod.rs"]
 mod test_support;
 mod tiff;
+mod wb;
+mod xtrans;
 
 use anyhow::Result;
 use tr_core::color::LinearImage;
 
 pub const MAX_SOURCE_BYTES: usize = 256 * 1024 * 1024;
-pub const RECIPE: &str = "TRExp-dng1-lj1-cal1-dir1-extended1";
+pub const RECIPE: &str = "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1";
 
 #[derive(Clone, Debug)]
 pub struct RawInfo {
     pub width: u32,
     pub height: u32,
     pub camera: String,
+    pub format: &'static str,
+    pub profile_source: &'static str,
     pub profile_hash: String,
     pub orientation: u32,
     pub compression: u32,
@@ -35,14 +43,60 @@ pub struct RawMemoryPlan {
     pub scratch_peak_bytes: usize,
 }
 
+enum Raw<'a> {
+    Dng(Box<dng::Dng<'a>>),
+    Nef(Box<nef::Nef<'a>>),
+    Raf(Box<raf::Raf<'a>>),
+}
+impl<'a> Raw<'a> {
+    fn parse(bytes: &'a [u8]) -> Result<Self> {
+        if bytes.starts_with(b"FUJIFILMCCD-RAW ") {
+            return Ok(Self::Raf(Box::new(raf::Raf::parse(bytes)?)));
+        }
+        let tiff = tiff::Tiff::parse(bytes)?;
+        if tiff.ifds[0].get(50706).is_some() {
+            Ok(Self::Dng(Box::new(dng::Dng::parse(bytes)?)))
+        } else {
+            Ok(Self::Nef(Box::new(nef::Nef::parse(tiff)?)))
+        }
+    }
+    fn info(&self) -> Result<RawInfo> {
+        match self {
+            Self::Dng(raw) => raw.info(),
+            Self::Nef(raw) => raw.info(),
+            Self::Raf(raw) => raw.info(),
+        }
+    }
+    fn validate_wb(&self, wb: [f64; 3]) -> Result<()> {
+        match self {
+            Self::Dng(raw) => raw.validate_wb(wb),
+            Self::Nef(raw) => raw.validate_wb(wb),
+            Self::Raf(raw) => raw.validate_wb(wb),
+        }
+    }
+}
+
 pub fn probe(bytes: &[u8]) -> Result<RawInfo> {
-    dng::Dng::parse(bytes)?.info()
+    Raw::parse(bytes)?.info()
 }
 
 pub fn probe_with_wb(bytes: &[u8], relative_wb: [f64; 3]) -> Result<RawInfo> {
-    let dng = dng::Dng::parse(bytes)?;
-    dng.validate_wb(relative_wb)?;
-    dng.info()
+    let raw = Raw::parse(bytes)?;
+    raw.validate_wb(relative_wb)?;
+    raw.info()
+}
+
+/// Neutral patch or robust grey-world estimate from calibrated CFA sites.
+pub fn estimate_white_balance(
+    bytes: &[u8],
+    analysis: tr_core::raw_wb::Analysis,
+) -> Result<tr_core::decoder::RawWhiteBalance> {
+    let mosaic = match Raw::parse(bytes)? {
+        Raw::Dng(raw) => raw.mosaic()?,
+        Raw::Nef(raw) => raw.mosaic()?,
+        Raw::Raf(raw) => raw.mosaic()?,
+    };
+    mosaic.estimate(analysis)
 }
 
 /// Positive bitmap classification; a malformed/unknown TIFF is never consent
@@ -66,18 +120,29 @@ pub fn is_bitmap_tiff(bytes: &[u8]) -> Result<bool> {
 /// Relative camera gains R/G/B; unity selects AsShot. No look, tone curve,
 /// highlight synthesis or clipping is applied to scene-linear samples.
 pub fn develop(bytes: &[u8], relative_wb: [f64; 3]) -> Result<LinearImage> {
-    dng::Dng::parse(bytes)?.develop(relative_wb)
+    match Raw::parse(bytes)? {
+        Raw::Dng(raw) => raw.develop(relative_wb),
+        Raw::Nef(raw) => raw.develop(relative_wb),
+        Raw::Raf(raw) => raw.develop(relative_wb),
+    }
 }
 
 /// Unpack without applying the LUT/black/WB stages, for numerical diagnostics.
 /// Values are in the stored code domain; dimensions include the sensor margins.
 pub fn unpack(bytes: &[u8]) -> Result<(u32, u32, Vec<u16>)> {
-    let dng = dng::Dng::parse(bytes)?;
-    Ok((dng.width as u32, dng.height as u32, dng.unpack()?))
+    match Raw::parse(bytes)? {
+        Raw::Dng(raw) => Ok((raw.width as u32, raw.height as u32, raw.unpack()?)),
+        Raw::Nef(raw) => Ok((raw.width as u32, raw.height as u32, raw.unpack()?)),
+        Raw::Raf(raw) => Ok((raw.width as u32, raw.height as u32, raw.unpack()?)),
+    }
 }
 
 /// Repack without applying WB, black subtraction, LUT or demosaic. Retains all
 /// supported calibration, margins and crop. Ancillary metadata is omitted.
 pub fn repack_dng(bytes: &[u8], limit: usize) -> Result<(u32, u32, Vec<u8>)> {
-    dng::Dng::parse(bytes)?.repack(limit)
+    match Raw::parse(bytes)? {
+        Raw::Dng(raw) => raw.repack(limit),
+        Raw::Nef(raw) => raw.repack(limit),
+        Raw::Raf(raw) => raw.repack(limit),
+    }
 }

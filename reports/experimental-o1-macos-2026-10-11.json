@@ -1,0 +1,1282 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign": "O1 laboratory, O2 prototype, O3 camera RGB refactor and DR1 rejection",
+  "date_utc": "2026-10-11T16:04:08.348255+00:00",
+  "integration_passed": true,
+  "all_originality_or_quality_objectives_complete": false,
+  "production_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1",
+  "production_change": "Camera RGB interface separated without changing numeric operations; RAW screenshot diagnostic closes Settings before capture. Neither research candidate selected.",
+  "baseline_freeze_sha256": "08b06f3b26ae8a35daf061117f8178182fe7d99ceee0069616a88a254a04d57d",
+  "protocol_sha256": "44f118403d7c2c411bdd28c45bb63c8a2519c83594aca3cfd62ec6f8314ce71f",
+  "machine": {
+    "machine": "Apple M4",
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+    "physical_memory": "17179869184"
+  },
+  "codec": {
+    "adobe_active_samples_compared": 39814656,
+    "baseline": {
+      "mad_ms": 2.134416499999986,
+      "max_ms": 915.958125,
+      "min_ms": 891.992084,
+      "p50_ms": 898.542625,
+      "p95_ms": 913.605833,
+      "samples_ms": [
+        911.662958,
+        892.893041,
+        892.726,
+        891.992084,
+        893.668125,
+        909.459625,
+        893.2797919999999,
+        894.838583,
+        898.038833,
+        896.024917,
+        898.0314999999999,
+        896.322042,
+        895.920417,
+        896.98575,
+        908.9187079999999,
+        897.251167,
+        897.058625,
+        899.231666,
+        896.718875,
+        900.1313749999999,
+        900.590875,
+        899.08975,
+        913.605833,
+        899.046417,
+        899.647458,
+        899.657917,
+        900.068709,
+        915.958125,
+        899.3655,
+        901.326792
+      ]
+    },
+    "baseline_live_buffer_lower_bound_bytes": 81850704,
+    "baseline_row_storage_bytes": 37008,
+    "candidate": {
+      "mad_ms": 1.19968700000004,
+      "max_ms": 852.125625,
+      "min_ms": 834.697542,
+      "p50_ms": 838.4389375,
+      "p95_ms": 851.293167,
+      "samples_ms": [
+        839.031208,
+        835.359084,
+        837.11275,
+        842.60525,
+        837.358708,
+        834.697542,
+        838.161167,
+        834.786583,
+        850.579042,
+        839.7409580000001,
+        837.979792,
+        849.379,
+        838.531208,
+        837.341584,
+        834.990542,
+        839.7490829999999,
+        852.125625,
+        839.9116250000001,
+        836.38925,
+        851.293167,
+        838.615292,
+        838.176666,
+        838.181292,
+        838.410542,
+        850.65775,
+        838.338834,
+        838.4673329999999,
+        838.3067910000001,
+        839.336833,
+        839.475666
+      ]
+    },
+    "candidate_live_buffer_bound_bytes": 81823776,
+    "candidate_row_storage_bytes": 9252,
+    "full_sensor_samples_compared": 40902912,
+    "limits": [
+      "same-session format knowledge includes CDDL source",
+      "no cold-start or thermal control",
+      "no lossless photographic corpus",
+      "Adobe excludes inactive sensor margins",
+      "memory is buffer accounting, not process RSS"
+    ],
+    "output_u16le_sha256": "fbfe3211aa05c580ea87a7c08ad218fc9905cd1df013efa1a8f25357b050de5d",
+    "p50_ratio": 0.9331098093426563,
+    "payload_sha256": "e8df787ed9d4c6f5a22e00eb2baf2185b4895600666bebb2b667849bbc6705da",
+    "photographic_files": 1,
+    "production_selected": false,
+    "protocol": "TRExp-research-v1",
+    "provenance_qualified": false,
+    "reference_sha256": "5ea8aebe87beeffcf6e672429e6311838f9546e2cbc60bf24dd3489885244ab9",
+    "repetitions": 30,
+    "sample_mismatches": 0,
+    "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+    "speed_target_passed": false,
+    "tracked_buffer_target_passed": true,
+    "warmups": 2,
+    "candidate_source_sha256": "c959595c498ef89070643f0e26d2060ddb6d2e29ab41a7c6d99b8b8bc19cc79d",
+    "timed_version": "circular rows v2",
+    "current_source_difference": "one attribution/scope comment corrected; executable code unchanged"
+  },
+  "previous_codec_candidate": {
+    "p50_ratio": 1.043633797926915,
+    "baseline": {
+      "mad_ms": 1.0478959999999233,
+      "max_ms": 1064.0464160000001,
+      "min_ms": 1032.836917,
+      "p50_ms": 1035.8708535,
+      "p95_ms": 1038.003,
+      "samples_ms": [
+        1034.3775,
+        1034.256167,
+        1035.351792,
+        1032.836917,
+        1035.972041,
+        1036.83425,
+        1034.6459160000002,
+        1035.4300409999998,
+        1035.4646249999998,
+        1035.605916,
+        1037.139834,
+        1034.7948330000002,
+        1037.833,
+        1036.4856659999998,
+        1038.003,
+        1035.608209,
+        1034.6735840000001,
+        1037.269625,
+        1034.974042,
+        1036.890625,
+        1036.3724160000002,
+        1034.5039590000001,
+        1036.4365,
+        1034.145459,
+        1037.64375,
+        1064.0464160000001,
+        1035.769666,
+        1036.059084,
+        1037.956833,
+        1036.377959
+      ]
+    },
+    "candidate": {
+      "mad_ms": 0.881166500000063,
+      "max_ms": 1088.592333,
+      "min_ms": 1078.906792,
+      "p50_ms": 1081.069833,
+      "p95_ms": 1085.161625,
+      "samples_ms": [
+        1085.161625,
+        1080.402542,
+        1080.244458,
+        1080.699708,
+        1080.194583,
+        1078.906792,
+        1080.920584,
+        1079.846708,
+        1079.915833,
+        1081.400208,
+        1082.53,
+        1082.1535410000001,
+        1081.956916,
+        1082.313875,
+        1082.43225,
+        1081.11975,
+        1081.019916,
+        1080.8143750000002,
+        1082.101083,
+        1080.74925,
+        1081.6231249999998,
+        1081.3945410000001,
+        1082.46,
+        1081.6975,
+        1080.8436669999999,
+        1084.8988749999999,
+        1088.592333,
+        1079.910083,
+        1080.252375,
+        1079.381958
+      ]
+    },
+    "retained": true
+  },
+  "timing_conditions": {
+    "source": "in-memory, two warmups per implementation, alternating 30 timed unpacks each; hashes excluded from timings",
+    "thermal_control": false,
+    "v1_observation": "OS reported no recorded thermal/performance warnings; not proof of constant clocks",
+    "v2_thermal_observation": "not separately captured",
+    "cold_start_measured": false,
+    "universal_latency_claim": false,
+    "single_photographic_file": true
+  },
+  "standalone": {
+    "passed": true,
+    "packages": [
+      "anyhow",
+      "block_buffer",
+      "build-script-build",
+      "bytemuck",
+      "cc",
+      "cfg_if",
+      "cpufeatures",
+      "crossbeam_deque",
+      "crossbeam_epoch",
+      "crossbeam_utils",
+      "crypto_common",
+      "digest",
+      "either",
+      "find_msvc_tools",
+      "generic_array",
+      "getrandom",
+      "itoa",
+      "libc",
+      "memchr",
+      "proc_macro2",
+      "quote",
+      "rayon",
+      "rayon_core",
+      "serde",
+      "serde_core",
+      "serde_derive",
+      "serde_json",
+      "sha2",
+      "sha2_asm",
+      "shlex",
+      "syn",
+      "tr-raw-lab",
+      "tr_core",
+      "typenum",
+      "unicode_ident",
+      "uuid",
+      "version_check",
+      "zmij"
+    ],
+    "executable_sha256": "d3faf657a82b2ccd5fbbaaf537a0679cd92712229916d3c32b52470888fccf90",
+    "candidate_source_sha256": "c959595c498ef89070643f0e26d2060ddb6d2e29ab41a7c6d99b8b8bc19cc79d",
+    "no_tr_raw_or_worker_dependency": true,
+    "no_e8_codec_in_depfile": true,
+    "no_libraw_symbols_or_linkage": true,
+    "output_matches_laboratory_comparison": true,
+    "samples": 40902912,
+    "dynamic_libraries": [
+      "\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)",
+      "\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)"
+    ],
+    "output_u16le_sha256": "fbfe3211aa05c580ea87a7c08ad218fc9905cd1df013efa1a8f25357b050de5d",
+    "final_executable_sha256": "9ca776d26bf8b92f33a1c72ac49d632d3d308c19fe68d978c4380e7383df4b5f",
+    "final_source_sha256": "f0d1a63baf1c998cdf3ca4196e380b8919742eda83c574e70f2e3bb5a42a54a2",
+    "comment_only_source_change_rebuilt": true
+  },
+  "codec_provenance": "Factual specification informed by CDDL source already studied. Candidate keeps CDDL/attribution; no clean-room or proprietary-origin certification.",
+  "robustness": {
+    "analytic_streams": 3,
+    "widths": [
+      768,
+      792,
+      1536
+    ],
+    "groups": [
+      2,
+      2,
+      5
+    ],
+    "quantizer_sequence": [
+      0,
+      1,
+      7,
+      255,
+      0
+    ],
+    "payload_mutations": 10000,
+    "mutation_acceptances": 0,
+    "matching_rejections": 10000,
+    "header_and_declared_stripe_truncation": true,
+    "hand_solved_residual_and_bit_reader_boundaries": true,
+    "coverage_guided_fuzzing": false
+  },
+  "quality": [
+    {
+      "candidate": "DR1",
+      "categories": [
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.079484454374541,
+              "sse": 69869.57584584675
+            },
+            "false_chroma_rmse": {
+              "count": 32440320,
+              "rmse": 0.08791558420969849,
+              "sse": 250736.09760647608
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.08778007559391304,
+              "sse": 249963.74952543378
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.05888112133439922,
+              "sse": 56235.074930283
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.09474339458984192,
+              "sse": 291194.39536856837
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.08383155681443935,
+              "sse": 77721.07070839992
+            },
+            "false_chroma_rmse": {
+              "count": 32440320,
+              "rmse": 0.10087683189693819,
+              "sse": 330117.0826912562
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.07819304309474479,
+              "sse": 198345.04703287128
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.06188050587633119,
+              "sse": 62110.18813334409
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.10119385796184896,
+              "sse": 332195.2639487454
+            },
+            "nonfinite_values": 0
+          },
+          "category": "achromatic_texture",
+          "gate": {
+            "passed": false,
+            "ratios": {
+              "border": 1.0546912282924437,
+              "chroma": 1.1474283291608938,
+              "gradient": 0.8907835014460497,
+              "luma": 1.0509396640885589,
+              "missing": 1.068083515478119
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.09079220330028502,
+              "sse": 91163.46485278627
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.08317930218169876,
+              "sse": 224447.9663577502
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.06499968575510869,
+              "sse": 68529.51337828762
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.1106181840333917,
+              "sse": 396952.16844658647
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.08656308622883582,
+              "sse": 82868.4424115992
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.07021826702988943,
+              "sse": 159950.40479425486
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.05524391081766798,
+              "sse": 49502.13895137114
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.09767552836451457,
+              "sse": 309497.1597741824
+            },
+            "nonfinite_values": 0
+          },
+          "category": "chromatic_texture",
+          "gate": {
+            "passed": true,
+            "ratios": {
+              "border": 0.95341982111105,
+              "gradient": 0.8441795637633872,
+              "luma": 0.8499104291950528,
+              "missing": 0.8829970336073298
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 4423680,
+              "rmse": 0.007040697829470129,
+              "sse": 219.28812543990915
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 12976128,
+              "rmse": 0.009788419255369083,
+              "sse": 1243.2837181923844
+            },
+            "luma_rmse": {
+              "count": 6488064,
+              "rmse": 0.006704386329827809,
+              "sse": 291.63066555751584
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 7962624,
+            "missing_channel_rmse": {
+              "count": 12976128,
+              "rmse": 0.012118936983883983,
+              "sse": 1905.7861890298018
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 4423680,
+              "rmse": 0.006775783684840867,
+              "sse": 203.0966542633211
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 12976128,
+              "rmse": 0.004713283567700571,
+              "sse": 288.2652283818562
+            },
+            "luma_rmse": {
+              "count": 6488064,
+              "rmse": 0.0033571165594080635,
+              "sse": 73.12198387313748
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 7962624,
+            "missing_channel_rmse": {
+              "count": 12976128,
+              "rmse": 0.007249720994420012,
+              "sse": 682.0052330343949
+            },
+            "nonfinite_values": 0
+          },
+          "category": "edge",
+          "gate": {
+            "passed": true,
+            "ratios": {
+              "border": 0.9623738795435283,
+              "gradient": 0.4815163148140871,
+              "luma": 0.5007343542349663,
+              "missing": 0.5982142661572416
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 1658880,
+              "rmse": 1.0191858951420366e-07,
+              "sse": 1.7231448268262284e-08
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 4866048,
+              "rmse": 1.2480940867290498e-07,
+              "sse": 7.58003201229492e-08
+            },
+            "luma_rmse": {
+              "count": 2433024,
+              "rmse": 8.053363930726828e-08,
+              "sse": 1.5779783613167505e-08
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 2985984,
+            "missing_channel_rmse": {
+              "count": 4866048,
+              "rmse": 1.3395322184764002e-07,
+              "sse": 8.731376510695554e-08
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 1658880,
+              "rmse": 3.4346804554512336e-08,
+              "sse": 1.956985684614665e-09
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 4866048,
+              "rmse": 2.369481416088009e-08,
+              "sse": 2.7320145146877897e-09
+            },
+            "luma_rmse": {
+              "count": 2433024,
+              "rmse": 1.649090256458624e-08,
+              "sse": 6.616605541680667e-10
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 2985984,
+            "missing_channel_rmse": {
+              "count": 4866048,
+              "rmse": 3.121931959202317e-08,
+              "sse": 4.742673809232656e-09
+            },
+            "nonfinite_values": 0
+          },
+          "category": "flat_extended",
+          "gate": {
+            "passed": true,
+            "ratios": {
+              "border": 1.0,
+              "gradient": 1.0,
+              "luma": 1.0,
+              "missing": 1.0
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 3317760,
+              "rmse": 0.021530266498768384,
+              "sse": 1537.9555293653827
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 9732096,
+              "rmse": 0.02401774384904773,
+              "sse": 5613.979232526192
+            },
+            "luma_rmse": {
+              "count": 4866048,
+              "rmse": 0.01840909453876665,
+              "sse": 1649.0781775620123
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 5971968,
+            "missing_channel_rmse": {
+              "count": 9732096,
+              "rmse": 0.019759630557089528,
+              "sse": 3799.828756120924
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 3317760,
+              "rmse": 0.02224551707911678,
+              "sse": 1641.8367668018948
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 9732096,
+              "rmse": 0.025755725298336283,
+              "sse": 6455.857759390198
+            },
+            "luma_rmse": {
+              "count": 4866048,
+              "rmse": 0.01927313798877184,
+              "sse": 1807.5122538327144
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 5971968,
+            "missing_channel_rmse": {
+              "count": 9732096,
+              "rmse": 0.020455295945328814,
+              "sse": 4072.0951629140027
+            },
+            "nonfinite_values": 0
+          },
+          "category": "noise",
+          "gate": {
+            "passed": false,
+            "ratios": {
+              "border": 1.0332207026043692,
+              "gradient": 1.072362394245347,
+              "luma": 1.046935684326334,
+              "missing": 1.0352063965077367
+            }
+          }
+        }
+      ],
+      "height": 144,
+      "photographic_ground_truth_available": false,
+      "production_promoted": false,
+      "protocol": "TRExp-research-v1",
+      "protocol_sha256": "44f118403d7c2c411bdd28c45bb63c8a2519c83594aca3cfd62ec6f8314ce71f",
+      "scene_phase_cases": 2052,
+      "split": "development",
+      "synthetic_gates_passed": false,
+      "width": 192,
+      "worst_phase_ratios": {
+        "achromatic_texture/border": 1.0688342348911894,
+        "achromatic_texture/chroma": 1.1501109894520156,
+        "achromatic_texture/gradient": 0.8917267004269902,
+        "achromatic_texture/luma": 1.052768203235464,
+        "achromatic_texture/missing": 1.0699456480484224,
+        "chromatic_texture/border": 0.9634395785363723,
+        "chromatic_texture/gradient": 0.8457345776047962,
+        "chromatic_texture/luma": 0.8515228291964064,
+        "chromatic_texture/missing": 0.8842347331583258,
+        "edge/border": 1.0704534499239562,
+        "edge/gradient": 0.5079827372963981,
+        "edge/luma": 0.5392944437647237,
+        "edge/missing": 0.6378774113815081,
+        "flat_extended/border": 1.0,
+        "flat_extended/gradient": 1.0,
+        "flat_extended/luma": 1.0,
+        "flat_extended/missing": 1.0,
+        "noise/border": 1.0392031377377493,
+        "noise/gradient": 1.0766327166715455,
+        "noise/luma": 1.0510522139424026,
+        "noise/missing": 1.0379049614064395
+      }
+    },
+    {
+      "candidate": "DR1",
+      "categories": [
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.10041712296477742,
+              "sse": 111516.53346595929
+            },
+            "false_chroma_rmse": {
+              "count": 32440320,
+              "rmse": 0.10674144796003264,
+              "sse": 369616.46495263337
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.1114475485718295,
+              "sse": 402926.8138997708
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.0738484463813121,
+              "sse": 88458.15156906712
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.12059184371022895,
+              "sse": 471759.87500606955
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.1057379193602559,
+              "sse": 123647.46954636142
+            },
+            "false_chroma_rmse": {
+              "count": 32440320,
+              "rmse": 0.12846903879754812,
+              "sse": 535404.5764491761
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.11867115790365336,
+              "sse": 456851.9567281977
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.0811279164015246,
+              "sse": 106756.856732979
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.13415157621415044,
+              "sse": 583816.9357265667
+            },
+            "nonfinite_values": 0
+          },
+          "category": "achromatic_texture",
+          "gate": {
+            "passed": false,
+            "ratios": {
+              "border": 1.0529869432461714,
+              "chroma": 1.2035534579374543,
+              "gradient": 1.0648162245324593,
+              "luma": 1.0985730963468803,
+              "missing": 1.112443197539166
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.10697853893754652,
+              "sse": 126565.99466669188
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.09934602820914962,
+              "sse": 320174.0632137342
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.07531541348582604,
+              "sse": 92007.42225437552
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.13025263065488132,
+              "sse": 550374.2874285429
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 11059200,
+              "rmse": 0.10763809494421389,
+              "sse": 128131.44311682224
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 32440320,
+              "rmse": 0.10087056932900773,
+              "sse": 330076.0957481967
+            },
+            "luma_rmse": {
+              "count": 16220160,
+              "rmse": 0.0750845797085922,
+              "sse": 91444.30049551609
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 19906560,
+            "missing_channel_rmse": {
+              "count": 32440320,
+              "rmse": 0.12997716526607722,
+              "sse": 548048.825735548
+            },
+            "nonfinite_values": 0
+          },
+          "category": "chromatic_texture",
+          "gate": {
+            "passed": true,
+            "ratios": {
+              "border": 1.0061653114093512,
+              "gradient": 1.0153457681936569,
+              "luma": 0.9969351057565755,
+              "missing": 0.9978851452948081
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 4423680,
+              "rmse": 0.008050486528983674,
+              "sse": 286.7001754485367
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 12976128,
+              "rmse": 0.011026145276722804,
+              "sse": 1577.584176224831
+            },
+            "luma_rmse": {
+              "count": 6488064,
+              "rmse": 0.007558777645088263,
+              "sse": 370.696311885052
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 7962624,
+            "missing_channel_rmse": {
+              "count": 12976128,
+              "rmse": 0.01373711356718315,
+              "sse": 2448.7029147711637
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 4423680,
+              "rmse": 0.007621908429917458,
+              "sse": 256.9870015003466
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 12976128,
+              "rmse": 0.005308856492900517,
+              "sse": 365.7186369809922
+            },
+            "luma_rmse": {
+              "count": 6488064,
+              "rmse": 0.003821427550906768,
+              "sse": 94.7472003338142
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 7962624,
+            "missing_channel_rmse": {
+              "count": 12976128,
+              "rmse": 0.00830798611666769,
+              "sse": 895.6465247891701
+            },
+            "nonfinite_values": 0
+          },
+          "category": "edge",
+          "gate": {
+            "passed": true,
+            "ratios": {
+              "border": 0.9467637021038129,
+              "gradient": 0.4814789175785663,
+              "luma": 0.5055615775905187,
+              "missing": 0.604783972705503
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 1658880,
+              "rmse": 1.0191858951420366e-07,
+              "sse": 1.7231448268262284e-08
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 4866048,
+              "rmse": 1.2480940867290498e-07,
+              "sse": 7.58003201229492e-08
+            },
+            "luma_rmse": {
+              "count": 2433024,
+              "rmse": 8.053363930726828e-08,
+              "sse": 1.5779783613167505e-08
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 2985984,
+            "missing_channel_rmse": {
+              "count": 4866048,
+              "rmse": 1.3395322184764002e-07,
+              "sse": 8.731376510695554e-08
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 1658880,
+              "rmse": 3.4346804554512336e-08,
+              "sse": 1.956985684614665e-09
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 4866048,
+              "rmse": 2.369481416088009e-08,
+              "sse": 2.7320145146877897e-09
+            },
+            "luma_rmse": {
+              "count": 2433024,
+              "rmse": 1.649090256458624e-08,
+              "sse": 6.616605541680667e-10
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 2985984,
+            "missing_channel_rmse": {
+              "count": 4866048,
+              "rmse": 3.121931959202317e-08,
+              "sse": 4.742673809232656e-09
+            },
+            "nonfinite_values": 0
+          },
+          "category": "flat_extended",
+          "gate": {
+            "passed": true,
+            "ratios": {
+              "border": 1.0,
+              "gradient": 1.0,
+              "luma": 1.0,
+              "missing": 1.0
+            }
+          }
+        },
+        {
+          "baseline": {
+            "border_rgb_rmse": {
+              "count": 3317760,
+              "rmse": 0.021478492288664996,
+              "sse": 1530.5677254874554
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 9732096,
+              "rmse": 0.024032700231049836,
+              "sse": 5620.973308394352
+            },
+            "luma_rmse": {
+              "count": 4866048,
+              "rmse": 0.01841175183721475,
+              "sse": 1649.5542910551437
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 5971968,
+            "missing_channel_rmse": {
+              "count": 9732096,
+              "rmse": 0.01976237803063384,
+              "sse": 3800.885522314909
+            },
+            "nonfinite_values": 0
+          },
+          "candidate": {
+            "border_rgb_rmse": {
+              "count": 3317760,
+              "rmse": 0.022201501533622294,
+              "sse": 1635.3460346118998
+            },
+            "false_chroma_rmse": {
+              "count": 0,
+              "rmse": 0.0,
+              "sse": 0.0
+            },
+            "luma_gradient_rmse": {
+              "count": 9732096,
+              "rmse": 0.025777431869734444,
+              "sse": 6466.744161345336
+            },
+            "luma_rmse": {
+              "count": 4866048,
+              "rmse": 0.019279512178839282,
+              "sse": 1808.7080458099363
+            },
+            "measured_mismatches": 0,
+            "measured_sites": 5971968,
+            "missing_channel_rmse": {
+              "count": 9732096,
+              "rmse": 0.02045906171572474,
+              "sse": 4073.5946266210017
+            },
+            "nonfinite_values": 0
+          },
+          "category": "noise",
+          "gate": {
+            "passed": false,
+            "ratios": {
+              "border": 1.0336620110592611,
+              "gradient": 1.0725982358166497,
+              "luma": 1.0471307863204289,
+              "missing": 1.03525302896296
+            }
+          }
+        }
+      ],
+      "height": 144,
+      "photographic_ground_truth_available": false,
+      "production_promoted": false,
+      "protocol": "TRExp-research-v1",
+      "protocol_sha256": "44f118403d7c2c411bdd28c45bb63c8a2519c83594aca3cfd62ec6f8314ce71f",
+      "scene_phase_cases": 2052,
+      "split": "validation",
+      "synthetic_gates_passed": false,
+      "width": 192,
+      "worst_phase_ratios": {
+        "achromatic_texture/border": 1.056808289497228,
+        "achromatic_texture/chroma": 1.204300997546595,
+        "achromatic_texture/gradient": 1.0653771377444647,
+        "achromatic_texture/luma": 1.099793350218968,
+        "achromatic_texture/missing": 1.1134285765933032,
+        "chromatic_texture/border": 1.010859048216863,
+        "chromatic_texture/gradient": 1.0161261669656092,
+        "chromatic_texture/luma": 0.9979184834055812,
+        "chromatic_texture/missing": 0.9984837477165291,
+        "edge/border": 1.0032558557436007,
+        "edge/gradient": 0.4829922959846357,
+        "edge/luma": 0.5070716123065214,
+        "edge/missing": 0.6066257094995695,
+        "flat_extended/border": 1.0,
+        "flat_extended/gradient": 1.0,
+        "flat_extended/luma": 1.0,
+        "flat_extended/missing": 1.0,
+        "noise/border": 1.0403831667845898,
+        "noise/gradient": 1.0778502898304738,
+        "noise/luma": 1.050332131140928,
+        "noise/missing": 1.0383704634276785
+      }
+    }
+  ],
+  "photographic_refactor": {
+    "cases": [
+      {
+        "bit_mismatches": 0,
+        "height": 7728,
+        "relative_wb": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "rgba_float_components_compared": 159258624,
+        "width": 5152
+      },
+      {
+        "bit_mismatches": 0,
+        "height": 7728,
+        "relative_wb": [
+          1.2,
+          1.0,
+          0.8
+        ],
+        "rgba_float_components_compared": 159258624,
+        "width": 5152
+      }
+    ],
+    "passed": true,
+    "reference": "frozen E8 xtrans source",
+    "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693"
+  },
+  "product": {
+    "passed": true,
+    "files": {
+      "dng": 8,
+      "nef": 39,
+      "raf": 1
+    },
+    "two_slots_cases": 96,
+    "exports": 192,
+    "repack_hashes_identical_to_e8": 96,
+    "preview_png_hashes_identical_to_e8": 48,
+    "wb_analyses_identical_to_e8": 192,
+    "source_sha256s": [
+      "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+      "7859bcd6d53fbb05cee79eade81375827e7f907789b1057c32bc4f406a93ef3a",
+      "7d3d3cef22dec751e43104df0986c035dac195081c1aa720b14b00face192660",
+      "d0e4748f510a4aae296af238ac53fd3453a8b55457041d98c6fe8eb4ae101590",
+      "fdf3ce3311afb6223ce2b6179a48fcde43b27a4ea1a750b118ba0d5c110c5005",
+      "4b940a0a035e20afc03f15785d027ffbc5da2da5eac9948930c1a59ba6db71c3",
+      "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+      "e399eb0b3bab9c76e1dabd61bc06a47750af194eea7819f76b2be03ef8cb6bcd",
+      "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+      "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+      "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+      "88acbb343b33fa378c04ae2e9f297b27ac6edf161cd14c2f2c08d599faee22f6",
+      "f31a345b1d5040ff78ac188d262585f4f8bf7da7f949d6fc3a147c98dc8c7cd0",
+      "03d332b0a262aa080095f54db1ea90253fdefd3efcf5aafb33d2b80a6a8e667b",
+      "bf3fcfa065d42c94f45fa27383c74c1b8c1cc5ac384e057f06b48ac830f2cf56",
+      "85acbca86c5c026fb62d79322eeffaad309dc604dd4e2ed2b6e99aee4109d620",
+      "27e19e3f26063f06a6a7a4b5155736b48590862f5e1a3507607d574a465594e6",
+      "a4ab182e886fab6c5391d6480227fb5bb2c67c11fd9ee3f78d45278fc69b77f0",
+      "f9b19ce41a871a6ba7e5dce4b26e3dc50c59fd8ce61a9ec5102d0ba26a7c3872",
+      "bc40194d5af8eb000dda0fda1b3992e994aa3865d374aec8909d806dd3f0117b",
+      "a87c9ff499cbbe8895fc6bf4d879ac7c2475fe24758e1c94ac8a348ca398e283",
+      "75a408949e7a6c90d0b94f635bbcdf01df5d10a71ed6d679e55168e052e8998e",
+      "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+      "c7f17566e3f81a6fd1eabbb6afd567c207a15b0d4a2b053d3f14e7744443dbb3",
+      "d8f957db7b3efffe573385134c6ac35f2da2785a22a63303d769947a7134bf71",
+      "643baed579adcbb8c7cfb8b65be4ce100c8d80e093f4155e4a9ee48aa390cc94",
+      "a7590bf5357701bd8db9c43ce54ea9ed7a9cb7f34462536b61db367e0796a32c",
+      "f40fb7309c22e98fe74fec80feeb491f4439445e16739e6360b324e9b0033d04",
+      "85d6decf9d9e37cb82fb94ca46b71a4f6cdd2a25dbe3cc5b19bffbbf88921129",
+      "5b029de7f7d4b6adc6bcdec8365158ff7ba6471e18597b3d662d83aa46a3e4ca",
+      "6cd324899633045ec7c79c5af03fbcf8847cc9cb01f23c79d07ed424b2a9d74c",
+      "c6270143a75f154a1dba22dd45398e6158c5ed2ca2478618b2b94844bf6fe575",
+      "a87d7545f7ccb65e261c77ff0233f61eea90fe4843eb8bc93879f8724e3a9358",
+      "b40e2d5d4b0ec5bfe147b3aded723cf0bae5da1af08c7533e3a2823f1b7aa6e0",
+      "53e1e52be64c2b5970cb46f9f5afbb5a5f4977692aeb3d6979b86e839c2c2d75",
+      "b498ddca401d08c938e9e2b008e138b9ff26a384b0f6ce30e207f78c728baa34",
+      "522fab9eb905bc541b7da5a98b4191bf4892a354a7ae5499990cf1c500440b17",
+      "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+      "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+      "ed4411f79e19ec323586717e84b1de124396813008f4ebd9ac134c5ec5b30f0d",
+      "cedea30543bc8cd2ec9d1349c788d5b2f6e055bc486a75258e4a8e8b6ffc1ffe",
+      "892987c2b110fb7bacda31d0fdbc29397edfefb4ebd531b42f590b712029ff20",
+      "c8eb91ac00e2df4d010d9c7f864834ce8ad8e4a332b05d6680b5df076d910cd2",
+      "9f1bc82fead8b4f1089623b0d2b9a0b0bedbf833604a9e042e7c5e6aae572b53",
+      "e5418da954d09532604d301bf7c852eb82844c8631e049071286cefb619875cd",
+      "2f7d8cd14ecd2f007a5fb59191e5275f45759eaaeb39cd254294a14e0f656e72",
+      "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+      "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693"
+    ]
+  },
+  "verification": {
+    "ordinary_tests": 463,
+    "native_integrations": 14,
+    "private_generic_tests_skipped": 3,
+    "manual_research_campaigns_run_separately": 3,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "python_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_smoke": true
+  },
+  "gui": {
+    "checks": [
+      {
+        "checked_pixels": 643080,
+        "compute": "CPU",
+        "engine": "TrueRendererExperimental",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 1
+      },
+      {
+        "checked_pixels": 643080,
+        "compute": "CPU",
+        "engine": "TrueRendererExperimental",
+        "max_channel_error_u8": 0,
+        "passed": true,
+        "stage": 2
+      }
+    ],
+    "passed": true,
+    "scope": "Right quarter of native RAW viewport vs CPU raster; excludes settings overlay, compositor and physical display.",
+    "threshold_u8": 1
+  },
+  "xpc": {
+    "passed": true,
+    "two_distinct_processes": true,
+    "corpus_images_checked": 12,
+    "production_fault_injection_rejected": true,
+    "full_sandbox_gate_passed": false,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "c5af28e106be3d2a5b2373807e0b1d9827f5397a1d5ba62f3e260177ef194b6f",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "25baed695cb2cd14f7d7d07f5b58d17aa743c340dd7dc75420a8ce178d7fa4df",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "fc0d9a39912cb65867f3136b769b7db1ec4a766df923b6cb867941e071de8ddc"
+    }
+  },
+  "initial_gui_failure": {
+    "max_error_u8": 32,
+    "cause": "Settings shadow covered a 23-pixel strip of the comparison rectangle; error zero outside that strip. Harness now closes Settings and waits before capture. Threshold remains 1.",
+    "failed_artifacts_retained": true
+  },
+  "campaign_interruption": {
+    "retained_completed_cases": 23,
+    "resumed_remaining_cases": 25,
+    "same_qualified_decoder_binaries": true,
+    "unknown_exit_status_of_initial_process": true
+  },
+  "installation": {
+    "passed": true,
+    "installed": "dist/TrueRenderer.app",
+    "previous": "var/experimental-o1-20261011/previous.app",
+    "previous_matches_frozen_e8": true,
+    "content_and_modes_preserved": true,
+    "ad_hoc_signature_verified": true,
+    "no_user_process_terminated": true,
+    "research_candidates_in_product": false,
+    "recipe_changed": false
+  },
+  "conservation": {
+    "passed": true,
+    "protected_sources_originals_and_rights_checked": 45,
+    "original_raws_unchanged": 40,
+    "historical_implementation_files_unchanged": 3,
+    "license_unchanged": true,
+    "original_architecture_unchanged": true,
+    "existing_backup_files_unchanged": 174,
+    "user_database_not_opened_by_campaign": true,
+    "checks": "SHA-256 before/after of protected files and pre-existing backups; isolated data roots for test applications"
+  },
+  "limits": [
+    "Codec candidate not promoted; provenance review pending",
+    "No lossless photographic Fuji qualification, no additional Fuji camera",
+    "No independent sensor margins beyond Adobe active window",
+    "DR1 fails synthetic gates and is not promoted; later candidate needs new holdout",
+    "No measured colour profiles or noise/shading qualification",
+    "Buffer accounting is not process RSS qualification",
+    "No new Windows, cancellation, R0-R4 or SF0-SF10 qualification"
+  ]
+}

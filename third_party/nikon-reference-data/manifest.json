@@ -1,0 +1,21 @@
+{
+  "name": "Nikon D750/D800 compatibility data",
+  "version": "2",
+  "license": "CDDL-1.0",
+  "upstream_version": "LibRaw 0.22.2",
+  "portions": [
+    {
+      "source": "https://github.com/LibRaw/LibRaw/blob/0.22.2/src/tables/colordata.cpp",
+      "portion": "D750 and D800 D65 matrices, nine coefficients each / 10000; upstream attributes to Adobe",
+      "sha256": "621d6a7e1a1904095d27087cf10ac7e935c6a984ec336816b79c273a8eaca768"
+    },
+    {
+      "source": "https://github.com/LibRaw/LibRaw/blob/0.22.2/src/decoders/decoders_dcraw.cpp",
+      "portion": "nikon_tree[2] and [5], 12/14-bit lossless code counts and category orders only",
+      "sha256": "e17e3faac2e9d5de0d1c3155b5fe37165010a09eab9a80f63523a391237d1658"
+    }
+  ],
+  "modification": "Extracted Nikon D750/D800 matrices and lossless Huffman data into Rust constants; no routines imported.",
+  "runtime": "Rust constants only; no LibRaw symbols, linking or calls",
+  "source_distribution": "This directory including source and license is copied into the application bundle."
+}

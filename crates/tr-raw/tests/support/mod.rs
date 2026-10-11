@@ -1,4 +1,8 @@
 use std::collections::BTreeMap;
+#[allow(dead_code)]
+pub mod nef;
+#[allow(dead_code)]
+pub mod raf;
 
 pub struct Fixture {
     pub le: bool,

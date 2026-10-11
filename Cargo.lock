@@ -3148,6 +3148,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tr-raw-lab"
+version = "0.1.5"
+dependencies = [
+ "anyhow",
+ "serde_json",
+ "sha2",
+ "tr-core",
+]
+
+[[package]]
 name = "tr-render"
 version = "0.1.5"
 dependencies = [

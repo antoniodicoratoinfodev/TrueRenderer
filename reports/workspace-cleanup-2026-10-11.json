@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "project_before_allocated_bytes": 93765066752,
+  "project_after_allocated_bytes": 4549193728,
+  "project_reclaimed_allocated_bytes": 89215873024,
+  "external_photo_cache_removed_logical_bytes": 4252497742,
+  "protected_files_unchanged": 10418,
+  "previous_original_guards_unchanged": 45,
+  "remaining_project_photo_caches": 0,
+  "retained": [
+    "Current app bundle",
+    "Most recent rollback bundle",
+    "Library databases and backups",
+    "Original photographs and public sample photographs",
+    "Campaign reports, logs and protocols",
+    "Independent Adobe DNG references and reference tools",
+    "Rust toolchain and dependency sources"
+  ],
+  "removed": [
+    "Compilation outputs",
+    "All identified TrueRenderer photo caches",
+    "Superseded app bundles except latest rollback",
+    "Generated campaign rasters and older screenshots",
+    "Downloaded converter installer and extracted installation files"
+  ],
+  "note": "Historical reports remain evidence of completed campaigns; disposable artifacts referenced by them were removed at owner request. No application source changes during cleanup."
+}

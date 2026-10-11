@@ -789,11 +789,11 @@ impl Language {
             "Rec.2020 lineare ICC, RGBA float32 con alpha associata. Conserva negativi e valori oltre 1 del render; non compresso. Non è un RAW sensore né un export FITS." => {
                 "Linear Rec.2020 ICC, float32 RGBA with associated alpha. Preserves negative and above-1 rendered values; uncompressed. Not sensor RAW or FITS export."
             }
-            "Mosaico sensore senza WB o demosaic: DNG supportati con Experimental, Nikon D750/D40 con i motori storici." => {
-                "Sensor mosaic without WB or demosaic: supported DNGs with Experimental, Nikon D750/D40 with the legacy engines."
+            "Mosaico sensore senza WB o demosaic: DNG, NEF D750/D800 e RAF X-T5 supportati con Experimental, Nikon D750/D40 con i motori storici." => {
+                "Sensor mosaic without WB or demosaic: supported DNGs, D750/D800 NEFs and X-T5 RAFs with Experimental, Nikon D750/D40 with legacy engines."
             }
-            "Experimental conserva anche LUT, calibrazione, margini e crop del DNG. Il percorso storico conserva l'area attiva e la matrice D65 LibRaw. EXIF, MakerNotes e RAW compresso sono esclusi: conservare l'originale." => {
-                "Experimental also retains DNG LUT, calibration, margins and crop. The legacy path retains the active area and LibRaw D65 matrix. EXIF, MakerNotes and compressed RAW are omitted: keep the original."
+            "Experimental conserva calibrazione, margini e crop; NEF e RAF ricevono un profilo D65 di compatibilità. La compressione lossy della fotocamera non è reversibile. EXIF, MakerNotes e RAW compresso sono esclusi: conservare l'originale." => {
+                "Experimental retains calibration, margins and crop; NEF and RAF receive a D65 compatibility profile. Camera lossy compression cannot be reversed. EXIF, MakerNotes and compressed RAW are omitted: keep the original."
             }
             "Lato lungo (0 = originale)" => "Long edge (0 = original)",
             "Cartella destinazione…" => "Destination folder…",
@@ -1049,8 +1049,8 @@ impl Language {
             "Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali." => {
                 "Available: 8/16-bit PNG corpus, grid, preview, two-image comparison, physical 1:1 zoom, pointer sampling, ratings, labels, keywords, search, undo and local backups."
             }
-            "Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, TrueRenderer fp32 o trueRendererExperimental. TrueRenderer fp32 supporta Nikon D750 e D40 Bayer. Experimental apre il sottoinsieme DNG dichiarato nelle impostazioni; NEF e RAF diretti non sono ancora supportati. Compatibilità e resa dipendono dal motore scelto." => {
-                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD, TrueRenderer fp32 or trueRendererExperimental. TrueRenderer fp32 supports Nikon D750 and D40 Bayer files. Experimental opens the DNG subset described in Settings; direct NEF and RAF decoding is not supported yet. Compatibility and rendering depend on the selected engine."
+            "Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, TrueRenderer fp32 o trueRendererExperimental. TrueRenderer fp32 supporta Nikon D750 e D40 Bayer. Experimental apre DNG Bayer/X-Trans supportati, NEF D750/D800 lossless FX e RAF X-T5 lossy a 14 bit. Compatibilità e resa dipendono dal motore scelto." => {
+                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD, TrueRenderer fp32 or trueRendererExperimental. TrueRenderer fp32 supports Nikon D750 and D40 Bayer files. Experimental opens supported Bayer/X-Trans DNGs, D750/D800 lossless FX NEFs and X-T5 lossy 14-bit RAFs. Compatibility and rendering depend on the selected engine."
             }
             "Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima." => {
                 "Qualification remains open for XPC/App Sandbox and Windows, ICC/Little CMS, monitor presentation, filters and CPU/GPU, accessibility and performance. Format qualification, XMP and gigapixel support follow the roadmap. Assurance remains Preview."
@@ -1079,8 +1079,8 @@ impl Language {
             "Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore." => {
                 "Experimental: Nikon D750 and D40 Bayer. Colour accuracy and superiority over other engines remain unqualified. Unsupported RAW files show an error."
             }
-            "Autonomo da LibRaw: sottoinsieme DNG Bayer, profili a matrici. Colore da qualificare; NEF e RAF non ancora disponibili." => {
-                "Independent of LibRaw: Bayer DNG subset, matrix profiles. Colour remains unqualified; NEF and RAF are not available yet."
+            "Autonomo da LibRaw: DNG Bayer/X-Trans supportati, NEF D750 14 bit e D800 12/14 bit lossless FX, RAF X-T5 14 bit lossy. Profili D65 di compatibilità; colore da qualificare." => {
+                "Independent of LibRaw: supported Bayer/X-Trans DNGs, D750 14-bit and D800 12/14-bit lossless FX NEFs, X-T5 14-bit lossy RAF. D65 compatibility profiles; colour remains unqualified."
             }
             "Memoria automatica" => "Automatic memory",
             "Memoria richiesta (MB)" => "Requested memory (MB)",

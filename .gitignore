@@ -36,6 +36,7 @@
 *.[rR][wW]2
 *.[dD][nN][gG]
 !/crates/tr-worker/tests/fixtures/*.dng
+!/crates/tr-raw/tests/fixtures/jpeg-*.dng
 
 # Local databases, raw diagnostics and editor/runtime leftovers.
 .DS_Store

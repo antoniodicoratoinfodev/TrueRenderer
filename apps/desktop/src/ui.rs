@@ -183,6 +183,11 @@ impl TrueRenderer {
             })
             .unwrap_or(("GPU non disponibile".into(), "sconosciuta".into()));
         let service = Service::start(root.clone(), data.clone(), worker, ctx.clone());
+        if smoke && std::env::args().any(|a| a == "--raw-engine-ui-only-experimental") {
+            let mut settings = service.cache.settings();
+            settings.raw_engine = tr_core::decoder::RawEngine::TrueRendererExperimental;
+            service.cache.configure(settings);
+        }
         if let Some(memory_mib) = fixed_memory_mib {
             let mut settings = service.cache.settings();
             settings.memory_mib = memory_mib;
@@ -3383,7 +3388,7 @@ impl TrueRenderer {
             ui.label(localized_format!(lang,
                 "Sviluppo, con focus sulle immagini: Alt + Shift + C copia; Alt + Shift + V incolla i gruppi selezionati. Cmd/Ctrl + Alt + Z annulla lo sviluppo; aggiungi Shift per ripetere. Cmd/Ctrl + Z resta l’annullamento delle annotazioni.",
                 "Develop, with image focus: Alt + Shift + C copies; Alt + Shift + V pastes selected groups. Cmd/Ctrl + Alt + Z undoes an edit; add Shift to redo. Cmd/Ctrl + Z still undoes annotations."));
-            ui.add_space(8.);ui.label(lang.text("Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, TrueRenderer fp32 o trueRendererExperimental. TrueRenderer fp32 supporta Nikon D750 e D40 Bayer. Experimental apre il sottoinsieme DNG dichiarato nelle impostazioni; NEF e RAF diretti non sono ancora supportati. Compatibilità e resa dipendono dal motore scelto."));
+            ui.add_space(8.);ui.label(lang.text("Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, TrueRenderer fp32 o trueRendererExperimental. TrueRenderer fp32 supporta Nikon D750 e D40 Bayer. Experimental apre DNG Bayer/X-Trans supportati, NEF D750/D800 lossless FX e RAF X-T5 lossy a 14 bit. Compatibilità e resa dipendono dal motore scelto."));
             ui.add_space(8.);ui.label(lang.text("Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima."));
             ui.add_space(8.);ui.monospace(localized_format!(lang, "GPU: {}\nSuperficie: {}\nSQLite: {}", "GPU: {}\nSurface: {}\nSQLite: {}",lang.text(&self.adapter),lang.text(&self.surface),tr_store::sqlite_version()));
             ui.label(lang.message(&self.gpu_status));
@@ -3569,8 +3574,17 @@ impl TrueRenderer {
     }
     fn raw_engines_smoke(&mut self, ctx: &egui::Context) {
         use tr_core::decoder::RawEngine;
-        let mut engines: Vec<_> = RawEngine::choices().collect();
-        engines.push(RawEngine::default()); // return to an earlier engine/cache
+        let experimental_only = std::env::args().any(|a| a == "--raw-engine-ui-only-experimental");
+        let mut engines: Vec<_> = if experimental_only {
+            vec![RawEngine::TrueRendererExperimental]
+        } else {
+            RawEngine::choices().collect()
+        };
+        engines.push(if experimental_only {
+            RawEngine::TrueRendererExperimental
+        } else {
+            RawEngine::default()
+        }); // revisit the selected engine/cache
         if self.raw_engine_smoke_results.len() >= engines.len() {
             return;
         }
@@ -3633,6 +3647,14 @@ impl TrueRenderer {
                 self.raw_engine_smoke_ready_at = None;
                 return;
             }
+            // The settings window's shadow can reach the supposedly visible
+            // quarter of a portrait RAW. Capture an unobscured viewport and
+            // let the close animation/layout settle under the same pixel gate.
+            if self.show_settings {
+                self.show_settings = false;
+                self.raw_engine_smoke_ready_at = None;
+                return;
+            }
             // CPU delivery and an empty upload queue precede the first visible
             // GPU frame. Require the current source in the main viewport and
             // allow presentation to settle before requesting the screenshot.
@@ -3672,7 +3694,7 @@ impl TrueRenderer {
                             && r["zoom"] == self.raw_engine_smoke_results[0]["zoom"]
                             && r["center"] == self.raw_engine_smoke_results[0]["center"]
                     });
-                    let report = serde_json::json!({"passed":same_selection && !self.presenter.has_errors(),"platform":std::env::consts::OS,"stages":self.raw_engine_smoke_results,"changed_engine_during_scan":std::env::args().any(|arg| arg == "--raw-engine-scan-change"),"scanned_items":self.state.items.len(),"scope":"Native UI, production apply-settings path, full RAW, engine provenance, selection preserved and return to earlier engine; private screenshots in var. Not colour/display qualification."});
+                    let report = serde_json::json!({"passed":same_selection && !self.presenter.has_errors(),"platform":std::env::consts::OS,"stages":self.raw_engine_smoke_results,"experimental_only":experimental_only,"changed_engine_during_scan":std::env::args().any(|arg| arg == "--raw-engine-scan-change"),"scanned_items":self.state.items.len(),"scope":"Native UI, production apply-settings path, full RAW, engine provenance, selection preserved and return to earlier engine; private screenshots in var. Not colour/display qualification."});
                     let _ = std::fs::write(
                         self.root.join("var/raw-engine-ui.json"),
                         serde_json::to_vec_pretty(&report).unwrap(),

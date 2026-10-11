@@ -1,0 +1,35 @@
+{
+  "application": "TrueRenderer",
+  "captured_at": "2026-10-11T16:17:28.602214+00:00",
+  "language": "en",
+  "capture_method": "Native application window screenshots using computer-use API; returned JPEG bytes saved without editing, cropping or resizing.",
+  "isolated_library": true,
+  "private_photographs_published": false,
+  "bundle": "dist/TrueRenderer.app",
+  "binary_sha256": "c5af28e106be3d2a5b2373807e0b1d9827f5397a1d5ba62f3e260177ef194b6f",
+  "photograph_credits": "sample-photos/manifest.json",
+  "older_comparison_library_screenshots": "reports/readme-showcase-macos-2026-10-06.json",
+  "screenshots": [
+    {
+      "path": "reports/readme-2026-10-11/colour.jpg",
+      "sha256": "a7443e121ea1544dc7068670be55e60c87980940cef44d2751cf924b37409032",
+      "bytes": 1058809,
+      "width": 2940,
+      "height": 1846
+    },
+    {
+      "path": "reports/readme-2026-10-11/develop.jpg",
+      "sha256": "cd99abb2f190e47765d4dbd8683b9edd63c94ab98b0eaae1d47581cc34f73749",
+      "bytes": 1020553,
+      "width": 2940,
+      "height": 1846
+    },
+    {
+      "path": "reports/readme-2026-10-11/tools.jpg",
+      "sha256": "071ad522813ceeba5c8d5667475d344b89ca6fd4d106c868ff330e622a1a831a",
+      "bytes": 1044162,
+      "width": 2940,
+      "height": 1846
+    }
+  ]
+}

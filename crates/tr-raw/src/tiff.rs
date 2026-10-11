@@ -7,7 +7,7 @@ pub(crate) struct Field<'a> {
     pub kind: u16,
     pub count: usize,
     pub data: &'a [u8],
-    le: bool,
+    pub le: bool,
 }
 impl Field<'_> {
     pub fn numbers(self, limit: usize) -> Result<Vec<f64>> {
@@ -178,48 +178,14 @@ impl<'a> Tiff<'a> {
             }
             ensure!(seen.insert(at), "TIFF: IFD ciclico o duplicato");
             ensure!(seen.len() <= 32, "TIFF: troppe directory");
-            let count = reader.short(at)? as usize;
-            total_entries += count;
-            ensure!(count <= 1024 && total_entries <= 4096, "TIFF: troppi tag");
-            reader.slice(at, 2 + count * 12 + 4)?;
-            let mut fields = BTreeMap::new();
-            for index in 0..count {
-                let entry = at + 2 + 12 * index;
-                let tag = reader.short(entry)?;
-                let kind = reader.short(entry + 2)?;
-                let count = reader.long(entry + 4)? as usize;
-                let length = count
-                    .checked_mul(type_width(kind)?)
-                    .context("TIFF: overflow campo")?;
-                metadata_bytes = metadata_bytes
-                    .checked_add(length)
-                    .context("TIFF: overflow metadati")?;
-                ensure!(
-                    metadata_bytes <= 16 * 1024 * 1024,
-                    "TIFF: metadati oltre quota"
-                );
-                let location = if length <= 4 {
-                    entry + 8
-                } else {
-                    reader.long(entry + 8)? as usize
-                };
-                let data = reader.slice(location, length)?;
-                ensure!(
-                    fields
-                        .insert(
-                            tag,
-                            Field {
-                                kind,
-                                count,
-                                data,
-                                le
-                            }
-                        )
-                        .is_none(),
-                    "TIFF: tag duplicato {tag}"
-                );
-            }
-            let ifd = Ifd { fields };
+            let (ifd, next, payload) = reader.directory(at)?;
+            total_entries += ifd.fields.len();
+            metadata_bytes += payload;
+            ensure!(total_entries <= 4096, "TIFF: troppi tag");
+            ensure!(
+                metadata_bytes <= 16 * 1024 * 1024,
+                "TIFF: metadati oltre quota"
+            );
             // SubIFDs only. EXIF/MakerNote offsets are not generic image IFDs.
             if let Some(sub) = ifd.get(330) {
                 let sub = sub.integers(32)?;
@@ -229,7 +195,6 @@ impl<'a> Tiff<'a> {
                 );
                 pending.extend(sub.into_iter().rev().map(|v| v as usize));
             }
-            let next = reader.long(at + 2 + 12 * count)? as usize;
             if next != 0 {
                 pending.push(next);
             }
@@ -237,6 +202,72 @@ impl<'a> Tiff<'a> {
         }
         ensure!(!reader.ifds.is_empty(), "TIFF: nessuna directory");
         Ok(reader)
+    }
+    /// One bounded directory, without following EXIF/MakerNote/preview links.
+    pub fn directory(&self, at: usize) -> Result<(Ifd<'a>, usize, usize)> {
+        ensure!(at >= 8, "TIFF: offset directory invalido");
+        let count = self.short(at)? as usize;
+        ensure!(count <= 1024, "TIFF: troppi tag");
+        let mut metadata_bytes = 0usize;
+        self.slice(at, 2 + count * 12 + 4)?;
+        let mut fields = BTreeMap::new();
+        for index in 0..count {
+            let entry = at + 2 + 12 * index;
+            let tag = self.short(entry)?;
+            let kind = self.short(entry + 2)?;
+            let count = self.long(entry + 4)? as usize;
+            let length = count
+                .checked_mul(type_width(kind)?)
+                .context("TIFF: overflow campo")?;
+            metadata_bytes = metadata_bytes
+                .checked_add(length)
+                .context("TIFF: overflow metadati")?;
+            ensure!(
+                metadata_bytes <= 16 * 1024 * 1024,
+                "TIFF: metadati oltre quota"
+            );
+            let location = if length <= 4 {
+                entry + 8
+            } else {
+                self.long(entry + 8)? as usize
+            };
+            let data = self.slice(location, length)?;
+            ensure!(
+                fields
+                    .insert(
+                        tag,
+                        Field {
+                            kind,
+                            count,
+                            data,
+                            le: self.le
+                        }
+                    )
+                    .is_none(),
+                "TIFF: tag duplicato {tag}"
+            );
+        }
+        Ok((
+            Ifd { fields },
+            self.long(at + 2 + 12 * count)? as usize,
+            metadata_bytes,
+        ))
+    }
+    /// Nikon type-2 MakerNotes contain a separate relative TIFF header.
+    pub fn maker_directory(bytes: &'a [u8]) -> Result<Ifd<'a>> {
+        ensure!(
+            bytes.len() <= 16 * 1024 * 1024
+                && matches!(bytes.get(..4), Some(b"II\x2a\0") | Some(b"MM\0\x2a")),
+            "NEF: TIFF MakerNote fuori contratto"
+        );
+        let reader = Self {
+            bytes,
+            le: bytes.starts_with(b"II"),
+            ifds: Vec::new(),
+        };
+        let (ifd, next, _) = reader.directory(reader.long(4)? as usize)?;
+        ensure!(next == 0, "NEF: catena MakerNote non supportata");
+        Ok(ifd)
     }
     pub fn slice(&self, at: usize, count: usize) -> Result<&'a [u8]> {
         let end = at.checked_add(count).context("TIFF: overflow intervallo")?;

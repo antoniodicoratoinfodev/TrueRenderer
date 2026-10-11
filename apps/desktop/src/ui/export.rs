@@ -147,9 +147,9 @@ impl TrueRenderer {
                         Format::TiffFloat32 => {ui.label(lang.text("Rec.2020 lineare ICC, RGBA float32 con alpha associata. Conserva negativi e valori oltre 1 del render; non compresso. Non è un RAW sensore né un export FITS."));}
                         Format::DngRaw => {
                             state.options.long_edge = 0;
-                            ui.colored_label(AMBER, lang.text("Mosaico sensore senza WB o demosaic: DNG supportati con Experimental, Nikon D750/D40 con i motori storici."));
+                            ui.colored_label(AMBER, lang.text("Mosaico sensore senza WB o demosaic: DNG, NEF D750/D800 e RAF X-T5 supportati con Experimental, Nikon D750/D40 con i motori storici."));
                             ui.label(lang.text("DNG RAW conserva il mosaico: le regolazioni fotografiche non vengono applicate."));
-                            ui.label(lang.text("Experimental conserva anche LUT, calibrazione, margini e crop del DNG. Il percorso storico conserva l'area attiva e la matrice D65 LibRaw. EXIF, MakerNotes e RAW compresso sono esclusi: conservare l'originale."));
+                            ui.label(lang.text("Experimental conserva calibrazione, margini e crop; NEF e RAF ricevono un profilo D65 di compatibilità. La compressione lossy della fotocamera non è reversibile. EXIF, MakerNotes e RAW compresso sono esclusi: conservare l'originale."));
                             ui.colored_label(AMBER, lang.text("Per riaprire usare trueRendererExperimental o LibRaw bilineare/AHD, entro i rispettivi formati supportati."));
                         }
                     }

@@ -38,8 +38,8 @@ fn describe(raw: tr_raw::RawInfo) -> Result<(RasterInfo, ColorSource)> {
         "Experimental: mosaico/crop oltre il budget di memoria del job"
     );
     let color = ColorSource::Developed(format!(
-        "Rec.2020 fp32; profilo DNG {}; matrici/WB v1; saturi conservati; no clamp",
-        raw.profile_hash
+        "Rec.2020 fp32; profilo {} {}; matrici/WB v1; saturi conservati; no clamp",
+        raw.profile_source, raw.profile_hash
     ));
     let mut camera = raw.camera;
     camera.truncate(camera.floor_char_boundary(75));
@@ -57,8 +57,8 @@ fn describe(raw: tr_raw::RawInfo) -> Result<(RasterInfo, ColorSource)> {
         input_color: color.provenance(),
         filter: "nessuno (campioni LOD 0)".into(),
         orientation: format!(
-            "DNG {} applicato una volta da Experimental",
-            raw.orientation
+            "{} EXIF {} applicato una volta da Experimental",
+            raw.format, raw.orientation
         ),
     };
     protocol::validate_info(&info)?;
@@ -101,6 +101,14 @@ pub fn develop_with_wb(
         info.filter = tr_core::color::FILTER_VERSION.into();
     }
     Ok((info, color, image))
+}
+
+pub fn estimate_white_balance(
+    bytes: &[u8],
+    analysis: tr_core::raw_wb::Analysis,
+) -> Result<RawWhiteBalance> {
+    probe_with_wb(bytes, RawWhiteBalance::default())?;
+    tr_raw::estimate_white_balance(bytes, analysis)
 }
 
 impl Decoder for Experimental {
@@ -165,7 +173,7 @@ pub fn export_raw(
     probe_with_wb(source, RawWhiteBalance::default())?;
     let (width, height, bytes) = tr_raw::repack_dng(source, limit.min(MAX_ENCODED) as usize)?;
     let info=Info {format:Format::DngRaw,width,height,bytes:bytes.len() as u64,clipped_channels:0,
-        description:"Experimental: campioni sensore originali uint16; calibrazione, LUT, nero, margini e crop conservati. WB/demosaic non applicati; EXIF/MakerNotes/preview esclusi. Conservare l'originale.".into()};
+        description:"Experimental: campioni sensore decodificati uint16; calibrazione, LUT, nero, margini e crop conservati. La quantizzazione lossy in camera non è reversibile. WB/demosaic non applicati; EXIF/MakerNotes/preview esclusi. Conservare l'originale.".into()};
     info.validate(options, limit)?;
     Ok((info, bytes))
 }
@@ -197,6 +205,84 @@ pub(crate) mod legacy_guard {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn raf_recognition_and_truncated_codec_never_call_libraw() {
+        let _guard = legacy_guard::Guard::new();
+        let bytes = fixture::raf::bytes();
+        Experimental.probe(&bytes).unwrap();
+        assert!(Experimental.decode(&bytes, 32).is_err());
+        assert!(estimate_white_balance(&bytes, tr_core::raw_wb::Analysis::Auto).is_err());
+        let options = tr_core::export::Options {
+            format: tr_core::export::Format::DngRaw,
+            ..Default::default()
+        };
+        assert!(export_raw(&bytes, options, 128 * 1024 * 1024).is_err());
+    }
+    #[test]
+    fn direct_nef_all_entry_points_never_call_libraw() {
+        let _guard = legacy_guard::Guard::new();
+        let engine = RawEngine::TrueRendererExperimental;
+        assert_eq!(engine.label(), "trueRendererExperimental");
+        let decoder =
+            super::super::select_engine(tr_core::decoder::Trust::External, engine).unwrap();
+        let mut fixture = fixture::nef::NefFixture::new();
+        let bytes = fixture.bytes();
+        decoder.probe(&bytes).unwrap();
+        let wb = RawWhiteBalance {
+            red: 1200,
+            blue: 900,
+            ..Default::default()
+        };
+        let balanced = super::super::WhiteBalanced {
+            base: decoder,
+            engine,
+            wb,
+        };
+        let (probe, _) = balanced.probe(&bytes).unwrap();
+        let (info, _, raster) = balanced.decode(&bytes, 8).unwrap();
+        assert_eq!(probe.input_color, info.input_color);
+        assert_eq!((raster.width, raster.height), (8, 5));
+        let options = tr_core::export::Options {
+            format: tr_core::export::Format::DngRaw,
+            ..Default::default()
+        };
+        let (_, dng) = export_raw(&bytes, options, 128 * 1024 * 1024).unwrap();
+        assert_eq!(balanced.decode(&dng, 8).unwrap().2.pixels, raster.pixels);
+        // A brighter constant plane gives Auto sufficient valid neutral samples.
+        for i in 0..4 {
+            fixture.maker.tags.get_mut(&0x96).unwrap().2[2 + i * 2..4 + i * 2]
+                .copy_from_slice(&4000u16.to_le_bytes());
+        }
+        let neutral = fixture.bytes();
+        for analysis in [
+            tr_core::raw_wb::Analysis::Auto,
+            tr_core::raw_wb::Analysis::Patch {
+                x: 32,
+                y: 32,
+                side: 5,
+            },
+        ] {
+            let direct = estimate_white_balance(&neutral, analysis).unwrap();
+            assert_eq!((direct.red, direct.blue), (500, 667));
+            let wb =
+                tr_core::raw_wb::estimate(engine, RawWhiteBalance::default(), analysis, |wb| {
+                    Ok(super::super::WhiteBalanced {
+                        base: decoder,
+                        engine,
+                        wb,
+                    }
+                    .decode(&neutral, 0)?
+                    .2)
+                })
+                .unwrap();
+            wb.validate_for(engine).unwrap();
+        }
+        fixture.root.text(272, "NIKON D800");
+        let unsupported = fixture.bytes();
+        assert!(decoder.probe(&unsupported).is_err());
+        assert!(decoder.decode(&unsupported, 8).is_err());
+        assert!(export_raw(&unsupported, options, 128 * 1024 * 1024).is_err());
+    }
     #[test]
     fn explicit_engine_probe_wb_render_refusal_and_export_never_call_libraw() {
         let _guard = legacy_guard::Guard::new();
@@ -277,6 +363,17 @@ mod tests {
             assert!(decoder.probe(bad).is_err());
             assert!(decoder.decode(bad, 8).is_err());
             assert!(export_raw(bad, options, 1 << 20).is_err());
+        }
+        for compressed in [
+            include_bytes!("../../tr-raw/tests/fixtures/jpeg-modern16.dng").as_slice(),
+            include_bytes!("../../tr-raw/tests/fixtures/jpeg-dng10-16.dng").as_slice(),
+            include_bytes!("../../tr-raw/tests/fixtures/jpeg-predictor4-12.dng").as_slice(),
+        ] {
+            let (info, _) = decoder.probe(compressed).unwrap();
+            let (_, _, image) = decoder.decode(compressed, 0).unwrap();
+            assert_eq!((info.width, info.height), (image.width, image.height));
+            let (_, copy) = export_raw(compressed, options, 1 << 20).unwrap();
+            assert_eq!(decoder.decode(&copy, 0).unwrap().2.pixels, image.pixels);
         }
     }
 }

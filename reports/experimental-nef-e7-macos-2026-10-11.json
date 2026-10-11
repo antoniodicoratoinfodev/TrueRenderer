@@ -1,0 +1,159 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-11",
+  "platform": "macOS arm64",
+  "passed": true,
+  "scope": "Experimental E7 Nikon D750 direct NEF subset and format-neutral engine name. No global R/SF gate, release assurance or measured colour qualification.",
+  "engine": {
+    "serialized": "TrueRendererExperimental",
+    "label": "trueRendererExperimental",
+    "recipe": "TRExp-raw2-nikon1-lj2-cal1-dir1-extended1",
+    "historical_recipe_unchanged": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2"
+  },
+  "capability": {
+    "camera": "NIKON D750",
+    "mode": "FX uncropped, 14-bit lossless, one RGGB strip",
+    "stored_dimensions": [
+      6032,
+      4032
+    ],
+    "crop": [
+      8,
+      8,
+      6016,
+      4016
+    ],
+    "compression_tags": [
+      34713,
+      3
+    ],
+    "maker_version": "0211",
+    "codec_version_hex": "4630",
+    "as_shot_source": "Nikon tag 0x000c R/B/G/G rationals, unit greens required",
+    "black_source": "Nikon tag 0x003d RGGB",
+    "white_level": 15520,
+    "profile": "D65 compatibility matrix, no ForwardMatrix or creative look"
+  },
+  "autonomy": {
+    "core_tests": 23,
+    "core_test_binaries": 3,
+    "libraw_symbols": false,
+    "libraw_linkage": false,
+    "guarded_worker_paths": [
+      "probe",
+      "develop",
+      "manual WB",
+      "Auto WB",
+      "neutral-patch WB",
+      "sensor export",
+      "unsupported NEF refusal"
+    ],
+    "constant_data_provenance": "third_party/nikon-reference-data/manifest.json",
+    "constant_data_license": "CDDL-1.0",
+    "constant_data_description": "D750 matrix and one Huffman table extracted from the pinned upstream constant data. No decoder routines imported; no clean-room claim. Sources, attribution and license included in the bundle.",
+    "native_libraw_upstream_hashes_preserved": 106
+  },
+  "reference": {
+    "converter": "Adobe DNG Converter 18.7 (2743)",
+    "options": [
+      "-c",
+      "-cr2.4",
+      "-p0"
+    ],
+    "sdk": "Adobe DNG SDK 1.7.1 build 2724",
+    "sdk_executable_sha256": "48ff3f164826b2057d3a79cd014ff389cfe7104bbd3fa207732b29d3be28bf0e",
+    "runtime_dependency": false
+  },
+  "nef_campaign": {
+    "files": 30,
+    "unique_sensor_samples": 729630720,
+    "sample_comparisons_per_stage": 1459261440,
+    "stage1_max_error_u16": 0,
+    "sdk_stage2_max_error_u16": 0,
+    "sdk_stage2_scope": "SDK linearization before/after repack, not Experimental colour rendering accuracy",
+    "sdk_warnings": 0,
+    "neutral_max_error_vs_adobe": 4.990512333935548e-07,
+    "neutral_tolerance": 5.1e-07,
+    "slots_identical": true,
+    "raw_repack_render_exact": 60,
+    "wb_probe_decode_pairs": 60,
+    "rgb_exports": 120,
+    "rgb_export_max_error_u16": 0,
+    "photographic_orientations": {
+      "1": 23,
+      "8": 7
+    },
+    "other_originals_explicitly_refused": {
+      "D800": 9,
+      "X-T5 RAF": 1
+    }
+  },
+  "dng_regression": {
+    "cases": 7,
+    "sample_comparisons_per_stage": 147499104,
+    "max_error_u16": 0,
+    "raw_roundtrips": 14,
+    "rgb_exports": 28,
+    "supported_metadata_preserved": true,
+    "warning_scope": "Only the four predeclared CFA-margin warnings of own small synthetic fixtures; none on photographic DNGs."
+  },
+  "other_engines": {
+    "files": 3,
+    "five_engine_developments": 15,
+    "historical_before_after_cases": 12,
+    "historical_metadata_ranges_unchanged": true,
+    "historical_preview_crop_pngs_identical": 20,
+    "scope": "Functional comparison of all five engines on three authorized NEFs, not a measured colour ranking. Four existing engines retain exact metadata/ranges and all SDR PNG artifacts for the first source."
+  },
+  "verification": {
+    "ordinary_rust_tests": 448,
+    "additional_integrations": 14,
+    "private_generic_tests_skipped_without_TR_RAW_SAMPLE": 3,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "python_reporting_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_sampling_smoke": true,
+    "engine_gui_stages": 6,
+    "engine_gui_max_error_u8": 0,
+    "gui_inspected": true,
+    "gui_scope": "Right quarter of native RAW viewport vs CPU raster; excludes settings overlay, compositor and physical display.",
+    "xpc_corpus_images": 12,
+    "xpc_two_processes": true,
+    "xpc_verified_after_install": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "previous": "var/experimental-nef-20261011/previous.app",
+    "previous_exact": true,
+    "candidate_exact_after_move": true,
+    "user_processes_closed": false,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "20074a724a0ab62a9cce5f69facbab392bad775dd333ff6617bfd0042e418f40",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b6854facbe1c4e71bbe82107dd5ec9c35e2c27a526e6fdf2eb4e75a2abd5430d",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "444076ffb016892101317b34172307247d7a3f6739813754ba4be44d2117e68e"
+    }
+  },
+  "preservation": {
+    "passed": true,
+    "authorized_originals": 40,
+    "protected_code_license_architecture": 5,
+    "durable_backup_files": 174,
+    "isolated_catalogs_only": true
+  },
+  "private_artifacts": {
+    "directory": "var/experimental-nef-20261011/",
+    "regenerable_sdk_tiffs_removed": 234,
+    "bytes_reclaimed": 10224302004,
+    "retained": "Adobe DNG references, both-slot sensor exports, photographs in original locations, logs, manifests and numerical hashes; cleanup manifest records hashes of the removed intermediate TIFFs."
+  },
+  "open": [
+    "Measured camera colour/DeltaE, lighting targets and own calibration",
+    "Other Nikon modes/models and Fujifilm RAF/X-Trans",
+    "Extended fuzzing, Windows and physical memory/release qualification",
+    "CFA statistics for WB, residual demosaic and sensor-highlight improvements"
+  ]
+}

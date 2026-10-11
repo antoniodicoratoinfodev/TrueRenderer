@@ -1,0 +1,342 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-11T12:22:10.427198+00:00",
+  "passed": true,
+  "scope": "Experimental DNG E3 selected subset: independent photographic lossless DNG, lossless JPEG conformance fixes, offline SDK export interoperability and native XPC integration.",
+  "starting_commit": "4cd59d1",
+  "engine": "trueRendererExperimental",
+  "recipe_before": "TRExp-dng1-lj1-cal1-dir1-extended1",
+  "recipe_after": "TRExp-dng1-lj2-cal1-dir1-extended1",
+  "legacy_truerenderer_recipe": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
+  "legacy_recipe_and_numerical_sources_unchanged": true,
+  "changes": [
+    "DNGVersion-selected pre-1.1 category-16 convention; no decoding fallback.",
+    "Residual categories may exceed sample precision; reconstructed samples must remain within precision after modulo-65536 arithmetic.",
+    "Reject out-of-precision reconstructed codes instead of silently wrapping them.",
+    "Version Experimental codec/cache identity; preserve the legacy engine.",
+    "Reproducible owned fixtures and offline SDK/XPC differential harness; raw export and reopen on both services."
+  ],
+  "independent_reference": {
+    "sdk_version": "1.7.1 build 2724",
+    "sdk_download": "https://www.adobe.com/go/dng_sdk",
+    "sdk_zip_sha256": "740fbe95c69e09e9cd17654a5e4fef2d7021254b06fd2b8c5557b79a1496b50c",
+    "reference_binary_sha256": "48ff3f164826b2057d3a79cd014ff389cfe7104bbd3fa207732b29d3be28bf0e",
+    "converter_version": "18.7 (2743)",
+    "converter_download": "https://download.adobe.com/pub/adobe/dng/mac/DNGConverter_18_7.dmg",
+    "converter_dmg_sha256": "e0ce6d182a5dbc6dfa8dde348ad4e49cec3b3c6bcbf142b400d488aa070d44cd",
+    "converter_package_signature": "Adobe Inc. Developer ID Installer; trusted timestamp and Apple notarization verified using native macOS services.",
+    "converter_options": [
+      "-c",
+      "-cr2.4",
+      "-p0"
+    ],
+    "source_corpus": "Three previously authorized Nikon D750 NEF files; no LibRaw conversion. Originals retained unchanged.",
+    "profile_origin": "Embedded Adobe dual-illuminant matrices and ForwardMatrix; not a measured TrueRenderer profile.",
+    "sdk_build": "macOS arm64 CMake build, XMP disabled. Two missing XMP guards added to a private copy of dng_jxl.cpp; TIFF/lossless JPEG/linearization/colour algorithms unmodified.",
+    "sdk_and_converter_in_product": false
+  },
+  "validation": {
+    "ordinary_tests": 444,
+    "integration_tests": 14,
+    "autonomous_core_tests": 20,
+    "autonomous_test_executables_without_libraw": 2,
+    "libraw_boundary_guard_includes_compressed_dng": true,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "python_existing_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_screenshots": 8,
+    "native_surface_comparison": true,
+    "gui_comparison_screenshot_inspected": true,
+    "private_generic_raw_tests_skipped": 3,
+    "release_build": true,
+    "fixture_regeneration_byte_exact": true,
+    "python_scripts_compile": true,
+    "comparator_negative_control": "Detects a one-code sensor error.",
+    "xpc_final_path": true,
+    "production_rejects_fault_injection": true
+  },
+  "dng_campaign": {
+    "unique_inputs": 7,
+    "photographic_inputs": 3,
+    "synthetic_inputs": 4,
+    "raw_repack_and_render_roundtrips": 14,
+    "wb_probe_decode_checks": 14,
+    "rgb_export_comparisons": 28,
+    "rgb_export_maximum_error_u16": 0,
+    "unique_sensor_samples": 73749552,
+    "sensor_samples_compared_across_both_slots": 147499104,
+    "sdk_stage2_samples_compared_across_both_slots": 147499104,
+    "maximum_sample_error_u16": 0,
+    "existing_photographic_previews_unchanged_across_recipes": true,
+    "cases": [
+      {
+        "id": "photographic-1",
+        "source_sha256": "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 6032,
+          "height": 4032,
+          "samples": 24321024,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "ee761b22eed3dd3db27f8f55740e649118b60a64699ca4ba201df4011a2f9cfc"
+        },
+        "reference_stage2": {
+          "width": 6032,
+          "height": 4032,
+          "samples": 24321024,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "22704a57fa7dfdfc8e147064cc2605a868c626ac877d150a3a34b23ab9d69b49"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [],
+        "sdk_warnings_expected_for_own_fixture": false
+      },
+      {
+        "id": "photographic-2",
+        "source_sha256": "7859bcd6d53fbb05cee79eade81375827e7f907789b1057c32bc4f406a93ef3a",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 6032,
+          "height": 4032,
+          "samples": 24321024,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "a68ffe3882e34dac2d647197075d07aeca3de5783eda2902236198a4ebac051d"
+        },
+        "reference_stage2": {
+          "width": 6032,
+          "height": 4032,
+          "samples": 24321024,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "cbffd780dae95c8e9e7f7a408317fbc7a4980a18f50f1d1b361ce3670d433135"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [],
+        "sdk_warnings_expected_for_own_fixture": false
+      },
+      {
+        "id": "photographic-3",
+        "source_sha256": "7d3d3cef22dec751e43104df0986c035dac195081c1aa720b14b00face192660",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 6032,
+          "height": 4032,
+          "samples": 24321024,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "db6af12701f78dd105f0b48aa24c807ae5e94f41738330d40acd07bc8d7e76b4"
+        },
+        "reference_stage2": {
+          "width": 6032,
+          "height": 4032,
+          "samples": 24321024,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "b613c8d8201dc8d449f5528024171b0315aa2db0c9f9f426780948fa916bc931"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [],
+        "sdk_warnings_expected_for_own_fixture": false
+      },
+      {
+        "id": "own-jpeg-dng10-16",
+        "source_sha256": "d0e4748f510a4aae296af238ac53fd3453a8b55457041d98c6fe8eb4ae101590",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 4,
+          "height": 4,
+          "samples": 16,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "a5077868ab576e6fd34b04cc2458aada1d3794073be2cf6af9698de50607aea4"
+        },
+        "reference_stage2": {
+          "width": 4,
+          "height": 4,
+          "samples": 16,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "a5077868ab576e6fd34b04cc2458aada1d3794073be2cf6af9698de50607aea4"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [
+          "*** Warning: Too little padding on left edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on top edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on right edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on bottom edge of CFA image (possible interpolation artifacts) ***"
+        ],
+        "sdk_warnings_expected_for_own_fixture": true
+      },
+      {
+        "id": "own-jpeg-modern16",
+        "source_sha256": "fdf3ce3311afb6223ce2b6179a48fcde43b27a4ea1a750b118ba0d5c110c5005",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 4,
+          "height": 4,
+          "samples": 16,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "a5077868ab576e6fd34b04cc2458aada1d3794073be2cf6af9698de50607aea4"
+        },
+        "reference_stage2": {
+          "width": 4,
+          "height": 4,
+          "samples": 16,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "a5077868ab576e6fd34b04cc2458aada1d3794073be2cf6af9698de50607aea4"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [
+          "*** Warning: Too little padding on left edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on top edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on right edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on bottom edge of CFA image (possible interpolation artifacts) ***"
+        ],
+        "sdk_warnings_expected_for_own_fixture": true
+      },
+      {
+        "id": "own-jpeg-predictor4-12",
+        "source_sha256": "4b940a0a035e20afc03f15785d027ffbc5da2da5eac9948930c1a59ba6db71c3",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 4,
+          "height": 4,
+          "samples": 16,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "82a38a8cc25356ad7480253318c695a108e824e6c4905a3e0f8f9749cc0271f0"
+        },
+        "reference_stage2": {
+          "width": 4,
+          "height": 4,
+          "samples": 16,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "d03ad4df01764835cd3feaac53b31f5041b05cbb54b720e5c852dcc4a9113bb0"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [
+          "*** Warning: Too little padding on left edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on top edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on right edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on bottom edge of CFA image (possible interpolation artifacts) ***"
+        ],
+        "sdk_warnings_expected_for_own_fixture": true
+      },
+      {
+        "id": "own-uncompressed-bayer",
+        "source_sha256": "05e787b0cb1400289bfa022cd2af2865b1fcd0974b6763ee2a904f796a64b242",
+        "xpc_slots": [
+          0,
+          1
+        ],
+        "reference_stage1": {
+          "width": 1024,
+          "height": 768,
+          "samples": 786432,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "d3413e8774cd0fce88285f37a89210dcb601fb2785dbbf2a9039f5f374515395"
+        },
+        "reference_stage2": {
+          "width": 1024,
+          "height": 768,
+          "samples": 786432,
+          "maximum_error_u16": 0,
+          "samples_le_u16_sha256": "dc77111f7161b92299ad99ba75fc7747952b80bbab754f6610c41ebd5b43678c"
+        },
+        "both_slots_sensor_and_stage2_exact": true,
+        "metadata_preserved": true,
+        "raw_roundtrip_render_exact": true,
+        "wb_probe_decode_match": true,
+        "rgb_export_maximum_error_u16": 0,
+        "sdk_warnings": [
+          "*** Warning: Too little padding on left edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on top edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on right edge of CFA image (possible interpolation artifacts) ***",
+          "*** Warning: Too little padding on bottom edge of CFA image (possible interpolation artifacts) ***"
+        ],
+        "sdk_warnings_expected_for_own_fixture": true
+      }
+    ]
+  },
+  "negative_evidence": [
+    "Initial bundle and core regression reject SDK-accepted DNG 1.0 category-16 vector.",
+    "Initial bundle rejects SDK-accepted 12-bit predictor-4 residuals.",
+    "New corruption regression confirms that an out-of-range sample must not wrap to declared precision.",
+    "Initial differential harness stopped on four CFA-border padding warnings for each owned synthetic image; final manifest explicitly declares these, records them for input and export, and still rejects unexpected diagnostics. Photographic DNG files have no SDK warnings.",
+    "The historical verify-package-macos.py aggregator compares dist against old root-level reports and refused that mismatch; it did not qualify this increment. Fresh per-bundle XPC reports and whole-bundle hashes were used."
+  ],
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "previous_bundle": "var/experimental-e3-20261011/previous.app",
+    "previous_bundle_exact": true,
+    "candidate_to_installed_contents_exact": true,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "20592ade7c763224523ff1fb3c70dcbc1e45182830442060a7742d16c6d9ba88",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "0d81cd55eac2bc127d70618d8dd43d5886593cea89a601dbb462019aa489e5db",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "3cbfae663229d2aba8a98d600b31ada827c58528c26835bd6debf87ccce677f4"
+    },
+    "signature": "ad hoc; codesign deep/strict verified. Not a distribution qualification.",
+    "no_user_process_terminated": true,
+    "originals_unchanged": true,
+    "tests_used_isolated_catalogs": true,
+    "durable_user_library_and_backups_not_modified_by_tests": true,
+    "private_evidence_root": "var/experimental-e3-20261011/",
+    "suite_evidence_root": "var/verify-Z0qRRVnq/",
+    "commit_or_push_performed": false
+  },
+  "reproduction": {
+    "generate_vectors": "python3 scripts/generate-experimental-dng-fixtures.py --output <private-directory>",
+    "build_reference": "python3 scripts/build-dng-reference.py --sdk <official-sdk> --output <project-var-build-directory> --cmake <cmake> --jpeg-prefix <libjpeg-prefix>",
+    "differential": "python scripts/test-experimental-dng.py --bundle dist/TrueRenderer.app --reference <dng_validate> --manifest <private-manifest> --root <new-project-var-directory>; test environment needs numpy/tifffile",
+    "suite": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "xpc": "python3 scripts/test-xpc-integration.py --bundle dist/TrueRenderer.app --report-root <isolated-root-with-corpus>"
+  },
+  "limits": [
+    "Qualified only for the exercised DNG subset, not all DNG cameras, codecs, opcodes or profiles.",
+    "Adobe conversion is a lab preparation step, not autonomous NEF decoding. Direct NEF/RAF still refused without fallback.",
+    "SDK stage2 comparison proves export interoperability; it does not compare the Experimental linearization/render to SDK colour output.",
+    "No measured colour accuracy, DeltaE00, CFA white-balance qualification or calibrated TrueRenderer camera profiles.",
+    "Synthetic padding warnings do not qualify border demosaic quality.",
+    "No Windows, broad fuzzing, physical memory/pressure, p95/p99 or full OS isolation release qualification.",
+    "No R0-R4 or SF0-SF10 gate closed, no Standard/Reference assurance mode promoted."
+  ],
+  "next_increment": "E7: inventory the 30 authorized D750 NEF subtypes and implement independent Nikon parsing, codec, sensor calibration, WB and explicit profile provenance; then X-T5 and D800."
+}

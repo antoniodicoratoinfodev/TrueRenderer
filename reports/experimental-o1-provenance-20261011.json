@@ -1,0 +1,225 @@
+{
+  "scope": "Experimental O1 source/data inventory; engineering traceability, not legal approval",
+  "production_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1",
+  "clean_room_claim": false,
+  "items": [
+    {
+      "component": "bounded TIFF/DNG containers, JPEG lossless, export",
+      "provenance": "project implementation; standards/input facts; no clean-room legal certification",
+      "license_scope": "project LICENSE",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/src/tiff.rs",
+          "sha256": "342687d9b2d9a0b4ba0a8e65d23520b2e5ef5438d91d102db90e2c8e358f4beb"
+        },
+        {
+          "path": "crates/tr-raw/src/dng.rs",
+          "sha256": "f4a51d095210d20178b4d0b76bfbbae8c11afd0d848b8036ee078d26af5b838b"
+        },
+        {
+          "path": "crates/tr-raw/src/jpeg.rs",
+          "sha256": "5ea0df9400f51b09d8bbdbc5a84906f0175c495d45b8fe808fdb51d75c00b8d5"
+        },
+        {
+          "path": "crates/tr-raw/src/export.rs",
+          "sha256": "101e08686b7f256f22dcea299b6f88740a7a5e025eecf25835284b2ec25ce036"
+        }
+      ]
+    },
+    {
+      "component": "Nikon parser and lossless control flow",
+      "provenance": "project implementation; externally sourced fixed codebook/profile data are separate",
+      "license_scope": "project LICENSE",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/src/nef.rs",
+          "sha256": "bb4a17f44502086b42cbe484bf0410d397e5eaa9290a9240639f37d38e7a2823"
+        }
+      ]
+    },
+    {
+      "component": "Fuji container and calibration control flow",
+      "provenance": "project implementation; sensor layout from RAF metadata, matrix separately attributed",
+      "license_scope": "project LICENSE",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/src/raf.rs",
+          "sha256": "fa58576beaaf1d5510a9f02e3a45d8e2954a5f8bf1374b6f99e346a2a41192b2"
+        },
+        {
+          "path": "crates/tr-raw/src/cfa.rs",
+          "sha256": "d172498b7015c6765fc73116e99ba5e0dbf2cd6566c140e9652669269deb3e3f"
+        }
+      ]
+    },
+    {
+      "component": "Fuji E8 production codec",
+      "provenance": "CDDL Rust adaptation of Alexey Danilchenko / Alex Tutubalin LibRaw implementation",
+      "license_scope": "CDDL-1.0",
+      "external_source_or_data": true,
+      "files": [
+        {
+          "path": "third_party/fuji-codec/fuji.rs",
+          "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54"
+        },
+        {
+          "path": "third_party/fuji-codec/manifest.json",
+          "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6"
+        }
+      ]
+    },
+    {
+      "component": "Fuji circular-row research candidate",
+      "provenance": "new design from the F3-derived factual contract; same-session source exposure; provenance review pending; CDDL retained",
+      "license_scope": "candidate CDDL-1.0; independent CLI glue project LICENSE",
+      "external_source_or_data": true,
+      "files": [
+        {
+          "path": "crates/tr-raw/research/fuji.rs",
+          "sha256": "f0d1a63baf1c998cdf3ca4196e380b8919742eda83c574e70f2e3bb5a42a54a2"
+        },
+        {
+          "path": "docs/formato-fuji-experimental.md",
+          "sha256": "eaa3f63a3b9f17ee1d80bf32e40d1ff593cc0d3fe8879053c4ca8c36b8fedeb4"
+        },
+        {
+          "path": "tools/raw-lab/src/main.rs",
+          "sha256": "c4544716c5076be06c81ed89a6bb3ba162e4783ad545b10eed65a577109fb2ea"
+        }
+      ]
+    },
+    {
+      "component": "X-Trans baseline/refactor and directional experiment",
+      "provenance": "project-authored numerical formulas and code; no imported demosaic implementation",
+      "license_scope": "project LICENSE",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/src/xtrans.rs",
+          "sha256": "aa730e2fa6659ef75a19505a87138c92712d5e11297506a6dd9e500e350b989f"
+        },
+        {
+          "path": "crates/tr-raw/research/directional.rs",
+          "sha256": "5c281f8e3fa5c45fd0a9eb8a15b9150e224378518ad2dc9f8aa4b4d8b99ddf0a"
+        },
+        {
+          "path": "crates/tr-raw/research/xtrans_e8.rs",
+          "sha256": "90ac22ee648578d3ce67128d85d6b34261bb5638bc944462c074746578dcb7b5"
+        },
+        {
+          "path": "docs/demosaic-xtrans-experimental.md",
+          "sha256": "c7d05488bebbead006c9da79107945352676361d181271c1d82a097b199ead44"
+        }
+      ]
+    },
+    {
+      "component": "Bayer render and sensor WB",
+      "provenance": "project implementation; unchanged photographic recipe",
+      "license_scope": "project LICENSE",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/src/render.rs",
+          "sha256": "5381a54ad5488b261740396c0b86f1d0ac9061af4ea82fcace1d5c841a2e980c"
+        },
+        {
+          "path": "crates/tr-raw/src/wb.rs",
+          "sha256": "337ff8c180258d23de626ae2a8629ad8cf9e9c1e89d61aa7fd05e4a9df371f91"
+        }
+      ]
+    },
+    {
+      "component": "Matrix calculations",
+      "provenance": "project implementation of DNG colour processing; Robertson constants are separately attributed",
+      "license_scope": "project LICENSE plus BSD data below",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/src/color.rs",
+          "sha256": "825f601e228fbbfc56152cace12c54372de929ed52983f0ceefa1abbafd1e519"
+        }
+      ]
+    },
+    {
+      "component": "Compatibility Nikon matrices and Huffman tables",
+      "provenance": "LibRaw 0.22.2 constant data, matrices attributed upstream to Adobe, not measured by this project",
+      "license_scope": "CDDL-1.0",
+      "external_source_or_data": true,
+      "files": [
+        {
+          "path": "third_party/nikon-reference-data/nikon_d750.rs",
+          "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf"
+        },
+        {
+          "path": "third_party/nikon-reference-data/manifest.json",
+          "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b"
+        }
+      ]
+    },
+    {
+      "component": "Compatibility Fuji matrix",
+      "provenance": "LibRaw 0.22.2 constant matrix data, upstream Adobe attribution, not measured by this project",
+      "license_scope": "CDDL-1.0",
+      "external_source_or_data": true,
+      "files": [
+        {
+          "path": "third_party/fuji-codec/xt5.rs",
+          "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e"
+        }
+      ]
+    },
+    {
+      "component": "Robertson isotemperature data",
+      "provenance": "Colour table, not imported Python code",
+      "license_scope": "BSD-3-Clause",
+      "external_source_or_data": true,
+      "files": [
+        {
+          "path": "third_party/colour-robertson/manifest.json",
+          "sha256": "cd8deb2cb5d7ca6f9c4ea71e9740749a849949a72462884e68d0866421da65a1"
+        },
+        {
+          "path": "third_party/colour-robertson/LICENSE",
+          "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076"
+        }
+      ]
+    },
+    {
+      "component": "Analytic fixtures, quality generator and metric harness",
+      "provenance": "project-authored; Fuji fixture format knowledge F3-derived, expected zero by induction; neither photographic corpus nor clean-source specification",
+      "license_scope": "project LICENSE; codec facts have documented F3 provenance",
+      "external_source_or_data": false,
+      "files": [
+        {
+          "path": "crates/tr-raw/research/fixtures.rs",
+          "sha256": "91dd781b5448a492b65c1892348eeb773c755e1c061a78140872c646df754ed4"
+        },
+        {
+          "path": "crates/tr-raw/research/mod.rs",
+          "sha256": "124bd2431e2386f848d6936f3f49c8040e407b6cd7be99d5914ec75209733ccc"
+        },
+        {
+          "path": "crates/tr-raw/research/quality.rs",
+          "sha256": "ffefe21c2b4930d8f883805ef9c5693cc713c8ecb5ee8a5ea4247502087ba5f8"
+        },
+        {
+          "path": "crates/tr-raw/tests/fixtures/research-v1.json",
+          "sha256": "44f118403d7c2c411bdd28c45bb63c8a2519c83594aca3cfd62ec6f8314ce71f"
+        }
+      ]
+    }
+  ],
+  "reference_tools": {
+    "adobe_dng_converter": "18.7 (2743), offline comparison only",
+    "adobe_dng_sdk": "1.7.1 (2724), offline stage 1; no imports or product calls"
+  },
+  "outstanding": [
+    "independent source/provenance review of Fuji candidate",
+    "varied Fuji photographic files and independent inactive sensor margins",
+    "measured Nikon/Fuji calibration targets and illuminants",
+    "independent review of mandatory Nikon codebook provenance"
+  ]
+}

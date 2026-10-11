@@ -1,0 +1,36 @@
+{
+  "protocol": "TRExp-research-v1",
+  "frozen_before_candidates": true,
+  "baseline_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1",
+  "quality": {
+    "width": 192,
+    "height": 144,
+    "phases": 36,
+    "border": 8,
+    "scale": "linear camera RGB, no WB, matrix, clipping, denoise or tone curve",
+    "development": {"angles_degrees": [0, 27, 59, 90], "frequencies": [0.015, 0.05, 0.12, 0.24, 0.38], "seed": 1457261},
+    "validation": {"angles_degrees": [13, 41, 73, 117], "frequencies": [0.035, 0.083, 0.173, 0.31, 0.43], "seed": 9813727},
+    "noise_sigma": [0.003, 0.012, 0.04],
+    "categories": ["achromatic_texture", "chromatic_texture", "edge", "noise", "flat_extended"],
+    "metrics": ["missing_channel_rmse", "false_chroma_rmse_achromatic_only", "luma_rmse", "luma_gradient_rmse", "border_rgb_rmse", "measured_sites_bit_exact", "finite_output"],
+    "false_chroma_rmse_max_ratio": 0.8,
+    "other_category_and_detail_rmse_max_ratio": 1.05,
+    "absolute_rmse_floor": 0.000001,
+    "aggregation": "sum squared error / sample count by category, split and phase; publish aggregate and worst phase; border separately",
+    "promotion_requires": ["all synthetic gates on development and held-out validation", "independent photographic validation", "measured sites exact and finite extended float on all 36 phases"],
+    "holdout_policy": "Do not tune a submitted candidate after inspecting validation. A later candidate requires a new independent holdout."
+  },
+  "codec": {
+    "warmups_per_implementation": 2,
+    "repetitions_per_implementation": 30,
+    "order": "alternate baseline/candidate then candidate/baseline",
+    "timed_scope": "unpack only including output allocation; source in memory; parse, comparisons and hash excluded",
+    "metrics": ["p50_ms", "p95_ms", "min_ms", "max_ms", "mad_ms", "scratch_live_upper_bound_bytes", "sample_mismatches"],
+    "p50_max_ratio": 0.8,
+    "scratch_max_ratio": 1.0,
+    "sample_mismatches": 0,
+    "cold_start": "not measured by this protocol",
+    "thermal_control": "not controlled; record machine, OS, load and thermal observation; no universal latency claim",
+    "corpus_diversity": "Repeated timing of one RAF is still one photographic case"
+  }
+}

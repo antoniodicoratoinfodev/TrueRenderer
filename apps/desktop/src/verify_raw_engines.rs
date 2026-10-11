@@ -19,15 +19,18 @@ pub fn run(root: &Path, worker: &Path, folder: &Path, limit: usize) -> Result<()
         .filter_map(|e| e.ok().map(|e| e.path()))
         .filter(|p| {
             p.is_file()
-                && p.extension()
-                    .is_some_and(|e| e.eq_ignore_ascii_case("nef") || e.eq_ignore_ascii_case("dng"))
+                && p.extension().is_some_and(|e| {
+                    ["nef", "dng", "raf"]
+                        .iter()
+                        .any(|extension| e.eq_ignore_ascii_case(extension))
+                })
         })
         .collect();
     paths.sort();
     if limit > 0 {
         paths.truncate(limit);
     }
-    ensure!(!paths.is_empty(), "Nessun NEF/DNG da verificare");
+    ensure!(!paths.is_empty(), "Nessun NEF/DNG/RAF da verificare");
     let mut broker = tr_platform::Broker::new(worker.into());
     let mut cases = vec![];
     let mut all_passed = true;
@@ -153,8 +156,9 @@ pub fn run(root: &Path, worker: &Path, folder: &Path, limit: usize) -> Result<()
     output.to_str().context("Percorso report non valido")?;
     Ok(())
 }
-/// The settings dialog covers the left side. Verify the visible right quarter
-/// of the actual surface against the independent CPU presentation raster.
+/// Verify the visible right quarter of the actual surface against the CPU
+/// presentation raster. The smoke closes Settings before capture so its shadow
+/// cannot contaminate portrait-image pixels.
 pub fn screenshots(root: &std::path::Path) -> anyhow::Result<()> {
     use anyhow::ensure;
     let root = root.join("var");
@@ -169,8 +173,14 @@ pub fn screenshots(root: &std::path::Path) -> anyhow::Result<()> {
         .ok_or_else(|| anyhow::anyhow!("Missing UI stages"))?;
     ensure!(
         ui["passed"] == true
-            && (RawEngine::choices().count()..=RawEngine::choices().count() + 1)
-                .contains(&stages.len()),
+            && ((ui["experimental_only"] == true
+                && stages.len() == 2
+                && stages.iter().all(
+                    |s| s["engine"] == serde_json::json!(RawEngine::TrueRendererExperimental)
+                ))
+                || (ui["experimental_only"] != true
+                    && (RawEngine::choices().count()..=RawEngine::choices().count() + 1)
+                        .contains(&stages.len()))),
         "UI smoke incomplete"
     );
     let mut checks = vec![];

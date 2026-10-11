@@ -1,0 +1,362 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-11",
+  "platform": "macOS arm64",
+  "passed": true,
+  "scope": "Experimental E8 on all 40 authorized Download RAWs: D800 and X-T5 extension, D750/DNG regressions, CFA WB and isolated native delivery. No global R/SF or measured colour gate concluded.",
+  "engine": {
+    "serialized": "TrueRendererExperimental",
+    "label": "trueRendererExperimental",
+    "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1",
+    "historical_recipe_unchanged": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2"
+  },
+  "cameras": [
+    {
+      "camera": "Nikon D750",
+      "mode": "FX lossless 14-bit",
+      "files": 30,
+      "sensor_comparisons_two_slots": 1459261440,
+      "observed_decode_seconds_min": 0.700330208,
+      "observed_decode_seconds_max": 1.8624011249999999
+    },
+    {
+      "camera": "Nikon D800",
+      "mode": "FX lossless 12-bit",
+      "files": 7,
+      "sensor_comparisons_two_slots": 508609808,
+      "observed_decode_seconds_min": 1.049331916,
+      "observed_decode_seconds_max": 1.794833667
+    },
+    {
+      "camera": "Nikon D800",
+      "mode": "FX lossless 14-bit",
+      "files": 2,
+      "sensor_comparisons_two_slots": 145317088,
+      "observed_decode_seconds_min": 1.129851792,
+      "observed_decode_seconds_max": 1.172393459
+    },
+    {
+      "camera": "Fujifilm X-T5",
+      "mode": "X-Trans lossy 14-bit",
+      "files": 1,
+      "sensor_comparisons_two_slots": 79629312,
+      "observed_decode_seconds_min": 2.143951458,
+      "observed_decode_seconds_max": 2.172090875
+    }
+  ],
+  "autonomy": {
+    "core_tests": 30,
+    "core_test_executables": 5,
+    "libraw_linkage": false,
+    "libraw_symbols": false,
+    "worker_libraw_guards": [
+      "recognition",
+      "probe",
+      "decode",
+      "manual WB",
+      "CFA Auto/patch WB",
+      "RAW export",
+      "unsupported and corrupt refusals"
+    ],
+    "fuji_codec_source": "third_party/fuji-codec/manifest.json",
+    "fuji_codec_license": "CDDL-1.0",
+    "fuji_codec_provenance": "Bounded memory-only Rust adaptation of the published Alexey Danilchenko / Alex Tutubalin LibRaw 0.22.2 Fuji codec. Source, changes, license and manifest bundled. Derived code, not clean-room; no runtime LibRaw calls or linking.",
+    "nikon_data_source": "third_party/nikon-reference-data/manifest.json",
+    "profiles": "CDDL D65 compatibility matrices with upstream Adobe attribution, not measured TrueRenderer profiles. No Adobe SDK or converter in the application.",
+    "native_libraw_upstream_hashes_preserved": 106
+  },
+  "independent_reference": {
+    "converter": "Adobe DNG Converter 18.7 (2743)",
+    "sdk": "Adobe DNG SDK 1.7.1 build 2724",
+    "sdk_sha256": "48ff3f164826b2057d3a79cd014ff389cfe7104bbd3fa207732b29d3be28bf0e",
+    "new_conversion_options": [
+      "-c",
+      "-cr7.1",
+      "-p0"
+    ],
+    "d750_options": [
+      "-c",
+      "-cr2.4",
+      "-p0"
+    ],
+    "xt5_calibration_reference": "Original Adobe DNG retained. Explicit derivative removes only optional FixVignetteRadial (OpcodeList2, ID 3) and WarpRectilinear (OpcodeList3, ID 1). Other raw-IFD tags and stage-1 codes verified identical. Original reference used for stage 1; derivative used only for stage-2 sensor calibration. No lens-correction qualification.",
+    "diagnostics": "SDK stdout and stderr captured separately and all diagnostic markers scanned. All unexpected warnings/errors fail; expected CFA-padding warnings are exact manifest entries."
+  },
+  "raw_campaign": {
+    "files": 40,
+    "unique_compared_sensor_samples": 1096408824,
+    "sample_comparisons_per_stage": 2192817648,
+    "stage1_max_error_u16": 0,
+    "sdk_stage2_max_error_u16": 0,
+    "stage2_scope": "Full active sensor calibration through SDK, not colour rendering accuracy.",
+    "excluded_unique_sensor_margin_samples": 3126792,
+    "margin_scope": "Adobe discards 46 rightmost D800 columns and X-T5 inactive margins. No independent sample-equivalence claim for those omitted samples; Experimental retains its full decoded sensor in RAW exports.",
+    "lossy_scope": "X-T5 equality is for reconstructed quantized codes. Camera quantization is irreversible.",
+    "slots_pixels_exact": true,
+    "raw_repack_render_exact": 80,
+    "manual_wb_probe_decode_pairs": 80,
+    "rgb_exports": 160,
+    "rgb_export_max_error_u16": 0,
+    "neutral_max_error_vs_adobe": 4.990512333935548e-07,
+    "neutral_tolerance": 5.1e-07,
+    "sdk_warning_scope": "Four expected CFA-padding warnings on the X-T5 original reference, calibration derivative and both repacks. None on the 39 NEF reference pairs. Border demosaic is not qualified by this check."
+  },
+  "cfa_white_balance": {
+    "domain": "Linearized black-subtracted CFA before gains, demosaic and colour conversion. Auto assumes grey world; explicit user action, not hidden colour correction.",
+    "two_slot_estimates": {
+      "auto_accepted": 78,
+      "patch_11_accepted": 72,
+      "patch_11_refused": 8,
+      "auto_refused": 2
+    },
+    "explicit_refusals": {
+      "WB CFA: area senza campioni validi sufficienti; evitare nero e saturi": 8,
+      "WB CFA: guadagni stimati oltre scala": 2
+    },
+    "accepted_values_and_refusals_equal_after_raw_repack": true,
+    "synthetic_tests": "Bayer/X-Trans; eight orientations; Auto and 5x5/11x11 patches; sparse outliers; dark, clipped, out-of-range and invalid coordinates.",
+    "limits": "Fixed sensor-relative validity thresholds; not a calibrated camera noise model or measured WB accuracy. Relative parameter precision remains 0.001."
+  },
+  "dng_regression": {
+    "cases": 8,
+    "photographic": 4,
+    "synthetic": 4,
+    "xtrans_photographic_cases": 1,
+    "sample_comparisons_per_stage": 227128416,
+    "max_error_u16": 0,
+    "raw_roundtrips": 16,
+    "rgb_exports": 32,
+    "supported_metadata_preserved": true,
+    "warning_scope": "Only four exact CFA-padding warnings on each small generated fixture and X-T5 DNG/repack; none on D750 photographic DNGs. Nonempty optical opcode lists remain unsupported by the product."
+  },
+  "other_engines": {
+    "passed": true,
+    "historical_cases": 12,
+    "historical_successes": 10,
+    "historical_refusals": 2,
+    "identical_pngs": 50,
+    "identical_linear_crops": 10,
+    "d750_experimental_pixels_unchanged": true,
+    "capabilities": [
+      {
+        "mode": "d750",
+        "results": [
+          {
+            "engine": "Apple",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawBilinear",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawAhd",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "TrueRenderer",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "TrueRendererExperimental",
+            "accepted": true,
+            "refusal": null
+          }
+        ]
+      },
+      {
+        "mode": "d800-12",
+        "results": [
+          {
+            "engine": "Apple",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawBilinear",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawAhd",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "TrueRenderer",
+            "accepted": false,
+            "refusal": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          {
+            "engine": "TrueRendererExperimental",
+            "accepted": true,
+            "refusal": null
+          }
+        ]
+      },
+      {
+        "mode": "d800-14",
+        "results": [
+          {
+            "engine": "Apple",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawBilinear",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawAhd",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "TrueRenderer",
+            "accepted": false,
+            "refusal": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          {
+            "engine": "TrueRendererExperimental",
+            "accepted": true,
+            "refusal": null
+          }
+        ]
+      },
+      {
+        "mode": "xt5",
+        "results": [
+          {
+            "engine": "Apple",
+            "accepted": true,
+            "refusal": null
+          },
+          {
+            "engine": "LibRawBilinear",
+            "accepted": false,
+            "refusal": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          },
+          {
+            "engine": "LibRawAhd",
+            "accepted": false,
+            "refusal": "CFA non Bayer: il demosaicing di questa ricetta non è qualificato"
+          },
+          {
+            "engine": "TrueRenderer",
+            "accepted": false,
+            "refusal": "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato"
+          },
+          {
+            "engine": "TrueRendererExperimental",
+            "accepted": true,
+            "refusal": null
+          }
+        ]
+      }
+    ],
+    "scope": "Four camera/mode examples on five current engines: 15 successful developments and five expected capability refusals. Before/after comparison of the four historical engines on three NEFs: 10 successful cases and two identical refusals; 50 PNG artifacts and 10 linear crops bit-identical. D750 Experimental PNGs and linear crop also unchanged. No colour ranking from approximate, unregistered visual crops."
+  },
+  "verification": {
+    "ordinary_rust_tests": 456,
+    "additional_integrations": 14,
+    "private_generic_tests_skipped_without_TR_RAW_SAMPLE": 3,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "python_reporting_tests": 2,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "native_sampling_smoke": true,
+    "raf_metadata_mutations": 20000,
+    "gui": [
+      {
+        "mode": "d750",
+        "stages": 6,
+        "experimental_only": false,
+        "selection_zoom_center_preserved": true,
+        "max_surface_error_u8": 0
+      },
+      {
+        "mode": "d800-12",
+        "stages": 2,
+        "experimental_only": true,
+        "selection_zoom_center_preserved": true,
+        "max_surface_error_u8": 0
+      },
+      {
+        "mode": "xt5",
+        "stages": 2,
+        "experimental_only": true,
+        "selection_zoom_center_preserved": true,
+        "max_surface_error_u8": 0
+      }
+    ],
+    "gui_visual_inspection": "D800 and X-T5 native screenshots plus overviews and 1:1 crops against AHD/Apple. No physical-display or measured colour verdict.",
+    "gui_surface_scope": "Visible right quarter of native viewport against CPU presentation; settings overlay and physical display excluded.",
+    "post_suite_host_change": "Only extension filtering in the --verify-raw-engines diagnostic to admit RAF, then fmt/Clippy/release and native comparison exercised. Decoder binaries bit-identical to the 40-file campaign.",
+    "xpc_corpus_images": 12,
+    "xpc_two_distinct_processes": true,
+    "xpc_verified_after_install": true,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false
+  },
+  "observed_memory": {
+    "complete": true,
+    "workload_exit_code": 0,
+    "passed": true,
+    "peak_sum_rss_bytes": 2573205504,
+    "peak_sum_physical_footprint_bytes": 2558954352,
+    "maximum_processes": 2,
+    "sample_count": 10127,
+    "maximum_sample_gap_seconds": 0.07690729199999957,
+    "incomplete_samples": 0,
+    "elapsed_seconds": 594.623410917,
+    "scope": "Read-only libproc sampling of this unique candidate host and both embedded XPCs during complete direct RAW differential campaign. Diagnostic harness retains additional comparison images; not a GUI memory budget or physical pressure qualification. Shared pages may be counted twice; brief unsampled peaks and unrelated process/driver allocations excluded."
+  },
+  "corrections_and_negative_evidence": [
+    "Pilot independent samples detected a wrong Fuji column projection; corrected with an explicit per-phase regression.",
+    "D800 DNG black is scalar zero; matching its representation removes SDK lookup-rounding differences.",
+    "Original Adobe X-T5 optional lens correction changes stage 2; calibration-only derivative is explicit, with stage 1 and remaining raw metadata verified unchanged.",
+    "Interleaved SDK stdout/stderr concealed the first warning in a line-prefix filter; capture fixed, four-warning regression checked on the actual log, full 40-RAW and eight-DNG reference campaigns repeated successfully."
+  ],
+  "delivery": {
+    "passed": true,
+    "installed": "dist/TrueRenderer.app",
+    "previous": "var/experimental-e8-20261011/previous.app",
+    "previous_exact": true,
+    "qualified_content_and_modes_preserved": true,
+    "ad_hoc_codesign_verified": true,
+    "qualified_entries": 40,
+    "previous_entries": 35,
+    "no_user_process_terminated": true,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "f818065161ee06c56caf6d30621cfe3f62884eaa3de0ee15ed63ace7ee6c174a",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "2f555772903de9480a8f0654ec058cc0acc32ce071537d669846ce69dd10e2e1",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5b3de208aa724db4c52bd117bd5d58f5ed2a6c1678e5433891d4c056c9d049f4"
+    },
+    "dependency_inventory": "reports/dependency-inventory-experimental-e8-20261011.json"
+  },
+  "preservation": {
+    "authorized_originals_unchanged": 40,
+    "historical_numeric_sources_unchanged": 3,
+    "license_and_original_architecture_unchanged": true,
+    "durable_backup_files_unchanged": 174,
+    "test_catalogs_isolated": true,
+    "photographs_and_private_reports_published": false,
+    "user_processes_terminated": false,
+    "commit_or_push_performed": false,
+    "regenerated_sdk_intermediate_tiffs_removed": 102,
+    "intermediate_cleanup_hashes_retained_privately": true
+  },
+  "remaining_limits": [
+    "No measured colour targets, illuminants or independent fit/validation captures: E4, deltaE00 and noise/WB uncertainty stay open.",
+    "X-Trans interpolation is an original baseline, not qualified RI/MLRI/ARI or a superiority claim.",
+    "No D850 files; other NEF/RAF modes are not photographically qualified. X-T5 lossless codec branch lacks a real lossless sample; nonuniform black remains rejected.",
+    "Broader coverage-guided fuzzing, physical memory-pressure campaigns, Windows and release isolation assurance remain open.",
+    "No R0-R4/SF0-SF10 gate or Standard/Reference assurance promoted."
+  ]
+}

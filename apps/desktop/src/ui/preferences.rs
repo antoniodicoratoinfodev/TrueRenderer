@@ -370,7 +370,7 @@ impl TrueRenderer {
             ui.label(RichText::new(lang.text("Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore.")).small().color(AMBER));
         }
         if self.cache_settings.raw_engine == tr_core::decoder::RawEngine::TrueRendererExperimental {
-            ui.label(RichText::new(lang.text("Autonomo da LibRaw: sottoinsieme DNG Bayer, profili a matrici. Colore da qualificare; NEF e RAF non ancora disponibili.")).small().color(AMBER));
+            ui.label(RichText::new(lang.text("Autonomo da LibRaw: DNG Bayer/X-Trans supportati, NEF D750 14 bit e D800 12/14 bit lossless FX, RAF X-T5 14 bit lossy. Profili D65 di compatibilità; colore da qualificare.")).small().color(AMBER));
         }
 
         ui.add_space(24.);
