@@ -1,5 +1,8 @@
 //! Autonomous, bounded RAW stages. No filesystem access, LibRaw, or native FFI.
 //! The host must grant bytes inside its decoder sandbox before calling this API.
+#[cfg(test)]
+#[path = "../research/calibration.rs"]
+mod calibration_lab;
 mod cfa;
 mod color;
 mod dng;
@@ -14,12 +17,13 @@ mod test_support;
 mod tiff;
 mod wb;
 mod xtrans;
+mod xtrans_dr6;
 
 use anyhow::Result;
 use tr_core::color::LinearImage;
 
 pub const MAX_SOURCE_BYTES: usize = 256 * 1024 * 1024;
-pub const RECIPE: &str = "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1";
+pub const RECIPE: &str = "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1";
 
 #[derive(Clone, Debug)]
 pub struct RawInfo {

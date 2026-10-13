@@ -31,6 +31,8 @@ if [ -n "$TR_EXE" ]; then
 fi
 ./scripts/cargo-local.sh fmt --all --check
 "$TR_PYTHON" scripts/test-preview-reporting.py
+"$TR_PYTHON" scripts/test-raw-calibration.py
+"$TR_PYTHON" scripts/test-raw-engine-color.py
 ./scripts/cargo-local.sh clippy --workspace --all-targets --locked --offline -- -D warnings
 ./scripts/cargo-local.sh build --workspace --locked --offline
 ./scripts/cargo-local.sh test --workspace --locked --offline
@@ -48,6 +50,6 @@ fi
 ./target/debug/truerenderer --root "$TR_VERIFY_ROOT" --verify-resampling
 if [ "${1:-}" = "--gui" ]; then
   ./target/debug/truerenderer --root "$TR_VERIFY_ROOT" --sampling-smoke
-  ./target/debug/truerenderer --root "$TR_VERIFY_ROOT" --verify-sampling-screenshots
   "$TR_PYTHON" -c 'import json,sys; r=json.load(open(sys.argv[1])); assert r["passed"],r; print("Native smoke passed")' "$TR_VERIFY_ROOT/reports/smoke-$TR_PLATFORM.json"
+  ./target/debug/truerenderer --root "$TR_VERIFY_ROOT" --verify-sampling-screenshots
 fi

@@ -107,7 +107,8 @@ impl<'a> CameraRgb<'a> {
     }
 }
 
-pub(crate) fn develop(
+#[cfg(test)]
+pub(crate) fn baseline_develop(
     mosaic: &[f32],
     width: usize,
     height: usize,
@@ -139,6 +140,48 @@ pub(crate) fn develop(
             pixels[oy * ow as usize + ox] = [rec[0], rec[1], rec[2], 1.];
         }
     }
+    LinearImage::new(ow, oh, pixels)
+}
+
+pub(crate) fn develop(
+    mosaic: &[f32],
+    width: usize,
+    height: usize,
+    cfa: Cfa,
+    matrix: Matrix,
+    crop: [usize; 4],
+    orientation: u32,
+) -> Result<LinearImage> {
+    let [left, top, w, h] = crop;
+    let (ow, oh) = oriented_size(w as u32, h as u32, orientation);
+    let mut pixels = vec![[0.; 4]; w * h];
+    let matrix = matrix.map(|r| r.map(|v| v as f32));
+    crate::xtrans_dr6::bounded::reconstruct_into(
+        mosaic,
+        width,
+        height,
+        cfa,
+        || false,
+        |x, y, rgb| {
+            if x < left || y < top || x >= left + w || y >= top + h {
+                return Ok(());
+            }
+            let (cx, cy) = (x - left, y - top);
+            let rec = matrix.map(|r| r[0] * rgb[0] + r[1] * rgb[1] + r[2] * rgb[2]);
+            let (ox, oy) = match orientation {
+                2 => (w - 1 - cx, cy),
+                3 => (w - 1 - cx, h - 1 - cy),
+                4 => (cx, h - 1 - cy),
+                5 => (cy, cx),
+                6 => (h - 1 - cy, cx),
+                7 => (h - 1 - cy, w - 1 - cx),
+                8 => (cy, w - 1 - cx),
+                _ => (cx, cy),
+            };
+            pixels[oy * ow as usize + ox] = [rec[0], rec[1], rec[2], 1.];
+            Ok(())
+        },
+    )?;
     LinearImage::new(ow, oh, pixels)
 }
 

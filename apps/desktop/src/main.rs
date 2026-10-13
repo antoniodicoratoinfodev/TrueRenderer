@@ -1,5 +1,6 @@
 mod browser_session;
 mod cache;
+mod compare_raw_color;
 mod decode_pool;
 mod filesystem_browser;
 mod graphics;
@@ -200,6 +201,13 @@ fn run() -> Result<()> {
             .unwrap_or(0);
         return verify_raw_engines::run(&root, &worker, &folder, limit);
     }
+    if let Some(manifest) = option("--compare-raw-color") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "RAW color comparison requires isolated --root"
+        );
+        return compare_raw_color::run(&root, &worker, &manifest);
+    }
     if let Some(manifest) = option("--verify-experimental") {
         anyhow::ensure!(
             option("--root").is_some(),
@@ -321,6 +329,7 @@ fn main() {
         eprintln!("TrueRenderer: {error:#}");
         if std::env::args().any(|a| {
             a.starts_with("--verify-")
+                || a == "--compare-raw-color"
                 || a.ends_with("-smoke")
                 || a == "--smoke-test"
                 || a == "--sampling-smoke"

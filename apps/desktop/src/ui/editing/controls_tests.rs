@@ -2,6 +2,61 @@ use super::*;
 use std::path::Path;
 
 #[test]
+fn precise_sensor_wb_opens_without_requantizing_and_resets_one_channel() {
+    use tr_core::decoder::{RawEngine, RawWhiteBalance};
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let legacy = RawWhiteBalance {
+            red: 1333,
+            blue: 800,
+            ..Default::default()
+        };
+        let mut reopened = legacy;
+        for _ in 0..3 {
+            frame(&ctx, vec![], |ui| {
+                assert_eq!(
+                    sensor_wb_controls(
+                        ui,
+                        lang,
+                        RawEngine::TrueRendererExperimental,
+                        &mut reopened
+                    ),
+                    (false, false)
+                );
+            });
+            assert_eq!(reopened, legacy);
+        }
+        for slider in 0..2 {
+            let ctx = egui::Context::default();
+            let original = RawWhiteBalance::precise_sensor_gains([1.333317, 1., 0.800273]).unwrap();
+            let mut wb = original;
+            let shapes = frame(&ctx, vec![], |ui| {
+                assert_eq!(
+                    sensor_wb_controls(ui, lang, RawEngine::TrueRendererExperimental, &mut wb),
+                    (false, false)
+                );
+            });
+            assert_eq!(wb, original);
+            let position = shapes.knobs[slider];
+            for pressed in [true, false, true, false] {
+                frame(&ctx, click(position, pressed), |ui| {
+                    sensor_wb_controls(ui, lang, RawEngine::TrueRendererExperimental, &mut wb);
+                });
+            }
+            let mut expected = original.gains_f64();
+            expected[slider * 2] = 1.;
+            assert_eq!(wb.gains_f64(), expected);
+            wb.validate_for(RawEngine::TrueRendererExperimental)
+                .unwrap();
+            assert_ne!(
+                wb_draft_gains(RawEngine::TrueRendererExperimental, original, wb),
+                [1.; 3]
+            );
+        }
+    }
+}
+
+#[test]
 fn curves_and_levels_panels_open_in_both_languages_without_rewriting_values() {
     use tr_core::editing::layers::*;
     for lang in [Language::Italian, Language::English] {

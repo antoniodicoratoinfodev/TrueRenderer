@@ -61,7 +61,7 @@ fn parameters(wb: RawWhiteBalance, engine: RawEngine) -> [f32; 2] {
             wb.apple_tint as f32 / 100.,
         ]
     } else {
-        [(wb.red as f32 / 1000.).ln(), (wb.blue as f32 / 1000.).ln()]
+        [wb.gains()[0].ln(), wb.gains()[2].ln()]
     }
 }
 fn resolve(p: [f32; 2], engine: RawEngine) -> Result<RawWhiteBalance> {
@@ -78,6 +78,8 @@ fn resolve(p: [f32; 2], engine: RawEngine) -> Result<RawWhiteBalance> {
             apple_tint: tint.round() as i16,
             ..Default::default()
         }
+    } else if engine == RawEngine::TrueRendererExperimental {
+        RawWhiteBalance::precise_sensor_gains([f64::from(p[0]).exp(), 1., f64::from(p[1]).exp()])?
     } else {
         let r = 1000. * p[0].exp();
         let b = 1000. * p[1].exp();

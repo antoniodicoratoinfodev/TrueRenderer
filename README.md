@@ -50,7 +50,7 @@ Combine brush, radial and linear gradients, luminance and hue masks. Add, subtra
 
 ## Independent RAW development
 
-On macOS, **trueRendererExperimental** provides an independent RAW decoding and development path. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It also offers automatic and sampled white balance on sensor data, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
+On macOS, **trueRendererExperimental 32fp** provides an independent RAW decoding and development path. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It uses its own X-Trans reconstruction and offers automatic and sampled white balance with precise sensor gains, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
 
 ## See the differences that matter
 

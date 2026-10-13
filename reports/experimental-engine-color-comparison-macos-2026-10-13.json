@@ -1,0 +1,1581 @@
+{
+  "date": "2026-10-13",
+  "campaign_started": "2026-10-12",
+  "scope": "Diagnostic color comparison of the autonomous RAW engine against existing Apple, AHD, bilinear and legacy engines. No measured camera calibration.",
+  "base_commit": "e1417a2a8665610b955cd90a61adc0cd6b4d28e2",
+  "committed": false,
+  "pushed": false,
+  "protocol": "TRExp-engine-color-v1",
+  "measurement_protocol_frozen_before_decodes": true,
+  "production_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1",
+  "production_color_recipe_changed": false,
+  "sources": [
+    {
+      "camera": "FUJIFILM X-T5",
+      "kind": "original",
+      "files": 1
+    },
+    {
+      "camera": "FUJIFILM X-T5",
+      "kind": "repacked-control",
+      "files": 1
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "original",
+      "files": 30
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "repacked-control",
+      "files": 1
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "original",
+      "files": 9
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "repacked-control",
+      "files": 1
+    }
+  ],
+  "execution": {
+    "sources": 43,
+    "attempts": 215,
+    "accepted_renders": 198,
+    "expected_refusals": 17,
+    "unexpected_failures": 0,
+    "original_hashes_unchanged": 43,
+    "full_resolution": true,
+    "wb": "as-shot, native engine interpretation",
+    "comparison_pairs": 155,
+    "pairs_with_normalized_metrics": 147,
+    "registered_zones": 1305,
+    "total_pair_zones": 1395,
+    "normalized_blocks": 128201,
+    "refusals": [
+      {
+        "camera": "FUJIFILM X-T5",
+        "kind": "original",
+        "engine": "LibRawAhd",
+        "count": 1
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "kind": "original",
+        "engine": "LibRawBilinear",
+        "count": 1
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "kind": "original",
+        "engine": "TrueRenderer",
+        "count": 1
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "kind": "repacked-control",
+        "engine": "LibRawAhd",
+        "count": 1
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "kind": "repacked-control",
+        "engine": "LibRawBilinear",
+        "count": 1
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "kind": "repacked-control",
+        "engine": "TrueRenderer",
+        "count": 1
+      },
+      {
+        "camera": "NIKON D750",
+        "kind": "repacked-control",
+        "engine": "TrueRenderer",
+        "count": 1
+      },
+      {
+        "camera": "NIKON D800",
+        "kind": "original",
+        "engine": "TrueRenderer",
+        "count": 9
+      },
+      {
+        "camera": "NIKON D800",
+        "kind": "repacked-control",
+        "engine": "TrueRenderer",
+        "count": 1
+      }
+    ],
+    "broker_statistics": [
+      {
+        "completed_jobs": 101,
+        "forced_stops": 0,
+        "peak_footprint_bytes": 1858111840,
+        "peak_rss_bytes": 2122563584,
+        "starts": 4,
+        "worker_pid": 90681
+      },
+      {
+        "completed_jobs": 97,
+        "forced_stops": 0,
+        "peak_footprint_bytes": 1872120400,
+        "peak_rss_bytes": 1752236032,
+        "starts": 4,
+        "worker_pid": 90766
+      }
+    ],
+    "memory_limit_qualified": false
+  },
+  "method": {
+    "working": "linear Rec.2020 D65 f32; XYZ D50/Lab for differences before SDR display",
+    "regions": "9 x 320-square at axis fractions .2/.5/.8, 32px margin, 256 x 16-square blocks per region",
+    "registration": "Integer translation \u00b124 px, gradient cosine >=.85, distant peak gap >=.002, no search-boundary peak. Weak regions retained but excluded.",
+    "exposure": "One scalar per engine/file, median anchor/candidate Y ratio from eligible blocks, at least 12 blocks and 3 zones. No channel gains or fitted profile.",
+    "domain": "Both block sample ranges strictly (0,.98), positive XYZ with Y .01-.9, working-Y relative standard deviation <=.15. Recheck after gain. Not a sensor saturation mask.",
+    "aggregation": "Median per file, then distribution across files. Original and repacked sources separate; blocks and repeated scene views are not independent captures. Pairwise masks can differ between engines, so this is not a ranking.",
+    "signed_differences": "comparison minus Experimental",
+    "matched_raw_subset_reported": true
+  },
+  "aggregates": [
+    {
+      "camera": "FUJIFILM X-T5",
+      "kind": "original",
+      "engine": "Apple",
+      "files": 1,
+      "files_with_normalized_comparison": 0,
+      "registered_zones": 0,
+      "raw_file_medians_delta_e00": {
+        "count": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "exposure_ev": {
+        "count": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "minimum": null,
+        "maximum": null
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 0,
+          "mean": null,
+          "median": null,
+          "p95": null,
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "count": 0,
+          "mean": null,
+          "median": null,
+          "p95": null,
+          "minimum": null,
+          "maximum": null
+        },
+        {
+          "count": 0,
+          "mean": null,
+          "median": null,
+          "p95": null,
+          "minimum": null,
+          "maximum": null
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 0,
+        "mean": null,
+        "median": null,
+        "p95": null,
+        "minimum": null,
+        "maximum": null
+      }
+    },
+    {
+      "camera": "FUJIFILM X-T5",
+      "kind": "repacked-control",
+      "engine": "Apple",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 9.675464631142862,
+        "median": 9.675464631142862,
+        "p95": 9.675464631142862,
+        "minimum": 9.675464631142862,
+        "maximum": 9.675464631142862
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 9.675464631142862,
+        "median": 9.675464631142862,
+        "p95": 9.675464631142862,
+        "minimum": 9.675464631142862,
+        "maximum": 9.675464631142862
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.448183598151072,
+        "median": 0.448183598151072,
+        "p95": 0.448183598151072,
+        "minimum": 0.448183598151072,
+        "maximum": 0.448183598151072
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": 0.8793560452674736,
+        "median": 0.8793560452674736,
+        "p95": 0.8793560452674736,
+        "minimum": 0.8793560452674736,
+        "maximum": 0.8793560452674736
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        {
+          "count": 1,
+          "mean": 0.23013688502304674,
+          "median": 0.23013688502304674,
+          "p95": 0.23013688502304674,
+          "minimum": 0.23013688502304674,
+          "maximum": 0.23013688502304674
+        },
+        {
+          "count": 1,
+          "mean": -0.14717231056800006,
+          "median": -0.14717231056800006,
+          "p95": -0.14717231056800006,
+          "minimum": -0.14717231056800006,
+          "maximum": -0.14717231056800006
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.4787897232780947,
+        "median": 0.4787897232780947,
+        "p95": 0.4787897232780947,
+        "minimum": 0.4787897232780947,
+        "maximum": 0.4787897232780947
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "original",
+      "engine": "Apple",
+      "files": 30,
+      "files_with_normalized_comparison": 29,
+      "registered_zones": 246,
+      "raw_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 2.784272213884724,
+        "median": 2.357707751563143,
+        "p95": 5.275711642888543,
+        "minimum": 0.9803223299331013,
+        "maximum": 6.737686390652808
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 2.8066330242430375,
+        "median": 2.357707751563143,
+        "p95": 5.474041469773887,
+        "minimum": 0.9793372893100414,
+        "maximum": 6.761671088647663
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 1.374146386327714,
+        "median": 1.086021334386881,
+        "p95": 2.5066821812655515,
+        "minimum": 0.2640637572229839,
+        "maximum": 3.468606799360982
+      },
+      "exposure_ev": {
+        "count": 29,
+        "mean": -0.1933597175490452,
+        "median": -0.14914782335395813,
+        "p95": 0.14721474847663482,
+        "minimum": -0.7867254120228876,
+        "maximum": 0.18239264786895257
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 29,
+          "mean": 0.010545483249805823,
+          "median": 0.0005292349965557719,
+          "p95": 0.0696243772312144,
+          "minimum": -0.0007923786061638793,
+          "maximum": 0.18599919127903952
+        },
+        {
+          "count": 29,
+          "mean": 0.2162405809564255,
+          "median": 0.25440962476069817,
+          "p95": 0.6378260889847986,
+          "minimum": -0.8302974701435151,
+          "maximum": 1.0424510421118711
+        },
+        {
+          "count": 29,
+          "mean": 0.948283539750795,
+          "median": 0.3742318038020498,
+          "p95": 4.093200677459176,
+          "minimum": -1.1792603533194836,
+          "maximum": 6.893518185738978
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 0.8529296666452686,
+        "median": 0.8731584835917329,
+        "p95": 1.2828577493051334,
+        "minimum": 0.2548435701711716,
+        "maximum": 1.333844629649537
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "original",
+      "engine": "LibRawAhd",
+      "files": 30,
+      "files_with_normalized_comparison": 28,
+      "registered_zones": 253,
+      "raw_file_medians_delta_e00": {
+        "count": 30,
+        "mean": 9.15382767818775,
+        "median": 8.478996548668725,
+        "p95": 16.596405235644774,
+        "minimum": 5.165315454671403,
+        "maximum": 17.745641772301596
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 28,
+        "mean": 9.100195837353217,
+        "median": 8.478996548668725,
+        "p95": 16.596405235644774,
+        "minimum": 5.165315454671403,
+        "maximum": 17.745641772301596
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 28,
+        "mean": 0.5636890446143076,
+        "median": 0.20504995765477751,
+        "p95": 1.9658383837287206,
+        "minimum": 0.06625589501382564,
+        "maximum": 2.0131039928089187
+      },
+      "exposure_ev": {
+        "count": 28,
+        "mean": 1.0438775900720327,
+        "median": 1.0391877389766355,
+        "p95": 1.2669690039206716,
+        "minimum": 0.8303125831834833,
+        "maximum": 1.284268467878715
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 28,
+          "mean": 8.848439578633207e-06,
+          "median": 0.0,
+          "p95": 0.00012712854790564165,
+          "minimum": -1.479781768765065e-05,
+          "maximum": 0.00015958675424698754
+        },
+        {
+          "count": 28,
+          "mean": -0.47763390226387353,
+          "median": -0.07452532587048927,
+          "p95": 0.07137164711273902,
+          "minimum": -2.4931079054271734,
+          "maximum": 0.10211928342418464
+        },
+        {
+          "count": 28,
+          "mean": 0.12155029912886273,
+          "median": -0.005106375777871874,
+          "p95": 1.0757614431357467,
+          "minimum": -0.12975022026127103,
+          "maximum": 1.341562329513236
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 28,
+        "mean": 0.28444166339725035,
+        "median": 0.17992987640551225,
+        "p95": 0.6072928598709355,
+        "minimum": 0.06570218049382992,
+        "maximum": 0.7576176515379334
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "original",
+      "engine": "LibRawBilinear",
+      "files": 30,
+      "files_with_normalized_comparison": 27,
+      "registered_zones": 241,
+      "raw_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 1.1432485142994797,
+        "median": 0.9968048050318745,
+        "p95": 2.7413331127538303,
+        "minimum": 0.32107867828859865,
+        "maximum": 3.505980978791803
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 27,
+        "mean": 1.1145109305052772,
+        "median": 0.9968048050318745,
+        "p95": 2.2181067826565277,
+        "minimum": 0.4058763567784599,
+        "maximum": 3.505980978791803
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 27,
+        "mean": 0.522127436920827,
+        "median": 0.17109708006494315,
+        "p95": 1.8133476595286053,
+        "minimum": 0.07682558054517132,
+        "maximum": 1.9415349203948347
+      },
+      "exposure_ev": {
+        "count": 27,
+        "mean": 0.04988809044580675,
+        "median": 0.07142122556004421,
+        "p95": 0.08776208024870832,
+        "minimum": -0.23427004695164894,
+        "maximum": 0.09061039621140922
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 27,
+          "mean": -4.144483083373879e-06,
+          "median": 0.0,
+          "p95": 7.900356248313756e-06,
+          "minimum": -0.00016478261837704622,
+          "maximum": 2.948271073321962e-05
+        },
+        {
+          "count": 27,
+          "mean": -0.4175976177201265,
+          "median": -0.056044200169483305,
+          "p95": 0.06883221186504507,
+          "minimum": -2.413171597443892,
+          "maximum": 0.07561749983006627
+        },
+        {
+          "count": 27,
+          "mean": 0.09493036616912637,
+          "median": -2.4846509072418144e-05,
+          "p95": 0.766984295894324,
+          "minimum": -0.13878948537675573,
+          "maximum": 1.604863305057318
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 27,
+        "mean": 0.2766398003186587,
+        "median": 0.15030285380612757,
+        "p95": 0.654790191280386,
+        "minimum": 0.07416135251773603,
+        "maximum": 0.7797416262873477
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "original",
+      "engine": "TrueRenderer",
+      "files": 30,
+      "files_with_normalized_comparison": 29,
+      "registered_zones": 266,
+      "raw_file_medians_delta_e00": {
+        "count": 30,
+        "mean": 1.0168114871028522,
+        "median": 0.9470498941828605,
+        "p95": 1.7303944853986615,
+        "minimum": 0.3685150215132404,
+        "maximum": 1.926165911585596
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 0.9967988804406998,
+        "median": 0.9417046918736104,
+        "p95": 1.7303944853986615,
+        "minimum": 0.3685150215132404,
+        "maximum": 1.926165911585596
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 0.49236512728749143,
+        "median": 0.16929479758971117,
+        "p95": 1.6699639298398328,
+        "minimum": 0.01103062577533651,
+        "maximum": 1.854352930204546
+      },
+      "exposure_ev": {
+        "count": 29,
+        "mean": 0.06972085400310787,
+        "median": 0.07879212914979235,
+        "p95": 0.09003715399007073,
+        "minimum": 0.03912748926314521,
+        "maximum": 0.09122556340141108
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 29,
+          "mean": -6.8473870871931965e-06,
+          "median": 0.0,
+          "p95": 9.60265677107941e-06,
+          "minimum": -0.00012318910736830446,
+          "maximum": 1.5688992931472967e-05
+        },
+        {
+          "count": 29,
+          "mean": -0.4478635058377629,
+          "median": -0.024791017175507246,
+          "p95": 0.09383278569269349,
+          "minimum": -2.55666530315904,
+          "maximum": 0.11741453782954103
+        },
+        {
+          "count": 29,
+          "mean": 0.07103843959874336,
+          "median": -0.0012287450222636664,
+          "p95": 0.5984435186149284,
+          "minimum": -0.17825530834639736,
+          "maximum": 1.6167301473350228
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 29,
+        "mean": 0.1958191772697013,
+        "median": 0.12911838169382509,
+        "p95": 0.45864939292685347,
+        "minimum": 0.009801491563385336,
+        "maximum": 0.4620588532714155
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "repacked-control",
+      "engine": "Apple",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 8.162775095008394,
+        "median": 8.162775095008394,
+        "p95": 8.162775095008394,
+        "minimum": 8.162775095008394,
+        "maximum": 8.162775095008394
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 8.162775095008394,
+        "median": 8.162775095008394,
+        "p95": 8.162775095008394,
+        "minimum": 8.162775095008394,
+        "maximum": 8.162775095008394
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.7768171584468819,
+        "median": 0.7768171584468819,
+        "p95": 0.7768171584468819,
+        "minimum": 0.7768171584468819,
+        "maximum": 0.7768171584468819
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": 1.2889648563724028,
+        "median": 1.2889648563724028,
+        "p95": 1.2889648563724028,
+        "minimum": 1.2889648563724028,
+        "maximum": 1.2889648563724028
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": 8.104587223556337e-07,
+          "median": 8.104587223556337e-07,
+          "p95": 8.104587223556337e-07,
+          "minimum": 8.104587223556337e-07,
+          "maximum": 8.104587223556337e-07
+        },
+        {
+          "count": 1,
+          "mean": 0.33309534198092106,
+          "median": 0.33309534198092106,
+          "p95": 0.33309534198092106,
+          "minimum": 0.33309534198092106,
+          "maximum": 0.33309534198092106
+        },
+        {
+          "count": 1,
+          "mean": 0.6631349470578192,
+          "median": 0.6631349470578192,
+          "p95": 0.6631349470578192,
+          "minimum": 0.6631349470578192,
+          "maximum": 0.6631349470578192
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.4376207431375703,
+        "median": 0.4376207431375703,
+        "p95": 0.4376207431375703,
+        "minimum": 0.4376207431375703,
+        "maximum": 0.4376207431375703
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "repacked-control",
+      "engine": "LibRawAhd",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 4.822321884617167,
+        "median": 4.822321884617167,
+        "p95": 4.822321884617167,
+        "minimum": 4.822321884617167,
+        "maximum": 4.822321884617167
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 4.822321884617167,
+        "median": 4.822321884617167,
+        "p95": 4.822321884617167,
+        "minimum": 4.822321884617167,
+        "maximum": 4.822321884617167
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.8857149422394099,
+        "median": 0.8857149422394099,
+        "p95": 0.8857149422394099,
+        "minimum": 0.8857149422394099,
+        "maximum": 0.8857149422394099
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": 0.8613984365583868,
+        "median": 0.8613984365583868,
+        "p95": 0.8613984365583868,
+        "minimum": 0.8613984365583868,
+        "maximum": 0.8613984365583868
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": -5.080627664355575e-05,
+          "median": -5.080627664355575e-05,
+          "p95": -5.080627664355575e-05,
+          "minimum": -5.080627664355575e-05,
+          "maximum": -5.080627664355575e-05
+        },
+        {
+          "count": 1,
+          "mean": -0.6564406932277609,
+          "median": -0.6564406932277609,
+          "p95": -0.6564406932277609,
+          "minimum": -0.6564406932277609,
+          "maximum": -0.6564406932277609
+        },
+        {
+          "count": 1,
+          "mean": -0.012406746884679798,
+          "median": -0.012406746884679798,
+          "p95": -0.012406746884679798,
+          "minimum": -0.012406746884679798,
+          "maximum": -0.012406746884679798
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.45991186892581015,
+        "median": 0.45991186892581015,
+        "p95": 0.45991186892581015,
+        "minimum": 0.45991186892581015,
+        "maximum": 0.45991186892581015
+      }
+    },
+    {
+      "camera": "NIKON D750",
+      "kind": "repacked-control",
+      "engine": "LibRawBilinear",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.8839203161123023,
+        "median": 0.8839203161123023,
+        "p95": 0.8839203161123023,
+        "minimum": 0.8839203161123023,
+        "maximum": 0.8839203161123023
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.8864145578847844,
+        "median": 0.8864145578847844,
+        "p95": 0.8864145578847844,
+        "minimum": 0.8864145578847844,
+        "maximum": 0.8864145578847844
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.9122725038664468,
+        "median": 0.9122725038664468,
+        "p95": 0.9122725038664468,
+        "minimum": 0.9122725038664468,
+        "maximum": 0.9122725038664468
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": -0.04086926148246479,
+        "median": -0.04086926148246479,
+        "p95": -0.04086926148246479,
+        "minimum": -0.04086926148246479,
+        "maximum": -0.04086926148246479
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": 0.0013144087974232832,
+          "median": 0.0013144087974232832,
+          "p95": 0.0013144087974232832,
+          "minimum": 0.0013144087974232832,
+          "maximum": 0.0013144087974232832
+        },
+        {
+          "count": 1,
+          "mean": -0.6738724866508228,
+          "median": -0.6738724866508228,
+          "p95": -0.6738724866508228,
+          "minimum": -0.6738724866508228,
+          "maximum": -0.6738724866508228
+        },
+        {
+          "count": 1,
+          "mean": -0.01308799231457014,
+          "median": -0.01308799231457014,
+          "p95": -0.01308799231457014,
+          "minimum": -0.01308799231457014,
+          "maximum": -0.01308799231457014
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.46258661181751737,
+        "median": 0.46258661181751737,
+        "p95": 0.46258661181751737,
+        "minimum": 0.46258661181751737,
+        "maximum": 0.46258661181751737
+      }
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "original",
+      "engine": "Apple",
+      "files": 9,
+      "files_with_normalized_comparison": 9,
+      "registered_zones": 78,
+      "raw_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 2.097385190114019,
+        "median": 2.1454045819925494,
+        "p95": 3.4490809320756624,
+        "minimum": 0.5871379098783556,
+        "maximum": 3.4490809320756624
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 2.097401393146218,
+        "median": 2.1454045819925494,
+        "p95": 3.4490809320756624,
+        "minimum": 0.5871379098783556,
+        "maximum": 3.4490809320756624
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 0.5795329700184921,
+        "median": 0.5666412175796433,
+        "p95": 1.048587863449296,
+        "minimum": 0.26822318747912105,
+        "maximum": 1.048587863449296
+      },
+      "exposure_ev": {
+        "count": 9,
+        "mean": -0.15122977721709918,
+        "median": -0.1540328191400864,
+        "p95": -0.06053581756706299,
+        "minimum": -0.22398711197802035,
+        "maximum": -0.06053581756706299
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 9,
+          "mean": 3.4193049991810336e-05,
+          "median": 8.476754551622889e-07,
+          "p95": 0.0003005603076786656,
+          "minimum": 0.0,
+          "maximum": 0.0003005603076786656
+        },
+        {
+          "count": 9,
+          "mean": -0.06644567642333393,
+          "median": -0.04134212946757554,
+          "p95": 0.22977692264974925,
+          "minimum": -0.4365532716284344,
+          "maximum": 0.22977692264974925
+        },
+        {
+          "count": 9,
+          "mean": -0.08680043045211629,
+          "median": -0.2127660567175007,
+          "p95": 1.1693890012477617,
+          "minimum": -1.2285918426118698,
+          "maximum": 1.1693890012477617
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 0.5559957032024543,
+        "median": 0.5098935739987464,
+        "p95": 1.027776345142283,
+        "minimum": 0.24050502470781032,
+        "maximum": 1.027776345142283
+      }
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "original",
+      "engine": "LibRawAhd",
+      "files": 9,
+      "files_with_normalized_comparison": 9,
+      "registered_zones": 80,
+      "raw_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 10.921121801577735,
+        "median": 10.98103090356926,
+        "p95": 13.635309824223516,
+        "minimum": 5.754477609308217,
+        "maximum": 13.635309824223516
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 10.921121801577735,
+        "median": 10.98103090356926,
+        "p95": 13.635309824223516,
+        "minimum": 5.754477609308217,
+        "maximum": 13.635309824223516
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 0.6953111774715626,
+        "median": 0.2477426159145262,
+        "p95": 2.4036333250976103,
+        "minimum": 0.13500715065524183,
+        "maximum": 2.4036333250976103
+      },
+      "exposure_ev": {
+        "count": 9,
+        "mean": 1.0835040557540307,
+        "median": 1.0777318492427939,
+        "p95": 1.2482476386014174,
+        "minimum": 1.0030527788225845,
+        "maximum": 1.2482476386014174
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 9,
+          "mean": 1.5726898100846636e-06,
+          "median": 0.0,
+          "p95": 8.451707099510486e-06,
+          "minimum": -1.4732250974702765e-07,
+          "maximum": 8.451707099510486e-06
+        },
+        {
+          "count": 9,
+          "mean": -0.3220486833820413,
+          "median": 0.03124694936476602,
+          "p95": 0.35971874991957953,
+          "minimum": -2.099413737067721,
+          "maximum": 0.35971874991957953
+        },
+        {
+          "count": 9,
+          "mean": -0.1538602426530361,
+          "median": -0.06579178117790407,
+          "p95": 0.21381722847761964,
+          "minimum": -1.1109891639478064,
+          "maximum": 0.21381722847761964
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 0.4999120861130824,
+        "median": 0.20463467255873896,
+        "p95": 1.9038301829881146,
+        "minimum": 0.11924610549397792,
+        "maximum": 1.9038301829881146
+      }
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "original",
+      "engine": "LibRawBilinear",
+      "files": 9,
+      "files_with_normalized_comparison": 9,
+      "registered_zones": 78,
+      "raw_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 1.4393727705580464,
+        "median": 1.0756954253702466,
+        "p95": 3.039843992701423,
+        "minimum": 0.5346865325015072,
+        "maximum": 3.039843992701423
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 1.4393727705580464,
+        "median": 1.0756954253702466,
+        "p95": 3.039843992701423,
+        "minimum": 0.5346865325015072,
+        "maximum": 3.039843992701423
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 0.7072955510213146,
+        "median": 0.2485458638967991,
+        "p95": 2.4592107500950253,
+        "minimum": 0.14458115248565137,
+        "maximum": 2.4592107500950253
+      },
+      "exposure_ev": {
+        "count": 9,
+        "mean": 0.04891695275312206,
+        "median": 0.08479152927848488,
+        "p95": 0.12880990511968532,
+        "minimum": -0.1982912096162031,
+        "maximum": 0.12880990511968532
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 9,
+          "mean": 2.995346607785147e-07,
+          "median": 0.0,
+          "p95": 2.614224161590073e-06,
+          "minimum": -7.105427357601002e-15,
+          "maximum": 2.614224161590073e-06
+        },
+        {
+          "count": 9,
+          "mean": -0.31842997881366564,
+          "median": 0.03684806219697556,
+          "p95": 0.3554880585522613,
+          "minimum": -2.0667844337616534,
+          "maximum": 0.3554880585522613
+        },
+        {
+          "count": 9,
+          "mean": -0.12108713852423228,
+          "median": -0.061093330086681163,
+          "p95": 0.45673329160250375,
+          "minimum": -1.0926667401560888,
+          "maximum": 0.45673329160250375
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 9,
+        "mean": 0.44299996716342155,
+        "median": 0.2052102769656649,
+        "p95": 1.4148754176342622,
+        "minimum": 0.14051779675237447,
+        "maximum": 1.4148754176342622
+      }
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "repacked-control",
+      "engine": "Apple",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 14.917104164164154,
+        "median": 14.917104164164154,
+        "p95": 14.917104164164154,
+        "minimum": 14.917104164164154,
+        "maximum": 14.917104164164154
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 14.917104164164154,
+        "median": 14.917104164164154,
+        "p95": 14.917104164164154,
+        "minimum": 14.917104164164154,
+        "maximum": 14.917104164164154
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.18482160761518196,
+        "median": 0.18482160761518196,
+        "p95": 0.18482160761518196,
+        "minimum": 0.18482160761518196,
+        "maximum": 0.18482160761518196
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": 1.2775440260980022,
+        "median": 1.2775440260980022,
+        "p95": 1.2775440260980022,
+        "minimum": 1.2775440260980022,
+        "maximum": 1.2775440260980022
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": -2.9372383281156544e-07,
+          "median": -2.9372383281156544e-07,
+          "p95": -2.9372383281156544e-07,
+          "minimum": -2.9372383281156544e-07,
+          "maximum": -2.9372383281156544e-07
+        },
+        {
+          "count": 1,
+          "mean": -0.02223286537239577,
+          "median": -0.02223286537239577,
+          "p95": -0.02223286537239577,
+          "minimum": -0.02223286537239577,
+          "maximum": -0.02223286537239577
+        },
+        {
+          "count": 1,
+          "mean": -0.08884550563269489,
+          "median": -0.08884550563269489,
+          "p95": -0.08884550563269489,
+          "minimum": -0.08884550563269489,
+          "maximum": -0.08884550563269489
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.22701425675396458,
+        "median": 0.22701425675396458,
+        "p95": 0.22701425675396458,
+        "minimum": 0.22701425675396458,
+        "maximum": 0.22701425675396458
+      }
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "repacked-control",
+      "engine": "LibRawAhd",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 12.62830494577994,
+        "median": 12.62830494577994,
+        "p95": 12.62830494577994,
+        "minimum": 12.62830494577994,
+        "maximum": 12.62830494577994
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 12.62830494577994,
+        "median": 12.62830494577994,
+        "p95": 12.62830494577994,
+        "minimum": 12.62830494577994,
+        "maximum": 12.62830494577994
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.24664980819758903,
+        "median": 0.24664980819758903,
+        "p95": 0.24664980819758903,
+        "minimum": 0.24664980819758903,
+        "maximum": 0.24664980819758903
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": 1.0274402821429025,
+        "median": 1.0274402821429025,
+        "p95": 1.0274402821429025,
+        "minimum": 1.0274402821429025,
+        "maximum": 1.0274402821429025
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0,
+          "minimum": 0.0,
+          "maximum": 0.0
+        },
+        {
+          "count": 1,
+          "mean": 0.08562702545078515,
+          "median": 0.08562702545078515,
+          "p95": 0.08562702545078515,
+          "minimum": 0.08562702545078515,
+          "maximum": 0.08562702545078515
+        },
+        {
+          "count": 1,
+          "mean": -0.18046711931718384,
+          "median": -0.18046711931718384,
+          "p95": -0.18046711931718384,
+          "minimum": -0.18046711931718384,
+          "maximum": -0.18046711931718384
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.20509193164231448,
+        "median": 0.20509193164231448,
+        "p95": 0.20509193164231448,
+        "minimum": 0.20509193164231448,
+        "maximum": 0.20509193164231448
+      }
+    },
+    {
+      "camera": "NIKON D800",
+      "kind": "repacked-control",
+      "engine": "LibRawBilinear",
+      "files": 1,
+      "files_with_normalized_comparison": 1,
+      "registered_zones": 9,
+      "raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.28197614183597586,
+        "median": 0.28197614183597586,
+        "p95": 0.28197614183597586,
+        "minimum": 0.28197614183597586,
+        "maximum": 0.28197614183597586
+      },
+      "matched_raw_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.28197614183597586,
+        "median": 0.28197614183597586,
+        "p95": 0.28197614183597586,
+        "minimum": 0.28197614183597586,
+        "maximum": 0.28197614183597586
+      },
+      "normalized_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.24861642674661122,
+        "median": 0.24861642674661122,
+        "p95": 0.24861642674661122,
+        "minimum": 0.24861642674661122,
+        "maximum": 0.24861642674661122
+      },
+      "exposure_ev": {
+        "count": 1,
+        "mean": 0.010503964481458763,
+        "median": 0.010503964481458763,
+        "p95": 0.010503964481458763,
+        "minimum": 0.010503964481458763,
+        "maximum": 0.010503964481458763
+      },
+      "normalized_file_medians_delta_lab": [
+        {
+          "count": 1,
+          "mean": 6.314529343853792e-09,
+          "median": 6.314529343853792e-09,
+          "p95": 6.314529343853792e-09,
+          "minimum": 6.314529343853792e-09,
+          "maximum": 6.314529343853792e-09
+        },
+        {
+          "count": 1,
+          "mean": 0.08648093450799865,
+          "median": 0.08648093450799865,
+          "p95": 0.08648093450799865,
+          "minimum": 0.08648093450799865,
+          "maximum": 0.08648093450799865
+        },
+        {
+          "count": 1,
+          "mean": -0.18418519689720192,
+          "median": -0.18418519689720192,
+          "p95": -0.18418519689720192,
+          "minimum": -0.18418519689720192,
+          "maximum": -0.18418519689720192
+        }
+      ],
+      "low_chroma_file_medians_delta_e00": {
+        "count": 1,
+        "mean": 0.20653312331867665,
+        "median": 0.20653312331867665,
+        "p95": 0.20653312331867665,
+        "minimum": 0.20653312331867665,
+        "maximum": 0.20653312331867665
+      }
+    }
+  ],
+  "container_controls": {
+    "anchor_overviews_bit_exact": [
+      {
+        "id": "dng-control-0",
+        "original_id": "raw-00",
+        "camera": "NIKON D750",
+        "anchor_overview_bit_exact": true
+      },
+      {
+        "id": "dng-control-1",
+        "original_id": "raw-30",
+        "camera": "NIKON D800",
+        "anchor_overview_bit_exact": true
+      },
+      {
+        "id": "dng-control-2",
+        "original_id": "raw-39",
+        "camera": "FUJIFILM X-T5",
+        "anchor_overview_bit_exact": true
+      }
+    ],
+    "metadata_diagnostics": [
+      {
+        "camera": "NIKON D750",
+        "original_id": "raw-00",
+        "control_id": "dng-control-0",
+        "dng_tags": {
+          "258": [
+            16
+          ],
+          "50714": [
+            600,
+            600,
+            600,
+            600
+          ],
+          "50717": [
+            15520
+          ],
+          "50728": [
+            0.6701570680628273,
+            1.0,
+            0.5355648535564853
+          ]
+        },
+        "pairs": [
+          {
+            "engine": "Apple",
+            "native_gain_ev": -0.08076471011428844,
+            "dng_gain_ev": 1.2889648563724028,
+            "native_delta_e00": 2.0688954020938004,
+            "dng_delta_e00": 0.7768171584468819
+          },
+          {
+            "engine": "LibRawAhd",
+            "native_gain_ev": 0.9426158566704749,
+            "dng_gain_ev": 0.8613984365583868,
+            "native_delta_e00": 0.8803633731018929,
+            "dng_delta_e00": 0.8857149422394099
+          },
+          {
+            "engine": "LibRawBilinear",
+            "native_gain_ev": 0.039986665203084554,
+            "dng_gain_ev": -0.04086926148246479,
+            "native_delta_e00": 0.9228859950680923,
+            "dng_delta_e00": 0.9122725038664468
+          }
+        ],
+        "integer_white_vs_export_white_hypothesis": {
+          "native_integer_white": 16383,
+          "exported_white": 15520,
+          "black_mean": 600.0,
+          "predicted_scale_ev": 0.08112392031334544,
+          "observed_ahd_native_minus_dng_ev": 0.0812174201120881,
+          "limits": "D750 legacy decoder metadata confirms white 16383. D800 integer maximum inferred from native 12-bit RAW IFD. Neither is a measured physical saturation threshold."
+        },
+        "native_sensor_bits_from_nef_raw_ifd": 14
+      },
+      {
+        "camera": "NIKON D800",
+        "original_id": "raw-30",
+        "control_id": "dng-control-1",
+        "dng_tags": {
+          "258": [
+            16
+          ],
+          "50714": [
+            0
+          ],
+          "50717": [
+            3880
+          ],
+          "50728": [
+            0.4942084942084942,
+            1.0,
+            0.7377521613832853
+          ]
+        },
+        "pairs": [
+          {
+            "engine": "Apple",
+            "native_gain_ev": -0.22398711197802035,
+            "dng_gain_ev": 1.2775440260980022,
+            "native_delta_e00": 0.339088607952722,
+            "dng_delta_e00": 0.18482160761518196
+          },
+          {
+            "engine": "LibRawAhd",
+            "native_gain_ev": 1.1052516854786734,
+            "dng_gain_ev": 1.0274402821429025,
+            "native_delta_e00": 0.2477426159145262,
+            "dng_delta_e00": 0.24664980819758903
+          },
+          {
+            "engine": "LibRawBilinear",
+            "native_gain_ev": 0.088295864827381,
+            "dng_gain_ev": 0.010503964481458763,
+            "native_delta_e00": 0.2485458638967991,
+            "dng_delta_e00": 0.24861642674661122
+          }
+        ],
+        "integer_white_vs_export_white_hypothesis": {
+          "native_integer_white": 4095,
+          "exported_white": 3880,
+          "black_mean": 0.0,
+          "predicted_scale_ev": 0.07780679945388098,
+          "observed_ahd_native_minus_dng_ev": 0.07781140333577086,
+          "limits": "D750 legacy decoder metadata confirms white 16383. D800 integer maximum inferred from native 12-bit RAW IFD. Neither is a measured physical saturation threshold."
+        },
+        "native_sensor_bits_from_nef_raw_ifd": 12
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "original_id": "raw-39",
+        "control_id": "dng-control-2",
+        "dng_tags": {
+          "258": [
+            16
+          ],
+          "50714": [
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021,
+            1021
+          ],
+          "50717": [
+            16383
+          ],
+          "50728": [
+            0.593320235756385,
+            1.0,
+            0.39580602883355176
+          ]
+        },
+        "pairs": [
+          {
+            "engine": "Apple",
+            "native_gain_ev": null,
+            "dng_gain_ev": 0.8793560452674736,
+            "native_delta_e00": null,
+            "dng_delta_e00": 0.448183598151072
+          }
+        ]
+      }
+    ],
+    "inference": "Same autonomous pixels with different native-engine results implicate native profile/WB/level/baseline handling as well as reconstruction. White-level scale hypotheses agree with the measured AHD native-minus-DNG exposure offsets for the two controls; not physical saturation measurements or a reason to replace coefficients."
+  },
+  "xt5_original_limit": {
+    "qualified_full_resolution_color_pairs": 0,
+    "rejected_regions": 9,
+    "gradient_cosine_range": [
+      0.5401613145056842,
+      0.69135021370043
+    ],
+    "all_best_translations_zero": true,
+    "exploratory_overview_size": [
+      427,
+      640
+    ],
+    "exploratory_overview_gradient_cosine": 0.9944438953947325,
+    "exploratory_overview_shift": [
+      0,
+      0
+    ],
+    "interpretation": "Coarse alignment agrees; high-frequency response/noise differs. No specific Apple internal stage or root cause established. The exploratory result does not override the frozen exclusion. DNG control has a separate accepted comparison."
+  },
+  "repeatability": {
+    "initial_run_interrupted_reason": "Per-engine broker recreation incurred service-restart throttling; partial artifacts retained. Reused production brokers with unchanged recipe and measurement thresholds in a new campaign.",
+    "overlapping_sources": 8,
+    "renders": 40,
+    "overview_f32_and_all_crop_pngs_and_block_statistics_exact": true,
+    "full_frame_buffers_retained": false
+  },
+  "verification": {
+    "rust_ordinary": 519,
+    "rust_integration": 14,
+    "python_tests": 19,
+    "fmt_clippy_workspace": true,
+    "release_build": true,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "exact_1to1": true,
+    "xpc_signature_two_services_passed": true,
+    "diagnostic_worker_binaries_identical_to_installed": true,
+    "earlier_full_suite_with_gui_passed_root": "var/verify-NlAJA75H",
+    "final_numeric_suite_root": "var/verify-CfrofKfH",
+    "final_native_smoke_passed": false,
+    "native_smoke_failures": [
+      {
+        "root": "var/verify-CfrofKfH",
+        "report_sha256": "c65960bc7ab8725f315f5f74d0cdb11e548a9703cfcd7ba1876317823da465d9",
+        "elapsed_seconds": 55.14927673339844,
+        "screenshots": 0,
+        "decode_errors": 0,
+        "presentation_errors": false
+      },
+      {
+        "root": "var/experimental-engine-comparison-20261012/gui-final",
+        "report_sha256": "f654843d311d134d8eb0466a8695fd41c147be4f2c382c41f97dd2306e813b8e",
+        "elapsed_seconds": 55.2427978515625,
+        "screenshots": 0,
+        "decode_errors": 0,
+        "presentation_errors": false
+      },
+      {
+        "root": "var/experimental-engine-comparison-20261012/gui-observed",
+        "report_sha256": "66c4ca45a0ddec7734101efa2db382a8a59a0a03ed26b24f8bad747cfb73f79f",
+        "elapsed_seconds": 55.130062103271484,
+        "screenshots": 0,
+        "decode_errors": 0,
+        "presentation_errors": false
+      }
+    ],
+    "native_smoke_limit": "No screenshot events arrived before the 55-second limit; downstream screenshot verification found no PNGs. No decode/presentation error reported. Root cause unresolved, earlier GUI success is not attributed to the final host. Verification script now checks the smoke result before reading screenshot files.",
+    "private_camera_tests_excluded_from_generic_suite": 3
+  },
+  "gallery": {
+    "gallery_sources": 43,
+    "checked_image_links": 2178,
+    "native_display_comparisons": 11,
+    "browser_ui_verified": false,
+    "browser_limit": "Browser tool denied file:// navigation; no alternate browser route attempted. Offline script syntax and local image links checked.",
+    "installed_bundle_files_unchanged": 23,
+    "native_srgb_display_maximum_code_difference": 1,
+    "private_path": "var/experimental-engine-comparison-20261012/gallery/index.html",
+    "sources": 43,
+    "normalized_overviews": 147,
+    "review": "Native and normalized D750 overview, corpus contact sheet, native/repacked X-T5 overview and center crops inspected. Interactive browser access to file:// was denied; offline JavaScript syntax and image links verified."
+  },
+  "preservation": {
+    "installed_bundle": "dist/TrueRenderer.app",
+    "files_identical_to_before": 23,
+    "no_install_performed": true,
+    "originals_read_only": true,
+    "catalogue_and_backups_not_campaign_destinations": true
+  },
+  "remaining": [
+    "Measured targets, known illuminants and independent validation for camera fidelity remain unavailable.",
+    "Investigate a noise-robust registration protocol before reporting color differences for the original X-T5 RAF; retain this failed qualification.",
+    "Qualify physical black/white levels across acquisition conditions and measured profiles without fitting to another renderer.",
+    "Investigate the native screenshot timeout separately.",
+    "Point 6 (D850/new modes/corpus compatibility expansion, extended fuzzing and Windows) remains deferred. No R0-R4/SF gate closed."
+  ],
+  "color_accuracy_qualified": false,
+  "measured_camera_profile_installed": false,
+  "source_hashes": {
+    "apps/desktop/src/compare_raw_color.rs": "0191ec5a7d9d13e21ff2680463d48086651c7d2563d681c32f1c92c2720b7924",
+    "apps/desktop/src/main.rs": "506f7bd367885c6534a2d2e2b851988d0017de5adac1fe50ddb530967e2be619",
+    "scripts/analyze-raw-engine-color.py": "d286dea6d261ec987e13645d3c7ce79cc93ec8283285354916e380b84266fa6e",
+    "scripts/test-raw-engine-color.py": "27cb38c56f6964d21df5ea6b41fadc0326705758d2e7d98410058f55d2c01325",
+    "scripts/render-raw-engine-comparison.py": "70f158921adedeb7c4e554096dbd1c95e4c22d740c4262327ff13a5e38527fb4",
+    "scripts/verify.sh": "f411bf3014e0e6a3b6f850a8c3f47c33d02833086884c3edfb27404f5ab1bdf6",
+    "docs/calibrazione-raw.md": "49fcc449dd6170e1afec0b6ebbb4a1551e50e0eccde267a8f39d50aaa716dd6f"
+  },
+  "private_evidence_root": "var/experimental-engine-comparison-20261012",
+  "evidence_hashes": {
+    "manifest.json": "61c1c19a7dcd29179be48e0655db203a91dd00f16b933a9d5e3cf7d19512376d",
+    "frozen.json": "7c7c58cea1fba99d26a4983b4207e8e026d489c35ab977cdcbea1b30ad079b3e",
+    "frozen-persistent.json": "4eee3225faa1eb4aa9beb294f41b88151c988b3c6046bbae2dded4a655b07e6e",
+    "initial-run-stopped.json": "3f326ead81f32fac4709ddcad1e62c969308f67e43cce195b8e517e9ee86f983",
+    "run-persistent/comparison/manifest.json": "9362470380a0a684eb787c4251c92dafb098b3c3025cb89c2d619235ec0de966",
+    "analysis.json": "1fb78050f232b5c66a414f56a70ef47803c2809ba1edeca3c2eab2f654171321",
+    "broker-repeatability.json": "6d48d4d54189802010c8ed8f4de839c0cd8f01b12c91907ad757e155d8701b33",
+    "container-metadata-diagnostics-v2.json": "9cbfb0c7d42e778219ea050075d96a3f727510c215de8c59a80b4fc87bd905f9",
+    "xt5-overview-geometry.json": "fba1bb4d652e344b08c4e928d3d9c4d7132c1f1b79a89d142a7aa44ee898b468",
+    "artifact-checks.json": "3fdb4c7c001cb1fb29954aaf0b6a6d71ddf83cf8a7dc9599a6afe63933e2bdf3",
+    "gallery/index.html": "dad146d6a9dac8f673bd1301b44e666e385e3139ec7ee42d206ebca52c127e59",
+    "gallery/display-checks.json": "37f03c6c74e18ae2b26d02964f97958d4a7546574dff761d27f1f65aee2e502d",
+    "verify-final.log": "0f7427103642a65ca409e880376547639d17186a1e8be64ce7e006843b5cb99d",
+    "xpc-persistent/reports/xpc-qualification-macos.json": "4ad81d567b502d078e1eedb82b1d65e8ce2dca8106976fc25afbda349c387c65",
+    "smoke-report-gate.json": "4a702e2eb6bcba42e8d5d7933414f2518efc0d389dc63851bc914ddc5e3cc157"
+  },
+  "limits": "All Delta E values are differences between engines on ordinary photographs, not errors against measured scene truth. No majority vote among renderers establishes correct color. One X-T5 source is not model-wide qualification. No fitted matrix, WB correction or production rendering change promoted."
+}

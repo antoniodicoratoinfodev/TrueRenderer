@@ -237,7 +237,10 @@ impl<'a> Raf<'a> {
             memory: RawMemoryPlan {
                 sensor_pixels,
                 output_pixels,
-                scratch_peak_bytes: sensor_pixels * 8 + output_pixels * 16 + 64 * 1024 * 1024,
+                scratch_peak_bytes: sensor_pixels * 8
+                    + output_pixels * 16
+                    + 64 * 1024 * 1024
+                    + crate::xtrans_dr6::bounded::SCRATCH_RESERVATION_BYTES,
             },
         })
     }

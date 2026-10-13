@@ -290,7 +290,14 @@ impl<'a> Nef<'a> {
             memory: RawMemoryPlan {
                 sensor_pixels,
                 output_pixels,
-                scratch_peak_bytes: sensor_pixels * 8 + output_pixels * 16 + 64 * 1024 * 1024,
+                // Unpack/calibration owns u16 + f32 sensor samples; development
+                // owns the f32 mosaic, three green rows and final RGBA. Export's
+                // two u16 rasters fit below the calibration peak.
+                scratch_peak_bytes: (sensor_pixels * 6).max(
+                    sensor_pixels * 4
+                        + output_pixels * 16
+                        + render::bayer_scratch_reservation_bytes(self.width),
+                ) + 64 * 1024 * 1024,
             },
         })
     }

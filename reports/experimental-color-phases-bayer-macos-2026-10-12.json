@@ -1,0 +1,284 @@
+{
+  "date": "2026-10-12",
+  "scope": "CFA phase metrology for color calibration and bit-preserving Bayer execution in the autonomous RAW engine",
+  "base_commit": "e1417a2a8665610b955cd90a61adc0cd6b4d28e2",
+  "committed": false,
+  "pushed": false,
+  "production_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1",
+  "numerical_recipe_changed": false,
+  "color_metrology": {
+    "cfa_statistics_schema": 2,
+    "measured_profile_input_schema": 2,
+    "phase_layouts": {
+      "Bayer": 4,
+      "X-Trans": 36
+    },
+    "behavior": "Gr on the red row and Gb on the blue row remain separately measurable. Pooled RGB statistics and all original samples are retained without a sensor correction.",
+    "measured_fit_validation": "Checks CFA layouts, phase uniqueness, geometry counts, finite moments, extrema and near-saturation; recomposes pooled mean and within/between-phase variance; preserves phase evidence in the candidate.",
+    "old_statistics_schema": "Schema 1 remains a historical artifact; re-extraction required for new measured fits.",
+    "diagnostic_patches": 18,
+    "diagnostic_phase_groups": 264,
+    "cameras": [
+      {
+        "camera": "NIKON D750",
+        "sha256": "25e49ccf506f3f07187ef524ce714dd43bdfd2bb0b6c639a06964f0867e3cfe6",
+        "patches": 6,
+        "phase_statistics": 24
+      },
+      {
+        "camera": "NIKON D800",
+        "sha256": "5b08547c04004ac720dba8656c79b4ab484e4090cc0e5f28a88647974f4cb66d",
+        "patches": 6,
+        "phase_statistics": 24
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "sha256": "385c3b8f9462b68a93734ece18b78c9d8c705e4e13fc9bac2f1d84ce75241326",
+        "patches": 6,
+        "phase_statistics": 216
+      }
+    ],
+    "synthetic_green_disparity_preserved": true,
+    "synthetic_fit_maximum_matrix_absolute_error": 2.220446049250313e-16,
+    "delta_e00_reference": {
+      "pairs": 34,
+      "maximum_absolute_error": 4.9498977271467126e-05,
+      "passed": true
+    },
+    "measured_camera_profile_installed": false,
+    "limits": "All 18 photographic regions are ordinary scene diagnostics, not target measurements. Differences between phases can arise from texture, shading or noise. Synthetic fit fixtures verify algebra only."
+  },
+  "bayer_execution": {
+    "protocol": "TRExp-Bayer-streaming-v1",
+    "reference_source_sha256": "a7a8d8276e3d1a548af7d2cf6721d9a163aeea1b4cacd8d9fe6b01ef05c09ea9",
+    "candidate_source_sha256": "14fc7ca6eb887005a08b4bd50a233763af396c7e2ac4c65b1b805cbdf69ab43f",
+    "source_freeze_preserved": true,
+    "synthetic_combinations": 15360,
+    "distinct_existing_inputs": 46,
+    "white_balances_per_input": 2,
+    "comparison_cases": 92,
+    "rgba_f32_components_compared": 8987566464,
+    "bit_mismatches": 0,
+    "scratch_reservation": "width * (3 * sizeof(f32) + 4 * sizeof(usize)) + 1024; input mosaic and output RGBA excluded",
+    "timing_protocol": {
+      "warmups": 3,
+      "repetitions": 30,
+      "order": "alternating implementations",
+      "scope": "full-frame demosaic + matrix + crop + orientation + output allocation; parsing, codec, WB and validation excluded",
+      "inputs": "first authorized D750, first authorized D800; no corpus selection by measured timings",
+      "target_p50_ratio_max": 0.8,
+      "relative_wb": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    "timing": [
+      {
+        "camera": "NIKON D750",
+        "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "sensor_size": [
+          6032,
+          4032
+        ],
+        "reference_green_buffer_bytes": 97284096,
+        "streamed_scratch_reservation_bytes": 266432,
+        "reference_p50_ms": 355.0325415,
+        "streamed_p50_ms": 176.0284375,
+        "reference_p95_ms": 356.771,
+        "streamed_p95_ms": 190.92008299999998,
+        "p50_ratio": 0.49580930456764905,
+        "speed_target_passed": true
+      },
+      {
+        "camera": "NIKON D800",
+        "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+        "sensor_size": [
+          7424,
+          4924
+        ],
+        "reference_green_buffer_bytes": 146223104,
+        "streamed_scratch_reservation_bytes": 327680,
+        "reference_p50_ms": 533.945375,
+        "streamed_p50_ms": 274.65675,
+        "reference_p95_ms": 549.911459,
+        "streamed_p95_ms": 286.67787500000003,
+        "p50_ratio": 0.5143911022733364,
+        "speed_target_passed": true
+      }
+    ],
+    "limits": "Exact equivalence of existing reconstruction; no physical color qualification. Timers cover full demosaic/matrix/crop/orientation/output allocation, exclude parse/codec/WB/checks. Warm timings without thermal control; scratch accounting is not RSS."
+  },
+  "validation": {
+    "command": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "ordinary_tests": 517,
+    "integration_tests": 14,
+    "python_tests": 13,
+    "fmt_clippy_passed": true,
+    "worker_protocol_checks": 8,
+    "sampling_cases": 24,
+    "native_surface_and_smoke_passed": true,
+    "suite_artifacts": "var/verify-oaMhynIu",
+    "private_camera_tests_skipped_in_generic_suite": 3,
+    "separate_product_campaign": {
+      "inputs": {
+        "DNG": 8,
+        "NEF_D750": 30,
+        "NEF_D800": 9,
+        "RAF_X_T5": 1
+      },
+      "xpc_renders": 96,
+      "rgb_exports": 192,
+      "rgb_export_maximum_error_u16": 0,
+      "raw_repack_pixels_exact": true,
+      "both_slots_pixels_exact": true,
+      "wb_probe_decode_match": true,
+      "wb_estimate_checks": 192,
+      "wb_estimates_accepted": 170,
+      "wb_estimates_explicitly_rejected": 22,
+      "wb_repack_acceptance_unchanged": true,
+      "raf_cancellation_and_restart_on_both_slots": true,
+      "maximum_observed_worker_rss_bytes": 900087808,
+      "memory_gate_closed": false,
+      "originals_unchanged": true
+    }
+  },
+  "bundle": {
+    "installed": "dist/TrueRenderer.app",
+    "previous": "var/experimental-bayer-streaming-20261012/previous.app",
+    "previous_files_preserved": 23,
+    "installed_matches_qualified_candidate": true,
+    "ad_hoc_signature_verified": true,
+    "xpc_candidate_passed": true,
+    "xpc_installed_passed": true,
+    "full_sandbox_gate_passed": false,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "75ae19bdc31fadaebc36baae0c33efa4118e09af83ee97ba75dd87cd45f5f083",
+      "Contents/MacOS/tr-worker": "17c454ed4b53538e664eeb342def751d788863fee54021577ee438d4316a4feb",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "b952afc0511b9697e1c5e44909398c71928f8941edbcd34270596cd26f03f7ac",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "d3e4f582352f7c0980ff89e47a2350a28224ab9f5f03f88307137805d014aa91"
+    }
+  },
+  "standalone_lab_linkage": [
+    "libSystem.B.dylib",
+    "libiconv.2.dylib"
+  ],
+  "point6_deferred": true,
+  "camera_color_accuracy_qualified": false,
+  "new_bayer_quality_algorithm_promoted": false,
+  "codec_provenance_qualified": false,
+  "global_gates_closed": false,
+  "remaining": [
+    "Calibrated captures, known target/illuminant references, repeatability and uncertainty for physical profiles.",
+    "Bayer reconstruction quality, noise and highlights; current optimization preserves the existing reconstruction.",
+    "Independent Fuji codec provenance review and replacement of the derived codec."
+  ],
+  "source_inventory": [
+    {
+      "path": "crates/tr-raw/src/render.rs",
+      "sha256": "14fc7ca6eb887005a08b4bd50a233763af396c7e2ac4c65b1b805cbdf69ab43f"
+    },
+    {
+      "path": "crates/tr-raw/src/nef.rs",
+      "sha256": "d26012eb135b65faccf6f0f2ecd1f19c50a4c08e24d863472084971761a70ebd"
+    },
+    {
+      "path": "crates/tr-raw/src/dng.rs",
+      "sha256": "67197e5b05abfa0c838a0a7a5e645e3c0b3742b311f6b2c2212425b8e4677266"
+    },
+    {
+      "path": "crates/tr-raw/research/bayer_frame_reference.rs",
+      "sha256": "a7a8d8276e3d1a548af7d2cf6721d9a163aeea1b4cacd8d9fe6b01ef05c09ea9"
+    },
+    {
+      "path": "crates/tr-raw/research/bayer_streaming.rs",
+      "sha256": "5b80c095f5eec982765486aeb5f131db66904f12612c7ba77baa060269df2eb1"
+    },
+    {
+      "path": "crates/tr-raw/research/calibration.rs",
+      "sha256": "483cf69bda9afc56d4e785ae4b5db02389203352d0bb3fb955a017c43286c56d"
+    },
+    {
+      "path": "scripts/calibrate-raw-profile.py",
+      "sha256": "338c77fb4a47090d47bd072ec3d9543d42c8f42539cde80ae64c0501e31a1439"
+    },
+    {
+      "path": "scripts/test-raw-calibration.py",
+      "sha256": "f25777a5090ab488c2eeb1507e0c62cbe6fe017a9fa28497e983f8fec34544e4"
+    },
+    {
+      "path": "docs/calibrazione-raw.md",
+      "sha256": "4b58af047b2aa84076e137c7eed05affa6e7304ba029d21c2a748d17a7deae5c"
+    },
+    {
+      "path": "docs/demosaic-bayer-experimental.md",
+      "sha256": "2a2df47813a3e7b5dc546a9198da1e84ac37c3b09d6ce7fbb273dcb81b4ad708"
+    }
+  ],
+  "private_evidence": [
+    {
+      "path": "var/experimental-bayer-streaming-20261012/protocol.json",
+      "sha256": "a19cd12bee6498681f627b0b6cf67b4433a3cbebf65a733977b56a64797c023c"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/manifest.json",
+      "sha256": "21a45f11c0510ebde69b348b73b817a47bfb33257441f5e9fab05cbfe97b160b"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/measurement-source-freeze.json",
+      "sha256": "718eeba90bd944d18930a5b1c266d5ad3ee1011f0a187a69080fd76da9f51db2"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/equivalence.json",
+      "sha256": "ab2672ee8c313e232856f5500efc0e67b6ef402858c1b03ebeeae39bde367ad6"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/color-phases/source-freeze.json",
+      "sha256": "6f084bd8e0dab2a4da24981f8ff41859f45ede5661886eecac07d3f15cb8e3c8"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/color-phases/verification-final.json",
+      "sha256": "920a63231fc46f01afa4eca38d2b230a682533de6f2399e32ea30fe883b14574"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/color-phases/synthetic-fit/input.json",
+      "sha256": "6dbcbaaa550d2123b99ca3e1be137d46d4e3f297411143e06188a9ea62280632"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/color-phases/synthetic-fit/candidate.json",
+      "sha256": "c9314d064410ef2e70871287874aab14c223672c53c09458277f617534fea1ed"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/verify-complete.log",
+      "sha256": "630e560fc3c43574fa6be1dd123cc841e666d67783663d8cc20ec1d2d8232a41"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/product-manifest.json",
+      "sha256": "61a272a6e0dcd06affa0c2c6baaea3db633fc4dc8fef206d16d1d5ec4c6691dd"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/product/reports/experimental-private.json",
+      "sha256": "b16eaa0d48d65516e8277ab7e42b48f588af2b3226a6d143887614e8e31aa783"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/xpc-candidate/reports/xpc-qualification-macos.json",
+      "sha256": "ecff4fc0846152af7740a845fc6a6f7dcfed1316d9978c6254b4201eee94a7ba"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/xpc-installed/reports/xpc-qualification-macos.json",
+      "sha256": "fa5a9dca7b2935a75d5bf27d00353f2195aeac445f4f823976929fe04abbcac2"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/previous-bundle-hashes.json",
+      "sha256": "ef084f196e6a342f9d64c2360f1ad88f7e0b284da4363cb1a87eee04326365ee"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/installed-bundle-hashes.json",
+      "sha256": "8c88f3d679d2724aadaa6e3dd1210be46dc15d2623d4990239cc01090f3d6f12"
+    },
+    {
+      "path": "var/experimental-bayer-streaming-20261012/standalone-linkage.txt",
+      "sha256": "21d94a17b21b6d769c2530ba798fb6f5e1ffaabeefc6d840d75b922fd613cf8d"
+    }
+  ]
+}

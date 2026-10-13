@@ -904,6 +904,44 @@ mod tests {
             -1.
         );
     }
+
+    #[test]
+    fn precise_raw_wb_survives_history_and_reopen() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut catalog = Catalog::open(dir.path()).unwrap();
+        let item = catalog
+            .observe(Path::new("synthetic.dng"), "wb-precision", 4)
+            .unwrap();
+        let engine = RawEngine::TrueRendererExperimental;
+        let mut recipe = EditRecipe::neutral(engine);
+        recipe.raw_wb =
+            tr_core::decoder::RawWhiteBalance::precise_sensor_gains([1.333317, 1., 0.800273])
+                .unwrap();
+        let original = recipe.clone();
+        let first = catalog.save_edit(&item.id, 0, &recipe).unwrap();
+        recipe.raw_wb =
+            tr_core::decoder::RawWhiteBalance::precise_sensor_gains([1.333318, 1., 0.800273])
+                .unwrap();
+        let second = catalog
+            .save_edit(&item.id, first.generation, &recipe)
+            .unwrap();
+        assert_ne!(first.recipe, second.recipe);
+        let undo = catalog
+            .step_edit(&item.id, second.generation, true)
+            .unwrap();
+        assert_eq!(undo.recipe, original);
+        drop(catalog);
+        let mut reopened = Catalog::open(dir.path()).unwrap();
+        let loaded = reopened.load_edit(&item.id, engine).unwrap();
+        assert_eq!(loaded.recipe, original);
+        assert_eq!(
+            reopened
+                .step_edit(&item.id, loaded.generation, false)
+                .unwrap()
+                .recipe,
+            recipe
+        );
+    }
     #[test]
     fn migration_preserves_v1_backup_and_favorites_survive_export_restore() {
         let dir = tempfile::tempdir().unwrap();

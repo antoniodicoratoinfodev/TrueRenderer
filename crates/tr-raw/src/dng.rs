@@ -463,14 +463,22 @@ impl<'a> Dng<'a> {
         let sensor_pixels = self.width * self.height;
         let active_pixels = self.active[2] * self.active[3];
         let output_pixels = w * h;
+        let demosaic_peak = if self.cfa.period == 2 {
+            active_pixels * 4
+                + output_pixels * 16
+                + render::bayer_scratch_reservation_bytes(self.active[2])
+        } else {
+            active_pixels * 8 + output_pixels * 16
+        };
         let scratch_peak_bytes = (sensor_pixels * 2 + active_pixels * 4)
             .max(sensor_pixels * 4) // sensor plus repacked DNG output
             .max(sensor_pixels * 2 + self.tile[0] * self.tile[1] * 2)
-            .max(active_pixels * 8 + output_pixels * 16)
+            .max(demosaic_peak)
             // Export can hold copied profile fields, a metadata payload and
             // its final output copy together (each <=16 MiB). The remaining
             // 16 MiB cover bounded directories, calibration vectors and LUT.
-            + 64 * 1024 * 1024;
+            + 64 * 1024 * 1024
+            + if self.cfa.period == 6 { crate::xtrans_dr6::bounded::SCRATCH_RESERVATION_BYTES } else { 0 };
         Ok(RawInfo {
             width,
             height,

@@ -47,7 +47,7 @@ impl RawEngine {
             Self::LibRawAhd => "LibRaw-0.22.2-TR-ahd-rec2020-v1",
             Self::TrueRenderer => "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
             Self::TrueRendererExperimental => {
-                "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1"
+                "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1"
             }
         }
     }
@@ -56,8 +56,8 @@ impl RawEngine {
             Self::Apple => "Apple RAW",
             Self::LibRawBilinear => "LibRaw bilineare (storico)",
             Self::LibRawAhd => "LibRaw AHD",
-            Self::TrueRenderer => "TrueRenderer fp32 (sperimentale)",
-            Self::TrueRendererExperimental => "trueRendererExperimental",
+            Self::TrueRenderer => "(old)truerenderer",
+            Self::TrueRendererExperimental => "trueRendererExperimental 32fp",
         }
     }
     pub fn available(self) -> bool {
@@ -84,6 +84,10 @@ impl RawEngine {
 pub struct RawWhiteBalance {
     pub red: u16,
     pub blue: u16,
+    /// Optional millionths for Experimental only. Absent in historical recipes.
+    /// Legacy fields retain their nearest-thousandth values for display/migration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub micro_gains: Option<[u32; 2]>,
     #[serde(default)]
     pub apple_temperature: u16,
     #[serde(default)]
@@ -94,6 +98,7 @@ impl Default for RawWhiteBalance {
         Self {
             red: 1000,
             blue: 1000,
+            micro_gains: None,
             apple_temperature: 0,
             apple_tint: 0,
         }
@@ -108,6 +113,15 @@ impl RawWhiteBalance {
             (250..=4000).contains(&self.red) && (250..=4000).contains(&self.blue),
             "Guadagni WB RAW fuori scala"
         );
+        if let Some([red, blue]) = self.micro_gains {
+            anyhow::ensure!(
+                (250_000..=4_000_000).contains(&red)
+                    && (250_000..=4_000_000).contains(&blue)
+                    && u32::from(self.red) == (red + 500) / 1000
+                    && u32::from(self.blue) == (blue + 500) / 1000,
+                "Guadagni WB RAW precisi fuori scala o incoerenti"
+            );
+        }
         anyhow::ensure!(
             (self.apple_temperature == 0 && self.apple_tint == 0)
                 || ((2000..=50000).contains(&self.apple_temperature)
@@ -119,6 +133,10 @@ impl RawWhiteBalance {
     pub fn validate_for(self, engine: RawEngine) -> Result<()> {
         self.validate()?;
         anyhow::ensure!(
+            self.micro_gains.is_none() || engine == RawEngine::TrueRendererExperimental,
+            "WB RAW preciso riservato al motore autonomo"
+        );
+        anyhow::ensure!(
             if engine == RawEngine::Apple {
                 self.red == 1000 && self.blue == 1000
             } else {
@@ -129,7 +147,45 @@ impl RawWhiteBalance {
         Ok(())
     }
     pub fn gains(self) -> [f32; 3] {
-        [self.red as f32 / 1000., 1., self.blue as f32 / 1000.]
+        if let Some([red, blue]) = self.micro_gains {
+            [red as f32 / 1_000_000., 1., blue as f32 / 1_000_000.]
+        } else {
+            [self.red as f32 / 1000., 1., self.blue as f32 / 1000.]
+        }
+    }
+    pub fn gains_f64(self) -> [f64; 3] {
+        if let Some([red, blue]) = self.micro_gains {
+            [
+                f64::from(red) / 1_000_000.,
+                1.,
+                f64::from(blue) / 1_000_000.,
+            ]
+        } else {
+            // Preserve the exact previous interpretation of stored recipes.
+            self.gains().map(f64::from)
+        }
+    }
+    pub fn precise_sensor_gains(gains: [f64; 3]) -> Result<Self> {
+        anyhow::ensure!(
+            gains[1] == 1.
+                && gains
+                    .iter()
+                    .all(|v| v.is_finite() && (0.25..=4.).contains(v)),
+            "Guadagni WB RAW precisi fuori scala"
+        );
+        let micro = [gains[0], gains[2]].map(|v| (v * 1_000_000.).round() as u32);
+        let result = Self {
+            red: ((micro[0] + 500) / 1000) as u16,
+            blue: ((micro[1] + 500) / 1000) as u16,
+            micro_gains: if micro == [1_000_000; 2] {
+                None
+            } else {
+                Some(micro)
+            },
+            ..Default::default()
+        };
+        result.validate_for(RawEngine::TrueRendererExperimental)?;
+        Ok(result)
     }
 }
 
@@ -217,6 +273,44 @@ pub trait Decoder: Send + Sync {
 #[cfg(test)]
 mod wb_tests {
     use super::*;
+    #[test]
+    fn precise_wb_preserves_old_json_and_separates_sub_millisteps() {
+        let old = r#"{"red":1333,"blue":800,"apple_temperature":0,"apple_tint":0}"#;
+        let legacy: RawWhiteBalance = serde_json::from_str(old).unwrap();
+        assert_eq!(serde_json::to_string(&legacy).unwrap(), old);
+        assert_eq!(
+            legacy.gains_f64(),
+            [f64::from(1.333f32), 1., f64::from(0.8f32)]
+        );
+        let a = RawWhiteBalance::precise_sensor_gains([0.25049049, 1., 1.333317]).unwrap();
+        let b = RawWhiteBalance::precise_sensor_gains([0.25049149, 1., 1.333317]).unwrap();
+        assert_eq!((a.red, a.blue), (b.red, b.blue));
+        assert_ne!(a, b);
+        assert_ne!(a.gains_f64(), b.gains_f64());
+        let roundtrip: RawWhiteBalance =
+            serde_json::from_str(&serde_json::to_string(&a).unwrap()).unwrap();
+        assert_eq!(a, roundtrip);
+        assert_eq!(a.gains_f64(), [0.25049, 1., 1.333317]);
+        assert!(a.validate_for(RawEngine::TrueRenderer).is_err());
+        assert!(a.validate_for(RawEngine::Apple).is_err());
+        assert!(RawWhiteBalance { red: 251, ..a }.validate().is_err());
+        assert!(
+            RawWhiteBalance {
+                micro_gains: Some([249999, 1000000]),
+                ..a
+            }
+            .validate()
+            .is_err()
+        );
+        for gains in [[f64::NAN, 1., 1.], [1., 2., 1.], [4.000001, 1., 1.]] {
+            assert!(RawWhiteBalance::precise_sensor_gains(gains).is_err());
+        }
+        assert!(
+            RawWhiteBalance::precise_sensor_gains([1.; 3])
+                .unwrap()
+                .is_as_shot()
+        );
+    }
     #[test]
     fn white_balance_capabilities_and_bounds_are_engine_specific() {
         let apple = RawWhiteBalance {

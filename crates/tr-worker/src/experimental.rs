@@ -67,15 +67,15 @@ fn describe(raw: tr_raw::RawInfo) -> Result<(RasterInfo, ColorSource)> {
 
 pub fn probe_with_wb(bytes: &[u8], wb: RawWhiteBalance) -> Result<(RasterInfo, ColorSource)> {
     wb.validate_for(RawEngine::TrueRendererExperimental)?;
-    let (mut info, mut color) = describe(tr_raw::probe_with_wb(bytes, wb.gains().map(f64::from))?)?;
+    let (mut info, mut color) = describe(tr_raw::probe_with_wb(bytes, wb.gains_f64())?)?;
     if !wb.is_as_shot() {
         let ColorSource::Developed(description) = color else {
             unreachable!()
         };
         color = ColorSource::Developed(format!(
-            "{description}; WB relativo {:.3}/1/{:.3}",
-            wb.gains()[0],
-            wb.gains()[2]
+            "{description}; WB relativo {:.6}/1/{:.6}",
+            wb.gains_f64()[0],
+            wb.gains_f64()[2]
         ));
         info.input_color = color.provenance();
     }
@@ -89,7 +89,7 @@ pub fn develop_with_wb(
     wb: RawWhiteBalance,
 ) -> Result<(RasterInfo, ColorSource, LinearImage)> {
     let (mut info, color) = probe_with_wb(bytes, wb)?;
-    let image = tr_raw::develop(bytes, wb.gains().map(f64::from))?;
+    let image = tr_raw::develop(bytes, wb.gains_f64())?;
     let image = if max_edge > 0 && image.width.max(image.height) > max_edge {
         image.reduced(max_edge)
     } else {
@@ -222,7 +222,7 @@ mod tests {
     fn direct_nef_all_entry_points_never_call_libraw() {
         let _guard = legacy_guard::Guard::new();
         let engine = RawEngine::TrueRendererExperimental;
-        assert_eq!(engine.label(), "trueRendererExperimental");
+        assert_eq!(engine.label(), "trueRendererExperimental 32fp");
         let decoder =
             super::super::select_engine(tr_core::decoder::Trust::External, engine).unwrap();
         let mut fixture = fixture::nef::NefFixture::new();

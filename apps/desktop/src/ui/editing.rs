@@ -178,6 +178,60 @@ fn adjustment_default<Num: egui::emath::Numeric>(
     .inner
 }
 
+fn sensor_wb_controls(
+    ui: &mut egui::Ui,
+    lang: Language,
+    engine: tr_core::decoder::RawEngine,
+    wb: &mut tr_core::decoder::RawWhiteBalance,
+) -> (bool, bool) {
+    let precise = engine == tr_core::decoder::RawEngine::TrueRendererExperimental;
+    let (mut changed, mut commit) = (false, false);
+    for (label, channel) in [("Rosso RAW", 0), ("Blu RAW", 2)] {
+        let mut gains = wb.gains_f64();
+        let response = adjustment_default(
+            ui,
+            lang.text(label),
+            &mut gains[channel],
+            0.25..=4.,
+            " ×",
+            Some(if precise { 0.000001 } else { 0.001 }),
+            1.,
+        )
+        .0;
+        let mut value_changed = false;
+        if response.changed() {
+            let mut next = *wb;
+            if precise {
+                let Ok(value) = tr_core::decoder::RawWhiteBalance::precise_sensor_gains(gains)
+                else {
+                    continue;
+                };
+                next = value;
+            } else if channel == 0 {
+                next.red = (gains[0] * 1000.).round() as u16;
+            } else {
+                next.blue = (gains[2] * 1000.).round() as u16;
+            }
+            // Widgets may round a float by an ULP while merely laying out.
+            // Compare representable gains before upgrading an old WB recipe.
+            value_changed = if precise {
+                let units = |v: tr_core::decoder::RawWhiteBalance| {
+                    v.gains_f64().map(|g| (g * 1_000_000.).round() as u32)
+                };
+                units(next) != units(*wb)
+            } else {
+                next != *wb
+            };
+            if value_changed {
+                *wb = next;
+            }
+            changed |= value_changed;
+        }
+        commit |= response.drag_stopped() || (value_changed && !response.dragged());
+    }
+    (changed, commit)
+}
+
 fn apple_wb_controls(
     ui: &mut egui::Ui,
     lang: Language,
@@ -1722,28 +1776,10 @@ impl TrueRenderer {
                         ui.label(lang.text(
                             "Guadagni sensore relativi a come scattato · prima del demosaic",
                         ));
-                        for (label, value) in [
-                            ("Rosso RAW", &mut draft.raw_wb.red),
-                            ("Blu RAW", &mut draft.raw_wb.blue),
-                        ] {
-                            let mut gain = f32::from(*value) / 1000.;
-                            let response = adjustment_default(
-                                ui,
-                                lang.text(label),
-                                &mut gain,
-                                0.25..=4.,
-                                " ×",
-                                Some(0.001),
-                                1.,
-                            )
-                            .0;
-                            if response.changed() {
-                                *value = (gain * 1000.).round() as u16;
-                                changed = true;
-                            }
-                            commit |= response.drag_stopped()
-                                || (response.changed() && !response.dragged());
-                        }
+                        let (wb_changed, wb_commit) =
+                            sensor_wb_controls(ui, lang, engine, &mut draft.raw_wb);
+                        changed |= wb_changed;
+                        commit |= wb_commit;
                         if ui.button(lang.text("WB RAW come scattato")).clicked() {
                             draft.raw_wb = Default::default();
                             changed = true;
@@ -2532,6 +2568,9 @@ fn wb_draft_gains(
         let warm = (temperature(to) / temperature(from)).powf(0.8);
         let tint = ((to.apple_tint as f32 - from.apple_tint as f32) / 300.).exp();
         [warm * tint, 1. / tint, tint / warm].map(|v| v.clamp(0.05, 20.))
+    } else if engine == tr_core::decoder::RawEngine::TrueRendererExperimental {
+        let (a, b) = (from.gains_f64(), to.gains_f64());
+        [(b[0] / a[0]) as f32, 1., (b[2] / a[2]) as f32]
     } else {
         [
             to.red as f32 / from.red as f32,

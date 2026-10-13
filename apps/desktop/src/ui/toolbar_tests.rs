@@ -138,7 +138,7 @@ fn engine_and_quality_remain_adjacent_with_loading_and_long_names() {
     for lang in [Language::English, Language::Italian] {
         app.set_language(lang);
         let mut settings = app.service.cache.settings();
-        settings.raw_engine = tr_core::decoder::RawEngine::TrueRenderer;
+        settings.raw_engine = tr_core::decoder::RawEngine::TrueRendererExperimental;
         app.service.cache.configure(settings);
         for size in [
             Vec2::new(550., 360.),
@@ -157,7 +157,7 @@ fn engine_and_quality_remain_adjacent_with_loading_and_long_names() {
                         .unwrap_or_else(|| panic!("Missing {label}: {text:?}"))
                         .1
                 };
-                let engine = rect("TrueRenderer fp32");
+                let engine = rect("trueRendererExperimental 32fp");
                 let quality = rect(&format!("{} · Standard", lang.text("Anteprime")));
                 assert!(quality.left() > engine.right());
                 assert!(
@@ -168,7 +168,7 @@ fn engine_and_quality_remain_adjacent_with_loading_and_long_names() {
                 for label in [
                     "Menu",
                     lang.text("Impostazioni"),
-                    "TrueRenderer fp32",
+                    "trueRendererExperimental 32fp",
                     &format!("{} · Standard", lang.text("Anteprime")),
                 ] {
                     assert!(

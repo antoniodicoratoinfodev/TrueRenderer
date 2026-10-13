@@ -1,0 +1,649 @@
+{
+  "date": "2026-10-12",
+  "scope": "Review of all pending autonomous-renderer changes, corrected verification harnesses, and traceable CFA-to-profile preparation",
+  "base_commit": "e1417a2a8665610b955cd90a61adc0cd6b4d28e2",
+  "committed": false,
+  "pushed": false,
+  "production_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1",
+  "findings": [
+    {
+      "id": "nonfinite-reference",
+      "before": "CIEDE2000 reference with expected NaN returned passed=true and a NaN error.",
+      "after": "Finite Lab components and finite nonnegative expected distance required; regression rejects NaN/Inf and negative references."
+    },
+    {
+      "id": "historical-wb-model",
+      "before": "Audit divided thousandths directly in f64 instead of preserving the stored legacy f32 interpretation; precise-domain rejection aborted the campaign.",
+      "after": "Uses RawWhiteBalance legacy gains_f64; records all three domain results, including precise rejection and acceptance differences."
+    },
+    {
+      "id": "photographic-evidence",
+      "before": "Empty data could yield a vacuous passing gate; candidate default ignored manifest; existing report could be overwritten.",
+      "after": "Requires complete nine-crop sources, distinct source hashes and crops, matching candidate, all phases and fixed v1 parameters; rejects existing report atomically at creation."
+    },
+    {
+      "id": "dr6-report-preservation",
+      "after": "Optimized timing/full-sensor harnesses now create new reports exclusively."
+    },
+    {
+      "id": "bayer-v1-metadata",
+      "description": "Frozen v1 candidate=DR6 and all-36-phases text are editorial remnants. Actual BR1/BR2 execution and quality.phases use four Bayer phases.",
+      "original_bytes_preserved": true,
+      "manifest_sha256": "b656eea23f6b8dde1965b648b4203947e33a6602ef5f70bc3e345e047da51ccd"
+    }
+  ],
+  "measured_profile_input": {
+    "schema": 2,
+    "statistics_hash_bound": true,
+    "raw_acquisition_hash_unique": true,
+    "one_exposure_scale_per_capture": true,
+    "fit_validation_split_from_capture": true,
+    "white_from_fit_patch_and_declared_reference_y": true,
+    "saturation_checked_before_scaling": true,
+    "isolated_saturated_site_rejected": true,
+    "camera_and_recipe_checked": true,
+    "free_means_schema1_synthetic_only": true,
+    "cli_contract_fixture": "Entirely synthetic camera, target and CFA statistics. No measured Nikon/Fujifilm profile produced.",
+    "synthetic_known_matrix_max_absolute_error": 2.220446049250313e-16,
+    "synthetic_validation_delta_e00_max": 4.696440556955249e-14,
+    "qualified": false,
+    "limits": "Hash linkage and metadata consistency do not establish physical target, illuminant or uncertainty correctness."
+  },
+  "verification": {
+    "command": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "ordinary_tests_passed": 513,
+    "integration_tests_passed": 14,
+    "python_tests_passed": 10,
+    "fmt_passed": true,
+    "clippy_passed": true,
+    "worker_protocol_checks_passed": 8,
+    "sampling_cases_passed": 24,
+    "native_surface_passed": true,
+    "native_gui_smoke_passed": true,
+    "private_camera_tests_skipped": 3,
+    "ciede2000_author_reference_pairs": 34,
+    "ciede2000_reference_max_absolute_error": 4.9498977271467126e-05,
+    "cfa_moments_compared_with_direct_samples_all_bayer_xtrans_phases": true,
+    "photographic_negative_checks": [
+      "empty corpus rejected",
+      "existing report rejected and bytes unchanged"
+    ],
+    "photographic_regression_cases": 648,
+    "photographic_regression_metrics_and_gates_identical": true,
+    "photographic_regression_role": "First previously measured GB82 source, nine tiles, both noises and all 36 phases; not a new holdout.",
+    "reference_preparation_existing_public_crops": 36,
+    "standalone_cli_dynamic_libraries": [
+      "libiconv.2.dylib",
+      "libSystem.B.dylib"
+    ],
+    "private_artifact_root": "var/experimental-review-20261012",
+    "suite_artifact_root": "var/verify-rNKDllTv"
+  },
+  "wb_precision_schema2": {
+    "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1",
+    "cameras": [
+      {
+        "camera": "NIKON D750",
+        "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "profile_hash": "6e6278e6e08b41474fafba5a879bcb027a8e7dae043400a3212bae510a93b090",
+        "evaluated_constant_colors": 600,
+        "wb_quantization_delta_e00": {
+          "count": 383,
+          "mean": 0.11125783050341816,
+          "p95": 0.32371593694322615,
+          "maximum": 8.39293139645606
+        },
+        "outside_lab_comparison_domain": 217,
+        "precise_wb_delta_e00": {
+          "count": 383,
+          "mean": 0.00011204028317496933,
+          "p95": 0.000311582978466023,
+          "maximum": 0.00909511962329152
+        },
+        "fp32_projection_absolute_error": {
+          "count": 1800,
+          "mean": 2.256958419168544e-08,
+          "p95": 8.549479280084427e-08,
+          "maximum": 1.1306793439302965e-06
+        },
+        "wb_quantization_linear_absolute_error": {
+          "count": 1800,
+          "mean": 0.0023285549293116975,
+          "p95": 0.0023995041847229004,
+          "maximum": 1.1653976440429688
+        },
+        "diagnostic_delta_e00_budget": 0.1,
+        "diagnostic_budget_passed": false,
+        "precise_diagnostic_budget_passed": true,
+        "rejected_wb_pairs": [
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              0.75049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.00049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.33349049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: bianco non fisico",
+            "precise_error": "DNG: bianco non fisico",
+            "quantized_error": "DNG: bianco non fisico",
+            "relative": [
+              1.75049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: bianco non fisico",
+            "precise_error": "DNG: bianco non fisico",
+            "quantized_error": "DNG: bianco non fisico",
+            "relative": [
+              2.50049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: bianco non fisico",
+            "precise_error": "DNG: bianco non fisico",
+            "quantized_error": "DNG: bianco non fisico",
+            "relative": [
+              3.99949049,
+              1.0,
+              3.99949049
+            ]
+          }
+        ],
+        "precise_wb_acceptance_changed": 0,
+        "wb_acceptance_changed": 0
+      },
+      {
+        "camera": "NIKON D800",
+        "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+        "profile_hash": "390aab7246bde15461e030a5607ec80b7e16f59198de0c34ee5ed9c0a9cecbc1",
+        "evaluated_constant_colors": 568,
+        "wb_quantization_delta_e00": {
+          "count": 383,
+          "mean": 0.08022934636756927,
+          "p95": 0.2868186577263446,
+          "maximum": 2.0811325104149967
+        },
+        "outside_lab_comparison_domain": 185,
+        "precise_wb_delta_e00": {
+          "count": 383,
+          "mean": 7.895627580546101e-05,
+          "p95": 0.0002947768278299331,
+          "maximum": 0.0020721447002272028
+        },
+        "fp32_projection_absolute_error": {
+          "count": 1704,
+          "mean": 2.6050457014440914e-08,
+          "p95": 9.593758898418514e-08,
+          "maximum": 1.9291581523361856e-06
+        },
+        "wb_quantization_linear_absolute_error": {
+          "count": 1704,
+          "mean": 0.0013973316089731112,
+          "p95": 0.0030405521392822266,
+          "maximum": 0.3989858627319336
+        },
+        "diagnostic_delta_e00_budget": 0.1,
+        "diagnostic_budget_passed": false,
+        "precise_diagnostic_budget_passed": true,
+        "rejected_wb_pairs": [
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              0.25049049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              0.33349049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              0.50049049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              0.75049049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.00049049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.33349049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.75049049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              2.50049049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              3.99949049,
+              1.0,
+              0.25049049
+            ]
+          },
+          {
+            "continuous_error": "DNG: trasformata fuori scala",
+            "precise_error": "DNG: trasformata fuori scala",
+            "quantized_error": "DNG: trasformata fuori scala",
+            "relative": [
+              3.99949049,
+              1.0,
+              3.99949049
+            ]
+          }
+        ],
+        "precise_wb_acceptance_changed": 0,
+        "wb_acceptance_changed": 0
+      },
+      {
+        "camera": "FUJIFILM X-T5",
+        "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+        "profile_hash": "7ae4521c0e4b555c7a7067c284d21400393adda006b4d1690337b003d16e3585",
+        "evaluated_constant_colors": 608,
+        "wb_quantization_delta_e00": {
+          "count": 428,
+          "mean": 0.06443221103273553,
+          "p95": 0.23201613736936577,
+          "maximum": 1.418883182262315
+        },
+        "outside_lab_comparison_domain": 180,
+        "precise_wb_delta_e00": {
+          "count": 428,
+          "mean": 6.491059238682034e-05,
+          "p95": 0.00023377991242072747,
+          "maximum": 0.0015000678895064033
+        },
+        "fp32_projection_absolute_error": {
+          "count": 1824,
+          "mean": 1.7598260489071053e-08,
+          "p95": 6.504999849887838e-08,
+          "maximum": 8.396961348466903e-07
+        },
+        "wb_quantization_linear_absolute_error": {
+          "count": 1824,
+          "mean": 0.0004062042048884139,
+          "p95": 0.0015063285827636719,
+          "maximum": 0.025234341621398926
+        },
+        "diagnostic_delta_e00_budget": 0.1,
+        "diagnostic_budget_passed": false,
+        "precise_diagnostic_budget_passed": true,
+        "rejected_wb_pairs": [
+          {
+            "continuous_error": "DNG: trasformata fuori scala",
+            "precise_error": "DNG: trasformata fuori scala",
+            "quantized_error": "DNG: trasformata fuori scala",
+            "relative": [
+              1.00049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.33349049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              1.75049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              2.50049049,
+              1.0,
+              3.99949049
+            ]
+          },
+          {
+            "continuous_error": "DNG: adattamento cromatico invalido",
+            "precise_error": "DNG: adattamento cromatico invalido",
+            "quantized_error": "DNG: adattamento cromatico invalido",
+            "relative": [
+              3.99949049,
+              1.0,
+              3.99949049
+            ]
+          }
+        ],
+        "precise_wb_acceptance_changed": 0,
+        "wb_acceptance_changed": 0
+      }
+    ],
+    "camera_color_accuracy_qualified": false,
+    "limits": "Synthetic constant camera colors and nine-by-nine near-half-step gain grid. Colors compared only when all three WB interpretations are accepted; other triplets recorded separately. WB/float precision only, not camera color accuracy or demosaic commutation.",
+    "lab_domain": "Positive XYZ, Y<=1 and unsaturated nonnegative camera samples only; extended values retained in linear metrics.",
+    "input_sha256": "9b15f780c4967abbfbafb4f1b57e7c363f80737f83c9a28ada118bd45f44a877"
+  },
+  "preservation": {
+    "photographic_regression_cases": 648,
+    "metrics_and_gates_identical": true,
+    "bundle_files_unchanged": 23
+  },
+  "bundle_rebuilt": false,
+  "xpc_repeated_this_review": false,
+  "xpc_basis": "No production broker/decoder/bundle changes in this review; installed bundle hashes match the previously qualified integration campaign.",
+  "point6_deferred": true,
+  "camera_color_accuracy_qualified": false,
+  "codec_provenance_qualified": false,
+  "bayer_candidates_promoted": false,
+  "global_gates_closed": false,
+  "remaining": [
+    "Calibrated captures, references, repeatability and uncertainty for physical camera profiles.",
+    "Independent Fuji provenance review and replacement of derived codec.",
+    "Bayer improvement meeting frozen quality gates, noise and highlight research."
+  ],
+  "source_inventory": [
+    {
+      "path": "README.md",
+      "sha256": "63c34b0f45c22533dd6d5d8384150c089e6f03ee763cc6295c911970f1768d51"
+    },
+    {
+      "path": "apps/desktop/src/cache/artifact.rs",
+      "sha256": "e36f29dc1d5c6a2fbda28658faef4d2daf367f57a00f5331c3b2ddc784347b90"
+    },
+    {
+      "path": "apps/desktop/src/ui/editing.rs",
+      "sha256": "d5af7b206c10f2679a15a860bd4544012cb2662d4ed3e14a48cf922e3afefac8"
+    },
+    {
+      "path": "apps/desktop/src/ui/editing/controls_tests.rs",
+      "sha256": "9804cfceba899c3559b7cbfc7b35eb8a3450629cf6ceab701f2be7b18a593b17"
+    },
+    {
+      "path": "apps/desktop/src/verify_experimental.rs",
+      "sha256": "34c586aad84e0cee9e0c8b025c1e86604c664832ae53ae3628eec14af3d751df"
+    },
+    {
+      "path": "crates/tr-core/src/decoder.rs",
+      "sha256": "3d52172b82fcb94989a1d6b74c951324093c90ad0745a2b5e28a03a3a5d987de"
+    },
+    {
+      "path": "crates/tr-core/src/raw_wb.rs",
+      "sha256": "b350352c0e8b5ed159f544901bfc7ad777d4dc0267c653537a6fcdee3edc6d15"
+    },
+    {
+      "path": "crates/tr-raw/research/bayer.rs",
+      "sha256": "24b1e7d21e439360ea484c6f718cd197ce21d03112bc80f4997a7d17ab1892a5"
+    },
+    {
+      "path": "crates/tr-raw/research/bayer_guarded.rs",
+      "sha256": "e479198ca60a189333a6678eb93d7e8ce696b426c0730c60f8b15354fdd7387f"
+    },
+    {
+      "path": "crates/tr-raw/research/bayer_guided.rs",
+      "sha256": "b78231cf7c40a4a93fdad3e68dcef9c9b464fba7588f81f6b7f7d991ab69803a"
+    },
+    {
+      "path": "crates/tr-raw/research/calibration.rs",
+      "sha256": "4406445c08a8817ac8141ecf9f70b4434b5def812448cf88715580c6ce82889a"
+    },
+    {
+      "path": "crates/tr-raw/research/frame_fast.rs",
+      "sha256": "15d8d4d97dbd8ba55b030251bba490d8dd87326cacb4f30fa91c451ffa6de79a"
+    },
+    {
+      "path": "crates/tr-raw/research/fuji.rs",
+      "sha256": "934d9c1f075e4d7f5e44b1aabc463edbaafb6174834be9568f005e89c0a2eb50"
+    },
+    {
+      "path": "crates/tr-raw/research/mod.rs",
+      "sha256": "9aed0000dbf67d5cb8d596fce36c9242d24881997f9adb58dcfdafb2db24e400"
+    },
+    {
+      "path": "crates/tr-raw/research/photographic.rs",
+      "sha256": "3c14410440b39f97fae16f93da5b914f670fdfc4ad5d542960d70216536d9954"
+    },
+    {
+      "path": "crates/tr-raw/research/quality.rs",
+      "sha256": "425bc24ece5513198b506b8fdd8a565e92a70bc60680f646371f6b70af332f8b"
+    },
+    {
+      "path": "crates/tr-raw/src/dng.rs",
+      "sha256": "f1be8b2e54e094f94085c1b8150dcd54b0f2f207e6eb360a32846ac0755c0a3a"
+    },
+    {
+      "path": "crates/tr-raw/src/lib.rs",
+      "sha256": "60b580677a01c96b7ed89ea7a89b1dafaab2724e46edaca9e8b6a5d14222cee9"
+    },
+    {
+      "path": "crates/tr-raw/src/raf.rs",
+      "sha256": "3fd8820d4841807df3f88bfeecc77dd40512f026526673a8eeeb4e99d3bdd71d"
+    },
+    {
+      "path": "crates/tr-raw/src/wb.rs",
+      "sha256": "2e1d51299f3e4f29c15edc3c2129cea298a898a438209604c5adcf97f23c3977"
+    },
+    {
+      "path": "crates/tr-raw/src/xtrans.rs",
+      "sha256": "010ce91806e5f05afa2d390c0c27f50b70ff2a8ea8eb2b0a2d2ee8cd2fba08c9"
+    },
+    {
+      "path": "crates/tr-raw/src/xtrans_dr6/bounded.rs",
+      "sha256": "5df8fde0d30c6b94cda8386ccd15e701bd20ae610c7eb78f683a39b8ec3082c8"
+    },
+    {
+      "path": "crates/tr-raw/src/xtrans_dr6/mod.rs",
+      "sha256": "973d9ea86a871a923ce01898979ba337c00ff03c75eb04f37986ec0a1a605810"
+    },
+    {
+      "path": "crates/tr-raw/src/xtrans_dr6/residual.rs",
+      "sha256": "e2146c1d390c7d3756e394305592f89c7f9767c347ba42c6732e20670155113d"
+    },
+    {
+      "path": "crates/tr-raw/tests/fixtures/bayer-research-v1.json",
+      "sha256": "b656eea23f6b8dde1965b648b4203947e33a6602ef5f70bc3e345e047da51ccd"
+    },
+    {
+      "path": "crates/tr-raw/tests/fixtures/bayer-research-v2.json",
+      "sha256": "b134b64de462b689a027e342464d478d2c4f866d6d9251ae4d71b47caf9e92d6"
+    },
+    {
+      "path": "crates/tr-raw/tests/fixtures/bayer-research-v3.json",
+      "sha256": "5cd21307b0ed48806184c1ecd99c093ca17436bdcccad2e677d546fc41c28a32"
+    },
+    {
+      "path": "crates/tr-store/src/lib.rs",
+      "sha256": "e91db618c851ad606269ce7ef7118278efafa48917ca14c95acbc3e4e613c9e6"
+    },
+    {
+      "path": "crates/tr-worker/src/experimental.rs",
+      "sha256": "7e13dff7c331f030dda25684a90e608867c3ecd284ca613df9818ce2bf01bf5c"
+    },
+    {
+      "path": "docs/calibrazione-raw.md",
+      "sha256": "229ab43ee28645f5aa106497e80623d36e0381184ba65c51deb0897098efe2c3"
+    },
+    {
+      "path": "docs/demosaic-bayer-experimental.md",
+      "sha256": "46044c2e492ea20b5f942851b00c7a28e22b1f72e8cf5bd18544cfb9831ca165"
+    },
+    {
+      "path": "docs/demosaic-xtrans-experimental.md",
+      "sha256": "546fa30009920e16995f0fe4608e36b6b5308561fc6acb8dc3cb8974c2094d98"
+    },
+    {
+      "path": "docs/progetto-truerenderer-experimental.md",
+      "sha256": "45c5a6ec3e0a545265e4d22650ab5736bdf661388a747d7a173ac48ad25fd416"
+    },
+    {
+      "path": "scripts/analyze-raw-wb.py",
+      "sha256": "9111e44dff77c3b30aa117e730d5dcc9957ba1ceefa3c559cc7a373ff318ea68"
+    },
+    {
+      "path": "scripts/calibrate-raw-profile.py",
+      "sha256": "4fecdaaa230be7363e064bc66fec5d8b84b82b882c3100acd32967648e1c28fb"
+    },
+    {
+      "path": "scripts/prepare-xtrans-photo-reference.py",
+      "sha256": "c217a70ad48225617f0ff01ae5c26b4b91c94e1496f2afdf4123d1eeece8c672"
+    },
+    {
+      "path": "scripts/test-raw-calibration.py",
+      "sha256": "15d9afb5fdef1b6d81414f7b2d6ba9ec63c241616b629134318ac3c188a6c2ac"
+    },
+    {
+      "path": "scripts/verify.sh",
+      "sha256": "47dea51cdaf68877ec2ab3824f61798b595e00f113131988995851497359dc4d"
+    },
+    {
+      "path": "tools/raw-lab/src/main.rs",
+      "sha256": "4df4efa9163303418630113ddcc0c49823a19b61cae10e897a95691181ab94e1"
+    }
+  ],
+  "private_evidence": [
+    {
+      "path": "var/experimental-review-20261012/verify.log",
+      "sha256": "4b9cb6443bd69a06955d6e5516dade9be7628beae61e82f605074b8000e2e076"
+    },
+    {
+      "path": "var/experimental-review-20261012/wb.log",
+      "sha256": "f16cfe20adacd778948b5c1838366f464198f40d1f31fa12450ca1d796bfd584"
+    },
+    {
+      "path": "var/experimental-review-20261012/wb-precision.json",
+      "sha256": "9b15f780c4967abbfbafb4f1b57e7c363f80737f83c9a28ada118bd45f44a877"
+    },
+    {
+      "path": "var/experimental-review-20261012/wb-analysis.json",
+      "sha256": "dc4a7524c42bbb954b1ade1045ccea4ec3db43ee4f1d747b8005c3af9b12574c"
+    },
+    {
+      "path": "var/experimental-review-20261012/photographic-overwrite-refusal.log",
+      "sha256": "1fe0c8f840d56f0e65898413a1adb4e8b12e9ccca393b46bc0d32f1e69553941"
+    },
+    {
+      "path": "var/experimental-review-20261012/photographic-empty-refusal.log",
+      "sha256": "5a945b6cdbbec4d9d680eb48326f1870b356cdc6bbfc9b613109c2574d0f96ba"
+    },
+    {
+      "path": "var/experimental-review-20261012/photo-regression.log",
+      "sha256": "76910f785bd5fc881cf76605f8dd6ad636d9d6056642ff0de348f6487a9df5ae"
+    },
+    {
+      "path": "var/experimental-review-20261012/photo-regression/manifest.json",
+      "sha256": "9528b4b400f0ff169baf10bd504b9eff5ddfdf624d20575500435428eaa997b5"
+    },
+    {
+      "path": "var/experimental-review-20261012/photo-regression/photographic-quality-dr6.json",
+      "sha256": "610fa2fb15d2ce38ea45b406d154871e860bd7b0252ad1dd7be9a932fb278e2b"
+    },
+    {
+      "path": "var/experimental-review-20261012/cfa-contract/input.json",
+      "sha256": "2ea53eda7ed67bad67603279436c647d92a556424b31c5b5cb5dcb41982856bb"
+    },
+    {
+      "path": "var/experimental-review-20261012/cfa-contract/candidate.json",
+      "sha256": "b70d24bebddd9531dceddc29132b29d4532758dcf30db44da598422f3949016b"
+    },
+    {
+      "path": "var/experimental-review-20261012/preservation.json",
+      "sha256": "8db41b4e2b0c1b5466e1c38d8b113c5a714e58de561ae01610dead20f981d851"
+    },
+    {
+      "path": "var/experimental-review-20261012/prepared-reference/manifest.json",
+      "sha256": "1b7a30510247160a5d278a6c28762b3d1f9a632e5be42c491ea035440cd33900"
+    },
+    {
+      "path": "var/experimental-review-20261012/prepare-reference.log",
+      "sha256": "da6499e6407b2bfdba2335f8396c5159027abeb9ec5f87683c5a94987e2a0d70"
+    }
+  ]
+}

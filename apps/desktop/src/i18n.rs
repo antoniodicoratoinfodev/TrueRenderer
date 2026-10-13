@@ -735,8 +735,8 @@ impl Language {
             "DNG RAW conserva il mosaico: le regolazioni fotografiche non vengono applicate." => {
                 "RAW DNG preserves the mosaic; photographic edits are not applied."
             }
-            "Per riaprire usare trueRendererExperimental o LibRaw bilineare/AHD, entro i rispettivi formati supportati." => {
-                "Reopen with trueRendererExperimental or LibRaw bilinear/AHD, within each engine's supported formats."
+            "Per riaprire usare trueRendererExperimental 32fp o LibRaw bilineare/AHD, entro i rispettivi formati supportati." => {
+                "Reopen with trueRendererExperimental 32fp or LibRaw bilinear/AHD, within each engine's supported formats."
             }
             "FITS · dati scientifici" => "FITS · scientific data",
             "Prima immagine 2D idonea, sola lettura. Selezione di altri HDU, cubi, tabelle, compressione e WCS non disponibili." => {
@@ -1049,8 +1049,8 @@ impl Language {
             "Disponibile: corpus PNG 8/16 bit, griglia, anteprima, confronto a due, zoom fisico 1:1, campione al puntatore, rating, etichette, parole chiave, ricerca, undo e backup locali." => {
                 "Available: 8/16-bit PNG corpus, grid, preview, two-image comparison, physical 1:1 zoom, pointer sampling, ratings, labels, keywords, search, undo and local backups."
             }
-            "Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, TrueRenderer fp32 o trueRendererExperimental. TrueRenderer fp32 supporta Nikon D750 e D40 Bayer. Experimental apre DNG Bayer/X-Trans supportati, NEF D750/D800 lossless FX e RAF X-T5 lossy a 14 bit. Compatibilità e resa dipendono dal motore scelto." => {
-                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD, TrueRenderer fp32 or trueRendererExperimental. TrueRenderer fp32 supports Nikon D750 and D40 Bayer files. Experimental opens supported Bayer/X-Trans DNGs, D750/D800 lossless FX NEFs and X-T5 lossy 14-bit RAFs. Compatibility and rendering depend on the selected engine."
+            "Scegli il motore RAW nelle impostazioni: Apple sul Mac, LibRaw bilineare/AHD, (old)truerenderer o trueRendererExperimental 32fp. (old)truerenderer supporta Nikon D750 e D40 Bayer. Experimental apre DNG Bayer/X-Trans supportati, NEF D750/D800 lossless FX e RAF X-T5 lossy a 14 bit. Compatibilità e resa dipendono dal motore scelto." => {
+                "Choose the RAW engine in Settings: Apple on Mac, LibRaw bilinear/AHD, (old)truerenderer or trueRendererExperimental 32fp. (old)truerenderer supports Nikon D750 and D40 Bayer files. Experimental opens supported Bayer/X-Trans DNGs, D750/D800 lossless FX NEFs and X-T5 lossy 14-bit RAFs. Compatibility and rendering depend on the selected engine."
             }
             "Restano da qualificare: XPC/App Sandbox e Windows, ICC/Little CMS, presentazione sul monitor, filtri e CPU/GPU, accessibilità e prestazioni. JPEG/TIFF, RAW, XMP e gigapixel seguono la roadmap. Il badge rimane Anteprima." => {
                 "Qualification remains open for XPC/App Sandbox and Windows, ICC/Little CMS, monitor presentation, filters and CPU/GPU, accessibility and performance. Format qualification, XMP and gigapixel support follow the roadmap. Assurance remains Preview."
@@ -1166,7 +1166,6 @@ impl Language {
             "Anteprima standard" => "Standard preview",
             "Anteprima a qualità piena" => "Full-quality preview",
             "LibRaw bilineare (storico)" => "LibRaw bilinear (legacy)",
-            "TrueRenderer fp32 (sperimentale)" => "TrueRenderer fp32 (experimental)",
             "Lingua" => "Language",
             "Avvio del motore…" => "Starting engine…",
             "Diagnostica GPU in corso…" => "Running GPU diagnostics…",

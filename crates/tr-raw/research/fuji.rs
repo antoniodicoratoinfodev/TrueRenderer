@@ -316,6 +316,16 @@ impl<'a> BitWindow<'a> {
         }
     }
     fn fill(&mut self) {
+        if self.bytes.len() - self.next >= 8 {
+            // Load a word but consume only complete bytes that fit. The two
+            // shifts discard lookahead beyond `count`; it is not valid data.
+            let count = (64 - self.valid) / 8;
+            let word = u64::from_be_bytes(self.bytes[self.next..self.next + 8].try_into().unwrap());
+            self.register |= (word >> (64 - count * 8)) << (64 - self.valid - count * 8);
+            self.next += count as usize;
+            self.valid += count * 8;
+            return;
+        }
         while self.valid <= 56 && self.next < self.bytes.len() {
             self.register |= u64::from(self.bytes[self.next]) << (56 - self.valid);
             self.next += 1;
@@ -369,6 +379,7 @@ struct Adaptation {
 }
 struct Model {
     q: i32,
+    thresholds: [i32; 4],
     cardinality: u32,
     escape_bits: u32,
     contexts: [[Adaptation; 41]; 6],
@@ -379,6 +390,7 @@ impl Model {
         let cardinality = ((MAXIMUM + 2 * q) / (2 * q + 1) + 1) as u32;
         Self {
             q,
+            thresholds: [q + 1, 3 * q + 18, 5 * q + 67, 7 * q + 276],
             cardinality,
             escape_bits: 32 - (cardinality - 1).leading_zeros(),
             contexts: [[Adaptation {
@@ -390,17 +402,12 @@ impl Model {
     #[inline(always)]
     fn bucket(&self, v: i32) -> i32 {
         let a = v.abs();
-        let magnitude = if a <= self.q {
-            0
-        } else if a < 3 * self.q + 18 {
-            1
-        } else if a < 5 * self.q + 67 {
-            2
-        } else if a < 7 * self.q + 276 {
-            3
-        } else {
-            4
-        };
+        // Ordered thresholds turn the branch chain into four independent
+        // comparisons. Hoist q-dependent arithmetic out of the sample loop.
+        let magnitude = i32::from(a >= self.thresholds[0])
+            + i32::from(a >= self.thresholds[1])
+            + i32::from(a >= self.thresholds[2])
+            + i32::from(a >= self.thresholds[3]);
         magnitude * v.signum()
     }
 }
@@ -495,6 +502,53 @@ impl Models {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn quantizer_buckets_match_contract_for_every_sensor_gradient() {
+        for q in 0..=255 {
+            let model = Model::new(q);
+            let q = i32::from(q);
+            for v in -MAXIMUM..=MAXIMUM {
+                let a = v.abs();
+                let expected = if a <= q {
+                    0
+                } else if a < 3 * q + 18 {
+                    1
+                } else if a < 5 * q + 67 {
+                    2
+                } else if a < 7 * q + 276 {
+                    3
+                } else {
+                    4
+                };
+                assert_eq!(model.bucket(v), expected * v.signum(), "q={q}, v={v}");
+            }
+        }
+    }
+    #[test]
+    fn word_refill_matches_bit_at_a_time_with_every_tail_and_alignment() {
+        for length in 1..80 {
+            let bytes: Vec<_> = (0..length).map(|i| (i * 137 + 29) as u8).collect();
+            for initial in 0..8 {
+                let mut reader = BitWindow::new(&bytes);
+                reader.take(initial).unwrap();
+                let mut position = initial as usize;
+                let mut step = 1;
+                while position < length * 8 {
+                    let n = step.min(length * 8 - position);
+                    let mut expected = 0;
+                    for bit in position..position + n {
+                        expected =
+                            (expected << 1) | u32::from((bytes[bit / 8] >> (7 - bit % 8)) & 1);
+                    }
+                    assert_eq!(reader.take(n as u32).unwrap(), expected);
+                    position += n;
+                    assert_eq!(reader.remaining_bits(), length * 8 - position);
+                    step = step % 16 + 1;
+                }
+                assert!(reader.take(1).is_err());
+            }
+        }
+    }
     fn codeword(zeros: usize, suffix: u32, bits: usize) -> Vec<u8> {
         let mut stream = vec![false; zeros];
         stream.push(true);

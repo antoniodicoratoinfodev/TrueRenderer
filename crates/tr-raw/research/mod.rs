@@ -212,7 +212,7 @@ fn codec_research_campaign() -> Result<()> {
     // A lower bound is enough to prove that the candidate's tracked live
     // buffers do not grow: E8 also has table/reader metadata beyond this sum.
     let baseline_buffer_lower_bound = full_count * 2 + 18 * 514 * 4 + 4 * 6 * 41 * 2 * 4;
-    let report = json!({"protocol":"TRExp-research-v1","source_sha256":hash(&source),"payload_sha256":hash(payload),
+    let report = json!({"protocol":"TRExp-research-v1","candidate_source_sha256":hash(include_bytes!("fuji.rs")),"source_sha256":hash(&source),"payload_sha256":hash(payload),
         "reference_sha256":hash(&ref_bytes),"full_sensor_samples_compared":full_count,"adobe_active_samples_compared":width*height,
         "sample_mismatches":0,"output_u16le_sha256":output_hash,"baseline":baseline,"candidate":proposed,"p50_ratio":ratio,
         "speed_target_passed":ratio<=0.8,"warmups":warmups,"repetitions":iterations,
@@ -223,7 +223,12 @@ fn codec_research_campaign() -> Result<()> {
         "provenance_qualified":false,"production_selected":false,"photographic_files":1,
         "limits":["same-session format knowledge includes CDDL source","no cold-start or thermal control","no lossless photographic corpus","Adobe excludes inactive sensor margins","memory is buffer accounting, not process RSS"]});
     let destination = config["output"].as_str().context("output")?;
-    fs::write(destination, serde_json::to_vec_pretty(&report)?)?;
+    use std::io::Write;
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(destination)?
+        .write_all(&serde_json::to_vec_pretty(&report)?)?;
     println!(
         "full samples={full_count}; Adobe={}; p50 ratio={ratio:.4}; report={destination}",
         width * height

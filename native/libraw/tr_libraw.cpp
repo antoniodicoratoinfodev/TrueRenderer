@@ -255,7 +255,7 @@ int mosaic_info(LibRaw &raw, TRMosaicInfo *info, char *error, size_t size) {
     if ((!nikon && !fixture) || id.colors != 3 || id.filters <= 1000 ||
         s.width < 8 || s.height < 8 || size_t(s.width) * s.height > 67108864 ||
         (s.flip != 0 && s.flip != 3 && s.flip != 5 && s.flip != 6)) {
-        message(error, size, "TrueRenderer sperimentale: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato");
+        message(error, size, "(old)truerenderer: solo Nikon D750/D40 Bayer e DNG sintetico TrueRenderer; formato/orientamento non supportato");
         return 1;
     }
     if ((c.cblack[4] || c.cblack[5]) &&

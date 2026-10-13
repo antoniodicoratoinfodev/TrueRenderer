@@ -40,6 +40,79 @@ mod residual_constrained;
 #[path = "residual_refined.rs"]
 mod residual_refined;
 
+use crate::xtrans_dr6::bounded as bounded_fast;
+#[path = "bayer.rs"]
+mod bayer;
+#[path = "bayer_guarded.rs"]
+mod bayer_guarded;
+#[path = "bayer_guided.rs"]
+mod bayer_guided;
+#[path = "frame_fast.rs"]
+mod frame_fast;
+
+#[test]
+fn integrated_dr6_matches_frozen_rgb_through_matrix_crop_and_all_orientations() {
+    let (w, h) = (41, 35);
+    let matrix = [
+        [1.13, -0.22, 0.034],
+        [-0.27, 1.21, 0.08],
+        [0.09, -0.03, 0.97],
+    ];
+    for phase in 0..36 {
+        let cfa = Cfa::new(6, &XTRANS).unwrap().shifted(phase % 6, phase / 6);
+        for gains in [[1., 1., 1.], [1.2, 1., 0.8]] {
+            let mosaic: Vec<_> = (0..w * h)
+                .map(|i| {
+                    let x = (i % w) as f32;
+                    let y = (i / w) as f32;
+                    (-0.2 + 0.8 * (x * 0.2 + y * 0.1).sin() + cfa.color(i % w, i / w) as f32 * 0.5)
+                        * gains[cfa.color(i % w, i / w)]
+                })
+                .collect();
+            let rgb = constrained::reconstruct(&mosaic, w, h, cfa);
+            let m = matrix.map(|r| r.map(|v| v as f32));
+            for [left, top, cw, ch] in [[0, 0, w, h], [3, 2, 29, 27]] {
+                for orientation in 1..=8 {
+                    let image = xtrans::develop(
+                        &mosaic,
+                        w,
+                        h,
+                        cfa,
+                        matrix,
+                        [left, top, cw, ch],
+                        orientation,
+                    )
+                    .unwrap();
+                    let expected_size = if orientation < 5 { (cw, ch) } else { (ch, cw) };
+                    assert_eq!((image.width as usize, image.height as usize), expected_size);
+                    for y in 0..ch {
+                        for x in 0..cw {
+                            let (ox, oy) = match orientation {
+                                1 => (x, y),
+                                2 => (cw - 1 - x, y),
+                                3 => (cw - 1 - x, ch - 1 - y),
+                                4 => (x, ch - 1 - y),
+                                5 => (y, x),
+                                6 => (ch - 1 - y, x),
+                                7 => (ch - 1 - y, cw - 1 - x),
+                                8 => (y, cw - 1 - x),
+                                _ => unreachable!(),
+                            };
+                            let p = rgb[(top + y) * w + left + x];
+                            let expected = m.map(|r| r[0] * p[0] + r[1] * p[1] + r[2] * p[2]);
+                            let actual = image.pixels[oy * expected_size.0 + ox];
+                            assert_eq!(actual[3], 1.);
+                            for c in 0..3 {
+                                assert!((actual[c] - expected[c]).abs() <= 4e-6);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 #[test]
 fn camera_rgb_refactor_is_bit_exact_with_frozen_e8() {
     let (w, h) = (29, 23);
@@ -57,7 +130,8 @@ fn camera_rgb_refactor_is_bit_exact_with_frozen_e8() {
         for orientation in 1..=8 {
             for crop in [[0, 0, w, h], [2, 3, 19, 17]] {
                 let a = xtrans_e8::develop(&mosaic, w, h, cfa, matrix, crop, orientation).unwrap();
-                let b = xtrans::develop(&mosaic, w, h, cfa, matrix, crop, orientation).unwrap();
+                let b = xtrans::baseline_develop(&mosaic, w, h, cfa, matrix, crop, orientation)
+                    .unwrap();
                 assert_eq!((a.width, a.height), (b.width, b.height));
                 for (a, b) in a.pixels.iter().zip(&b.pixels) {
                     assert_eq!(a.map(f32::to_bits), b.map(f32::to_bits));
@@ -97,7 +171,7 @@ fn photographic_refactor_research_campaign() -> Result<()> {
             mosaic.crop,
             mosaic.orientation,
         )?;
-        let b = xtrans::develop(
+        let b = xtrans::baseline_develop(
             &mosaic.values,
             mosaic.width,
             mosaic.height,
@@ -459,6 +533,26 @@ fn constrained_previous_research_campaign() -> Result<()> {
     run_quality_campaign("DR6", include_str!("../tests/fixtures/research-v5.json"))
 }
 
+#[test]
+#[ignore = "offline Bayer research campaign; needs TR_QUALITY_LAB_ROOT, TR_QUALITY_SPLIT and TR_BAYER_CANDIDATE"]
+fn bayer_quality_research_campaign() -> Result<()> {
+    let candidate = std::env::var("TR_BAYER_CANDIDATE")?;
+    ensure!(
+        matches!(candidate.as_str(), "BR1" | "BR2" | "BR3" | "BR4" | "BR5"),
+        "Bayer candidate"
+    );
+    run_quality_campaign(
+        &candidate,
+        if candidate == "BR5" {
+            include_str!("../tests/fixtures/bayer-research-v3.json")
+        } else if matches!(candidate.as_str(), "BR3" | "BR4") {
+            include_str!("../tests/fixtures/bayer-research-v2.json")
+        } else {
+            include_str!("../tests/fixtures/bayer-research-v1.json")
+        },
+    )
+}
+
 fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
     let root = PathBuf::from(
         std::env::var("TR_QUALITY_LAB_ROOT").context("TR_QUALITY_LAB_ROOT required")?,
@@ -483,8 +577,14 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
     let mut all_passed = true;
     let mut worst_ratios: BTreeMap<String, f64> = BTreeMap::new();
     let mut worst_cases: BTreeMap<String, Value> = BTreeMap::new();
-    for phase in 0..36 {
-        let cfa = Cfa::new(6, &XTRANS)?.shifted(phase % 6, phase / 6);
+    let is_bayer = matches!(candidate, "BR1" | "BR2" | "BR3" | "BR4" | "BR5");
+    let phases = if is_bayer { 4 } else { 36 };
+    for phase in 0..phases {
+        let cfa = if is_bayer {
+            Cfa::bayer([0, 1, 1, 2]).shifted(phase % 2, phase / 2)
+        } else {
+            Cfa::new(6, &XTRANS)?.shifted(phase % 6, phase / 6)
+        };
         let mut per_phase: BTreeMap<&str, [Metrics; 2]> = BTreeMap::new();
         for (case, scene) in cases.iter().enumerate() {
             let mut seed = q[&split]["seed"].as_u64().unwrap() as u32
@@ -513,8 +613,16 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
                     (f64::from(rgb[cfa.color(i % w, i / w)]) + value) as f32
                 })
                 .collect();
-            let base = xtrans::CameraRgb::new(&mosaic, w, h, cfa);
-            let a: Vec<_> = (0..w * h).map(|i| base.at(i % w, i / w)).collect();
+            let a: Vec<_> = if is_bayer {
+                crate::render::develop(&mosaic, w, h, cfa, crate::color::ID, [0, 0, w, h], 1)?
+                    .pixels
+                    .iter()
+                    .map(|p| [p[0], p[1], p[2]])
+                    .collect()
+            } else {
+                let base = xtrans::CameraRgb::new(&mosaic, w, h, cfa);
+                (0..w * h).map(|i| base.at(i % w, i / w)).collect()
+            };
             let b = match candidate {
                 "DR1" => directional::reconstruct(&mosaic, w, h, cfa),
                 "DR2" => residual::reconstruct(&mosaic, w, h, cfa),
@@ -522,6 +630,9 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
                 "DR4" => confidence::reconstruct(&mosaic, w, h, cfa),
                 "DR5" => refined::reconstruct(&mosaic, w, h, cfa),
                 "DR6" => constrained::reconstruct(&mosaic, w, h, cfa),
+                "BR1" | "BR2" => bayer::reconstruct(&mosaic, w, h, cfa, &a, candidate == "BR2"),
+                "BR3" | "BR4" => bayer_guided::reconstruct(&mosaic, w, h, cfa, candidate == "BR4"),
+                "BR5" => bayer_guarded::reconstruct(&mosaic, w, h, cfa, &a),
                 _ => anyhow::bail!("unknown candidate"),
             };
             let metrics = [
@@ -571,19 +682,30 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
         if matches!(candidate, "DR4" | "DR5" | "DR6") && (phase + 1) % 6 == 0 {
             println!("{split}: {}/36 phases measured", phase + 1);
         }
+        if is_bayer {
+            println!("{candidate} {split}: {}/4 phases measured", phase + 1);
+        }
     }
     let categories:Vec<_>=totals.iter().map(|(category,pair)|json!({"category":category,"baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(pair,category,q)})).collect();
-    let report = json!({"protocol":protocol["protocol"],"protocol_sha256":hash(text.as_bytes()),"candidate":candidate,"split":split,
-        "scenes":cases.iter().map(|s|&s.name).collect::<Vec<_>>(),"scene_phase_cases":cases.len()*36,"width":w,"height":h,
+    let candidate_source = match candidate {
+        "BR1" | "BR2" => Some(include_bytes!("bayer.rs").as_slice()),
+        "BR3" | "BR4" => Some(include_bytes!("bayer_guided.rs").as_slice()),
+        "BR5" => Some(include_bytes!("bayer_guarded.rs").as_slice()),
+        _ => None,
+    };
+    let report = json!({"protocol":protocol["protocol"],"protocol_sha256":hash(text.as_bytes()),"candidate":candidate,"candidate_source_sha256":candidate_source.map(hash),"split":split,
+        "scenes":cases.iter().map(|s|&s.name).collect::<Vec<_>>(),"scene_phase_cases":cases.len()*phases,"width":w,"height":h,
         "synthetic_gates_passed":all_passed,"production_promoted":false,"photographic_ground_truth_available":false,
         "categories":categories,"worst_phase_ratios":worst_ratios,"worst_scene_phase_cases":worst_cases,"per_phase":details});
-    fs::write(
-        root.join(format!("quality-{split}.json")),
-        serde_json::to_vec_pretty(&report)?,
-    )?;
+    use std::io::Write;
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(root.join(format!("quality-{split}.json")))?
+        .write_all(&serde_json::to_vec_pretty(&report)?)?;
     println!(
         "{split}: {} cases, synthetic gates={all_passed}",
-        cases.len() * 36
+        cases.len() * phases
     );
     Ok(())
 }
@@ -733,6 +855,17 @@ fn check_distinct_holdout(old: &Value, new: &Value) {
 }
 
 #[test]
+fn bayer_v2_uses_four_phases_and_an_unconsumed_holdout() {
+    let old: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/bayer-research-v1.json")).unwrap();
+    let new: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/bayer-research-v2.json")).unwrap();
+    assert_eq!(new["quality"]["phases"], 4);
+    assert_eq!(old["quality"]["development"], new["quality"]["development"]);
+    check_distinct_holdout(&old, &new);
+}
+
+#[test]
 fn noisy_structure_and_spatial_stress_do_not_dilute_the_original_categories() {
     let protocol: Value =
         serde_json::from_str(include_str!("../tests/fixtures/research-v4.json")).unwrap();
@@ -777,5 +910,53 @@ fn stratified_protocols_expand_validation_without_changing_development_gates() {
                 .len(),
             10
         );
+    }
+}
+
+#[test]
+fn optimized_execution_matches_frozen_dr6_on_structures_and_noise() {
+    for (w, h) in [(6, 7), (17, 21), (79, 65)] {
+        for phase in 0..36 {
+            let cfa = Cfa::new(6, &XTRANS).unwrap().shifted(phase % 6, phase / 6);
+            for mode in 0..3 {
+                let mosaic: Vec<_> = (0..w * h)
+                    .map(|i| {
+                        let noise = ((i * 7919 + phase * 31) % 997) as f32 / 997. - 0.5;
+                        let signal = ((i % w) as f32 * 0.21 + (i / w) as f32 * 0.13).sin();
+                        match mode {
+                            0 => 0.4 + 0.03 * noise,
+                            1 => {
+                                -0.3 + 0.8 * signal
+                                    + 0.01 * noise
+                                    + cfa.color(i % w, i / w) as f32 * 0.6
+                            }
+                            _ => (if i % w < w / 2 { -0.2 } else { 1.7 }) + 0.02 * noise,
+                        }
+                    })
+                    .collect();
+                let expected = constrained::reconstruct(&mosaic, w, h, cfa);
+                let actual = crate::xtrans_dr6::reconstruct(&mosaic, w, h, cfa);
+                for (i, (a, b)) in actual.iter().zip(&expected).enumerate() {
+                    let channel = cfa.color(i % w, i / w);
+                    assert_eq!(a[channel].to_bits(), mosaic[i].to_bits());
+                    for c in 0..3 {
+                        assert!((a[c] - b[c]).abs() <= 2e-6, "{phase} {mode} {i} {c}");
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn bayer_v3_keeps_gates_and_changes_both_consumed_holdouts() {
+    let new: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/bayer-research-v3.json")).unwrap();
+    for text in [
+        include_str!("../tests/fixtures/bayer-research-v1.json"),
+        include_str!("../tests/fixtures/bayer-research-v2.json"),
+    ] {
+        let old: Value = serde_json::from_str(text).unwrap();
+        check_distinct_holdout(&old, &new);
     }
 }

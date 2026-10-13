@@ -1077,6 +1077,21 @@ mod tests {
             },
             ..request
         };
+        let precise_a = PreviewRequest {
+            raw_engine: tr_core::decoder::RawEngine::TrueRendererExperimental,
+            raw_wb: tr_core::decoder::RawWhiteBalance::precise_sensor_gains([1.333317, 1., 0.8])
+                .unwrap(),
+            ..request
+        };
+        let precise_b = PreviewRequest {
+            raw_wb: tr_core::decoder::RawWhiteBalance::precise_sensor_gains([1.333318, 1., 0.8])
+                .unwrap(),
+            ..precise_a
+        };
+        assert_ne!(
+            cache.preview_key("engine-fixture", precise_a),
+            cache.preview_key("engine-fixture", precise_b)
+        );
         assert_ne!(
             original_key,
             cache.preview_key("engine-fixture", changed_wb)

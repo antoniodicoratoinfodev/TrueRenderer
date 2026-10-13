@@ -33,6 +33,29 @@ fn check_raw(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
         broker.set_raw_engine(RawEngine::TrueRendererExperimental);
         let source = broker.prepare_snapshot(path, &digest, || false)?;
         let info = broker.probe_snapshot(&source, || false)?;
+        let cancelled_pid = if path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("raf"))
+        {
+            let pid = broker.statistics().worker_pid;
+            let stops = broker.statistics().forced_stops;
+            let started = Instant::now();
+            let failure = match broker.decode_snapshot_cancellable(source.clone(), 0, || {
+                started.elapsed() >= std::time::Duration::from_millis(150)
+            }) {
+                Ok(_) => anyhow::bail!("RAF cancellation finished without interruption"),
+                Err(error) => error.to_string(),
+            };
+            ensure!(
+                failure.contains("annullata")
+                    && started.elapsed() < std::time::Duration::from_secs(3)
+                    && broker.statistics().forced_stops == stops + 1,
+                "RAF in-flight cancellation did not stop its worker: {failure}"
+            );
+            pid
+        } else {
+            None
+        };
         let started = Instant::now();
         let decoded = broker.decode_snapshot_cancellable(
             source.clone(),
@@ -48,6 +71,12 @@ fn check_raw(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
             "Experimental recipe missing"
         );
         let image = decoded.raster;
+        if let Some(pid) = cancelled_pid {
+            ensure!(
+                decoded.worker_pid != Some(pid),
+                "Cancelled RAF worker was not replaced"
+            );
+        }
         if let Some(expected) = &reference {
             ensure!(expected == &image.pixels, "XPC slots differ");
         } else {
@@ -100,11 +129,7 @@ fn check_raw(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
                 image::ColorType::Rgba8,
             )?;
         }
-        let wb = RawWhiteBalance {
-            red: 1150,
-            blue: 900,
-            ..Default::default()
-        };
+        let wb = RawWhiteBalance::precise_sensor_gains([1.150317, 1., 0.900273])?;
         broker.set_raw_white_balance(wb);
         let wb_probe = broker.probe_snapshot(&source, || false)?;
         let wb_image = broker.decode_snapshot_cancellable(source.clone(), 1024, || false)?;
@@ -182,7 +207,7 @@ fn check_raw(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
             };
             wb_estimates.push(value);
         }
-        cases.push(serde_json::json!({"slot":slot,"worker_pid":decoded.worker_pid,"info":info,"seconds":elapsed,"linear_min":minimum,"linear_max":maximum,"repack_pixels_exact":roundtrip,"repacked_path":repacked_path,"repacked_sha256":repacked_sha256,"wb_probe_decode_match":true,"cfa_wb_estimates":wb_estimates,"rgb_exports":exports,"observed_peak_rss_bytes":broker.statistics().peak_rss_bytes}));
+        cases.push(serde_json::json!({"slot":slot,"worker_pid":decoded.worker_pid,"cancelled_raf_worker_pid":cancelled_pid,"info":info,"seconds":elapsed,"linear_min":minimum,"linear_max":maximum,"repack_pixels_exact":roundtrip,"repacked_path":repacked_path,"repacked_sha256":repacked_sha256,"wb_probe_decode_match":true,"cfa_wb_estimates":wb_estimates,"rgb_exports":exports,"observed_peak_rss_bytes":broker.statistics().peak_rss_bytes}));
     }
     ensure!(tr_platform::snapshot(path)?.1 == digest, "Original changed");
     Ok(

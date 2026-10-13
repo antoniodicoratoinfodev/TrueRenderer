@@ -9,7 +9,8 @@ use std::{
 };
 
 // Shared sensor geometry only; the standalone executable does not import the
-// derived codec, RAF parser, compatibility profiles, or production library.
+// E8 codec module, RAF parser, compatibility profiles, or production library.
+// The laboratory candidate retains its own CDDL/provenance notice.
 #[allow(dead_code)]
 #[path = "../../../crates/tr-raw/src/cfa.rs"]
 mod cfa;
