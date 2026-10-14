@@ -1,4 +1,5 @@
 //! Bounded execution of the frozen DR6 equations.
+#[cfg(test)]
 use super as refined;
 use crate::cfa::Cfa;
 use anyhow::{Result, ensure};
@@ -14,11 +15,32 @@ pub struct Statistics {
     pub largest_tile_pixels: usize,
 }
 
+#[cfg(test)]
 pub fn reconstruct_into(
     mosaic: &[f32],
     width: usize,
     height: usize,
     cfa: Cfa,
+    cancelled: impl FnMut() -> bool,
+    emit: impl FnMut(usize, usize, [f32; 3]) -> Result<()>,
+) -> Result<Statistics> {
+    reconstruct_with(
+        mosaic,
+        width,
+        height,
+        cfa,
+        |m, w, h, c, _, _| refined::reconstruct(m, w, h, c),
+        cancelled,
+        emit,
+    )
+}
+
+pub(crate) fn reconstruct_with(
+    mosaic: &[f32],
+    width: usize,
+    height: usize,
+    cfa: Cfa,
+    reconstruct: impl Fn(&[f32], usize, usize, Cfa, usize, usize) -> Vec<[f32; 3]>,
     mut cancelled: impl FnMut() -> bool,
     mut emit: impl FnMut(usize, usize, [f32; 3]) -> Result<()>,
 ) -> Result<Statistics> {
@@ -48,7 +70,7 @@ pub fn reconstruct_into(
             for y in y0..y1 {
                 tile.extend_from_slice(&mosaic[y * width + x0..y * width + x1]);
             }
-            let rgb = refined::reconstruct(&tile, w, h, cfa.shifted(x0, y0));
+            let rgb = reconstruct(&tile, w, h, cfa.shifted(x0, y0), x0, y0);
             for y in top..bottom {
                 for x in left..right {
                     emit(x, y, rgb[(y - y0) * w + x - x0])?;
@@ -123,6 +145,8 @@ mod tests {
         let side = CORE_EDGE + 2 * HALO;
         let buffers = (side + 1).pow(2) * (18 + 4) * size_of::<f64>()
             + side.pow(2) * (size_of::<f64>() + 5 * size_of::<f32>() + 3 * size_of::<[f32; 3]>())
+            + side.pow(2) * size_of::<bool>() + 8 * 1024 // edge mask and local fits
+            + crate::edge_planes::RangeRows::reservation_bytes(side)
             + 256 * 1024; // neighbor vectors and metadata, conservative
         assert!(buffers <= SCRATCH_RESERVATION_BYTES);
         let (w, h) = (257, 133);

@@ -13,6 +13,37 @@ use std::{
     path::{Path, PathBuf},
 };
 
+fn extrema(rgb: &[[f32; 3]], truth: &[[f32; 3]], w: usize, h: usize) -> Value {
+    let (mut colour, mut chroma, mut gradient) = (0f64, 0f64, 0f64);
+    for y in 0..h {
+        for x in 0..w {
+            let i = y * w + x;
+            let (a, b) = (rgb[i], truth[i]);
+            let (sa, sb) = (
+                a.map(f64::from).into_iter().sum::<f64>(),
+                b.map(f64::from).into_iter().sum::<f64>(),
+            );
+            for c in 0..3 {
+                colour = colour.max((f64::from(a[c]) - f64::from(b[c])).abs());
+                if sa > 0.01 && sb > 0.01 {
+                    chroma = chroma.max((f64::from(a[c]) / sa - f64::from(b[c]) / sb).abs());
+                }
+                for j in [(x + 1 < w).then_some(i + 1), (y + 1 < h).then_some(i + w)]
+                    .into_iter()
+                    .flatten()
+                {
+                    gradient = gradient.max(
+                        (f64::from(rgb[j][c]) - f64::from(a[c]) - f64::from(truth[j][c])
+                            + f64::from(b[c]))
+                        .abs(),
+                    );
+                }
+            }
+        }
+    }
+    json!({"rgb_max_abs":colour,"chroma_max_abs":chroma,"gradient_max_abs":gradient})
+}
+
 fn validate_manifest(config: &Value, requested: Option<&str>) -> Result<String> {
     ensure!(
         config["protocol"] == "TRExp-photo-remosaic-v1",
@@ -20,14 +51,17 @@ fn validate_manifest(config: &Value, requested: Option<&str>) -> Result<String> 
     );
     let candidate = config["candidate"].as_str().context("manifest candidate")?;
     ensure!(
-        matches!(candidate, "DR4" | "DR5" | "DR6"),
+        matches!(candidate, "DR4" | "DR5" | "DR6" | "DR7" | "BR6"),
         "photo candidate"
     );
     ensure!(
         requested.is_none_or(|value| value == candidate),
         "candidate differs from frozen manifest"
     );
-    ensure!(config["phases"] == 36, "all 36 phases required");
+    ensure!(
+        config["phases"] == if candidate == "BR6" { 4 } else { 36 },
+        "all CFA phases required"
+    );
     ensure!(
         config["border"] == 16
             && config["other_category_and_detail_rmse_max_ratio"] == 1.05
@@ -110,11 +144,14 @@ fn photographic_quality_research_campaign() -> Result<()> {
     let requested = std::env::var("TR_PHOTO_CANDIDATE").ok();
     let candidate = validate_manifest(&config, requested.as_deref())?;
     let border = config["border"].as_u64().context("border")? as usize;
+    let phase_count = if candidate == "BR6" { 4 } else { 36 };
     let root = path.parent().context("manifest parent")?;
     let destination = root.join(match candidate.as_str() {
         "DR4" => "photographic-quality.json",
         "DR5" => "photographic-quality-dr5.json",
         "DR6" => "photographic-quality-dr6.json",
+        "DR7" => "photographic-quality-dr7.json",
+        "BR6" => "photographic-quality-br6.json",
         _ => unreachable!(),
     });
     ensure!(!destination.exists(), "report already exists");
@@ -167,8 +204,12 @@ fn photographic_quality_research_campaign() -> Result<()> {
                 sigma,
                 noise_correlation: 0.,
             };
-            for phase in 0..36 {
-                let cfa = Cfa::new(6, &XTRANS)?.shifted(phase % 6, phase / 6);
+            for phase in 0..phase_count {
+                let cfa = if candidate == "BR6" {
+                    Cfa::bayer([0, 1, 1, 2]).shifted(phase % 2, phase / 2)
+                } else {
+                    Cfa::new(6, &XTRANS)?.shifted(phase % 6, phase / 6)
+                };
                 let mut seed = config["seed"].as_u64().context("seed")? as u32
                     ^ (tile_id as u32 * 1877 + phase as u32 * 8191 + noise_id as u32 * 131071);
                 let mosaic: Vec<_> = truth
@@ -181,12 +222,44 @@ fn photographic_quality_research_campaign() -> Result<()> {
                         (f64::from(p[cfa.color(i % w, i / w)]) + noise) as f32
                     })
                     .collect();
-                let baseline = xtrans::CameraRgb::new(&mosaic, w, h, cfa);
-                let a: Vec<_> = (0..w * h).map(|i| baseline.at(i % w, i / w)).collect();
+                let a: Vec<_> = if candidate == "DR7" {
+                    crate::xtrans_dr6::reconstruct(&mosaic, w, h, cfa)
+                } else if candidate == "BR6" {
+                    crate::render::frame_reference::develop(
+                        &mosaic,
+                        w,
+                        h,
+                        cfa,
+                        crate::color::ID,
+                        [0, 0, w, h],
+                        1,
+                    )?
+                    .pixels
+                    .into_iter()
+                    .map(|p| [p[0], p[1], p[2]])
+                    .collect()
+                } else {
+                    let baseline = xtrans::CameraRgb::new(&mosaic, w, h, cfa);
+                    (0..w * h).map(|i| baseline.at(i % w, i / w)).collect()
+                };
                 let b = match candidate.as_str() {
                     "DR4" => confidence::reconstruct(&mosaic, w, h, cfa),
                     "DR5" => refined::reconstruct(&mosaic, w, h, cfa),
                     "DR6" => constrained::reconstruct(&mosaic, w, h, cfa),
+                    "DR7" => crate::xtrans_steps::reconstruct(&mosaic, w, h, cfa),
+                    "BR6" => crate::render::develop(
+                        &mosaic,
+                        w,
+                        h,
+                        cfa,
+                        crate::color::ID,
+                        [0, 0, w, h],
+                        1,
+                    )?
+                    .pixels
+                    .into_iter()
+                    .map(|p| [p[0], p[1], p[2]])
+                    .collect(),
                     _ => unreachable!(),
                 };
                 let pair = [
@@ -202,7 +275,9 @@ fn photographic_quality_research_campaign() -> Result<()> {
                     phases.entry((category.clone(), phase)).or_default()[i].merge(m);
                 }
                 details.push(json!({"tile":name,"category":category,"phase":phase,
-                    "baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(&pair,"photographic",&config)}));
+                    "baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(&pair,"photographic",&config),
+                    "baseline_extrema":extrema(&a,&truth,w,h),"candidate_extrema":extrema(&b,&truth,w,h),
+                    "changed_components":a.iter().flatten().zip(b.iter().flatten()).filter(|(a,b)| a.to_bits()!=b.to_bits()).count()}));
             }
         }
         if (tile_id + 1) % 9 == 0 {
@@ -212,13 +287,16 @@ fn photographic_quality_research_campaign() -> Result<()> {
     let per_phase:Vec<_>=phases.iter().map(|((category,phase),pair)|json!({"category":category,"phase":phase,
         "baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(pair,"photographic",&config)})).collect();
     ensure!(
-        details.len() == config["tiles"].as_array().unwrap().len() * 2 * 36,
+        details.len() == config["tiles"].as_array().unwrap().len() * 2 * phase_count,
         "incomplete campaign"
     );
     let all_passed = !per_phase.is_empty() && per_phase.iter().all(|p| p["gate"]["passed"] == true);
     let categories:Vec<_>=aggregates.iter().map(|(category,pair)|json!({"category":category,
         "baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(pair,"photographic",&config)})).collect();
     let report = json!({"protocol":config["protocol"],"manifest_sha256":hash(&bytes),"candidate":candidate,
+        "baseline":if candidate=="DR7" {"DR6"} else if candidate=="BR6" {"Bayer dir1"} else {"E8 camera RGB"},
+        "edge_planes_sha256":hash(include_bytes!("../src/edge_planes.rs")),
+        "xtrans_steps_sha256":hash(include_bytes!("../src/xtrans_steps.rs")),
         "role":config["role"].as_str().unwrap_or(if candidate=="DR4" {"held-out photographic surrogate"} else {"regression on photographs already measured with DR4"}),
         "case_count":details.len(),"photographic_surrogate_gates_passed":all_passed,"production_promoted":false,
         "camera_ground_truth_available":false,"categories":categories,"per_phase":per_phase,"cases":details,"limits":config["limits"]});

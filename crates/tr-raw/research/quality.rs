@@ -534,6 +534,24 @@ fn constrained_previous_research_campaign() -> Result<()> {
 }
 
 #[test]
+#[ignore = "Bayer BR6 regression on observed v3 signals"]
+fn edge_planes_bayer_quality_research_campaign() -> Result<()> {
+    run_quality_campaign(
+        "BR6",
+        include_str!("../tests/fixtures/research-br6-regression.json"),
+    )
+}
+
+#[test]
+#[ignore = "DR7 regression on observed v6 signals; not new validation"]
+fn steps_quality_research_campaign() -> Result<()> {
+    run_quality_campaign(
+        "DR7",
+        include_str!("../tests/fixtures/research-dr7-regression.json"),
+    )
+}
+
+#[test]
 #[ignore = "offline Bayer research campaign; needs TR_QUALITY_LAB_ROOT, TR_QUALITY_SPLIT and TR_BAYER_CANDIDATE"]
 fn bayer_quality_research_campaign() -> Result<()> {
     let candidate = std::env::var("TR_BAYER_CANDIDATE")?;
@@ -577,7 +595,7 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
     let mut all_passed = true;
     let mut worst_ratios: BTreeMap<String, f64> = BTreeMap::new();
     let mut worst_cases: BTreeMap<String, Value> = BTreeMap::new();
-    let is_bayer = matches!(candidate, "BR1" | "BR2" | "BR3" | "BR4" | "BR5");
+    let is_bayer = matches!(candidate, "BR1" | "BR2" | "BR3" | "BR4" | "BR5" | "BR6");
     let phases = if is_bayer { 4 } else { 36 };
     for phase in 0..phases {
         let cfa = if is_bayer {
@@ -613,12 +631,22 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
                     (f64::from(rgb[cfa.color(i % w, i / w)]) + value) as f32
                 })
                 .collect();
-            let a: Vec<_> = if is_bayer {
-                crate::render::develop(&mosaic, w, h, cfa, crate::color::ID, [0, 0, w, h], 1)?
-                    .pixels
-                    .iter()
-                    .map(|p| [p[0], p[1], p[2]])
-                    .collect()
+            let a: Vec<_> = if candidate == "DR7" {
+                crate::xtrans_dr6::reconstruct(&mosaic, w, h, cfa)
+            } else if is_bayer {
+                crate::render::frame_reference::develop(
+                    &mosaic,
+                    w,
+                    h,
+                    cfa,
+                    crate::color::ID,
+                    [0, 0, w, h],
+                    1,
+                )?
+                .pixels
+                .iter()
+                .map(|p| [p[0], p[1], p[2]])
+                .collect()
             } else {
                 let base = xtrans::CameraRgb::new(&mosaic, w, h, cfa);
                 (0..w * h).map(|i| base.at(i % w, i / w)).collect()
@@ -630,6 +658,14 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
                 "DR4" => confidence::reconstruct(&mosaic, w, h, cfa),
                 "DR5" => refined::reconstruct(&mosaic, w, h, cfa),
                 "DR6" => constrained::reconstruct(&mosaic, w, h, cfa),
+                "DR7" => crate::xtrans_steps::reconstruct(&mosaic, w, h, cfa),
+                "BR6" => {
+                    crate::render::develop(&mosaic, w, h, cfa, crate::color::ID, [0, 0, w, h], 1)?
+                        .pixels
+                        .into_iter()
+                        .map(|p| [p[0], p[1], p[2]])
+                        .collect()
+                }
                 "BR1" | "BR2" => bayer::reconstruct(&mosaic, w, h, cfa, &a, candidate == "BR2"),
                 "BR3" | "BR4" => bayer_guided::reconstruct(&mosaic, w, h, cfa, candidate == "BR4"),
                 "BR5" => bayer_guarded::reconstruct(&mosaic, w, h, cfa, &a),
@@ -694,6 +730,9 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
         _ => None,
     };
     let report = json!({"protocol":protocol["protocol"],"protocol_sha256":hash(text.as_bytes()),"candidate":candidate,"candidate_source_sha256":candidate_source.map(hash),"split":split,
+        "baseline":if candidate=="DR7" {"DR6"} else if is_bayer {"Bayer dir1"} else {"E8 camera RGB"},
+        "edge_planes_sha256":hash(include_bytes!("../src/edge_planes.rs")),
+        "xtrans_steps_sha256":hash(include_bytes!("../src/xtrans_steps.rs")),
         "scenes":cases.iter().map(|s|&s.name).collect::<Vec<_>>(),"scene_phase_cases":cases.len()*phases,"width":w,"height":h,
         "synthetic_gates_passed":all_passed,"production_promoted":false,"photographic_ground_truth_available":false,
         "categories":categories,"worst_phase_ratios":worst_ratios,"worst_scene_phase_cases":worst_cases,"per_phase":details});

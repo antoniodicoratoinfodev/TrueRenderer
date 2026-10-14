@@ -6,9 +6,20 @@ mod calibration_lab;
 mod cfa;
 mod color;
 mod dng;
+mod edge_planes;
 mod export;
+mod highlights;
+#[cfg(test)]
+#[path = "../research/highlights_hl1.rs"]
+mod highlights_lab;
+#[cfg(test)]
+#[path = "../research/highlights.rs"]
+mod highlights_research;
 mod jpeg;
 mod nef;
+#[cfg(test)]
+#[path = "../research/projection.rs"]
+mod projection_lab;
 mod raf;
 mod render;
 #[cfg(test)]
@@ -18,12 +29,13 @@ mod tiff;
 mod wb;
 mod xtrans;
 mod xtrans_dr6;
+mod xtrans_steps;
 
 use anyhow::Result;
 use tr_core::color::LinearImage;
 
 pub const MAX_SOURCE_BYTES: usize = 256 * 1024 * 1024;
-pub const RECIPE: &str = "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1";
+pub const RECIPE: &str = "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1";
 
 #[derive(Clone, Debug)]
 pub struct RawInfo {
@@ -121,8 +133,8 @@ pub fn is_bitmap_tiff(bytes: &[u8]) -> Result<bool> {
     Ok(root.integer(254, 0)? == 0 && matches!((photometric, samples), (0 | 1, 1 | 2) | (2, 3 | 4)))
 }
 
-/// Relative camera gains R/G/B; unity selects AsShot. No look, tone curve,
-/// highlight synthesis or clipping is applied to scene-linear samples.
+/// Relative camera gains R/G/B; unity selects AsShot. Locally supported clipped
+/// CFA samples are estimated before WB. No look, tone curve or output clamp.
 pub fn develop(bytes: &[u8], relative_wb: [f64; 3]) -> Result<LinearImage> {
     match Raw::parse(bytes)? {
         Raw::Dng(raw) => raw.develop(relative_wb),

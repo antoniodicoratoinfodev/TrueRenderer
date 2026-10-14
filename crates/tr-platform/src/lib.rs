@@ -328,6 +328,8 @@ pub struct BrokerStatistics {
     pub completed_jobs: u64,
     pub starts: u64,
     pub forced_stops: u64,
+    pub cpu_recycles: u64,
+    pub peak_worker_cpu_nanoseconds: u64,
 }
 pub struct Broker {
     raw_engine: tr_core::decoder::RawEngine,
@@ -867,6 +869,32 @@ impl Broker {
             timeout
         };
         let started = Instant::now();
+        // The XPC service has a 60 s lifetime CPU limit, not a per-job limit.
+        // Leave 45 s for the next ordinary external job and 5 s of margin.
+        // This does not replace the hard limit (nor bound a multithreaded job
+        // by its wall time); it prevents repeated jobs consuming its reserve.
+        #[cfg(target_os = "macos")]
+        if let Some(Process {
+            owner: Owner::Xpc(lease),
+            ..
+        }) = self.process.as_ref()
+        {
+            let cpu = match lease.cpu_time() {
+                Ok(cpu) => cpu,
+                Err(error) => {
+                    self.process.take();
+                    return Err(error);
+                }
+            };
+            self.statistics.peak_worker_cpu_nanoseconds = self
+                .statistics
+                .peak_worker_cpu_nanoseconds
+                .max(cpu.as_nanos().min(u64::MAX as u128) as u64);
+            if cpu >= Duration::from_secs(10) {
+                self.process.take();
+                self.statistics.cpu_recycles += 1;
+            }
+        }
         if self.process.as_ref().is_some_and(|p| p.jobs >= 32) {
             self.process.take();
         }

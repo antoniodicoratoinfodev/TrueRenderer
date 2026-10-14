@@ -1,0 +1,1400 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-14",
+  "protocol": "TR-HL4-fidelity-review-v1",
+  "machine": {
+    "adapter": "Apple M4 \u00b7 Metal",
+    "OS": "macOS 27.0.1 (26A434)"
+  },
+  "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1",
+  "previous_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-mat2-hl3-extended1",
+  "scope": {
+    "formats": [
+      "supported Bayer/X-Trans DNG",
+      "D750 FX lossless 14-bit NEF",
+      "D800 FX lossless 12/14-bit NEF",
+      "X-T5 lossy 14-bit RAF"
+    ],
+    "excluded": [
+      "D40",
+      "new formats, compatibility expansion, fuzz and Windows from postponed point 6"
+    ],
+    "legacy_engine_retained": true,
+    "committed": false,
+    "pushed": false,
+    "physical_camera_accuracy_qualified": false,
+    "general_superiority_claimed": false
+  },
+  "findings_and_fixes": [
+    "The 0.140 to 0.219 X-Trans failure was reproduced with an ideal unclipped CFA; DR6 interpolation caused the local false colour. DR7 uses independently fitted measured-channel levels or affine surfaces only when every available sample supports them.",
+    "HL4 continues independently supported original illumination planes to coherent dark obstacles and small fully clipped tails, with joint completeness for connected clipped colours. It does not recursively seed from inferred samples or neutralize unsupported coloured lights.",
+    "Unsupported clipped codes are inequalities, not measured levels. A compact cell map now excludes them from the new demosaic fits. Newly extended components refit existing affine estimates on original 18x18 support to avoid support discontinuity.",
+    "The first candidate timed out. Exact separable extrema, monotone queues and mathematically necessary early rejections remove repeated scans. All 1886 diagnostic records and full photographic outputs reproduce the frozen numerical model.",
+    "Repeated RAF work exhausted the unchanged XPC 60-second lifetime CPU cap. The broker now reads cumulative CPU on its retained authenticated task and recycles at 10 seconds before the next job. This remains a reserve policy, not a guarantee for long multithreaded jobs or WB.",
+    "WB verification now validates refusals on both original and repacked inputs and preserves asymmetric transport errors instead of mislabelling them as an algorithmic acceptance change.",
+    "Historical normalized chroma used different near-black populations in 185 regions. Supplemental comparisons use the exact same valid pixel intersection with per-render exclusion counts; RGB and gradient metrics still include the entire region."
+  ],
+  "validation_design": {
+    "development_synthetic_sources": 1600,
+    "frozen_holdout_synthetic_sources": 280,
+    "diagnostic_photographic_inputs": 6,
+    "cfa_phases": 40,
+    "first_two_280_case_series_consumed_for_fixes": true,
+    "holdout_input_and_truth_hashes_disjoint_from_development": true,
+    "post_holdout_numerical_algorithm_changes": false,
+    "equivalent_implementation_optimizations_verified": true,
+    "HL3_original_demosaic_baseline_hashes_replayed": 1040,
+    "tolerance_absolute": 1e-05,
+    "metrics_are_not_DeltaE": true,
+    "correlated_phases_and_overlapping_regions_are_not_independent_observations": true
+  },
+  "synthetic_results": {
+    "sources_total": 1886,
+    "regressions_vs_original_HL3": [],
+    "valid_RAW_sites_changed": 0,
+    "exact_DNG_reopen_cases": 1880,
+    "holdout_metric_improvements": 959,
+    "common_pixel_chroma_regressions": [],
+    "common_pixel_chroma_improvements": 1619,
+    "regions_with_chroma_exclusions": 207,
+    "four_XTrans_failures": [
+      {
+        "id": "cfa6-p0-step",
+        "normalized_chroma_max_HL2": 0.14004462164014853,
+        "normalized_chroma_max_HL3": 0.2194097390770564,
+        "normalized_chroma_max_HL4": 0.0004227291881766515,
+        "common_pixels_chroma": {
+          "before_after_max_abs": [
+            0.2194097390770564,
+            0.0004227291881766515
+          ],
+          "before_after_rmse": [
+            0.008846010923923687,
+            1.0938928327865862e-05
+          ],
+          "excluded_before_after_truth": [
+            0,
+            0,
+            0
+          ],
+          "pixels": 11968
+        }
+      },
+      {
+        "id": "cfa6-p18-step",
+        "normalized_chroma_max_HL2": 0.14004462164014853,
+        "normalized_chroma_max_HL3": 0.2194314296170875,
+        "normalized_chroma_max_HL4": 0.00042272208505278464,
+        "common_pixels_chroma": {
+          "before_after_max_abs": [
+            0.2194314296170875,
+            0.00042272208505278464
+          ],
+          "before_after_rmse": [
+            0.008832186905118718,
+            1.0948475957112562e-05
+          ],
+          "excluded_before_after_truth": [
+            0,
+            0,
+            0
+          ],
+          "pixels": 11968
+        }
+      },
+      {
+        "id": "cfa6-p21-step",
+        "normalized_chroma_max_HL2": 0.1400445715519672,
+        "normalized_chroma_max_HL3": 0.2194315424334229,
+        "normalized_chroma_max_HL4": 0.0004227291881766515,
+        "common_pixels_chroma": {
+          "before_after_max_abs": [
+            0.2194315424334229,
+            0.0004227291881766515
+          ],
+          "before_after_rmse": [
+            0.010967184846813137,
+            1.2920916602796925e-05
+          ],
+          "excluded_before_after_truth": [
+            0,
+            0,
+            0
+          ],
+          "pixels": 11968
+        }
+      },
+      {
+        "id": "cfa6-p30-step",
+        "normalized_chroma_max_HL2": 0.14002026349685426,
+        "normalized_chroma_max_HL3": 0.19988504807897156,
+        "normalized_chroma_max_HL4": 0.00020922465209055607,
+        "common_pixels_chroma": {
+          "before_after_max_abs": [
+            0.19988504807897156,
+            0.00020922465209055607
+          ],
+          "before_after_rmse": [
+            0.009097436831273644,
+            1.0116672168628303e-05
+          ],
+          "excluded_before_after_truth": [
+            0,
+            0,
+            0
+          ],
+          "pixels": 11968
+        }
+      }
+    ]
+  },
+  "HL2_remaining_extrema": {
+    "count": 59,
+    "scenes": 32,
+    "metric_order": [
+      "id",
+      "region",
+      "metric",
+      "HL2",
+      "HL4"
+    ],
+    "diagnostics": [
+      [
+        "development-d750-warm-p0",
+        0,
+        "rgb_max_abs",
+        4.887580871582031e-05,
+        0.0001475811004638672
+      ],
+      [
+        "development-d750-warm-p0",
+        0,
+        "gradient_max_abs",
+        5.0067901611328125e-05,
+        0.00011157989501953125
+      ],
+      [
+        "development-d750-warm-p0",
+        1,
+        "rgb_max_abs",
+        4.887580871582031e-05,
+        0.00010704994201660156
+      ],
+      [
+        "development-d750-warm-p0",
+        1,
+        "gradient_max_abs",
+        5.0067901611328125e-05,
+        7.939338684082031e-05
+      ],
+      [
+        "development-d750-warm-p1",
+        0,
+        "rgb_max_abs",
+        5.078315734863281e-05,
+        0.00012755393981933594
+      ],
+      [
+        "development-d750-warm-p1",
+        0,
+        "gradient_max_abs",
+        4.506111145019531e-05,
+        0.00010085105895996094
+      ],
+      [
+        "development-d750-warm-p1",
+        1,
+        "rgb_max_abs",
+        5.078315734863281e-05,
+        0.00012755393981933594
+      ],
+      [
+        "development-d750-warm-p1",
+        1,
+        "gradient_max_abs",
+        4.506111145019531e-05,
+        0.00010085105895996094
+      ],
+      [
+        "development-d800-cool-p2",
+        0,
+        "rgb_max_abs",
+        4.5418739318847656e-05,
+        0.00012362003326416016
+      ],
+      [
+        "development-d800-cool-p2",
+        0,
+        "chroma_max_abs",
+        1.6230240763526194e-05,
+        3.4466604874772155e-05
+      ],
+      [
+        "development-d800-cool-p2",
+        0,
+        "gradient_max_abs",
+        5.1975250244140625e-05,
+        0.00011736154556274414
+      ],
+      [
+        "development-d800-cool-p2",
+        1,
+        "rgb_max_abs",
+        4.5418739318847656e-05,
+        0.00012362003326416016
+      ],
+      [
+        "development-d800-cool-p2",
+        1,
+        "chroma_max_abs",
+        8.967659480940693e-06,
+        3.4466604874772155e-05
+      ],
+      [
+        "development-d800-cool-p2",
+        1,
+        "gradient_max_abs",
+        5.1975250244140625e-05,
+        0.00011736154556274414
+      ],
+      [
+        "development-xt5-warm-p2",
+        0,
+        "gradient_max_abs",
+        0.0012521147727966309,
+        0.0012912750244140625
+      ],
+      [
+        "development-xt5-warm-p2",
+        1,
+        "gradient_max_abs",
+        0.0012508034706115723,
+        0.0012912750244140625
+      ],
+      [
+        "development-xt5-warm-p3",
+        0,
+        "rgb_max_abs",
+        0.0011110305786132812,
+        0.0011265277862548828
+      ],
+      [
+        "development-xt5-warm-p3",
+        1,
+        "rgb_max_abs",
+        0.0011110305786132812,
+        0.0011265277862548828
+      ],
+      [
+        "validation-d750-neutral-p0",
+        0,
+        "rgb_max_abs",
+        1.9073486328125e-05,
+        5.1140785217285156e-05
+      ],
+      [
+        "validation-d750-neutral-p0",
+        0,
+        "gradient_max_abs",
+        2.658367156982422e-05,
+        5.2094459533691406e-05
+      ],
+      [
+        "validation-d750-neutral-p1",
+        0,
+        "rgb_max_abs",
+        1.913309097290039e-05,
+        4.7147274017333984e-05
+      ],
+      [
+        "validation-d750-neutral-p1",
+        0,
+        "gradient_max_abs",
+        2.586841583251953e-05,
+        5.3942203521728516e-05
+      ],
+      [
+        "validation-d750-warm-p0",
+        0,
+        "rgb_max_abs",
+        4.601478576660156e-05,
+        9.512901306152344e-05
+      ],
+      [
+        "validation-d750-warm-p0",
+        0,
+        "gradient_max_abs",
+        5.543231964111328e-05,
+        9.918212890625e-05
+      ],
+      [
+        "validation-d750-warm-p1",
+        0,
+        "rgb_max_abs",
+        4.601478576660156e-05,
+        0.00010251998901367188
+      ],
+      [
+        "validation-d750-warm-p1",
+        0,
+        "gradient_max_abs",
+        5.0961971282958984e-05,
+        0.000102996826171875
+      ],
+      [
+        "validation-d750-cool-p0",
+        0,
+        "rgb_max_abs",
+        3.6716461181640625e-05,
+        5.036592483520508e-05
+      ],
+      [
+        "validation-d750-cool-p2",
+        0,
+        "rgb_max_abs",
+        5.412101745605469e-05,
+        7.2479248046875e-05
+      ],
+      [
+        "validation-d750-cool-p2",
+        1,
+        "rgb_max_abs",
+        5.412101745605469e-05,
+        7.2479248046875e-05
+      ],
+      [
+        "validation-d750-noisy-p1",
+        1,
+        "chroma_max_abs",
+        0.0008847438058335877,
+        0.0009245575715048915
+      ],
+      [
+        "validation-d800-neutral-p0",
+        0,
+        "rgb_max_abs",
+        2.4557113647460938e-05,
+        5.358457565307617e-05
+      ],
+      [
+        "validation-d800-neutral-p0",
+        0,
+        "gradient_max_abs",
+        3.361701965332031e-05,
+        4.4465065002441406e-05
+      ],
+      [
+        "validation-d800-neutral-p1",
+        0,
+        "rgb_max_abs",
+        2.9802322387695312e-05,
+        4.792213439941406e-05
+      ],
+      [
+        "validation-d800-neutral-p1",
+        0,
+        "gradient_max_abs",
+        3.361701965332031e-05,
+        4.9173831939697266e-05
+      ],
+      [
+        "validation-d800-warm-p2",
+        0,
+        "rgb_max_abs",
+        5.435943603515625e-05,
+        7.49826431274414e-05
+      ],
+      [
+        "validation-d800-cool-p0",
+        0,
+        "rgb_max_abs",
+        6.365776062011719e-05,
+        0.0001779794692993164
+      ],
+      [
+        "validation-d800-cool-p0",
+        0,
+        "gradient_max_abs",
+        5.984306335449219e-05,
+        0.00013399124145507812
+      ],
+      [
+        "validation-d800-cool-p0",
+        1,
+        "rgb_max_abs",
+        6.330013275146484e-05,
+        0.0001779794692993164
+      ],
+      [
+        "validation-d800-cool-p0",
+        1,
+        "gradient_max_abs",
+        5.9604644775390625e-05,
+        0.00013399124145507812
+      ],
+      [
+        "validation-d800-cool-p1",
+        0,
+        "rgb_max_abs",
+        6.103515625e-05,
+        0.00019943714141845703
+      ],
+      [
+        "validation-d800-cool-p1",
+        0,
+        "gradient_max_abs",
+        5.9604644775390625e-05,
+        0.00015044212341308594
+      ],
+      [
+        "validation-d800-cool-p1",
+        1,
+        "rgb_max_abs",
+        5.054473876953125e-05,
+        0.00019943714141845703
+      ],
+      [
+        "validation-d800-cool-p1",
+        1,
+        "gradient_max_abs",
+        5.5909156799316406e-05,
+        0.00015044212341308594
+      ],
+      [
+        "validation-d800-noisy-p0",
+        1,
+        "chroma_max_abs",
+        0.0008974689765520183,
+        0.000958911961428166
+      ],
+      [
+        "validation-d800-noisy-p1",
+        1,
+        "chroma_max_abs",
+        0.0008756436654224209,
+        0.0009636712786500468
+      ],
+      [
+        "d750-step-cool-p0",
+        0,
+        "chroma_max_abs",
+        0.06816849749638393,
+        0.0767987122454887
+      ],
+      [
+        "d750-step-cool-p1",
+        0,
+        "chroma_max_abs",
+        0.06816849749638393,
+        0.0767987122454887
+      ],
+      [
+        "d750-noisy-cool-p1",
+        0,
+        "rgb_max_abs",
+        0.010351061820983887,
+        0.010379552841186523
+      ],
+      [
+        "d800-step-cool-p0",
+        0,
+        "chroma_max_abs",
+        0.0795738971214906,
+        0.08074152227120271
+      ],
+      [
+        "d800-step-cool-p1",
+        0,
+        "chroma_max_abs",
+        0.0795738971214906,
+        0.08074152227120271
+      ],
+      [
+        "second-d750-step-cool-p0",
+        0,
+        "chroma_max_abs",
+        0.0669351404580048,
+        0.07725036782237772
+      ],
+      [
+        "second-d750-step-cool-p1",
+        0,
+        "chroma_max_abs",
+        0.0669351404580048,
+        0.07725036782237772
+      ],
+      [
+        "second-d750-step-cool-p3",
+        0,
+        "chroma_max_abs",
+        0.0669351404580048,
+        0.07725036782237772
+      ],
+      [
+        "third-d750-step-cool-p0",
+        0,
+        "chroma_max_abs",
+        0.08553963495524133,
+        0.08935135415730076
+      ],
+      [
+        "third-d750-step-cool-p1",
+        0,
+        "chroma_max_abs",
+        0.08553963495524133,
+        0.08935135415730076
+      ],
+      [
+        "third-d750-step-cool-p2",
+        0,
+        "chroma_max_abs",
+        0.08553963495524133,
+        0.08935135415730076
+      ],
+      [
+        "third-d750-step-cool-p3",
+        0,
+        "chroma_max_abs",
+        0.08553963495524133,
+        0.08935135415730076
+      ],
+      [
+        "cfa6-p11-signal-noise",
+        0,
+        "gradient_max_abs",
+        0.009383797645568848,
+        0.00948035717010498
+      ],
+      [
+        "cfa6-p11-signal-noise",
+        1,
+        "gradient_max_abs",
+        0.009383797645568848,
+        0.00948035717010498
+      ]
+    ],
+    "scope": "Historical per-render normalized chroma and full-region RGB/gradient maxima; distinct from the common-population HL3 comparison. No universal dominance over HL2."
+  },
+  "legacy_comparison": {
+    "sources": 124,
+    "equal_output_geometry_for_all_quality_cases": true,
+    "unchanged_legacy_hashes_replayed": 96,
+    "groups": {
+      "occlusion-neutral": {
+        "sources": 8,
+        "regional_rgb_rmse_mean_experimental_legacy_HL3": [
+          0.0036683426904408458,
+          0.01708490983075401,
+          0.21216956271194262
+        ],
+        "region_metric_better_experimental_legacy_equal": [
+          24,
+          0,
+          0
+        ]
+      },
+      "occlusion-warm": {
+        "sources": 8,
+        "regional_rgb_rmse_mean_experimental_legacy_HL3": [
+          0.004734384716632293,
+          0.5545218813953113,
+          0.3233170596042939
+        ],
+        "region_metric_better_experimental_legacy_equal": [
+          24,
+          0,
+          0
+        ]
+      },
+      "curved-colour": {
+        "sources": 4,
+        "regional_rgb_rmse_mean_experimental_legacy_HL3": [
+          0.0898269359923282,
+          0.11954000902322816,
+          0.11954541528016821
+        ],
+        "region_metric_better_experimental_legacy_equal": [
+          19,
+          5,
+          0
+        ]
+      },
+      "clipped-tail": {
+        "sources": 4,
+        "regional_rgb_rmse_mean_experimental_legacy_HL3": [
+          2.7879393586790067e-05,
+          0.046061468556743285,
+          null
+        ],
+        "region_metric_better_experimental_legacy_equal": [
+          24,
+          0,
+          0
+        ]
+      },
+      "ambiguous-neutral": {
+        "sources": 4,
+        "regional_rgb_rmse_mean_experimental_legacy_HL3": [
+          1.5999999046325053,
+          1.6000007192296901,
+          null
+        ],
+        "region_metric_better_experimental_legacy_equal": [
+          0,
+          0,
+          24
+        ]
+      },
+      "ambiguous-colour": {
+        "sources": 4,
+        "regional_rgb_rmse_mean_experimental_legacy_HL3": [
+          1.0847426166047127,
+          1.0847433547424492,
+          null
+        ],
+        "region_metric_better_experimental_legacy_equal": [
+          0,
+          0,
+          24
+        ]
+      }
+    },
+    "common_pixel_chroma_experimental_better": 248,
+    "common_pixel_chroma_legacy_better": 36,
+    "scope": "Known mathematical scene references; LibRaw is a comparator, not calibrated truth. Group means are descriptive and do not qualify general superiority. Entirely clipped fields without informative contours remain unidentified."
+  },
+  "photographic_surrogates": {
+    "photo-br6-final": {
+      "cases": 1800,
+      "changed_cases": 0,
+      "changed_components": 0,
+      "extrema_worse": [],
+      "extrema_better": [],
+      "gates": true
+    },
+    "photo-dr7-final": {
+      "cases": 16200,
+      "changed_cases": 12,
+      "changed_components": 24,
+      "extrema_worse": [],
+      "extrema_better": [],
+      "gates": true
+    }
+  },
+  "demosaic_regressions": {
+    "Bayer_cases": 1476,
+    "XTrans_cases": 13284,
+    "gates_passed": true,
+    "worst_regional_ratio": 1.0,
+    "scope": "Reused analytical development corpus, not new held-out camera captures; frozen equations preserved by optimization."
+  },
+  "real_inputs": {
+    "inputs": 8,
+    "repeated_autonomous_runs": 2,
+    "unpack_repack_render_exact": true,
+    "final_optimized_outputs_match_frozen": true,
+    "all_eight_default_full_images_identical_to_HL3": true,
+    "linkage": [
+      "libiconv.2.dylib",
+      "libSystem.B.dylib"
+    ],
+    "LibRaw_in_autonomous_executable": false,
+    "scope": "Functional and repeatability evidence; no measured colour improvement claimed for these eight captures."
+  },
+  "bundle_functional": {
+    "inputs": 8,
+    "slots": 2,
+    "RGB_exports": 32,
+    "formats": [
+      "PNG16",
+      "TIFF16"
+    ],
+    "export_long_edge": 1024,
+    "maximum_export_error_u16": 0,
+    "reopen_exact": true,
+    "auto_and_patch_WB_roundtrip": true,
+    "RAF_cancel_and_restart_both_slots": true,
+    "CPU_recycles_observed": 32,
+    "peak_observed_decoder_RSS_bytes": 902479872,
+    "scope": "One functional run, no pressure/RSS assurance. Delivery decoder binaries are identical to the functional-test build."
+  },
+  "timing": {
+    "inputs": [
+      {
+        "id": "raw-00",
+        "sizes": [
+          [
+            6016,
+            4016
+          ],
+          [
+            6032,
+            4032
+          ]
+        ],
+        "experimental": {
+          "count": 30,
+          "median_seconds": 2.0255418755,
+          "p95_seconds": 2.047230166,
+          "sorted_seconds": [
+            2.017796125,
+            2.018161875,
+            2.019472459,
+            2.02039175,
+            2.020487875,
+            2.02065375,
+            2.022040709,
+            2.022043959,
+            2.023061792,
+            2.023105916,
+            2.023340916,
+            2.02346675,
+            2.023800333,
+            2.024114875,
+            2.025355834,
+            2.025727917,
+            2.030539333,
+            2.031226833,
+            2.031399833,
+            2.035163333,
+            2.038845208,
+            2.038926792,
+            2.041064833,
+            2.041835,
+            2.042708625,
+            2.0429445,
+            2.045680459,
+            2.045903875,
+            2.047230166,
+            2.049323792
+          ]
+        },
+        "legacy": {
+          "count": 30,
+          "median_seconds": 1.0778800414999998,
+          "p95_seconds": 1.105892125,
+          "sorted_seconds": [
+            1.06602325,
+            1.068058916,
+            1.069009666,
+            1.069379542,
+            1.070322334,
+            1.071171542,
+            1.071642583,
+            1.073078166,
+            1.073334041,
+            1.073360709,
+            1.073892583,
+            1.075320125,
+            1.07683275,
+            1.07740975,
+            1.077542125,
+            1.078217958,
+            1.078698375,
+            1.080430625,
+            1.081073,
+            1.081522958,
+            1.082548375,
+            1.0848384580000001,
+            1.085708583,
+            1.088449334,
+            1.088779333,
+            1.095279666,
+            1.096125875,
+            1.099700333,
+            1.105892125,
+            1.107050125
+          ]
+        }
+      },
+      {
+        "id": "raw-14",
+        "sizes": [
+          [
+            6016,
+            4016
+          ],
+          [
+            6032,
+            4032
+          ]
+        ],
+        "experimental": {
+          "count": 30,
+          "median_seconds": 2.0339221875,
+          "p95_seconds": 2.040641292,
+          "sorted_seconds": [
+            2.022476875,
+            2.025177583,
+            2.025543417,
+            2.025631167,
+            2.026587167,
+            2.027104208,
+            2.027627167,
+            2.028524833,
+            2.029361833,
+            2.02954875,
+            2.030012375,
+            2.031511584,
+            2.032584959,
+            2.033049083,
+            2.0333585,
+            2.034485875,
+            2.034623625,
+            2.034973667,
+            2.035057375,
+            2.0352275,
+            2.035327334,
+            2.035524542,
+            2.03557775,
+            2.037270458,
+            2.037986958,
+            2.039517,
+            2.040355708,
+            2.040628333,
+            2.040641292,
+            2.041349834
+          ]
+        },
+        "legacy": {
+          "count": 30,
+          "median_seconds": 1.091800375,
+          "p95_seconds": 1.136401625,
+          "sorted_seconds": [
+            1.072388167,
+            1.080118916,
+            1.080372792,
+            1.080439209,
+            1.082044459,
+            1.084808333,
+            1.084847708,
+            1.085371666,
+            1.086271459,
+            1.087666791,
+            1.087764375,
+            1.089089416,
+            1.089139291,
+            1.091432709,
+            1.09168625,
+            1.0919145,
+            1.092022333,
+            1.094197542,
+            1.095342709,
+            1.095959833,
+            1.099157375,
+            1.11467375,
+            1.119160208,
+            1.119855125,
+            1.123280042,
+            1.126083667,
+            1.127249334,
+            1.1328028749999999,
+            1.136401625,
+            1.136442292
+          ]
+        }
+      },
+      {
+        "id": "raw-29",
+        "sizes": [
+          [
+            6016,
+            4016
+          ],
+          [
+            6032,
+            4032
+          ]
+        ],
+        "experimental": {
+          "count": 30,
+          "median_seconds": 1.7136622085000002,
+          "p95_seconds": 1.724895375,
+          "sorted_seconds": [
+            1.706171625,
+            1.706614042,
+            1.707058375,
+            1.7070800830000001,
+            1.7091317080000001,
+            1.70960075,
+            1.7097514999999999,
+            1.710111916,
+            1.710251667,
+            1.710527833,
+            1.711602458,
+            1.711921667,
+            1.713088959,
+            1.7133720000000001,
+            1.713576542,
+            1.7137478750000001,
+            1.7137517500000001,
+            1.7139576669999999,
+            1.714109125,
+            1.714225709,
+            1.714493666,
+            1.715199625,
+            1.7172255,
+            1.718597333,
+            1.7190205,
+            1.7218799169999999,
+            1.722620042,
+            1.7228792080000002,
+            1.724895375,
+            1.756489084
+          ]
+        },
+        "legacy": {
+          "count": 30,
+          "median_seconds": 1.0853935419999998,
+          "p95_seconds": 1.1263905,
+          "sorted_seconds": [
+            1.071833792,
+            1.072571916,
+            1.072614042,
+            1.074204708,
+            1.074421833,
+            1.075437375,
+            1.075833042,
+            1.07669325,
+            1.07713775,
+            1.077620792,
+            1.080359459,
+            1.080872792,
+            1.082570459,
+            1.083221917,
+            1.084726959,
+            1.086060125,
+            1.086131833,
+            1.087342375,
+            1.08940525,
+            1.08963025,
+            1.09192925,
+            1.091981875,
+            1.10651975,
+            1.109483,
+            1.109703208,
+            1.110907041,
+            1.120450208,
+            1.1226824579999999,
+            1.1263905,
+            1.137343209
+          ]
+        }
+      }
+    ],
+    "warmups": 3,
+    "repetitions_each": 30,
+    "alternating": true,
+    "broker_statistics": [
+      {
+        "completed_jobs": 132,
+        "cpu_recycles": 16,
+        "forced_stops": 0,
+        "peak_footprint_bytes": 872744064,
+        "peak_rss_bytes": 879640576,
+        "peak_worker_cpu_nanoseconds": 11802999625,
+        "starts": 17,
+        "worker_pid": 13851
+      },
+      {
+        "completed_jobs": 66,
+        "cpu_recycles": 8,
+        "forced_stops": 0,
+        "peak_footprint_bytes": 874038400,
+        "peak_rss_bytes": 880934912,
+        "peak_worker_cpu_nanoseconds": 11868411791,
+        "starts": 9,
+        "worker_pid": 13769
+      }
+    ],
+    "scope": "Decode-only timing includes broker input hash, XPC and transfer, excludes output hash, image analysis and disk reports. Warm OS caches; no whole-machine RSS, cold-start or physical camera accuracy claim. NEF crop geometry differs between native engines. CPU recycling is included; no thermal control or cold-start qualification. This is not an equal-workload kernel comparison.",
+    "previous_HL3_campaign": [
+      {
+        "id": "raw-00",
+        "input_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "all_render_hashes_unchanged": true,
+        "previous_HL3_median_seconds": 0.605144396,
+        "HL4_median_seconds": 2.0255418755,
+        "legacy_median_seconds": 1.0778800414999998,
+        "legacy_previous_median_seconds": 1.0793218960000002,
+        "prior_record_sha256": "6495919ed30e1d8b76664e3652275ec81cc5e8b26f954c809c23fe90d4671e11"
+      },
+      {
+        "id": "raw-14",
+        "input_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+        "all_render_hashes_unchanged": true,
+        "previous_HL3_median_seconds": 0.6111045,
+        "HL4_median_seconds": 2.0339221875,
+        "legacy_median_seconds": 1.091800375,
+        "legacy_previous_median_seconds": 1.0573251045,
+        "prior_record_sha256": "6385354b790b13e1e28540590a72c2bb08e57fab6a5beef6315ab97a76d71e4c"
+      },
+      {
+        "id": "raw-29",
+        "input_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+        "all_render_hashes_unchanged": true,
+        "previous_HL3_median_seconds": 0.663104583,
+        "HL4_median_seconds": 1.7136622085000002,
+        "legacy_median_seconds": 1.0853935419999998,
+        "legacy_previous_median_seconds": 1.0576833335,
+        "prior_record_sha256": "766f28aea0b7185ed170f099e1b0860764a810566154d2e67dd008d9ee3a8653"
+      }
+    ],
+    "previous_campaign_scope": "Same hashed inputs and full outputs, separate dates/runs; not an interleaved HL3/HL4 benchmark. HL4 is slower in these observations; legacy is interleaved in the final run."
+  },
+  "rejected_variants": [
+    {
+      "name": "unconditional Bayer affine preservation",
+      "regressions": 454,
+      "improvements": 5
+    },
+    {
+      "name": "Bayer affine models on axis-aligned steps",
+      "regressions": 7,
+      "improvements": 488
+    }
+  ],
+  "verification": {
+    "Rust_ordinary_full_run_passed": 553,
+    "additional_Rust_integration_checks": 14,
+    "final_raw_unit_checks": 95,
+    "final_desktop_comparison_unit_checks": 3,
+    "Python_checks": 34,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "fmt_and_clippy_passed": true,
+    "initial_debug_GUI_smoke_completed": false,
+    "initial_debug_GUI_limit": "55-second incomplete run without decode/presentation errors; not counted as passed. Final release bundle tested separately.",
+    "release_native_smoke_screenshots": 8,
+    "release_native_surface_passed": true
+  },
+  "remaining_limits": [
+    "Physical target/illuminant measurements and calibrated camera profiles remain missing.",
+    "Some Bayer chroma boundaries, peaks and fully clipped fields still favour the legacy renderer; neutralizing unknown colour would not establish correctness.",
+    "A same-RAW/different-scene ambiguity cannot be solved uniquely without additional information.",
+    "Physical sensor clipping below the digital ceiling is not characterized.",
+    "Photographic X-T5 registration, broad real-camera holdouts, pressure qualification and global R0-R4/SF gates remain open.",
+    "The new boundary fitting has a measurable runtime and memory cost; timings, CPU recycling and unequal native crops must be reported explicitly.",
+    "Own rendering does not remove codec/data provenance obligations or LibRaw from the retained legacy engine."
+  ],
+  "source_sha256": {
+    "crates/tr-raw/src/jpeg.rs": "5ea0df9400f51b09d8bbdbc5a84906f0175c495d45b8fe808fdb51d75c00b8d5",
+    "crates/tr-raw/src/export.rs": "101e08686b7f256f22dcea299b6f88740a7a5e025eecf25835284b2ec25ce036",
+    "crates/tr-raw/src/wb.rs": "a4e12365354b72dd00b410887a9bc005ea139603d8eee3cf1dfd882dc99f3675",
+    "crates/tr-raw/src/color.rs": "4792f42736503cf239fcc9b300887e2d804bdb0f1f990e32e17fc42c5c5f9f1a",
+    "crates/tr-raw/src/render.rs": "443b09e2f5f08de76464d9562da41956bbe53c356a2d78932f25c891103c8d36",
+    "crates/tr-raw/src/edge_planes.rs": "301cc6da21e10880cb4e9e6f6360a7bcc1fcff05df6dfe36dd899484bb295550",
+    "crates/tr-raw/src/highlights.rs": "39ba85684746cc8f10bc88faac3c41a18ce1e137617257342c1a22de246f3e23",
+    "crates/tr-raw/src/lib.rs": "32cda6785bfeac4292b0847532937f58adf42969e77d31abfedfbf8ed9d26809",
+    "crates/tr-raw/src/tiff.rs": "342687d9b2d9a0b4ba0a8e65d23520b2e5ef5438d91d102db90e2c8e358f4beb",
+    "crates/tr-raw/src/nef.rs": "9f73c57b811f2bdd8cf6dd9d4b4f5849a8231228510175dd8efb789a274cf656",
+    "crates/tr-raw/src/cfa.rs": "d172498b7015c6765fc73116e99ba5e0dbf2cd6566c140e9652669269deb3e3f",
+    "crates/tr-raw/src/dng.rs": "bd5044828b8ada7389f85093d80446caa49801a198e83f1225b57e3f99267fdc",
+    "crates/tr-raw/src/xtrans.rs": "aa6ebd8a3937649ce1bd6ea41eb9769134fa04e3474b5a03550840b6d2e198f2",
+    "crates/tr-raw/src/xtrans_steps.rs": "254494413f4f9bc348d7a03fb7bed00248acc5f3f09d0effff32af5eb5487775",
+    "crates/tr-raw/src/raf.rs": "1abaec5e8312e842f7e7d4af1eb652c18a0f697d03365e8dad848f3cfee85300",
+    "crates/tr-raw/src/xtrans_dr6/residual.rs": "e2146c1d390c7d3756e394305592f89c7f9767c347ba42c6732e20670155113d",
+    "crates/tr-raw/src/xtrans_dr6/bounded.rs": "0e4d4143cbc16f98f9ba5530aca54fb1feedaf4e9cf03bdb5f5fab7464c1612f",
+    "crates/tr-raw/src/xtrans_dr6/mod.rs": "973d9ea86a871a923ce01898979ba337c00ff03c75eb04f37986ec0a1a605810",
+    "crates/tr-raw/src/wb/tests.rs": "7b9fd3f0c08c2b956d5fb3453b327fae4e2994ab35dc56ae36848c23c582f8ad",
+    "crates/tr-raw/src/highlights/edge.rs": "c35fd64f38022087ca3644cd912da125fe30944b68ee465ee84af5f1f0334dd1",
+    "crates/tr-raw/src/highlights/metadata.rs": "861bb5eb034503759508d418838f9bfda5d2007e709aafa143f3f0504beda088",
+    "crates/tr-raw/src/highlights/occlusion.rs": "a08b7e2cf3fb7e28348fd77aa42ded2f526d95fa61b96d0ed17abdce98debe72",
+    "crates/tr-raw/src/highlights/tests.rs": "ed1c5fbeb03e1e83837f841944ce4c299b48739887d11cf1d58c0e85cb1001d3",
+    "crates/tr-platform/src/filesystem.rs": "7c5f44f1744a6569cf4db204fe38ddb44550d53b49b5dfef3e0a26096f41440d",
+    "crates/tr-platform/src/lib.rs": "d16786b7e317a1cb2b51cdd21a8d64e0ed82404bbf6a42824f2a8f192220177a",
+    "crates/tr-platform/src/isolation.rs": "403360754840d226785dfc49af7f3cfc49f4011d9c5ddfa524fe51b26e764021",
+    "crates/tr-platform/src/xpc.rs": "395975c42a55d10100b2ece1e75190d018aa13538ebf26a81119973ed3b41824",
+    "crates/tr-platform/src/resources.rs": "432eb2cd3383be5a665d1121a5212c828a9dea100ab8cf7182b2702ee920599b",
+    "crates/tr-platform/src/isolation/appcontainer.rs": "2f3ad38d4632a079ab6887f9b1a9df49f3434c4c49b184eb141b225b7e0e919a",
+    "native/macos/xpc_worker.m": "00be3224f56be95195e401fd1e8cecec01ff4b5253dffbac388aab347a23176c",
+    "native/macos/xpc_bridge.h": "c73a4b94fa846757b01d76027899b603728d62d3cb1442d2b5fb489ea02248e0",
+    "native/macos/signing.m": "164848288a1e936530fb68b2acfb4b25c80b4d76b93ce89a2e5165ba9e93f06d",
+    "native/macos/image_decoder.h": "e2406c209cff6235a8512e78a214595c7db094ac4049fbcfc3e9f7a8ad206255",
+    "native/macos/xpc_bridge.m": "a9d8d02513fa6d5bc1b6c5df9d77c8f3d99e3020efe98d9834bc4029cc2e7659",
+    "native/macos/resources.m": "ccdc5ab5e01d962169a734aa379716ed4cdfbdaec63329a92a8b2b2fdb201226",
+    "native/macos/signing.h": "a0cbecbdddf4038980ea2e05d6ba0eed126ac4e86febbb3574f93cd6a5ab2345",
+    "native/macos/image_decoder.m": "5860e87d93f9ed44e69e1109eb30de79172d2aab0eace784b90fd91680d33ee7",
+    "crates/tr-core/src/decoder.rs": "eb89a6c2c71c206bb532e239c9a5031910a4852747a57cbe422ed128b0301960",
+    "crates/tr-worker/src/experimental.rs": "2e66a6922ed3a2e55bc946f7ca58b850d9975b1f6ccf8286dc07cb229d918fd9",
+    "apps/desktop/src/compare_renderers.rs": "dfef05b2d2085213af9f27dc8a51a958d164ce1abd332bdfa1c91a76c5ed8b9d",
+    "apps/desktop/src/verify_experimental.rs": "ef26d9d897b576aae56b82c8062e3d215f0394373ecf503e6daed5047c6fcebc",
+    "crates/tr-raw/research/highlights.rs": "bf28aa309cba9a1587a875949dde41efe41ef27707f8b6e62589ad96fe419f29",
+    "scripts/generate-highlight-fidelity.py": "26c4bf02f97224c44632d784c0bb89becdd47ede1faee2a5f924a9fe7ee6c61a",
+    "scripts/analyze-renderer-duel.py": "4249f10ea675685721f4e1956202ddacbdf94ae1e7739364c572840fc2ea5758",
+    "scripts/test-renderer-duel.py": "972eb3cb42aa496e9ce2ce5b48ea114300d8c08bf417950309d92e01342067a7"
+  },
+  "durable_data": {
+    "files": 181,
+    "unchanged": true,
+    "differences": [],
+    "original_inputs_checked": 8,
+    "original_inputs_unchanged": true,
+    "original_input_hash_mismatches": []
+  },
+  "artifacts": {
+    "var/fidelity-fixes-20261013/freeze-final.json": "2127f6f5a918c3d5fac0d2c33391a62c17167c948ca23d32d21fbad8761800aa",
+    "var/fidelity-fixes-20261013/evidence-validation.json": "86c68ed430ec801b77526a4079b5229afff910f09d7836e918ad4f7825a6a0b3",
+    "var/fidelity-fixes-20261013/optimization-equivalence.json": "840bb0c17562e702af4a487c5c90d3619042b1f0caf19e08138012c6b4f2431d",
+    "var/fidelity-fixes-20261013/block-ranges-equivalence.json": "3ebb47348aae5c758d5154426990d5dcb0a288ad10c887e8b5fa9837c4fa672a",
+    "var/fidelity-fixes-20261013/common-complete.json": "cf4d64c8cbbd350aa7a83070bc80bc92c9dec693ac92f3b851d027ef30b36a07",
+    "var/fidelity-fixes-20261013/common-chroma-analysis.json": "ed3329b803cba10711c6d40c65668bf9672f92d50e33fb1f24ae919f350ac3e1",
+    "var/fidelity-fixes-20261013/holdout.json": "dcf3bebe39c2dc1b0829c17c59a17264470bbf70c508765ebdf71076642e34dc",
+    "var/fidelity-fixes-20261013/holdout-analysis.json": "b5a792ca38512dd0d33557b81bcc4627e09f7f1595d0c4777c105c18a7c714ab",
+    "var/fidelity-fixes-20261013/refit-prototype.json": "3ed0be3d48dd1ecf9f53c1c385316758cb8af05fb5398c939045f0c3085dcc72",
+    "var/fidelity-fixes-20261013/refit-analysis.json": "98f24a59379f9fc30207b32365f4aa048753e4ec183d487a0600702ab3239ff2",
+    "var/fidelity-fixes-20261013/comparison-hl2.json": "d04a2b64f8bdb2fd0bfbf0a3bc7d170423fd4ffcde4fa8211412a2baddfed08a",
+    "var/fidelity-fixes-20261013/duel-common/renderer-duel/report.json": "8c5ac3db5fefc13476a8f700bdabc72108df4df2821937b92ee6dde33b15c8ba",
+    "var/fidelity-fixes-20261013/duel-common-analysis.json": "2c583a11306e18201162120674ee5379276cca2eedd5adac9a675c507fc8fb47",
+    "var/fidelity-fixes-20261013/duel-analysis.json": "38241441995a95b8e6d12ac382a900eca0085e82fd62c1344038639295dddd7e",
+    "var/fidelity-fixes-20261013/photographic-extrema-analysis.json": "f55c66980014e163374455a7f5852a76cf38952603776918a928d7b9fd11f7e8",
+    "var/fidelity-fixes-20261013/photo-br6-final/photographic-quality-br6.json": "640aa104df5ecec93d1e05a0192c6e328e8d2cf82b7fb86d8a7538f596f63bcf",
+    "var/fidelity-fixes-20261013/photo-dr7-final/photographic-quality-dr7.json": "d5e015339f6902011154cc2b24f4c1cd8b580ce3422481ed724ae0528639fceb",
+    "var/fidelity-fixes-20261013/quality-br6/quality-validation.json": "c20068b6ae59f02343628ef34e252c38c9da1e49c52e984b22f8b15a5eaf469e",
+    "var/fidelity-fixes-20261013/quality-dr7/quality-validation.json": "7fbd259225d75ba0056b592d7d6c1b1086d0f46e2fab041eb17bbeb508926c16",
+    "var/fidelity-fixes-20261013/integration-release/reports/experimental-private.json": "b55a91fa9157f1245ba118e6f826e8e7cc1e410f206ce8f14da9ca3cabdfa41a",
+    "var/fidelity-fixes-20261013/timing-final/renderer-duel/report.json": "3a201c582af44235cf6f17d966ce8d1c02e126fc86777a9a909e791f31a27596",
+    "var/fidelity-fixes-20261013/autonomy-final-summary.json": "ca8a20b60b94f5736e0bd778ba990b6e10d7820bd13140a2ad1536d3359ce205",
+    "var/fidelity-fixes-20261013/autonomy-block-summary.json": "e3bdf661a22bbd738b303969321cb78b4f920350cb9f290d0e37419728188e4f",
+    "var/fidelity-fixes-20261013/autonomy-block.jsonl": "7d9c7fa15b3c585a92d26ae7952836ad4590695bd79c31cb16721848402f2131",
+    "var/fidelity-fixes-20261013/autonomy-linkage-final.txt": "828ed070415910f7001cf9fd6b81e1383f07bc21bc17c6d5a5ef186944218140",
+    "var/fidelity-fixes-20261013/verify-qualified.log": "7458589bbcbf40b400fabfc0b923573e1cbaa19d98f14502cadcf83f15a55193",
+    "var/fidelity-fixes-20261013/raw-tests-final.log": "78a643ec02368b0748df78afe4f6685a6aec5cf9433b45a82d4338103db55b1a",
+    "var/fidelity-fixes-20261013/clippy-delivery.log": "93031ba0f64505952ec40e59ec1eea4676893ed8e375c3d7f1b32b481dda6de1",
+    "var/fidelity-fixes-20261013/duel-tests-delivery.log": "3c112580b073e63342af3d1f8bf5a3b83f5337f12c662a1179616f611244df61",
+    "var/fidelity-fixes-20261013/duel-python-final.log": "108b556859bf0ed04fcbdf4205de873baf2cfef1ab6e788a9588191d7c4ac682",
+    "var/fidelity-fixes-20261013/gui-initial-failure.json": "ad3e4b68fbe31d04604833d5fdefa15049d85cdee520c7a4a564fb4e374ae981",
+    "var/fidelity-fixes-20261013/gui-final/reports/smoke-macos.json": "fbe9a9952b365164d49f36b93082439c7a51497cf8eed5c888ab0a2403dedd82",
+    "var/fidelity-fixes-20261013/gui-surface-final.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "var/fidelity-fixes-20261013/durable-check.json": "ecc8d05d85ee360975dbbdeb773db7ea820daf4683b827192cec9a628a868ea0",
+    "var/fidelity-fixes-20261013/delivery-sources.json": "5d3ce505241b1ec7495b159905aa9f5e3a356eaa294d5fe445691d1d232dd8e0",
+    "var/fidelity-fixes-20261013/installed-bundle.json": "aa39050c7632cfa62ffcff04b4e63320997f5aeaac0706c0ba8bb1b035688648",
+    "var/fidelity-fixes-20261013/installed-xpc/reports/xpc-qualification-macos.json": "587a5000072d18dd8bf2159e6edfa9caac23bed378206f04cbec6bbbc612b01f",
+    "var/fidelity-fixes-20261013/delivery-gui/reports/smoke-macos.json": "625b2e10a836816b0544c6f1f2b86ac0bf0ca50017680920be00ba39cf30671e",
+    "var/fidelity-fixes-20261013/final-checks.log": "e7bda9407dd97c6f06946a6571a33fab4510a24a992cdef23776ff341656bb71",
+    "var/fidelity-fixes-20261013/timing-comparison.json": "0d280cf582901f8d53dbb0a5246115c2c1b1b265e341a481bcddc5997d35a7e8",
+    "var/fidelity-fixes-20261013/delivery-gui-surface.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "var/fidelity-fixes-20261013/build-delivery-final.log": "0e25ab85133ebc41eed9f2f44664422719c5315b510ecfcc206a12fc5e6b89a3"
+  },
+  "installed_bundle": {
+    "candidate": "var/fidelity-fixes-20261013/delivery/TrueRenderer.app",
+    "installed": "dist/TrueRenderer.app",
+    "previous": "var/fidelity-fixes-20261013/previous.app",
+    "files": 23,
+    "exact": true,
+    "file_sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "2fa869b58b011a3353207fdbb2ccc4c0abb04e60aac18b84c002b6580c6cd4f7",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "2a645e0895ee7fec38247016068bc268b908a646ee9ad55acd2477488325a92a",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "9a638b5cef58c69168bf53fa689df7ce5648bc04e10792f7d7374f49942e3628",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "a0b4f68352fb0ce3b79054be4d572219cd7e91f5340243085159c0af21bfd060",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "d12a90e1be74a28e2eab502c6b9278cbfdd964dde380d3735f93d6378d2479bf",
+        "mode": 420
+      }
+    },
+    "previous_file_sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "00ce96817d1cae7075a74d34b136e0074d9c98cd2cf076cc8c80a64510cdf8bf",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "ec0c6631c4a2e909aa5d3276d139884765a1b3f3f2b03e5d7ecd0043f6fa0996",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "d6a140cf1b672df96f53036b99be7c15bd07cdc3974ef53dfbcc332c06d238c7",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "db2b0522502c7c6f7e57bf960f73c3edff7a4c365935336102c5c259974fef3a",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "819e21377af3fd80eaf819e830815cba98233b012cb31359584535eb2c7c5efd",
+        "mode": 420
+      }
+    },
+    "functional_worker_binaries_identical": [
+      "Contents/MacOS/tr-worker",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder"
+    ],
+    "source_hashes_match": 43,
+    "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1"
+  },
+  "xpc_qualification": {
+    "application": "TrueRenderer",
+    "version": "0.1.5",
+    "passed": true,
+    "checked_at": "2026-10-14T10:47:57.243591+00:00",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "2fa869b58b011a3353207fdbb2ccc4c0abb04e60aac18b84c002b6580c6cd4f7",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "9a638b5cef58c69168bf53fa689df7ce5648bc04e10792f7d7374f49942e3628",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "a0b4f68352fb0ce3b79054be4d572219cd7e91f5340243085159c0af21bfd060"
+    },
+    "integration_report": "xpc-integration-macos.json",
+    "production_rejects_fault_injection": true,
+    "production_rejection_exit_code": 1,
+    "production_rejection": "TrueRenderer: Il servizio non \u00e8 una build di fault injection",
+    "memory_growth_report": null,
+    "full_sandbox_gate_passed": false
+  }
+}

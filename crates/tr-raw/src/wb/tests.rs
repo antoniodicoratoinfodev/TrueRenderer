@@ -4,7 +4,9 @@ use crate::{cfa::XTRANS, color::ID};
 pub(super) fn mosaic(cfa: Cfa, width: usize, height: usize) -> Mosaic {
     Mosaic {
         values: vec![0.; width * height],
+        saturation: vec![0; width * height],
         width,
+        active_width: width,
         height,
         cfa,
         crop: [0, 0, width, height],

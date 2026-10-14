@@ -14,7 +14,8 @@ wb = importlib.import_module("analyze-raw-wb")
 MATRIX = wb.conversion()
 ANCHOR = "TrueRendererExperimental"
 ENGINES = (ANCHOR, "Apple", "LibRawAhd", "LibRawBilinear", "TrueRenderer")
-PROTOCOL = "TRExp-engine-color-v1"
+PROTOCOL_V1 = "TRExp-engine-color-v1"
+PROTOCOL_V2 = "TRExp-engine-color-v2"
 Y_BINS = (.01, .03, .1, .3, .9)
 
 
@@ -65,31 +66,80 @@ def metrics(rows):
             "y_ratio": summary(r["y_ratio"] for r in rows)}
 
 
-def analyze_pair(zones):
+def registration_offset(reg):
+    if not isinstance(reg, dict):
+        raise ValueError("missing registration evidence")
+    dx, dy = reg.get("dx"), reg.get("dy")
+    if any(type(v) is not int or abs(v) > 24 for v in (dx, dy)):
+        raise ValueError("invalid registration offset")
+    return dx, dy
+
+
+def validate_search(reg, minimum_cosine):
+    dx, dy = registration_offset(reg)
+    if "method" in reg or "scales" in reg:
+        raise ValueError("unexpected registration method")
+    if "gradient_cosine" in reg:
+        cosine = color.number(reg["gradient_cosine"])
+        runner = color.number(reg["distant_runner_up_cosine"])
+        gap = color.number(reg["peak_gap"])
+        if max(abs(cosine), abs(runner)) > 1.000001 or gap < 0 or abs(gap - (cosine - runner)) > 1e-12:
+            raise ValueError("inconsistent registration scores")
+        boundary = max(abs(dx), abs(dy)) == 24
+        supported = cosine >= minimum_cosine and gap >= .002 and not boundary
+        if reg.get("at_search_boundary") is not boundary:
+            raise ValueError("inconsistent registration boundary")
+    else:
+        supported = False
+        if (reg.get("reason") != "insufficient gradient energy" or (dx, dy) != (0, 0)
+                or set(reg) != {"dx", "dy", "supported", "reason"}):
+            raise ValueError("missing registration evidence")
+    if reg.get("supported") is not supported:
+        raise ValueError("inconsistent registration eligibility")
+    return supported
+
+
+def validate_registration(reg, protocol):
+    if protocol == PROTOCOL_V1:
+        return validate_search(reg, .85)
+    if protocol != PROTOCOL_V2:
+        raise ValueError("unknown registration protocol")
+    dx, dy = registration_offset(reg)
+    if reg.get("method") != "symmetric-binomial-v2":
+        raise ValueError("unexpected registration method")
+    scales = reg.get("scales")
+    if (not isinstance(scales, list) or len(scales) != 2
+            or any(not isinstance(s, dict) or type(s.get("radius")) is not int for s in scales)
+            or [s["radius"] for s in scales] != [2, 4]):
+        raise ValueError("missing or reordered registration scales")
+    validate_search(reg.get("fine"), .85)
+    searches = [s.get(d) for s in scales for d in ("forward", "reverse")]
+    eligible = [validate_search(s, .90) for s in searches]
+    if registration_offset(searches[0]) != (dx, dy):
+        raise ValueError("inconsistent registration offset")
+    supported = all(eligible) and all(
+        registration_offset(s) == ((dx, dy) if i % 2 == 0 else (-dx, -dy))
+        for i, s in enumerate(searches))
+    cosines = [s.get("gradient_cosine") for s in searches]
+    if "minimum_gradient_cosine" not in reg:
+        raise ValueError("missing registration score")
+    minimum = reg["minimum_gradient_cosine"]
+    if None in cosines:
+        if minimum is not None:
+            raise ValueError("inconsistent registration score")
+    elif abs(color.number(minimum) - min(cosines)) > 1e-12:
+        raise ValueError("inconsistent registration score")
+    if reg.get("supported") is not supported:
+        raise ValueError("inconsistent symmetric registration eligibility")
+    return supported
+
+
+def analyze_pair(zones, protocol=PROTOCOL_V1):
     if len(zones) != 9:
         raise ValueError("nine comparison zones required")
     eligible, excluded, geometry, zone_counts = [], Counter(), [], []
     for zi, zone in enumerate(zones):
-        reg = zone["registration"]
-        dx, dy = reg["dx"], reg["dy"]
-        if any(type(v) is not int or abs(v) > 24 for v in (dx, dy)):
-            raise ValueError("invalid registration offset")
-        if "gradient_cosine" in reg:
-            cosine = color.number(reg["gradient_cosine"])
-            runner = color.number(reg["distant_runner_up_cosine"])
-            gap = color.number(reg["peak_gap"])
-            if max(abs(cosine), abs(runner)) > 1.000001 or abs(gap - (cosine - runner)) > 1e-12:
-                raise ValueError("inconsistent registration scores")
-            boundary = max(abs(dx), abs(dy)) == 24
-            supported = cosine >= .85 and gap >= .002 and not boundary
-            if reg.get("at_search_boundary") is not boundary:
-                raise ValueError("inconsistent registration boundary")
-        else:
-            supported = False
-            if reg.get("reason") != "insufficient gradient energy":
-                raise ValueError("missing registration evidence")
-        if reg.get("supported") is not supported:
-            raise ValueError("inconsistent registration eligibility")
+        supported = validate_registration(zone["registration"], protocol)
         geometry.append(supported)
         rows = zone["blocks"]
         expected_xy = {(x, y) for y in range(32, 288, 16) for x in range(32, 288, 16)}
@@ -165,7 +215,8 @@ def local_file(root, name):
 
 def analyze(root):
     manifest = read_json(root / "manifest.json")
-    if manifest.get("protocol") != PROTOCOL or manifest.get("complete") is not True or manifest.get("passed") is not True:
+    protocol = manifest.get("protocol")
+    if protocol not in (PROTOCOL_V1, PROTOCOL_V2) or manifest.get("complete") is not True or manifest.get("passed") is not True:
         raise ValueError("complete successful comparison campaign required")
     if [manifest.get(k) for k in ("edge", "margin", "registration_radius", "registration_stride")] != [320, 32, 24, 8]:
         raise ValueError("unexpected comparison geometry")
@@ -214,7 +265,7 @@ def analyze(root):
                 continue
             pair = {"engine": engine["engine"], "recipe": engine["recipe"], "size": engine["size"],
                     "input_color": engine["info"]["input_color"], "range": engine["range"],
-                    **analyze_pair(engine["zones"])}
+                    **analyze_pair(engine["zones"], protocol)}
             pairs.append(pair)
             groups[source["camera"], source["kind"], engine["engine"]].append(pair)
         result = {k: source[k] for k in ("id", "camera", "kind", "source_sha256", "original_sha256")}
@@ -245,7 +296,7 @@ def analyze(root):
         a, b = original["engines"][0]["overview"], source["engines"][0]["overview"]
         controls.append({"id": source["id"], "original_id": original["id"], "camera": source["camera"],
                          "anchor_overview_bit_exact": a["size"] == b["size"] and digest(root / a["linear"]) == digest(root / b["linear"])})
-    return {"schema": 1, "protocol": PROTOCOL, "campaign_manifest_sha256": digest(root / "manifest.json"),
+    return {"schema": 1, "protocol": protocol, "campaign_manifest_sha256": digest(root / "manifest.json"),
             "analyzer_sha256": digest(Path(__file__)), "color_accuracy_qualified": False,
             "sources": len(files), "accepted_renders": accepted, "expected_refusals": refusals,
             "pair_count": sum(len(f["pairs"]) for f in files), "aggregates": aggregates,

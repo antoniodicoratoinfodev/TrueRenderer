@@ -18,6 +18,7 @@ unsafe extern "C" {
         size: usize,
     ) -> *mut c_void;
     fn tr_xpc_usage(lease: *mut c_void, rss: *mut u64, footprint: *mut u64, pid: *mut i32) -> i32;
+    fn tr_xpc_cpu_nanoseconds(lease: *mut c_void, cpu: *mut u64) -> i32;
     fn tr_xpc_suspend_for_test(lease: *mut c_void) -> i32;
     fn tr_xpc_inject_growth_for_test(lease: *mut c_void) -> i32;
     fn tr_xpc_stop(lease: *mut c_void) -> i32;
@@ -28,6 +29,15 @@ pub struct Session(NonNull<c_void>);
 // XPC callbacks own separate ARC-managed state. This type is intentionally not Sync.
 unsafe impl Send for Session {}
 impl Session {
+    pub fn cpu_time(&self) -> Result<Duration> {
+        let mut cpu = 0;
+        // SAFETY: authenticated retained task and a valid writable out-pointer.
+        ensure!(
+            unsafe { tr_xpc_cpu_nanoseconds(self.0.as_ptr(), &mut cpu) } == 0,
+            "Misura CPU del servizio XPC non disponibile"
+        );
+        Ok(Duration::from_nanos(cpu))
+    }
     pub fn inject_growth_for_test(&mut self) -> Result<()> {
         // SAFETY: live authenticated lease. Only a separately compiled qualification service accepts this message.
         ensure!(

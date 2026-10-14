@@ -26,6 +26,7 @@ pub(crate) struct Dng<'a> {
     delta_h: Vec<f64>,
     delta_v: Vec<f64>,
     white: f64,
+    clipping: Option<f64>,
     maximum_black: f64,
     lut: Option<Vec<u16>>,
     calibration: Calibration,
@@ -430,6 +431,13 @@ impl<'a> Dng<'a> {
             }
         }
         let profile_hash = format!("{:x}", hash.finalize());
+        let clipping = crate::highlights::metadata::decode(
+            root.get(50740),
+            width,
+            height,
+            white,
+            lut.is_some(),
+        )?;
         Ok(Self {
             tiff,
             width,
@@ -448,6 +456,7 @@ impl<'a> Dng<'a> {
             delta_h,
             delta_v,
             white,
+            clipping,
             maximum_black,
             lut,
             calibration,
@@ -473,7 +482,9 @@ impl<'a> Dng<'a> {
         let scratch_peak_bytes = (sensor_pixels * 2 + active_pixels * 4)
             .max(sensor_pixels * 4) // sensor plus repacked DNG output
             .max(sensor_pixels * 2 + self.tile[0] * self.tile[1] * 2)
-            .max(demosaic_peak)
+            .max(demosaic_peak + crate::highlights::support_bytes(self.active[2], self.active[3]))
+            .max(active_pixels * 4 + crate::highlights::scratch_bytes(self.active[2], self.active[3]))
+            .max(sensor_pixels * 2 + active_pixels * 5)
             // Export can hold copied profile fields, a metadata payload and
             // its final output copy together (each <=16 MiB). The remaining
             // 16 MiB cover bounded directories, calibration vectors and LUT.
@@ -566,6 +577,7 @@ impl<'a> Dng<'a> {
         let raw = self.unpack()?;
         let [left, top, w, h] = self.active;
         let mut mosaic = vec![0.; w * h];
+        let mut saturation = vec![0; w * h];
         let scale = (self.white - self.maximum_black).recip();
         for y in 0..h {
             for x in 0..w {
@@ -580,12 +592,19 @@ impl<'a> Dng<'a> {
                     + self.delta_h[x]
                     + self.delta_v[y];
                 mosaic[y * w + x] = ((f64::from(value) - black) * scale) as f32;
+                saturation[y * w + x] = crate::highlights::classify(
+                    f64::from(value),
+                    black,
+                    self.clipping.unwrap_or(self.white),
+                );
             }
         }
         drop(raw);
         Ok(crate::wb::Mosaic {
             values: mosaic,
+            saturation,
             width: w,
+            active_width: w,
             height: h,
             cfa: self.cfa,
             crop: self.crop,
@@ -623,6 +642,15 @@ impl<'a> Dng<'a> {
             }
         };
         let mut fields: BTreeMap<u16, (u16, u32, Vec<u8>)> = BTreeMap::new();
+        if let Some(clipping) = self.clipping {
+            let record = crate::highlights::metadata::encode(
+                self.width,
+                self.height,
+                self.white as u32,
+                clipping as u32,
+            );
+            fields.insert(50740, (1, record.len() as u32, record));
+        }
         for tag in [
             50708, 50721, 50722, 50723, 50724, 50727, 50728, 50729, 50778, 50779, 50931, 50932,
             50936, 50941, 50942, 50964, 50965,

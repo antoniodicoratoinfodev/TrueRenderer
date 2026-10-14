@@ -30,7 +30,83 @@ def zones(gains=(.5, .5, .5)):
     return result
 
 
+def symmetric_registration():
+    def search(dx, dy, cosine=.99, threshold=.90):
+        return {"dx": dx, "dy": dy, "supported": cosine >= threshold,
+                "gradient_cosine": cosine, "distant_runner_up_cosine": cosine - .10,
+                "peak_gap": .10, "at_search_boundary": False}
+    return {"method": "symmetric-binomial-v2", "dx": 3, "dy": -2, "supported": True,
+            "minimum_gradient_cosine": .99, "fine": search(4, -2, .6, .85),
+            "scales": [{"radius": radius, "forward": search(3, -2), "reverse": search(-3, 2)}
+                       for radius in (2, 4)]}
+
+
 class EngineColorTests(unittest.TestCase):
+    def test_symmetric_geometry_preserves_unfiltered_color_differences(self):
+        data = zones((.6, .5, .4))
+        old = analysis.analyze_pair(data)
+        for zone in data:
+            zone["registration"] = symmetric_registration()
+        self.assertEqual(analysis.analyze_pair(data, analysis.PROTOCOL_V2), old)
+
+    def test_every_scale_and_direction_must_pass_even_with_strong_fine_geometry(self):
+        for scale in (0, 1):
+            for direction in ("forward", "reverse"):
+                reg = symmetric_registration()
+                reg["fine"] = copy.deepcopy(reg["scales"][0]["forward"])
+                changed = reg["scales"][scale][direction]
+                changed.update(gradient_cosine=.87, distant_runner_up_cosine=.77, supported=False)
+                reg.update(minimum_gradient_cosine=.87, supported=False)
+                self.assertFalse(analysis.validate_registration(reg, analysis.PROTOCOL_V2))
+                reg["supported"] = True
+                with self.assertRaises(ValueError):
+                    analysis.validate_registration(reg, analysis.PROTOCOL_V2)
+
+    def test_wrong_reciprocal_or_scale_offsets_cannot_be_admitted(self):
+        for scale, direction in ((0, "reverse"), (1, "forward"), (1, "reverse")):
+            reg = symmetric_registration()
+            reg["scales"][scale][direction]["dx"] += 1
+            with self.assertRaises(ValueError):
+                analysis.validate_registration(reg, analysis.PROTOCOL_V2)
+            reg["supported"] = False
+            self.assertFalse(analysis.validate_registration(reg, analysis.PROTOCOL_V2))
+
+    def test_missing_nonfinite_or_conflicting_multiscale_evidence_is_an_error(self):
+        reg = symmetric_registration()
+        for key in ("method", "fine", "scales", "minimum_gradient_cosine"):
+            changed = copy.deepcopy(reg)
+            del changed[key]
+            with self.assertRaises(ValueError):
+                analysis.validate_registration(changed, analysis.PROTOCOL_V2)
+        for invalid in (None, math.nan, math.inf, -math.inf, .98):
+            changed = copy.deepcopy(reg)
+            changed["minimum_gradient_cosine"] = invalid
+            with self.assertRaises(ValueError):
+                analysis.validate_registration(changed, analysis.PROTOCOL_V2)
+        for invalid in ([], reg["scales"][:1], reg["scales"][::-1], reg["scales"] * 2):
+            changed = copy.deepcopy(reg)
+            changed["scales"] = invalid
+            with self.assertRaises(ValueError):
+                analysis.validate_registration(changed, analysis.PROTOCOL_V2)
+        changed = copy.deepcopy(reg)
+        changed["dx"] = 4
+        with self.assertRaises(ValueError):
+            analysis.validate_registration(changed, analysis.PROTOCOL_V2)
+        with self.assertRaises(ValueError):
+            analysis.validate_registration(reg, analysis.PROTOCOL_V1)
+        with self.assertRaises(ValueError):
+            analysis.validate_registration(reg["fine"], analysis.PROTOCOL_V2)
+
+    def test_missing_energy_is_retained_as_refusal_at_every_scale(self):
+        reg = symmetric_registration()
+        reg["scales"][1]["reverse"] = {"dx": 0, "dy": 0, "supported": False,
+                                         "reason": "insufficient gradient energy"}
+        reg.update(minimum_gradient_cosine=None, supported=False)
+        self.assertFalse(analysis.validate_registration(reg, analysis.PROTOCOL_V2))
+        reg["minimum_gradient_cosine"] = .99
+        with self.assertRaises(ValueError):
+            analysis.validate_registration(reg, analysis.PROTOCOL_V2)
+
     def test_single_exposure_factor_recovers_known_linear_neutral(self):
         result = analysis.analyze_pair(zones())
         self.assertEqual(result["comparison_exposure_gain"], 2.)

@@ -195,19 +195,27 @@ fn check_raw(root: &Path, worker: &Path, path: &Path, full: bool) -> Result<serd
                 }
                 (Err(error), Err(copy_error)) => {
                     let message = format!("{error:#}");
-                    ensure!(
-                        message.contains("WB CFA:")
-                            || message.contains("DNG: bianco")
-                            || message.contains("DNG: CCT"),
-                        "Unexpected WB failure: {message}"
-                    );
+                    let copy_message = format!("{copy_error:#}");
+                    for refusal in [&message, &copy_message] {
+                        ensure!(
+                            refusal.contains("WB CFA:")
+                                || refusal.contains("DNG: bianco")
+                                || refusal.contains("DNG: CCT"),
+                            "Unexpected WB failure: {refusal}"
+                        );
+                    }
                     serde_json::json!({"analysis":analysis,"accepted":false,"explicit_refusal":message,"repack_refusal":format!("{copy_error:#}"),"seconds":seconds})
                 }
-                _ => anyhow::bail!("CFA WB acceptance changed after repack"),
+                (Err(error), Ok(_)) => {
+                    anyhow::bail!("CFA WB original failed while repack succeeded: {error:#}")
+                }
+                (Ok(_), Err(error)) => {
+                    anyhow::bail!("CFA WB repack failed while original succeeded: {error:#}")
+                }
             };
             wb_estimates.push(value);
         }
-        cases.push(serde_json::json!({"slot":slot,"worker_pid":decoded.worker_pid,"cancelled_raf_worker_pid":cancelled_pid,"info":info,"seconds":elapsed,"linear_min":minimum,"linear_max":maximum,"repack_pixels_exact":roundtrip,"repacked_path":repacked_path,"repacked_sha256":repacked_sha256,"wb_probe_decode_match":true,"cfa_wb_estimates":wb_estimates,"rgb_exports":exports,"observed_peak_rss_bytes":broker.statistics().peak_rss_bytes}));
+        cases.push(serde_json::json!({"slot":slot,"worker_pid":decoded.worker_pid,"cancelled_raf_worker_pid":cancelled_pid,"info":info,"seconds":elapsed,"linear_min":minimum,"linear_max":maximum,"repack_pixels_exact":roundtrip,"repacked_path":repacked_path,"repacked_sha256":repacked_sha256,"wb_probe_decode_match":true,"cfa_wb_estimates":wb_estimates,"rgb_exports":exports,"observed_peak_rss_bytes":broker.statistics().peak_rss_bytes,"cpu_recycles":broker.statistics().cpu_recycles,"observed_peak_worker_cpu_nanoseconds":broker.statistics().peak_worker_cpu_nanoseconds}));
     }
     ensure!(tr_platform::snapshot(path)?.1 == digest, "Original changed");
     Ok(

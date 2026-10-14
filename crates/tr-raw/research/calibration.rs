@@ -445,10 +445,7 @@ fn wb_precision_research_campaign() -> Result<()> {
                     });
                     let apply = |g: [f32; 3], m: crate::color::Matrix| {
                         let wb: [f32; 3] = std::array::from_fn(|c| camera[c] * g[c]);
-                        m.map(|r| {
-                            let r = r.map(|v| v as f32);
-                            r[0] * wb[0] + r[1] * wb[1] + r[2] * wb[2]
-                        })
+                        crate::color::project(m, wb)
                     };
                     let ideal = apply(g, m);
                     let actual = apply(qg, qm);

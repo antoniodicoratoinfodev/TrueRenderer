@@ -1,0 +1,187 @@
+{
+  "protocol": "TRExp-BR6-regression-v1",
+  "baseline_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt1-wb2-extended1",
+  "quality": {
+    "width": 192,
+    "height": 144,
+    "phases": 4,
+    "border": 8,
+    "scale": "linear camera RGB, no WB, matrix, clipping, denoise or tone curve",
+    "development": {
+      "angles_degrees": [
+        0,
+        27,
+        59,
+        90
+      ],
+      "frequencies": [
+        0.015,
+        0.05,
+        0.12,
+        0.24,
+        0.38
+      ],
+      "seed": 1457261
+    },
+    "validation": {
+      "width": 246,
+      "height": 190,
+      "angles_degrees": [
+        24.650145,
+        87.524548,
+        107.168197,
+        163.082879
+      ],
+      "frequencies": [
+        0.035878,
+        0.024888,
+        0.104018,
+        0.06405,
+        0.157102,
+        0.165017,
+        0.283319,
+        0.304315,
+        0.358974,
+        0.418681
+      ],
+      "seed": 382471601,
+      "wave_phase_radians": 2.256916,
+      "edge_offset_pixels": 0.385225,
+      "flat_rgb": [
+        [
+          -0.27,
+          0.54,
+          1.87
+        ],
+        [
+          -0.23,
+          -0.23,
+          -0.23
+        ],
+        [
+          1.69,
+          1.69,
+          1.69
+        ]
+      ],
+      "noise_rgb": [
+        [
+          0.56,
+          0.56,
+          0.56
+        ],
+        [
+          0.28,
+          0.64,
+          0.81
+        ]
+      ]
+    },
+    "noise_sigma": [
+      0.003,
+      0.012,
+      0.04
+    ],
+    "categories": [
+      "achromatic_texture",
+      "chromatic_texture",
+      "edge",
+      "noise",
+      "flat_extended",
+      "noisy_achromatic_texture",
+      "noisy_chromatic_texture",
+      "noisy_edge",
+      "cross_texture",
+      "correlated_noise"
+    ],
+    "metrics": [
+      "missing_channel_rmse",
+      "false_chroma_rmse_achromatic_only",
+      "luma_rmse",
+      "luma_gradient_rmse",
+      "border_rgb_rmse",
+      "measured_sites_bit_exact",
+      "finite_output"
+    ],
+    "false_chroma_rmse_max_ratio": 1.0,
+    "other_category_and_detail_rmse_max_ratio": 1.05,
+    "absolute_rmse_floor": 1e-06,
+    "aggregation": "sum squared error / sample count by category, split and phase; publish aggregate and worst phase; border separately; also report worst individual scene/phase as diagnostics, without changing the category/phase gates",
+    "promotion_requires": [
+      "all synthetic gates on development and held-out validation",
+      "independent photographic validation",
+      "measured sites exact and finite extended float on all four Bayer phases"
+    ],
+    "holdout_policy": "Do not tune a submitted candidate after inspecting validation. A later candidate requires a new independent holdout.",
+    "validation_limits": "New parameter holdout from the same analytic scene families; not independent photographic validation.",
+    "mixed_noise": [
+      {
+        "contrast_scale": 1.0,
+        "sigma": 0.012
+      },
+      {
+        "contrast_scale": 0.2,
+        "sigma": 0.012
+      },
+      {
+        "contrast_scale": 0.05,
+        "sigma": 0.04
+      }
+    ],
+    "spatial_stress": true,
+    "spatial_stress_contract": "Two crossed sinusoid frequencies (split indices 1,3), achromatic/chromatic; stationary noise n=(z+0.6*z shifted six columns)/sqrt(1.36), sigma 0.012/0.04, two flat colors, row-periodic noise boundary.",
+    "validation_generation": {
+      "algorithm": "Python random.Random (MT19937), uniform stratified, rounded once",
+      "seed": 623587091,
+      "frequency_bands": [
+        [
+          0.015,
+          0.06
+        ],
+        [
+          0.06,
+          0.12
+        ],
+        [
+          0.12,
+          0.22
+        ],
+        [
+          0.22,
+          0.34
+        ],
+        [
+          0.34,
+          0.48
+        ]
+      ],
+      "draws_per_band": 2,
+      "angle_strata_degrees": [
+        [
+          0,
+          45
+        ],
+        [
+          45,
+          90
+        ],
+        [
+          90,
+          135
+        ],
+        [
+          135,
+          180
+        ]
+      ],
+      "policy": "single draw before candidate measurements; no selection based on results",
+      "draw_order": "wave phase, edge offset, four angles, two frequencies per band; scalar flat/noise colors and dimensions declared independently"
+    }
+  },
+  "candidates": [
+    "BR5 measured-CFA confidence over frozen BR3"
+  ],
+  "frozen_before_measurements": true,
+  "frozen_before_candidates": false,
+  "scope": "Observed Bayer v3 signals reused as regressions against dir1; no new holdout claim."
+}

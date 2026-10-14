@@ -4,9 +4,44 @@ use crate::{cfa::Cfa, color::Matrix};
 use anyhow::Result;
 use tr_core::color::LinearImage;
 
+/// Six-site cells whose clipped colours lack an admitted highlight model.
+/// A clipped code is an inequality, not a measured level for edge fitting.
+#[derive(Clone, Copy, Default)]
+pub(crate) struct Support<'a> {
+    cells: &'a [u8],
+    columns: usize,
+    origin: [usize; 2],
+}
+impl<'a> Support<'a> {
+    pub(crate) fn new(cells: &'a [u8], columns: usize) -> Self {
+        Self {
+            cells,
+            columns,
+            origin: [0, 0],
+        }
+    }
+    pub(crate) fn shifted(self, x: usize, y: usize) -> Self {
+        Self {
+            origin: [self.origin[0] + x, self.origin[1] + y],
+            ..self
+        }
+    }
+    pub(crate) fn allows(self, x: usize, y: usize) -> bool {
+        if self.cells.is_empty() {
+            return true;
+        }
+        let (x, y) = (x + self.origin[0], y + self.origin[1]);
+        let rows = self.cells.len() / self.columns;
+        (y.saturating_sub(6) / 6..=((y + 6) / 6).min(rows - 1)).all(|yy| {
+            (x.saturating_sub(6) / 6..=((x + 6) / 6).min(self.columns - 1))
+                .all(|xx| self.cells[yy * self.columns + xx] == 0)
+        })
+    }
+}
+
 #[cfg(test)]
 #[path = "../research/bayer_frame_reference.rs"]
-mod frame_reference;
+pub(crate) mod frame_reference;
 #[cfg(test)]
 #[path = "../research/bayer_streaming.rs"]
 mod streaming_lab;
@@ -26,7 +61,9 @@ pub(crate) fn oriented_size(w: u32, h: u32, orientation: u32) -> (u32, u32) {
 }
 
 pub(crate) fn bayer_scratch_reservation_bytes(width: usize) -> usize {
-    width * (3 * size_of::<f32>() + size_of::<[usize; 4]>()) + 1024
+    width * (3 * size_of::<f32>() + size_of::<[usize; 4]>())
+        + crate::edge_planes::RangeRows::reservation_bytes(width)
+        + 8 * 1024
 }
 
 struct BayerRows {
@@ -96,6 +133,7 @@ impl BayerRows {
     }
 }
 
+#[cfg(test)]
 pub(crate) fn develop(
     mosaic: &[f32],
     width: usize,
@@ -105,16 +143,45 @@ pub(crate) fn develop(
     crop: [usize; 4],
     orientation: u32,
 ) -> Result<LinearImage> {
+    develop_supported(
+        (mosaic, Support::default()),
+        width,
+        height,
+        cfa,
+        matrix,
+        crop,
+        orientation,
+    )
+}
+
+pub(crate) fn develop_supported(
+    (mosaic, support): (&[f32], Support<'_>),
+    width: usize,
+    height: usize,
+    cfa: Cfa,
+    matrix: Matrix,
+    crop: [usize; 4],
+    orientation: u32,
+) -> Result<LinearImage> {
     if cfa.period == 6 {
-        return crate::xtrans::develop(mosaic, width, height, cfa, matrix, crop, orientation);
+        return crate::xtrans::develop_supported(
+            (mosaic, support),
+            width,
+            height,
+            cfa,
+            matrix,
+            crop,
+            orientation,
+        );
     }
     let mut rows = BayerRows::new(width, height, cfa);
+    let mut ranges = crate::edge_planes::RangeRows::new(width, height);
     let [left, top, w, h] = crop;
     let (ow, oh) = oriented_size(w as u32, h as u32, orientation);
     let mut pixels = vec![[0.; 4]; w * h];
-    let m = matrix.map(|row| row.map(|v| v as f32));
     for cy in 0..h {
         let y = cy + top;
+        ranges.prepare(mosaic, width, cfa, y);
         let (above, below) = (
             reflect(y as isize - 1, height),
             reflect(y as isize + 1, height),
@@ -158,7 +225,25 @@ pub(crate) fn develop(
                 .sum();
                 rgb[2 - measured] = green[x] + delta / 4.;
             }
-            let rec = m.map(|r| r[0] * rgb[0] + r[1] * rgb[1] + r[2] * rgb[2]);
+            if support.allows(x, y)
+                && crate::edge_planes::near_edge(mosaic, width, height, x, y, 2)
+                && let Some(model) = crate::edge_planes::interpolate_with_bounds(
+                    mosaic,
+                    width,
+                    height,
+                    cfa,
+                    x,
+                    y,
+                    ranges.at(x, y),
+                )
+            {
+                for c in 0..3 {
+                    if c != measured {
+                        rgb[c] = model[c];
+                    }
+                }
+            }
+            let rec = crate::color::project(matrix, rgb);
             let (ox, oy) = match orientation {
                 2 => (w - 1 - cx, cy),
                 3 => (w - 1 - cx, h - 1 - cy),
@@ -178,16 +263,34 @@ pub(crate) fn develop(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unsupported_clipping_excludes_the_entire_edge_fit_support_across_tiles() {
+        let (columns, rows) = (25, 24);
+        let mut cells = vec![0; columns * rows];
+        cells[21 * columns + 22] = 1;
+        let support = Support::new(&cells, columns);
+        for y in 0..rows * 6 {
+            for x in 0..columns * 6 {
+                let intersects = x + 6 >= 132
+                    && x.saturating_sub(6) < 138
+                    && y + 6 >= 126
+                    && y.saturating_sub(6) < 132;
+                assert_eq!(support.allows(x, y), !intersects);
+                if x >= 119 && y >= 119 {
+                    assert_eq!(
+                        support.shifted(119, 119).allows(x - 119, y - 119),
+                        !intersects
+                    );
+                }
+            }
+        }
+    }
     #[test]
     fn directional_construction_matches_legacy_with_controlled_matrix() {
         let (w, h) = (17, 13);
-        // Same f32 operation order as the old two-matrix path with identity
-        // camera->sRGB; compare all samples including negative/high headroom.
-        let rec = [
-            [0.627404, 0.329282, 0.0433136],
-            [0.069097, 0.91954, 0.0113612],
-            [0.0163916, 0.0880132, 0.895595],
-        ];
+        // Reconstruct camera RGB, then use the legacy colour conversion to
+        // isolate the demosaic comparison from the new matrix precision.
         let mosaic: Vec<_> = (0..w * h)
             .map(|i| (i * 137 % 997) as f32 / 400. - 0.1)
             .collect();
@@ -201,8 +304,6 @@ mod tests {
                 0,
             )
             .unwrap();
-            let new = develop(&mosaic, w, h, Cfa::bayer(cfa), rec, [0, 0, w, h], 1).unwrap();
-            assert_eq!(old.pixels, new.pixels);
             let camera = develop(
                 &mosaic,
                 w,
@@ -214,6 +315,12 @@ mod tests {
             )
             .unwrap();
             for i in 0..w * h {
+                let p = camera.pixels[i];
+                let legacy_rgb = tr_core::color::linear_srgb_to_rec2020([p[0], p[1], p[2]]);
+                assert_eq!(
+                    old.pixels[i],
+                    [legacy_rgb[0], legacy_rgb[1], legacy_rgb[2], 1.]
+                );
                 let c = cfa[(i / w % 2) * 2 + i % w % 2];
                 assert_eq!(camera.pixels[i][c], mosaic[i]);
             }

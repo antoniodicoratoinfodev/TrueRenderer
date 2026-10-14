@@ -33,6 +33,7 @@ fi
 "$TR_PYTHON" scripts/test-preview-reporting.py
 "$TR_PYTHON" scripts/test-raw-calibration.py
 "$TR_PYTHON" scripts/test-raw-engine-color.py
+"$TR_PYTHON" scripts/test-renderer-duel.py
 ./scripts/cargo-local.sh clippy --workspace --all-targets --locked --offline -- -D warnings
 ./scripts/cargo-local.sh build --workspace --locked --offline
 ./scripts/cargo-local.sh test --workspace --locked --offline

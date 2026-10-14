@@ -7,6 +7,9 @@ use sha2::{Digest, Sha256};
 use std::{fs, io::Write, path::Path, time::Instant};
 use tr_core::{color::LinearImage, decoder::RawEngine};
 
+mod registration;
+use registration::register as registration;
+
 const EDGE: usize = 320;
 const MARGIN: usize = 32;
 const RADIUS: i32 = 24;
@@ -76,53 +79,6 @@ fn patches(image: &LinearImage) -> Result<Vec<Patch>> {
         }
     }
     Ok(out)
-}
-
-fn registration(a: &[f64], b: &[f64], edge: usize, radius: i32, stride: usize) -> Value {
-    let margin = MARGIN.max(radius as usize + 2);
-    let mut points = vec![];
-    let mut energy = 0.;
-    for y in (margin..edge - margin).step_by(stride) {
-        for x in (margin..edge - margin).step_by(stride) {
-            let i = y * edge + x;
-            let gradient = [a[i + 1] - a[i - 1], a[i + edge] - a[i - edge]];
-            energy += gradient[0] * gradient[0] + gradient[1] * gradient[1];
-            points.push((i, gradient));
-        }
-    }
-    if energy < 1e-12 {
-        return json!({"supported":false,"reason":"insufficient gradient energy","dx":0,"dy":0});
-    }
-    let mut scores = vec![];
-    for dy in -radius..=radius {
-        for dx in -radius..=radius {
-            let offset = dy as isize * edge as isize + dx as isize;
-            let (mut dot, mut norm) = (0., 0.);
-            for &(i, g) in &points {
-                let i = (i as isize + offset) as usize;
-                let h = [b[i + 1] - b[i - 1], b[i + edge] - b[i - edge]];
-                dot += g[0] * h[0] + g[1] * h[1];
-                norm += h[0] * h[0] + h[1] * h[1];
-            }
-            let score = if norm > 1e-12 {
-                dot / (energy * norm).sqrt()
-            } else {
-                -1.
-            };
-            scores.push((score, dx, dy));
-        }
-    }
-    scores.sort_by(|a, b| b.0.total_cmp(&a.0));
-    let (best, dx, dy) = scores[0];
-    let runner = scores
-        .iter()
-        .find(|&&(_, x, y)| (x - dx).abs() > 2 || (y - dy).abs() > 2)
-        .unwrap()
-        .0;
-    let boundary = dx.abs().max(dy.abs()) == radius;
-    json!({"dx":dx,"dy":dy,"gradient_cosine":best,"distant_runner_up_cosine":runner,
-        "peak_gap":best-runner,"at_search_boundary":boundary,
-        "supported":best >= 0.85 && best-runner >= 0.002 && !boundary})
 }
 
 fn block(patch: &Patch, x0: usize, y0: usize) -> Value {
@@ -375,7 +331,7 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
     }
     new_json(
         &output.join("manifest.json"),
-        &json!({"protocol":"TRExp-engine-color-v1","complete":true,
+        &json!({"protocol":"TRExp-engine-color-v2","complete":true,
         "passed":unexpected==0,"unexpected_failures":unexpected,"sources":rows,
         "input_manifest_sha256":format!("{:x}",Sha256::digest(source_bytes)),"purpose":manifest.purpose,
         "anchor":"TrueRendererExperimental","wb":"as-shot, engine-specific interpretation retained",
@@ -396,6 +352,36 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
 mod tests {
     use super::*;
     #[test]
+    fn registration_recovers_known_shift_despite_independent_fine_noise() {
+        let edge = 160;
+        let signal = |x: f64, y: f64| {
+            0.3 * (0.11 * x + 0.03 * y).sin()
+                + 0.23 * (0.13 * y - 0.02 * x).cos()
+                + 0.17 * (0.05 * x - 0.07 * y).sin()
+        };
+        let mut noise = 0x12854376_u64;
+        let mut jitter = || {
+            noise ^= noise << 13;
+            noise ^= noise >> 7;
+            noise ^= noise << 17;
+            ((noise >> 11) as f64 / (1_u64 << 53) as f64 - 0.5) * 0.12
+        };
+        let a: Vec<_> = (0..edge * edge)
+            .map(|i| signal((i % edge) as f64, (i / edge) as f64) + jitter())
+            .collect();
+        let b: Vec<_> = (0..edge * edge)
+            .map(|i| {
+                1.7 * (signal((i % edge) as f64 - 3., (i / edge) as f64 + 2.) + jitter()) + 0.4
+            })
+            .collect();
+        let result = registration(&a, &b, edge, 12, 4);
+        assert_eq!(result["supported"], true, "{result}");
+        assert_eq!(
+            (result["dx"].as_i64(), result["dy"].as_i64()),
+            (Some(3), Some(-2))
+        );
+    }
+    #[test]
     fn registration_recovers_translation_with_common_gain_and_offset() {
         let edge = 96;
         let signal = |x: f64, y: f64| {
@@ -411,7 +397,7 @@ mod tests {
         assert_eq!(r["dx"], 3);
         assert_eq!(r["dy"], -2);
         assert_eq!(r["supported"], true);
-        assert!(r["gradient_cosine"].as_f64().unwrap() > 1. - 1e-12);
+        assert!(r["minimum_gradient_cosine"].as_f64().unwrap() > 1. - 1e-12);
         assert_eq!(
             registration(&vec![0.; edge * edge], &b, edge, 6, 4)["supported"],
             false

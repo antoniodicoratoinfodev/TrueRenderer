@@ -239,6 +239,7 @@ impl<'a> Raf<'a> {
                 output_pixels,
                 scratch_peak_bytes: sensor_pixels * 8
                     + output_pixels * 16
+                    + crate::highlights::support_bytes(self.width, self.height)
                     + 64 * 1024 * 1024
                     + crate::xtrans_dr6::bounded::SCRATCH_RESERVATION_BYTES,
             },
@@ -260,8 +261,14 @@ impl<'a> Raf<'a> {
         let cfa = self.cfa.shifted(left, top);
         let scale = f64::from(WHITE - self.black).recip();
         let mut mosaic = Vec::with_capacity(w * h);
+        let mut saturation = Vec::with_capacity(w * h);
         for y in 0..h {
             for x in 0..w {
+                saturation.push(crate::highlights::classify(
+                    f64::from(raw[(y + top) * self.width + x + left]),
+                    f64::from(self.black),
+                    f64::from(WHITE),
+                ));
                 mosaic.push(
                     ((f64::from(raw[(y + top) * self.width + x + left]) - f64::from(self.black))
                         * scale) as f32,
@@ -271,7 +278,9 @@ impl<'a> Raf<'a> {
         drop(raw);
         Ok(crate::wb::Mosaic {
             values: mosaic,
+            saturation,
             width: w,
+            active_width: w,
             height: h,
             cfa,
             crop: [0, 0, w, h],

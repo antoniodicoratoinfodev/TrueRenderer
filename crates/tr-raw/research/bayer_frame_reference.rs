@@ -67,7 +67,6 @@ pub(crate) fn develop(
     let [left, top, w, h] = crop;
     let (ow, oh) = oriented_size(w as u32, h as u32, orientation);
     let mut pixels = vec![[0.; 4]; w * h];
-    let m = matrix.map(|row| row.map(|v| v as f32));
     for cy in 0..h {
         for cx in 0..w {
             let (x, y) = (cx + left, cy + top);
@@ -94,7 +93,7 @@ pub(crate) fn develop(
                     .sum();
                 rgb[c] = green[i] + delta / offsets.len() as f32;
             }
-            let rec = m.map(|r| r[0] * rgb[0] + r[1] * rgb[1] + r[2] * rgb[2]);
+            let rec = crate::color::project(matrix, rgb);
             let (ox, oy) = match orientation {
                 2 => (w - 1 - cx, cy),
                 3 => (w - 1 - cx, h - 1 - cy),

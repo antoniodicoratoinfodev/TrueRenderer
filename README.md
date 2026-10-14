@@ -52,6 +52,8 @@ Combine brush, radial and linear gradients, luminance and hue masks. Add, subtra
 
 On macOS, **trueRendererExperimental 32fp** provides an independent RAW decoding and development path. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It uses its own X-Trans reconstruction and offers automatic and sampled white balance with precise sensor gains, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
 
+Highlight reconstruction uses nearby unclipped colours when there is enough consistent information.
+
 ## See the differences that matter
 
 Compare photographs side by side with synchronized navigation, or compare the initial rendering with your current adjustments. Assign photographs to **A** and **B** from the context menu, keep the pair across folders, and inspect fine detail at physical 1:1.

@@ -12,6 +12,12 @@ const XYZ_TO_2020: Matrix = [
 pub(crate) fn vector(m: Matrix, v: [f64; 3]) -> [f64; 3] {
     m.map(|r| r.into_iter().zip(v).map(|(a, b)| a * b).sum())
 }
+/// Keep the resolved profile coefficients and sums in f64. Round once into
+/// the fp32 working image; coefficient cancellation must not erase low signals.
+pub(crate) fn project(m: Matrix, rgb: [f32; 3]) -> [f32; 3] {
+    let v = rgb.map(f64::from);
+    m.map(|r| (r[0] * v[0] + r[1] * v[1] + r[2] * v[2]) as f32)
+}
 pub(crate) fn multiply(a: Matrix, b: Matrix) -> Matrix {
     std::array::from_fn(|r| std::array::from_fn(|c| (0..3).map(|k| a[r][k] * b[k][c]).sum()))
 }

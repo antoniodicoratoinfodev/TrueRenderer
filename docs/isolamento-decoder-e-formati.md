@@ -82,7 +82,7 @@ mentre la terminazione rimane incerta.
 
 Il servizio imposta inoltre limiti hard/soft propri: nessun figlio, nessun core dump,
 128 descrittori e 60 s di CPU per vita del processo. Questi limiti non sono limiti di heap,
-mmap o numero di thread. Il riciclo avviene anche dopo 32 job o errore. Il riavvio XPC dopo
+mmap o numero di thread. Il riciclo avviene anche dopo 32 job o errore. Prima di un nuovo job, il broker legge `TASK_ABSOLUTETIME_INFO` sul task trattenuto e ricicla il servizio quando ha consumato almeno 10 s di CPU: conserva 45 s per un job esterno ordinario e 5 s di margine rispetto al tetto cumulativo. La misura comprende thread vivi e terminati; il contatore non proviene dal decoder. Il tetto OS di 60 s resta invariato. Questa riserva non garantisce il completamento di un singolo job multithread o di un WB lungo; le misure dei riavvii distinguono il costo del riciclo. Il riavvio XPC dopo
 una terminazione può subire un ritardo di circa 10 s di launchd, incluso nelle prove.
 
 ### Prove e limiti del gate

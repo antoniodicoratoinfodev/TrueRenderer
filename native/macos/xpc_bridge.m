@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <mach/mach.h>
+#include <mach/mach_time.h>
 #include <signal.h>
 #include <stdatomic.h>
 #include <unistd.h>
@@ -139,6 +140,22 @@ int tr_xpc_usage(void *pointer, uint64_t *rss, uint64_t *footprint, int *pid) {
     if (rss) *rss = info.resident_size;
     if (footprint) *footprint = info.phys_footprint;
     if (pid) *pid = lease->pid;
+    return 0;
+}
+int tr_xpc_cpu_nanoseconds(void *pointer, uint64_t *cpu) {
+    TRXpcLease *lease = (__bridge TRXpcLease *)pointer;
+    if (!lease || !lease->authenticated || lease->stopped || !cpu) return -1;
+    task_absolutetime_info_data_t info = {0};
+    mach_msg_type_number_t count = TASK_ABSOLUTETIME_INFO_COUNT;
+    kern_return_t status = task_info(lease->task, TASK_ABSOLUTETIME_INFO, (task_info_t)&info, &count);
+    if (status != KERN_SUCCESS) return (int)status;
+    mach_timebase_info_data_t base = {0};
+    status = mach_timebase_info(&base);
+    if (status != KERN_SUCCESS || base.denom == 0) return -1;
+    // Includes live and terminated threads, measured on the pinned task.
+    long double ns = ((long double)info.total_user + info.total_system) * base.numer / base.denom;
+    if (ns < 0 || ns >= 0x1p64L) return -1;
+    *cpu = (uint64_t)ns;
     return 0;
 }
 int tr_xpc_suspend_for_test(void *pointer) {

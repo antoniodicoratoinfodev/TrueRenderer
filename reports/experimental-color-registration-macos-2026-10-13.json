@@ -1,0 +1,1273 @@
+{
+  "date": "2026-10-13",
+  "scope": "Symmetric two-scale geometry for diagnostic RAW color comparisons",
+  "base_commit": "6f255b383939c227359ff822113ccf5309445b11",
+  "committed": false,
+  "pushed": false,
+  "protocol": {
+    "name": "TRExp-engine-color-v2",
+    "base_commit": "6f255b383939c227359ff822113ccf5309445b11",
+    "frozen_design": {
+      "filters": {
+        "radius2": [
+          1,
+          4,
+          6,
+          4,
+          1
+        ],
+        "radius4": [
+          1,
+          8,
+          28,
+          56,
+          70,
+          56,
+          28,
+          8,
+          1
+        ]
+      },
+      "filter_application": "separable symmetric binomial, unaltered linear luminance, no downsampling",
+      "search_radius": 24,
+      "sampling_stride": 8,
+      "margin": 32,
+      "minimum_gradient_cosine": 0.9,
+      "minimum_distant_peak_gap": 0.002,
+      "distant_peak_chebyshev_pixels": 2,
+      "acceptance": "both scales in both directions eligible, same integer translation across scales, inverse translation in reverse search",
+      "output": "color statistics from original unfiltered linear pixels; full-resolution v1 alignment retained diagnostically"
+    },
+    "qualification": "synthetic known integer shifts, independent fine noise, gains and offsets, repeat patterns, flat fields, unrelated and conflicting geometry. Private photo regression uses the existing three cameras and DNG controls; no new measured truth."
+  },
+  "implementation_frozen_before_validation_and_decodes": true,
+  "production_recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir1-xt6-wb3-extended1",
+  "production_color_recipe_changed": false,
+  "generated_validation": {
+    "accepted_translations": 144,
+    "edge": 320,
+    "false_acceptances": 0,
+    "incorrect_accepted_translations": 0,
+    "limits": "Integer translations of generated fields with independent uniform fine noise. No camera noise model, fractional/affine registration or physical color qualification.",
+    "passed": true,
+    "protocol": "TRExp-engine-color-v2",
+    "radius": 24,
+    "refusal_cases": 24,
+    "rejected_clean_translations": 0,
+    "schema": 1,
+    "seed": "0x37f08b9251ce4ad6",
+    "stride": 8,
+    "translation_cases": 192
+  },
+  "generated_validation_by_noise": [
+    {
+      "uniform_noise_amplitude": 0.0,
+      "cases": 48,
+      "v2_accepted": 48,
+      "v2_accepted_wrong": 0,
+      "v1_fine_accepted": 48
+    },
+    {
+      "uniform_noise_amplitude": 0.04,
+      "cases": 48,
+      "v2_accepted": 48,
+      "v2_accepted_wrong": 0,
+      "v1_fine_accepted": 11
+    },
+    {
+      "uniform_noise_amplitude": 0.12,
+      "cases": 48,
+      "v2_accepted": 48,
+      "v2_accepted_wrong": 0,
+      "v1_fine_accepted": 0
+    },
+    {
+      "uniform_noise_amplitude": 0.35,
+      "cases": 48,
+      "v2_accepted": 0,
+      "v2_accepted_wrong": 0,
+      "v1_fine_accepted": 0
+    }
+  ],
+  "generated_refusals": {
+    "flat": 4,
+    "periodic": 4,
+    "unrelated": 4,
+    "inverted": 4,
+    "conflicting": 4,
+    "boundary": 4
+  },
+  "regression_before_fix": "Known shift [3,-2] with independent fine noise: v1 chose [3,-1] and refused (cosine 0.5286931); v2 admits the exact shift.",
+  "execution_notes": [
+    "First generated validation invocation used a relative output path, resolved by Cargo against apps/desktop; report creation failed. Repeated with an absolute path, unchanged frozen implementation and seed."
+  ],
+  "photo_comparison": {
+    "sources": 6,
+    "source_scope": "One previously used original per D750/D800/X-T5 and its existing sample-preserving DNG control. Same cameras and original captures as the v1 campaign, not independent scene validation.",
+    "accepted_renders": 21,
+    "expected_refusals": 9,
+    "unexpected_failures": 0,
+    "pairs": 15,
+    "v1_registered_zones": 126,
+    "v2_registered_zones": 114,
+    "total_zones": 135,
+    "normalized_pairs": 14,
+    "normalized_blocks": 13549,
+    "geometry_transitions": {
+      "both_accepted": 113,
+      "v1_only": 13,
+      "rejected_with_cosine_below_090": 21,
+      "rejected_with_gap_below_0002": 0,
+      "both_rejected": 8,
+      "v2_only": 1
+    },
+    "pairs_detail": [
+      {
+        "id": "raw-00",
+        "camera": "NIKON D750",
+        "kind": "original",
+        "engine": "Apple",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 778,
+        "exposure_gain": 0.9455563154482513,
+        "exposure_ev": -0.08076471011428844,
+        "normalized_delta_e00": {
+          "count": 778,
+          "mean": 2.1427679303400646,
+          "median": 2.0688954020938004,
+          "p95": 4.390020641500611,
+          "minimum": 0.22322353108140672,
+          "maximum": 5.527566121534751
+        },
+        "normalized_delta_lab_median": [
+          -1.8182804417676834e-06,
+          0.45242581997738407,
+          2.7872600469117685
+        ]
+      },
+      {
+        "id": "raw-00",
+        "camera": "NIKON D750",
+        "kind": "original",
+        "engine": "LibRawAhd",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 714,
+        "exposure_gain": 1.9220100191317644,
+        "exposure_ev": 0.9426158566704749,
+        "normalized_delta_e00": {
+          "count": 714,
+          "mean": 1.111714705500294,
+          "median": 0.8803633731018929,
+          "p95": 2.5211632618127915,
+          "minimum": 0.15523671110625206,
+          "maximum": 2.915313580093007
+        },
+        "normalized_delta_lab_median": [
+          -1.479781768765065e-05,
+          -0.6554171220694986,
+          -0.016940712244189804
+        ]
+      },
+      {
+        "id": "raw-00",
+        "camera": "NIKON D750",
+        "kind": "original",
+        "engine": "LibRawBilinear",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 813,
+        "exposure_gain": 1.0281043238676484,
+        "exposure_ev": 0.039986665203084554,
+        "normalized_delta_e00": {
+          "count": 813,
+          "mean": 1.1049337447269085,
+          "median": 0.9228859950680923,
+          "p95": 2.431484027871137,
+          "minimum": 0.15195112262929286,
+          "maximum": 2.9625897137318806
+        },
+        "normalized_delta_lab_median": [
+          0.0,
+          -0.6796217249507022,
+          -0.012151331413801092
+        ]
+      },
+      {
+        "id": "raw-00",
+        "camera": "NIKON D750",
+        "kind": "original",
+        "engine": "TrueRenderer",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 810,
+        "exposure_gain": 1.0274922336468515,
+        "exposure_ev": 0.03912748926314521,
+        "normalized_delta_e00": {
+          "count": 810,
+          "mean": 1.099050412861527,
+          "median": 0.8867481489038254,
+          "p95": 2.462704563185172,
+          "minimum": 0.15854721041181224,
+          "maximum": 2.8728154039401828
+        },
+        "normalized_delta_lab_median": [
+          -4.607643841580966e-06,
+          -0.6787066021254757,
+          -0.00568829075706101
+        ]
+      },
+      {
+        "id": "dng-control-0",
+        "camera": "NIKON D750",
+        "kind": "repacked-control",
+        "engine": "Apple",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 458,
+        "exposure_gain": 2.443526679029565,
+        "exposure_ev": 1.2889648563724028,
+        "normalized_delta_e00": {
+          "count": 458,
+          "mean": 0.7472549733344568,
+          "median": 0.7768171584468819,
+          "p95": 1.451940251255253,
+          "minimum": 0.06223035248646323,
+          "maximum": 1.5878415941046886
+        },
+        "normalized_delta_lab_median": [
+          8.104587223556337e-07,
+          0.33309534198092106,
+          0.6631349470578192
+        ]
+      },
+      {
+        "id": "dng-control-0",
+        "camera": "NIKON D750",
+        "kind": "repacked-control",
+        "engine": "LibRawAhd",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 728,
+        "exposure_gain": 1.816798520816508,
+        "exposure_ev": 0.8613984365583868,
+        "normalized_delta_e00": {
+          "count": 728,
+          "mean": 1.111426826489669,
+          "median": 0.8857149422394099,
+          "p95": 2.505781357828368,
+          "minimum": 0.15183649050943862,
+          "maximum": 2.9118977066266942
+        },
+        "normalized_delta_lab_median": [
+          -5.080627664355575e-05,
+          -0.6564406932277609,
+          -0.012406746884679798
+        ]
+      },
+      {
+        "id": "dng-control-0",
+        "camera": "NIKON D750",
+        "kind": "repacked-control",
+        "engine": "LibRawBilinear",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 822,
+        "exposure_gain": 0.9720690738954669,
+        "exposure_ev": -0.04086926148246479,
+        "normalized_delta_e00": {
+          "count": 822,
+          "mean": 1.0984247462828227,
+          "median": 0.9122725038664468,
+          "p95": 2.403668925346171,
+          "minimum": 0.1509761691856577,
+          "maximum": 2.9612806259074507
+        },
+        "normalized_delta_lab_median": [
+          0.0013144087974232832,
+          -0.6738724866508228,
+          -0.01308799231457014
+        ]
+      },
+      {
+        "id": "raw-30",
+        "camera": "NIKON D800",
+        "kind": "original",
+        "engine": "Apple",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 6,
+        "normalized_blocks": 1003,
+        "exposure_gain": 0.8547019988560522,
+        "exposure_ev": -0.22650659852954796,
+        "normalized_delta_e00": {
+          "count": 1003,
+          "mean": 0.34357153066126467,
+          "median": 0.3231730127498965,
+          "p95": 0.649966390086747,
+          "minimum": 0.04803136997744669,
+          "maximum": 1.0198712547480788
+        },
+        "normalized_delta_lab_median": [
+          0.0,
+          0.05701659027135264,
+          -0.09245866562312965
+        ]
+      },
+      {
+        "id": "raw-30",
+        "camera": "NIKON D800",
+        "kind": "original",
+        "engine": "LibRawAhd",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 7,
+        "normalized_blocks": 1273,
+        "exposure_gain": 2.144841331205036,
+        "exposure_ev": 1.1008709255101423,
+        "normalized_delta_e00": {
+          "count": 1273,
+          "mean": 0.24021835250224247,
+          "median": 0.2101042829256672,
+          "p95": 0.5184014896580817,
+          "minimum": 0.006499689095846146,
+          "maximum": 0.7641822941458458
+        },
+        "normalized_delta_lab_median": [
+          0.0,
+          0.05959613689215937,
+          -0.10810678951862496
+        ]
+      },
+      {
+        "id": "raw-30",
+        "camera": "NIKON D800",
+        "kind": "original",
+        "engine": "LibRawBilinear",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 7,
+        "normalized_blocks": 1274,
+        "exposure_gain": 1.0598017689278842,
+        "exposure_ev": 0.0837944405155475,
+        "normalized_delta_e00": {
+          "count": 1274,
+          "mean": 0.2415315717735193,
+          "median": 0.21415678460150356,
+          "p95": 0.5319241732107997,
+          "minimum": 0.014410192189226704,
+          "maximum": 1.242394002504932
+        },
+        "normalized_delta_lab_median": [
+          -1.9539240767585397e-06,
+          0.059205379050186746,
+          -0.1056274047825323
+        ]
+      },
+      {
+        "id": "dng-control-1",
+        "camera": "NIKON D800",
+        "kind": "repacked-control",
+        "engine": "Apple",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 7,
+        "normalized_blocks": 1270,
+        "exposure_gain": 2.4198774914450967,
+        "exposure_ev": 1.2749340115666357,
+        "normalized_delta_e00": {
+          "count": 1270,
+          "mean": 0.21671492340734116,
+          "median": 0.2009751416536863,
+          "p95": 0.40047631831893316,
+          "minimum": 0.02449479842746437,
+          "maximum": 1.0049619170025372
+        },
+        "normalized_delta_lab_median": [
+          -9.129217914960464e-08,
+          -0.012572505374799925,
+          -0.04942853475254916
+        ]
+      },
+      {
+        "id": "dng-control-1",
+        "camera": "NIKON D800",
+        "kind": "repacked-control",
+        "engine": "LibRawAhd",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 7,
+        "normalized_blocks": 1273,
+        "exposure_gain": 2.0322032260282157,
+        "exposure_ev": 1.023044682879039,
+        "normalized_delta_e00": {
+          "count": 1273,
+          "mean": 0.23987927110188909,
+          "median": 0.20931299352172028,
+          "p95": 0.5138114483210766,
+          "minimum": 0.01711134609764893,
+          "maximum": 0.760701809599323
+        },
+        "normalized_delta_lab_median": [
+          0.0,
+          0.06000910044634544,
+          -0.10758612802823642
+        ]
+      },
+      {
+        "id": "dng-control-1",
+        "camera": "NIKON D800",
+        "kind": "repacked-control",
+        "engine": "LibRawBilinear",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 7,
+        "normalized_blocks": 1274,
+        "exposure_gain": 1.0041647216791931,
+        "exposure_ev": 0.00599594623820639,
+        "normalized_delta_e00": {
+          "count": 1274,
+          "mean": 0.24159052692902797,
+          "median": 0.21447250673583904,
+          "p95": 0.5327660264662459,
+          "minimum": 0.01569321747617527,
+          "maximum": 1.2440780837074328
+        },
+        "normalized_delta_lab_median": [
+          8.18372157596059e-06,
+          0.060521609014208,
+          -0.10619604353996892
+        ]
+      },
+      {
+        "id": "raw-39",
+        "camera": "FUJIFILM X-T5",
+        "kind": "original",
+        "engine": "Apple",
+        "v1_registered_zones": 0,
+        "v2_registered_zones": 1,
+        "normalized_blocks": 0,
+        "exposure_gain": null,
+        "exposure_ev": null,
+        "normalized_delta_e00": {
+          "count": 0,
+          "mean": null,
+          "median": null,
+          "p95": null,
+          "minimum": null,
+          "maximum": null
+        },
+        "normalized_delta_lab_median": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "id": "dng-control-2",
+        "camera": "FUJIFILM X-T5",
+        "kind": "repacked-control",
+        "engine": "Apple",
+        "v1_registered_zones": 9,
+        "v2_registered_zones": 9,
+        "normalized_blocks": 1059,
+        "exposure_gain": 1.8395540230872613,
+        "exposure_ev": 0.8793560452674736,
+        "normalized_delta_e00": {
+          "count": 1059,
+          "mean": 0.5226350834666726,
+          "median": 0.448183598151072,
+          "p95": 1.0847996864666707,
+          "minimum": 0.03934539524504272,
+          "maximum": 1.5274419800139913
+        },
+        "normalized_delta_lab_median": [
+          0.0,
+          0.23013688502304674,
+          -0.14717231056800006
+        ]
+      }
+    ]
+  },
+  "xt5_original": {
+    "registered_zones": 1,
+    "required_zones_for_exposure_estimate": 3,
+    "sufficient_for_exposure_estimate": false,
+    "v2_minimum_cosine_range": [
+      0.8489344551986656,
+      0.9473419745049481
+    ],
+    "all_scales_and_directions_choose_zero_shift": true,
+    "zones": [
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.07916015382915291,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.5501643247572687,
+          "peak_gap": 0.4710041709281158,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.8581005157418976,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.06718149269331157,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8581005157418976,
+              "peak_gap": 0.7909190230485861,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.07708123741552937,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8581005157418976,
+              "peak_gap": 0.7810192783263682,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.14132914949159933,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.882888518103569,
+              "peak_gap": 0.7415593686119697,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.14907949128799233,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.882888518103569,
+              "peak_gap": 0.7338090268155767,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.07214496128258509,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.5710784410345435,
+          "peak_gap": 0.49893347975195845,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.8702031483688104,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.07607046429820173,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8702031483688104,
+              "peak_gap": 0.7941326840706087,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.07129345254189577,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8702031483688104,
+              "peak_gap": 0.7989096958269146,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.20552292435491712,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8892248831890853,
+              "peak_gap": 0.6837019588341682,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.18502416831677646,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8892248831890853,
+              "peak_gap": 0.7042007148723088,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.0735122929227152,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.5530091341549819,
+          "peak_gap": 0.47949684123226666,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.859618604597752,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.06801636158560564,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.859618604597752,
+              "peak_gap": 0.7916022430121463,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.07581201575781071,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.859618604597752,
+              "peak_gap": 0.7838065888399413,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.1334133555880175,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8847111100855807,
+              "peak_gap": 0.7512977544975632,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.12324420195535288,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8847111100855807,
+              "peak_gap": 0.7614669081302278,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.08943099304356181,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.5778286054469283,
+          "peak_gap": 0.48839761240336643,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.864687909536104,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.09070445629988202,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.864687909536104,
+              "peak_gap": 0.773983453236222,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.09302520749094248,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.864687909536104,
+              "peak_gap": 0.7716627020451615,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.20509010739005937,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8881848607491736,
+              "peak_gap": 0.6830947533591142,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.2143540260986285,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8881848607491736,
+              "peak_gap": 0.673830834650545,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.17726834663879137,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.69135021370043,
+          "peak_gap": 0.5140818670616387,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.9473419745049481,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.45638761986821225,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.9473419745049481,
+              "peak_gap": 0.4909543546367358,
+              "supported": true
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.44602102734267746,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.9473419745049481,
+              "peak_gap": 0.5013209471622706,
+              "supported": true
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.6371404358750127,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.9678737880467158,
+              "peak_gap": 0.3307333521717031,
+              "supported": true
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.6268978460587071,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.9678737880467158,
+              "peak_gap": 0.3409759419880086,
+              "supported": true
+            }
+          }
+        ],
+        "supported": true
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.07095890215652421,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.5726512248857043,
+          "peak_gap": 0.5016923227291801,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.8602626879792256,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.06230629843634588,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8602626879792256,
+              "peak_gap": 0.7979563895428797,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.07510061843401686,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8602626879792256,
+              "peak_gap": 0.7851620695452087,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.1595140754297027,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8839212678030821,
+              "peak_gap": 0.7244071923733795,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.1558413984600017,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8839212678030821,
+              "peak_gap": 0.7280798693430804,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.06856278377279978,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.565349452509235,
+          "peak_gap": 0.4967866687364352,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.8489344551986656,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.10175944996934252,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8489344551986656,
+              "peak_gap": 0.7471750052293231,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.11732761410349161,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8489344551986656,
+              "peak_gap": 0.731606841095174,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.20432570743525277,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8774662464000557,
+              "peak_gap": 0.6731405389648029,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.20211344018257713,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8774662464000557,
+              "peak_gap": 0.6753528062174785,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.08675241268404793,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.6043890282045713,
+          "peak_gap": 0.5176366155205234,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.855564372056985,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.09885156396739662,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.855564372056985,
+              "peak_gap": 0.7567128080895884,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.09012939536513655,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.855564372056985,
+              "peak_gap": 0.7654349766918485,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.15852245949883495,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8800360468526379,
+              "peak_gap": 0.721513587353803,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.169157139168669,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8800360468526379,
+              "peak_gap": 0.7108789076839689,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      },
+      {
+        "dx": 0,
+        "dy": 0,
+        "fine": {
+          "at_search_boundary": false,
+          "distant_runner_up_cosine": 0.0784399219138633,
+          "dx": 0,
+          "dy": 0,
+          "gradient_cosine": 0.5401613145056842,
+          "peak_gap": 0.4617213925918209,
+          "supported": false
+        },
+        "method": "symmetric-binomial-v2",
+        "minimum_gradient_cosine": 0.8511543913255444,
+        "scales": [
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.09628713016679713,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8511543913255444,
+              "peak_gap": 0.7548672611587472,
+              "supported": false
+            },
+            "radius": 2,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.09362401399062867,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8511543913255444,
+              "peak_gap": 0.7575303773349157,
+              "supported": false
+            }
+          },
+          {
+            "forward": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.17136170912715987,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8755551714278684,
+              "peak_gap": 0.7041934623007086,
+              "supported": false
+            },
+            "radius": 4,
+            "reverse": {
+              "at_search_boundary": false,
+              "distant_runner_up_cosine": 0.16875967275363232,
+              "dx": 0,
+              "dy": 0,
+              "gradient_cosine": 0.8755551714278684,
+              "peak_gap": 0.7067954986742361,
+              "supported": false
+            }
+          }
+        ],
+        "supported": false
+      }
+    ],
+    "conclusion": "All scale/direction maxima agree on zero integer shift, but only the central zone meets the frozen 0.90 cosine criterion. No whole-file exposure-normalized color comparison. Eight zones still fail confidence; no measured cause or subpixel geometry claim."
+  },
+  "d800_refusal_reason": "Thirteen zones previously admitted by v1 fail the v2 cosine threshold; their scale/direction translations agree. The distant peak gaps do not cause these refusals. Filtering and the stricter criterion change selection, not the rendered color.",
+  "repacked_controls": [
+    {
+      "id": "dng-control-0",
+      "original_id": "raw-00",
+      "camera": "NIKON D750",
+      "anchor_overview_bit_exact": true
+    },
+    {
+      "id": "dng-control-1",
+      "original_id": "raw-30",
+      "camera": "NIKON D800",
+      "anchor_overview_bit_exact": true
+    },
+    {
+      "id": "dng-control-2",
+      "original_id": "raw-39",
+      "camera": "FUJIFILM X-T5",
+      "anchor_overview_bit_exact": true
+    }
+  ],
+  "repeatability": {
+    "accepted_renders": 21,
+    "image_artifacts_checked": 231,
+    "bit_exact_to_v1": true,
+    "fine_registrations": 135,
+    "fine_registrations_identical_to_v1": 135,
+    "renders": [
+      {
+        "id": "raw-00",
+        "engine": "TrueRendererExperimental",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-00",
+        "engine": "Apple",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-00",
+        "engine": "LibRawAhd",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-00",
+        "engine": "LibRawBilinear",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-00",
+        "engine": "TrueRenderer",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-0",
+        "engine": "TrueRendererExperimental",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-0",
+        "engine": "Apple",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-0",
+        "engine": "LibRawAhd",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-0",
+        "engine": "LibRawBilinear",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-30",
+        "engine": "TrueRendererExperimental",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-30",
+        "engine": "Apple",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-30",
+        "engine": "LibRawAhd",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-30",
+        "engine": "LibRawBilinear",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-1",
+        "engine": "TrueRendererExperimental",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-1",
+        "engine": "Apple",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-1",
+        "engine": "LibRawAhd",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-1",
+        "engine": "LibRawBilinear",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-39",
+        "engine": "TrueRendererExperimental",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "raw-39",
+        "engine": "Apple",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-2",
+        "engine": "TrueRendererExperimental",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      },
+      {
+        "id": "dng-control-2",
+        "engine": "Apple",
+        "image_artifacts_checked": 11,
+        "bit_exact_to_v1": true
+      }
+    ]
+  },
+  "historical_analysis": {
+    "sources": 43,
+    "pairs": 155,
+    "identical_except_analyzer_sha256": true
+  },
+  "verification": {
+    "command": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "rust_ordinary": 527,
+    "rust_integrations": 14,
+    "python_tests": 24,
+    "fmt": true,
+    "clippy": true,
+    "worker_protocol_checks": 8,
+    "resampling_cases": 24,
+    "debug_native_smoke_and_surface": true,
+    "release_build": true,
+    "release_native_smoke_and_surface": true,
+    "candidate_signature_and_two_xpc": true,
+    "installed_signature_and_two_xpc": true,
+    "private_suite_root": "var/verify-kmntzw5g",
+    "new_generated_campaign_executed_separately": true
+  },
+  "gallery": {
+    "private_path": "var/experimental-registration-20261013/gallery/index.html",
+    "display_comparisons": 11,
+    "maximum_display_code_difference": 1,
+    "javascript_syntax_checked": true
+  },
+  "preservation": {
+    "six_source_sha256_unchanged": true,
+    "render_worker_binaries_unchanged": 3,
+    "installed_bundle_files_match_candidate": 23,
+    "previous_bundle": "var/experimental-registration-20261013/previous.app",
+    "previous_bundle_matches_before_snapshot": true,
+    "durable_catalog_and_backups_not_test_destinations": true
+  },
+  "remaining": [
+    "Reliable full-file RAF X-T5 versus Apple comparison; the stricter v2 still admits only one zone.",
+    "Independently captured calibrated targets, illuminants and measured camera profiles.",
+    "Point 6 remains deferred; no D850/new format qualification or global gate closure."
+  ],
+  "color_accuracy_qualified": false,
+  "measured_camera_profile_installed": false,
+  "source_hashes": {
+    "apps/desktop/src/compare_raw_color.rs": "ab80ee7fb28ce2c2fc28deeb448192f1104ba27552fb4c4e709eaf40537b0c76",
+    "apps/desktop/src/compare_raw_color/registration.rs": "1ddaca825f065fea28ec37da5f64d0b5d9651a48b5634ba221f550110aa24278",
+    "apps/desktop/src/compare_raw_color/registration/research.rs": "2221ad63a4de1e1c8424c29343fe46cc208c119ad79302b60c0da0267e269893",
+    "scripts/analyze-raw-engine-color.py": "a94eee921ff5fa80057e25be54861a0622e294c368c3b21c1a5d97bb6e015ced",
+    "scripts/test-raw-engine-color.py": "921fe3ebfb38af200249143875d62bca43e79d36f04dc2b22ec691c99cda1288",
+    "scripts/render-raw-engine-comparison.py": "a0b37825286c403af68fe617486a6627e5c3de27381e84810a2a4e17e1efa852",
+    "docs/calibrazione-raw.md": "e26191f2485bd094cc0257dbe3d5584d90df46dfdfef43ff82d2bf6fe4b5ec52"
+  },
+  "private_evidence_root": "var/experimental-registration-20261013",
+  "evidence_hashes": {
+    "protocol-before.json": "3493f94e7438c572922c77ff09cdbff631d6c9ba0cfbc7bce0f681a71f56d9f9",
+    "frozen-sources.json": "2534ab0d05b18af5356decf1fcc9d877b3a0279927a8886c879edd5ec3d6a1e7",
+    "regression-before.log": "3f1394e31b04618faf5c90a60147bd8166d9232bddf81a978a442b54002e708e",
+    "generated-validation.json": "c5a55a7025945cd83149864aad1556627061b970b43d4aa5e6a223535568146b",
+    "generated-validation.log": "a0c77ee97a600fc3d8106802fdc495ab2959db4dc11dd7ae831951048524623e",
+    "generated-validation-absolute.log": "26c9186c749e731f3316062f10e825f0531b98917f3abb018b5ad69eb68cb9b6",
+    "v1-reanalysis.json": "a4d28901e513430d43dfd6abb021dbedf2e89b39cc0d0daed3911f1b969081a0",
+    "render-regression.json": "fe344b0196c7d5808d4a778520d5048bce2ca39029edcef973280ce12077c99d",
+    "analysis.json": "c16ff8253ee16fbae2dc9a4396477eaafab86c9016e99cd52bab1252673e4803",
+    "product/comparison/manifest.json": "df5f25dddfc0451704341712d105ee502e0b1bec9cc1be99564879a95b266bcd",
+    "verify.log": "48cd61fc7cc626649cb3c11ac9a7b2bb13f63caf73f81452094cc643f128748e",
+    "build-release.log": "58d7e775e1fafafd3821449f55dd98d414f52419cfff4e533ae00af7a3d793ff",
+    "photo-comparison.log": "7cf6ebdb7e43e8d7e07b0881554e3c007a3ba8f8d7e391905393bce46be1c90b",
+    "xpc/reports/xpc-qualification-macos.json": "d0ae9e266fc0f45841e92d5e8dcb7bd2c71fc546bae14269eaea33d22342b9db",
+    "gui/reports/smoke-macos.json": "9ca7a4b5c852064b644f9ae3d81073af887d1d6d9aa21d3dbb6df05bbe8f8d0b",
+    "gui/reports/sampling-presentation-macos.json": "b4bd6b866bd3a51e1cb0b4025e394f49aee14a79e19db1f35f05eea91e466aa3",
+    "gui.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "installed-xpc/reports/xpc-qualification-macos.json": "ff3585d00f24efe30bf6abf5ad55dcc5f4973fa222de141a2d86d5431cb21583",
+    "installed-before.json": "2dc0e99fda74b29e5e9602902bb827ca579c4a39a68e0fbf89f190aa5fe04ece",
+    "installed-after.json": "c0c3354832d2ffe149a8d3dd82d0e12bd99bd89dc9b35a42c2017a8952a112f6",
+    "gallery/display-checks.json": "37f03c6c74e18ae2b26d02964f97958d4a7546574dff761d27f1f65aee2e502d"
+  },
+  "limits": "Geometry validation only. Unfiltered RGB statistics retain their masks and single common exposure scale. Changes in measured medians reflect accepted blocks, not improved camera rendering. Other engines are diagnostic references, never scene truth. One capture per camera here; blocks and DNG controls are dependent. Generated uniform noise is not camera noise; no fractional/affine geometry or absolute color qualification."
+}

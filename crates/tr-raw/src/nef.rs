@@ -293,11 +293,18 @@ impl<'a> Nef<'a> {
                 // Unpack/calibration owns u16 + f32 sensor samples; development
                 // owns the f32 mosaic, three green rows and final RGBA. Export's
                 // two u16 rasters fit below the calibration peak.
-                scratch_peak_bytes: (sensor_pixels * 6).max(
-                    sensor_pixels * 4
-                        + output_pixels * 16
-                        + render::bayer_scratch_reservation_bytes(self.width),
-                ) + 64 * 1024 * 1024,
+                scratch_peak_bytes: (sensor_pixels * 7)
+                    .max(
+                        sensor_pixels * 4
+                            + output_pixels * 16
+                            + render::bayer_scratch_reservation_bytes(self.width)
+                            + crate::highlights::support_bytes(self.width, self.height),
+                    )
+                    .max(
+                        sensor_pixels * 4
+                            + crate::highlights::scratch_bytes(self.width, self.height),
+                    )
+                    + 64 * 1024 * 1024,
             },
         })
     }
@@ -321,17 +328,23 @@ impl<'a> Nef<'a> {
         let raw = self.unpack()?;
         let scale =
             (f64::from(self.mode.white) - f64::from(*self.black.iter().max().unwrap())).recip();
-        let values = raw
-            .iter()
-            .enumerate()
-            .map(|(i, v)| {
-                let phase = ((i / self.width) % 2) * 2 + i % 2;
-                ((f64::from(*v) - f64::from(self.black[phase])) * scale) as f32
-            })
-            .collect();
+        let mut values = Vec::with_capacity(raw.len());
+        let mut saturation = Vec::with_capacity(raw.len());
+        for (i, v) in raw.iter().enumerate() {
+            let phase = ((i / self.width) % 2) * 2 + i % 2;
+            let black = f64::from(self.black[phase]);
+            values.push(((f64::from(*v) - black) * scale) as f32);
+            saturation.push(crate::highlights::classify(
+                f64::from(*v),
+                black,
+                f64::from((1u32 << self.mode.bits) - 1),
+            ));
+        }
         Ok(crate::wb::Mosaic {
             values,
+            saturation,
             width: self.width,
+            active_width: self.mode.active_width,
             height: self.height,
             cfa: crate::cfa::Cfa::bayer(CFA),
             crop: self.mode.crop,
@@ -341,6 +354,13 @@ impl<'a> Nef<'a> {
     }
     pub fn repack(&self, limit: usize) -> Result<(u32, u32, Vec<u8>)> {
         let mut f = Fields::new();
+        let clipping = crate::highlights::metadata::encode(
+            self.width,
+            self.height,
+            self.mode.white,
+            (1u32 << self.mode.bits) - 1,
+        );
+        f.insert(50740, (1, clipping.len() as u32, clipping));
         for (tag, values) in [
             (254, vec![0]),
             (256, vec![self.width as u32]),

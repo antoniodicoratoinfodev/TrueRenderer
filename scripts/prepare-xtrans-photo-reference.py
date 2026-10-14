@@ -25,7 +25,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source-manifest", type=Path,
                         help="JSON with photographs, filenames relative to its directory, SHA-256 and source rights")
-    parser.add_argument("--candidate", choices=("DR4", "DR5", "DR6"), default="DR4")
+    parser.add_argument("--candidate", choices=("DR4", "DR5", "DR6", "DR7"), default="DR4")
     parser.add_argument("--role", default="held-out photographic surrogate")
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent

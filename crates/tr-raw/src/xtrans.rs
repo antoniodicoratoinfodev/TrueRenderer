@@ -121,6 +121,7 @@ pub(crate) fn baseline_develop(
     let [left, top, w, h] = crop;
     let (ow, oh) = oriented_size(w as u32, h as u32, orientation);
     let mut pixels = vec![[0.; 4]; w * h];
+    // Historical E8 research reference retains its original matrix arithmetic.
     let matrix = matrix.map(|r| r.map(|v| v as f32));
     for cy in 0..h {
         for cx in 0..w {
@@ -143,8 +144,29 @@ pub(crate) fn baseline_develop(
     LinearImage::new(ow, oh, pixels)
 }
 
+#[cfg(test)]
 pub(crate) fn develop(
     mosaic: &[f32],
+    width: usize,
+    height: usize,
+    cfa: Cfa,
+    matrix: Matrix,
+    crop: [usize; 4],
+    orientation: u32,
+) -> Result<LinearImage> {
+    develop_supported(
+        (mosaic, crate::render::Support::default()),
+        width,
+        height,
+        cfa,
+        matrix,
+        crop,
+        orientation,
+    )
+}
+
+pub(crate) fn develop_supported(
+    (mosaic, support): (&[f32], crate::render::Support<'_>),
     width: usize,
     height: usize,
     cfa: Cfa,
@@ -155,19 +177,21 @@ pub(crate) fn develop(
     let [left, top, w, h] = crop;
     let (ow, oh) = oriented_size(w as u32, h as u32, orientation);
     let mut pixels = vec![[0.; 4]; w * h];
-    let matrix = matrix.map(|r| r.map(|v| v as f32));
-    crate::xtrans_dr6::bounded::reconstruct_into(
+    crate::xtrans_dr6::bounded::reconstruct_with(
         mosaic,
         width,
         height,
         cfa,
+        |m, w, h, c, x, y| {
+            crate::xtrans_steps::reconstruct_supported(m, w, h, c, support.shifted(x, y))
+        },
         || false,
         |x, y, rgb| {
             if x < left || y < top || x >= left + w || y >= top + h {
                 return Ok(());
             }
             let (cx, cy) = (x - left, y - top);
-            let rec = matrix.map(|r| r[0] * rgb[0] + r[1] * rgb[1] + r[2] * rgb[2]);
+            let rec = crate::color::project(matrix, rgb);
             let (ox, oy) = match orientation {
                 2 => (w - 1 - cx, cy),
                 3 => (w - 1 - cx, h - 1 - cy),

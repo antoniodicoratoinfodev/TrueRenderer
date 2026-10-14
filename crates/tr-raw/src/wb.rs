@@ -16,7 +16,9 @@ mod tests;
 
 pub(crate) struct Mosaic {
     pub values: Vec<f32>,
+    pub saturation: Vec<u8>,
     pub width: usize,
+    pub active_width: usize,
     pub height: usize,
     pub cfa: Cfa,
     pub crop: [usize; 4],
@@ -141,11 +143,26 @@ fn region_ratios(channels: &[Vec<Site>; 3]) -> Option<[f64; 2]> {
 impl Mosaic {
     pub fn develop(mut self, relative: [f64; 3]) -> Result<LinearImage> {
         let (gains, matrix) = self.calibration.resolve(relative)?;
+        let mut unsupported = Vec::new();
+        crate::highlights::recover_with_support(
+            &mut self.values,
+            &self.saturation,
+            self.width,
+            self.active_width,
+            self.height,
+            self.cfa,
+            Some(&mut unsupported),
+        );
+        // Neither the mask nor the local fits need to coexist with demosaic.
+        drop(self.saturation);
         for (i, v) in self.values.iter_mut().enumerate() {
             *v *= gains[self.cfa.color(i % self.width, i / self.width)];
         }
-        render::develop(
-            &self.values,
+        render::develop_supported(
+            (
+                &self.values,
+                render::Support::new(&unsupported, self.active_width.div_ceil(6)),
+            ),
             self.width,
             self.height,
             self.cfa,
