@@ -1,13 +1,30 @@
 //! Autonomous, bounded RAW stages. No filesystem access, LibRaw, or native FFI.
 //! The host must grant bytes inside its decoder sandbox before calling this API.
+mod bayer_clipped_edges;
+mod bayer_texture_edges;
+#[cfg(test)]
+#[path = "../research/brackets.rs"]
+mod brackets_lab;
 #[cfg(test)]
 #[path = "../research/calibration.rs"]
 mod calibration_lab;
 mod cfa;
 mod color;
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../research/color_cal1.rs"]
+mod color_cal1;
+#[cfg(test)]
+#[path = "../research/color_reference.rs"]
+mod color_reference;
 mod dng;
 mod edge_planes;
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../research/edge_planes_dir6.rs"]
+mod edge_planes_dir6;
 mod export;
+mod highlight_render;
 mod highlights;
 #[cfg(test)]
 #[path = "../research/highlights_hl1.rs"]
@@ -28,14 +45,22 @@ mod test_support;
 mod tiff;
 mod wb;
 mod xtrans;
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../research/xtrans_dir6.rs"]
+mod xtrans_dir6;
 mod xtrans_dr6;
 mod xtrans_steps;
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../research/xtrans_steps_dir6.rs"]
+mod xtrans_steps_dir6;
 
 use anyhow::Result;
 use tr_core::color::LinearImage;
 
 pub const MAX_SOURCE_BYTES: usize = 256 * 1024 * 1024;
-pub const RECIPE: &str = "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1";
+pub const RECIPE: &str = tr_core::decoder::RawEngine::TrueRendererExperimental.recipe();
 
 #[derive(Clone, Debug)]
 pub struct RawInfo {

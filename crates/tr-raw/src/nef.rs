@@ -293,15 +293,15 @@ impl<'a> Nef<'a> {
                 // Unpack/calibration owns u16 + f32 sensor samples; development
                 // owns the f32 mosaic, three green rows and final RGBA. Export's
                 // two u16 rasters fit below the calibration peak.
-                scratch_peak_bytes: (sensor_pixels * 7)
+                scratch_peak_bytes: (sensor_pixels * 8)
                     .max(
-                        sensor_pixels * 4
+                        sensor_pixels * 5
                             + output_pixels * 16
-                            + render::bayer_scratch_reservation_bytes(self.width)
+                            + render::bayer_scratch_reservation_bytes(self.width, self.height)
                             + crate::highlights::support_bytes(self.width, self.height),
                     )
                     .max(
-                        sensor_pixels * 4
+                        sensor_pixels * 5
                             + crate::highlights::scratch_bytes(self.width, self.height),
                     )
                     + 64 * 1024 * 1024,
@@ -330,6 +330,7 @@ impl<'a> Nef<'a> {
             (f64::from(self.mode.white) - f64::from(*self.black.iter().max().unwrap())).recip();
         let mut values = Vec::with_capacity(raw.len());
         let mut saturation = Vec::with_capacity(raw.len());
+        let mut highlight_confidence = Vec::with_capacity(raw.len());
         for (i, v) in raw.iter().enumerate() {
             let phase = ((i / self.width) % 2) * 2 + i % 2;
             let black = f64::from(self.black[phase]);
@@ -339,10 +340,16 @@ impl<'a> Nef<'a> {
                 black,
                 f64::from((1u32 << self.mode.bits) - 1),
             ));
+            highlight_confidence.push(crate::highlight_render::confidence(
+                f64::from(*v),
+                black,
+                f64::from((1u32 << self.mode.bits) - 1),
+            ));
         }
         Ok(crate::wb::Mosaic {
             values,
             saturation,
+            highlight_confidence,
             width: self.width,
             active_width: self.mode.active_width,
             height: self.height,

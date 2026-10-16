@@ -974,24 +974,85 @@ mod tests {
     }
     #[test]
     fn pre_highlight_recipe_cannot_supply_cached_true_renderer_pixels() {
-        use tr_core::decoder::RawEngine;
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRenderer,
+            "LibRaw-0.22.2-TR-directional-f32-v1",
+        );
+    }
+    #[test]
+    fn pre_dir3_recipe_cannot_supply_cached_experimental_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1",
+        );
+    }
+    #[test]
+    fn hl4_recipe_cannot_supply_cached_hl5_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir3-xt7-wb3-mat2-hl4-extended1",
+        );
+    }
+    #[test]
+    fn dir3_hl5_recipe_cannot_supply_cached_dir4_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir3-xt7-wb3-mat2-hl5-extended1",
+        );
+    }
+    #[test]
+    fn unchecked_forward_profiles_cannot_supply_cached_cal2_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir4-xt7-wb3-mat2-hl5-extended1",
+        );
+    }
+    #[test]
+    fn dir4_recipe_cannot_supply_cached_dir5_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir4-xt7-wb3-mat2-hl5-extended1",
+        );
+    }
+    #[test]
+    fn hl5_dir5_recipe_cannot_supply_cached_texture_recovery_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir5-xt7-wb3-mat2-hl5-extended1",
+        );
+    }
+    #[test]
+    fn magenta_highlight_recipes_cannot_supply_corrected_pixels() {
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+            "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-extended1",
+        );
+        previous_recipe_cannot_supply_pixels(
+            tr_core::decoder::RawEngine::LibRawAhd,
+            "LibRaw-0.22.2-TR-ahd-rec2020-v1",
+        );
+    }
+    fn previous_recipe_cannot_supply_pixels(
+        engine: tr_core::decoder::RawEngine,
+        previous_recipe: &str,
+    ) {
         let folder = tempfile::tempdir().unwrap();
         let cache = manager();
         let (info, preview, mut request) = fixture();
-        request.raw_engine = RawEngine::TrueRenderer;
+        request.raw_engine = engine;
         let digest = "sensor-highlight-regression";
         cache
             .store_preview(folder.path(), digest, request, &info, &preview, &|| false)
             .unwrap();
         let current = cache.preview_key(digest, request);
-        // The actual persisted v1 recipe key, including the otherwise identical
+        // The actual previous recipe key, including the otherwise identical
         // fingerprint. Keep a complete, valid old descriptor and pixel blocks.
         let old = format!(
             "{:x}",
             Sha256::digest(
                 serde_json::to_vec(&(
                     "tr-preview-v3-engines",
-                    "LibRaw-0.22.2-TR-directional-f32-v1",
+                    previous_recipe,
                     digest,
                     &cache.fingerprint,
                     request,

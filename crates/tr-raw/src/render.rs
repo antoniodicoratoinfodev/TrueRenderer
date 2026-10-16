@@ -6,11 +6,15 @@ use tr_core::color::LinearImage;
 
 /// Six-site cells whose clipped colours lack an admitted highlight model.
 /// A clipped code is an inequality, not a measured level for edge fitting.
+/// Low three bits: unsupported colours. Bit 3: admitted Bayer texture recovery.
 #[derive(Clone, Copy, Default)]
 pub(crate) struct Support<'a> {
     cells: &'a [u8],
     columns: usize,
     origin: [usize; 2],
+    original_clipping: &'a [u8],
+    stride: usize,
+    fallback: Option<&'a crate::highlight_render::Fallback>,
 }
 impl<'a> Support<'a> {
     pub(crate) fn new(cells: &'a [u8], columns: usize) -> Self {
@@ -18,13 +22,71 @@ impl<'a> Support<'a> {
             cells,
             columns,
             origin: [0, 0],
+            original_clipping: &[],
+            stride: 0,
+            fallback: None,
         }
+    }
+    pub(crate) fn with_highlight_fallback(
+        mut self,
+        fallback: &'a crate::highlight_render::Fallback,
+    ) -> Self {
+        self.fallback = Some(fallback);
+        self
+    }
+    pub(crate) fn render_highlights(self, rgb: [f32; 3], x: usize, y: usize) -> [f32; 3] {
+        self.fallback.map_or(rgb, |fallback| {
+            fallback.apply(rgb, x + self.origin[0], y + self.origin[1])
+        })
+    }
+    pub(crate) fn with_original_clipping(mut self, bits: &'a [u8], stride: usize) -> Self {
+        self.original_clipping = bits;
+        self.stride = stride;
+        self
+    }
+    pub(crate) fn measured(self, x: usize, y: usize) -> bool {
+        let i = (y + self.origin[1]) * self.stride + x + self.origin[0];
+        self.original_clipping.is_empty() || self.original_clipping[i / 8] & (1 << (i % 8)) == 0
+    }
+    fn axis_identified(
+        self,
+        x: usize,
+        y: usize,
+        w: usize,
+        h: usize,
+        axis: usize,
+        cut: usize,
+    ) -> bool {
+        // The two adjacent rows/columns at the fitted boundary must each
+        // contain an original measurement. Otherwise clipping can hide which
+        // side an intervening CFA row/column belongs to.
+        [cut - 1, cut].into_iter().all(|coordinate| {
+            if axis == 0 {
+                (y.saturating_sub(6)..=(y + 6).min(h - 1)).any(|yy| self.measured(coordinate, yy))
+            } else {
+                (x.saturating_sub(6)..=(x + 6).min(w - 1)).any(|xx| self.measured(xx, coordinate))
+            }
+        })
     }
     pub(crate) fn shifted(self, x: usize, y: usize) -> Self {
         Self {
             origin: [self.origin[0] + x, self.origin[1] + y],
             ..self
         }
+    }
+    pub(crate) fn unsupported_colour(self, x: usize, y: usize, c: usize) -> bool {
+        if self.cells.is_empty() {
+            return false;
+        }
+        let (x, y) = (x + self.origin[0], y + self.origin[1]);
+        self.cells[y / 6 * self.columns + x / 6] & (1 << c) != 0
+    }
+    pub(crate) fn texture(self, x: usize, y: usize) -> bool {
+        if self.cells.is_empty() {
+            return false;
+        }
+        let (x, y) = (x + self.origin[0], y + self.origin[1]);
+        self.cells[y / 6 * self.columns + x / 6] & 8 != 0
     }
     pub(crate) fn allows(self, x: usize, y: usize) -> bool {
         if self.cells.is_empty() {
@@ -34,11 +96,14 @@ impl<'a> Support<'a> {
         let rows = self.cells.len() / self.columns;
         (y.saturating_sub(6) / 6..=((y + 6) / 6).min(rows - 1)).all(|yy| {
             (x.saturating_sub(6) / 6..=((x + 6) / 6).min(self.columns - 1))
-                .all(|xx| self.cells[yy * self.columns + xx] == 0)
+                .all(|xx| self.cells[yy * self.columns + xx] & 7 == 0)
         })
     }
 }
 
+#[cfg(test)]
+#[path = "../research/bayer_dir2.rs"]
+pub(crate) mod dir2_reference;
 #[cfg(test)]
 #[path = "../research/bayer_frame_reference.rs"]
 pub(crate) mod frame_reference;
@@ -60,9 +125,25 @@ pub(crate) fn oriented_size(w: u32, h: u32, orientation: u32) -> (u32, u32) {
     if orientation >= 5 { (h, w) } else { (w, h) }
 }
 
-pub(crate) fn bayer_scratch_reservation_bytes(width: usize) -> usize {
+/// One provenance bit per sensor site; no clipping is inferred after WB.
+pub(crate) fn original_clipping_bits(state: &[u8]) -> Vec<u8> {
+    if !state.contains(&crate::highlights::SATURATED) {
+        return Vec::new();
+    }
+    state
+        .chunks(8)
+        .map(|chunk| {
+            chunk.iter().enumerate().fold(0, |bits, (i, &s)| {
+                bits | (u8::from(s == crate::highlights::SATURATED) << i)
+            })
+        })
+        .collect()
+}
+
+pub(crate) fn bayer_scratch_reservation_bytes(width: usize, height: usize) -> usize {
     width * (3 * size_of::<f32>() + size_of::<[usize; 4]>())
         + crate::edge_planes::RangeRows::reservation_bytes(width)
+        + (width * height).div_ceil(8)
         + 8 * 1024
 }
 
@@ -179,6 +260,7 @@ pub(crate) fn develop_supported(
     let [left, top, w, h] = crop;
     let (ow, oh) = oriented_size(w as u32, h as u32, orientation);
     let mut pixels = vec![[0.; 4]; w * h];
+    let has_texture = support.cells.iter().any(|&mask| mask & 8 != 0);
     for cy in 0..h {
         let y = cy + top;
         ranges.prepare(mosaic, width, cfa, y);
@@ -225,25 +307,72 @@ pub(crate) fn develop_supported(
                 .sum();
                 rgb[2 - measured] = green[x] + delta / 4.;
             }
-            if support.allows(x, y)
-                && crate::edge_planes::near_edge(mosaic, width, height, x, y, 2)
+            let near_edge = crate::edge_planes::near_edge(mosaic, width, height, x, y, 2);
+            let supported = near_edge && support.allows(x, y);
+            if supported
                 && let Some(model) = crate::edge_planes::interpolate_with_bounds(
                     mosaic,
                     width,
                     height,
                     cfa,
-                    x,
-                    y,
+                    (x, y),
                     ranges.at(x, y),
+                    true,
+                )
+            {
+                let bounds = ranges.at(x, y);
+                let significant = model.bayer_axis.is_none()
+                    || (0..3).any(|c| {
+                        c != measured
+                            && (model.rgb[c] - rgb[c]).abs()
+                                > 0.001 * bounds[0][c].abs().max(bounds[1][c].abs()).max(0.01)
+                    });
+                let identified = model.bayer_axis.is_none_or(|(axis, cut)| {
+                    support.axis_identified(x, y, width, height, axis, cut)
+                });
+                if identified && significant {
+                    for (c, value) in rgb.iter_mut().enumerate() {
+                        if c != measured {
+                            *value = model.rgb[c];
+                        }
+                    }
+                }
+            }
+            if near_edge
+                && !supported
+                && let Some(prediction) = crate::bayer_clipped_edges::interpolate(
+                    (mosaic, support),
+                    width,
+                    height,
+                    cfa,
+                    (x, y),
+                    ranges.at(x, y),
+                    (rgb, matrix),
                 )
             {
                 for c in 0..3 {
                     if c != measured {
-                        rgb[c] = model[c];
+                        rgb[c] = prediction[c];
                     }
                 }
             }
-            let rec = crate::color::project(matrix, rgb);
+            // Texture interpolation is defined only at the physical margin.
+            // Reject interior pixels before looking up the per-cell support.
+            if has_texture
+                && (x < 3 || x + 3 >= width || y < 3 || y + 3 >= height)
+                && support.texture(x, y)
+                && let Some(prediction) = crate::bayer_texture_edges::interpolate(
+                    (mosaic, support),
+                    width,
+                    height,
+                    cfa,
+                    (x, y),
+                    rgb,
+                )
+            {
+                rgb = prediction;
+            }
+            let rec = crate::color::project(matrix, support.render_highlights(rgb, x, y));
             let (ox, oy) = match orientation {
                 2 => (w - 1 - cx, cy),
                 3 => (w - 1 - cx, h - 1 - cy),
@@ -263,6 +392,112 @@ pub(crate) fn develop_supported(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn original_clipping_bits_keep_partial_bytes_stride_and_shifted_coordinates() {
+        for length in 1usize..=41 {
+            let state: Vec<_> = (0..length).map(|i| (i % 3) as u8).collect();
+            let bits = original_clipping_bits(&state);
+            assert!(bits.len() <= length.div_ceil(8));
+            assert_eq!(bits.capacity(), bits.len());
+            let support = Support::default().with_original_clipping(&bits, length);
+            for (i, &s) in state.iter().enumerate() {
+                assert_eq!(support.measured(i, 0), s != crate::highlights::SATURATED);
+            }
+        }
+        let (w, h) = (19, 17);
+        let mut state = vec![0; w * h];
+        for x in 0..w {
+            state[8 * w + x] = crate::highlights::SATURATED;
+        }
+        let bits = original_clipping_bits(&state);
+        let support = Support::default().with_original_clipping(&bits, w);
+        assert!(!support.axis_identified(8, 8, w, h, 1, 8));
+        assert!(!support.axis_identified(8, 8, w, h, 1, 9));
+        assert!(support.axis_identified(8, 8, w, h, 0, 8));
+        for y in 4..h {
+            for x in 3..w {
+                assert_eq!(
+                    support.measured(x, y),
+                    support.shifted(3, 4).measured(x - 3, y - 4)
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn identified_bayer_axis_edges_preserve_sites_and_reject_clipped_boundary_evidence() {
+        let (w, h) = (31, 29);
+        for phase in 0..4 {
+            let cfa = Cfa::bayer([0, 1, 1, 2]).shifted(phase % 2, phase / 2);
+            for axis in 0..2 {
+                for cut in [7, 14, 15, 23] {
+                    let scene = |x: usize, y: usize| {
+                        if [x, y][axis] < cut {
+                            [0.13, 0.41, 0.27]
+                        } else {
+                            [1.21, 0.73, 0.99]
+                        }
+                    };
+                    let mosaic: Vec<_> = (0..w * h)
+                        .map(|i| scene(i % w, i / w)[cfa.color(i % w, i / w)])
+                        .collect();
+                    let reference = dir2_reference::develop(
+                        &mosaic,
+                        w,
+                        h,
+                        cfa,
+                        crate::color::ID,
+                        [0, 0, w, h],
+                        1,
+                    )
+                    .unwrap();
+                    let actual =
+                        develop(&mosaic, w, h, cfa, crate::color::ID, [0, 0, w, h], 1).unwrap();
+                    for (i, pixel) in actual.pixels.iter().enumerate() {
+                        assert!(pixel.iter().all(|v| v.is_finite()));
+                        let c = cfa.color(i % w, i / w);
+                        assert_eq!(pixel[c].to_bits(), mosaic[i].to_bits());
+                    }
+                    let mut old_error = 0f32;
+                    for y in 3..h - 3 {
+                        for x in 3..w - 3 {
+                            let i = y * w + x;
+                            let measured = cfa.color(x, y);
+                            assert_eq!(actual.pixels[i][measured].to_bits(), mosaic[i].to_bits());
+                            for c in 0..3 {
+                                assert!((actual.pixels[i][c] - scene(x, y)[c]).abs() < 2e-6);
+                                old_error =
+                                    old_error.max((reference.pixels[i][c] - scene(x, y)[c]).abs());
+                            }
+                        }
+                    }
+                    assert!(old_error > 0.01);
+                    let state: Vec<_> = (0..w * h)
+                        .map(|i| {
+                            if [i % w, i / w][axis] == cut {
+                                crate::highlights::SATURATED
+                            } else {
+                                0
+                            }
+                        })
+                        .collect();
+                    let bits = original_clipping_bits(&state);
+                    let blocked = develop_supported(
+                        (&mosaic, Support::default().with_original_clipping(&bits, w)),
+                        w,
+                        h,
+                        cfa,
+                        crate::color::ID,
+                        [0, 0, w, h],
+                        1,
+                    )
+                    .unwrap();
+                    assert_eq!(blocked.pixels, reference.pixels);
+                }
+            }
+        }
+    }
 
     #[test]
     fn unsupported_clipping_excludes_the_entire_edge_fit_support_across_tiles() {

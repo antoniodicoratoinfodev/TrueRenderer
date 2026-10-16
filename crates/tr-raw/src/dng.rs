@@ -68,6 +68,21 @@ fn matrix(field: Field<'_>) -> Result<Matrix> {
     Ok(m)
 }
 
+fn forward_matrix(field: Field<'_>) -> Result<Matrix> {
+    let m = matrix(field)?;
+    // DNG 1.7.1 pp. 50–51, 103: EACH endpoint maps unit camera RGB to
+    // D50. Checking only the selected interpolation lets invalid endpoints
+    // cancel, or hides one outside the current WB's interpolation interval.
+    // Keep the existing rounding allowance and numerical path for valid data.
+    let white = color::vector(m, [1.; 3]);
+    let d50 = color::xyz([0.3457, 0.3585])?;
+    ensure!(
+        (0..3).all(|c| (white[c] - d50[c]).abs() < 0.001),
+        "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante"
+    );
+    Ok(m)
+}
+
 impl<'a> Dng<'a> {
     pub fn parse(bytes: &'a [u8]) -> Result<Self> {
         let tiff = Tiff::parse(bytes)?;
@@ -374,8 +389,8 @@ impl<'a> Dng<'a> {
             .map(matrix)
             .transpose()?
             .unwrap_or(color::ID);
-        let fm1 = root.get(50964).map(matrix).transpose()?;
-        let fm2 = root.get(50965).map(matrix).transpose()?;
+        let fm1 = root.get(50964).map(forward_matrix).transpose()?;
+        let fm2 = root.get(50965).map(forward_matrix).transpose()?;
         ensure!(
             second.is_none() || fm1.is_some() == fm2.is_some(),
             "DNG: ForwardMatrix incompleta"
@@ -473,18 +488,18 @@ impl<'a> Dng<'a> {
         let active_pixels = self.active[2] * self.active[3];
         let output_pixels = w * h;
         let demosaic_peak = if self.cfa.period == 2 {
-            active_pixels * 4
+            active_pixels * 5
                 + output_pixels * 16
-                + render::bayer_scratch_reservation_bytes(self.active[2])
+                + render::bayer_scratch_reservation_bytes(self.active[2], self.active[3])
         } else {
-            active_pixels * 8 + output_pixels * 16
+            active_pixels * 9 + output_pixels * 16
         };
         let scratch_peak_bytes = (sensor_pixels * 2 + active_pixels * 4)
             .max(sensor_pixels * 4) // sensor plus repacked DNG output
             .max(sensor_pixels * 2 + self.tile[0] * self.tile[1] * 2)
             .max(demosaic_peak + crate::highlights::support_bytes(self.active[2], self.active[3]))
-            .max(active_pixels * 4 + crate::highlights::scratch_bytes(self.active[2], self.active[3]))
-            .max(sensor_pixels * 2 + active_pixels * 5)
+            .max(active_pixels * 5 + crate::highlights::scratch_bytes(self.active[2], self.active[3]))
+            .max(sensor_pixels * 2 + active_pixels * 6)
             // Export can hold copied profile fields, a metadata payload and
             // its final output copy together (each <=16 MiB). The remaining
             // 16 MiB cover bounded directories, calibration vectors and LUT.
@@ -578,6 +593,7 @@ impl<'a> Dng<'a> {
         let [left, top, w, h] = self.active;
         let mut mosaic = vec![0.; w * h];
         let mut saturation = vec![0; w * h];
+        let mut highlight_confidence = vec![0; w * h];
         let scale = (self.white - self.maximum_black).recip();
         for y in 0..h {
             for x in 0..w {
@@ -597,12 +613,18 @@ impl<'a> Dng<'a> {
                     black,
                     self.clipping.unwrap_or(self.white),
                 );
+                highlight_confidence[y * w + x] = crate::highlight_render::confidence(
+                    f64::from(value),
+                    black,
+                    self.clipping.unwrap_or(self.white),
+                );
             }
         }
         drop(raw);
         Ok(crate::wb::Mosaic {
             values: mosaic,
             saturation,
+            highlight_confidence,
             width: w,
             active_width: w,
             height: h,

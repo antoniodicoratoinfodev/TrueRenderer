@@ -93,6 +93,128 @@ fn scene(
 }
 
 #[test]
+fn stricter_continuity_cannot_create_corrected_islands() {
+    let cells = [Cell {
+        clipped: 1,
+        ..Cell::default()
+    }; 3];
+    let mut allowed = [129, 65, 137];
+    complete_continuity(&cells, &mut allowed, 3, 1);
+    assert_eq!(allowed, [1, 65, 9]);
+    let mut allowed = [129; 3];
+    complete_continuity(&cells, &mut allowed, 3, 1);
+    assert_eq!(allowed, [129; 3]);
+    let mut separate = cells;
+    separate[1].clipped = 0;
+    let mut allowed = [129, 0, 1];
+    complete_continuity(&separate, &mut allowed, 3, 1);
+    assert_eq!(allowed, [129, 0, 1]);
+    let diagonal = [1, 0, 0, 1].map(|clipped| Cell {
+        clipped,
+        ..Cell::default()
+    });
+    let mut allowed = [129, 0, 0, 1];
+    complete_continuity(&diagonal, &mut allowed, 2, 2);
+    assert_eq!(allowed, [1, 0, 0, 1]);
+}
+
+#[test]
+fn small_lifts_require_original_affine_support_outside_the_cell() {
+    let (w, h, stride) = (42, 42, 47);
+    let cfa = Cfa::bayer([0, 1, 1, 2]);
+    let (truth, image, states) = scene(cfa, w, h, |x, _| {
+        [1., 0.5, 0.7].map(|v| v * (1.00004 + 0.008 * (x as f32 - 18.)))
+    });
+    let mut values = vec![f32::NAN; stride * h];
+    let mut state = vec![0; stride * h];
+    for y in 0..h {
+        values[y * stride..y * stride + w].copy_from_slice(&image[y * w..(y + 1) * w]);
+        state[y * stride..y * stride + w].copy_from_slice(&states[y * w..(y + 1) * w]);
+    }
+    let r = Reconstruction {
+        model: Model {
+            plane: [1.02004, 0.02, 0.],
+            jump: 0.,
+            split: 0,
+            split2: 0,
+            side: 6,
+            border: 0,
+            correction: [0.; 2],
+        },
+        ratio: [1., 0.5, 0.7],
+        extended: false,
+    };
+    let accepts = |v: &[f32]| {
+        let grid = Grid {
+            data: vec![],
+            values: v,
+            state: &state,
+            stride,
+            width: w,
+            height: h,
+            columns: w / SIDE,
+            cfa,
+            designs: vec![],
+        };
+        continuous_bayer_plane(&grid, 3, 3, r, 1)
+    };
+    assert!(truth[18 * w + 18] > 1.);
+    assert!(accepts(&values));
+    // A valid red site just outside the target cell invalidates continuation,
+    // even though a 1% change is within HL4's looser colour agreement.
+    let i = 18 * stride + 16;
+    assert_ne!(state[i], SATURATED);
+    values[i] *= 0.99;
+    assert!(!accepts(&values));
+}
+
+#[test]
+fn supported_bayer_ramps_remain_continuous_through_the_clipping_limit() {
+    // A sub-0.01% highlight is still part of a supported plane. A relative
+    // dead band leaves isolated clipped sites and creates a false colour edge.
+    for cfa in phases().into_iter().filter(|cfa| cfa.period == 2) {
+        for axis in 0..2 {
+            for hue in [[1., 0.4, 0.7], [0.5, 1., 0.8], [0.3, 0.6, 1.]] {
+                let (w, h) = (97, 73); // Partial cells and every CFA phase.
+                let bright = hue.iter().position(|&v| v == 1.).unwrap();
+                let crossing = (42..42 + cfa.period)
+                    .find(|&p| {
+                        (0..cfa.period).any(|q| {
+                            let [x, y] = if axis == 0 { [p, q] } else { [q, p] };
+                            cfa.color(x, y) == bright
+                        })
+                    })
+                    .unwrap() as f32;
+                let (truth, mut values, state) = scene(cfa, w, h, |x, y| {
+                    let p = [x, y][axis] as f32;
+                    hue.map(|v| v * (1.00004 + 0.008 * (p - crossing)))
+                });
+                let original = values.clone();
+                recover(&mut values, &state, w, w, h, cfa);
+                let mut near_limit = 0;
+                for i in 0..values.len() {
+                    if state[i] != SATURATED {
+                        assert_eq!(values[i].to_bits(), original[i].to_bits());
+                    } else {
+                        assert!(
+                            (values[i] - truth[i]).abs() < 2e-6,
+                            "{cfa:?}, axis {axis}, {hue:?}, site {i}: {} vs {}",
+                            values[i],
+                            truth[i]
+                        );
+                        if truth[i] > 1. && truth[i] < 1.0001 {
+                            near_limit += 1;
+                            assert!(values[i] > 1.);
+                        }
+                    }
+                }
+                assert!(near_limit > 0);
+            }
+        }
+    }
+}
+
+#[test]
 fn ramps_recover_one_or_two_channels_without_changing_valid_measurements() {
     for cfa in phases() {
         for hue in [[0.4, 1., 0.7], [1., 0.35, 0.8], [0.3, 0.65, 1.]] {

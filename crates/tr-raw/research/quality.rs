@@ -543,6 +543,15 @@ fn edge_planes_bayer_quality_research_campaign() -> Result<()> {
 }
 
 #[test]
+#[ignore = "Bayer BR7 regression on observed signals, against frozen dir2"]
+fn identified_edges_bayer_quality_research_campaign() -> Result<()> {
+    run_quality_campaign(
+        "BR7",
+        include_str!("../tests/fixtures/research-br7-regression.json"),
+    )
+}
+
+#[test]
 #[ignore = "DR7 regression on observed v6 signals; not new validation"]
 fn steps_quality_research_campaign() -> Result<()> {
     run_quality_campaign(
@@ -595,7 +604,10 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
     let mut all_passed = true;
     let mut worst_ratios: BTreeMap<String, f64> = BTreeMap::new();
     let mut worst_cases: BTreeMap<String, Value> = BTreeMap::new();
-    let is_bayer = matches!(candidate, "BR1" | "BR2" | "BR3" | "BR4" | "BR5" | "BR6");
+    let is_bayer = matches!(
+        candidate,
+        "BR1" | "BR2" | "BR3" | "BR4" | "BR5" | "BR6" | "BR7"
+    );
     let phases = if is_bayer { 4 } else { 36 };
     for phase in 0..phases {
         let cfa = if is_bayer {
@@ -633,6 +645,20 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
                 .collect();
             let a: Vec<_> = if candidate == "DR7" {
                 crate::xtrans_dr6::reconstruct(&mosaic, w, h, cfa)
+            } else if candidate == "BR7" {
+                crate::render::dir2_reference::develop(
+                    &mosaic,
+                    w,
+                    h,
+                    cfa,
+                    crate::color::ID,
+                    [0, 0, w, h],
+                    1,
+                )?
+                .pixels
+                .into_iter()
+                .map(|p| [p[0], p[1], p[2]])
+                .collect()
             } else if is_bayer {
                 crate::render::frame_reference::develop(
                     &mosaic,
@@ -659,7 +685,20 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
                 "DR5" => refined::reconstruct(&mosaic, w, h, cfa),
                 "DR6" => constrained::reconstruct(&mosaic, w, h, cfa),
                 "DR7" => crate::xtrans_steps::reconstruct(&mosaic, w, h, cfa),
-                "BR6" => {
+                "BR6" => crate::render::dir2_reference::develop(
+                    &mosaic,
+                    w,
+                    h,
+                    cfa,
+                    crate::color::ID,
+                    [0, 0, w, h],
+                    1,
+                )?
+                .pixels
+                .into_iter()
+                .map(|p| [p[0], p[1], p[2]])
+                .collect(),
+                "BR7" => {
                     crate::render::develop(&mosaic, w, h, cfa, crate::color::ID, [0, 0, w, h], 1)?
                         .pixels
                         .into_iter()
@@ -727,10 +766,12 @@ fn run_quality_campaign(candidate: &str, text: &str) -> Result<()> {
         "BR1" | "BR2" => Some(include_bytes!("bayer.rs").as_slice()),
         "BR3" | "BR4" => Some(include_bytes!("bayer_guided.rs").as_slice()),
         "BR5" => Some(include_bytes!("bayer_guarded.rs").as_slice()),
+        "BR6" => Some(include_bytes!("bayer_dir2.rs").as_slice()),
+        "BR7" => Some(include_bytes!("../src/render.rs").as_slice()),
         _ => None,
     };
     let report = json!({"protocol":protocol["protocol"],"protocol_sha256":hash(text.as_bytes()),"candidate":candidate,"candidate_source_sha256":candidate_source.map(hash),"split":split,
-        "baseline":if candidate=="DR7" {"DR6"} else if is_bayer {"Bayer dir1"} else {"E8 camera RGB"},
+        "baseline":if candidate=="DR7" {"DR6"} else if candidate=="BR7" {"Bayer dir2"} else if is_bayer {"Bayer dir1"} else {"E8 camera RGB"},
         "edge_planes_sha256":hash(include_bytes!("../src/edge_planes.rs")),
         "xtrans_steps_sha256":hash(include_bytes!("../src/xtrans_steps.rs")),
         "scenes":cases.iter().map(|s|&s.name).collect::<Vec<_>>(),"scene_phase_cases":cases.len()*phases,"width":w,"height":h,

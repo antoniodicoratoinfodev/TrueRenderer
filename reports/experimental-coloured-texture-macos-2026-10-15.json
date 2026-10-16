@@ -1,0 +1,2079 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-15",
+  "protocol": "Bayer-coloured-texture-HL6-dir6-v1",
+  "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-extended1",
+  "decision": "Installed the bounded green-texture recovery and its joint boundary interpolation after frozen verification, native paired comparisons and functional checks. Removes a documented local legacy colour/detail advantage on a D800 texture. No general superiority or calibrated photographic accuracy claim.",
+  "method": {
+    "cause": "Constant chromatic ratios cannot reproduce some coloured textures. Restoring only R/B while green remains clipped worsens final colour. Conversely, accurate green recovery can expose a pre-existing reflected-boundary error in the directional demosaic.",
+    "HL6": "HL5 first. Otherwise only complete previously unsupported Bayer green-only components up to 192x192. Fit G=aR+bB+c+dx*x+dy*y from original observations in a 24-pixel context. Phase- and boundary-stencil-specific R/B interpolation, disjoint green fit groups, validation of every available green including held-out/near-clipped sites, finite conditioned systems and bounded colour amplification. Both predictions must agree at every missing green; lift at most 1.5 times its observed code. All original non-clipped sites preserved. No neutral assumption, renderer matching or test-reference fitting.",
+    "dir6": "Only the physical frame margin of newly admitted texture cells. Interpolate missing R/B with original same-channel cubic samples; green along the frame boundary, average the two directions at corners. No reflection, modification of measured CFA channels, denoise, RGB clamp or extra raster. The support bit distinguishes this admission from unsupported clipping.",
+    "limits": "The green relationship is validated where green survives; a change affecting only the hidden green cannot be identified from R/B alone. Fold predictions are spatially correlated, not independent camera observations. Highly amplified fits, multiple clipped channels, unsupported edges, noise and insufficient evidence are rejected. No new X-Trans recovery."
+  },
+  "rejected": {
+    "curvature_without_surviving_channels": {
+      "reason": "Quadratic/log-quadratic extrapolation helped curved peaks but worsened same-RAW flat-top hypotheses. Removed from production before final candidate. All 221 regional metric regressions were hidden-flat controls.",
+      "analysis": {
+        "records": 616,
+        "regions": 1232,
+        "valid_sites_changed": 0,
+        "exact_DNG_reopens": 616,
+        "metric_order": [
+          "rgb_rmse",
+          "rgb_max_abs",
+          "chroma_rmse",
+          "chroma_max_abs",
+          "gradient_rmse",
+          "gradient_max_abs"
+        ],
+        "regressions_over_1e_minus_5": 221,
+        "improvements_over_1e_minus_5": 1503,
+        "common_chroma_regressions_over_1e_minus_5": 54,
+        "common_chroma_improvements_over_1e_minus_5": 396,
+        "maximum_positive_change": {
+          "rgb_rmse": 0.015451665977002533,
+          "rgb_max_abs": 0.10836553573608398,
+          "chroma_rmse": 0.0022747186361150654,
+          "chroma_max_abs": 0.011240641210390562,
+          "gradient_rmse": 0.0018865742158555845,
+          "gradient_max_abs": 0.014478683471679688
+        },
+        "changed_images": 193,
+        "changed_chroma_populations": 0
+      }
+    },
+    "green_recovery_with_original_demosaic": {
+      "analysis": {
+        "records": 8454,
+        "regions": 18752,
+        "valid_sites_changed": 0,
+        "exact_DNG_reopens": 8448,
+        "metric_order": [
+          "rgb_rmse",
+          "rgb_max_abs",
+          "chroma_rmse",
+          "chroma_max_abs",
+          "gradient_rmse",
+          "gradient_max_abs"
+        ],
+        "regressions_over_1e_minus_5": 1,
+        "improvements_over_1e_minus_5": 95,
+        "common_chroma_regressions_over_1e_minus_5": 0,
+        "common_chroma_improvements_over_1e_minus_5": 32,
+        "maximum_positive_change": {
+          "rgb_rmse": 0.0,
+          "rgb_max_abs": 0.0,
+          "chroma_rmse": 0.0,
+          "chroma_max_abs": 0.0,
+          "gradient_rmse": 0.0,
+          "gradient_max_abs": 0.0007497072219848633
+        },
+        "changed_images": 8,
+        "changed_chroma_populations": 0
+      },
+      "cause": "One frame-edge gradient peak rose 0.1162145138 to 0.1169642210. Ideal unclipped demosaic also gives 0.1169625521, identifying a boundary interpolation defect rather than green estimation error. Joint boundary correction reduces the selected peak to 0.1016044617."
+    },
+    "RB_only_boundary_probe": {
+      "changed_pixels": 534,
+      "before": {
+        "rgb_rmse": 0.012980289284771405,
+        "rgb_max": 0.13859784603118896,
+        "chroma_rmse": 0.003179794126989722,
+        "chroma_max": 0.018924950045339672,
+        "gradient_rmse": 0.01207400781171688,
+        "gradient_max": 0.11696422100067139
+      },
+      "after": {
+        "rgb_rmse": 0.0123638894690287,
+        "rgb_max": 0.09115886688232422,
+        "chroma_rmse": 0.0031185465879647865,
+        "chroma_max": 0.01920723333750135,
+        "gradient_rmse": 0.011728765409039348,
+        "gradient_max": 0.11976575190571404
+      }
+    },
+    "unstable_D750_fit": "The private unconstrained probe improves a reused D750 p1 texture but requires original-domain |a|+|b| above 6 and up to about 9.90 for boundary stencils. Production rejects the whole component rather than relaxing the amplification bound of 4.",
+    "development_harness_notes": "Early private curvature reports used the default no-recovery text label while selecting frozen HL5/dir5; hashes and explicit flag identified the actual baseline. Fixed before final regression/verification. Private mosaic probe uses only its rendered truth metrics; its sensor diagnostics describe the ordinary pipeline and it has no production repack claim. The first native launch rejected a manifest missing schema before decoding; repaired and rerun. The initial texture-development point-error generator only perturbed some green phases; fixed before the frozen verification. Reused development counts are not independent observations."
+  },
+  "quality": [
+    {
+      "records": 8562,
+      "regions": 18968,
+      "valid_sites_changed": 0,
+      "exact_DNG_reopens": 8556,
+      "metric_order": [
+        "rgb_rmse",
+        "rgb_max_abs",
+        "chroma_rmse",
+        "chroma_max_abs",
+        "gradient_rmse",
+        "gradient_max_abs"
+      ],
+      "regressions_over_1e_minus_5": 0,
+      "improvements_over_1e_minus_5": 480,
+      "common_chroma_regressions_over_1e_minus_5": 0,
+      "common_chroma_improvements_over_1e_minus_5": 160,
+      "maximum_positive_change": {
+        "rgb_rmse": 0.0,
+        "rgb_max_abs": 0.0,
+        "chroma_rmse": 0.0,
+        "chroma_max_abs": 0.0,
+        "gradient_rmse": 0.0,
+        "gradient_max_abs": 0.0
+      },
+      "changed_images": 40,
+      "changed_chroma_populations": 0
+    },
+    {
+      "records": 1532,
+      "regions": 3064,
+      "valid_sites_changed": 0,
+      "exact_DNG_reopens": 1532,
+      "metric_order": [
+        "rgb_rmse",
+        "rgb_max_abs",
+        "chroma_rmse",
+        "chroma_max_abs",
+        "gradient_rmse",
+        "gradient_max_abs"
+      ],
+      "regressions_over_1e_minus_5": 0,
+      "improvements_over_1e_minus_5": 300,
+      "common_chroma_regressions_over_1e_minus_5": 0,
+      "common_chroma_improvements_over_1e_minus_5": 100,
+      "maximum_positive_change": {
+        "rgb_rmse": 0.0,
+        "rgb_max_abs": 0.0,
+        "chroma_rmse": 0.0,
+        "chroma_max_abs": 0.0,
+        "gradient_rmse": 0.0,
+        "gradient_max_abs": 0.0
+      },
+      "changed_images": 28,
+      "changed_chroma_populations": 0
+    },
+    {
+      "records": 400,
+      "regions": 800,
+      "valid_sites_changed": 0,
+      "exact_DNG_reopens": 400,
+      "metric_order": [
+        "rgb_rmse",
+        "rgb_max_abs",
+        "chroma_rmse",
+        "chroma_max_abs",
+        "gradient_rmse",
+        "gradient_max_abs"
+      ],
+      "regressions_over_1e_minus_5": 0,
+      "improvements_over_1e_minus_5": 0,
+      "common_chroma_regressions_over_1e_minus_5": 0,
+      "common_chroma_improvements_over_1e_minus_5": 0,
+      "maximum_positive_change": {
+        "rgb_rmse": 0.0,
+        "rgb_max_abs": 0.0,
+        "chroma_rmse": 0.0,
+        "chroma_max_abs": 0.0,
+        "gradient_rmse": 0.0,
+        "gradient_max_abs": 0.0
+      },
+      "changed_images": 0,
+      "changed_chroma_populations": 0
+    }
+  ],
+  "integrity": {
+    "development_records": 8562,
+    "new_verification_records": 1532,
+    "fresh_unique_RAW_hashes": 1343,
+    "fresh_RAW_overlap_with_development": [],
+    "identical_RAW_groups": {
+      "d9bc3935d260452d229869766ef8ace1e092e1f1fe73caae94ea5057ac098803": [
+        "s153137-d750-p0-ambiguous-neutral",
+        "s153137-d750-p0-ambiguous-colour"
+      ],
+      "b4e9745b89bba2c040eb15f51078340a2b1f61a376276e811361b0b13cdbba6e": [
+        "s153137-d750-p1-ambiguous-neutral",
+        "s153137-d750-p1-ambiguous-colour"
+      ],
+      "004e9c184c21358d479c404c73af4587e131e72a52bfce31ffbe490a69d74479": [
+        "s153137-d750-p2-ambiguous-neutral",
+        "s153137-d750-p2-ambiguous-colour"
+      ],
+      "fee89e8198f2ac272f0350d0b649593ed9afbe458743e071a80ffb218d733249": [
+        "s153137-d750-p3-ambiguous-neutral",
+        "s153137-d750-p3-ambiguous-colour"
+      ],
+      "eb13d715ef38e2bed9af4a1b745ec39b0ce475bd312637d0b4636287c01235dc": [
+        "s153137-d800-p0-ambiguous-neutral",
+        "s153137-d800-p0-ambiguous-colour"
+      ],
+      "ecb8793cadb911166a629a808a28586828879b11ab17674587ab6ca0f8d31cae": [
+        "s153137-d800-p1-ambiguous-neutral",
+        "s153137-d800-p1-ambiguous-colour"
+      ],
+      "7bdf4fb9b92a887f3a4b1e53f6c11ec5678adc2b399186148e9824289cb7f6af": [
+        "s153137-d800-p2-ambiguous-neutral",
+        "s153137-d800-p2-ambiguous-colour"
+      ],
+      "f0c75f631227a0a64843df479ab53b22bd238c8da7b88ff9cb629dc9d259b7a2": [
+        "s153137-d800-p3-ambiguous-neutral",
+        "s153137-d800-p3-ambiguous-colour"
+      ],
+      "356fae9a986c7fb6955caa45d364171862f38562aa3ba03228590e92fb696822": [
+        "s153137-xt5-p0-ambiguous-neutral",
+        "s153137-xt5-p0-ambiguous-colour"
+      ],
+      "fda6516ad8a186fd224af3968b7c1a86a613eda6161068de2fac23c0cbcafa64": [
+        "s153137-xt5-p1-ambiguous-neutral",
+        "s153137-xt5-p1-ambiguous-colour"
+      ],
+      "88dd243d7e55c0ace4b5d7add33cdb47f6105f393bd501ab91c7c0b1f0f64ac8": [
+        "s153137-xt5-p2-ambiguous-neutral",
+        "s153137-xt5-p2-ambiguous-colour"
+      ],
+      "654724b16e8190a1f669e7d50982f139ada3f4dc37671cf0b1e354b95d01344c": [
+        "s153137-xt5-p3-ambiguous-neutral",
+        "s153137-xt5-p3-ambiguous-colour"
+      ],
+      "a2ac938beb2597d163afb77b2d118ae3a420b8e23d0629f0c53befbbef0e90a8": [
+        "s153137-xt5-p4-ambiguous-neutral",
+        "s153137-xt5-p4-ambiguous-colour"
+      ],
+      "73b1920e13a5ec4b122a04338bc3a923c4b708042d0e0cf1e7986ec811c25b7d": [
+        "s153137-xt5-p5-ambiguous-neutral",
+        "s153137-xt5-p5-ambiguous-colour"
+      ],
+      "5c9f77fe9e78f0b8cea8d94c3ae5484946679db9c1bc2bb93f25a7f338a16b07": [
+        "s153137-xt5-p6-ambiguous-neutral",
+        "s153137-xt5-p6-ambiguous-colour"
+      ],
+      "53fa66629b3c171493ec3d26784009101bcaae7058b305c552a0e4b396c639b7": [
+        "s153137-xt5-p7-ambiguous-neutral",
+        "s153137-xt5-p7-ambiguous-colour"
+      ],
+      "c5f7b9730aa179acd9762d0b1329a10298a3fa3ec4b22aba1120eadf5615cbab": [
+        "s153137-xt5-p8-ambiguous-neutral",
+        "s153137-xt5-p8-ambiguous-colour"
+      ],
+      "81e0e264627dbae6d8993b9402749c8bdc9e5f7c14c2b3b322e6436087e2bc01": [
+        "s153137-xt5-p9-ambiguous-neutral",
+        "s153137-xt5-p9-ambiguous-colour"
+      ],
+      "7fa69fbf85ccec72a551975d294ac19ce583f03ee456a4c5cf6c1926ae0b5a4f": [
+        "s153137-xt5-p10-ambiguous-neutral",
+        "s153137-xt5-p10-ambiguous-colour"
+      ],
+      "e313ee060692375f58104bb8a952dbf2ecfb63792413087afc3c6a7d478cf900": [
+        "s153137-xt5-p11-ambiguous-neutral",
+        "s153137-xt5-p11-ambiguous-colour"
+      ],
+      "c1f7d7eeef911d3f96162c0fdca2f9d56a52ce9f9297304fa9b7fccd6933f568": [
+        "s153137-xt5-p12-ambiguous-neutral",
+        "s153137-xt5-p12-ambiguous-colour"
+      ],
+      "b243b508b26e7acf9c7268a3ba98fae27c379374e86d3a70d9c4d7fdbce62d79": [
+        "s153137-xt5-p13-ambiguous-neutral",
+        "s153137-xt5-p13-ambiguous-colour"
+      ],
+      "8e5875d4142032aa18575fdaf0858dd8cd7ff8da5f7b9bfce3d4192c23f21ffe": [
+        "s153137-xt5-p14-ambiguous-neutral",
+        "s153137-xt5-p14-ambiguous-colour"
+      ],
+      "837227a0c6c9a33a93ca2e8f8a1dc7b7c55f682f41e24ae6e8055868a0d0d8dc": [
+        "s153137-xt5-p15-ambiguous-neutral",
+        "s153137-xt5-p15-ambiguous-colour"
+      ],
+      "3af979ba6a5afc794d3e9d5d2754402783c25d4fcfa6ac9f015fd790e0243763": [
+        "s153137-xt5-p16-ambiguous-neutral",
+        "s153137-xt5-p16-ambiguous-colour"
+      ],
+      "01307749dacc49e30cfc6f18770700323f4ffa09a9f7406431b8a13fe1b0a952": [
+        "s153137-xt5-p17-ambiguous-neutral",
+        "s153137-xt5-p17-ambiguous-colour"
+      ],
+      "37790c4bab20a8d70e15f11c8a0853653433db322dd552fcab7242b831e27404": [
+        "s153137-xt5-p18-ambiguous-neutral",
+        "s153137-xt5-p18-ambiguous-colour"
+      ],
+      "21d1d5642e5d00d6ce026fcafa181e7a667fe0027c934a4ec60bc8a93276409d": [
+        "s153137-xt5-p19-ambiguous-neutral",
+        "s153137-xt5-p19-ambiguous-colour"
+      ],
+      "a4a54893c66f7f4c0ad7bed2ee3d449f656f762541bac25532949a9545b7005b": [
+        "s153137-xt5-p20-ambiguous-neutral",
+        "s153137-xt5-p20-ambiguous-colour"
+      ],
+      "7b6bd0c599910b1d355e969e18d978a452fa0e669099cc985a1216476eab8ead": [
+        "s153137-xt5-p21-ambiguous-neutral",
+        "s153137-xt5-p21-ambiguous-colour"
+      ],
+      "975d78e4691f268dfa774257887d66de00feb5a5fe41d4ffca886224ac7fd33e": [
+        "s153137-xt5-p22-ambiguous-neutral",
+        "s153137-xt5-p22-ambiguous-colour"
+      ],
+      "184595e986e637a5c09a7f46a4600ccdd456c8ee4a49de2d9c49a2934f62687e": [
+        "s153137-xt5-p23-ambiguous-neutral",
+        "s153137-xt5-p23-ambiguous-colour"
+      ],
+      "da4d48188bce8545ddb573b9ee5a88c2064e6c75ce0cd0dafc68da8d5d857eef": [
+        "s153137-xt5-p24-ambiguous-neutral",
+        "s153137-xt5-p24-ambiguous-colour"
+      ],
+      "7f546b7cdccda8381d8a9878e1f0ba5d8c9e17deb9664e5aa337df0e51741088": [
+        "s153137-xt5-p25-ambiguous-neutral",
+        "s153137-xt5-p25-ambiguous-colour"
+      ],
+      "030ecf9adaa38c1ee3068d48cb00881fc617b1e38e52f4e6d49d5b363d468603": [
+        "s153137-xt5-p26-ambiguous-neutral",
+        "s153137-xt5-p26-ambiguous-colour"
+      ],
+      "9ca565a53833845b90d8eebd9758f75e744ecdb376c096c21251a51e205049df": [
+        "s153137-xt5-p27-ambiguous-neutral",
+        "s153137-xt5-p27-ambiguous-colour"
+      ],
+      "ecab3dac229f094109c1ee76a239747d7f4f0020b8b6895b76828ae53e2a5e29": [
+        "s153137-xt5-p28-ambiguous-neutral",
+        "s153137-xt5-p28-ambiguous-colour"
+      ],
+      "47fb82ab08157769efaf6c70c472a463f9f95671d80e72cefd491d27cbef9775": [
+        "s153137-xt5-p29-ambiguous-neutral",
+        "s153137-xt5-p29-ambiguous-colour"
+      ],
+      "5b6fbbe467730e50d8c4f535624d8814401d137707eed2cc6207139e05eda92f": [
+        "s153137-xt5-p30-ambiguous-neutral",
+        "s153137-xt5-p30-ambiguous-colour"
+      ],
+      "6afa92cc3dd74c58b43fbee48919417c783d5d80d19542db9736881556d4e19f": [
+        "s153137-xt5-p31-ambiguous-neutral",
+        "s153137-xt5-p31-ambiguous-colour"
+      ],
+      "bd2dd670442c17fee861b2ffff91122ea093ed3f1d1e8c2c254e74003e15ef93": [
+        "s153137-xt5-p32-ambiguous-neutral",
+        "s153137-xt5-p32-ambiguous-colour"
+      ],
+      "91c7730ab511841ea1e25ebf3b470d3c9cd3ed78292f78eacd670f3c01c10e13": [
+        "s153137-xt5-p33-ambiguous-neutral",
+        "s153137-xt5-p33-ambiguous-colour"
+      ],
+      "7831e676f0838f12dd5a5a738d9302cb055124aea0f74a255a6288c169db556b": [
+        "s153137-xt5-p34-ambiguous-neutral",
+        "s153137-xt5-p34-ambiguous-colour"
+      ],
+      "0f013d3f5ff4e65899e56a8485cb9b97260afc4bb47b34d70fddb0b37089776c": [
+        "s153137-xt5-p35-ambiguous-neutral",
+        "s153137-xt5-p35-ambiguous-colour"
+      ],
+      "e91582851e56562fed3434f54490d09f12b89845eebf8f875547ecacf7e838dc": [
+        "s153151-linear-p0-a0-k0-ambiguous-neutral",
+        "s153151-linear-p0-a0-k0-ambiguous-colour"
+      ],
+      "a198d91c312dd7ceaeba8f92e7b878d11a16dd1651b19207ccd5f16cba16a6fd": [
+        "s153151-linear-p1-a0-k0-ambiguous-neutral",
+        "s153151-linear-p1-a0-k0-ambiguous-colour"
+      ],
+      "04aacb9315d6562664b003fab58ad9283c7fbe3ff6c3d3c7aebd8c9da4c27e56": [
+        "s153151-linear-p2-a0-k0-ambiguous-neutral",
+        "s153151-linear-p2-a0-k0-ambiguous-colour"
+      ],
+      "838d65b0a78479e09a6412133860fa857143b15e731b3894e14828b6d2906702": [
+        "s153151-linear-p3-a0-k0-ambiguous-neutral",
+        "s153151-linear-p3-a0-k0-ambiguous-colour"
+      ],
+      "e448bb788ffb7fd3a707b06dce4a924363e5e29707d7289f36b209a19d955e5c": [
+        "s153151-d750-p0-a0-k0-ambiguous-neutral",
+        "s153151-d750-p0-a0-k0-ambiguous-colour"
+      ],
+      "811dffc5bf13c0524d8398d45c4bdab2180584c47e44f1e259cb7c3e7a26575d": [
+        "s153151-d750-p1-a0-k0-ambiguous-neutral",
+        "s153151-d750-p1-a0-k0-ambiguous-colour"
+      ],
+      "57965d0d747104aa310c116bc5a08f9d2ee321c7882c225cef4ddb42556bef9e": [
+        "s153151-d750-p2-a0-k0-ambiguous-neutral",
+        "s153151-d750-p2-a0-k0-ambiguous-colour"
+      ],
+      "a623ae8bfb62bf58805ddb082819038af302ce5c1848d95b88f2e37d3ddc5028": [
+        "s153151-d750-p3-a0-k0-ambiguous-neutral",
+        "s153151-d750-p3-a0-k0-ambiguous-colour"
+      ],
+      "a299d082f71e9cc8de3ea66725c6d5d93ec31cf70c66fb36fd7ffaf4e357b695": [
+        "s153151-d800-p0-a0-k0-ambiguous-neutral",
+        "s153151-d800-p0-a0-k0-ambiguous-colour"
+      ],
+      "ccbe03d9b2afb214f29ce1144e189e6af18c35e5a0f7da947aecd2d03b61a7f1": [
+        "s153151-d800-p1-a0-k0-ambiguous-neutral",
+        "s153151-d800-p1-a0-k0-ambiguous-colour"
+      ],
+      "a6c15e9280db79e94d76ca7dc6b263c04be2068ba3e7fd41ba28d2f02e2fc81f": [
+        "s153151-d800-p2-a0-k0-ambiguous-neutral",
+        "s153151-d800-p2-a0-k0-ambiguous-colour"
+      ],
+      "f90bdb5b7fd009c9c65df088f7799adcd8e0727e230c6fc37bff913e3589c61d": [
+        "s153151-d800-p3-a0-k0-ambiguous-neutral",
+        "s153151-d800-p3-a0-k0-ambiguous-colour"
+      ],
+      "8b16d362a5552ac8f55498b23eb8807d70119e28e1f63d1fbc7f5c01cd8eaa9c": [
+        "t153173-d750-p2-mixed-waves",
+        "t153173-d750-p2-point-error"
+      ],
+      "ecb408ce6af0405c07befdcd9199d8589cd7db306fa8acb9c3895687e8989f36": [
+        "i153181-d750-p0-quadratic",
+        "i153181-d750-p0-hidden-colour",
+        "i153181-d750-p0-hidden-detail",
+        "i153181-d750-p0-hidden-flat"
+      ],
+      "5a566e8a3083a2e0b017b3a55eb012c52a113a8e856b9065efc9d5e04b6e4337": [
+        "i153181-d750-p1-quadratic",
+        "i153181-d750-p1-hidden-colour",
+        "i153181-d750-p1-hidden-detail",
+        "i153181-d750-p1-hidden-flat"
+      ],
+      "f48159ed88eea50b2e89220593a20c16afc8fcc258bcd7acfb56afd66e1c962c": [
+        "i153181-d750-p2-quadratic",
+        "i153181-d750-p2-hidden-colour",
+        "i153181-d750-p2-hidden-detail",
+        "i153181-d750-p2-hidden-flat"
+      ],
+      "6fe6bf3a7d3b283e01b9770eb7159e02f3d35b2aa3a12db2b49e56cbeb90d58a": [
+        "i153181-d750-p3-quadratic",
+        "i153181-d750-p3-hidden-colour",
+        "i153181-d750-p3-hidden-detail",
+        "i153181-d750-p3-hidden-flat"
+      ],
+      "3946be1e70df78277f55078247c9191774236fcfaa55c243d9dbf2a00d2b1bcd": [
+        "i153181-d800-p0-quadratic",
+        "i153181-d800-p0-hidden-colour",
+        "i153181-d800-p0-hidden-detail",
+        "i153181-d800-p0-hidden-flat"
+      ],
+      "17926164c982d3b474e44cdd5d557622a657c44f813f37c03b5c1e5accb839be": [
+        "i153181-d800-p1-quadratic",
+        "i153181-d800-p1-hidden-colour",
+        "i153181-d800-p1-hidden-detail",
+        "i153181-d800-p1-hidden-flat"
+      ],
+      "f484bc857eb400896b2ae0123ab1b25e229d864d70ac6494030999ed9cc30ff4": [
+        "i153181-d800-p2-quadratic",
+        "i153181-d800-p2-hidden-colour",
+        "i153181-d800-p2-hidden-detail",
+        "i153181-d800-p2-hidden-flat"
+      ],
+      "a380f8d86bd6026ec622f4ed0613e1d98de8b9f8c71640b8f5744d4b7b074f83": [
+        "i153181-d800-p3-quadratic",
+        "i153181-d800-p3-hidden-colour",
+        "i153181-d800-p3-hidden-detail",
+        "i153181-d800-p3-hidden-flat"
+      ],
+      "ab0c754bf8c3a4e1a2747324e05bc4a3ea82b1f362385215da52b2affe77e201": [
+        "i153181-xt5-p0-quadratic",
+        "i153181-xt5-p0-hidden-colour",
+        "i153181-xt5-p0-hidden-detail",
+        "i153181-xt5-p0-hidden-flat"
+      ],
+      "a01a57b48fa7606f00828f456a8f4cf98c758f012cae3b718883b0a4eb7d3188": [
+        "i153181-xt5-p1-quadratic",
+        "i153181-xt5-p1-hidden-colour",
+        "i153181-xt5-p1-hidden-detail",
+        "i153181-xt5-p1-hidden-flat"
+      ],
+      "0458dfa79d10c36167cb0b2cd10d74cb829d4f5c87eceb0f3c159498ce13291d": [
+        "i153181-xt5-p2-quadratic",
+        "i153181-xt5-p2-hidden-colour",
+        "i153181-xt5-p2-hidden-detail",
+        "i153181-xt5-p2-hidden-flat"
+      ],
+      "59377d50c0c464b0b91ef6534d45bb184028132af838feff097d8c7c5692ba31": [
+        "i153181-xt5-p3-quadratic",
+        "i153181-xt5-p3-hidden-colour",
+        "i153181-xt5-p3-hidden-detail",
+        "i153181-xt5-p3-hidden-flat"
+      ],
+      "ff7eaac60bda8f58f6a5bc56d8e5d9163703783bdfb7829f26d268c894a17dd6": [
+        "i153181-xt5-p4-quadratic",
+        "i153181-xt5-p4-hidden-colour",
+        "i153181-xt5-p4-hidden-detail",
+        "i153181-xt5-p4-hidden-flat"
+      ],
+      "64f6410ec330a9dae39711c54aa031b4981de58db7f42b6c3fd7a4b3fb4d8249": [
+        "i153181-xt5-p5-quadratic",
+        "i153181-xt5-p5-hidden-colour",
+        "i153181-xt5-p5-hidden-detail",
+        "i153181-xt5-p5-hidden-flat"
+      ],
+      "5a0b04e8b444e4e799a96f467546fb3801cb75aa9b882a7d0f549ca3e35608a5": [
+        "i153181-xt5-p6-quadratic",
+        "i153181-xt5-p6-hidden-colour",
+        "i153181-xt5-p6-hidden-detail",
+        "i153181-xt5-p6-hidden-flat"
+      ],
+      "e3e6fdaa8cb6620ddefc3b6b63653a8815908dfbe61054118ad1355a8a18b110": [
+        "i153181-xt5-p7-quadratic",
+        "i153181-xt5-p7-hidden-colour",
+        "i153181-xt5-p7-hidden-detail",
+        "i153181-xt5-p7-hidden-flat"
+      ],
+      "842bb887cae67051eeb86b8a974c6495df90716d197ddc7d6bd1a7045655b7fd": [
+        "i153181-xt5-p8-quadratic",
+        "i153181-xt5-p8-hidden-colour",
+        "i153181-xt5-p8-hidden-detail",
+        "i153181-xt5-p8-hidden-flat"
+      ],
+      "6815222a890b4a82443b4324edc6ac2ffecaf6228362007c16cda6290f09c343": [
+        "i153181-xt5-p9-quadratic",
+        "i153181-xt5-p9-hidden-colour",
+        "i153181-xt5-p9-hidden-detail",
+        "i153181-xt5-p9-hidden-flat"
+      ],
+      "e0f65ab4e4001a96526542f94088b8b6ace45f38d7da728b1fdcaffad38be003": [
+        "i153181-xt5-p10-quadratic",
+        "i153181-xt5-p10-hidden-colour",
+        "i153181-xt5-p10-hidden-detail",
+        "i153181-xt5-p10-hidden-flat"
+      ],
+      "0af161e3d91ef2338d06dee042a9c6b5d0fdd8e20c59da9695cf57679ea1f57b": [
+        "i153181-xt5-p11-quadratic",
+        "i153181-xt5-p11-hidden-colour",
+        "i153181-xt5-p11-hidden-detail",
+        "i153181-xt5-p11-hidden-flat"
+      ],
+      "739909aba88392b626450690f3d7cf8b077b9d5fcf689da66d81b42d0e4566b7": [
+        "i153181-xt5-p12-quadratic",
+        "i153181-xt5-p12-hidden-colour",
+        "i153181-xt5-p12-hidden-detail",
+        "i153181-xt5-p12-hidden-flat"
+      ],
+      "df102c544cd73caf73c609c0fde66828c4bd42f9e2b5aca74fee343905338b3f": [
+        "i153181-xt5-p13-quadratic",
+        "i153181-xt5-p13-hidden-colour",
+        "i153181-xt5-p13-hidden-detail",
+        "i153181-xt5-p13-hidden-flat"
+      ],
+      "971f7bcdb7e171c73c278fbaf3f038159555e8aba5c9961dc0a023b9de808901": [
+        "i153181-xt5-p14-quadratic",
+        "i153181-xt5-p14-hidden-colour",
+        "i153181-xt5-p14-hidden-detail",
+        "i153181-xt5-p14-hidden-flat"
+      ],
+      "621d2cb7b1e1bbbccea97fc4fa27ed0d893163d22073ce96c2748bcf0510c151": [
+        "i153181-xt5-p15-quadratic",
+        "i153181-xt5-p15-hidden-colour",
+        "i153181-xt5-p15-hidden-detail",
+        "i153181-xt5-p15-hidden-flat"
+      ],
+      "e3362d342e7cf231ddb0cff671d5f09bda2014d82bd0f512e1e451fc3822890f": [
+        "i153181-xt5-p16-quadratic",
+        "i153181-xt5-p16-hidden-colour",
+        "i153181-xt5-p16-hidden-detail",
+        "i153181-xt5-p16-hidden-flat"
+      ],
+      "31a78e2ceccd3151253239df078c764b7c2b972a6d6d1665af48c9d322f33d9f": [
+        "i153181-xt5-p17-quadratic",
+        "i153181-xt5-p17-hidden-colour",
+        "i153181-xt5-p17-hidden-detail",
+        "i153181-xt5-p17-hidden-flat"
+      ],
+      "b44f1d37e6dda72574e1e8aa2456e8d8ccdc9dceadc4d9c1437c58d5859f06f4": [
+        "i153181-xt5-p18-quadratic",
+        "i153181-xt5-p18-hidden-colour",
+        "i153181-xt5-p18-hidden-detail",
+        "i153181-xt5-p18-hidden-flat"
+      ],
+      "7bbd91c0d15a1c32946bd56e5bf21f67a0b94f03257c819c4c8999a4be2bc3d3": [
+        "i153181-xt5-p19-quadratic",
+        "i153181-xt5-p19-hidden-colour",
+        "i153181-xt5-p19-hidden-detail",
+        "i153181-xt5-p19-hidden-flat"
+      ],
+      "ea123e8d45d093e726a142f9aa69c3a7a8f9b9941b7c84805ca883c0e14092df": [
+        "i153181-xt5-p20-quadratic",
+        "i153181-xt5-p20-hidden-colour",
+        "i153181-xt5-p20-hidden-detail",
+        "i153181-xt5-p20-hidden-flat"
+      ],
+      "525c507721603caebeea49df61d8bd85c6380bd39598800ab30e62ad49acb487": [
+        "i153181-xt5-p21-quadratic",
+        "i153181-xt5-p21-hidden-colour",
+        "i153181-xt5-p21-hidden-detail",
+        "i153181-xt5-p21-hidden-flat"
+      ],
+      "73f73597a7e8c06009e9d53b16c01bab8528f86db6d725a0ef25786e1be33813": [
+        "i153181-xt5-p22-quadratic",
+        "i153181-xt5-p22-hidden-colour",
+        "i153181-xt5-p22-hidden-detail",
+        "i153181-xt5-p22-hidden-flat"
+      ],
+      "23eaeb85bc30155cba03d68b2bf57d0480944600e4c095e66b210b3ffdc18b60": [
+        "i153181-xt5-p23-quadratic",
+        "i153181-xt5-p23-hidden-colour",
+        "i153181-xt5-p23-hidden-detail",
+        "i153181-xt5-p23-hidden-flat"
+      ],
+      "db4bdd2587d5eb50efa02db00cf1e5c40ab589637b9ffe14c2d8d9d77ca73684": [
+        "i153181-xt5-p24-quadratic",
+        "i153181-xt5-p24-hidden-colour",
+        "i153181-xt5-p24-hidden-detail",
+        "i153181-xt5-p24-hidden-flat"
+      ],
+      "e5545a327c51bbc5f124d9bd28bbebe19afd8e1c7d7bafdbbf0692efd462119d": [
+        "i153181-xt5-p25-quadratic",
+        "i153181-xt5-p25-hidden-colour",
+        "i153181-xt5-p25-hidden-detail",
+        "i153181-xt5-p25-hidden-flat"
+      ],
+      "8713c6f0972d6ab96c9b179afb46c563587bc27e03136628d137bf34d851bd50": [
+        "i153181-xt5-p26-quadratic",
+        "i153181-xt5-p26-hidden-colour",
+        "i153181-xt5-p26-hidden-detail",
+        "i153181-xt5-p26-hidden-flat"
+      ],
+      "3ff88d713f227b65d89456af5556aef6da613009fc457d5bbc2300e67b127af5": [
+        "i153181-xt5-p27-quadratic",
+        "i153181-xt5-p27-hidden-colour",
+        "i153181-xt5-p27-hidden-detail",
+        "i153181-xt5-p27-hidden-flat"
+      ],
+      "bf129ad64a8e7f619200683af0bc644de3e44804d790e57a4bbe8f32a74d21c3": [
+        "i153181-xt5-p28-quadratic",
+        "i153181-xt5-p28-hidden-colour",
+        "i153181-xt5-p28-hidden-detail",
+        "i153181-xt5-p28-hidden-flat"
+      ],
+      "8130c445f9672480ceadfee7866adedf0b98b1d00038e373656b20f83b852b6b": [
+        "i153181-xt5-p29-quadratic",
+        "i153181-xt5-p29-hidden-colour",
+        "i153181-xt5-p29-hidden-detail",
+        "i153181-xt5-p29-hidden-flat"
+      ],
+      "0977fbfa8beae76327583384bb4dd8e8af56616ea12a4266364680bd1eb9db2d": [
+        "i153181-xt5-p30-quadratic",
+        "i153181-xt5-p30-hidden-colour",
+        "i153181-xt5-p30-hidden-detail",
+        "i153181-xt5-p30-hidden-flat"
+      ],
+      "e314383d56ed253ab2911229b4b3b5e02474d3ca04f0589a4a75b58859e94f45": [
+        "i153181-xt5-p31-quadratic",
+        "i153181-xt5-p31-hidden-colour",
+        "i153181-xt5-p31-hidden-detail",
+        "i153181-xt5-p31-hidden-flat"
+      ],
+      "bcb4026b52ade7d5aa68440641fedafae95b9259f2e925e3a9b406bbcf4e0f65": [
+        "i153181-xt5-p32-quadratic",
+        "i153181-xt5-p32-hidden-colour",
+        "i153181-xt5-p32-hidden-detail",
+        "i153181-xt5-p32-hidden-flat"
+      ],
+      "d07af4bcf6c308d7d636d811368fdd71177a4e273d341604c7c65fafd6af333f": [
+        "i153181-xt5-p33-quadratic",
+        "i153181-xt5-p33-hidden-colour",
+        "i153181-xt5-p33-hidden-detail",
+        "i153181-xt5-p33-hidden-flat"
+      ],
+      "a58975ba4d80b7f0245051ed2f87fb9fc338e0d38605a5300a64c0436924aa0a": [
+        "i153181-xt5-p34-quadratic",
+        "i153181-xt5-p34-hidden-colour",
+        "i153181-xt5-p34-hidden-detail",
+        "i153181-xt5-p34-hidden-flat"
+      ],
+      "7c8d1491adb9ab8cb6205c91ed9efaacf284813d3bccd5a07730f789c0547184": [
+        "i153181-xt5-p35-quadratic",
+        "i153181-xt5-p35-hidden-colour",
+        "i153181-xt5-p35-hidden-detail",
+        "i153181-xt5-p35-hidden-flat"
+      ]
+    },
+    "constant_or_shared_truth_records": 78,
+    "generated_files_reproduced_byte_exact": 4596,
+    "prior_dir5_hashes_and_patch_metrics_reproduced": 7832,
+    "fresh_baselines_reproduced_by_entire_frozen_HL5_dir5_crate": 1532,
+    "XTrans_render_hashes_unchanged": 4724,
+    "fresh_ambiguity_and_hidden_truth_controls_unchanged": 244,
+    "limits": "Spatial phases, overlapping regions, stochastic controls and shared-RAW hypotheses are correlated. Same generators and compatibility matrices also define truth. Not physical colour calibration."
+  },
+  "native_comparison": {
+    "cases": 291,
+    "reused": 71,
+    "new_verification": 220,
+    "current_outputs_match_lab": 291,
+    "old_autonomous_outputs_match_frozen_lab": 71,
+    "legacy_hashes_and_all_metrics_reproduced_between_old_and_new_bundles": 71,
+    "same_RAW_reference_geometry_WB": true,
+    "exposure_fitted": false,
+    "examples": [
+      {
+        "id": "s715163-d750-p1-texture",
+        "patch": 0,
+        "lab_before_after": {
+          "after": {
+            "chroma_max_abs": 0.10316783619659886,
+            "chroma_max_site_xyc": [
+              96,
+              82,
+              2
+            ],
+            "chroma_pixels": 9794,
+            "chroma_rmse": 0.02675701435807736,
+            "gradient_max_abs": 0.09812331199645996,
+            "gradient_max_site_xyc_axis": [
+              32,
+              80,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.021955755409244142,
+            "rect": [
+              0,
+              0,
+              118,
+              83
+            ],
+            "rgb_max_abs": 0.5689132213592529,
+            "rgb_max_site_xyc": [
+              34,
+              82,
+              1
+            ],
+            "rgb_rmse": 0.10753984416856652
+          },
+          "before": {
+            "chroma_max_abs": 0.10316783619659886,
+            "chroma_max_site_xyc": [
+              96,
+              82,
+              2
+            ],
+            "chroma_pixels": 9794,
+            "chroma_rmse": 0.02675701435807736,
+            "gradient_max_abs": 0.09812331199645996,
+            "gradient_max_site_xyc_axis": [
+              32,
+              80,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.021955755409244142,
+            "rect": [
+              0,
+              0,
+              118,
+              83
+            ],
+            "rgb_max_abs": 0.5689132213592529,
+            "rgb_max_site_xyc": [
+              34,
+              82,
+              1
+            ],
+            "rgb_rmse": 0.10753984416856652
+          },
+          "common_chroma": {
+            "before_after_max_abs": [
+              0.10316783619659886,
+              0.10316783619659886
+            ],
+            "before_after_rmse": [
+              0.02675701435807736,
+              0.02675701435807736
+            ],
+            "excluded_before_after_truth": [
+              0,
+              0,
+              0
+            ],
+            "pixels": 9794
+          }
+        },
+        "legacy": {
+          "actual": [
+            0.3121341181402076,
+            1.0897330152506441,
+            0.46861497532939217
+          ],
+          "chroma_max_abs": 0.10860680680169404,
+          "chroma_pixels": 9794,
+          "chroma_rmse": 0.030420234568665497,
+          "gradient_max_abs": 0.09822535514831543,
+          "gradient_rmse": [
+            0.011286660290661879,
+            0.035106507789622814,
+            0.008987731793898565
+          ],
+          "maximum_error": [
+            0.17884159088134766,
+            0.5608571767807007,
+            0.10046249628067017
+          ],
+          "rect": [
+            0,
+            0,
+            118,
+            83
+          ],
+          "reference": [
+            0.3877375694225695,
+            1.185715821785226,
+            0.4494002438733259
+          ],
+          "rgb_rmse": [
+            0.08276695941124584,
+            0.17390341366633472,
+            0.0318817985822758
+          ]
+        },
+        "common_candidate_legacy": {
+          "excluded_experimental_legacy_truth": [
+            0,
+            0,
+            0
+          ],
+          "experimental_legacy_max_abs": [
+            0.10316783619659886,
+            0.10860680680169404
+          ],
+          "experimental_legacy_rmse": [
+            0.02675701435807736,
+            0.030420234568665497
+          ],
+          "pixels": 9794,
+          "rect": [
+            0,
+            0,
+            118,
+            83
+          ]
+        }
+      },
+      {
+        "id": "s715163-d750-p1-texture",
+        "patch": 1,
+        "lab_before_after": {
+          "after": {
+            "chroma_max_abs": 0.08926294493167256,
+            "chroma_max_site_xyc": [
+              100,
+              75,
+              2
+            ],
+            "chroma_pixels": 7350,
+            "chroma_rmse": 0.02362541341304204,
+            "gradient_max_abs": 0.09594857692718506,
+            "gradient_max_site_xyc_axis": [
+              86,
+              76,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.02149761752441222,
+            "rect": [
+              7,
+              7,
+              105,
+              70
+            ],
+            "rgb_max_abs": 0.5006717443466187,
+            "rgb_max_site_xyc": [
+              48,
+              76,
+              1
+            ],
+            "rgb_rmse": 0.09457260734219289
+          },
+          "before": {
+            "chroma_max_abs": 0.08926294493167256,
+            "chroma_max_site_xyc": [
+              100,
+              75,
+              2
+            ],
+            "chroma_pixels": 7350,
+            "chroma_rmse": 0.02362541341304204,
+            "gradient_max_abs": 0.09594857692718506,
+            "gradient_max_site_xyc_axis": [
+              86,
+              76,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.02149761752441222,
+            "rect": [
+              7,
+              7,
+              105,
+              70
+            ],
+            "rgb_max_abs": 0.5006717443466187,
+            "rgb_max_site_xyc": [
+              48,
+              76,
+              1
+            ],
+            "rgb_rmse": 0.09457260734219289
+          },
+          "common_chroma": {
+            "before_after_max_abs": [
+              0.08926294493167256,
+              0.08926294493167256
+            ],
+            "before_after_rmse": [
+              0.02362541341304204,
+              0.02362541341304204
+            ],
+            "excluded_before_after_truth": [
+              0,
+              0,
+              0
+            ],
+            "pixels": 7350
+          }
+        },
+        "legacy": {
+          "actual": [
+            0.31542894259196563,
+            1.107010878989485,
+            0.46794179316280676
+          ],
+          "chroma_max_abs": 0.09478454557378826,
+          "chroma_pixels": 7350,
+          "chroma_rmse": 0.027886648737986394,
+          "gradient_max_abs": 0.09605145454406738,
+          "gradient_rmse": [
+            0.011045593375126674,
+            0.03435198881510381,
+            0.008887356966860141
+          ],
+          "maximum_error": [
+            0.16371405124664307,
+            0.4923872947692871,
+            0.08847272396087646
+          ],
+          "rect": [
+            7,
+            7,
+            105,
+            70
+          ],
+          "reference": [
+            0.38916484981167315,
+            1.1901066405838057,
+            0.4510467194416092
+          ],
+          "rgb_rmse": [
+            0.07948458475158872,
+            0.15229593961465424,
+            0.02787477894954615
+          ]
+        },
+        "common_candidate_legacy": {
+          "excluded_experimental_legacy_truth": [
+            0,
+            0,
+            0
+          ],
+          "experimental_legacy_max_abs": [
+            0.08926294493167256,
+            0.09478454557378826
+          ],
+          "experimental_legacy_rmse": [
+            0.02362541341304204,
+            0.027886648737986394
+          ],
+          "pixels": 7350,
+          "rect": [
+            7,
+            7,
+            105,
+            70
+          ]
+        }
+      },
+      {
+        "id": "s715163-d800-p1-texture",
+        "patch": 0,
+        "lab_before_after": {
+          "after": {
+            "chroma_max_abs": 0.018117809426892006,
+            "chroma_max_site_xyc": [
+              0,
+              25,
+              2
+            ],
+            "chroma_pixels": 8568,
+            "chroma_rmse": 0.0029355735221185245,
+            "gradient_max_abs": 0.07463812828063965,
+            "gradient_max_site_xyc_axis": [
+              0,
+              41,
+              0,
+              1
+            ],
+            "gradient_rmse": 0.007712661857527735,
+            "rect": [
+              0,
+              0,
+              119,
+              72
+            ],
+            "rgb_max_abs": 0.056909263134002686,
+            "rgb_max_site_xyc": [
+              0,
+              25,
+              0
+            ],
+            "rgb_rmse": 0.008307248892796808
+          },
+          "before": {
+            "chroma_max_abs": 0.09084652436172547,
+            "chroma_max_site_xyc": [
+              0,
+              71,
+              1
+            ],
+            "chroma_pixels": 8568,
+            "chroma_rmse": 0.017844682690735303,
+            "gradient_max_abs": 0.09856027364730835,
+            "gradient_max_site_xyc_axis": [
+              74,
+              71,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.0177394636726369,
+            "rect": [
+              0,
+              0,
+              119,
+              72
+            ],
+            "rgb_max_abs": 0.41615504026412964,
+            "rgb_max_site_xyc": [
+              82,
+              71,
+              1
+            ],
+            "rgb_rmse": 0.06289234308504478
+          },
+          "common_chroma": {
+            "before_after_max_abs": [
+              0.09084652436172547,
+              0.018117809426892006
+            ],
+            "before_after_rmse": [
+              0.017844682690735303,
+              0.0029355735221185245
+            ],
+            "excluded_before_after_truth": [
+              0,
+              0,
+              0
+            ],
+            "pixels": 8568
+          }
+        },
+        "legacy": {
+          "actual": [
+            0.7086931350045289,
+            0.9124422992130089,
+            0.8355806771488419
+          ],
+          "chroma_max_abs": 0.040692979397070395,
+          "chroma_pixels": 8568,
+          "chroma_rmse": 0.011584934437660723,
+          "gradient_max_abs": 0.081703782081604,
+          "gradient_rmse": [
+            0.011039874085131102,
+            0.018231041203022918,
+            0.011379958974416788
+          ],
+          "maximum_error": [
+            0.07824885845184326,
+            0.18528592586517334,
+            0.06459927558898926
+          ],
+          "rect": [
+            0,
+            0,
+            119,
+            72
+          ],
+          "reference": [
+            0.6919849788949186,
+            0.944660894809259,
+            0.8242508835610569
+          ],
+          "rgb_rmse": [
+            0.021016317370305515,
+            0.06151292093230088,
+            0.018208495078713853
+          ]
+        },
+        "common_candidate_legacy": {
+          "excluded_experimental_legacy_truth": [
+            0,
+            0,
+            0
+          ],
+          "experimental_legacy_max_abs": [
+            0.018117809426892006,
+            0.040692979397070395
+          ],
+          "experimental_legacy_rmse": [
+            0.0029355735221185245,
+            0.011584934437660723
+          ],
+          "pixels": 8568,
+          "rect": [
+            0,
+            0,
+            119,
+            72
+          ]
+        }
+      },
+      {
+        "id": "s715163-d800-p1-texture",
+        "patch": 1,
+        "lab_before_after": {
+          "after": {
+            "chroma_max_abs": 0.006417204648870634,
+            "chroma_max_site_xyc": [
+              60,
+              11,
+              0
+            ],
+            "chroma_pixels": 6254,
+            "chroma_rmse": 0.0029118053487071378,
+            "gradient_max_abs": 0.0249861478805542,
+            "gradient_max_site_xyc_axis": [
+              38,
+              65,
+              0,
+              0
+            ],
+            "gradient_rmse": 0.0075581864797780165,
+            "rect": [
+              7,
+              7,
+              106,
+              59
+            ],
+            "rgb_max_abs": 0.030186831951141357,
+            "rgb_max_site_xyc": [
+              94,
+              65,
+              0
+            ],
+            "rgb_rmse": 0.0083590159923364
+          },
+          "before": {
+            "chroma_max_abs": 0.07427443338035905,
+            "chroma_max_site_xyc": [
+              44,
+              65,
+              1
+            ],
+            "chroma_pixels": 6254,
+            "chroma_rmse": 0.014159080255305566,
+            "gradient_max_abs": 0.08439415693283081,
+            "gradient_max_site_xyc_axis": [
+              26,
+              64,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.016498545766001096,
+            "rect": [
+              7,
+              7,
+              106,
+              59
+            ],
+            "rgb_max_abs": 0.33547115325927734,
+            "rgb_max_site_xyc": [
+              75,
+              65,
+              1
+            ],
+            "rgb_rmse": 0.049367648280400585
+          },
+          "common_chroma": {
+            "before_after_max_abs": [
+              0.07427443338035905,
+              0.006417204648870634
+            ],
+            "before_after_rmse": [
+              0.014159080255305566,
+              0.0029118053487071378
+            ],
+            "excluded_before_after_truth": [
+              0,
+              0,
+              0
+            ],
+            "pixels": 6254
+          }
+        },
+        "legacy": {
+          "actual": [
+            0.7121215400068338,
+            0.9208954257785156,
+            0.8382092041065028
+          ],
+          "chroma_max_abs": 0.0406029723167009,
+          "chroma_pixels": 6254,
+          "chroma_rmse": 0.010732308609495856,
+          "gradient_max_abs": 0.081703782081604,
+          "gradient_rmse": [
+            0.010714099775464612,
+            0.017917754487063696,
+            0.010691557468088054
+          ],
+          "maximum_error": [
+            0.056889116764068604,
+            0.1804426908493042,
+            0.06303679943084717
+          ],
+          "rect": [
+            7,
+            7,
+            106,
+            59
+          ],
+          "reference": [
+            0.6949156815341614,
+            0.9485686945484441,
+            0.8276222948357851
+          ],
+          "rgb_rmse": [
+            0.021142846169526483,
+            0.05533467652912378,
+            0.016856648262266394
+          ]
+        },
+        "common_candidate_legacy": {
+          "excluded_experimental_legacy_truth": [
+            0,
+            0,
+            0
+          ],
+          "experimental_legacy_max_abs": [
+            0.006417204648870634,
+            0.0406029723167009
+          ],
+          "experimental_legacy_rmse": [
+            0.0029118053487071378,
+            0.010732308609495856
+          ],
+          "pixels": 6254,
+          "rect": [
+            7,
+            7,
+            106,
+            59
+          ]
+        }
+      },
+      {
+        "id": "s315109-d800-p3-texture",
+        "patch": 0,
+        "lab_before_after": {
+          "after": {
+            "chroma_max_abs": 0.018924950045339672,
+            "chroma_max_site_xyc": [
+              0,
+              0,
+              0
+            ],
+            "chroma_pixels": 9213,
+            "chroma_rmse": 0.003088970005037864,
+            "gradient_max_abs": 0.10160446166992188,
+            "gradient_max_site_xyc_axis": [
+              0,
+              41,
+              0,
+              1
+            ],
+            "gradient_rmse": 0.011379088826284465,
+            "rect": [
+              0,
+              0,
+              111,
+              83
+            ],
+            "rgb_max_abs": 0.09115886688232422,
+            "rgb_max_site_xyc": [
+              0,
+              34,
+              0
+            ],
+            "rgb_rmse": 0.01226611466124465
+          },
+          "before": {
+            "chroma_max_abs": 0.08926633260187172,
+            "chroma_max_site_xyc": [
+              106,
+              82,
+              1
+            ],
+            "chroma_pixels": 9213,
+            "chroma_rmse": 0.018423312084769054,
+            "gradient_max_abs": 0.11621451377868652,
+            "gradient_max_site_xyc_axis": [
+              0,
+              76,
+              0,
+              0
+            ],
+            "gradient_rmse": 0.02139665113153204,
+            "rect": [
+              0,
+              0,
+              111,
+              83
+            ],
+            "rgb_max_abs": 0.5392378568649292,
+            "rgb_max_site_xyc": [
+              96,
+              82,
+              1
+            ],
+            "rgb_rmse": 0.08503978744951897
+          },
+          "common_chroma": {
+            "before_after_max_abs": [
+              0.08926633260187172,
+              0.018924950045339672
+            ],
+            "before_after_rmse": [
+              0.018423312084769054,
+              0.003088970005037864
+            ],
+            "excluded_before_after_truth": [
+              0,
+              0,
+              0
+            ],
+            "pixels": 9213
+          }
+        },
+        "legacy": {
+          "actual": [
+            1.4346866400443947,
+            1.2469345424516345,
+            0.601292494071055
+          ],
+          "chroma_max_abs": 0.15124873276097717,
+          "chroma_pixels": 9213,
+          "chroma_rmse": 0.05439535979919482,
+          "gradient_max_abs": 0.7259962558746338,
+          "gradient_rmse": [
+            0.02065380732580662,
+            0.1075107808318312,
+            0.022451937720825477
+          ],
+          "maximum_error": [
+            0.2488168478012085,
+            1.1412243843078613,
+            0.19694489240646362
+          ],
+          "rect": [
+            0,
+            0,
+            111,
+            83
+          ],
+          "reference": [
+            1.393768478860616,
+            0.9407078677954759,
+            0.6532835960032336
+          ],
+          "rgb_rmse": [
+            0.06011184933158289,
+            0.5116305274875064,
+            0.09028060791210481
+          ]
+        },
+        "common_candidate_legacy": {
+          "excluded_experimental_legacy_truth": [
+            0,
+            0,
+            0
+          ],
+          "experimental_legacy_max_abs": [
+            0.018924950045339672,
+            0.15124873276097717
+          ],
+          "experimental_legacy_rmse": [
+            0.003088970005037864,
+            0.05439535979919482
+          ],
+          "pixels": 9213,
+          "rect": [
+            0,
+            0,
+            111,
+            83
+          ]
+        }
+      },
+      {
+        "id": "s315109-d800-p3-texture",
+        "patch": 1,
+        "lab_before_after": {
+          "after": {
+            "chroma_max_abs": 0.0069227289077017085,
+            "chroma_max_site_xyc": [
+              97,
+              7,
+              2
+            ],
+            "chroma_pixels": 6860,
+            "chroma_rmse": 0.0030324412432627284,
+            "gradient_max_abs": 0.036086082458496094,
+            "gradient_max_site_xyc_axis": [
+              10,
+              76,
+              0,
+              0
+            ],
+            "gradient_rmse": 0.01130623778399453,
+            "rect": [
+              7,
+              7,
+              98,
+              70
+            ],
+            "rgb_max_abs": 0.04860389232635498,
+            "rgb_max_site_xyc": [
+              76,
+              76,
+              0
+            ],
+            "rgb_rmse": 0.012238619625597368
+          },
+          "before": {
+            "chroma_max_abs": 0.07539943687920811,
+            "chroma_max_site_xyc": [
+              89,
+              76,
+              1
+            ],
+            "chroma_pixels": 6860,
+            "chroma_rmse": 0.014982466092688567,
+            "gradient_max_abs": 0.09844136238098145,
+            "gradient_max_site_xyc_axis": [
+              76,
+              75,
+              1,
+              0
+            ],
+            "gradient_rmse": 0.020168630478484908,
+            "rect": [
+              7,
+              7,
+              98,
+              70
+            ],
+            "rgb_max_abs": 0.44419223070144653,
+            "rgb_max_site_xyc": [
+              17,
+              76,
+              1
+            ],
+            "rgb_rmse": 0.06819131775433496
+          },
+          "common_chroma": {
+            "before_after_max_abs": [
+              0.07539943687920811,
+              0.0069227289077017085
+            ],
+            "before_after_rmse": [
+              0.014982466092688567,
+              0.0030324412432627284
+            ],
+            "excluded_before_after_truth": [
+              0,
+              0,
+              0
+            ],
+            "pixels": 6860
+          }
+        },
+        "legacy": {
+          "actual": [
+            1.439894254344893,
+            1.227070421128161,
+            0.6093934650584489
+          ],
+          "chroma_max_abs": 0.15088471851978874,
+          "chroma_pixels": 6860,
+          "chroma_rmse": 0.052479034203652325,
+          "gradient_max_abs": 0.7259962558746338,
+          "gradient_rmse": [
+            0.020173938789402015,
+            0.11564247069726415,
+            0.02354448638896788
+          ],
+          "maximum_error": [
+            0.15243113040924072,
+            1.0890165567398071,
+            0.1909053921699524
+          ],
+          "rect": [
+            7,
+            7,
+            98,
+            70
+          ],
+          "reference": [
+            1.4014442164678993,
+            0.9458353354701459,
+            0.6567735278267557
+          ],
+          "rgb_rmse": [
+            0.056453867126933364,
+            0.4809680081676832,
+            0.0849720044842888
+          ]
+        },
+        "common_candidate_legacy": {
+          "excluded_experimental_legacy_truth": [
+            0,
+            0,
+            0
+          ],
+          "experimental_legacy_max_abs": [
+            0.0069227289077017085,
+            0.15088471851978874
+          ],
+          "experimental_legacy_rmse": [
+            0.0030324412432627284,
+            0.052479034203652325
+          ],
+          "pixels": 6860,
+          "rect": [
+            7,
+            7,
+            98,
+            70
+          ]
+        }
+      }
+    ],
+    "counts": {
+      "duel-reused": {
+        "records": 71,
+        "candidate_better": {
+          "rgb_rmse": 109,
+          "rgb_max_abs": 106,
+          "gradient_rmse": 106,
+          "gradient_max_abs": 101,
+          "common_chroma_rmse": 110,
+          "common_chroma_max_abs": 110
+        },
+        "legacy_better": {
+          "gradient_max_abs": 7,
+          "rgb_rmse": 33,
+          "rgb_max_abs": 36,
+          "common_chroma_rmse": 32,
+          "common_chroma_max_abs": 32,
+          "gradient_rmse": 4
+        },
+        "ties": {
+          "gradient_rmse": 32,
+          "gradient_max_abs": 34
+        }
+      },
+      "duel-new-0": {
+        "records": 100,
+        "candidate_better": {
+          "rgb_rmse": 136,
+          "rgb_max_abs": 132,
+          "gradient_rmse": 153,
+          "gradient_max_abs": 146,
+          "common_chroma_rmse": 167,
+          "common_chroma_max_abs": 168
+        },
+        "legacy_better": {
+          "rgb_rmse": 64,
+          "rgb_max_abs": 68,
+          "gradient_rmse": 29,
+          "common_chroma_rmse": 33,
+          "common_chroma_max_abs": 32,
+          "gradient_max_abs": 48
+        },
+        "ties": {
+          "gradient_rmse": 18,
+          "gradient_max_abs": 6
+        }
+      },
+      "duel-new-1": {
+        "records": 100,
+        "candidate_better": {
+          "rgb_rmse": 117,
+          "rgb_max_abs": 120,
+          "gradient_rmse": 144,
+          "gradient_max_abs": 153,
+          "common_chroma_rmse": 135,
+          "common_chroma_max_abs": 128
+        },
+        "legacy_better": {
+          "rgb_rmse": 83,
+          "rgb_max_abs": 80,
+          "common_chroma_rmse": 65,
+          "common_chroma_max_abs": 72,
+          "gradient_rmse": 21,
+          "gradient_max_abs": 11
+        },
+        "ties": {
+          "gradient_rmse": 35,
+          "gradient_max_abs": 36
+        }
+      },
+      "duel-new-2": {
+        "records": 20,
+        "candidate_better": {
+          "rgb_rmse": 24,
+          "gradient_rmse": 30,
+          "gradient_max_abs": 35,
+          "common_chroma_rmse": 29,
+          "rgb_max_abs": 22,
+          "common_chroma_max_abs": 23
+        },
+        "legacy_better": {
+          "rgb_max_abs": 18,
+          "common_chroma_max_abs": 17,
+          "common_chroma_rmse": 11,
+          "rgb_rmse": 16,
+          "gradient_rmse": 9,
+          "gradient_max_abs": 4
+        },
+        "ties": {
+          "gradient_rmse": 1,
+          "gradient_max_abs": 1
+        }
+      }
+    },
+    "limits": "Counts refer to regional metric comparisons, not independent scenes. Overlapping regions and CFA phases correlated. Known-model matrices also generate truth. Chroma can be unbounded for signed RGB with small sum; no DeltaE. No general superiority or physical camera calibration claim. Pairwise common-chroma populations are recorded, not interchangeable across pairs. Preview PNGs checked visually as SDR diagnostics, not calibrated truth."
+  },
+  "photographs": [
+    {
+      "id": "d750-01",
+      "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+      "image_sha256_before_after": [
+        "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2",
+        "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2"
+      ],
+      "output_identical": true,
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ]
+    },
+    {
+      "id": "d800-12",
+      "source_sha256": "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+      "image_sha256_before_after": [
+        "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c",
+        "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c"
+      ],
+      "output_identical": true,
+      "size": [
+        7360,
+        4912
+      ],
+      "scratch_peak_bytes_before_after": [
+        806956246,
+        806956246
+      ]
+    },
+    {
+      "id": "d750-dng",
+      "source_sha256": "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+      "image_sha256_before_after": [
+        "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d",
+        "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d"
+      ],
+      "output_identical": true,
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ]
+    },
+    {
+      "id": "xt5-raf",
+      "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+      "image_sha256_before_after": [
+        "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c",
+        "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c"
+      ],
+      "output_identical": true,
+      "size": [
+        5152,
+        7728
+      ],
+      "scratch_peak_bytes_before_after": [
+        1040891456,
+        1040891456
+      ]
+    },
+    {
+      "id": "d750-15",
+      "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+      "image_sha256_before_after": [
+        "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a",
+        "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a"
+      ],
+      "output_identical": true,
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ]
+    },
+    {
+      "id": "xt5-dng",
+      "source_sha256": "e399eb0b3bab9c76e1dabd61bc06a47750af194eea7819f76b2be03ef8cb6bcd",
+      "image_sha256_before_after": [
+        "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989",
+        "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989"
+      ],
+      "output_identical": true,
+      "size": [
+        5152,
+        7728
+      ],
+      "scratch_peak_bytes_before_after": [
+        1032155608,
+        1032155608
+      ]
+    },
+    {
+      "id": "d800-14",
+      "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+      "image_sha256_before_after": [
+        "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902",
+        "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902"
+      ],
+      "output_identical": true,
+      "size": [
+        7360,
+        4912
+      ],
+      "scratch_peak_bytes_before_after": [
+        806956246,
+        806956246
+      ]
+    },
+    {
+      "id": "d750-30",
+      "source_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+      "image_sha256_before_after": [
+        "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918",
+        "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918"
+      ],
+      "output_identical": true,
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ]
+    }
+  ],
+  "photographic_limits": "Eight complete reused DNG/NEF/RAF inputs and 400 remosaics from 25 reused photographs are bit-identical. These are regression controls; no measured improvement to real photographic accuracy or noise is claimed.",
+  "performance": {
+    "scope": "Full pipelines in one process: frozen HL5/dir5 versus HL6/dir6, identical opt-level=3/thin LTO, source bytes, geometry and WB. Three warmups and thirty alternating pairs. Input reading/hash and output hashing excluded; parse, allocation, codec, HL, demosaic, matrix included. No concurrent build/test/GUI/campaign. Warm OS cache, uncontrolled OS/thermal activity, no cold-start or LibRaw timing claim.",
+    "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+    "image_sha256": "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a",
+    "methods": [
+      {
+        "count": 30,
+        "median_seconds": 1.1632933755,
+        "p95_seconds": 1.1784634170000001,
+        "MAD_seconds": 0.0009896039999999218,
+        "sorted_seconds": [
+          1.160564709,
+          1.160814208,
+          1.16092975,
+          1.161369167,
+          1.162105958,
+          1.1623904170000001,
+          1.162415916,
+          1.162668375,
+          1.162689209,
+          1.162698541,
+          1.1627186250000001,
+          1.1627225,
+          1.162825083,
+          1.163083125,
+          1.163201542,
+          1.163385209,
+          1.163504792,
+          1.163626417,
+          1.163769666,
+          1.1638885,
+          1.164369625,
+          1.164388167,
+          1.164397541,
+          1.164501083,
+          1.165308166,
+          1.165571041,
+          1.17650775,
+          1.177093166,
+          1.1784634170000001,
+          1.180328958
+        ]
+      },
+      {
+        "count": 30,
+        "median_seconds": 1.205130167,
+        "p95_seconds": 1.220458459,
+        "MAD_seconds": 0.0013499170000000893,
+        "sorted_seconds": [
+          1.202083,
+          1.202205375,
+          1.202669625,
+          1.203194958,
+          1.203277125,
+          1.20358225,
+          1.203646792,
+          1.203772875,
+          1.203787625,
+          1.204222958,
+          1.204447125,
+          1.205010291,
+          1.205044959,
+          1.205080583,
+          1.205096,
+          1.205164334,
+          1.205306834,
+          1.205358375,
+          1.20561475,
+          1.205897958,
+          1.205942875,
+          1.206096792,
+          1.206222333,
+          1.206689083,
+          1.2071981250000001,
+          1.217387,
+          1.218508542,
+          1.2192875,
+          1.220458459,
+          1.220634583
+        ]
+      }
+    ],
+    "median_percent_change": 3.596409330708883
+  },
+  "functional": {
+    "complete": true,
+    "passed": true,
+    "formats": {
+      "dng": 2,
+      "nef": 5,
+      "raf": 1
+    },
+    "inputs": 8,
+    "slot_cases": 16,
+    "refusal_controls": 0,
+    "refusal_messages": [],
+    "originals_unchanged": true,
+    "slots_pixels_exact": true,
+    "repack_pixels_exact": true,
+    "wb_probe_decode_match": true,
+    "WB_accepted": 30,
+    "WB_refused": 2,
+    "exports": 32,
+    "max_export_error_u16": 0,
+    "exports_by_format": {
+      "Png16": 16,
+      "Tiff16": 16
+    },
+    "cancelled_raf_workers": 2,
+    "cpu_recycles": 16,
+    "maximum_observed_decoder_RSS_bytes": 902660096,
+    "recipes": [
+      "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-extended1"
+    ]
+  },
+  "checks": {
+    "Rust_ordinary": 587,
+    "Rust_ignored_integration": 14,
+    "Python": 34,
+    "fmt_and_Clippy_workspace": true,
+    "protocol_checks": 8,
+    "sampling_signals": 24,
+    "verify_sh_gui_exit_code": 0
+  },
+  "installed_bundle": {
+    "path": "dist/TrueRenderer.app",
+    "file_sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "9dcd11881e97b399e8b480b6e2c5e344c6921d2c35f43202a5828a2a27bfad68",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "b13f3501dd691ab329f2d18364a2af404549ccd8ad3a9ff59f9f9e234388e189",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "7bb19719f963f15879899746e0eb4aa97151b94d3f624833272ef66da3282167",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "578bb0848ad11815c0ce9ba0bafa87a3b3e0336240d51865b5c37397afb91e22",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "26a7639f06b7507f7a9a25ef86211a289f0792f969e6ca0fdffe07fb909d1734",
+        "mode": 420
+      }
+    },
+    "candidate_and_installed_identical": true,
+    "XPC_rechecked_at_final_location": true
+  },
+  "preservation": {
+    "original_inputs": 8,
+    "durable_files": 181,
+    "all_hashes_and_durable_paths_unchanged": true,
+    "LICENSE_third_party_original_architecture_unchanged": true,
+    "previous_bundle_retained": true,
+    "commit_or_push": false
+  },
+  "open": [
+    "Legacy retains local advantages on unsupported texture, coloured edges, multiple/full clipping and some peak comparisons; no universal dominance.",
+    "All ten previously tracked HL2 peak comparisons on seven scenes remain unchanged; not a fresh exhaustive HL2 comparison.",
+    "Independent calibrated photographic references, measured clipping/LED/spectral response and broader noisy texture tests remain missing.",
+    "The new fit can only infer a continuation of the observed green relationship; hidden colour changes remain ambiguous.",
+    "Previously measured D750 slowdown versus LibRaw remains open; this campaign times only autonomous revisions.",
+    "RSS under pressure, full sandbox and R0-R4/SF global gates remain unqualified. D40 and postponed point 6 excluded."
+  ],
+  "evidence_sha256": {
+    "var/engine-curvature-20261015/source-before.json": "2f3001333910aa14d1d317f58d9d47ee5d8e18ff1e4b25afdc37c561f1365042",
+    "var/engine-curvature-20261015/selected-freeze.json": "7dbd87efcb126201e149f81085e30150d01b6881c0402c32ee7009ef1eca3446",
+    "var/engine-curvature-20261015/quadratic-v1-analysis.json": "de3841b183180a53e642de2f3d747c6f61af5dba842103fe4b1c56def955bacf",
+    "var/engine-curvature-20261015/challenge-v2-analysis.json": "fdbea40c26d74947ff7f4e4cb828f87b286f9451f05faeb547ecfaff24ec5523",
+    "var/engine-curvature-20261015/rejected-curvature.rs": "3faf4e482764f7f16c15fde313f2dd8299d35d731af6353ad0d4c132fce69cd7",
+    "var/engine-curvature-20261015/texture-correlation.py": "b6cd2030473dd1a103cc017cd0a1925603fbdad5e416945eca9c9fb087629cdd",
+    "var/engine-curvature-20261015/texture-correlation.json": "ddd31324df364f01d9d63751639f2a30c5f3f1da2941040757835b56221d8f8c",
+    "var/engine-curvature-20261015/texture-correlation-local.json": "4cd2f76cf7f89a2338212c2afd51f6f39f3f10b7fdfdb642d0a01c3a77a66e6d",
+    "var/engine-curvature-20261015/texture-probe.json": "21f4da9a5392678ab0e2e70103cf464ac47e9f2dfbbee7a50623b9db4d04433e",
+    "var/engine-curvature-20261015/texture-regression-v1-analysis.json": "10945bbc5020b1d85cdc128920cf1f8c01d4c3429aa3420f4c6e101038d92a32",
+    "var/engine-curvature-20261015/gradient-diagnostic.json": "4c00c493e3ccbc2e9a49feb3e0d112c4419acd250a084b6d70fa5c7a3f5630c1",
+    "var/engine-curvature-20261015/border-probe.json": "d59a7489c748847c74df55b12220f1b110c176bb1835f29adfa6ec083c41a8f7",
+    "var/engine-curvature-20261015/border-joint-probe.json": "39efc7afb5840a9e62d88c9c28447fb7f4cd1d2c17e06e96ce4797cf2ddfcc1b",
+    "var/engine-curvature-20261015/regression-final.json": "a2cca2d364728f56c968ed3decd43c0777bec348a2e53cb6f82879e1d132ad92",
+    "var/engine-curvature-20261015/regression-final-analysis.json": "63ef795d136ee06982e084a114a7f872dee679659dc82f88251c54aa0cc61e01",
+    "var/engine-curvature-20261015/holdout.json": "48b1ae2b4ba49923ee4d679028da49a234dbcd37ee28251df98f218cbadcd5fd",
+    "var/engine-curvature-20261015/holdout-analysis.json": "eddeb4e45317271e278c591328350861b08c3642095fa3446074dbcd3c7fafbe",
+    "var/engine-curvature-20261015/holdout-frozen-reference.json": "5c0c674aa6ae7b3b3444fc6839ce58615d58dbee65695692569fcba2fa4f81c9",
+    "var/engine-curvature-20261015/integrity-summary.json": "38747795467e3f6ab5c8631ad2130f179bbbba46d209342abc8fbfbd4260fb4b",
+    "var/engine-curvature-20261015/photo-surrogate-analysis.json": "98e3c3ec3371578464243cd45cdb387e595e21e3da734768f66990b8ef650f94",
+    "var/engine-curvature-20261015/duel-summary.json": "8863f7c0c5a6c7d1b306eb50c1ebcf7d6fd8824828505c13a4dc787ccc38a32f",
+    "var/engine-curvature-20261015/paired-report.json": "8c0d805c571a29e4a1777b2d34aa5271156e32f1841e4504864f6354f7f6d17b",
+    "var/engine-curvature-20261015/timing-d750-15.jsonl": "d9220632c2d70ded23fc7231c1a3e78736e14c85f3c2565f3dfc12bd93a7f43f",
+    "var/engine-curvature-20261015/timing-summary.json": "dc33ca92b2e942639851ab5f2d757b84accb3955496b630f8d6910acc41283ce",
+    "var/engine-curvature-20261015/integration-summary.json": "653956614accda3230e6017e2913e7471f8ff3ebc9d644858ba9a5100699673a",
+    "var/engine-curvature-20261015/verify.log": "85e1562fdcf711c19a37279801945bc10a828bd371cd6fdbb972026e830161a1",
+    "var/engine-curvature-20261015/verify-summary.json": "9725eb19c94ed5a758e5edf64b179f4fac7f3aabcf9dce1e28da3a05a9492cb6",
+    "var/engine-curvature-20261015/gui/reports/smoke-macos.json": "963114523a59f6062b6e4cae7c6b392c13730ddab8616538491c1412797b86a0",
+    "var/engine-curvature-20261015/gui-surface.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "var/engine-curvature-20261015/xpc/reports/xpc-qualification-macos.json": "b32d838defad76b064643928934354a863f439206121235f47b2b642df52afcf",
+    "var/engine-curvature-20261015/installed-xpc/reports/xpc-qualification-macos.json": "3c94562ba6288f39dd7ca0f5e772241c617f4eae3ae67c7ebea016e4cd040035",
+    "var/engine-curvature-20261015/installed-bundle.json": "7bbb80a174227f3916823589e34f865ecd52fa9990729e8f8f77824854005bd1",
+    "var/engine-curvature-20261015/integrity.py": "f90004db4a214ae91e4ee912a7bf04adb42c8b26b36acb682fea9469f44ff742",
+    "var/engine-curvature-20261015/summarize-duel.py": "1385c12bf3e0f91e824210c585cc61aef31918aeffa785a6f29b5df9746e4db3",
+    "var/engine-curvature-20261015/qualify.py": "4a5930a551fe9a79a4a4d026502f8eeb0fe9c140ce3c1c6dfc75c4b3ada864d6",
+    "var/engine-curvature-20261015/functional.py": "639624833aafd34c86072112d209109aa22fbae9299803e6d25536a10fc8834b",
+    "var/engine-curvature-20261015/finalize.py": "379d7aaf250ff96268db6e7aa456156bbc41f2235668bc6758c9bbcd09f6be31",
+    "var/engine-curvature-20261015/duel-reused/renderer-duel/report.json": "a2e580377c1fdf0dd856694c2a9fd66a8b19ad1eef455706d93dd9994e9f6140",
+    "var/engine-curvature-20261015/duel-before/renderer-duel/report.json": "8a3bbb39421f4c17a26eefc0cc560d73b4928a38041db7d0e6ef822e57a78d24",
+    "var/engine-curvature-20261015/duel-new-0/renderer-duel/report.json": "ef097ce44ad1d1bb181896c901d2f9cb705a8e0293958af6260845aa1ea9e2e0",
+    "var/engine-curvature-20261015/duel-new-1/renderer-duel/report.json": "ca04cee3634e09f910f8350fe5d470d9092efaeba998099ca3f313d8fa114d09",
+    "var/engine-curvature-20261015/duel-new-2/renderer-duel/report.json": "2a14cd6786bfaf8dd581e5e228942a1334468d704a4a726f8c550e7819ee2792"
+  }
+}

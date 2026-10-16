@@ -51,7 +51,7 @@ fn validate_manifest(config: &Value, requested: Option<&str>) -> Result<String> 
     );
     let candidate = config["candidate"].as_str().context("manifest candidate")?;
     ensure!(
-        matches!(candidate, "DR4" | "DR5" | "DR6" | "DR7" | "BR6"),
+        matches!(candidate, "DR4" | "DR5" | "DR6" | "DR7" | "BR6" | "BR7"),
         "photo candidate"
     );
     ensure!(
@@ -59,7 +59,12 @@ fn validate_manifest(config: &Value, requested: Option<&str>) -> Result<String> 
         "candidate differs from frozen manifest"
     );
     ensure!(
-        config["phases"] == if candidate == "BR6" { 4 } else { 36 },
+        config["phases"]
+            == if matches!(candidate, "BR6" | "BR7") {
+                4
+            } else {
+                36
+            },
         "all CFA phases required"
     );
     ensure!(
@@ -144,7 +149,11 @@ fn photographic_quality_research_campaign() -> Result<()> {
     let requested = std::env::var("TR_PHOTO_CANDIDATE").ok();
     let candidate = validate_manifest(&config, requested.as_deref())?;
     let border = config["border"].as_u64().context("border")? as usize;
-    let phase_count = if candidate == "BR6" { 4 } else { 36 };
+    let phase_count = if matches!(candidate.as_str(), "BR6" | "BR7") {
+        4
+    } else {
+        36
+    };
     let root = path.parent().context("manifest parent")?;
     let destination = root.join(match candidate.as_str() {
         "DR4" => "photographic-quality.json",
@@ -152,6 +161,7 @@ fn photographic_quality_research_campaign() -> Result<()> {
         "DR6" => "photographic-quality-dr6.json",
         "DR7" => "photographic-quality-dr7.json",
         "BR6" => "photographic-quality-br6.json",
+        "BR7" => "photographic-quality-br7.json",
         _ => unreachable!(),
     });
     ensure!(!destination.exists(), "report already exists");
@@ -205,7 +215,7 @@ fn photographic_quality_research_campaign() -> Result<()> {
                 noise_correlation: 0.,
             };
             for phase in 0..phase_count {
-                let cfa = if candidate == "BR6" {
+                let cfa = if matches!(candidate.as_str(), "BR6" | "BR7") {
                     Cfa::bayer([0, 1, 1, 2]).shifted(phase % 2, phase / 2)
                 } else {
                     Cfa::new(6, &XTRANS)?.shifted(phase % 6, phase / 6)
@@ -224,6 +234,20 @@ fn photographic_quality_research_campaign() -> Result<()> {
                     .collect();
                 let a: Vec<_> = if candidate == "DR7" {
                     crate::xtrans_dr6::reconstruct(&mosaic, w, h, cfa)
+                } else if candidate == "BR7" {
+                    crate::render::dir2_reference::develop(
+                        &mosaic,
+                        w,
+                        h,
+                        cfa,
+                        crate::color::ID,
+                        [0, 0, w, h],
+                        1,
+                    )?
+                    .pixels
+                    .into_iter()
+                    .map(|p| [p[0], p[1], p[2]])
+                    .collect()
                 } else if candidate == "BR6" {
                     crate::render::frame_reference::develop(
                         &mosaic,
@@ -247,7 +271,20 @@ fn photographic_quality_research_campaign() -> Result<()> {
                     "DR5" => refined::reconstruct(&mosaic, w, h, cfa),
                     "DR6" => constrained::reconstruct(&mosaic, w, h, cfa),
                     "DR7" => crate::xtrans_steps::reconstruct(&mosaic, w, h, cfa),
-                    "BR6" => crate::render::develop(
+                    "BR6" => crate::render::dir2_reference::develop(
+                        &mosaic,
+                        w,
+                        h,
+                        cfa,
+                        crate::color::ID,
+                        [0, 0, w, h],
+                        1,
+                    )?
+                    .pixels
+                    .into_iter()
+                    .map(|p| [p[0], p[1], p[2]])
+                    .collect(),
+                    "BR7" => crate::render::develop(
                         &mosaic,
                         w,
                         h,
@@ -294,7 +331,8 @@ fn photographic_quality_research_campaign() -> Result<()> {
     let categories:Vec<_>=aggregates.iter().map(|(category,pair)|json!({"category":category,
         "baseline":pair[0].value(),"candidate":pair[1].value(),"gate":gate(pair,"photographic",&config)})).collect();
     let report = json!({"protocol":config["protocol"],"manifest_sha256":hash(&bytes),"candidate":candidate,
-        "baseline":if candidate=="DR7" {"DR6"} else if candidate=="BR6" {"Bayer dir1"} else {"E8 camera RGB"},
+        "baseline":if candidate=="DR7" {"DR6"} else if candidate=="BR7" {"Bayer dir2"} else if candidate=="BR6" {"Bayer dir1"} else {"E8 camera RGB"},
+        "bayer_source_sha256":if candidate=="BR7" {Some(hash(include_bytes!("../src/render.rs")))} else if candidate=="BR6" {Some(hash(include_bytes!("bayer_dir2.rs")))} else {None},
         "edge_planes_sha256":hash(include_bytes!("../src/edge_planes.rs")),
         "xtrans_steps_sha256":hash(include_bytes!("../src/xtrans_steps.rs")),
         "role":config["role"].as_str().unwrap_or(if candidate=="DR4" {"held-out photographic surrogate"} else {"regression on photographs already measured with DR4"}),

@@ -219,14 +219,48 @@ impl Calibration {
         );
         let mut point = [0.3457, 0.3585];
         let mut converged = false;
-        for _ in 0..64 {
+        let mut previous: Option<([f64; 2], [f64; 2])> = None;
+        // Dual-illuminant fixed points can converge slowly even with bounded,
+        // well-conditioned matrices. Preserve the first 64 passes exactly.
+        // Afterwards try a two-point residual extrapolation, but accept it
+        // only after evaluating the actual equations and halving the residual.
+        // Invalid/out-of-domain proposals fall back to the original damping.
+        for iteration in 0..256 {
             let (cm, _, _) = self.matrices(point)?;
             let next = xy(vector(inverse(cm)?, n))?;
-            if (next[0] - point[0]).abs() + (next[1] - point[1]).abs() < 1e-10 {
+            let residual = [next[0] - point[0], next[1] - point[1]];
+            let error = residual[0].abs() + residual[1].abs();
+            if error < 1e-10 {
                 point = next;
                 converged = true;
                 break;
             }
+            if iteration >= 64 {
+                let (old_point, old_residual) = previous.unwrap();
+                let delta = [residual[0] - old_residual[0], residual[1] - old_residual[1]];
+                let denominator = delta[0] * delta[0] + delta[1] * delta[1];
+                if denominator > f64::MIN_POSITIVE {
+                    let factor = (residual[0] * delta[0] + residual[1] * delta[1]) / denominator;
+                    let proposal = std::array::from_fn(|c| {
+                        next[c] - factor * (next[c] - old_point[c] - old_residual[c])
+                    });
+                    // A secant estimate is not itself a solution or evidence
+                    // of better colour. Check the real residual, conditioning
+                    // and physical white domain before using the estimate.
+                    let checked = xyz(proposal).and_then(|_| {
+                        let (cm, _, _) = self.matrices(proposal)?;
+                        xy(vector(inverse(cm)?, n))
+                    });
+                    if checked.is_ok_and(|v| {
+                        (v[0] - proposal[0]).abs() + (v[1] - proposal[1]).abs() < 0.5 * error
+                    }) {
+                        previous = Some((point, residual));
+                        point = proposal;
+                        continue;
+                    }
+                }
+            }
+            previous = Some((point, residual));
             point = [(point[0] + next[0]) * 0.5, (point[1] + next[1]) * 0.5];
         }
         ensure!(converged, "DNG: risoluzione WB non convergente");

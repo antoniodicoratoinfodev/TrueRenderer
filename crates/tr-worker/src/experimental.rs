@@ -38,7 +38,7 @@ fn describe(raw: tr_raw::RawInfo) -> Result<(RasterInfo, ColorSource)> {
         "Experimental: mosaico/crop oltre il budget di memoria del job"
     );
     let color = ColorSource::Developed(format!(
-        "Rec.2020 fp32; profilo {} {}; matrice f64 mat2; alte luci: stima locale hl4; no clamp",
+        "Rec.2020 fp32; profilo {} {}; mat2; alte luci HL6 + ripiego neutro sensor98-100; no clamp",
         raw.profile_source, raw.profile_hash
     ));
     let mut camera = raw.camera;

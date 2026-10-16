@@ -14,10 +14,45 @@ mod baseline_hl2;
 #[path = "highlights_hl3.rs"]
 mod baseline_hl3;
 
+#[allow(dead_code)]
+#[path = "highlights_hl4.rs"]
+mod baseline_hl4;
+
+#[allow(dead_code)]
+#[path = "bayer_dir3.rs"]
+mod baseline_dir3;
+
+#[allow(dead_code)]
+#[path = "bayer_dir4.rs"]
+mod baseline_dir4;
+
+#[allow(dead_code)]
+#[path = "highlights_hl5.rs"]
+mod baseline_hl5;
+
+#[allow(dead_code)]
+#[path = "bayer_dir5.rs"]
+mod baseline_dir5;
+
+// Preserve the original WB solver too: cal2 accepts some formerly rejected
+// profiles. Those new profiles cannot serve as old-HL comparison inputs.
+fn original_calibration(c: &crate::color::Calibration) -> crate::color_cal1::Calibration {
+    crate::color_cal1::Calibration {
+        cm: c.cm,
+        cc: c.cc,
+        fm: c.fm,
+        temperatures: c.temperatures,
+        analog: c.analog,
+        neutral: c.neutral,
+    }
+}
+
 // HL3's original demosaic, WB arithmetic, projection, crop and orientation.
 // Comparing recoveries through the new demosaic would confound both changes.
 fn original_demosaic(mut raw: Mosaic) -> LinearImage {
-    let (gains, matrix) = raw.calibration.resolve([1.; 3]).unwrap();
+    let (gains, matrix) = original_calibration(&raw.calibration)
+        .resolve([1.; 3])
+        .unwrap();
     for (i, v) in raw.values.iter_mut().enumerate() {
         *v *= gains[raw.cfa.color(i % raw.width, i / raw.width)];
     }
@@ -64,6 +99,188 @@ fn original_demosaic(mut raw: Mosaic) -> LinearImage {
     )
     .unwrap();
     LinearImage::new(ow, oh, pixels).unwrap()
+}
+
+// Frozen HL4 recovery with the dir2 or dir3 demosaic. Shared edge equations
+// must retain the qualified hashes; the recovery policy is frozen separately.
+fn hl4_reference(mut raw: Mosaic, dir3: bool, hl5: bool, dir4: bool, dir5: bool) -> LinearImage {
+    for (bytes, expected) in [
+        (
+            include_bytes!("xtrans_dir6.rs").as_slice(),
+            "e9a860a975cfe77ae10d0cc546ecc0a5afb87cbd84db74a305d3011212812ba6",
+        ),
+        (
+            include_bytes!("../src/xtrans_dr6/mod.rs").as_slice(),
+            "973d9ea86a871a923ce01898979ba337c00ff03c75eb04f37986ec0a1a605810",
+        ),
+        (
+            include_bytes!("../src/xtrans_dr6/bounded.rs").as_slice(),
+            "0e4d4143cbc16f98f9ba5530aca54fb1feedaf4e9cf03bdb5f5fab7464c1612f",
+        ),
+        (
+            include_bytes!("../src/xtrans_dr6/residual.rs").as_slice(),
+            "e2146c1d390c7d3756e394305592f89c7f9767c347ba42c6732e20670155113d",
+        ),
+        (
+            include_bytes!("highlights_hl4.rs").as_slice(),
+            "e4b10165f6ae3ee5448fe0c712128398f22bef1022defc43e88b5843af675e29",
+        ),
+        (
+            include_bytes!("bayer_dir3.rs").as_slice(),
+            "a4f4081f9ab05bc60743dd8d83959ecb9885c33bdb45bbf963d2c277d22551ea",
+        ),
+        (
+            include_bytes!("edge_planes_dir6.rs").as_slice(),
+            "5a920d3b8a9bf0af019fde6b7b10b989da545d20d0ea6249ecd148be12486297",
+        ),
+        (
+            include_bytes!("xtrans_steps_dir6.rs").as_slice(),
+            "62f13d57ce8e491167c0f6d6b5d65ca33720b0dbc981adf2ecef8b7c3789e54e",
+        ),
+        (
+            include_bytes!("color_cal1.rs").as_slice(),
+            "4792f42736503cf239fcc9b300887e2d804bdb0f1f990e32e17fc42c5c5f9f1a",
+        ),
+        (
+            include_bytes!("../src/cfa.rs").as_slice(),
+            "d172498b7015c6765fc73116e99ba5e0dbf2cd6566c140e9652669269deb3e3f",
+        ),
+        (
+            include_bytes!("../src/highlights/edge.rs").as_slice(),
+            "c35fd64f38022087ca3644cd912da125fe30944b68ee465ee84af5f1f0334dd1",
+        ),
+        (
+            include_bytes!("../src/highlights/occlusion.rs").as_slice(),
+            "a08b7e2cf3fb7e28348fd77aa42ded2f526d95fa61b96d0ed17abdce98debe72",
+        ),
+    ] {
+        assert_eq!(format!("{:x}", Sha256::digest(bytes)), expected);
+    }
+    let mut unsupported = Vec::new();
+    if hl5 {
+        assert_eq!(
+            format!("{:x}", Sha256::digest(include_bytes!("highlights_hl5.rs"))),
+            "a3552ce323283ba95f3749c7d8f4b9a65c59f0ef8877327f40e3e88d802b3d64",
+            "Shared HL5 recovery changed: this is no longer the frozen baseline"
+        );
+        baseline_hl5::recover_with_support(
+            &mut raw.values,
+            &raw.saturation,
+            raw.width,
+            raw.active_width,
+            raw.height,
+            raw.cfa,
+            Some(&mut unsupported),
+        );
+    } else {
+        baseline_hl4::recover_with_support(
+            &mut raw.values,
+            &raw.saturation,
+            raw.width,
+            raw.active_width,
+            raw.height,
+            raw.cfa,
+            Some(&mut unsupported),
+        );
+    }
+    let (gains, matrix) = if dir4 || dir5 {
+        assert_eq!(
+            format!("{:x}", Sha256::digest(include_bytes!("../src/color.rs"))),
+            "0c632b4c1d43bccca112d6766fa21358ef81076bcebdad849cce0850e5c0d351"
+        );
+        raw.calibration.resolve([1.; 3]).unwrap()
+    } else {
+        original_calibration(&raw.calibration)
+            .resolve([1.; 3])
+            .unwrap()
+    };
+    for (i, v) in raw.values.iter_mut().enumerate() {
+        *v *= gains[raw.cfa.color(i % raw.width, i / raw.width)];
+    }
+    if dir5 {
+        assert_eq!(
+            format!("{:x}", Sha256::digest(include_bytes!("bayer_dir5.rs"))),
+            "ced735d9562289ece19f656d3548e59609e7a453c8cb4ae092f3498263e792b7"
+        );
+        let clipped = if raw.cfa.period == 2 {
+            baseline_dir5::original_clipping_bits(&raw.saturation)
+        } else {
+            Vec::new()
+        };
+        return baseline_dir5::develop_supported(
+            (
+                &raw.values,
+                baseline_dir5::Support::new(&unsupported, raw.active_width.div_ceil(6))
+                    .with_original_clipping(&clipped, raw.width),
+            ),
+            raw.width,
+            raw.height,
+            raw.cfa,
+            matrix,
+            raw.crop,
+            raw.orientation,
+        )
+        .unwrap();
+    }
+    if dir4 {
+        assert_eq!(
+            format!("{:x}", Sha256::digest(include_bytes!("bayer_dir4.rs"))),
+            "8fb4d08fdbc8ea12d4f871ac819cf33ff4a1dfbb671b6127fc26a13998887592"
+        );
+        let clipped = if raw.cfa.period == 2 {
+            baseline_dir4::original_clipping_bits(&raw.saturation)
+        } else {
+            Vec::new()
+        };
+        return baseline_dir4::develop_supported(
+            (
+                &raw.values,
+                baseline_dir4::Support::new(&unsupported, raw.active_width.div_ceil(6))
+                    .with_original_clipping(&clipped, raw.width),
+            ),
+            raw.width,
+            raw.height,
+            raw.cfa,
+            matrix,
+            raw.crop,
+            raw.orientation,
+        )
+        .unwrap();
+    }
+    if dir3 {
+        let clipped = if raw.cfa.period == 2 {
+            crate::render::original_clipping_bits(&raw.saturation)
+        } else {
+            Vec::new()
+        };
+        return baseline_dir3::develop_supported(
+            (
+                &raw.values,
+                baseline_dir3::Support::new(&unsupported, raw.active_width.div_ceil(6))
+                    .with_original_clipping(&clipped, raw.width),
+            ),
+            raw.width,
+            raw.height,
+            raw.cfa,
+            matrix,
+            raw.crop,
+            raw.orientation,
+        )
+        .unwrap();
+    }
+    crate::render::dir2_reference::develop_supported(
+        (
+            &raw.values,
+            crate::render::Support::new(&unsupported, raw.active_width.div_ceil(6)),
+        ),
+        raw.width,
+        raw.height,
+        raw.cfa,
+        matrix,
+        raw.crop,
+        raw.orientation,
+    )
+    .unwrap()
 }
 
 fn mosaic(bytes: &[u8]) -> Mosaic {
@@ -198,7 +415,26 @@ fn research_campaign_highlights() {
     let manifest: Value = serde_json::from_slice(&fs::read(&input).unwrap()).unwrap();
     let compare_hl2 = std::env::var_os("TR_HL_BASELINE_HL2").is_some();
     let compare_hl3 = std::env::var_os("TR_HL_BASELINE_HL3").is_some();
-    assert!(!(compare_hl2 && compare_hl3));
+    let compare_hl4 = std::env::var_os("TR_HL_BASELINE_HL4").is_some();
+    let compare_hl5_dir5 = std::env::var_os("TR_HL_BASELINE_HL5_DIR5").is_some();
+    let compare_hl5_dir4 = std::env::var_os("TR_HL_BASELINE_HL5_DIR4").is_some();
+    let compare_hl5_dir3 = std::env::var_os("TR_HL_BASELINE_HL5_DIR3").is_some();
+    let compare_hl4_dir3 = std::env::var_os("TR_HL_BASELINE_HL4_DIR3").is_some();
+    assert!(
+        [
+            compare_hl2,
+            compare_hl3,
+            compare_hl4,
+            compare_hl4_dir3,
+            compare_hl5_dir3,
+            compare_hl5_dir4,
+            compare_hl5_dir5,
+        ]
+        .into_iter()
+        .filter(|b| *b)
+        .count()
+            <= 1
+    );
     if compare_hl3 {
         assert_eq!(
             format!(
@@ -290,14 +526,67 @@ fn research_campaign_highlights() {
                 );
                 row["baseline_reconstructed_sites"] = json!(base.reconstructed);
             }
-            before.saturation.fill(0);
-            let baseline = if compare_hl3 {
+            if !compare_hl4
+                && !compare_hl4_dir3
+                && !compare_hl5_dir3
+                && !compare_hl5_dir4
+                && !compare_hl5_dir5
+            {
+                before.saturation.fill(0);
+            }
+            let baseline = if compare_hl4
+                || compare_hl4_dir3
+                || compare_hl5_dir3
+                || compare_hl5_dir4
+                || compare_hl5_dir5
+            {
+                hl4_reference(
+                    before,
+                    compare_hl4_dir3 || compare_hl5_dir3,
+                    compare_hl5_dir3 || compare_hl5_dir4 || compare_hl5_dir5,
+                    compare_hl5_dir4,
+                    compare_hl5_dir5,
+                )
+            } else if compare_hl3 {
                 original_demosaic(before)
             } else {
                 before.develop([1.; 3]).unwrap()
             };
-            let after = crate::develop(&bytes, [1.; 3]).unwrap();
+            let after = if let Ok(root) = std::env::var("TR_HL_PRIVATE_MOSAIC_PROBE") {
+                // Explicit test-only probe: the caller supplies sensor-domain
+                // candidates, not an image reference. Never product behaviour.
+                let mut probe = mosaic(&bytes);
+                let candidate = read_f32(
+                    &Path::new(&root).join(format!("{}.probe.f32", source["id"].as_str().unwrap())),
+                );
+                assert_eq!(candidate.len(), probe.values.len());
+                for (i, &v) in candidate.iter().enumerate() {
+                    assert!(v.is_finite());
+                    if probe.saturation[i] != highlights::SATURATED {
+                        assert_eq!(v.to_bits(), probe.values[i].to_bits());
+                    }
+                }
+                probe.values = candidate;
+                probe.saturation.fill(0);
+                probe.develop([1.; 3]).unwrap()
+            } else {
+                crate::develop(&bytes, [1.; 3]).unwrap()
+            };
             let truth = read_f32(Path::new(truthpath));
+            if let Ok(root) = std::env::var("TR_HL_SAMPLE_DUMP") {
+                let raw = mosaic(&bytes);
+                let (gains, matrix) = raw.calibration.resolve([1.; 3]).unwrap();
+                let destination =
+                    Path::new(&root).join(format!("{}.json", source["id"].as_str().unwrap()));
+                assert!(!destination.exists());
+                let dump = json!({"source_sha256":hash,
+                    "size":[raw.width,raw.height], "crop":raw.crop,
+                    "orientation":raw.orientation, "gains":gains,"matrix":matrix,
+                    "cfa":(0..raw.cfa.period*raw.cfa.period).map(|i|raw.cfa.color(i%raw.cfa.period,i/raw.cfa.period)).collect::<Vec<_>>(),
+                    "measured":raw.values,"state":raw.saturation,
+                    "recovered":values,"rendered":after.pixels,"truth":truth});
+                fs::write(destination, serde_json::to_vec(&dump).unwrap()).unwrap();
+            }
             // This optional counterfactual separates recovery error from the
             // demosaic's response to the ideal, unclipped analytical mosaic.
             // It is not a second physical camera reference.
@@ -342,11 +631,15 @@ fn research_campaign_highlights() {
                 crate::unpack(&bytes).unwrap().2,
                 crate::unpack(&repacked).unwrap().2
             );
-            assert_eq!(
-                after.pixels,
-                crate::develop(&repacked, [1.; 3]).unwrap().pixels
-            );
-            row["repack_sensor_and_render_exact"] = json!(true);
+            if std::env::var_os("TR_HL_PRIVATE_MOSAIC_PROBE").is_none() {
+                assert!(
+                    after.pixels == crate::develop(&repacked, [1.; 3]).unwrap().pixels,
+                    "reopened image differs from developed source"
+                );
+                row["repack_sensor_and_render_exact"] = json!(true);
+            } else {
+                row["private_mosaic_probe"] = json!(true);
+            }
         }
         assert_eq!(
             hash,
@@ -355,6 +648,6 @@ fn research_campaign_highlights() {
         println!("{}: {evidence:?}", source["id"]);
         rows.push(row);
     }
-    let report = json!({"protocol":"TR-HL4-v1","baseline_policy":if compare_hl3 {"hl3 with original dir1/DR6 demosaic"} else if compare_hl2 {"hl2 with current demosaic"} else {"no-recovery with current demosaic"},"recipe":crate::RECIPE,"scope":"Known-model or uncalibrated private inputs; no physical colour truth inferred.","sources":rows});
+    let report = json!({"protocol":"TR-HL4-v1","baseline_policy":if compare_hl5_dir5 {"frozen hl5/cal2 with dir5/DR7 demosaic"} else if compare_hl5_dir4 {"hl5/cal2 with frozen dir4/DR7 demosaic"} else if compare_hl5_dir3 {"hl5 with frozen dir3/DR7 demosaic"} else if compare_hl4_dir3 {"frozen hl4 with dir3/DR7 demosaic"} else if compare_hl4 {"hl4 with frozen dir2/DR7 demosaic"} else if compare_hl3 {"hl3 with original dir1/DR6 demosaic"} else if compare_hl2 {"hl2 with current demosaic"} else {"no-recovery with current demosaic"},"recipe":crate::RECIPE,"scope":"Known-model or uncalibrated private inputs; no physical colour truth inferred.","sources":rows});
     fs::write(output, serde_json::to_vec_pretty(&report).unwrap()).unwrap();
 }

@@ -13,6 +13,7 @@ pub(crate) mod metadata;
 mod occlusion;
 #[cfg(test)]
 mod tests;
+mod texture;
 
 const SIDE: usize = 6;
 const RADIUS: usize = 32;
@@ -364,6 +365,104 @@ fn estimate(grid: &mut Grid<'_>, tx: usize, ty: usize) -> Estimate {
     })
 }
 
+// A small lift must be consistent across the demosaic's neighbourhood, not
+// merely inside its six-pixel cell. A shoulder can satisfy the looser HL fit
+// while its curvature interacts with interpolation outside that cell.
+fn continuous_bayer_plane(
+    grid: &Grid<'_>,
+    tx: usize,
+    ty: usize,
+    r: Reconstruction,
+    allowed: u8,
+) -> bool {
+    if grid.cfa.period != 2 || r.model.split != 0 || r.model.border != 0 {
+        return false;
+    }
+    let (x0, y0) = (
+        (tx * SIDE).min(grid.width - SIDE),
+        (ty * SIDE).min(grid.height - SIDE),
+    );
+    let near_limit = (ty * SIDE..((ty + 1) * SIDE).min(grid.height)).any(|y| {
+        (tx * SIDE..((tx + 1) * SIDE).min(grid.width)).any(|x| {
+            let i = y * grid.stride + x;
+            let c = grid.cfa.color(x, y);
+            let predicted = r.model.predict(x - x0, y - y0) * r.ratio[c];
+            grid.state[i] == SATURATED
+                && allowed & (1 << c) != 0
+                && predicted > grid.values[i]
+                && predicted <= 1.0001 * grid.values[i]
+        })
+    });
+    if !near_limit {
+        return true;
+    }
+    let p = r.model.plane.map(f64::from);
+    let mut samples = 0;
+    for y in y0.saturating_sub(SIDE)..(y0 + 2 * SIDE).min(grid.height) {
+        for x in x0.saturating_sub(SIDE)..(x0 + 2 * SIDE).min(grid.width) {
+            let i = y * grid.stride + x;
+            if grid.state[i] == SATURATED {
+                continue;
+            }
+            let expected = (p[0]
+                + p[1] * (x as f64 - x0 as f64 - 2.5) / 2.5
+                + p[2] * (y as f64 - y0 as f64 - 2.5) / 2.5)
+                * f64::from(r.ratio[grid.cfa.color(x, y)]);
+            let measured = f64::from(grid.values[i]);
+            // Same relative consistency as the affine demosaic model. This
+            // is an admission policy, not a calibrated sensor-noise estimate.
+            if !expected.is_finite()
+                || (expected - measured).abs()
+                    > 0.001 * expected.abs().max(measured.abs()).max(0.01)
+            {
+                return false;
+            }
+            samples += 1;
+        }
+    }
+    samples >= 12
+}
+
+// The stricter neighbourhood check must not create newly corrected islands
+// inside a clipped component. Every cell must agree before its small lifts
+// are admitted; otherwise retain HL4's threshold throughout that component.
+fn complete_continuity(cells: &[Cell], allowed: &mut [u8], columns: usize, rows: usize) {
+    if !allowed.iter().any(|v| v & 128 != 0) {
+        return;
+    }
+    let mut visited = vec![false; cells.len()];
+    let mut queue = Vec::with_capacity(cells.len());
+    for start in 0..cells.len() {
+        if cells[start].clipped == 0 || visited[start] {
+            continue;
+        }
+        queue.clear();
+        queue.push(start);
+        visited[start] = true;
+        let (mut cursor, mut complete) = (0, true);
+        while cursor < queue.len() {
+            let i = queue[cursor];
+            cursor += 1;
+            complete &= allowed[i] & 128 != 0;
+            let (x, y) = (i % columns, i / columns);
+            for yy in y.saturating_sub(1)..=(y + 1).min(rows - 1) {
+                for xx in x.saturating_sub(1)..=(x + 1).min(columns - 1) {
+                    let j = yy * columns + xx;
+                    if cells[j].clipped != 0 && !visited[j] {
+                        visited[j] = true;
+                        queue.push(j);
+                    }
+                }
+            }
+        }
+        if !complete {
+            for &i in &queue {
+                allowed[i] &= !128;
+            }
+        }
+    }
+}
+
 // A supported island inside an unsupported clipped region creates a false
 // intensity edge. Admit a connected clipped region only when every cell has
 // evidence, independently for each channel. Eight-neighbour connectivity is
@@ -544,23 +643,7 @@ pub(crate) fn recover_with_support(
             estimates[i] = occlusion::estimate(&grid, &estimates, i % columns, i / columns);
         }
     }
-    let allowed = complete_regions(&grid.data, &estimates, columns, rows);
-    if let Some(unsupported) = unsupported {
-        unsupported.clear();
-        if grid
-            .data
-            .iter()
-            .zip(&allowed)
-            .any(|(cell, &mask)| cell.clipped & !mask != 0)
-        {
-            unsupported.extend(
-                grid.data
-                    .iter()
-                    .zip(&allowed)
-                    .map(|(cell, &mask)| cell.clipped & !mask),
-            );
-        }
-    }
+    let mut allowed = complete_regions(&grid.data, &estimates, columns, rows);
     // Preserve established affine components. Compute the extra boundary
     // support for piecewise components entirely from original measurements.
     for (i, estimate) in estimates.iter_mut().enumerate() {
@@ -581,8 +664,16 @@ pub(crate) fn recover_with_support(
         {
             r.model = edge::with_halo(&grid, i % columns, i / columns, r.model, r.ratio);
         }
+        if let Some(r) = estimate
+            && allowed[i] & 7 != 0
+            && continuous_bayer_plane(&grid, i % columns, i / columns, *r, allowed[i])
+        {
+            // Reuse the free high bit: no extra per-cell allocation.
+            allowed[i] |= 128;
+        }
     }
-    drop(grid);
+    complete_continuity(&grid.data, &mut allowed, columns, rows);
+    let Grid { data: cells, .. } = grid;
     for ty in 0..rows {
         for tx in 0..columns {
             if allowed[ty * columns + tx] == 0 {
@@ -612,15 +703,37 @@ pub(crate) fn recover_with_support(
                         Model { border: 0, ..model }
                     };
                     let predicted = local_model.predict(x - x0, y - y0) * ratio[c];
-                    if predicted.is_finite()
-                        && predicted > 1.0001 * values[i]
-                        && predicted <= 4. * values[i]
-                    {
+                    let minimum = if allowed[ty * columns + tx] & 128 != 0 {
+                        values[i]
+                    } else {
+                        1.0001 * values[i]
+                    };
+                    if predicted.is_finite() && predicted > minimum && predicted <= 4. * values[i] {
                         values[i] = predicted;
                         evidence.reconstructed += 1;
                     }
                 }
             }
+        }
+    }
+    drop(estimates);
+    for (mask, cell) in allowed.iter_mut().zip(&cells) {
+        *mask = cell.clipped & !*mask;
+    }
+    let extra = texture::recover(
+        values,
+        state,
+        [stride, active_width, height],
+        cfa,
+        &cells,
+        &mut allowed,
+    );
+    evidence.reconstructed += extra.reconstructed;
+    evidence.supported_cells += extra.supported_cells;
+    if let Some(unsupported) = unsupported {
+        unsupported.clear();
+        if allowed.iter().any(|&mask| mask != 0) {
+            unsupported.extend_from_slice(&allowed);
         }
     }
     evidence

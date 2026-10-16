@@ -191,7 +191,7 @@ pub(crate) fn develop_supported(
                 return Ok(());
             }
             let (cx, cy) = (x - left, y - top);
-            let rec = crate::color::project(matrix, rgb);
+            let rec = crate::color::project(matrix, support.render_highlights(rgb, x, y));
             let (ox, oy) = match orientation {
                 2 => (w - 1 - cx, cy),
                 3 => (w - 1 - cx, h - 1 - cy),

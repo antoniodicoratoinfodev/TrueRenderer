@@ -301,6 +301,61 @@ mod tests {
         }
     }
     #[test]
+    fn ahd_clipped_highlights_stay_neutral_under_wb_and_negative_exposure() {
+        use tr_core::decoder::{RawEngine, RawWhiteBalance};
+        for (red, blue) in [(2246, 1234), (800, 1800), (4000, 250)] {
+            let wb = RawWhiteBalance {
+                red,
+                blue,
+                ..Default::default()
+            };
+            for orientation in [1, 3, 6, 8] {
+                let bytes = fixture(4095, true, "Synthetic DNG", orientation);
+                let (_, _, image) =
+                    crate::libraw::develop_with_wb(&bytes, 0, RawEngine::LibRawAhd, wb).unwrap();
+                for ev in [-4., -2., -1., 0., 1., 2.] {
+                    let recipe = tr_core::editing::EditRecipe {
+                        exposure_ev: ev,
+                        ..tr_core::editing::EditRecipe::neutral(RawEngine::LibRawAhd)
+                    };
+                    for p in &image.pixels {
+                        let p = recipe.apply_pixel(*p);
+                        let lo = p[..3].iter().copied().fold(f32::INFINITY, f32::min);
+                        let hi = p[..3].iter().copied().fold(f32::NEG_INFINITY, f32::max);
+                        assert!(
+                            lo > 0. && (hi - lo) / hi < 0.001,
+                            "WB {red}/{blue}, EV {ev}: {p:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+    #[test]
+    fn ahd_unclipped_coloured_fields_keep_linear_exposure_response() {
+        use tr_core::decoder::RawEngine;
+        let mut images = vec![];
+        for scale in [1, 2] {
+            let mut bytes = fixture(512, true, "Synthetic DNG", 1);
+            let start = bytes.len() - 32 * 24 * 2;
+            for i in 0..32 * 24 {
+                let c = [0, 1, 1, 2][(i / 32 % 2) * 2 + i % 2];
+                let code = 512u16 + [800, 400, 600][c] * scale;
+                bytes[start + i * 2..start + i * 2 + 2].copy_from_slice(&code.to_le_bytes());
+            }
+            images.push(
+                crate::libraw::develop_with_engine(&bytes, 0, RawEngine::LibRawAhd)
+                    .unwrap()
+                    .2,
+            );
+        }
+        for (a, b) in images[0].pixels.iter().zip(&images[1].pixels) {
+            for c in 0..3 {
+                assert!((2. * a[c] - b[c]).abs() < 0.0001, "{a:?} {b:?}");
+            }
+        }
+    }
+    #[test]
     #[ignore = "requires TR_RAW_SAMPLE pointing to an authorized read-only Nikon sample"]
     fn real_raw_export_preserves_every_active_sample() {
         let path = std::env::var_os("TR_RAW_SAMPLE").expect("TR_RAW_SAMPLE");

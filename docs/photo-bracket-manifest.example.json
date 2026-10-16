@@ -1,0 +1,69 @@
+{
+  "protocol": "TR-photo-bracket-v1",
+  "role": "development",
+  "candidate_freeze_sha256": "REPLACE_WITH_FROZEN_SOURCE_MANIFEST_SHA256",
+  "planes": "extracted/planes.json",
+  "planes_sha256": "REPLACE_WITH_EXTRACTED_MANIFEST_SHA256",
+  "acquisition": {
+    "scene_id": "REPLACE",
+    "session_id": "REPLACE",
+    "illuminant": "REPLACE_WITH_LIGHT_SOURCE_AND_STABILITY_MEASUREMENTS",
+    "rights": "REPLACE_WITH_LOCAL_USE_AND_REDISTRIBUTION_RIGHTS",
+    "static_scene": true,
+    "fixed_optics": true,
+    "fixed_lighting": true
+  },
+  "target": {
+    "id": "bright",
+    "exposure_s": 0.04,
+    "iso": 100,
+    "f_number": 8,
+    "focus_id": "locked-session-1"
+  },
+  "reference": {
+    "id": "dark",
+    "exposure_s": 0.01,
+    "iso": 100,
+    "f_number": 8,
+    "focus_id": "locked-session-1",
+    "registration": {
+      "offset": [0, 0],
+      "method": "REPLACE_WITH_MEASURED_LANDMARK_METHOD_AND_EVIDENCE_HASH",
+      "landmarks": []
+    }
+  },
+  "repeat": {
+    "id": "dark-repeat",
+    "exposure_s": 0.01,
+    "iso": 100,
+    "f_number": 8,
+    "focus_id": "locked-session-1",
+    "registration": {
+      "offset": [0, 0],
+      "method": "REPLACE_WITH_MEASURED_LANDMARK_METHOD_AND_EVIDENCE_HASH",
+      "landmarks": []
+    }
+  },
+  "limits": {
+    "min_signal": 0.02,
+    "max_signal": 0.9,
+    "scale_metadata_relative": 0.02,
+    "scale_phase_relative": 0.01,
+    "validation_relative": 0.03,
+    "repeat_relative": 0.03,
+    "registration_max_px": 0.1,
+    "max_translation_px": 12,
+    "minimum_sites_per_phase": 32
+  },
+  "regions": [
+    {"id": "scale", "role": "fit", "category": "neutral", "rect": [0, 0, 64, 64]},
+    {"id": "radiometry-check", "role": "validation", "category": "coloured-surface", "rect": [128, 0, 64, 64]},
+    {"id": "clipped-texture", "role": "evaluation", "category": "fine-texture", "rect": [0, 128, 128, 128]}
+  ],
+  "notes": [
+    "Example coordinates, exposures and screening thresholds only: replace and freeze before viewing candidate errors.",
+    "Acquire additional oblique-edge, coloured-surface and LED scenes and separate red, blue, green and multiple clipping regions.",
+    "Verification requires development_source_sha256 listing development captures; independent sessions remain a capture responsibility.",
+    "Relative sensor references cannot establish absolute colour accuracy. Keep measured target/illuminant evidence separately."
+  ]
+}

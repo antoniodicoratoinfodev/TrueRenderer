@@ -12,10 +12,91 @@
 #include <cmath>
 #include <exception>
 #include <memory>
+#include <algorithm>
+#include <vector>
+#include <stdexcept>
 
 #include "libraw/libraw.h"
 
 namespace {
+
+// AHD keeps its original scale and interpolation. This local rendering stage
+// only raises sensor-clipped camera channels before colour conversion. It does
+// not infer clipping from bright RGB, nor import another demosaic algorithm.
+class HighlightRaw final : public LibRaw {
+    std::vector<uint8_t> confidence;
+    unsigned width = 0, height = 0;
+    int pattern[4] = {};
+
+    static void render(void *object) {
+        auto &raw = *static_cast<HighlightRaw *>(static_cast<LibRaw *>(object));
+        if (raw.confidence.empty()) return;
+        if (raw.imgdata.sizes.width != raw.width || raw.imgdata.sizes.height != raw.height)
+            throw std::runtime_error("AHD: geometria alte luci cambiata");
+        auto color = [&](unsigned x, unsigned y) { return raw.pattern[(y % 2) * 2 + x % 2]; };
+        for (unsigned y = 0; y < raw.height; ++y) {
+            for (unsigned x = 0; x < raw.width; ++x) {
+                auto *rgb = raw.imgdata.image[size_t(y) * raw.width + x];
+                const unsigned maximum = std::max({rgb[0], rgb[1], rgb[2]});
+                for (int c = 0; c < 3; ++c) {
+                    double sum = 0, weights = 0;
+                    if (color(x,y) == c) {
+                        sum = raw.confidence[size_t(y) * raw.width + x]; weights = 1;
+                    } else {
+                        for (int dy = -1; dy <= 1; ++dy) {
+                            for (int dx = -1; dx <= 1; ++dx) {
+                                const int xx = int(x) + dx, yy = int(y) + dy;
+                                if (xx < 0 || yy < 0 || xx >= int(raw.width) || yy >= int(raw.height) || color(xx,yy) != c) continue;
+                                const double weight = 1. / (dx * dx + dy * dy);
+                                sum += weight * raw.confidence[size_t(yy) * raw.width + xx];
+                                weights += weight;
+                            }
+                        }
+                    }
+                    if (sum > 0 && weights > 0)
+                        rgb[c] = uint16_t(std::lround(rgb[c] + (sum / (255. * weights)) * (maximum - rgb[c])));
+                }
+            }
+        }
+    }
+
+public:
+    int prepare_highlights() {
+        const int status = raw2image();
+        if (status != LIBRAW_SUCCESS) return status;
+        width = imgdata.sizes.width; height = imgdata.sizes.height;
+        const auto &levels = imgdata.color;
+        if (!width || !height || size_t(width) * height > 67108864 ||
+            imgdata.sizes.iwidth != width || imgdata.sizes.iheight != height ||
+            !imgdata.image || imgdata.idata.colors != 3)
+            throw std::runtime_error("AHD: mosaico alte luci non supportato");
+        confidence.resize(size_t(width) * height);
+        for (unsigned p = 0; p < 4; ++p) {
+            const int c = COLOR(p / 2, p % 2);
+            pattern[p] = c == 3 ? 1 : c;
+            if (c < 0 || c > 3) throw std::runtime_error("AHD: CFA alte luci non RGB");
+        }
+        bool any = false;
+        for (unsigned y = 0; y < height; ++y) {
+            for (unsigned x = 0; x < width; ++x) {
+                const int c = COLOR(y,x);
+                double black = double(levels.black) + levels.cblack[c];
+                if (levels.cblack[4] && levels.cblack[5])
+                    black += levels.cblack[6 + y % levels.cblack[4] * levels.cblack[5] + x % levels.cblack[5]];
+                if (levels.maximum <= black) throw std::runtime_error("AHD: livelli alte luci non validi");
+                // LibRaw's own declared white, as in the historical TR recipe.
+                // Its nominal white is not a measured physical clipping level.
+                const double code = imgdata.image[size_t(y) * width + x][c];
+                const double t = std::max(0., std::min(1., ((code - black) / (levels.maximum - black) - .98) / .02));
+                const auto q = uint8_t(std::lround(255. * t * t * (3. - 2. * t)));
+                confidence[size_t(y) * width + x] = q; any |= q != 0;
+            }
+        }
+        if (!any) { std::vector<uint8_t>().swap(confidence); }
+        callbacks.post_interpolate_cb = render;
+        return LIBRAW_SUCCESS;
+    }
+};
 
 void message(char *error, size_t size, const char *text) {
     if (size) {
@@ -73,7 +154,7 @@ void apply_recipe(LibRaw &raw, uint32_t variant = 0) {
     if (variant == 1) {
         p.user_qual = 3; // AHD, core LibRaw, no optional demosaic packs.
         p.output_color = 8; // Rec.2020/D65, still a bounded integer output.
-        p.highlight = 1; // unclip scale; no reconstruction
+        p.highlight = 1; // retain unclip scale; local sensor-gated fallback below
         p.adjust_maximum_thr = 0.0f;
         raw.imgdata.rawparams.options |= LIBRAW_RAWOPTIONS_CAMERAWB_FALLBACK_TO_DAYLIGHT;
     }
@@ -169,7 +250,7 @@ extern "C" int tr_libraw_develop_wb(const uint8_t *bytes, size_t length, uint32_
     }
     // LibRaw exceeds the stack available on macOS XPC dispatch threads.
     // Keep its lifetime scoped and exception-safe without consuming that stack.
-    auto owner = std::make_unique<LibRaw>();
+    auto owner = std::make_unique<HighlightRaw>();
     LibRaw &raw = *owner;
     if (open_and_identify(raw, bytes, length, error, error_size, variant)) {
         return 1;
@@ -206,6 +287,12 @@ extern "C" int tr_libraw_develop_wb(const uint8_t *bytes, size_t length, uint32_
         }
         raw.imgdata.params.use_camera_wb = 0;
         raw.imgdata.params.use_auto_wb = 0;
+    }
+    if (variant == 1 && info->non_bayer == 0) {
+        status = owner->prepare_highlights();
+        if (status != LIBRAW_SUCCESS) {
+            message(error, error_size, libraw_strerror(status)); return 1;
+        }
     }
     status = raw.dcraw_process();
     if (status != LIBRAW_SUCCESS) {

@@ -9,46 +9,56 @@ const RADIUS: usize = 6;
 const EDGE: usize = 2 * RADIUS + 1;
 type Bounds = [[f32; 3]; 2];
 
-#[derive(Clone, Copy, Default)]
-struct Extremum {
-    indices: [usize; EDGE],
-    head: usize,
-    len: usize,
-}
-impl Extremum {
-    fn expire(&mut self, left: usize) {
-        while self.len != 0 && self.indices[self.head] < left {
-            self.head = (self.head + 1) % EDGE;
-            self.len -= 1;
-        }
-    }
-    fn push(&mut self, row: &[f32], index: usize, minimum: bool) {
-        while self.len != 0 {
-            let last = row[self.indices[(self.head + self.len - 1) % EDGE]];
-            if if minimum {
-                last < row[index]
-            } else {
-                last > row[index]
-            } {
-                break;
+/// A 13-site interval intersects at most two 13-site blocks. Reusing each
+/// block's prefix/suffix extrema avoids data-dependent queues and retains the
+/// exact range, including the shorter windows at the sensor boundary.
+fn horizontal_ranges(row: &[f32], cfa: Cfa, y: usize, output: &mut [Bounds]) {
+    let empty = [[f32::INFINITY; 3], [f32::NEG_INFINITY; 3]];
+    let mut blocks = [[[empty; EDGE]; 2]; 2];
+    let mut ids = [None; 2];
+    for (x, bounds) in output.iter_mut().enumerate() {
+        let left = x.saturating_sub(RADIUS);
+        let right = (x + RADIUS).min(row.len() - 1);
+        let (first, last) = (left / EDGE, right / EDGE);
+        for block in first..=last {
+            let slot = block % 2;
+            if ids[slot] == Some(block) {
+                continue;
             }
-            self.len -= 1;
+            let start = block * EDGE;
+            let length = (row.len() - start).min(EDGE);
+            let mut prefix = empty;
+            let mut suffix = empty;
+            for i in 0..length {
+                let xx = start + i;
+                let c = cfa.color(xx, y);
+                prefix[0][c] = prefix[0][c].min(row[xx]);
+                prefix[1][c] = prefix[1][c].max(row[xx]);
+                blocks[slot][0][i] = prefix;
+                let j = length - 1 - i;
+                let xx = start + j;
+                let c = cfa.color(xx, y);
+                suffix[0][c] = suffix[0][c].min(row[xx]);
+                suffix[1][c] = suffix[1][c].max(row[xx]);
+                blocks[slot][1][j] = suffix;
+            }
+            ids[slot] = Some(block);
         }
-        debug_assert!(self.len < EDGE);
-        self.indices[(self.head + self.len) % EDGE] = index;
-        self.len += 1;
-    }
-    fn value(&self, row: &[f32], empty: f32) -> f32 {
-        if self.len == 0 {
-            empty
+        let prefix = blocks[last % 2][0][right % EDGE];
+        let suffix = blocks[first % 2][1][left % EDGE];
+        *bounds = if first != last {
+            combine(suffix, prefix)
+        } else if left.is_multiple_of(EDGE) {
+            prefix
         } else {
-            row[self.indices[self.head]]
-        }
+            debug_assert_eq!(right, row.len() - 1);
+            suffix
+        };
     }
 }
 
 /// Exact separable bounds: two 13-row blocks, with prefix/suffix extrema.
-/// Each pixel enters a horizontal queue once; a window combines two bounds.
+/// Prefix/suffix blocks on both axes; a window combines two bounds per axis.
 pub(crate) struct RangeRows {
     rows: [[Vec<Bounds>; 2 * EDGE]; 2],
     ids: [Option<usize>; 2],
@@ -90,24 +100,7 @@ impl RangeRows {
             for yy in block * EDGE..end {
                 let local = yy % EDGE;
                 let row = &mosaic[yy * w..(yy + 1) * w];
-                let mut queues = [[Extremum::default(); 3]; 2];
-                let mut right = 0;
-                for (x, bounds) in prefix[local].iter_mut().enumerate() {
-                    let left = x.saturating_sub(RADIUS);
-                    for q in queues.iter_mut().flatten() {
-                        q.expire(left);
-                    }
-                    while right < (x + RADIUS + 1).min(w) {
-                        let c = cfa.color(right, yy);
-                        queues[0][c].push(row, right, true);
-                        queues[1][c].push(row, right, false);
-                        right += 1;
-                    }
-                    for c in 0..3 {
-                        bounds[0][c] = queues[0][c].value(row, f32::INFINITY);
-                        bounds[1][c] = queues[1][c].value(row, f32::NEG_INFINITY);
-                    }
-                }
+                horizontal_ranges(row, cfa, yy, &mut prefix[local]);
                 suffix[local].copy_from_slice(&prefix[local]);
                 if local > 0 {
                     let (before, after) = prefix.split_at_mut(local);
@@ -193,43 +186,92 @@ pub(crate) fn interpolate(
             bounds[1][c] = bounds[1][c].max(v);
         }
     }
-    interpolate_with_bounds(mosaic, w, h, cfa, x, y, bounds)
+    interpolate_with_bounds(mosaic, w, h, cfa, (x, y), bounds, false).map(|p| p.rgb)
 }
 
+pub(crate) struct Prediction {
+    pub(crate) rgb: [f32; 3],
+    pub(crate) bayer_axis: Option<(usize, usize)>,
+}
+
+#[inline(always)]
 pub(crate) fn interpolate_with_bounds(
     mosaic: &[f32],
     w: usize,
     h: usize,
     cfa: Cfa,
-    x: usize,
-    y: usize,
+    (x, y): (usize, usize),
     [low, high]: Bounds,
-) -> Option<[f32; 3]> {
+    allow_bayer_axis: bool,
+) -> Option<Prediction> {
     let (x0, y0) = (x.saturating_sub(RADIUS), y.saturating_sub(RADIUS));
     let (x1, y1) = ((x + RADIUS + 1).min(w), (y + RADIUS + 1).min(h));
-    let mut counts = [0usize; 3];
+    // For X-Trans, test the cheap full-range bound before visiting samples.
+    // No admissible gap can exceed that range. Bayer benefits more from the
+    // spatial subset below; neither ordering changes the final conditions.
+    if cfa.period == 6
+        && (0..3).any(|c| high[c] - low[c] < 0.1 * low[c].abs().max(high[c].abs()).max(0.01))
+    {
+        return None;
+    }
     let thresholds: [f32; 3] = std::array::from_fn(|c| low[c] + 0.5 * (high[c] - low[c]));
-    let mut tolerance = [0.; 3];
-    let mut lower_max = [f32::NEG_INFINITY; 3];
-    let mut upper_min = [f32::INFINITY; 3];
-    let mut upper_count = [0usize; 3];
+    // The extrema already come from this window. Any admissible split has
+    // its minimum below the midpoint and its maximum above it. Starting from
+    // those observed bounds avoids repeated infinity fills and can establish
+    // rejection earlier; the final extrema and sample counts are unchanged.
+    let mut lower_max = low;
+    let mut upper_min = high;
+    let half_range = std::array::from_fn::<_, 3, _>(|c| 0.5 * (high[c] - low[c]));
     // A subset can only overestimate the gap. Rejecting an already too small
     // upper bound is exact, not a texture heuristic or an admission change.
-    for gy in 0..4 {
-        for gx in 0..4 {
-            let (xx, yy) = (x0 + gx * (x1 - x0 - 1) / 3, y0 + gy * (y1 - y0 - 1) / 3);
-            let c = cfa.color(xx, yy);
-            let value = mosaic[yy * w + xx];
-            if value > thresholds[c] {
-                upper_min[c] = upper_min[c].min(value);
-            } else {
-                lower_max[c] = lower_max[c].max(value);
-            }
-            if upper_min[c] - lower_max[c] <= 0.5 * (high[c] - low[c]) {
-                return None;
+    if cfa.period == 2 {
+        for gy in 0..4 {
+            for gx in 0..4 {
+                let (xx, yy) = (x0 + gx * (x1 - x0 - 1) / 3, y0 + gy * (y1 - y0 - 1) / 3);
+                let c = cfa.color(xx, yy);
+                let value = mosaic[yy * w + xx];
+                if value > thresholds[c] {
+                    upper_min[c] = upper_min[c].min(value);
+                } else {
+                    lower_max[c] = lower_max[c].max(value);
+                }
+                if upper_min[c] - lower_max[c] <= half_range[c] {
+                    return None;
+                }
             }
         }
     }
+    fit_partition(
+        mosaic,
+        w,
+        cfa,
+        (x, y),
+        [x0, y0, x1, y1],
+        [low, high],
+        [lower_max, upper_min],
+        allow_bayer_axis,
+    )
+}
+
+// Most photographic windows fail the small subset above. Keep the larger
+// mask/plane stack and its register saves off that frequent rejection path.
+#[inline(never)]
+#[allow(clippy::too_many_arguments)]
+fn fit_partition(
+    mosaic: &[f32],
+    w: usize,
+    cfa: Cfa,
+    (x, y): (usize, usize),
+    [x0, y0, x1, y1]: [usize; 4],
+    [low, high]: Bounds,
+    [mut lower_max, mut upper_min]: Bounds,
+    allow_bayer_axis: bool,
+) -> Option<Prediction> {
+    let thresholds: [f32; 3] = std::array::from_fn(|c| low[c] + 0.5 * (high[c] - low[c]));
+    let half_range: [f32; 3] = std::array::from_fn(|c| 0.5 * (high[c] - low[c]));
+    let mut counts = [0usize; 3];
+    let mut upper_count = [0usize; 3];
+    let mut tolerance = [0.; 3];
     let mut mask = [[false; EDGE]; EDGE];
     // A unique gap larger than half the range contains its midpoint. This
     // partition is equivalent to sorting for an admissible gap, in linear
@@ -246,6 +288,12 @@ pub(crate) fn interpolate_with_bounds(
                 upper_count[c] += 1;
             } else {
                 lower_max[c] = lower_max[c].max(value);
+            }
+            // Further samples can only shrink this gap. Once it cannot pass
+            // the final separation test, constructing the rest of the mask
+            // and its counts cannot change the rejection.
+            if upper_min[c] - lower_max[c] <= half_range[c] {
+                return None;
             }
         }
     }
@@ -264,14 +312,23 @@ pub(crate) fn interpolate_with_bounds(
         }
         tolerance[c] = 0.001 * scale;
     }
-    // All measured colours must describe one common, non-alternating boundary.
-    // The directional Bayer construction already treats axis-aligned edges.
-    // This extra model is for boundaries crossing both axes. In particular,
-    // do not refit an unresolved highlight step from its inferred samples.
-    if cfa.period == 2
-        && ((1..y1 - y0).all(|yy| mask[yy][..x1 - x0] == mask[0][..x1 - x0])
-            || (0..y1 - y0).all(|yy| (1..x1 - x0).all(|xx| mask[yy][xx] == mask[yy][0])))
-    {
+    // All colours must describe one common, non-alternating boundary. Bayer
+    // axis models require a separate original-measurement check in the caller:
+    // recovered highlights alone cannot identify the boundary's position.
+    let bayer_axis = if cfa.period != 2 {
+        None
+    } else if (1..y1 - y0).all(|yy| mask[yy][..x1 - x0] == mask[0][..x1 - x0]) {
+        (1..x1 - x0)
+            .find(|&xx| mask[0][xx] != mask[0][0])
+            .map(|cut| (0, x0 + cut))
+    } else if (0..y1 - y0).all(|yy| (1..x1 - x0).all(|xx| mask[yy][xx] == mask[yy][0])) {
+        (1..y1 - y0)
+            .find(|&yy| mask[yy][0] != mask[0][0])
+            .map(|cut| (1, y0 + cut))
+    } else {
+        None
+    };
+    if bayer_axis.is_some() && !allow_bayer_axis {
         return None;
     }
     let monotone = (0..2).any(|axis| {
@@ -343,13 +400,122 @@ pub(crate) fn interpolate_with_bounds(
     }
     let side = usize::from(mask[y - y0][x - x0]);
     let result = planes[side].map(|p| p[0] as f32);
-    result.iter().all(|v| v.is_finite()).then_some(result)
+    result.iter().all(|v| v.is_finite()).then_some(Prediction {
+        rgb: result,
+        bayer_axis,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::cfa::XTRANS;
+
+    #[test]
+    fn early_rejection_matches_frozen_fit_including_admitted_surfaces() {
+        let (mut admitted, mut rejected) = (0, 0);
+        for base in [Cfa::bayer([0, 1, 1, 2]), Cfa::new(6, &XTRANS).unwrap()] {
+            for phase in 0..base.period * base.period {
+                let cfa = base.shifted(phase % base.period, phase / base.period);
+                for (w, h) in [(2, 3), (9, 7), (19, 17)] {
+                    for pattern in 0..5 {
+                        let mosaic: Vec<f32> = (0..w * h)
+                            .map(|i| {
+                                let (x, y) = (i % w, i / w);
+                                let c = cfa.color(x, y);
+                                match pattern {
+                                    0 => {
+                                        [0.1, 0.2, 0.3][c]
+                                            + if x < w / 2 + y / 4 { 0. } else { 0.5 }
+                                            + 0.0002 * x as f32
+                                            + 0.0001 * y as f32
+                                    }
+                                    1 => [-0.3, -0.1, 0.2][c] + if x < w / 2 { 0. } else { 1.5 },
+                                    2 => ((i * 137) % 997) as f32 / 300. - 0.3,
+                                    3 => [-0., 0., -f32::MIN_POSITIVE, f32::MIN_POSITIVE][i % 4],
+                                    _ => [-f32::MAX, f32::MAX, 0., 0.5][i % 4],
+                                }
+                            })
+                            .collect();
+                        let mut ranges = RangeRows::new(w, h);
+                        for y in 0..h {
+                            ranges.prepare(&mosaic, w, cfa, y);
+                            for x in 0..w {
+                                for allow_axis in [false, true] {
+                                    let bounds = ranges.at(x, y);
+                                    let actual = interpolate_with_bounds(
+                                        &mosaic,
+                                        w,
+                                        h,
+                                        cfa,
+                                        (x, y),
+                                        bounds,
+                                        allow_axis,
+                                    );
+                                    let expected = crate::edge_planes_dir6::interpolate_with_bounds(
+                                        &mosaic,
+                                        w,
+                                        h,
+                                        cfa,
+                                        (x, y),
+                                        bounds,
+                                        allow_axis,
+                                    );
+                                    if actual.is_some() {
+                                        admitted += 1;
+                                    } else {
+                                        rejected += 1;
+                                    }
+                                    assert_eq!(
+                                        actual.map(|p| (p.rgb.map(f32::to_bits), p.bayer_axis)),
+                                        expected.map(|p| (p.rgb.map(f32::to_bits), p.bayer_axis)),
+                                        "{w}x{h}, CFA {cfa:?}, pattern {pattern}, {x}/{y}, axis {allow_axis}"
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        assert!(admitted > 100 && rejected > 100);
+    }
+
+    #[test]
+    fn horizontal_blocks_match_literal_windows_at_every_partial_block_length() {
+        for base in [Cfa::bayer([0, 1, 1, 2]), Cfa::new(6, &XTRANS).unwrap()] {
+            for phase in 0..base.period * base.period {
+                let cfa = base.shifted(phase % base.period, phase / base.period);
+                for width in 1..=3 * EDGE + 2 {
+                    let row: Vec<_> = (0..width)
+                        .map(|x| match x % 7 {
+                            0 => -0.0,
+                            1 => 0.0,
+                            2 => 3.0,
+                            3 => -0.3,
+                            _ => ((x * 137) % 97) as f32 / 300.,
+                        })
+                        .collect();
+                    let mut bounds = vec![[[0.; 3]; 2]; width];
+                    horizontal_ranges(&row, cfa, 0, &mut bounds);
+                    for (x, actual) in bounds.into_iter().enumerate() {
+                        let mut expected = [[f32::INFINITY; 3], [f32::NEG_INFINITY; 3]];
+                        for (xx, &value) in row
+                            .iter()
+                            .enumerate()
+                            .take((x + RADIUS + 1).min(width))
+                            .skip(x.saturating_sub(RADIUS))
+                        {
+                            let c = cfa.color(xx, 0);
+                            expected[0][c] = expected[0][c].min(value);
+                            expected[1][c] = expected[1][c].max(value);
+                        }
+                        assert_eq!(actual, expected, "phase {phase}, width {width}, x {x}");
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn cached_ranges_and_early_rejection_match_frozen_equations_exactly() {
@@ -405,8 +571,16 @@ mod tests {
                                 assert_eq!(cached, literal);
                                 let old = frozen::interpolate(&mosaic, w, h, cfa, x, y)
                                     .map(|v| v.map(f32::to_bits));
-                                let new = interpolate_with_bounds(&mosaic, w, h, cfa, x, y, cached)
-                                    .map(|v| v.map(f32::to_bits));
+                                let new = interpolate_with_bounds(
+                                    &mosaic,
+                                    w,
+                                    h,
+                                    cfa,
+                                    (x, y),
+                                    cached,
+                                    false,
+                                )
+                                .map(|v| v.rgb.map(f32::to_bits));
                                 assert_eq!(
                                     old, new,
                                     "phase {phase}, scene {scene}, {w}×{h}, ({x},{y})"

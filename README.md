@@ -52,7 +52,7 @@ Combine brush, radial and linear gradients, luminance and hue masks. Add, subtra
 
 On macOS, **trueRendererExperimental 32fp** provides an independent RAW decoding and development path. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It uses its own X-Trans reconstruction and offers automatic and sampled white balance with precise sensor gains, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
 
-Highlight reconstruction uses nearby unclipped colours when there is enough consistent information.
+Highlight reconstruction uses nearby unclipped colours when there is enough consistent information. The independent engine and LibRaw AHD also use sensor saturation information to suppress magenta casts in blown highlights, including when exposure is reduced. This neutral rendering cannot restore lost scene colour and can soften coloured lights near clipping.
 
 ## See the differences that matter
 

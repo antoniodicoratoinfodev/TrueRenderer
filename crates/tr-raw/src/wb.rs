@@ -17,6 +17,7 @@ mod tests;
 pub(crate) struct Mosaic {
     pub values: Vec<f32>,
     pub saturation: Vec<u8>,
+    pub highlight_confidence: Vec<u8>,
     pub width: usize,
     pub active_width: usize,
     pub height: usize,
@@ -153,7 +154,23 @@ impl Mosaic {
             self.cfa,
             Some(&mut unsupported),
         );
-        // Neither the mask nor the local fits need to coexist with demosaic.
+        // Bayer's axis-edge admission needs original clipping provenance,
+        // even when HL has supplied a valid estimate. Keep one bit per site;
+        // X-Trans uses only the existing cell support contract.
+        let clipped = if self.cfa.period == 2 {
+            render::original_clipping_bits(&self.saturation)
+        } else {
+            Vec::new()
+        };
+        let fallback = crate::highlight_render::Fallback::new(
+            self.highlight_confidence,
+            &self.saturation,
+            render::Support::new(&unsupported, self.active_width.div_ceil(6)),
+            self.width,
+            self.active_width,
+            self.height,
+            self.cfa,
+        );
         drop(self.saturation);
         for (i, v) in self.values.iter_mut().enumerate() {
             *v *= gains[self.cfa.color(i % self.width, i / self.width)];
@@ -161,7 +178,9 @@ impl Mosaic {
         render::develop_supported(
             (
                 &self.values,
-                render::Support::new(&unsupported, self.active_width.div_ceil(6)),
+                render::Support::new(&unsupported, self.active_width.div_ceil(6))
+                    .with_original_clipping(&clipped, self.width)
+                    .with_highlight_fallback(&fallback),
             ),
             self.width,
             self.height,

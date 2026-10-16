@@ -85,7 +85,7 @@ fn green_rows_reserve_only_width_dependent_buffers() {
                     .map(|r| r.capacity() * size_of::<f32>())
                     .sum::<usize>()
                 + size_of::<BayerRows>();
-            assert!(allocated <= bayer_scratch_reservation_bytes(w));
+            assert!(allocated <= bayer_scratch_reservation_bytes(w, h));
             assert_eq!(rows.green.len(), 3);
             assert!(rows.green.iter().all(|r| r.len() == w));
         }
@@ -213,7 +213,7 @@ fn bayer_streaming_research_campaign() -> anyhow::Result<()> {
                 "relative_wb":relative,"resolved_gains":gains,"rgba_float_components_compared":expected.pixels.len()*4,
                 "bit_mismatches":0,"rgba_f32le_sha256":image_hash(&expected),
                 "reference_green_buffer_bytes":sensor.width*sensor.height*4,
-                "streamed_scratch_reservation_bytes":bayer_scratch_reservation_bytes(sensor.width),
+                "streamed_scratch_reservation_bytes":bayer_scratch_reservation_bytes(sensor.width, sensor.height),
                 "decoder_scratch_peak_bytes":info.memory.scratch_peak_bytes,"kernel_timing":timing}));
         }
         ensure!(

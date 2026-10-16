@@ -1,0 +1,1193 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-15",
+  "protocol": "identified-bayer-boundary-colour-v1",
+  "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir3-xt7-wb3-mat2-hl4-extended1",
+  "scope": "Bayer dir3 refinement of the current autonomous HL4/DR7 engine, no language rewrite. Legacy retained. D40 and postponed point 6 excluded.",
+  "machine": {
+    "CPU": "Apple M4",
+    "OS": "27.0.1"
+  },
+  "changes": [
+    "The Bayer two-surface fit may handle axis-aligned boundaries only when both adjacent rows/columns contain an original nonsaturated sample within the same 13x13 window. Recovered HL values alone cannot locate a hidden boundary.",
+    "Retain directional reconstruction when every missing-channel difference is within the existing plane-fit tolerance 0.001 * max(abs(low),abs(high),0.01). Oblique/curved admission, HL4 recovery, DR7 and camera profiles unchanged.",
+    "Only missing CFA channels are replaced; acquired samples remain assigned directly. Original clipping provenance is bit-packed before WB and included in DNG/NEF memory plans.",
+    "Core owns the dir3 recipe string; tr-raw references it directly. Probe/decode/job/cache identities cannot drift through separately maintained literals.",
+    "Frozen dir2 reference preserves BR6 reproducibility; BR7 and the HL4/dir2 comparator identify baseline, candidate and source hashes explicitly."
+  ],
+  "development": {
+    "previous_inputs": 1886,
+    "rejected_centre_only_admission": {
+      "regional_gradient_regressions": 4,
+      "artifact": "var/engine-colour-20261014/axis-measured-v1-analysis.json"
+    },
+    "model_freeze": "var/engine-colour-20261014/candidate-freeze-v2.json",
+    "changes_after_fresh_measurement": {
+      "render.rs": "Clippy iteration cleanup: identical channel order and assignments; no numerical model change.",
+      "lib.rs and core/decoder.rs": "Single recipe definition in core, dir3, used by RAW and cache.",
+      "research/quality.rs and photographic.rs": "Report identifies frozen dir2 baseline and hashes the Bayer source; no pixel calculations changed.",
+      "apps/desktop/src/cache/artifact.rs": "Test-only extension of persisted-cache regression: old dir2 descriptor and pixel blocks are valid but cannot be read by dir3, at requested or reduced resolution. No production cache behavior changed."
+    },
+    "final_full_hl_reports_byte_identical_to_frozen_candidate": true,
+    "not_retuned_after_holdout": true
+  },
+  "regression": {
+    "records": 1886,
+    "regions": 5616,
+    "valid_sites_changed": 0,
+    "exact_DNG_reopens": 1880,
+    "metric_order": [
+      "rgb_rmse",
+      "rgb_max_abs",
+      "chroma_rmse",
+      "chroma_max_abs",
+      "gradient_rmse",
+      "gradient_max_abs"
+    ],
+    "regressions_over_1e_minus_5": 0,
+    "improvements_over_1e_minus_5": 432,
+    "common_chroma_regressions_over_1e_minus_5": 0,
+    "common_chroma_improvements_over_1e_minus_5": 162,
+    "maximum_positive_change": {
+      "rgb_rmse": 0.0,
+      "rgb_max_abs": 0.0,
+      "chroma_rmse": 0.0,
+      "chroma_max_abs": 0.0,
+      "gradient_rmse": 0.0,
+      "gradient_max_abs": 0.0
+    },
+    "changed_images": 176,
+    "changed_chroma_populations": 2
+  },
+  "fresh_analytical_validation": {
+    "records": 456,
+    "regions": 912,
+    "valid_sites_changed": 0,
+    "exact_DNG_reopens": 456,
+    "metric_order": [
+      "rgb_rmse",
+      "rgb_max_abs",
+      "chroma_rmse",
+      "chroma_max_abs",
+      "gradient_rmse",
+      "gradient_max_abs"
+    ],
+    "regressions_over_1e_minus_5": 0,
+    "improvements_over_1e_minus_5": 180,
+    "common_chroma_regressions_over_1e_minus_5": 0,
+    "common_chroma_improvements_over_1e_minus_5": 58,
+    "maximum_positive_change": {
+      "rgb_rmse": 0.0,
+      "rgb_max_abs": 0.0,
+      "chroma_rmse": 0.0,
+      "chroma_max_abs": 0.0,
+      "gradient_rmse": 0.0,
+      "gradient_max_abs": 0.0
+    },
+    "changed_images": 21,
+    "changed_chroma_populations": 0,
+    "seed": 946183,
+    "independent_of_tuning_at_first_measurement": true,
+    "unique_RAW_hashes": 444,
+    "unique_reference_hashes": 382,
+    "RAW_or_truth_hashes_shared_with_previous_cases": 0,
+    "intentional_identical_RAW_different_truth_pairs": 12,
+    "all_generator_files_reproduced": 1368,
+    "repeated_measurement_role": "Reproducibility, not a second independent holdout.",
+    "limits": "Three analytical transforms, all four Bayer phases, two axes, central/border cuts, colour changes, affine fields, texture, noise and curved edges. Phases, regions and shared truths are correlated; 456 records are not 456 independent camera observations. No physical targets or calibrated profiles."
+  },
+  "baseline_integrity": {
+    "frozen_optimized_dir2_source_files": 23,
+    "frozen_dir2_full_image_hashes_reproduced": 1880,
+    "HL4_shared_equations_hash_asserted": true,
+    "HL2_comparison_scope": "Follow-up of the 59 previously listed peak comparisons against their frozen HL2 comparator; not an exhaustive fresh HL2 campaign."
+  },
+  "examples": [
+    {
+      "campaign": "var/engine-colour-20261014/regression-final.json",
+      "id": "d750-step-cool-p0",
+      "source_sha256": "e4552436e90e5eadfb79272615b2244151a575c733a8517518914a97f557f570",
+      "truth_sha256": "3159717c65506862b78f5489fcc79f27d31710b124bd0e274e0eb0ef4bda91cb",
+      "rect": [
+        8,
+        8,
+        152,
+        92
+      ],
+      "metric": "common normalized chromaticity maximum absolute error",
+      "before_after": [
+        0.0767987122454887,
+        0.008385187308103559
+      ]
+    },
+    {
+      "campaign": "var/engine-colour-20261014/holdout-final.json",
+      "id": "s946183-linear-p0-a0-k0-constant-hue",
+      "source_sha256": "97e5949a261abfe43e5094085d2243aeb393ef450817d42d150aa7131aa1b600",
+      "truth_sha256": "88d0477627ae8e40576c7e201a237f431d2a073a597fa5559f18041ec27b9956",
+      "rect": [
+        0,
+        0,
+        100,
+        74
+      ],
+      "metric": "common normalized chromaticity maximum absolute error",
+      "before_after": [
+        0.02327682410605275,
+        2.5708491915577003e-06
+      ]
+    }
+  ],
+  "example_identity_note": "IDs such as d750-step-cool-p0 recur across historical generators with different dimensions and parameters. Compare only records with the same source/truth hashes and regions; HL and legacy campaign numbers must not be mixed by label.",
+  "demosaic_regression": {
+    "development": {
+      "cases": 836,
+      "gates_passed": true,
+      "worst_phase_ratios": {
+        "achromatic_texture/border": 1.0,
+        "achromatic_texture/chroma": 1.0,
+        "achromatic_texture/gradient": 1.0,
+        "achromatic_texture/luma": 1.0,
+        "achromatic_texture/missing": 1.0,
+        "chromatic_texture/border": 1.0,
+        "chromatic_texture/gradient": 1.0,
+        "chromatic_texture/luma": 1.0,
+        "chromatic_texture/missing": 1.0,
+        "correlated_noise/border": 1.0,
+        "correlated_noise/gradient": 1.0,
+        "correlated_noise/luma": 1.0,
+        "correlated_noise/missing": 1.0,
+        "cross_texture/border": 1.0,
+        "cross_texture/gradient": 1.0,
+        "cross_texture/luma": 1.0,
+        "cross_texture/missing": 1.0,
+        "edge/border": 1.0,
+        "edge/gradient": 1.0,
+        "edge/luma": 1.0,
+        "edge/missing": 1.0,
+        "flat_extended/border": 1.0,
+        "flat_extended/gradient": 1.0,
+        "flat_extended/luma": 1.0,
+        "flat_extended/missing": 1.0,
+        "noise/border": 1.0,
+        "noise/gradient": 1.0,
+        "noise/luma": 1.0,
+        "noise/missing": 1.0,
+        "noisy_achromatic_texture/border": 1.0,
+        "noisy_achromatic_texture/gradient": 1.0,
+        "noisy_achromatic_texture/luma": 1.0,
+        "noisy_achromatic_texture/missing": 1.0,
+        "noisy_chromatic_texture/border": 1.0,
+        "noisy_chromatic_texture/gradient": 1.0,
+        "noisy_chromatic_texture/luma": 1.0,
+        "noisy_chromatic_texture/missing": 1.0,
+        "noisy_edge/border": 1.0,
+        "noisy_edge/gradient": 1.0,
+        "noisy_edge/luma": 1.0,
+        "noisy_edge/missing": 1.0
+      },
+      "role": "Reused regression corpus, validation split already consumed."
+    },
+    "consumed_validation_split": {
+      "cases": 1476,
+      "gates_passed": true,
+      "worst_phase_ratios": {
+        "achromatic_texture/border": 1.0,
+        "achromatic_texture/chroma": 1.0,
+        "achromatic_texture/gradient": 1.0,
+        "achromatic_texture/luma": 1.0,
+        "achromatic_texture/missing": 1.0,
+        "chromatic_texture/border": 1.0,
+        "chromatic_texture/gradient": 1.0,
+        "chromatic_texture/luma": 1.0,
+        "chromatic_texture/missing": 1.0,
+        "correlated_noise/border": 1.0,
+        "correlated_noise/gradient": 1.0,
+        "correlated_noise/luma": 1.0,
+        "correlated_noise/missing": 1.0,
+        "cross_texture/border": 1.0,
+        "cross_texture/gradient": 1.0,
+        "cross_texture/luma": 1.0,
+        "cross_texture/missing": 1.0,
+        "edge/border": 1.0,
+        "edge/gradient": 1.0,
+        "edge/luma": 1.0,
+        "edge/missing": 1.0,
+        "flat_extended/border": 1.0,
+        "flat_extended/gradient": 1.0,
+        "flat_extended/luma": 1.0,
+        "flat_extended/missing": 1.0,
+        "noise/border": 1.0,
+        "noise/gradient": 1.0,
+        "noise/luma": 1.0,
+        "noise/missing": 1.0,
+        "noisy_achromatic_texture/border": 1.0,
+        "noisy_achromatic_texture/gradient": 1.0,
+        "noisy_achromatic_texture/luma": 1.0,
+        "noisy_achromatic_texture/missing": 1.0,
+        "noisy_chromatic_texture/border": 1.0,
+        "noisy_chromatic_texture/gradient": 1.0,
+        "noisy_chromatic_texture/luma": 1.0,
+        "noisy_chromatic_texture/missing": 1.0,
+        "noisy_edge/border": 1.0,
+        "noisy_edge/gradient": 1.0,
+        "noisy_edge/luma": 1.0,
+        "noisy_edge/missing": 1.0
+      },
+      "role": "Reused regression corpus, validation split already consumed."
+    },
+    "photographic_surrogate": {
+      "cases": 1800,
+      "changed_components": 0,
+      "all_metrics_and_extrema_identical": true,
+      "independent_camera_colour_truth": false
+    },
+    "photo_scope": "225 fixed crops from 25 previously measured GB82 photographs, four Bayer phases and two noise levels. Already rendered RGB remosaicing; no new independent sensor or camera colour truth."
+  },
+  "legacy_comparison": {
+    "sources": 124,
+    "legacy_hashes_and_metrics_reproduced": 124,
+    "scope": "Reused 124-case Bayer regression; identical RAW/truth/geometry/WB/recipes for legacy, no exposure fitting, no fresh independent legacy holdout. Compatibility matrices used to synthesize and interpret input are not physical camera truth. One decode per engine is functional evidence only, not timing qualification.",
+    "changed_autonomous_images": 20,
+    "regional_RGB_gradient_improvements_over_previous_autonomous": 95,
+    "regional_RGB_gradient_regressions_over_previous_autonomous": 0,
+    "legacy_better_by_metric": {
+      "rgb_max_abs": 35,
+      "gradient_max_abs": 11,
+      "rgb_rmse": 21,
+      "experimental_legacy_rmse": 16,
+      "experimental_legacy_max_abs": 20,
+      "gradient_rmse": 2
+    },
+    "candidate_better_by_metric": {
+      "rgb_rmse": 128,
+      "gradient_rmse": 124,
+      "experimental_legacy_rmse": 128,
+      "experimental_legacy_max_abs": 120,
+      "rgb_max_abs": 106,
+      "gradient_max_abs": 101
+    },
+    "common_chroma_rule": "Both engines measured on the same explicitly valid pixel intersection with truth, without exposure matching.",
+    "legacy_retained": true,
+    "legacy_is_calibrated_truth": false,
+    "general_superiority_claimed": false,
+    "examples": [
+      {
+        "id": "d750-step-cool-p0",
+        "source_sha256": "39ec198508e7b5672c80fbca1caa3d584b739786536d65c1e98c56576bd487fb",
+        "truth_sha256": "8b7c0f7902f4e3df196bcece78e1a061d7f7ac06759e2d9d6a4122aad74b66e8",
+        "rect": [
+          8,
+          8,
+          194,
+          134
+        ],
+        "metric_order": [
+          "current_autonomous",
+          "legacy"
+        ],
+        "common_chroma_max_abs": [
+          0.006975403798703372,
+          0.11988954245187483
+        ],
+        "RGB_max_abs": [
+          0.2572990655899048,
+          0.9758833646774292
+        ]
+      },
+      {
+        "id": "d800-step-cool-p0",
+        "source_sha256": "b99e7007b18cf671c591f6255f1e4140288a33430cfd9c9810e0446a5dc7b688",
+        "truth_sha256": "e2a9d7a46abccdb7f20bf17196121a396238440729df1dd58871f84fc3d71fd5",
+        "rect": [
+          8,
+          8,
+          194,
+          134
+        ],
+        "metric_order": [
+          "current_autonomous",
+          "legacy"
+        ],
+        "common_chroma_max_abs": [
+          0.009167058880747758,
+          0.15196322906430737
+        ],
+        "RGB_max_abs": [
+          0.2509732246398926,
+          0.9679317474365234
+        ]
+      },
+      {
+        "id": "d800-fully-clipped-neutral-p0",
+        "source_sha256": "7302e30e5d39e66c7ce2e915bebf5bf2a6d7229701b56640baefe95a10e9275b",
+        "truth_sha256": "c42117bea94e49aff1044901c7fc31c071dedb1e8d220ad9c1bd1320c0181d27",
+        "rect": [
+          8,
+          8,
+          194,
+          134
+        ],
+        "metric_order": [
+          "current_autonomous",
+          "legacy"
+        ],
+        "common_chroma_max_abs": [
+          0.17204494023787503,
+          3.585317707721636e-07
+        ],
+        "RGB_max_abs": [
+          7.138910591602325,
+          5.7833826541900635
+        ]
+      }
+    ],
+    "limits": "Legacy still wins some rejected/ambiguous boundaries and fully clipped neutral references. Its neutralization is an assumption, not a measured recovery of coloured lights. Counts are overlapping region/metric comparisons, not independent scene wins."
+  },
+  "remaining_tracked_HL2_peaks": {
+    "previously_flagged": 59,
+    "resolved": 11,
+    "remaining": 48,
+    "remaining_scenes": 21,
+    "remaining_by_metric": {
+      "rgb_max_abs": 23,
+      "gradient_max_abs": 20,
+      "chroma_max_abs": 5
+    },
+    "scope": "Follow-up of the previously flagged 59 comparisons only, not a new exhaustive HL2 comparison.",
+    "worst_remaining_increase": [
+      "validation-d800-cool-p1",
+      1,
+      "rgb_max_abs",
+      5.054473876953125e-05,
+      0.00019943714141845703,
+      0.00019943714141845703
+    ]
+  },
+  "fully_clipped_ambiguity": {
+    "pairs": 12,
+    "identical_raw_different_truth": true,
+    "identical_output_within_each_pair": true,
+    "candidate_unchanged_from_dir2": true,
+    "scope": "Fully clipped fields with no informative contour cannot identify neutral versus coloured light. These pairs do not test fully clipped components with informative surroundings."
+  },
+  "full_photographic_outputs": {
+    "inputs": 8,
+    "before_after_hashes_and_geometry_identical": true,
+    "also_equal_to_previous_performance_campaign": true,
+    "all_values_finite": true,
+    "measured_quality_improvement_on_these_photographs": false
+  },
+  "timing": {
+    "scope": "Same process, same input bytes, same native geometry and gains; two source versions with identical opt-level=3/LTO=thin, alternating order. Input read and input/output hashing excluded; allocation, parse, unpack, HL, demosaic and matrix included. Warm OS caches; no IPC or GUI, no thermal control. One-repeat entries check full-output equivalence only.",
+    "baseline": "optimized autonomous HL4/dir2/DR7",
+    "candidate": "HL4/dir3/DR7",
+    "comparison_to_LibRaw": false,
+    "same_process_opt_level_3_LTO_thin": true,
+    "relative_WB": [
+      1,
+      1,
+      1
+    ],
+    "samples": [
+      {
+        "id": "d750-01",
+        "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "image_sha256_before_after": [
+          "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2",
+          "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2"
+        ],
+        "output_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "sensor_pixels": 24321024,
+        "scratch_peak_bytes_before_after": [
+          559435912,
+          562476040
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 30,
+            "median_seconds": 1.0405532705,
+            "p95_seconds": 1.059580334,
+            "MAD_seconds": 0.002905479000000044,
+            "sorted_seconds": [
+              1.035681416,
+              1.036220334,
+              1.03624975,
+              1.036610791,
+              1.037411042,
+              1.037598625,
+              1.037684417,
+              1.037837458,
+              1.037987666,
+              1.038731084,
+              1.039842083,
+              1.039946875,
+              1.0400995,
+              1.040389583,
+              1.040398916,
+              1.040707625,
+              1.040806708,
+              1.041437458,
+              1.042259125,
+              1.042444916,
+              1.042611583,
+              1.043495375,
+              1.043516083,
+              1.046803084,
+              1.050945833,
+              1.054288125,
+              1.0567065,
+              1.057329542,
+              1.059580334,
+              1.059593041
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.0776739165,
+            "p95_seconds": 1.095068958,
+            "MAD_seconds": 0.00358960450000001,
+            "sorted_seconds": [
+              1.0699265,
+              1.0701933750000001,
+              1.070819292,
+              1.071030042,
+              1.071089708,
+              1.07110575,
+              1.072797125,
+              1.073548958,
+              1.074619666,
+              1.075294625,
+              1.075608625,
+              1.076198417,
+              1.076360583,
+              1.077216708,
+              1.077298166,
+              1.078049667,
+              1.078327084,
+              1.07855775,
+              1.078884458,
+              1.079420792,
+              1.080277375,
+              1.080328791,
+              1.080638166,
+              1.0866035410000001,
+              1.089055,
+              1.091225833,
+              1.0939435,
+              1.095055916,
+              1.095068958,
+              1.0999999169999999
+            ]
+          }
+        ],
+        "speedup_ratio": 0.9655548441586504,
+        "percent_time_reduction": -3.5673950630286333,
+        "role": "timing"
+      },
+      {
+        "id": "xt5-raf",
+        "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+        "image_sha256_before_after": [
+          "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c",
+          "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c"
+        ],
+        "output_identical": true,
+        "size": [
+          5152,
+          7728
+        ],
+        "sensor_pixels": 40902912,
+        "scratch_peak_bytes_before_after": [
+          1040891456,
+          1040891456
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 10,
+            "median_seconds": 8.411518145999999,
+            "p95_seconds": 8.489986834,
+            "MAD_seconds": 0.010201187499999875,
+            "sorted_seconds": [
+              8.399927166,
+              8.401495208,
+              8.40481325,
+              8.40673975,
+              8.410027667,
+              8.413008625,
+              8.421897583,
+              8.425517791,
+              8.467841875,
+              8.489986834
+            ]
+          },
+          {
+            "count": 10,
+            "median_seconds": 8.372826083,
+            "p95_seconds": 8.391078125,
+            "MAD_seconds": 0.0032980834999998265,
+            "sorted_seconds": [
+              8.365511375,
+              8.368583958,
+              8.37149875,
+              8.371649083,
+              8.372669375,
+              8.372982791,
+              8.375180125,
+              8.379372667,
+              8.380076042,
+              8.391078125
+            ]
+          }
+        ],
+        "speedup_ratio": 1.0046211473421809,
+        "percent_time_reduction": 0.4599890570098686,
+        "role": "timing"
+      },
+      {
+        "id": "d800-14",
+        "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+        "image_sha256_before_after": [
+          "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902",
+          "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902"
+        ],
+        "output_identical": true,
+        "size": [
+          7360,
+          4912
+        ],
+        "sensor_pixels": 36555776,
+        "scratch_peak_bytes_before_after": [
+          802386774,
+          806956246
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 10,
+            "median_seconds": 1.7311066875,
+            "p95_seconds": 1.7441888749999999,
+            "MAD_seconds": 0.005547688000000162,
+            "sorted_seconds": [
+              1.725078916,
+              1.7260390829999999,
+              1.726455375,
+              1.7277797499999998,
+              1.730426375,
+              1.731787,
+              1.7398675,
+              1.741109417,
+              1.741735041,
+              1.7441888749999999
+            ]
+          },
+          {
+            "count": 10,
+            "median_seconds": 1.7925368339999999,
+            "p95_seconds": 1.811596125,
+            "MAD_seconds": 0.002483750000000007,
+            "sorted_seconds": [
+              1.789916292,
+              1.789976958,
+              1.790340875,
+              1.791262792,
+              1.791319459,
+              1.793754209,
+              1.794944458,
+              1.7992169169999999,
+              1.808511916,
+              1.811596125
+            ]
+          }
+        ],
+        "speedup_ratio": 0.9657300506551266,
+        "percent_time_reduction": -3.54860546398299,
+        "role": "timing"
+      }
+    ],
+    "full_output_only": [
+      {
+        "id": "d800-12",
+        "source_sha256": "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+        "image_sha256_before_after": [
+          "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c",
+          "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c"
+        ],
+        "output_identical": true,
+        "size": [
+          7360,
+          4912
+        ],
+        "sensor_pixels": 36555776,
+        "scratch_peak_bytes_before_after": [
+          802386774,
+          806956246
+        ],
+        "warmups": 0,
+        "methods_before_after": [
+          {
+            "count": 1,
+            "median_seconds": 2.421548875,
+            "p95_seconds": 2.421548875,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              2.421548875
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 2.514205166,
+            "p95_seconds": 2.514205166,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              2.514205166
+            ]
+          }
+        ],
+        "speedup_ratio": 0.9631468854439543,
+        "percent_time_reduction": -3.8263233898180093,
+        "role": "full-output-check-only"
+      },
+      {
+        "id": "d750-dng",
+        "source_sha256": "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+        "image_sha256_before_after": [
+          "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d",
+          "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d"
+        ],
+        "output_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "sensor_pixels": 24321024,
+        "scratch_peak_bytes_before_after": [
+          559435912,
+          562476040
+        ],
+        "warmups": 0,
+        "methods_before_after": [
+          {
+            "count": 1,
+            "median_seconds": 1.243207333,
+            "p95_seconds": 1.243207333,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.243207333
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.2680447080000001,
+            "p95_seconds": 1.2680447080000001,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.2680447080000001
+            ]
+          }
+        ],
+        "speedup_ratio": 0.980412855443264,
+        "percent_time_reduction": -1.997846565147321,
+        "role": "full-output-check-only"
+      },
+      {
+        "id": "d750-15",
+        "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+        "image_sha256_before_after": [
+          "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a",
+          "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a"
+        ],
+        "output_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "sensor_pixels": 24321024,
+        "scratch_peak_bytes_before_after": [
+          559435912,
+          562476040
+        ],
+        "warmups": 0,
+        "methods_before_after": [
+          {
+            "count": 1,
+            "median_seconds": 1.1353607079999999,
+            "p95_seconds": 1.1353607079999999,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.1353607079999999
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.176032458,
+            "p95_seconds": 1.176032458,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.176032458
+            ]
+          }
+        ],
+        "speedup_ratio": 0.9654161330979183,
+        "percent_time_reduction": -3.5822756339388917,
+        "role": "full-output-check-only"
+      },
+      {
+        "id": "xt5-dng",
+        "source_sha256": "e399eb0b3bab9c76e1dabd61bc06a47750af194eea7819f76b2be03ef8cb6bcd",
+        "image_sha256_before_after": [
+          "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989",
+          "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989"
+        ],
+        "output_identical": true,
+        "size": [
+          5152,
+          7728
+        ],
+        "sensor_pixels": 39814656,
+        "scratch_peak_bytes_before_after": [
+          1032155608,
+          1032155608
+        ],
+        "warmups": 0,
+        "methods_before_after": [
+          {
+            "count": 1,
+            "median_seconds": 8.106574167,
+            "p95_seconds": 8.106574167,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.106574167
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 8.071829708,
+            "p95_seconds": 8.071829708,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.071829708
+            ]
+          }
+        ],
+        "speedup_ratio": 1.0043044093169564,
+        "percent_time_reduction": 0.42859607874109473,
+        "role": "full-output-check-only"
+      },
+      {
+        "id": "d750-30",
+        "source_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+        "image_sha256_before_after": [
+          "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918",
+          "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918"
+        ],
+        "output_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "sensor_pixels": 24321024,
+        "scratch_peak_bytes_before_after": [
+          559435912,
+          562476040
+        ],
+        "warmups": 0,
+        "methods_before_after": [
+          {
+            "count": 1,
+            "median_seconds": 0.952661625,
+            "p95_seconds": 0.952661625,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              0.952661625
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.005501125,
+            "p95_seconds": 1.005501125,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.005501125
+            ]
+          }
+        ],
+        "speedup_ratio": 0.9474495863940479,
+        "percent_time_reduction": -5.546512907980339,
+        "role": "full-output-check-only"
+      }
+    ],
+    "limits": [
+      "No concurrent test/build/GUI campaign; ordinary OS background activity not controlled.",
+      "One D750 input with 30 repetitions, D800 14-bit and RAF with 10 each, three warmups per method and alternating order.",
+      "Other five inputs have one pair, no performance inference.",
+      "Warm OS caches; file read/hash, IPC and GUI excluded, no thermal/cold-start control.",
+      "10-sample p95 is a coarse nearest-rank estimate. No general speed superiority claim."
+    ]
+  },
+  "memory": {
+    "additional_Bayer_provenance_bytes": "ceil(sensor_pixels / 8), or zero allocation if no clipped codes",
+    "original_byte_mask_released_before_demosaic": true,
+    "DNG_NEF_reservation_updated": true,
+    "XTrans_bitmap_allocated": false,
+    "observed_decoder_peak_RSS_bytes": 902529024,
+    "pressure_qualified": false,
+    "limits": "Reserved buffer accounting and single functional RSS observation; not a hard cap or demonstrated overall RSS improvement."
+  },
+  "functional": {
+    "formats": [
+      "DNG Bayer",
+      "DNG X-Trans",
+      "NEF D750 FX lossless 14-bit",
+      "NEF D800 FX lossless 12/14-bit",
+      "RAF X-T5 lossy 14-bit"
+    ],
+    "inputs": 8,
+    "slots": 2,
+    "reopen_and_repack_exact": true,
+    "WB_probe_decode_match": true,
+    "WB_estimates_reproduced": 30,
+    "WB_explicit_refusals_matched": 2,
+    "RAF_cancellation_and_restart_both_slots": true,
+    "PNG16_TIFF16_exports": 32,
+    "export_long_edge": 1024,
+    "maximum_export_error_u16": 0,
+    "CPU_recycles": 16
+  },
+  "verification": {
+    "RAW_unit_tests": 98,
+    "RAW_integration_fixture_tests": 18,
+    "core_tests": 106,
+    "fmt": true,
+    "workspace_clippy_all_targets_warnings_denied": true,
+    "release_build": true,
+    "two_new_boundary_and_provenance_regressions": true,
+    "autonomous_harness_libraw_free": true,
+    "persisted_recipe_and_engine_cache_tests": 3,
+    "worker_tests_guarding_against_any_LibRaw_call": 3,
+    "bundle_bit_identical_after_test_only_cache_regression": true,
+    "native_XPC_candidate_and_installed": true,
+    "production_rejects_fault_injection": true,
+    "GUI_smoke_screenshots": 8,
+    "GUI_surface": true,
+    "full_sandbox_or_R0_R4_SF_gate_completed": false
+  },
+  "installed_bundle": {
+    "installed": "dist/TrueRenderer.app",
+    "candidate": "var/engine-colour-20261014/release-final/TrueRenderer.app",
+    "previous": "var/engine-colour-20261014/previous.app",
+    "file_sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "b5e9406267fecd7cce24d87b426fd803ea7791902242f984a520d684e541afc0",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "c5e8696a7d57823c2c75b2fc07dc80d15ce8ba6235323451765bd332df0bda3d",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "f4cd72269d2b4ee5aa09ac7b61404388e41470a60dad37ce6bb8429bcbf978c0",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "ca7e165693d9e53f0e720bb7570a88c4e0041987d899dba2238a482514caa9cd",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "85051e8a2c7028086ca9c2df2ecba8526d1c80c1b80fc0b3662098e61f92ef74",
+        "mode": 420
+      }
+    },
+    "previous_file_sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "dfe5477a033d7e356cbbdec005eed8161fa0c33cbc3651efaa60e87c360157e1",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "5d9ec07f67cf4518667bf18b09955e083170834d3d0d331fbc5dff5b8c9ddef0",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "2e71a44bca20592935d44484c992af40eec69fafec0d0295859f5ee92b30bded",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "cdbb5870c48d1ea39135ac6a3db3f103b316fcdd24a3ce1c3eabb634e33db8d5",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "00371a311758617651f141597aefe8d5e541361917fd265e77d2b4ef4342a899",
+        "mode": 420
+      }
+    }
+  },
+  "durable_data": {
+    "durable_files": 181,
+    "all_hashes_sizes_and_path_set_unchanged": true,
+    "original_inputs": 8,
+    "all_input_hashes_unchanged": true
+  },
+  "open": [
+    "48 previously tracked local peak comparisons remain worse than HL2 on 21 scenes; no denoising or profile adjustment to hide them.",
+    "Some legacy advantages remain on rejected edges and full saturation without informative surroundings; original measurements do not uniquely identify the missing colour.",
+    "Camera-measured profiles, physical targets and illuminants, physical saturation below the digital ceiling, extended independent sensor/photo verification and sufficient X-T5 registration remain open.",
+    "Memory-pressure, global release/security/quality gates remain open. No new formats, D40, fuzz or Windows work in this increment."
+  ],
+  "source_sha256": {
+    "crates/tr-raw/src/jpeg.rs": "5ea0df9400f51b09d8bbdbc5a84906f0175c495d45b8fe808fdb51d75c00b8d5",
+    "crates/tr-raw/src/export.rs": "101e08686b7f256f22dcea299b6f88740a7a5e025eecf25835284b2ec25ce036",
+    "crates/tr-raw/src/wb.rs": "94c20453907f22abbac883d9bf5ece8bbc373624b5265da58ffd962018ad2878",
+    "crates/tr-raw/src/color.rs": "4792f42736503cf239fcc9b300887e2d804bdb0f1f990e32e17fc42c5c5f9f1a",
+    "crates/tr-raw/src/render.rs": "831e64cdd35a48d84dfa1989b63847afed19571333ab8454f611434b9052db3e",
+    "crates/tr-raw/src/edge_planes.rs": "cb831ac995e0e789ccd3f5efdda76302e9ed44087f40cb0e11ce1086903932a2",
+    "crates/tr-raw/src/highlights.rs": "39ba85684746cc8f10bc88faac3c41a18ce1e137617257342c1a22de246f3e23",
+    "crates/tr-raw/src/lib.rs": "d36e2f08c882cc8ccb83872dac9ce2003e79d66a300039ceac9756ee6d80895d",
+    "crates/tr-raw/src/tiff.rs": "342687d9b2d9a0b4ba0a8e65d23520b2e5ef5438d91d102db90e2c8e358f4beb",
+    "crates/tr-raw/src/nef.rs": "81d535d2205678de4bb7a45196122f82085d104e19a1d8e53c38f123014538f7",
+    "crates/tr-raw/src/cfa.rs": "d172498b7015c6765fc73116e99ba5e0dbf2cd6566c140e9652669269deb3e3f",
+    "crates/tr-raw/src/dng.rs": "7ba5c2ef3d1ded65e26cc380d25f78b15d350e8059a3d379fe6f2b93ace20bea",
+    "crates/tr-raw/src/xtrans.rs": "aa6ebd8a3937649ce1bd6ea41eb9769134fa04e3474b5a03550840b6d2e198f2",
+    "crates/tr-raw/src/xtrans_steps.rs": "8cb1e965413315e41c9e47185a5da99e30351b65bce75acc95c8353aed38a44d",
+    "crates/tr-raw/src/raf.rs": "1abaec5e8312e842f7e7d4af1eb652c18a0f697d03365e8dad848f3cfee85300",
+    "crates/tr-raw/src/xtrans_dr6/residual.rs": "e2146c1d390c7d3756e394305592f89c7f9767c347ba42c6732e20670155113d",
+    "crates/tr-raw/src/xtrans_dr6/bounded.rs": "0e4d4143cbc16f98f9ba5530aca54fb1feedaf4e9cf03bdb5f5fab7464c1612f",
+    "crates/tr-raw/src/xtrans_dr6/mod.rs": "973d9ea86a871a923ce01898979ba337c00ff03c75eb04f37986ec0a1a605810",
+    "crates/tr-raw/src/wb/tests.rs": "7b9fd3f0c08c2b956d5fb3453b327fae4e2994ab35dc56ae36848c23c582f8ad",
+    "crates/tr-raw/src/highlights/edge.rs": "c35fd64f38022087ca3644cd912da125fe30944b68ee465ee84af5f1f0334dd1",
+    "crates/tr-raw/src/highlights/metadata.rs": "861bb5eb034503759508d418838f9bfda5d2007e709aafa143f3f0504beda088",
+    "crates/tr-raw/src/highlights/occlusion.rs": "a08b7e2cf3fb7e28348fd77aa42ded2f526d95fa61b96d0ed17abdce98debe72",
+    "crates/tr-raw/src/highlights/tests.rs": "ed1c5fbeb03e1e83837f841944ce4c299b48739887d11cf1d58c0e85cb1001d3",
+    "scripts/generate-bayer-edge-validation.py": "01e6cf4f61322e1535757769c4d0f9d3b3d33a3c3268c6c44cb7b04454751579",
+    "crates/tr-raw/research/highlights.rs": "00c2b5805a98225e51a4d25ae123dd077f6c61ebd907dc3d1fd19109ec8082ed",
+    "crates/tr-raw/research/bayer_dir2.rs": "1c0a36d10d4fc07937c56a6760bddb1bad801cbe34038a2d412f90c3e87cbca0",
+    "crates/tr-core/src/decoder.rs": "fa6f58b4cfe282cc74e01525ce4451f54fecae063bee4a04015c413ddfcdf9ab",
+    "crates/tr-raw/research/quality.rs": "068771032e90066f3581d47cbdd9646bdc33fd87aab1b30eafb7d830ea42719d",
+    "crates/tr-raw/research/photographic.rs": "c348958ff8ad8f8c666566dcca470595aea804989b5a5c554a31d46859d54c83",
+    "crates/tr-raw/tests/fixtures/research-br7-regression.json": "465fae5384ea630ff79c4f0a8c06e7effc56a1203641f267da32a00d7241b8d4",
+    "apps/desktop/src/cache/artifact.rs": "51057564901e67b6370e74c111a4682db486646e2aac32d1df4d2ba99cbf204b"
+  },
+  "artifacts": {
+    "var/engine-colour-20261014/freeze.json": "83cdc1674288307330c8f5d9b022d09e200bc98b6ce40763363cfa33d06af942",
+    "var/engine-colour-20261014/candidate-freeze-v2.json": "7ad972a6c848d9c4e37f131d9a4a7ed539dfb0e58efdd1d61b49598a6130e1f8",
+    "var/engine-colour-20261014/delivery-freeze.json": "aaebd22ef6fbb5abed5f8160c1aac6ca068665b70a359198d23fac343a9911f6",
+    "var/engine-colour-20261014/delivery-final-freeze.json": "fc074f9b76e724e484df60ea4cee3bb744428df4ab661b4506a34e3457857766",
+    "var/engine-colour-20261014/holdout-protocol.json": "63d3701bd742379383d2d843c88a570b8709bb3dee4fb0b1a6c73d71505c17ac",
+    "var/engine-colour-20261014/holdout-distinction.json": "3e914e319b8e3e6dc21a7b67c2c8e3a9ec5f442b889cd1c5cace3841274cee4b",
+    "var/engine-colour-20261014/ambiguity-check.json": "4f36ad4e46a67f777ba38fda0721df0cc599b46a3a9760ca2965901bb7e87efd",
+    "var/engine-colour-20261014/axis-measured-v1.json": "299a178fde2d8c55a5da2176e5c0d25a5bab77ae798c3c841d62903460eb8c10",
+    "var/engine-colour-20261014/axis-measured-v1-analysis.json": "9da98a49e37a5e0f29206d650a27c6ddafb9d643ba9451a7e94ca13f1a7bb587",
+    "var/engine-colour-20261014/axis-identified-v2.json": "db12fc73f1d522bc2e5f0d38b6ea3c2762cd6039ebdcd94e62b27f54fe7e3f12",
+    "var/engine-colour-20261014/diagnostic-before.json": "0b2918266eca97aa134630502da270c56a6642f13adb11792b6b9457f3a36c1f",
+    "var/engine-colour-20261014/regression-hl4.json": "b0664b52582fbc8ceb53510c71bc819655cbbb9e04019620220c9b01b8ce63bd",
+    "var/engine-colour-20261014/holdout-v2.json": "eccb77035b3f6cc565f6a8dabe71bda21681fb9100d51cf4b47c433bdecf80fd",
+    "var/engine-colour-20261014/regression-final.json": "b0664b52582fbc8ceb53510c71bc819655cbbb9e04019620220c9b01b8ce63bd",
+    "var/engine-colour-20261014/holdout-final.json": "eccb77035b3f6cc565f6a8dabe71bda21681fb9100d51cf4b47c433bdecf80fd",
+    "var/engine-colour-20261014/repeat-campaigns.py": "a02f8e93b142d3b4786502a26bbfede71fb55eea78d16bfadfec0b7d7b0d94ac",
+    "var/engine-colour-20261014/repeat-campaigns.log": "27f5b9ea946ba2a4ced223efd5ebcc409f8a991b8a7adcaf861c9473ccf7faf3",
+    "var/engine-colour-20261014/repeat-summary.json": "e646dacf4dc475ded142035b243c585c92f857c6a5d47efc2f35f2c08e2d043a",
+    "var/engine-colour-20261014/generator-reproduced.log": "198704771c722b916926462c887c07e7de7ba869ee46332e86b2c01ea2e730b4",
+    "var/engine-colour-20261014/holdout/description.json": "1f38601150c5a66a57484fb71c70c1fcfe44947af8f87de72dfc860758b74edf",
+    "var/engine-colour-20261014/holdout/manifest.json": "b5524fc1588f976b2afd65316f687ce540afcaebeb6a0776adf773e5ab602a61",
+    "var/engine-colour-20261014/quality-summary-final.json": "5bd0ca32042ea5b67ca9b6065b5a0de87ab4d3425788f77630277bb9fd2d92ca",
+    "var/engine-colour-20261014/quality-summary-final.log": "5aff9ed7533904810dd484723590f728e14120e38858ba8a316113b9503622bf",
+    "var/engine-colour-20261014/analyze-final.py": "21da456aae50033c9d1372fc401007bf00b263b4739fa6906eee7e3085ad57fc",
+    "var/engine-colour-20261014/quality-final-development/quality-development.json": "33894abbee34852d0291bd9b909388f685760f50853448d1343aba23a40e461d",
+    "var/engine-colour-20261014/quality-final-validation/quality-validation.json": "487cc2407baf5e86a9c775968da50a37cf6a0c5067cf2aa9fa486b4fc9364fa9",
+    "var/engine-colour-20261014/photo-br7-final/manifest.json": "40bf1877241d7d8754d60645ab31ccc32b089c670fd0d5ecc83b6200adfc3993",
+    "var/engine-colour-20261014/photo-br7-final/photographic-quality-br7.json": "bb9af150975e3b4f5f3711e1ad4e9939ebc414a993a66b45d7549de16e520df2",
+    "var/engine-colour-20261014/tracked-hl2-peaks.json": "d2f95c49293406fd082985601fd61d11aec187ca6812d2e93c51a516a2df0136",
+    "var/engine-colour-20261014/duel/renderer-duel/report.json": "3956f85ed2ac5ee933390fb00c70ea723c2dcd8c091dedc582ecfed91c15cab5",
+    "var/engine-colour-20261014/duel-analysis-final.json": "6d919f5a311c3bdd800d2f78bd4a5f403caf2858531712bef23eba1a81138e0b",
+    "var/engine-colour-20261014/analyze-duel-final.py": "827dd81010ffe5aa25fd881e3dd3a38dbe2e2b68c5a762ffde917a1c8afd0fcb",
+    "var/engine-colour-20261014/raw-core-tests-final.log": "d66134d4732e8717d9909f5e35cc12d06bb0aaf08bb4e796125231f632af0036",
+    "var/engine-colour-20261014/clippy-final-v2.log": "77cfaa630639d6ddbf88f67e4132698328b39194787583a0c3b73c1576bdcac7",
+    "var/engine-colour-20261014/clippy-delivery.log": "e55926ee2619a05ab67c86ee60b8b6629c1a088534bccc8eb190859cfacf47f4",
+    "var/engine-colour-20261014/build-release.log": "d8d2b0a5570448a6b14d53c5d4b25b056e4c22686d8f469cc6042f22b50a10c0",
+    "var/engine-colour-20261014/build-delivery.log": "2e73d51fb264d06a8ffeb5fb20cb3d993e57953200a4a8cb5a2f097c1ef1f97e",
+    "var/engine-colour-20261014/build-pair-final.log": "30cfb72f0fa80315bd7d56aee4b99278e88bab14b2c4e98fdb8817c60307b245",
+    "var/engine-colour-20261014/autonomous-linkage.txt": "4e7af6a91c168e172432d88a9f8e028851dafbc453bd1a904016e820e5967b3e",
+    "var/engine-colour-20261014/autonomous-dependencies.txt": "bf40ff9ba028377bf37cce9272da1b7a39caabd940a92532a8f738a2d5c766dd",
+    "var/engine-colour-20261014/cache-recipe-tests.log": "12f77df1963078eb8010f34521ad8b717a33e2c02cfdc10b77228cf2305c7d7e",
+    "var/engine-colour-20261014/cache-engine-tests.log": "2e332c6d42b0fd4125622c2e83276a546ae59992bb443dbcc99501177ece6006",
+    "var/engine-colour-20261014/worker-autonomy-tests.log": "5aad08dc3c3827fd12f917892679947d3d89ada3be7fb25954e33d97976bd695",
+    "var/engine-colour-20261014/paired-source-freeze.json": "9bae4ba10a323d2418c3dac087a97013fce7ae570c3b1d705cc443c97159676c",
+    "var/engine-colour-20261014/bench/Cargo.toml": "7ce1af599ea523b3a8379e1f1d07323f1af84a77db8dc0b0fbddbdb1631e7324",
+    "var/engine-colour-20261014/bench/Cargo.lock": "da23e70fdcc0b18a94127ea732064408c1b7577f676e3a25cc493fcc006d236c",
+    "var/engine-colour-20261014/bench/src/main.rs": "f094ed70f7ab4980b86fbbc1e23f6c036ebc2f5f71ff4799e846fb7a5fbfe75e",
+    "var/engine-colour-20261014/bench-target/release/tr-perf-pair": "b5c703cfba4773d98196f68f0c3ad87cbe60a2f3bdb931d59e10af2d02c55ce7",
+    "var/engine-colour-20261014/run-pair.py": "f0385050a5e354c16ea1b9ccd26c6bed12ce8b4e8d7f4980bf6c94f4e22bb0c0",
+    "var/engine-colour-20261014/paired-protocol.json": "0a11e69f3d509de32a07a069c5e0739117248fe0f66383e9de63d6d544bb3575",
+    "var/engine-colour-20261014/paired-report.json": "98c875887bd8e311c03e8cc64941cb5e025bdf878c832bfeb80aecd3f8edb845",
+    "var/engine-colour-20261014/integration/reports/experimental-private.json": "6f0f4f792da34312a685eb6747ddde8b84fc004e84dbb83536b819fc6d966e2f",
+    "var/engine-colour-20261014/xpc/reports/xpc-qualification-macos.json": "bdab3b1ee167bca744e9a5a48491adc4d86918f4f27d8468b87095a3903dcff7",
+    "var/engine-colour-20261014/installed-xpc/reports/xpc-qualification-macos.json": "f042d55d1e1616abd5b8766683cd2dcb2e9df46484b66d710de41c36c2f44292",
+    "var/engine-colour-20261014/installed-xpc/reports/xpc-integration-macos.json": "ed7ed33cfb8facd9b007129ab7c3f4e6eafdfa3972e1dd4be0612399050e632b",
+    "var/engine-colour-20261014/install-qualified.py": "664e6217a38e883e872e3aa3d4d9edeb8c7697cb9bf6df83bfb8d620ac871049",
+    "var/engine-colour-20261014/installed-bundle.json": "b12d18819d0f8f030e57ae7178b30fade99a76a8e922c9615f8af06b0ca29f69",
+    "var/engine-colour-20261014/gui/reports/smoke-macos.json": "0c8fde72e18bb16e5cccd8152e0bdfb6136755c0de6fd6d44afcf3cbf9782242",
+    "var/engine-colour-20261014/gui-surface.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "var/engine-colour-20261014/durable-before.json": "04ee8f07e789bf06292c23b89e86a47395d16bd11c66c9e72e8d558cad273684",
+    "var/engine-colour-20261014/durable-check.json": "cb28bb6ab336a1847fd1e49287db999b9c6d6630f8d9f2d89a8b33b648941c55",
+    "var/engine-colour-20261014/finalize.py": "560ee4e060fffeba75496bd045798d12abcb021c52fe92b65da014cc664f897a",
+    "var/engine-colour-20261014/paired-d750-01.jsonl": "935c82cfd7b4cdfffbcd6fe5ade53862e2b2c5ff6c5c668f7b1402a08dab8cfa",
+    "var/engine-colour-20261014/paired-d800-12.jsonl": "44add96588c61cf6e28fa3910dfa013eb19c61e2edd47660b392d97a68494005",
+    "var/engine-colour-20261014/paired-d750-dng.jsonl": "73db4cd513dc57d2913280d8c09270225ceffe01d6505af23d63a6b467903b06",
+    "var/engine-colour-20261014/paired-xt5-raf.jsonl": "c7755013ef195c5651aa3e515b0def5ae9836280c5531e04fdcca1d28dccd871",
+    "var/engine-colour-20261014/paired-d750-15.jsonl": "fdb91842cc5ed72bd5e313053a5a345bd7c4e9c4f36be79f6e7e3d2f2b703e2d",
+    "var/engine-colour-20261014/paired-xt5-dng.jsonl": "faa30fb6fc86f44779f9b6263c44853ca88a64e32d158a6b2cbf85dd97c3d1c5",
+    "var/engine-colour-20261014/paired-d800-14.jsonl": "233506edda71ff9c44c1379891ebe16824f6f35fb0e7f05e43c38103ac5ace04",
+    "var/engine-colour-20261014/paired-d750-30.jsonl": "28121b782b7fcf18bef4a1d8c54af5bb1baadc957008eea59b88ba52acba6327"
+  },
+  "commit_or_push_performed": false
+}

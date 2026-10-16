@@ -1,0 +1,936 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-15",
+  "protocol": "HL6-bitexact-performance-photo-brackets-v1",
+  "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-extended1",
+  "decision": "Installed an output-preserving optimization after frozen numerical, photographic and native checks. Added an offline relative sensor bracket bench. No new chromatic recovery policy or photographic accuracy claim; legacy engine retained.",
+  "production_changes": [
+    "Visit only green CFA rows and skip non-training observations before computing R/B features during fitting.",
+    "Accumulate the symmetric normal matrix once per product, in the original sample order; copy its transpose.",
+    "Stop validation at the first disagreement: no subsequent observation can reverse component rejection.",
+    "Skip texture lookup for interior pixels and for frames without an admitted texture component."
+  ],
+  "unchanged": [
+    "Recovery thresholds, including the D750 colour-amplification bound 4.",
+    "Arithmetic and sample order in retained sums, recipe/cache identity, original valid sensor samples.",
+    "Legacy engine, formats, memory admission plans, X-Trans and colour calibration."
+  ],
+  "equivalence": {
+    "regression_records_exact": 10094,
+    "regression_regions_exact": 22032,
+    "fresh_records": 1532,
+    "fresh_regions": 3064,
+    "fresh_unique_raw": 1342,
+    "fresh_raw_overlap": [],
+    "valid_sites_changed": 0,
+    "repack_exact": 11620,
+    "fresh_records_exact": 1532,
+    "fresh_report_sha256": "fab260eae684b7c3a592baad16a32ffb4bdfa819001fc70f3e31676dd43c7911",
+    "fresh_duplicate_raw_groups": 102,
+    "fresh_records_with_reused_reference": 72,
+    "final_reports_byte_identical_to_original_run": true
+  },
+  "independence_limits": [
+    "Fresh cases were generated after freezing production and generators with seeds 163219/163237/163249/163259.",
+    "Fresh RAW hashes have no overlap with development; 102 groups contain intentionally shared or clipping-equivalent RAW, and 72 records reuse reference hashes.",
+    "These are analytic families, CFA phases and ambiguity controls, not independent photographed scenes.",
+    "400 reused photographic remosaics are included in the regression; eight full photographic inputs are identity checks, not new truth."
+  ],
+  "performance": {
+    "complete": true,
+    "sources": [
+      {
+        "id": "d750-01",
+        "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "image_sha256": "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2",
+        "all_three_outputs_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "scratch_peak_bytes_before_after": [
+          562476040,
+          562476040
+        ],
+        "methods": [
+          {
+            "count": 30,
+            "median_seconds": 1.0658065205,
+            "p95_seconds": 1.1138675,
+            "MAD_seconds": 0.0016112080000000306,
+            "sorted_seconds": [
+              1.06343075,
+              1.063688708,
+              1.063869292,
+              1.064050125,
+              1.064073417,
+              1.064317208,
+              1.064471542,
+              1.064504292,
+              1.064694666,
+              1.064747834,
+              1.064822875,
+              1.065043708,
+              1.065349,
+              1.0656259160000001,
+              1.065729125,
+              1.065883916,
+              1.066118083,
+              1.066755167,
+              1.066981291,
+              1.067063709,
+              1.067638708,
+              1.089497167,
+              1.095304458,
+              1.098014375,
+              1.1004545000000001,
+              1.100771625,
+              1.110061083,
+              1.112822084,
+              1.1138675,
+              1.117500292
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.0572822085,
+            "p95_seconds": 1.109276542,
+            "MAD_seconds": 0.002960583499999947,
+            "sorted_seconds": [
+              1.052786125,
+              1.053425792,
+              1.053580125,
+              1.054118417,
+              1.05429525,
+              1.054348,
+              1.054686041,
+              1.05475725,
+              1.0549912909999999,
+              1.055208875,
+              1.055385125,
+              1.055398333,
+              1.055935083,
+              1.055961833,
+              1.0571125,
+              1.057451917,
+              1.0574845,
+              1.057646917,
+              1.058176333,
+              1.060159167,
+              1.087239541,
+              1.087829541,
+              1.089460625,
+              1.102387667,
+              1.1025345,
+              1.102788041,
+              1.103018208,
+              1.103103792,
+              1.109276542,
+              1.133565959
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.0444117290000001,
+            "p95_seconds": 1.092922167,
+            "MAD_seconds": 0.0017369165000001852,
+            "sorted_seconds": [
+              1.041837791,
+              1.042148958,
+              1.042454458,
+              1.042562542,
+              1.042787083,
+              1.042790083,
+              1.042878417,
+              1.043072208,
+              1.043159958,
+              1.043327792,
+              1.043384083,
+              1.043599167,
+              1.043981875,
+              1.044056917,
+              1.044301792,
+              1.044521666,
+              1.044687083,
+              1.044976333,
+              1.045950667,
+              1.048259541,
+              1.064972042,
+              1.074923208,
+              1.075223333,
+              1.086920125,
+              1.089452459,
+              1.090789542,
+              1.091977125,
+              1.092128,
+              1.092922167,
+              1.148983041
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": 0.7997991977006347,
+        "remaining_overhead_percent_vs_HL5": 1.2323185524087288,
+        "role": "timing"
+      },
+      {
+        "id": "d750-15",
+        "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+        "image_sha256": "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a",
+        "all_three_outputs_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "scratch_peak_bytes_before_after": [
+          562476040,
+          562476040
+        ],
+        "methods": [
+          {
+            "count": 30,
+            "median_seconds": 1.2375213125,
+            "p95_seconds": 1.240677583,
+            "MAD_seconds": 0.001586708499999978,
+            "sorted_seconds": [
+              1.2233947920000001,
+              1.22435225,
+              1.225090625,
+              1.227804875,
+              1.230681042,
+              1.233497291,
+              1.233753708,
+              1.234102458,
+              1.235860166,
+              1.236009042,
+              1.236186166,
+              1.236635083,
+              1.236759875,
+              1.237091917,
+              1.2373267079999999,
+              1.237715917,
+              1.237868833,
+              1.237906,
+              1.23792275,
+              1.237929417,
+              1.237974792,
+              1.238004625,
+              1.2380493750000001,
+              1.238940666,
+              1.239856541,
+              1.240552167,
+              1.240574417,
+              1.24067625,
+              1.240677583,
+              1.240902458
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.2160341460000001,
+            "p95_seconds": 1.220598667,
+            "MAD_seconds": 0.003037666500000036,
+            "sorted_seconds": [
+              1.202785958,
+              1.203705208,
+              1.204957083,
+              1.205552166,
+              1.210989834,
+              1.210996,
+              1.211785167,
+              1.21267275,
+              1.212822375,
+              1.213242375,
+              1.21328225,
+              1.214825167,
+              1.215374333,
+              1.2157930000000001,
+              1.215869625,
+              1.216198667,
+              1.216769958,
+              1.216899209,
+              1.217148875,
+              1.217484041,
+              1.217667959,
+              1.217859083,
+              1.218274625,
+              1.218897708,
+              1.2193545829999999,
+              1.219469167,
+              1.220158334,
+              1.220245833,
+              1.220598667,
+              1.220666167
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.1920360005,
+            "p95_seconds": 1.197002083,
+            "MAD_seconds": 0.00258843700000011,
+            "sorted_seconds": [
+              1.158089417,
+              1.178381625,
+              1.178821958,
+              1.178890958,
+              1.1792505420000001,
+              1.180720875,
+              1.181729917,
+              1.187817042,
+              1.188755625,
+              1.190308959,
+              1.191051625,
+              1.191165625,
+              1.1913898330000001,
+              1.191444458,
+              1.191909417,
+              1.192162584,
+              1.192351875,
+              1.192743709,
+              1.193173666,
+              1.193222542,
+              1.193912458,
+              1.193948791,
+              1.194553333,
+              1.194589417,
+              1.194659458,
+              1.1946927920000001,
+              1.196268333,
+              1.196801375,
+              1.197002083,
+              1.197228792
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": 1.7363067838073953,
+        "remaining_overhead_percent_vs_HL5": 2.01320643755174,
+        "role": "timing"
+      },
+      {
+        "id": "d750-30",
+        "source_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+        "image_sha256": "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918",
+        "all_three_outputs_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "scratch_peak_bytes_before_after": [
+          562476040,
+          562476040
+        ],
+        "methods": [
+          {
+            "count": 30,
+            "median_seconds": 1.042838813,
+            "p95_seconds": 1.055122958,
+            "MAD_seconds": 0.0016558129999998394,
+            "sorted_seconds": [
+              1.038275666,
+              1.040137209,
+              1.040286042,
+              1.041006625,
+              1.041137083,
+              1.04115675,
+              1.04120925,
+              1.041705292,
+              1.042074459,
+              1.042217834,
+              1.042273334,
+              1.042300625,
+              1.042311208,
+              1.042640125,
+              1.042670542,
+              1.043007084,
+              1.043306667,
+              1.043539042,
+              1.043648,
+              1.044329459,
+              1.044348083,
+              1.044622167,
+              1.045016875,
+              1.045273208,
+              1.04617975,
+              1.046201208,
+              1.048011667,
+              1.052489,
+              1.055122958,
+              1.06131525
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.034890833,
+            "p95_seconds": 1.0467385,
+            "MAD_seconds": 0.003687270999999881,
+            "sorted_seconds": [
+              1.029989375,
+              1.0307795,
+              1.031088833,
+              1.031318291,
+              1.031739333,
+              1.032235833,
+              1.032539792,
+              1.03323275,
+              1.033278875,
+              1.033312041,
+              1.033386417,
+              1.033498334,
+              1.033881542,
+              1.034031917,
+              1.034211583,
+              1.035570083,
+              1.036050875,
+              1.03690725,
+              1.042994167,
+              1.043351667,
+              1.043631416,
+              1.044175416,
+              1.0444735,
+              1.044885875,
+              1.04491725,
+              1.044964875,
+              1.046538166,
+              1.046662917,
+              1.0467385,
+              1.0471110829999999
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.019250687,
+            "p95_seconds": 1.028097833,
+            "MAD_seconds": 0.006241771000000007,
+            "sorted_seconds": [
+              1.006478042,
+              1.009105958,
+              1.009895625,
+              1.009965875,
+              1.010736125,
+              1.010845042,
+              1.011105208,
+              1.011109458,
+              1.011385667,
+              1.011691834,
+              1.011828792,
+              1.013094875,
+              1.013279917,
+              1.013618584,
+              1.019060208,
+              1.019441166,
+              1.021322,
+              1.021546041,
+              1.021693458,
+              1.022419375,
+              1.022823,
+              1.023862292,
+              1.024180041,
+              1.024582833,
+              1.02493225,
+              1.025355,
+              1.025578417,
+              1.027312,
+              1.028097833,
+              1.028821667
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": 0.7621484644530496,
+        "remaining_overhead_percent_vs_HL5": 1.5344749039153616,
+        "role": "timing"
+      },
+      {
+        "id": "d800-12",
+        "source_sha256": "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+        "image_sha256": "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c",
+        "all_three_outputs_identical": true,
+        "size": [
+          7360,
+          4912
+        ],
+        "scratch_peak_bytes_before_after": [
+          806956246,
+          806956246
+        ],
+        "methods": [
+          {
+            "count": 1,
+            "median_seconds": 2.4950787500000002,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              2.4950787500000002
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 2.50681975,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              2.50681975
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 2.494804167,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              2.494804167
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": null,
+        "remaining_overhead_percent_vs_HL5": null,
+        "role": "identity-only"
+      },
+      {
+        "id": "d750-dng",
+        "source_sha256": "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+        "image_sha256": "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d",
+        "all_three_outputs_identical": true,
+        "size": [
+          6016,
+          4016
+        ],
+        "scratch_peak_bytes_before_after": [
+          562476040,
+          562476040
+        ],
+        "methods": [
+          {
+            "count": 1,
+            "median_seconds": 1.267408417,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.267408417
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.274287625,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.274287625
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.251968167,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.251968167
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": null,
+        "remaining_overhead_percent_vs_HL5": null,
+        "role": "identity-only"
+      },
+      {
+        "id": "xt5-raf",
+        "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+        "image_sha256": "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c",
+        "all_three_outputs_identical": true,
+        "size": [
+          5152,
+          7728
+        ],
+        "scratch_peak_bytes_before_after": [
+          1040891456,
+          1040891456
+        ],
+        "methods": [
+          {
+            "count": 1,
+            "median_seconds": 8.59662575,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.59662575
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 8.542357375,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.542357375
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 8.385339208,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.385339208
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": null,
+        "remaining_overhead_percent_vs_HL5": null,
+        "role": "identity-only"
+      },
+      {
+        "id": "xt5-dng",
+        "source_sha256": "e399eb0b3bab9c76e1dabd61bc06a47750af194eea7819f76b2be03ef8cb6bcd",
+        "image_sha256": "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989",
+        "all_three_outputs_identical": true,
+        "size": [
+          5152,
+          7728
+        ],
+        "scratch_peak_bytes_before_after": [
+          1032155608,
+          1032155608
+        ],
+        "methods": [
+          {
+            "count": 1,
+            "median_seconds": 8.268955541,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.268955541
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 8.367084333,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.367084333
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 8.064806834,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              8.064806834
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": null,
+        "remaining_overhead_percent_vs_HL5": null,
+        "role": "identity-only"
+      },
+      {
+        "id": "d800-14",
+        "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+        "image_sha256": "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902",
+        "all_three_outputs_identical": true,
+        "size": [
+          7360,
+          4912
+        ],
+        "scratch_peak_bytes_before_after": [
+          806956246,
+          806956246
+        ],
+        "methods": [
+          {
+            "count": 1,
+            "median_seconds": 1.789975667,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.789975667
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.783236666,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.783236666
+            ]
+          },
+          {
+            "count": 1,
+            "median_seconds": 1.787571416,
+            "p95_seconds": null,
+            "MAD_seconds": 0.0,
+            "sorted_seconds": [
+              1.787571416
+            ]
+          }
+        ],
+        "reduction_percent_vs_HL6": null,
+        "remaining_overhead_percent_vs_HL5": null,
+        "role": "identity-only"
+      }
+    ],
+    "methods": [
+      "HL6-dir6 frozen",
+      "HL6-dir6 optimized",
+      "HL5-dir5 frozen"
+    ],
+    "memory": [
+      {
+        "method": 0,
+        "maximum_resident_set_bytes": 531070976,
+        "scope": "Whole isolated benchmark process, includes source, render and SHA work; three renders after one warmup. Not decoder admission or pressure qualification."
+      },
+      {
+        "method": 1,
+        "maximum_resident_set_bytes": 530989056,
+        "scope": "Whole isolated benchmark process, includes source, render and SHA work; three renders after one warmup. Not decoder admission or pressure qualification."
+      }
+    ]
+  },
+  "timing_scope": {
+    "method_order": [
+      "HL6-dir6 frozen",
+      "HL6-dir6 optimized",
+      "HL5-dir5 frozen"
+    ],
+    "order": "Six permutations, rotated by iteration; 3 warmups, 30 measured triplets on each D750. Other formats check full-output identity only.",
+    "conditions": "Same process/input bytes/WB/geometry, opt-level 3 and thin LTO. Read and input/output hash excluded from render time. No concurrent build/test/GUI campaign. Warm OS cache; thermal state and other OS activity not controlled; IPC and cold start excluded."
+  },
+  "profiling": {
+    "baseline_D750_texture_seconds": [
+      0.001517,
+      0.001446,
+      0.001447
+    ],
+    "instrumented_offline_only": true,
+    "inference": "Texture fitting is not the main end-to-end cost on this photo. Per-pixel boundary admission was a more useful target.",
+    "pilot": "Fit-only pilot did not improve the D750 median (1.075919 to 1.081334 s). Border exclusion pilot improved it about 1.2%. Pilot data are not the final timing result."
+  },
+  "photographic_bench": {
+    "protocol": "TR-photo-bracket-v1",
+    "extractor": "crates/tr-raw/research/brackets.rs",
+    "preparation": "scripts/prepare-photo-brackets.py",
+    "template": "docs/photo-bracket-manifest.example.json",
+    "tests": 16,
+    "synthetic_end_to_end": {
+      "captures": 3,
+      "declared_exposure_scale": 4.0,
+      "measured_common_scale": 4.000011346634042,
+      "supported_clipped_sites": 2560,
+      "uncertain_clipped_sites": 0,
+      "absolute_colour_reference": false
+    },
+    "physical_bracket_sets_acquired": 0,
+    "measured_absolute_colour_targets": 0,
+    "admission": "Hash-pinned pre-WB CFA. Only integer CFA-period translations, at least six externally measured landmarks spanning the frame. One common exposure scale fitted on designated original unsaturated regions; disjoint validation per CFA phase and dark-exposure repeat. No per-channel correction. Invalid pairs retain diagnostics but emit no reference.",
+    "limits": [
+      "Relative sensor reference only; no absolute colour accuracy or full RGB/demosaic truth.",
+      "Integer CFA-period translations only; subpixel registration/resampling is deliberately unsupported.",
+      "Repeat difference is a diagnostic, not a calibrated confidence interval or noise estimate.",
+      "Global failure invalidates every reference and all provisional error metrics.",
+      "Unknown physical clipping below the metadata ceiling needs separate measured calibration."
+    ]
+  },
+  "residuals": {
+    "legacy_reference_report": "reports/experimental-coloured-texture-macos-2026-10-15.json",
+    "reused_regional_metric_advantages": 825,
+    "new_legacy_measurement": false,
+    "selected_D750_texture": [
+      {
+        "id": "s715163-d750-p1-texture",
+        "region": 1,
+        "metric": "rgb_max_abs",
+        "experimental": 0.5006717443466187,
+        "legacy": 0.4923872947692871,
+        "absolute_gap": 0.008284449577331543,
+        "reconstructed_sites": 0,
+        "saturated_sites": 2433,
+        "raw_sensor_error": {
+          "saturated_max_abs": [
+            0.410353422164917,
+            0.410353422164917
+          ],
+          "saturated_rmse": [
+            0.1872688811610722,
+            0.1872688811610722
+          ],
+          "truth_sha256": "ec5f3283b3dbb04f1c2809355115b6c82a8546f4201076ebc41ee5703609cfb6"
+        },
+        "diagnostic_scope": "Analytical source; unchanged output hashes establish persistence, not a new photographic measurement."
+      },
+      {
+        "id": "s715163-d750-p1-texture",
+        "region": 0,
+        "metric": "rgb_max_abs",
+        "experimental": 0.5689132213592529,
+        "legacy": 0.5608571767807007,
+        "absolute_gap": 0.008056044578552246,
+        "reconstructed_sites": 0,
+        "saturated_sites": 2433,
+        "raw_sensor_error": {
+          "saturated_max_abs": [
+            0.410353422164917,
+            0.410353422164917
+          ],
+          "saturated_rmse": [
+            0.1872688811610722,
+            0.1872688811610722
+          ],
+          "truth_sha256": "ec5f3283b3dbb04f1c2809355115b6c82a8546f4201076ebc41ee5703609cfb6"
+        },
+        "diagnostic_scope": "Analytical source; unchanged output hashes establish persistence, not a new photographic measurement."
+      },
+      {
+        "id": "s715163-d750-p1-texture",
+        "region": 0,
+        "metric": "gradient_rmse",
+        "experimental": 0.02195575540924557,
+        "legacy": 0.021913731710951668,
+        "absolute_gap": 4.202369829390054e-05,
+        "reconstructed_sites": 0,
+        "saturated_sites": 2433,
+        "raw_sensor_error": {
+          "saturated_max_abs": [
+            0.410353422164917,
+            0.410353422164917
+          ],
+          "saturated_rmse": [
+            0.1872688811610722,
+            0.1872688811610722
+          ],
+          "truth_sha256": "ec5f3283b3dbb04f1c2809355115b6c82a8546f4201076ebc41ee5703609cfb6"
+        },
+        "diagnostic_scope": "Analytical source; unchanged output hashes establish persistence, not a new photographic measurement."
+      },
+      {
+        "id": "s715163-d750-p1-texture",
+        "region": 1,
+        "metric": "gradient_rmse",
+        "experimental": 0.021497617524413495,
+        "legacy": 0.02145576365779956,
+        "absolute_gap": 4.185386661393481e-05,
+        "reconstructed_sites": 0,
+        "saturated_sites": 2433,
+        "raw_sensor_error": {
+          "saturated_max_abs": [
+            0.410353422164917,
+            0.410353422164917
+          ],
+          "saturated_rmse": [
+            0.1872688811610722,
+            0.1872688811610722
+          ],
+          "truth_sha256": "ec5f3283b3dbb04f1c2809355115b6c82a8546f4201076ebc41ee5703609cfb6"
+        },
+        "diagnostic_scope": "Analytical source; unchanged output hashes establish persistence, not a new photographic measurement."
+      }
+    ],
+    "causal_limits": {
+      "raw": "Sensor-domain diagnostics available for analytical references. Photographic CFA reference preparation added; no independent bracket acquired in this campaign.",
+      "demosaic": "Use same demosaic on reconstructed and independently supported mosaic; reference demosaic itself is not ground truth.",
+      "boundary": "Full-frame and interior metrics stay separate.",
+      "colour": "Compatibility matrix also defines analytical truth; absolute colour requires physical measurement."
+    },
+    "decision": "Retain the legacy engine. D750 texture remains rejected at the unchanged amplification bound 4; an errors-in-variables or regularized model requires separately frozen support/noise evidence and photographic brackets. Do not treat a prior or higher amplification as recovered information."
+  },
+  "native": {
+    "complete": true,
+    "passed": true,
+    "formats": {
+      "dng": 2,
+      "nef": 5,
+      "raf": 1
+    },
+    "inputs": 8,
+    "slot_cases": 16,
+    "refusal_controls": 0,
+    "refusal_messages": [],
+    "originals_unchanged": true,
+    "slots_pixels_exact": true,
+    "repack_pixels_exact": true,
+    "wb_probe_decode_match": true,
+    "WB_accepted": 30,
+    "WB_refused": 2,
+    "exports": 32,
+    "max_export_error_u16": 0,
+    "exports_by_format": {
+      "Png16": 16,
+      "Tiff16": 16
+    },
+    "cancelled_raf_workers": 2,
+    "cpu_recycles": 19,
+    "maximum_observed_decoder_RSS_bytes": 902316032,
+    "recipes": [
+      "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-extended1"
+    ]
+  },
+  "checks": {
+    "rust_ordinary": 587,
+    "rust_integrations": 14,
+    "python": 50,
+    "offline_bracket_extraction": true,
+    "fmt": true,
+    "clippy_warnings_denied": true,
+    "workspace_release_build": true,
+    "worker_protocol_checks": 8,
+    "sampling_signals": 24,
+    "gui_screenshots": 8,
+    "release_surface_sampling": true,
+    "xpc_two_slots": true,
+    "production_fault_injection_refused": true
+  },
+  "qualification_notes": [
+    "Initial Clippy rejected index-style symmetric matrix copy; changed to split_at_mut without floating-point changes and reran both numerical reports byte-for-byte.",
+    "Core Image and XPC handshakes failed inside the additional terminal sandbox; the complete native suite and bundle tests passed outside it.",
+    "The first XPC script invocation lacked the required isolated report directory and stopped before decoding; prepared it and reran.",
+    "No new thermal/cold-start/Windows/physical-memory-pressure or LibRaw timing qualification."
+  ],
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "files_and_modes_match_candidate": 23,
+    "previous_bundle_preserved": true,
+    "source_files_changed_since_freeze": [
+      "crates/tr-raw/src/highlights/texture.rs",
+      "crates/tr-raw/src/lib.rs",
+      "crates/tr-raw/src/render.rs"
+    ],
+    "protected_original_and_durable_files_verified": 191,
+    "durable_catalog_and_backup_files": 181,
+    "original_photographic_inputs": 8,
+    "LICENSE_and_architecture_original_unchanged": true,
+    "commit_or_push": false,
+    "gates_closed": []
+  },
+  "evidence_sha256": {
+    "baseline-freeze.json": "cace067a01bb6e2e15fbeb048587fcd025ab91a920ee8a10c69c20f5a6dcad46",
+    "candidate-freeze.json": "45a765af3f84bdec225c511502659887c6c591a0b2959d7a0be96fb82762d1f7",
+    "candidate-final-freeze.json": "4c740c8fbd512b4142e98a40358e1d2c306d0629a9e84d81f66378edee1d1520",
+    "equivalence-summary.json": "12ccb93d47d2a8c69c157d479870ac5204e43f889d68760364338fee4fdb675b",
+    "regression-final.json": "63e49a751bee6899bb4c20494ba2255109e0283ac334ba4f64a423c2d9ecd652",
+    "fresh-final.json": "fab260eae684b7c3a592baad16a32ffb4bdfa819001fc70f3e31676dd43c7911",
+    "fresh-frozen.json": "fab260eae684b7c3a592baad16a32ffb4bdfa819001fc70f3e31676dd43c7911",
+    "performance-protocol.json": "2aaa1164e8ed8b5e5b39b835d11a78b862822159669e5cc4423cd2947cab736d",
+    "performance.json": "212122efbd5a1de6745cf201392d78228be692b2d5b0ae8021b2ebd6df10e52f",
+    "residual-triage.json": "0035c8d91df645d16b8f9c0e0714fbf8807af0a488cff63c999f52bdabdd179b",
+    "integration-summary.json": "a7a6029ce24837bacf649a9646df81e0e5225c3c899966230bd3fc1518acf53f",
+    "verify-native.log": "d7652cb03db5be55035a920432a49f8f753ffca5bb31499c555902988597b510",
+    "xpc-native.log": "df18e4691e508026edc3b1ba8e653110aba1b527f1c90ad586d47c6173935960",
+    "bracket-extract.log": "44ab390a442d319777058b094c2c0667eec81ae2faeb76d0b51ce3434ca1426d",
+    "photo-bracket-tests.log": "4b6c5e8dcb878feb0ad78fea7f51a7d86697e1a66d549c84f010765d85fb77f1",
+    "bracket-selftest/reference-delivery/report.json": "f79956e5fb116bcdcd3ca340fa47cb7ed6e54808979bc98e5f583e78699000ec",
+    "installed-xpc/reports/xpc-qualification-macos.json": "7f89af814abc325769eeedd66abe53d308abc3527eaca1eed9703479141e83ec",
+    "bench/src/main.rs": "7d07e49102b3df4c75676195bf10dda02216bea4c6dd18c8695832cbe1665de3",
+    "bench/Cargo.toml": "c1c37be1e1ef2907b0de61328e469ba808689825caac84dbfeb89ceec49c88ab",
+    "run-performance.py": "df68090bc3aada95027e8165c9a1b4fd90fb3086da03afc4e67ca47800752471"
+  },
+  "public_source_sha256": {
+    "crates/tr-raw/src/render.rs": "71c38597017a5112f7a512bc9668627349aaed72657f941823a2222bae54535e",
+    "crates/tr-raw/src/highlights/texture.rs": "c9dd8a212a2969668a452ceab80fced98d52078812efb30bb12c43f580767dda",
+    "crates/tr-raw/research/brackets.rs": "25deea7f568d7957fa8fb377319cb98c51905259d848fd87b290f8e6a59b117c",
+    "scripts/prepare-photo-brackets.py": "e5cad9ac50be50e83ba652a4eeef56c984bbee573b0beece47b9e949ca9ec573",
+    "scripts/test-photo-brackets.py": "36a49861d300b918ac5b378f433deb28ff82079c07e45c19057a2db886a596e2",
+    "scripts/verify.sh": "f7676488993b954fbf5c4e93fc5e0d3141d8b6ab76e59739bdc7a661348a3f0e",
+    "docs/photo-bracket-manifest.example.json": "dfc159a8b6d74d096159404f75b6401f126acffcf25264f05f570dc97616970e"
+  }
+}

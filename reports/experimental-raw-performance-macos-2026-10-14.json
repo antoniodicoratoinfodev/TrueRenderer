@@ -1,0 +1,726 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-14",
+  "protocol": "exact-edge-range-performance-v1",
+  "machine": {
+    "CPU": "Apple M4",
+    "OS": "macOS 27.0.1 (26A434)",
+    "rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: aarch64-apple-darwin\nrelease: 1.98.1\nLLVM version: 22.1.8"
+  },
+  "baseline_commit": "598f1323f72fecea73d39dadf5b1c09be02bc548",
+  "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1",
+  "recipe_and_cache_unchanged": true,
+  "scope": "Exact implementation optimization of the existing autonomous HL4/DR7 engine; no language rewrite, algorithm thresholds, fit arithmetic, camera profiles or supported format changes. Timing compares this engine before/after, not LibRaw.",
+  "changes": [
+    "Horizontal extrema use prefix/suffix summaries of two 13-site blocks, replacing data-dependent queues; truncated sensor boundaries keep the same exact range.",
+    "The complete window scan rejects as soon as the observed partition gap cannot exceed half the complete range; additional samples can only shrink the gap.",
+    "Bayer retains the 16-position subset rejection; X-Trans tests the necessary full-span bound before the sequential scan. Bayer checks near-edge before the pure HL-support predicate.",
+    "The f64 plane fits, accumulation order, admission thresholds and measured CFA samples are unchanged."
+  ],
+  "memory": {
+    "new_horizontal_local_bounds_bytes": 1248,
+    "included_in_existing_local_reserve_bytes": 8192,
+    "additional_heap_allocations": 0,
+    "range_rows": 52,
+    "reservation_unchanged": true,
+    "observed_decoder_peak_RSS_bytes": 902447104,
+    "qualification": "Single functional campaign; no memory-pressure qualification or claimed RSS reduction."
+  },
+  "equivalence": {
+    "sources": 1886,
+    "all_fields_equal_to_frozen_report": true,
+    "baseline_report_sha256": "cf4d64c8cbbd350aa7a83070bc80bc92c9dec693ac92f3b851d027ef30b36a07",
+    "candidate_report_sha256": "cf4d64c8cbbd350aa7a83070bc80bc92c9dec693ac92f3b851d027ef30b36a07",
+    "changed_valid_RAW_sites": 0,
+    "exact_DNG_reopen_cases": 1880,
+    "full_photographic_inputs": 8,
+    "all_full_output_hashes_equal_before_after_and_previous_campaign": true,
+    "geometry_equal": true,
+    "all_outputs_finite": true,
+    "corpus_role": "Reused regression/equivalence corpus. All cases have been observed previously; no new independent colour-validation claim.",
+    "baseline_report": "var/fidelity-fixes-20261013/common-complete.json",
+    "baseline_full_hashes": "var/fidelity-fixes-20261013/autonomy-block.jsonl"
+  },
+  "timing": {
+    "scope": "Same process, same input bytes, same native geometry and gains; two source versions with identical opt-level=3/LTO=thin, alternating order. Input read and input/output hashing excluded; allocation, parse, unpack, HL, demosaic and matrix included. Warm OS caches; no IPC or GUI, no thermal control. One-repeat entries check full-output equivalence only.",
+    "before": "frozen HL4/DR7 at baseline_commit",
+    "after": "same HL4/DR7 equations with exact range/scan optimizations",
+    "build": {
+      "profile": "release",
+      "opt_level": 3,
+      "lto": "thin",
+      "strip": "debuginfo",
+      "same_binary_and_shared_dependencies": true
+    },
+    "gains": [
+      1,
+      1,
+      1
+    ],
+    "warmups_per_method": 3,
+    "samples": [
+      {
+        "id": "d750-01",
+        "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "image_sha256": "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2",
+        "size": [
+          6016,
+          4016
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 30,
+            "median_seconds": 1.9042069585,
+            "p95_seconds": 1.978825625,
+            "MAD_seconds": 0.006733041499999981,
+            "sorted_seconds": [
+              1.895502375,
+              1.895578041,
+              1.8966297920000001,
+              1.898318042,
+              1.898977125,
+              1.8992051669999999,
+              1.8992510839999999,
+              1.899329292,
+              1.899841292,
+              1.8999103339999999,
+              1.900093834,
+              1.900406834,
+              1.900738042,
+              1.9008623340000002,
+              1.904144125,
+              1.904269792,
+              1.904574208,
+              1.907425792,
+              1.911851042,
+              1.9152527080000001,
+              1.915573709,
+              1.916004666,
+              1.9162167079999999,
+              1.9184782500000002,
+              1.921266042,
+              1.931032916,
+              1.9326148330000001,
+              1.977516167,
+              1.978825625,
+              1.980065958
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.0413356045,
+            "p95_seconds": 1.068768083,
+            "MAD_seconds": 0.00789575049999991,
+            "sorted_seconds": [
+              1.032239584,
+              1.032579875,
+              1.032654875,
+              1.032806167,
+              1.032820375,
+              1.033017042,
+              1.033862666,
+              1.034008208,
+              1.035460666,
+              1.035716667,
+              1.036219833,
+              1.036973167,
+              1.03919925,
+              1.040102583,
+              1.040369917,
+              1.042301292,
+              1.042699,
+              1.042997709,
+              1.044021292,
+              1.044682917,
+              1.046890459,
+              1.050395125,
+              1.051012208,
+              1.051711166,
+              1.052610666,
+              1.054944625,
+              1.0549725,
+              1.064580833,
+              1.068768083,
+              1.096940667
+            ]
+          }
+        ],
+        "speedup_ratio": 1.828619851536057,
+        "percent_time_reduction": 45.31394815822485,
+        "role": "timing"
+      },
+      {
+        "id": "xt5-raf",
+        "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+        "image_sha256": "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c",
+        "size": [
+          5152,
+          7728
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 10,
+            "median_seconds": 10.24134925,
+            "p95_seconds": 10.392001916,
+            "MAD_seconds": 0.07058818699999936,
+            "sorted_seconds": [
+              10.152894583,
+              10.155671209,
+              10.155790167,
+              10.19227925,
+              10.205684334,
+              10.277014166,
+              10.300577458,
+              10.308807833,
+              10.315067041,
+              10.392001916
+            ]
+          },
+          {
+            "count": 10,
+            "median_seconds": 8.362298895999999,
+            "p95_seconds": 8.404938209,
+            "MAD_seconds": 0.03896666700000129,
+            "sorted_seconds": [
+              8.278094042,
+              8.28218875,
+              8.285130916,
+              8.337421791,
+              8.343146625,
+              8.381451167,
+              8.393925124999999,
+              8.399600042,
+              8.402931084,
+              8.404938209
+            ]
+          }
+        ],
+        "speedup_ratio": 1.2247049976769933,
+        "percent_time_reduction": 18.34768357304094,
+        "role": "timing"
+      },
+      {
+        "id": "d750-15",
+        "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+        "image_sha256": "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a",
+        "size": [
+          6016,
+          4016
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 30,
+            "median_seconds": 1.8707291875,
+            "p95_seconds": 1.874162916,
+            "MAD_seconds": 0.0012507914999999592,
+            "sorted_seconds": [
+              1.866856709,
+              1.867368041,
+              1.868872833,
+              1.868873,
+              1.868889959,
+              1.869149,
+              1.869463,
+              1.869493792,
+              1.870048167,
+              1.870109875,
+              1.8701999169999999,
+              1.8703349999999999,
+              1.870473417,
+              1.870534667,
+              1.870649292,
+              1.8708090830000002,
+              1.871079875,
+              1.871085083,
+              1.871192333,
+              1.871214459,
+              1.8713855000000001,
+              1.871891459,
+              1.872197584,
+              1.8724555,
+              1.872584,
+              1.8727219590000002,
+              1.8730682079999998,
+              1.874053334,
+              1.874162916,
+              1.8906973329999999
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 1.098217479,
+            "p95_seconds": 1.119150208,
+            "MAD_seconds": 0.00141197950000016,
+            "sorted_seconds": [
+              1.095361625,
+              1.095389208,
+              1.095415334,
+              1.095440583,
+              1.096392709,
+              1.096568458,
+              1.096625583,
+              1.096782333,
+              1.096828666,
+              1.097083833,
+              1.0977706249999999,
+              1.097942167,
+              1.097964209,
+              1.098066458,
+              1.098172833,
+              1.098262125,
+              1.098723292,
+              1.098934625,
+              1.098967583,
+              1.099037709,
+              1.099083334,
+              1.099232458,
+              1.099425166,
+              1.100131291,
+              1.100230541,
+              1.10039375,
+              1.113287292,
+              1.113357875,
+              1.119150208,
+              1.123646084
+            ]
+          }
+        ],
+        "speedup_ratio": 1.7034232501957838,
+        "percent_time_reduction": 41.29468410830576,
+        "role": "timing"
+      },
+      {
+        "id": "d800-14",
+        "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+        "image_sha256": "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902",
+        "size": [
+          7360,
+          4912
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 10,
+            "median_seconds": 2.8924537499999996,
+            "p95_seconds": 2.896896167,
+            "MAD_seconds": 0.001369854500000045,
+            "sorted_seconds": [
+              2.889048459,
+              2.890978125,
+              2.891381333,
+              2.891749709,
+              2.8918535419999998,
+              2.893053958,
+              2.8937178340000003,
+              2.894544416,
+              2.89589625,
+              2.896896167
+            ]
+          },
+          {
+            "count": 10,
+            "median_seconds": 1.700784687,
+            "p95_seconds": 1.753949125,
+            "MAD_seconds": 0.002287978500000065,
+            "sorted_seconds": [
+              1.6975635420000001,
+              1.6994298749999999,
+              1.6995535,
+              1.700271708,
+              1.700373333,
+              1.701196041,
+              1.7041039580000001,
+              1.7152767500000001,
+              1.7206856670000001,
+              1.753949125
+            ]
+          }
+        ],
+        "speedup_ratio": 1.700658391452227,
+        "percent_time_reduction": 41.19924347969261,
+        "role": "timing"
+      },
+      {
+        "id": "d750-30",
+        "source_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+        "image_sha256": "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918",
+        "size": [
+          6016,
+          4016
+        ],
+        "warmups": 3,
+        "methods_before_after": [
+          {
+            "count": 30,
+            "median_seconds": 1.5653584585,
+            "p95_seconds": 1.569962625,
+            "MAD_seconds": 0.0009651459999999723,
+            "sorted_seconds": [
+              1.563541375,
+              1.5638658749999998,
+              1.5641586250000001,
+              1.564159,
+              1.564265458,
+              1.564521167,
+              1.564651875,
+              1.564745708,
+              1.564771833,
+              1.564884834,
+              1.56491325,
+              1.564945875,
+              1.565011291,
+              1.565238667,
+              1.5653154169999999,
+              1.5654015000000001,
+              1.565418875,
+              1.5658160410000002,
+              1.565955208,
+              1.566019416,
+              1.5664677500000002,
+              1.5665555,
+              1.566594667,
+              1.5666845409999999,
+              1.56692725,
+              1.567586542,
+              1.5680889169999999,
+              1.568121,
+              1.569962625,
+              1.588014166
+            ]
+          },
+          {
+            "count": 30,
+            "median_seconds": 0.9324983755,
+            "p95_seconds": 0.936514375,
+            "MAD_seconds": 0.0013030205000000294,
+            "sorted_seconds": [
+              0.928563542,
+              0.929297,
+              0.930408125,
+              0.930546166,
+              0.930776125,
+              0.930905084,
+              0.931140417,
+              0.931187625,
+              0.931402167,
+              0.931457917,
+              0.9316015,
+              0.931656959,
+              0.931733042,
+              0.932173583,
+              0.932247459,
+              0.932749292,
+              0.9328515,
+              0.932877625,
+              0.9330005,
+              0.933084083,
+              0.933214375,
+              0.933273584,
+              0.933793666,
+              0.933819167,
+              0.934054709,
+              0.934163292,
+              0.934208584,
+              0.934238208,
+              0.936514375,
+              0.93904375
+            ]
+          }
+        ],
+        "speedup_ratio": 1.6786715126025438,
+        "percent_time_reduction": 40.429083802724406,
+        "role": "timing"
+      }
+    ],
+    "equivalence_only": [
+      {
+        "id": "d800-12",
+        "source_sha256": "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+        "image_sha256": "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c",
+        "size": [
+          7360,
+          4912
+        ],
+        "role": "equivalence-only"
+      },
+      {
+        "id": "d750-dng",
+        "source_sha256": "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+        "image_sha256": "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d",
+        "size": [
+          6016,
+          4016
+        ],
+        "role": "equivalence-only"
+      },
+      {
+        "id": "xt5-dng",
+        "source_sha256": "e399eb0b3bab9c76e1dabd61bc06a47750af194eea7819f76b2be03ef8cb6bcd",
+        "image_sha256": "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989",
+        "size": [
+          5152,
+          7728
+        ],
+        "role": "equivalence-only"
+      }
+    ],
+    "equivalence_only_note": "D800 12-bit and both DNG inputs have one untimed-for-inference check per method, no reported performance conclusion.",
+    "exclusion": {
+      "id": "d750-01",
+      "reason": "The first paired run was started before the GUI/surface check had been confirmed complete; discard the entire first input timing and rerun it after all other checks. Decision recorded before inspecting its timing distribution.",
+      "replacement_required": false,
+      "replacement_completed": true,
+      "replacement_records": "paired-repeat-d750-01.jsonl"
+    },
+    "excluded_attempts_preserved": "var/engine-perf-20261014/paired-initial.json and paired-d750-01.jsonl; complete first input rerun after all GUI checks, decision recorded before inspecting its distribution.",
+    "limits": [
+      "Warm-cache direct-engine development, excluding file read, hashing, IPC and GUI.",
+      "No thermal control or cold-start qualification. Timing covers these known input files only, not independent camera-wide samples.",
+      "The optimization was selected using some of these files; the final repeated run quantifies this workload, not an unseen performance holdout.",
+      "p95 is the nearest-rank empirical quantile; 10 samples for D800/RAF give a coarse estimate.",
+      "No current timing comparison to the legacy engine; older XPC/native-crop measurements have different boundaries."
+    ]
+  },
+  "bundle_functional": {
+    "passed": true,
+    "inputs": 8,
+    "formats": [
+      "DNG Bayer",
+      "DNG X-Trans",
+      "NEF D750 FX lossless 14-bit",
+      "NEF D800 FX lossless 12/14-bit",
+      "RAF X-T5 lossy 14-bit"
+    ],
+    "slots": 2,
+    "repack_and_reopen_exact": true,
+    "slots_pixels_exact": true,
+    "WB_auto_and_patch": {
+      "accepted_repack_exact": 30,
+      "matched_explicit_refusals": 2
+    },
+    "WB_probe_decode_match": true,
+    "RAF_cancel_and_restart": true,
+    "exports": {
+      "count": 32,
+      "formats": [
+        "PNG16",
+        "TIFF16"
+      ],
+      "long_edge": 1024,
+      "maximum_error_u16": 0
+    },
+    "CPU_recycles": 16
+  },
+  "verification": {
+    "raw_unit_tests": 96,
+    "raw_integration_fixture_tests": 18,
+    "additional_test": "horizontal_blocks_match_literal_windows_at_every_partial_block_length: widths 1..41, all 40 Bayer/X-Trans phases, negative/headroom/zero values.",
+    "frozen_model_equivalence_test": "cached_ranges_and_early_rejection_match_frozen_equations_exactly",
+    "workspace_clippy_all_targets_warnings_denied": true,
+    "fmt": true,
+    "release_build": true,
+    "installed_GUI_screenshots": 8,
+    "GUI_surface_sampling_passed": true
+  },
+  "installed_bundle": {
+    "path": "dist/TrueRenderer.app",
+    "candidate": "var/engine-perf-20261014/release/TrueRenderer.app",
+    "previous_preserved": "var/engine-perf-20261014/previous.app",
+    "files_and_modes_exact": 23,
+    "sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "dfe5477a033d7e356cbbdec005eed8161fa0c33cbc3651efaa60e87c360157e1",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "5d9ec07f67cf4518667bf18b09955e083170834d3d0d331fbc5dff5b8c9ddef0",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "2e71a44bca20592935d44484c992af40eec69fafec0d0295859f5ee92b30bded",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "cdbb5870c48d1ea39135ac6a3db3f103b316fcdd24a3ce1c3eabb634e33db8d5",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "00371a311758617651f141597aefe8d5e541361917fd265e77d2b4ef4342a899",
+        "mode": 420
+      }
+    }
+  },
+  "xpc_qualification": {
+    "passed": true,
+    "two_distinct_processes": true,
+    "other_isolate_survived": true,
+    "corpus_images_checked": 12,
+    "production_rejects_fault_injection": true,
+    "full_sandbox_gate_passed": false,
+    "memory_limit_is_hard_kernel_cap": false
+  },
+  "quality_and_legacy": {
+    "image_quality_change_in_this_increment": "None measured or intended: the frozen outputs are identical, preserving earlier HL4/DR7 improvements and failures.",
+    "legacy_retained": true,
+    "legacy_not_calibrated_truth": true,
+    "prior_comparison_report": "reports/experimental-highlight-fidelity-macos-2026-10-14.json",
+    "open": [
+      "59 region/metric peak comparisons on 32 scenes remain worse than HL2; unchanged by this optimization.",
+      "Some local maxima still favour legacy rendering; fully clipped regions without an informative boundary remain ambiguous, including coloured lights.",
+      "Measured camera profiles, physical targets/illuminants, extended independent photographic validation and adequate X-T5 registration remain open.",
+      "No general colour, detail, noise or speed superiority claim; global R0-R4/SF and sandbox/pressure gates remain open."
+    ]
+  },
+  "durable_data": {
+    "durable_files": 181,
+    "all_hashes_sizes_and_path_set_unchanged": true,
+    "original_inputs": 8,
+    "all_input_hashes_unchanged": true
+  },
+  "source_sha256": {
+    "crates/tr-raw/src/jpeg.rs": "5ea0df9400f51b09d8bbdbc5a84906f0175c495d45b8fe808fdb51d75c00b8d5",
+    "crates/tr-raw/src/export.rs": "101e08686b7f256f22dcea299b6f88740a7a5e025eecf25835284b2ec25ce036",
+    "crates/tr-raw/src/wb.rs": "a4e12365354b72dd00b410887a9bc005ea139603d8eee3cf1dfd882dc99f3675",
+    "crates/tr-raw/src/color.rs": "4792f42736503cf239fcc9b300887e2d804bdb0f1f990e32e17fc42c5c5f9f1a",
+    "crates/tr-raw/src/render.rs": "fc5351b96ac11c9f2e34775dcef4acabd64d685e4a64346e40b339cc5eee0e45",
+    "crates/tr-raw/src/edge_planes.rs": "75f2d3ad9e396ea1ec4ecdc039113c0defdb5f5df8f1477d78898ce4e91ecbe9",
+    "crates/tr-raw/src/highlights.rs": "39ba85684746cc8f10bc88faac3c41a18ce1e137617257342c1a22de246f3e23",
+    "crates/tr-raw/src/lib.rs": "32cda6785bfeac4292b0847532937f58adf42969e77d31abfedfbf8ed9d26809",
+    "crates/tr-raw/src/tiff.rs": "342687d9b2d9a0b4ba0a8e65d23520b2e5ef5438d91d102db90e2c8e358f4beb",
+    "crates/tr-raw/src/nef.rs": "9f73c57b811f2bdd8cf6dd9d4b4f5849a8231228510175dd8efb789a274cf656",
+    "crates/tr-raw/src/cfa.rs": "d172498b7015c6765fc73116e99ba5e0dbf2cd6566c140e9652669269deb3e3f",
+    "crates/tr-raw/src/dng.rs": "bd5044828b8ada7389f85093d80446caa49801a198e83f1225b57e3f99267fdc",
+    "crates/tr-raw/src/xtrans.rs": "aa6ebd8a3937649ce1bd6ea41eb9769134fa04e3474b5a03550840b6d2e198f2",
+    "crates/tr-raw/src/xtrans_steps.rs": "254494413f4f9bc348d7a03fb7bed00248acc5f3f09d0effff32af5eb5487775",
+    "crates/tr-raw/src/raf.rs": "1abaec5e8312e842f7e7d4af1eb652c18a0f697d03365e8dad848f3cfee85300",
+    "crates/tr-raw/src/xtrans_dr6/residual.rs": "e2146c1d390c7d3756e394305592f89c7f9767c347ba42c6732e20670155113d",
+    "crates/tr-raw/src/xtrans_dr6/bounded.rs": "0e4d4143cbc16f98f9ba5530aca54fb1feedaf4e9cf03bdb5f5fab7464c1612f",
+    "crates/tr-raw/src/xtrans_dr6/mod.rs": "973d9ea86a871a923ce01898979ba337c00ff03c75eb04f37986ec0a1a605810",
+    "crates/tr-raw/src/wb/tests.rs": "7b9fd3f0c08c2b956d5fb3453b327fae4e2994ab35dc56ae36848c23c582f8ad",
+    "crates/tr-raw/src/highlights/edge.rs": "c35fd64f38022087ca3644cd912da125fe30944b68ee465ee84af5f1f0334dd1",
+    "crates/tr-raw/src/highlights/metadata.rs": "861bb5eb034503759508d418838f9bfda5d2007e709aafa143f3f0504beda088",
+    "crates/tr-raw/src/highlights/occlusion.rs": "a08b7e2cf3fb7e28348fd77aa42ded2f526d95fa61b96d0ed17abdce98debe72",
+    "crates/tr-raw/src/highlights/tests.rs": "ed1c5fbeb03e1e83837f841944ce4c299b48739887d11cf1d58c0e85cb1001d3"
+  },
+  "artifacts": {
+    "var/engine-perf-20261014/freeze.json": "9522013b4861fa9f57560761d0cfe60d3cd6609bd53d96858b60f224e36e4119",
+    "var/engine-perf-20261014/candidate-freeze.json": "f245e6a72a7861d2ce6b9c1db8de409bf4116f6845783859a19973df58a5e73d",
+    "var/engine-perf-20261014/profile-baseline.txt": "c0a8eacd16f0f39614302ceefa97711592e7de5ed441b33a0db6f46e521892da",
+    "var/engine-perf-20261014/profile-candidate.txt": "23d176d936e9c55e3bbac63c5383a9edda27aa277d03fcb996d475656831b5e8",
+    "var/engine-perf-20261014/screening-d750.json": "3a55d0a8d54747c521cb7621b75398b9c87710c78f1bdfb97c9865392d562686",
+    "var/engine-perf-20261014/screening-sequential.json": "e12afad685d0e58efa132168cdcf782eebed4e3f13c63d93816d1769d9650fa3",
+    "var/engine-perf-20261014/screening-cfa.json": "1c483d69dc23e2ccd16a8a6adfd8fc2dca1cb41f198f5d7b5b10f0f844e49e07",
+    "var/engine-perf-20261014/screening-selected.json": "872debd5528dc842624d0ffd044871f3bd8a733bb9965b801eec32dc94487ca5",
+    "var/engine-perf-20261014/equivalence-summary.json": "afbab82064d219dcef372167fad1444647fc7d589c7bb1453db3d231c6248eea",
+    "var/engine-perf-20261014/equivalence-complete.json": "cf4d64c8cbbd350aa7a83070bc80bc92c9dec693ac92f3b851d027ef30b36a07",
+    "var/engine-perf-20261014/equivalence-complete.log": "40867ea0401a3d2f99a57f3b07629fdac409bc5bdd6bd0206df951d8c2c392d4",
+    "var/engine-perf-20261014/raw-tests-final.log": "5ee446732e6d00fb7b2a9862360551f25d9b79c68815194c5b4d1378100dd8ee",
+    "var/engine-perf-20261014/clippy.log": "b553be6378a4af26a82ab294f976688e68bc26ec431e5e21b5f7b2dd9772079c",
+    "var/engine-perf-20261014/build-release.log": "50074144cb6d3fa400a4cf1374c4107e2dac078fafb9592d50c1b505cc9b3f44",
+    "var/engine-perf-20261014/build-pair-final.log": "306b5edf3d3a583c791960e4949cffe8acfa2279b3a4bc226905008d4e7a5ba6",
+    "var/engine-perf-20261014/bench/Cargo.toml": "7ce1af599ea523b3a8379e1f1d07323f1af84a77db8dc0b0fbddbdb1631e7324",
+    "var/engine-perf-20261014/bench/Cargo.lock": "da23e70fdcc0b18a94127ea732064408c1b7577f676e3a25cc493fcc006d236c",
+    "var/engine-perf-20261014/bench/src/main.rs": "0d1fe55d8b9ec74742f3e24318ee9f4a91bc0d2ae204a508fa6a744fc0478914",
+    "var/engine-perf-20261014/bench-target/release/tr-perf-pair": "b432e248dc85d1c061e655b61b921985eb01f6fdcbdad0a71ef8147dc5e39686",
+    "var/engine-perf-20261014/run-pair.py": "20d02cef8e2f355b15de0399cf3ac36c4227f477efdcc61a304458974ee93279",
+    "var/engine-perf-20261014/repeat-excluded.py": "10a3f59fe2f4bbdd61433209d627c5cd111d142db0cd51529321f4f2058af26a",
+    "var/engine-perf-20261014/paired-protocol.json": "03ebdbd0fb4fd09919763b9c586f150b3d4758f54080e6893f68566ba217b156",
+    "var/engine-perf-20261014/paired-report.json": "9b560dd545c69382bbdf1f00e6422e732a580fdcb8c0618bf9a1fb1c1d02d995",
+    "var/engine-perf-20261014/paired-initial.json": "a49c0032442fa05a55d35fb025a304fae90c61315c4dc9dcb8f8174a21d8192a",
+    "var/engine-perf-20261014/timing-exclusion.json": "69e712d76030f99770b12cac317666d7c3a94364f1de64a483c0b0ce5f5fd365",
+    "var/engine-perf-20261014/paired-repeat-d750-01.jsonl": "afdccfe56bb1bb267fc45b02ded58600b9d2416ade864336561dc0cfe141be81",
+    "var/engine-perf-20261014/integration/reports/experimental-private.json": "81818242ae2aeb6973f50699d04059de98e8e163caf887771b670b201c9d5d34",
+    "var/engine-perf-20261014/installed-bundle.json": "69532f344b5acbe5cc2f034e13e0fec3977b335cc9da1961d6b4066ff685b0da",
+    "var/engine-perf-20261014/installed-xpc/reports/xpc-qualification-macos.json": "509531d4f43b3328c51094fa173a8e72133ec454738d86f4c0cfb42e3f4bc152",
+    "var/engine-perf-20261014/installed-xpc/reports/xpc-integration-macos.json": "393e467b7c31e38fa3cb7a5997a87ef997f4afb355daa6530b443ba98c1b19c6",
+    "var/engine-perf-20261014/gui/reports/smoke-macos.json": "4447569fd0dc85dc15d4f24e111e717721c602705990f14617b1f5bb1d1ff870",
+    "var/engine-perf-20261014/gui-surface.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "var/engine-perf-20261014/durable-before.json": "04ee8f07e789bf06292c23b89e86a47395d16bd11c66c9e72e8d558cad273684",
+    "var/engine-perf-20261014/durable-check.json": "cb28bb6ab336a1847fd1e49287db999b9c6d6630f8d9f2d89a8b33b648941c55",
+    "var/engine-perf-20261014/finalize.py": "59d217981ebc0004655d1cdbac4234781cf47b766b6a548da923d943fd0e9128",
+    "var/engine-perf-20261014/paired-d750-01.jsonl": "c7c7c8be327b95826f2bedcbfc0114daf9b2848a7a76225f9896231af41ea43f",
+    "var/engine-perf-20261014/paired-d800-12.jsonl": "35d8c675850794f54e1e682e3c01252521aa0c9d13009b5ca357828c0695ab2f",
+    "var/engine-perf-20261014/paired-d750-dng.jsonl": "25937bb30a9d3df23d5d8cbdee9253def00c799189358a299cdbb36673192a50",
+    "var/engine-perf-20261014/paired-xt5-raf.jsonl": "d6acb62da591b5f04a980d8b72ae8be1a85867f70fffe1cad88b04bb2214d62a",
+    "var/engine-perf-20261014/paired-d750-15.jsonl": "427b0fc3c3a782d401975cd8c59203ec90fb688804fde6798a851c6222506c42",
+    "var/engine-perf-20261014/paired-xt5-dng.jsonl": "1b2ca910cdeecfdcfa8c871832a8bf4eb8f76bd4a45740c0229110ac57c80a3f",
+    "var/engine-perf-20261014/paired-d800-14.jsonl": "6473730c8705d4aa8b81dd68c4ef063e45b529eed6c4b29e7a390a1be5f35f8c",
+    "var/engine-perf-20261014/paired-d750-30.jsonl": "4c8dfb16459615d8d0d53b7175309662df85698f46e2372856868de34b006fc4"
+  }
+}

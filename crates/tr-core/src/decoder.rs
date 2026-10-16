@@ -44,10 +44,10 @@ impl RawEngine {
         match self {
             Self::Apple => "Apple-TR-linear-v1",
             Self::LibRawBilinear => "LibRaw-0.22.2-TR-libraw-linear-v1",
-            Self::LibRawAhd => "LibRaw-0.22.2-TR-ahd-rec2020-v1",
+            Self::LibRawAhd => "LibRaw-0.22.2-TR-ahd-rec2020-sensor-highlights-v2",
             Self::TrueRenderer => "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
             Self::TrueRendererExperimental => {
-                "TRExp-raw3-nikon2-fuji1-lj2-cal1-dir2-xt7-wb3-mat2-hl4-extended1"
+                "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-neutral1-extended1"
             }
         }
     }

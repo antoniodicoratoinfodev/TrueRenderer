@@ -1,0 +1,649 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-15",
+  "completed_at": "2026-10-15T13:17:08.442383+00:00",
+  "recipe": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir4-xt7-wb3-mat2-hl5-extended1",
+  "scope": "Colour-profile arithmetic and reliability; no new calibrated photographic superiority claim.",
+  "source_freeze": {
+    "utc": "2026-10-15T12:57:47.848700+00:00",
+    "validation_seed": 151219,
+    "profiles": 84,
+    "sources": {
+      "crates/tr-core/src/decoder.rs": "6b625dacdf2bfc22062a18d516b80e34ef90bed4fd9c98ca07f35b8618b6e1cc",
+      "crates/tr-raw/research/color_cal1.rs": "4792f42736503cf239fcc9b300887e2d804bdb0f1f990e32e17fc42c5c5f9f1a",
+      "crates/tr-raw/research/color_reference.rs": "f112b77ccca220288c97e8b2562304ff25ced92162d1b664a16c3ecc55b17b47",
+      "crates/tr-raw/src/bayer_clipped_edges.rs": "37b9a9a971ad51fcc553c69c23c3f2d45e42a0451610bc14286fbf25aac04091",
+      "crates/tr-raw/src/cfa.rs": "d172498b7015c6765fc73116e99ba5e0dbf2cd6566c140e9652669269deb3e3f",
+      "crates/tr-raw/src/color.rs": "0c632b4c1d43bccca112d6766fa21358ef81076bcebdad849cce0850e5c0d351",
+      "crates/tr-raw/src/dng.rs": "e6095b0b09d310ae8b4c3e043baf0ba40607139ec5785bc4fe72d3860f1430ff",
+      "crates/tr-raw/src/edge_planes.rs": "cb831ac995e0e789ccd3f5efdda76302e9ed44087f40cb0e11ce1086903932a2",
+      "crates/tr-raw/src/export.rs": "101e08686b7f256f22dcea299b6f88740a7a5e025eecf25835284b2ec25ce036",
+      "crates/tr-raw/src/highlights/edge.rs": "c35fd64f38022087ca3644cd912da125fe30944b68ee465ee84af5f1f0334dd1",
+      "crates/tr-raw/src/highlights/metadata.rs": "861bb5eb034503759508d418838f9bfda5d2007e709aafa143f3f0504beda088",
+      "crates/tr-raw/src/highlights/occlusion.rs": "a08b7e2cf3fb7e28348fd77aa42ded2f526d95fa61b96d0ed17abdce98debe72",
+      "crates/tr-raw/src/highlights/tests.rs": "c3226ac77b354aa8f99f5a5f932b095e1b48ec1fdb5da6707673ae28830e16fe",
+      "crates/tr-raw/src/highlights.rs": "aefe1e67188ef3adc7d7c89fab938f21b53ae1f65fb4755846c5b43026441f2d",
+      "crates/tr-raw/src/jpeg.rs": "5ea0df9400f51b09d8bbdbc5a84906f0175c495d45b8fe808fdb51d75c00b8d5",
+      "crates/tr-raw/src/lib.rs": "20308b51fa8ca9c9af0a59056e3d9a617466faafa89b097ff450ebd5aa08357e",
+      "crates/tr-raw/src/nef.rs": "81d535d2205678de4bb7a45196122f82085d104e19a1d8e53c38f123014538f7",
+      "crates/tr-raw/src/raf.rs": "1abaec5e8312e842f7e7d4af1eb652c18a0f697d03365e8dad848f3cfee85300",
+      "crates/tr-raw/src/render.rs": "d7d418dfb945c1ca5c004378cec281b3017699c736c5bc2a0e6d8ca2e3848813",
+      "crates/tr-raw/src/tiff.rs": "342687d9b2d9a0b4ba0a8e65d23520b2e5ef5438d91d102db90e2c8e358f4beb",
+      "crates/tr-raw/src/wb/tests.rs": "7b9fd3f0c08c2b956d5fb3453b327fae4e2994ab35dc56ae36848c23c582f8ad",
+      "crates/tr-raw/src/wb.rs": "94c20453907f22abbac883d9bf5ece8bbc373624b5265da58ffd962018ad2878",
+      "crates/tr-raw/src/xtrans.rs": "aa6ebd8a3937649ce1bd6ea41eb9769134fa04e3474b5a03550840b6d2e198f2",
+      "crates/tr-raw/src/xtrans_dr6/bounded.rs": "0e4d4143cbc16f98f9ba5530aca54fb1feedaf4e9cf03bdb5f5fab7464c1612f",
+      "crates/tr-raw/src/xtrans_dr6/mod.rs": "973d9ea86a871a923ce01898979ba337c00ff03c75eb04f37986ec0a1a605810",
+      "crates/tr-raw/src/xtrans_dr6/residual.rs": "e2146c1d390c7d3756e394305592f89c7f9767c347ba42c6732e20670155113d",
+      "crates/tr-raw/src/xtrans_steps.rs": "8cb1e965413315e41c9e47185a5da99e30351b65bce75acc95c8353aed38a44d",
+      "scripts/generate-dng-color-vectors.py": "35ca805cef2552befb6055a5ef088b3ab808e2102c1bfe4ed80929f629a8df47"
+    }
+  },
+  "changes": [
+    "Validate every ForwardMatrix endpoint against unit-neutral to D50 before interpolation. Preserve the existing 0.001 tolerance and numerical path for valid profiles.",
+    "Keep the original first 64 WB iterations bit exact. Thereafter use a bounded two-residual extrapolation only if actual equations halve the residual and numerical/physical guards pass; original damping otherwise. Total cap 256, same convergence threshold 1e-10.",
+    "Version calibration admission/solver in recipe and cache; preserve previous calibration code for historical HL comparisons."
+  ],
+  "negative_evidence": {
+    "invalid_forward_profiles": [
+      {
+        "accepted_after": false,
+        "accepted_before": true,
+        "after_error": "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+        "before_error": null,
+        "id": "cancelled-endpoints",
+        "source_sha256": "112fd19d38780117b2d637af78771eebda25daf299aa52d704abd41fc40c77a6"
+      },
+      {
+        "accepted_after": false,
+        "accepted_before": true,
+        "after_error": "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+        "before_error": null,
+        "id": "invalid-first",
+        "source_sha256": "46f7b313244f30a6074dd9e14712a7e50a1e67dd310cf09b00e1bd2d15990b52"
+      },
+      {
+        "accepted_after": false,
+        "accepted_before": true,
+        "after_error": "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+        "before_error": null,
+        "id": "invalid-second",
+        "source_sha256": "564cf641993731a313667f8cadde5564c8f54d530dbd990535f90996ba60c250"
+      },
+      {
+        "accepted_after": true,
+        "accepted_before": false,
+        "after_error": null,
+        "before_error": "DNG: risoluzione WB non convergente",
+        "id": "slow-valid",
+        "source_sha256": "7acf408a70dea8f36a4ba2de19ee6c68cfd85840c902de2591e7dafb1b99e5c6"
+      }
+    ],
+    "first_cap_extension_rejected": "256 unaccelerated iterations did not pass the first 60-profile verification; one fixed point needs 276 steps. That set was moved to development before selecting the accelerated solver.",
+    "independent_reference_choice": "DNG 1.7.1 pp. 100–103 independently interpolates CM and CC before composition. SDK 1.7.1 composes endpoints first, so its full colour transform is not used as an oracle. Only its temperature calculation supplies CCT.",
+    "first_native_invocation": "Exited before decoding because the temporary root had not been created; rerun after creating the isolated root."
+  },
+  "numerical_reference": {
+    "specification_pdf_sha256": "abdecfd8e104e8b86cc054d3a40b677bb2ebe87131bfde080a1df3ee16eb2f8d",
+    "white_reference": {
+      "reference": "Adobe DNG SDK 1.7.1/2724 dng_temperature only; matrix oracle follows specification, not SDK interpolation of composed matrices.",
+      "temperature_source_sha256": "a747c94d8b56a821631935ed43ff003fbf35a06b6f978160a17310bad66d3427",
+      "adapter_sha256": "8291adcbe421fc8a3ed2d5008d58780c43df3fd0a96cf54dcf0b3545816dd516",
+      "binary_sha256": "52f36e18f81b0a9b8f86b9e2d8267f393067ec1b38c0d11cb29c923cb6737166",
+      "whites": [
+        {
+          "xy": [
+            0.44757,
+            0.40745
+          ],
+          "cct": 2855.75533700771
+        },
+        {
+          "xy": [
+            0.3457,
+            0.3585
+          ],
+          "cct": 5000.706605070579
+        },
+        {
+          "xy": [
+            0.3127,
+            0.329
+          ],
+          "cct": 6503.70718479529
+        },
+        {
+          "xy": [
+            0.3,
+            0.31
+          ],
+          "cct": 7528.144997344039
+        },
+        {
+          "xy": [
+            0.46,
+            0.41
+          ],
+          "cct": 2693.3210027608307
+        },
+        {
+          "xy": [
+            0.39,
+            0.37
+          ],
+          "cct": 3690.4484611335856
+        },
+        {
+          "xy": [
+            0.33,
+            0.36
+          ],
+          "cct": 5600.543822310803
+        },
+        {
+          "xy": [
+            0.36,
+            0.34
+          ],
+          "cct": 4372.662380944598
+        },
+        {
+          "xy": [
+            0.41,
+            0.39
+          ],
+          "cct": 3392.605069977946
+        },
+        {
+          "xy": [
+            0.32,
+            0.33
+          ],
+          "cct": 6111.38430453358
+        },
+        {
+          "xy": [
+            0.37,
+            0.36
+          ],
+          "cct": 4180.513059896599
+        },
+        {
+          "xy": [
+            0.34,
+            0.35
+          ],
+          "cct": 5193.9590642838075
+        }
+      ]
+    },
+    "generator_sha256": "35ca805cef2552befb6055a5ef088b3ab808e2102c1bfe4ed80929f629a8df47",
+    "decimal_precision": 70,
+    "development": [
+      {
+        "color_source_sha256": "0c632b4c1d43bccca112d6766fa21358ef81076bcebdad849cce0850e5c0d351",
+        "max_absolute_fp32_error": 6.030124186651165e-07,
+        "max_fraction_of_tolerance": 0.11801342521274387,
+        "max_matrix_error_with_fp32_gains": 1.3239664475861446e-07,
+        "max_neutral_error": 4.440892098500626e-16,
+        "negative_components_preserved": 306,
+        "over_one_components_preserved": 462,
+        "passed": true,
+        "previously_accepted_calibrations_bit_exact": 35,
+        "previously_rejected_calibrations_now_match_reference": 1,
+        "profiles": 12,
+        "reference_sha256": "a2fb881106ec391032850f996945175478d394c8aa30122fd27cbf20039ac600",
+        "scope": "Matrix arithmetic only; no photographic calibration, demosaic/HL quality or general renderer superiority",
+        "seed": 151017,
+        "tolerance": "2e-6 + 2e-6 * abs(reference)",
+        "vectors": 432
+      },
+      {
+        "color_source_sha256": "0c632b4c1d43bccca112d6766fa21358ef81076bcebdad849cce0850e5c0d351",
+        "max_absolute_fp32_error": 6.361767885820768e-07,
+        "max_fraction_of_tolerance": 0.11848131119646123,
+        "max_matrix_error_with_fp32_gains": 1.354105139128592e-07,
+        "max_neutral_error": 8.881784197001252e-16,
+        "negative_components_preserved": 1585,
+        "over_one_components_preserved": 2310,
+        "passed": true,
+        "previously_accepted_calibrations_bit_exact": 176,
+        "previously_rejected_calibrations_now_match_reference": 4,
+        "profiles": 60,
+        "reference_sha256": "c406502bb2664dfaef7bd81825c7e6e29ce7172542bf2e29a8cfdd90c005c68e",
+        "scope": "Matrix arithmetic only; no photographic calibration, demosaic/HL quality or general renderer superiority",
+        "seed": 151111,
+        "tolerance": "2e-6 + 2e-6 * abs(reference)",
+        "vectors": 2160
+      }
+    ],
+    "post_freeze_validation": {
+      "color_source_sha256": "0c632b4c1d43bccca112d6766fa21358ef81076bcebdad849cce0850e5c0d351",
+      "max_absolute_fp32_error": 9.04325254680316e-07,
+      "max_fraction_of_tolerance": 0.13239080684402163,
+      "max_matrix_error_with_fp32_gains": 1.615758362660813e-07,
+      "max_neutral_error": 8.881784197001252e-16,
+      "negative_components_preserved": 2118,
+      "over_one_components_preserved": 3215,
+      "passed": true,
+      "previously_accepted_calibrations_bit_exact": 243,
+      "previously_rejected_calibrations_now_match_reference": 9,
+      "profiles": 84,
+      "reference_sha256": "37af85378a387589e7c209ab0f9a18f8b9e7af44ac0c36f935a845d46933b376",
+      "scope": "Matrix arithmetic only; no photographic calibration, demosaic/HL quality or general renderer superiority",
+      "seed": 151219,
+      "tolerance": "2e-6 + 2e-6 * abs(reference)",
+      "vectors": 3024
+    },
+    "disjointness": {
+      "development_unique_profiles": 72,
+      "validation_unique_profiles": 84,
+      "shared_profile_parameters": 0,
+      "whites_reused": true,
+      "scope": "Generated profile parameters and colour samples are distinct; white coordinates/CCT, model and generator reused. Not independent photographic subjects."
+    },
+    "reference_and_fixture_regenerated_byte_exact": true
+  },
+  "HL_regression": [
+    {
+      "cases": 4606,
+      "valid_RAW_sites_changed": 0,
+      "exact_DNG_reopens": 4600,
+      "complete_source_records_identical": true,
+      "before_report_sha256": "6fba2aff7d78b2ba408bf6c358ef29837c29aca1bf391f8cce277b42294d7d2d",
+      "after_report_sha256": "83da6abd9ecb80478c6e8a7d67820f4281fea4c5ac5acec5de2f79f76f3d56a4"
+    },
+    {
+      "cases": 808,
+      "valid_RAW_sites_changed": 0,
+      "exact_DNG_reopens": 808,
+      "complete_source_records_identical": true,
+      "before_report_sha256": "d7fe672fc5f026cfdf89bac8f1d47bac4af9e46b3b53ae4bbffaea6f7dfa749d",
+      "after_report_sha256": "42989dc2beee911e0c8fa4343560b3a5efb617745d7504abbc0067e453da63cc"
+    }
+  ],
+  "photographic_full_outputs": [
+    {
+      "id": "d750-01",
+      "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+      "image_sha256_before_after": [
+        "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2",
+        "14991f859c7fd4b4506f3e5412517ef2912e0451f10ad57c205a28d27db7d6e2"
+      ],
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "d800-12",
+      "source_sha256": "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+      "image_sha256_before_after": [
+        "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c",
+        "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c"
+      ],
+      "size": [
+        7360,
+        4912
+      ],
+      "scratch_peak_bytes_before_after": [
+        806956246,
+        806956246
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "d750-dng",
+      "source_sha256": "5a7d53f0a3e66a3176af714c618c98f58b8de273dbc5e5ffbc0d383ddb9f547d",
+      "image_sha256_before_after": [
+        "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d",
+        "6a3ee34a3e9c9aa8deaed2af5886ff737b50fd226d69b22c3a30ee6b5da9250d"
+      ],
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "xt5-raf",
+      "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+      "image_sha256_before_after": [
+        "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c",
+        "848cb207fd8a1db33ad47fa61968a35d7a0542ac0add50d80440e38b401c540c"
+      ],
+      "size": [
+        5152,
+        7728
+      ],
+      "scratch_peak_bytes_before_after": [
+        1040891456,
+        1040891456
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "d750-15",
+      "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+      "image_sha256_before_after": [
+        "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a",
+        "fe5f98429178dc6b238f0834c77819326f27e270e2b8c601df9980fd4130197a"
+      ],
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "xt5-dng",
+      "source_sha256": "e399eb0b3bab9c76e1dabd61bc06a47750af194eea7819f76b2be03ef8cb6bcd",
+      "image_sha256_before_after": [
+        "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989",
+        "5b216b64e898ff2bdec6598e108e22a3322e7cb879f71f98477a7f1e92834989"
+      ],
+      "size": [
+        5152,
+        7728
+      ],
+      "scratch_peak_bytes_before_after": [
+        1032155608,
+        1032155608
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "d800-14",
+      "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+      "image_sha256_before_after": [
+        "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902",
+        "30ded9f2c6df6c1c9a2e1309579635f28401ea15a8b61919386bf62b77d00902"
+      ],
+      "size": [
+        7360,
+        4912
+      ],
+      "scratch_peak_bytes_before_after": [
+        806956246,
+        806956246
+      ],
+      "output_identical": true
+    },
+    {
+      "id": "d750-30",
+      "source_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+      "image_sha256_before_after": [
+        "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918",
+        "c0f35eb2bb28ad60586a49bd4ab36f1c04eb08ef4a30ad8719d9492fd2535918"
+      ],
+      "size": [
+        6016,
+        4016
+      ],
+      "scratch_peak_bytes_before_after": [
+        562476040,
+        562476040
+      ],
+      "output_identical": true
+    }
+  ],
+  "legacy_repeat": {
+    "cases": 64,
+    "same_RAW_reference_geometry_WB": true,
+    "legacy_and_autonomous_hashes_and_all_colour_detail_metrics_reproduced": true,
+    "new_photographic_truth": false,
+    "previous_broader_report": "experimental-renderer-recomparison-macos-2026-10-15.json",
+    "meaning": "Current calibration fixes preserve both the established autonomous advantages and the remaining local legacy advantages; no new quality ranking."
+  },
+  "verification": {
+    "passed": true,
+    "ordinary_Rust_tests": 576,
+    "ignored_integration_tests": 14,
+    "Python_tests": 34,
+    "worker_checks": 8,
+    "resampling_signals": 24,
+    "native_smoke_and_surface": true,
+    "fmt_Clippy": true
+  },
+  "native_formats": {
+    "complete": true,
+    "passed": true,
+    "formats": {
+      "dng": 2,
+      "nef": 5,
+      "raf": 1
+    },
+    "inputs": 8,
+    "slot_cases": 16,
+    "refusal_controls": 0,
+    "refusal_messages": [],
+    "originals_unchanged": true,
+    "slots_pixels_exact": true,
+    "repack_pixels_exact": true,
+    "wb_probe_decode_match": true,
+    "WB_accepted": 30,
+    "WB_refused": 2,
+    "exports": 32,
+    "max_export_error_u16": 0,
+    "exports_by_format": {
+      "Png16": 16,
+      "Tiff16": 16
+    },
+    "cancelled_raf_workers": 2,
+    "cpu_recycles": 16,
+    "maximum_observed_decoder_RSS_bytes": 902594560,
+    "recipes": [
+      "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir4-xt7-wb3-mat2-hl5-extended1"
+    ]
+  },
+  "native_profile_controls": {
+    "complete": true,
+    "passed": true,
+    "formats": {
+      "dng": 1,
+      "nef": 0,
+      "raf": 0
+    },
+    "inputs": 1,
+    "slot_cases": 2,
+    "refusal_controls": 6,
+    "refusal_messages": [
+      "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+      "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+      "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+      "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+      "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante",
+      "DNG: ForwardMatrix non normalizzata D50 al proprio illuminante"
+    ],
+    "originals_unchanged": true,
+    "slots_pixels_exact": true,
+    "repack_pixels_exact": true,
+    "wb_probe_decode_match": true,
+    "WB_accepted": 2,
+    "WB_refused": 2,
+    "exports": 4,
+    "max_export_error_u16": 0,
+    "exports_by_format": {
+      "Png16": 2,
+      "Tiff16": 2
+    },
+    "cancelled_raf_workers": 0,
+    "cpu_recycles": 0,
+    "maximum_observed_decoder_RSS_bytes": 11255808,
+    "recipes": [
+      "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir4-xt7-wb3-mat2-hl5-extended1"
+    ]
+  },
+  "bundle": {
+    "installed": "dist/TrueRenderer.app",
+    "candidate": "var/engine-precision-20261015/release/TrueRenderer.app",
+    "previous": "var/engine-precision-20261015/previous.app",
+    "file_sha256_and_modes": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "25c0acc79a270b7fca4c41a969ef3ce67c7c451e7de882d1ed52d56db17d5716",
+        "mode": 493
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "53919fde8832c67afb97c9fab875ce3b544065b5fd1f7d4cd5d630d7fffa4cd6",
+        "mode": 493
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "dcfde1d1cce6704e05e9c4d4a5a4cc28c8c0a2fc66a5c2374e7982f30b96e31a",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "7683f6d5ddfe17cd1c9bfe39ef3b3b7b066b28c7e822ddaa56fa011ef470c42e",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "f4eb5404c45df18399bb8c4de6860f8dd80683549c62501e704ff3b626ce91b4",
+        "mode": 420
+      }
+    }
+  },
+  "GUI": {
+    "passed": true,
+    "screenshots": 8,
+    "surface_passed": true
+  },
+  "preservation": {
+    "durable_files": 181,
+    "photographic_inputs": 8,
+    "all_SHA256_unchanged": true,
+    "legacy_engine_retained": true,
+    "LICENSE_original_architecture_and_third_party_unchanged": true,
+    "commit_or_push": false
+  },
+  "limits": [
+    "Synthetic vectors verify matrix arithmetic, not measured camera profiles or DeltaE colour accuracy. No calibrated target capture, spectral/LED characterization or independent photographic acquisition added.",
+    "White coordinates and CCT, model and generator reused; final profile coefficients and colour vectors generated after source freeze, separate from development.",
+    "WB convergence remains bounded and does not prove uniqueness of the inferred white; malformed/out-of-domain and non-convergent profiles still fail explicitly.",
+    "No new detail/noise/highlight improvement claimed: every previously qualified photographed and analytical output checked here is unchanged.",
+    "Legacy still has local advantages on rejected boundaries, texture and complete clipping; ten previously tracked HL2 peaks on seven signals remain. Universal superiority is not demonstrated.",
+    "No new performance qualification: full-output pairs have one repetition and ran with concurrent verification. Earlier D750 legacy timing advantage remains open. Raster memory plans unchanged; observed RSS is not pressure/sandbox release qualification.",
+    "D40 and postponed new-format/compatibility/fuzz/Windows work excluded; no R0–R4 or Standard/Reference gate closed."
+  ],
+  "evidence": {
+    "var/engine-precision-20261015/source-before.json": "75d88c7ab2b061e3f7d66102157f974481de07c7a06dfe4333df4981bcda1f98",
+    "var/engine-precision-20261015/selected-freeze.json": "322dfa54609ebe9bdeaf352ebc93feeb2e9907bc0729a82b1a2fe68ed87a3a6e",
+    "var/engine-precision-20261015/rejected-256-freeze.json": "6da244af965d8323439bc6e31842ecd416692303e96f3b61059bae3f5ad47695",
+    "var/engine-precision-20261015/before-regressions.log": "c5cd5aecc5a6c70b0d25c91f51172282edd3b46c9d6300f086d42a6589b13097",
+    "var/engine-precision-20261015/after-regressions.log": "d736eee5e13c60b6b2a98b141e3df8695b2495629843f4e6ff6eb612a1786bbb",
+    "var/engine-precision-20261015/color-before-solver.log": "a23f43e7f6309036979b653fae4841075669ee6f57ce1e67c0eda3b4a4f7524d",
+    "var/engine-precision-20261015/color-validation.log": "16b31ed81c71b9eb3613c28e4a0c6d27c85c95e01885d1c852f52a87225f0cbd",
+    "var/engine-precision-20261015/solver-diagnostic-25.json": "ecb65c1d362c06107aa7625863e3a720d976d15a3272ae7a474672893b139e25",
+    "var/engine-precision-20261015/convergence-development.json": "542cd6ae379de2d9ea46f4596162b0f32963b74166a47e48cd16abc811eeaff3",
+    "var/engine-precision-20261015/whites.json": "df0d5e303f176198193a79eb787dbe726209137e8578273f861ae2967c47c286",
+    "var/engine-precision-20261015/temperature-reference.cpp": "8291adcbe421fc8a3ed2d5008d58780c43df3fd0a96cf54dcf0b3545816dd516",
+    "var/engine-precision-20261015/temperature-reference": "52f36e18f81b0a9b8f86b9e2d8267f393067ec1b38c0d11cb29c923cb6737166",
+    "var/engine-precision-20261015/color-initial-vectors.json": "a2fb881106ec391032850f996945175478d394c8aa30122fd27cbf20039ac600",
+    "var/engine-precision-20261015/color-initial-final.json": "2e6478b074084e576111c132fef9dead4c659d35569b832308504778f77e0475",
+    "var/engine-precision-20261015/color-validation-vectors.json": "c406502bb2664dfaef7bd81825c7e6e29ce7172542bf2e29a8cfdd90c005c68e",
+    "var/engine-precision-20261015/color-development-expanded.json": "cb5fe270c012febefc759659febbe07f57022453dafdfdfdc6a19278b1448891",
+    "var/engine-precision-20261015/color-final-vectors.json": "37af85378a387589e7c209ab0f9a18f8b9e7af44ac0c36f935a845d46933b376",
+    "var/engine-precision-20261015/color-final.json": "e37db1927af9c8d487a3381763a016900e7eeaa257732e575131a7d60d7dad6d",
+    "var/engine-precision-20261015/validation-disjointness.json": "ba3d2902af7a3b83440335ed842d506fa6cd3b9649e0ef941e2b871081bf5ada",
+    "var/engine-precision-20261015/raw-tests-final.log": "d092abbbd55612fa85289d5ffa9ddff67b0d7f5ef345a88804fb9e64cf740278",
+    "var/engine-precision-20261015/verify.log": "7322364aec9017ec74125aa65bc8f50e65afe35ae8096cfba29ac1fd91f25b17",
+    "var/engine-precision-20261015/verify-summary.json": "17bc9719e726717920eab8742b10bbb49c18e271d9d1241d44d734d5d610c357",
+    "var/engine-precision-20261015/paired-report.json": "0601d43aa43e5bc41e24aa5682a123899f2ba665d877024543df8cd52c33bd23",
+    "var/engine-precision-20261015/hl-regression.json": "83da6abd9ecb80478c6e8a7d67820f4281fea4c5ac5acec5de2f79f76f3d56a4",
+    "var/engine-precision-20261015/hl-previous-holdout.json": "42989dc2beee911e0c8fa4343560b3a5efb617745d7504abbc0067e453da63cc",
+    "var/engine-precision-20261015/profile-fixtures/report.json": "733fd4e66e726be1dbc255798b68e11a3ebb88eb6701c29aad29c1d17314a862",
+    "var/engine-precision-20261015/integration/reports/experimental-private.json": "c3d1fe8dc6e3bacd92905b68208db0b7070206688bd00e4e9e6f788ff851b0ef",
+    "var/engine-precision-20261015/profiles-xpc/reports/experimental-private.json": "0a0ad8f53b67d9e8f8e31a5956b401bad2814d4386030886d022f07c14450207",
+    "var/engine-precision-20261015/integration-summary.json": "7a315e60524108a0f166cb2384db20961e15f5168dc6b9469d499b32620931cb",
+    "var/engine-precision-20261015/profiles-summary.json": "39bfd12735cef5cfdd3c23f268e6c546885ee29d184c78edfd9627e8772cbeea",
+    "var/engine-precision-20261015/xpc/reports/xpc-qualification-macos.json": "cf866cbdf07ae8fe1ab06d446b7577b65eee6046771acb1a0c1480d87b33641e",
+    "var/engine-precision-20261015/installed-xpc/reports/xpc-qualification-macos.json": "d48c841d7f015042e7da69c2079b0b8472f2c5d00ecd4861f0c33449a5ec7b5e",
+    "var/engine-precision-20261015/installed-bundle.json": "f4fab17771b50fa43db4192107d70481904d73e9e78362d32010f102894f03a8",
+    "var/engine-precision-20261015/gui/reports/smoke-macos.json": "a2da3ee5ddcc4be0255b1aa01016a4a9516c9b92fa6697aeb1b3e822438b9674",
+    "var/engine-precision-20261015/duel-existing/renderer-duel/report.json": "8e54c8313c0ceb3a8e29f50b6c843f8c218d04a11d3e9a4246a1d1279183092b",
+    "var/engine-precision-20261015/finalize.py": "f550a4ac5a1882a1b020a40d357c44f92341fe4aa1e130edb13fd7ac8bb9caf3"
+  }
+}

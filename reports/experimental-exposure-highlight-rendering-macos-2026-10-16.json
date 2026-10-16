@@ -1,0 +1,846 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-16",
+  "scope": "Equal exposure-offset comparison and explicit neutral highlight rendering for unrecoverable sensor clipping in the existing independent engine and LibRaw AHD.",
+  "platform": {
+    "system": "Darwin",
+    "release": "27.0.0",
+    "machine": "arm64"
+  },
+  "production_changed": true,
+  "installed_bundle_changed": true,
+  "independent_engine_was_already_installed": true,
+  "legacy_engine_retained": true,
+  "corpus": {
+    "original_RAW": 40,
+    "Nikon_D750": 30,
+    "Nikon_D800": 9,
+    "Fujifilm_X_T5": 1,
+    "derived_DNG_controls": 3,
+    "new_independent_photographs": 0,
+    "acquisition_exposure_bracket": false
+  },
+  "protocol": {
+    "native": "TRExp-engine-exposure-v1",
+    "analysis": "TR-equal-EV-highlight-review-v1",
+    "EV": [
+      -4.0,
+      -2.0,
+      -1.0,
+      0.0,
+      1.0,
+      2.0
+    ],
+    "method": "EditRecipe::apply; common RGB factor 2^EV, alpha retained, no normalization fit; PNGs are SDR sRGB",
+    "as_shot_WB": "Each engine retains its own interpretation; no WB/profile fit.",
+    "native_engine_brightness_retained": true,
+    "overview_long_edge": 640,
+    "native_crops_per_render": 9,
+    "crop_size": [
+      320,
+      320
+    ],
+    "all_render_inputs_developed_at_native_resolution": true,
+    "exposure_views_are_overviews_and_crops_not_full_size_exports": true,
+    "before_and_after_accepted_each": 198,
+    "expected_refusals_each": 17,
+    "unexpected_failures_each": 0,
+    "verified_exposure_views_both_versions": 23760,
+    "baseline_matches_prior_delivered_campaign": {
+      "overview_files": 198,
+      "all_float_bytes_equal_to_previous_delivered_campaign": true
+    }
+  },
+  "implementation": {
+    "autonomous": "Sensor-code confidence in the 98-100% clipping shoulder, quantized to one byte per site. Protect admitted HL6 recovery and its neighbourhood. Interpolate confidence by CFA channel; after demosaic and before the colour matrix, lift channels with clipping evidence toward the maximum camera RGB. Preserve extended values without inferring clipping from RGB. Above explicit sensor clipping tags remains extended rather than marked clipped.",
+    "AHD": "Capture unbalanced raw2image clipping confidence from local black and LibRaw nominal maximum. Post-interpolation callback applies the camera-RGB neutral fallback before colour conversion. AHD demosaic, highlight=1 scaling and uint16 limits remain. Linear DNG without CFA keeps its previous path.",
+    "cache": "Distinct recipe identities reject previous autonomous/AHD artifacts.",
+    "other_engines": "Apple, LibRaw bilinear and legacy TrueRenderer rendering algorithms unchanged.",
+    "cost": "One confidence byte per sensor site, temporary coarse support maps in the autonomous engine and an extra raw2image preparation in AHD. No controlled performance comparison performed in this campaign."
+  },
+  "within_engine_before_after": [
+    {
+      "engine": "TrueRendererExperimental",
+      "accepted": 43,
+      "recipe_before": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-extended1",
+      "recipe_after": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-neutral1-extended1",
+      "unchanged_overviews": 6,
+      "native_crop_count": 387,
+      "unchanged_native_crops": 343,
+      "native_crop_pixels": 39628800,
+      "changed_native_crop_pixels": 230702,
+      "changed_native_crop_pixel_fraction": 0.00582157420865633,
+      "comparison": "Exact numeric equality of finite fp32 RGB; crop counts describe the sampled regions, not every full-resolution image pixel."
+    },
+    {
+      "engine": "Apple",
+      "accepted": 43,
+      "recipe_before": "Apple-TR-linear-v1",
+      "recipe_after": "Apple-TR-linear-v1",
+      "unchanged_overviews": 43,
+      "native_crop_count": 387,
+      "unchanged_native_crops": 387,
+      "native_crop_pixels": 39628800,
+      "changed_native_crop_pixels": 0,
+      "changed_native_crop_pixel_fraction": 0.0,
+      "comparison": "Exact numeric equality of finite fp32 RGB; crop counts describe the sampled regions, not every full-resolution image pixel."
+    },
+    {
+      "engine": "LibRawAhd",
+      "accepted": 41,
+      "recipe_before": "LibRaw-0.22.2-TR-ahd-rec2020-v1",
+      "recipe_after": "LibRaw-0.22.2-TR-ahd-rec2020-sensor-highlights-v2",
+      "unchanged_overviews": 6,
+      "native_crop_count": 369,
+      "unchanged_native_crops": 324,
+      "native_crop_pixels": 37785600,
+      "changed_native_crop_pixels": 235297,
+      "changed_native_crop_pixel_fraction": 0.0062271606114498645,
+      "comparison": "Exact numeric equality of finite fp32 RGB; crop counts describe the sampled regions, not every full-resolution image pixel."
+    },
+    {
+      "engine": "LibRawBilinear",
+      "accepted": 41,
+      "recipe_before": "LibRaw-0.22.2-TR-libraw-linear-v1",
+      "recipe_after": "LibRaw-0.22.2-TR-libraw-linear-v1",
+      "unchanged_overviews": 41,
+      "native_crop_count": 369,
+      "unchanged_native_crops": 369,
+      "native_crop_pixels": 37785600,
+      "changed_native_crop_pixels": 0,
+      "changed_native_crop_pixel_fraction": 0.0,
+      "comparison": "Exact numeric equality of finite fp32 RGB; crop counts describe the sampled regions, not every full-resolution image pixel."
+    },
+    {
+      "engine": "TrueRenderer",
+      "accepted": 30,
+      "recipe_before": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
+      "recipe_after": "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
+      "unchanged_overviews": 30,
+      "native_crop_count": 270,
+      "unchanged_native_crops": 270,
+      "native_crop_pixels": 27648000,
+      "changed_native_crop_pixels": 0,
+      "changed_native_crop_pixel_fraction": 0.0,
+      "comparison": "Exact numeric equality of finite fp32 RGB; crop counts describe the sampled regions, not every full-resolution image pixel."
+    }
+  ],
+  "fixed_region_diagnostics": [
+    {
+      "id": "raw-11",
+      "engine": "TrueRendererExperimental",
+      "regions": [
+        {
+          "name": "Apertura luminosa sotto la volta: diagnostica",
+          "rect": [
+            275,
+            146,
+            8,
+            8
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              1.9161664098501205,
+              0.8598560355603695,
+              1.65456910058856
+            ],
+            "relative_channel_spread_median": 0.553287923336029,
+            "relative_magenta_excess_median": 0.41347482800483704
+          },
+          "after": {
+            "mean_linear_rgb": [
+              1.97991131991148,
+              1.97991131991148,
+              1.97991131991148
+            ],
+            "relative_channel_spread_median": 0.0,
+            "relative_magenta_excess_median": 0.0
+          },
+          "difference": {
+            "pixels": 64,
+            "changed_pixels": 64,
+            "max_abs_rgb": 1.1282007694244385,
+            "rgb_rmse": 0.674696416509829
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-11",
+      "engine": "Apple",
+      "regions": [
+        {
+          "name": "Apertura luminosa sotto la volta: diagnostica",
+          "rect": [
+            275,
+            146,
+            8,
+            8
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              3.625662252306938,
+              3.625663422048092,
+              3.6256643794476986
+            ],
+            "relative_channel_spread_median": 5.891338332730811e-07,
+            "relative_magenta_excess_median": -3.2729656140872976e-07
+          },
+          "after": {
+            "mean_linear_rgb": [
+              3.625662252306938,
+              3.625663422048092,
+              3.6256643794476986
+            ],
+            "relative_channel_spread_median": 5.891338332730811e-07,
+            "relative_magenta_excess_median": -3.2729656140872976e-07
+          },
+          "difference": {
+            "pixels": 64,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-11",
+      "engine": "LibRawAhd",
+      "regions": [
+        {
+          "name": "Apertura luminosa sotto la volta: diagnostica",
+          "rect": [
+            275,
+            146,
+            8,
+            8
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.9415823835879564,
+              0.42287425184622407,
+              0.8175347000360489
+            ],
+            "relative_channel_spread_median": 0.5519366264343262,
+            "relative_magenta_excess_median": 0.4184361398220062
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.9979729084298015,
+              0.9979726755991578,
+              0.9979729084298015
+            ],
+            "relative_channel_spread_median": 0.0,
+            "relative_magenta_excess_median": 0.0
+          },
+          "difference": {
+            "pixels": 64,
+            "changed_pixels": 64,
+            "max_abs_rgb": 0.5772182941436768,
+            "rgb_rmse": 0.34958346410757135
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-11",
+      "engine": "LibRawBilinear",
+      "regions": [
+        {
+          "name": "Apertura luminosa sotto la volta: diagnostica",
+          "rect": [
+            275,
+            146,
+            8,
+            8
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.9999895095825195,
+              0.9999700784683228,
+              0.9999971389770508
+            ],
+            "relative_channel_spread_median": 2.7060586944571696e-05,
+            "relative_magenta_excess_median": 1.9431170585448854e-05
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.9999895095825195,
+              0.9999700784683228,
+              0.9999971389770508
+            ],
+            "relative_channel_spread_median": 2.7060586944571696e-05,
+            "relative_magenta_excess_median": 1.9431170585448854e-05
+          },
+          "difference": {
+            "pixels": 64,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-11",
+      "engine": "TrueRenderer",
+      "regions": [
+        {
+          "name": "Apertura luminosa sotto la volta: diagnostica",
+          "rect": [
+            275,
+            146,
+            8,
+            8
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              1.8751401863992214,
+              1.8751375675201416,
+              1.8751405514776707
+            ],
+            "relative_channel_spread_median": 1.5861530755501008e-06,
+            "relative_magenta_excess_median": 1.3958147064840887e-06
+          },
+          "after": {
+            "mean_linear_rgb": [
+              1.8751401863992214,
+              1.8751375675201416,
+              1.8751405514776707
+            ],
+            "relative_channel_spread_median": 1.5861530755501008e-06,
+            "relative_magenta_excess_median": 1.3958147064840887e-06
+          },
+          "difference": {
+            "pixels": 64,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-25",
+      "engine": "TrueRendererExperimental",
+      "regions": [
+        {
+          "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              2.2006148614202226,
+              0.89853271317482,
+              1.3868580265045165
+            ],
+            "relative_channel_spread_median": 0.6048876047134399,
+            "relative_magenta_excess_median": 0.21833090484142303
+          },
+          "after": {
+            "mean_linear_rgb": [
+              2.3006879393373216,
+              2.301287319830486,
+              2.3065633458069392
+            ],
+            "relative_channel_spread_median": 0.0,
+            "relative_magenta_excess_median": 0.0
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 1746,
+            "max_abs_rgb": 1.4782779812812805,
+            "rgb_rmse": 0.9870129089975509
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-25",
+      "engine": "Apple",
+      "regions": [
+        {
+          "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              2.6733347226551603,
+              2.674507127557482,
+              2.6802774977684023
+            ],
+            "relative_channel_spread_median": 4.305458105591242e-07,
+            "relative_magenta_excess_median": -3.444366427629575e-07
+          },
+          "after": {
+            "mean_linear_rgb": [
+              2.6733347226551603,
+              2.674507127557482,
+              2.6802774977684023
+            ],
+            "relative_channel_spread_median": 4.305458105591242e-07,
+            "relative_magenta_excess_median": -3.444366427629575e-07
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-25",
+      "engine": "LibRawAhd",
+      "regions": [
+        {
+          "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.9362787686926978,
+              0.3762267897810255,
+              0.5836285724128996
+            ],
+            "relative_channel_spread_median": 0.6104142665863037,
+            "relative_magenta_excess_median": 0.21820281445980072
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.9704808924027851,
+              0.9707769111054284,
+              0.9727723572935377
+            ],
+            "relative_channel_spread_median": 0.0,
+            "relative_magenta_excess_median": 0.0
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 1749,
+            "max_abs_rgb": 0.6241550445556641,
+            "rgb_rmse": 0.4173266140665391
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-25",
+      "engine": "LibRawBilinear",
+      "regions": [
+        {
+          "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.99586777646201,
+              0.9961670133045741,
+              0.9992210597991943
+            ],
+            "relative_channel_spread_median": 2.7060586944571696e-05,
+            "relative_magenta_excess_median": 1.9431170585448854e-05
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.99586777646201,
+              0.9961670133045741,
+              0.9992210597991943
+            ],
+            "relative_channel_spread_median": 2.7060586944571696e-05,
+            "relative_magenta_excess_median": 1.9431170585448854e-05
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-25",
+      "engine": "TrueRenderer",
+      "regions": [
+        {
+          "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              2.1796484714916775,
+              2.180189585821969,
+              2.18469615650177
+            ],
+            "relative_channel_spread_median": 1.6983697150863009e-06,
+            "relative_magenta_excess_median": 1.4860735291222227e-06
+          },
+          "after": {
+            "mean_linear_rgb": [
+              2.1796484714916775,
+              2.180189585821969,
+              2.18469615650177
+            ],
+            "relative_channel_spread_median": 1.6983697150863009e-06,
+            "relative_magenta_excess_median": 1.4860735291222227e-06
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-26",
+      "engine": "TrueRendererExperimental",
+      "regions": [
+        {
+          "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.5335455163036074,
+              0.5800500103746141,
+              0.78061360846247
+            ],
+            "relative_channel_spread_median": 0.3163195848464966,
+            "relative_magenta_excess_median": -0.059621430933475494
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.5335455163036074,
+              0.5800500103746141,
+              0.78061360846247
+            ],
+            "relative_channel_spread_median": 0.3163195848464966,
+            "relative_magenta_excess_median": -0.059621430933475494
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-26",
+      "engine": "Apple",
+      "regions": [
+        {
+          "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.9625472633838653,
+              1.0266501989705221,
+              1.4321915905135019
+            ],
+            "relative_channel_spread_median": 0.32768380641937256,
+            "relative_magenta_excess_median": -0.04474041610956192
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.9625472633838653,
+              1.0266501989705221,
+              1.4321915905135019
+            ],
+            "relative_channel_spread_median": 0.32768380641937256,
+            "relative_magenta_excess_median": -0.04474041610956192
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-26",
+      "engine": "LibRawAhd",
+      "regions": [
+        {
+          "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.2255743817601885,
+              0.2451468601993152,
+              0.33009255622114453
+            ],
+            "relative_channel_spread_median": 0.31639528274536133,
+            "relative_magenta_excess_median": -0.059308867901563644
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.2255743817601885,
+              0.2451468601993152,
+              0.33009255622114453
+            ],
+            "relative_channel_spread_median": 0.31639528274536133,
+            "relative_magenta_excess_median": -0.059308867901563644
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-26",
+      "engine": "LibRawBilinear",
+      "regions": [
+        {
+          "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.5031521740811211,
+              0.5468064707347325,
+              0.736288293327604
+            ],
+            "relative_channel_spread_median": 0.3164360523223877,
+            "relative_magenta_excess_median": -0.059323035180568695
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.5031521740811211,
+              0.5468064707347325,
+              0.736288293327604
+            ],
+            "relative_channel_spread_median": 0.3164360523223877,
+            "relative_magenta_excess_median": -0.059323035180568695
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "id": "raw-26",
+      "engine": "TrueRenderer",
+      "regions": [
+        {
+          "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+          "rect": [
+            365,
+            25,
+            35,
+            50
+          ],
+          "before": {
+            "mean_linear_rgb": [
+              0.5031572639601571,
+              0.546833287698882,
+              0.7363085971559797
+            ],
+            "relative_channel_spread_median": 0.3163936734199524,
+            "relative_magenta_excess_median": -0.059345245361328125
+          },
+          "after": {
+            "mean_linear_rgb": [
+              0.5031572639601571,
+              0.546833287698882,
+              0.7363085971559797
+            ],
+            "relative_channel_spread_median": 0.3163936734199524,
+            "relative_magenta_excess_median": -0.059345245361328125
+          },
+          "difference": {
+            "pixels": 1750,
+            "changed_pixels": 0,
+            "max_abs_rgb": 0.0,
+            "rgb_rmse": 0.0
+          }
+        }
+      ]
+    }
+  ],
+  "diagnostic_metric_definitions": {
+    "relative_channel_spread": "(max(R,G,B)-min(R,G,B))/max(R,G,B)",
+    "relative_magenta_excess": "(min(R,B)-G)/max(R,G,B)",
+    "valid": "max(R,G,B)>1e-6; report medians on the fixed rectangle in each engine own overview coordinates.",
+    "meaning": "Neutrality and change diagnostics, not measured colour accuracy or Delta E. No cross-engine alignment or scene-truth assumption."
+  },
+  "photographic_observations": [
+    "The reproduced magenta sky in raw-25 and bright opening in raw-11 becomes neutral in autonomous and AHD at equal EV, visible at negative exposure offsets.",
+    "The raw-26 blue-sky control rectangle is numerically unchanged in all five engines.",
+    "Native crops and other bright architectural/reflection regions were visually inspected; these are reused ordinary photographs, not calibrated colour targets."
+  ],
+  "validation": {
+    "full_command": "RUST_TEST_THREADS=1 scripts/verify.sh --gui",
+    "full_suite_passed": true,
+    "ordinary_Rust_tests": 597,
+    "opt_in_Rust_integrations": 14,
+    "Python_tests": 50,
+    "fmt_and_Clippy": true,
+    "worker_protocol_checks": 8,
+    "sampling_signals": 24,
+    "native_debug_surface": true,
+    "targeted_regressions": "Six autonomous highlight tests, two AHD tests and recipe-cache rejection test; CFA phases, all orientations, WB, clipping shoulders, extended values, admitted recovery and independence from LibRaw.",
+    "independent_worker_never_call_libraw_tests": 3,
+    "release_native_smoke_passed": true,
+    "release_smoke_screenshots": 8,
+    "release_smoke_fixture_note": "First isolated run lacked its corpus; rerun after copying the fixture corpus passed. Both logs retained.",
+    "private_RAW_integration": {
+      "inputs": 9,
+      "XPC_slots": 2,
+      "cases": 18,
+      "repack_pixels_exact": true,
+      "WB_probe_decode_match": true,
+      "RAF_cancel_restart_cases": 2,
+      "reduced_PNG16_TIFF16_exports": 36,
+      "export_long_edge": 1024,
+      "maximum_error_u16": 0,
+      "originals_unchanged": true
+    },
+    "full_resolution_export": {
+      "source_id": "raw-25",
+      "engines": 5,
+      "neutral_and_edited_recipes": true,
+      "exports": 10,
+      "format": "Png16",
+      "exact_integer_file_codes": true,
+      "maximum_error_u16": 0,
+      "output_proof_vs_reopened_export_max_error_u8": 1,
+      "scope": "One authorized RAW, all available engines, neutral and explicit edited recipes. Native PNG16 or TIFF16, no resize. Every native pixel compared to decoded integer file codes, then isolated production readback through the CPU viewer pipeline at 1:1 and fit. Provisional mip edit measured separately. No OS compositor, physical display, JPEG, GPU or other cameras qualification.",
+      "source_unchanged": true
+    },
+    "installed_XPC_passed": true,
+    "installed_two_distinct_processes": true,
+    "production_rejects_fault_injection": true,
+    "gallery": {
+      "image_references_verified": 23760,
+      "javascript_syntax_checked": true,
+      "browser_interaction_tested": false,
+      "browser_limitation": "Computer-use browser policy rejected local file URLs. No workaround attempted; image artifacts were inspected directly."
+    }
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "file_count": 23,
+    "all_files_and_modes_match_measured_candidate_and_final_source_rebuild": true,
+    "codesign_deep_strict_passed": true,
+    "previous_bundle_preserved": true,
+    "frozen_source_count": 348,
+    "protected_files_unchanged": 224,
+    "license_and_original_architecture_unchanged": true,
+    "commit_or_push": false
+  },
+  "limits": [
+    "This suppresses false magenta through an explicit neutral rendering convention. It cannot restore lost sky blue, true scene colour or texture when the sensor observations are clipped.",
+    "The 98-100% shoulder can desaturate real coloured lights near clipping; admitted autonomous recovery is protected but there is no universal physical-colour guarantee.",
+    "Equal software EV offsets do not add photons or substitute for independently acquired, registered exposure brackets. Native engine brightness, geometry, profile and WB differences remain.",
+    "Changed-pixel fractions refer only to the nine sampled native crops. Fixed-region medians do not describe every sky pixel.",
+    "The ordinary-photo corpus is reused and contains derived DNG controls. No measured camera/illuminant targets, absolute colour fidelity ranking, noise/detail superiority or general superiority claim.",
+    "Performance and memory under pressure were not qualified. Observed XPC RSS is not a hard memory bound; no R0-R4 or SF0-SF10 gate or release sandbox qualification closed."
+  ],
+  "private_artifact_root": "var/exposure-magenta-20261016",
+  "private_evidence_sha256": {
+    "freeze.json": "35f922fedd5115347eeec48edf1e2e7d6c80a8004cd01c69d709e7e2b6e5668c",
+    "manifest.json": "4effb3e04cc4c183e98135292e337fa95718512dfea50acfd4ebef417e7582d4",
+    "baseline-identity.json": "da912be5aba90caec5d59e8e05df506e45ce03d05e76b11ca610ad5d533607ea",
+    "baseline/comparison/manifest.json": "55cbfe75e0f69814eec8fcc07444d8663f8c4bef1570678daec1ef87cf0a980d",
+    "candidate/comparison/manifest.json": "880d007a755e7b2559a13254d5327f04087b40f0459b9d811a20eb13bdb6c1b4",
+    "gallery/analysis.json": "b3e03f7a32e71dc1b41ac59b9a23f160452b7a20ec87d6ebbd7abd5a55baf237",
+    "gallery/index.html": "53103dbf387df6139598d605b3c4a641bc3e2c163c3fe9135c01a8747e59f071",
+    "regions.json": "9b9db58c333ea604f3f293e2a9673f1b766a8648a0ebe58d989aeec2a4a10c68",
+    "cielo-prima-dopo.png": "60c21ca0a21e20a1a7238c6467b44092a71c7a35235d564ed399cfdfcd9c5e12",
+    "final-native-crops.png": "a54ff7360a8a57728c6f967b5a5957583d1011400ff1df6b345b1f8103d60b6e",
+    "other-highlights.png": "55776a51fc6217e45a96ebd1a4c9670f08cd7972270d0a914c71db9da89a91ac",
+    "verify.log": "3d71cd30c91938069a5ad972a5c61fd71e311f045a1577f8f2c2f457bb64a87d",
+    "highlight-render-tests-final.log": "aa0587a24f2f7d84f77efd3c4c4f7d2f5d20e1fd730ce0fef5f72d5cee081c41",
+    "highlight-pipeline-tests-fixed.log": "8e577aeb1862a47b1be77601ec8e9b280379ed3c91674f1bcd627674adde53c3",
+    "ahd-tests.log": "4aed28f9cb9890d84a260e2d903b5521f9d9fba7f90767273d27c4e93ab39298",
+    "integration/reports/experimental-private.json": "b8520357a89139ee553237c429f46d7c2030d4c5e152a64a9d4234fc1787754d",
+    "exports/var/photo-export-parity-OCunaB/report.json": "1ede2debbc05b1d793e54141ebfa957555e0da8832dad1e6ecea47c49f8fee17",
+    "gui/reports/smoke-macos.json": "f04b9a1ee70bc928d575ed2c49a751b7b7b0be4b055defcdde7fd812a3d2f119",
+    "gui-surface-rerun.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "installed-xpc/reports/xpc-qualification-macos.json": "aa93ccb282f33924cdf106057a0fac4f42bcdffad6b76331be9a879d11a057b7",
+    "installed-xpc/reports/xpc-integration-macos.json": "a942f553595c162ae10dd53540fbedd71aed71a3cff6225b535e661838f7665e",
+    "source-package-equality.json": "d2875d92d42146d81a93b3e4f715a8b2bc674cf910235ac80452f453bad37c1d",
+    "installed-bundle.json": "2573edd98400258e7c54f3620a0c351536af6b66333924bb64a9160400962b6f",
+    "source-changes.json": "cebb86898edb1b8da57d1d00c0a0c47a4840c57edf59e21ab8fb44298eb6447c",
+    "final-integrity.json": "e62caab1a7ad6afa4def50ba595233f076d751bdb43942fb25abdab599ebdec5",
+    "finalize.py": "83c0c16a31517ca3ff0aaee15bda2b9dd10a9a4cf30c03422749101eaeea47aa"
+  },
+  "changed_sources_sha256": {
+    "crates/tr-worker/src/experimental.rs": "585de6d41dff43d9f2e8ea6262594e5436a615b41f2b7a9216588c6aff80ef01",
+    "crates/tr-worker/src/mosaic.rs": "fc2191dd833a9f3d33b840bf707a6587c8b9bef9b6b7cda330b399583058cc95",
+    "crates/tr-raw/src/wb.rs": "b476c76b8b10179e52c2ccd7f292ab5a6398f40b1cd10be8c4ed70482da68c28",
+    "crates/tr-raw/src/render.rs": "7f9c10a702210fabad96afd8d01bb4bae39b4d77a1a91b3fb628097ddf230274",
+    "crates/tr-raw/src/lib.rs": "5e683d89484385a9faf4212050111f5ccb653afc0bcf0a119845e4bf62af4568",
+    "crates/tr-raw/src/nef.rs": "3c560371bf7f3f2518972f64b01d53867a0f5fae6518612cf61417d11799ffc1",
+    "crates/tr-raw/src/dng.rs": "30058a5173b50a309d0f26cfaccc8d07fa21c0a869458eb3648d6a00a705f19e",
+    "crates/tr-raw/src/xtrans.rs": "119413574fa71e73d9d2a17e5a896afa9ac445782ec56d0b087c45f8c7e5b224",
+    "crates/tr-raw/src/raf.rs": "48c2a7896099ad93ce11e5f6763eadb419d77ac9ef9806991dbd92405e87ff56",
+    "crates/tr-raw/src/wb/tests.rs": "36b1b14e6d236c1350552e007726618d6db2e68e4e91072ec29aab93ab938a3c",
+    "crates/tr-core/src/decoder.rs": "10724868d8dccb46898ed652ef572983f1b68cf6c4d61c9bff9ffc565324d61a",
+    "apps/desktop/src/compare_raw_color.rs": "240d1f509efe6b3ae33d29cfeaf1ebbffcf3198f0206aed26ff9bf77b36a6846",
+    "apps/desktop/src/cache/artifact.rs": "f489c55e7e01025c61ceab0e346e77efbaee87c3609e1e3764ce0acd420a1948",
+    "native/libraw/tr_libraw.cpp": "624e4a124b6be669a09bef63558bd9b103e3184b9f92a73f1c4cacfbc680b532",
+    "docs/progetto-motori-raw.md": "a8df9526d18eb03b0cf20dcf482e7972027e513bc6a77ea762da8b57d133ce30",
+    "docs/calibrazione-raw.md": "b2c8f0481f2ad9dc0a33ceaa68b5713f16de289fd4cd69056f1b95d937358b76",
+    "docs/progetto-truerenderer-experimental.md": "5a0f5d6b24afe0590911c0b75d0d0033690a64042bc269614f33fd55eb08a968",
+    "STATO.md": "a9e567d0049b958440b96b15a2f75198b338d33da551fd3a2dad7c6600655c03",
+    "README.md": "071c422b373e610555ef395a03eff852e13da7323beba43d5c1998ad0d405203",
+    "crates/tr-raw/src/highlight_render.rs": "8a862e059da16209584502b01be1d890dc013b243e1a5a5ef0bac695a20af020",
+    "scripts/analyze-exposure-highlights.py": "de1e958a5f9442570f3ad55170ce7d1eab5ebe4099866883f966ba3acea09501"
+  }
+}

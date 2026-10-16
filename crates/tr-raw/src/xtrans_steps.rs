@@ -177,10 +177,11 @@ pub(crate) fn reconstruct_supported(
                         w,
                         h,
                         cfa,
-                        x,
-                        y,
+                        (x, y),
                         ranges.at(x, y),
+                        false,
                     )
+                    .map(|p| p.rgb)
                 })
             {
                 let i = y * w + x;

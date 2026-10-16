@@ -5,6 +5,7 @@ pub(super) fn mosaic(cfa: Cfa, width: usize, height: usize) -> Mosaic {
     Mosaic {
         values: vec![0.; width * height],
         saturation: vec![0; width * height],
+        highlight_confidence: vec![0; width * height],
         width,
         active_width: width,
         height,

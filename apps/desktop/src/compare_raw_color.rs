@@ -32,6 +32,44 @@ struct Manifest {
     schema: u32,
     sources: Vec<Source>,
     purpose: String,
+    #[serde(default)]
+    exposure_ev: Vec<f32>,
+}
+
+// Exercise the actual photo graph at identical EV offsets. Preserve the
+// unedited floats too: SDR PNGs alone conceal both headroom and pink plateaus.
+fn exposure_series(
+    output: &Path,
+    stem: &str,
+    image: &LinearImage,
+    steps: &[f32],
+) -> Result<Vec<Value>> {
+    let mut rows = vec![];
+    for (index, &ev) in steps.iter().enumerate() {
+        let recipe = tr_core::editing::EditRecipe {
+            exposure_ev: ev,
+            ..tr_core::editing::EditRecipe::neutral(RawEngine::TrueRendererExperimental)
+        };
+        let mut edited = image.clone();
+        recipe.apply(&mut edited)?;
+        let factor = ev.exp2();
+        ensure!(
+            image.pixels.iter().zip(&edited.pixels).all(|(a, b)| {
+                (0..3).all(|c| b[c].to_bits() == (a[c] * factor).to_bits()) && a[3] == b[3]
+            }),
+            "photo exposure differs from the declared common RGB gain"
+        );
+        let name = format!("{stem}-ev-{index}.png");
+        image::save_buffer(
+            output.join(&name),
+            &edited.to_display(),
+            edited.width,
+            edited.height,
+            image::ColorType::Rgba8,
+        )?;
+        rows.push(json!({"ev":ev,"gain":factor,"png":name,"linear_gain_exact":true}));
+    }
+    Ok(rows)
 }
 
 struct Patch {
@@ -165,6 +203,14 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
         manifest.schema == 1 && !manifest.sources.is_empty() && manifest.sources.len() <= 128,
         "invalid comparison manifest"
     );
+    ensure!(
+        manifest.exposure_ev.len() <= 9
+            && manifest
+                .exposure_ev
+                .iter()
+                .all(|v| v.is_finite() && (-10. ..=10.).contains(v)),
+        "invalid exposure steps"
+    );
     let mut ids = std::collections::HashSet::new();
     let mut hashes = std::collections::HashSet::new();
     for source in &manifest.sources {
@@ -263,6 +309,13 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
                     }
                 }
                 file.flush()?;
+                let exposure_overview = exposure_series(
+                    &output,
+                    &format!("{stem}-overview"),
+                    &reduced,
+                    &manifest.exposure_ev,
+                )?;
+                let mut exposure_crops = vec![];
                 for (i, region) in regions.iter().enumerate() {
                     let pixels: Vec<u8> = region
                         .rgb
@@ -276,6 +329,31 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
                         EDGE as u32,
                         image::ColorType::Rgba8,
                     )?;
+                    if !manifest.exposure_ev.is_empty() {
+                        let patch = LinearImage::new(
+                            EDGE as u32,
+                            EDGE as u32,
+                            region.rgb.iter().map(|p| [p[0], p[1], p[2], 1.]).collect(),
+                        )?;
+                        let mut linear = std::io::BufWriter::new(
+                            fs::OpenOptions::new()
+                                .write(true)
+                                .create_new(true)
+                                .open(output.join(format!("{stem}-zone-{i}.f32")))?,
+                        );
+                        for p in &region.rgb {
+                            for v in p {
+                                linear.write_all(&v.to_le_bytes())?;
+                            }
+                        }
+                        linear.flush()?;
+                        exposure_crops.push(exposure_series(
+                            &output,
+                            &format!("{stem}-zone-{i}"),
+                            &patch,
+                            &manifest.exposure_ev,
+                        )?);
+                    }
                 }
                 let (mut low, mut high, mut below, mut above) =
                     (f32::INFINITY, f32::NEG_INFINITY, 0u64, 0u64);
@@ -300,6 +378,7 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
                     "info":decoded.info,"size":[image.width,image.height],"seconds":started.elapsed().as_secs_f64(),
                     "worker_pid":decoded.worker_pid,"slot":index%2,"range":{"minimum":low,"maximum":high,"below_zero":below,"above_one":above},
                     "overview":{"png":format!("{stem}-overview.png"),"linear":format!("{stem}-overview.f32"),"size":[reduced.width,reduced.height]},
+                    "exposure_overview":exposure_overview,"exposure_crops":exposure_crops,
                     "zones":comparisons,"crop_pngs":(0..9).map(|i|format!("{stem}-zone-{i}.png")).collect::<Vec<_>>()});
                 if engine == RawEngine::TrueRendererExperimental {
                     anchor = Some(regions);
@@ -331,11 +410,12 @@ pub fn run(root: &Path, worker: &Path, manifest: &Path) -> Result<()> {
     }
     new_json(
         &output.join("manifest.json"),
-        &json!({"protocol":"TRExp-engine-color-v2","complete":true,
+        &json!({"protocol":if manifest.exposure_ev.is_empty() {"TRExp-engine-color-v2"} else {"TRExp-engine-exposure-v1"},"complete":true,
         "passed":unexpected==0,"unexpected_failures":unexpected,"sources":rows,
         "input_manifest_sha256":format!("{:x}",Sha256::digest(source_bytes)),"purpose":manifest.purpose,
         "anchor":"TrueRendererExperimental","wb":"as-shot, engine-specific interpretation retained",
         "working":"linear Rec.2020 D65 f32; no additional photo graph", "edge":EDGE,"margin":MARGIN,
+        "exposure_ev":manifest.exposure_ev,"exposure_method":"EditRecipe::apply; common RGB factor 2^EV, alpha retained, no normalization fit; PNGs are SDR sRGB",
         "registration_radius":RADIUS,"registration_stride":STRIDE,
         "broker_statistics":brokers.iter().map(|b|b.statistics()).collect::<Vec<_>>(),
         "limits":"Diagnostic engine differences only. Native profile, WB, baseline exposure, clipping, reconstruction and geometry can differ. No camera calibration ground truth."}),
