@@ -240,6 +240,7 @@ impl<'a> Raf<'a> {
                 scratch_peak_bytes: sensor_pixels * 9
                     + output_pixels * 16
                     + crate::highlights::support_bytes(self.width, self.height)
+                    + crate::highlight_render::scratch_bytes(self.width)
                     + 64 * 1024 * 1024
                     + crate::xtrans_dr6::bounded::SCRATCH_RESERVATION_BYTES,
             },

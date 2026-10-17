@@ -3,6 +3,16 @@
 use crate::{cfa::Cfa, render::Support};
 type Neighbors = [[Vec<(isize, isize, f32)>; 3]; 36];
 
+// The former 3x3 block of 6x6 cells reached up to eleven pixels from an
+// admitted site, but its extent changed with the grid origin. Use that full
+// radius at every site: previously protected samples remain protected.
+const PROTECTION_RADIUS: usize = 11;
+
+/// Temporary column counts, released before the interpolation/activity maps.
+pub(crate) fn scratch_bytes(width: usize) -> usize {
+    width * size_of::<[u8; 3]>()
+}
+
 /// Quantized smooth shoulder in sensor codes, before WB. Codes beyond the
 /// declared clipping level remain extended data, not inferred saturation.
 pub(crate) fn confidence(code: f64, black: f64, clipping: f64) -> u8 {
@@ -34,37 +44,59 @@ impl Fallback {
         height: usize,
         cfa: Cfa,
     ) -> Self {
-        // Protect admitted reconstruction and its immediate interpolation
-        // neighborhood. This mask is temporary (one byte per 6x6 cell).
-        let columns = active_width.div_ceil(6);
-        let rows = height.div_ceil(6);
-        let mut recovered = vec![0u8; columns * rows];
-        for y in 0..height {
-            for x in 0..active_width {
+        // Separable square dilation of the original admitted sites, per colour.
+        // Vertical counts are <=23, horizontal sums <=529; no full-size mask
+        // or dependence on the recovery grid. Never read inactive sensor sites.
+        let mut columns = vec![[0u8; 3]; active_width];
+        let update_row = |columns: &mut [[u8; 3]], y: usize, add: bool| {
+            for (x, counts) in columns.iter_mut().enumerate() {
                 let c = cfa.color(x, y);
                 if state[y * width + x] == crate::highlights::SATURATED
                     && !support.unsupported_colour(x, y, c)
                 {
-                    recovered[y / 6 * columns + x / 6] |= 1 << c;
-                }
-            }
-        }
-        for y in 0..height {
-            for x in 0..width {
-                let q = &mut confidence[y * width + x];
-                if x >= active_width {
-                    *q = 0;
-                } else if *q != 0 {
-                    let c = cfa.color(x, y);
-                    if (y.saturating_sub(6) / 6..=((y + 6) / 6).min(rows - 1)).any(|yy| {
-                        (x.saturating_sub(6) / 6..=((x + 6) / 6).min(columns - 1))
-                            .any(|xx| recovered[yy * columns + xx] & (1 << c) != 0)
-                    }) {
-                        *q = 0;
+                    if add {
+                        counts[c] += 1;
+                    } else {
+                        counts[c] -= 1;
                     }
                 }
             }
+        };
+        for y in 0..PROTECTION_RADIUS.min(height) {
+            update_row(&mut columns, y, true);
         }
+        let rows = height.div_ceil(6);
+        for y in 0..height {
+            if y > PROTECTION_RADIUS {
+                update_row(&mut columns, y - PROTECTION_RADIUS - 1, false);
+            }
+            if y + PROTECTION_RADIUS < height {
+                update_row(&mut columns, y + PROTECTION_RADIUS, true);
+            }
+            let mut counts = [0u16; 3];
+            for column in columns.iter().take(PROTECTION_RADIUS) {
+                for c in 0..3 {
+                    counts[c] += u16::from(column[c]);
+                }
+            }
+            for x in 0..active_width {
+                if x > PROTECTION_RADIUS {
+                    for c in 0..3 {
+                        counts[c] -= u16::from(columns[x - PROTECTION_RADIUS - 1][c]);
+                    }
+                }
+                if x + PROTECTION_RADIUS < active_width {
+                    for c in 0..3 {
+                        counts[c] += u16::from(columns[x + PROTECTION_RADIUS][c]);
+                    }
+                }
+                if counts[cfa.color(x, y)] != 0 {
+                    confidence[y * width + x] = 0;
+                }
+            }
+            confidence[y * width + active_width..(y + 1) * width].fill(0);
+        }
+        drop(columns);
         if confidence.iter().all(|q| *q == 0) {
             confidence = Vec::new();
         }
@@ -330,6 +362,56 @@ mod tests {
                 pixel,
                 [2.2 * ev.exp2(), 2.2 * ev.exp2(), 2.2 * ev.exp2(), 1.]
             );
+        }
+    }
+
+    #[test]
+    fn protection_uses_distance_from_admitted_sites_in_all_cfa_phases() {
+        // A 6x6-cell halo formerly gave the same admitted site a different
+        // radius (6..11 pixels) when it moved by one CFA period. Retain the
+        // largest former radius everywhere, independent of the cell origin.
+        let (w, h, active) = (53usize, 47usize, 49usize);
+        for base in [
+            Cfa::bayer([0, 1, 1, 2]),
+            Cfa::new(6, &crate::cfa::XTRANS).unwrap(),
+        ] {
+            for phase in 0..base.period * base.period {
+                let cfa = base.shifted(phase % base.period, phase / base.period);
+                let admitted = [(0usize, 0usize), (22, 19), (25, 24), (48, 46)];
+                let mut state = vec![0; w * h];
+                for (x, y) in admitted {
+                    state[y * w + x] = 2;
+                }
+                // A censored site without support must not protect colour.
+                let unsupported = (39, 8);
+                state[unsupported.1 * w + unsupported.0] = 2;
+                let mut cells = vec![0; active.div_ceil(6) * h.div_ceil(6)];
+                cells[unsupported.1 / 6 * active.div_ceil(6) + unsupported.0 / 6] = 7;
+                let fallback = Fallback::new(
+                    vec![193; w * h],
+                    &state,
+                    Support::new(&cells, active.div_ceil(6)),
+                    w,
+                    active,
+                    h,
+                    cfa,
+                );
+                for y in 0..h {
+                    for x in 0..w {
+                        let protected = admitted.iter().any(|&(xx, yy)| {
+                            x.abs_diff(xx) <= 11
+                                && y.abs_diff(yy) <= 11
+                                && cfa.color(x, y) == cfa.color(xx, yy)
+                        });
+                        assert_eq!(
+                            fallback.confidence[y * w + x],
+                            if x >= active || protected { 0 } else { 193 },
+                            "period={} phase={phase} site={x},{y}",
+                            base.period
+                        );
+                    }
+                }
+            }
         }
     }
 }

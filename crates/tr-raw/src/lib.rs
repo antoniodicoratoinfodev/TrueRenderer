@@ -25,6 +25,9 @@ mod edge_planes;
 mod edge_planes_dir6;
 mod export;
 mod highlight_render;
+#[cfg(test)]
+#[path = "../research/highlight_stability.rs"]
+mod highlight_stability;
 mod highlights;
 #[cfg(test)]
 #[path = "../research/highlights_hl1.rs"]

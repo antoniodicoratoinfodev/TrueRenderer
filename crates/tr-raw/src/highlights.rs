@@ -11,6 +11,7 @@ mod diagnostics;
 mod edge;
 pub(crate) mod metadata;
 mod occlusion;
+mod shoulder;
 #[cfg(test)]
 mod tests;
 mod texture;
@@ -663,6 +664,15 @@ pub(crate) fn recover_with_support(
             && let Some(r) = estimate
         {
             r.model = edge::with_halo(&grid, i % columns, i / columns, r.model, r.ratio);
+        }
+        if let Some(r) = estimate
+            && allowed[i] & 7 != 0
+            && let Some(plateau) = shoulder::plateau(&grid, i % columns, i / columns, *r)
+        {
+            // Only the originally censored sites are written later. The
+            // plateau has been verified jointly with its unsaturated ramp;
+            // it does not replace the acquired samples on that ramp.
+            r.model = plateau;
         }
         if let Some(r) = estimate
             && allowed[i] & 7 != 0

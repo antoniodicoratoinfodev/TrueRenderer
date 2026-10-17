@@ -166,6 +166,35 @@ pub(crate) fn near_edge(
     })
 }
 
+/// R/B residuals also read neighbouring interpolated green. Their footprint
+/// reaches three sites from the output pixel, beyond the same-phase axial
+/// probes used for green alone. Include diagonal and outer Bayer phases so
+/// the gate cannot miss a curved boundary that contaminates those residuals.
+pub(crate) fn outer_bayer_edge(mosaic: &[f32], w: usize, h: usize, x: usize, y: usize) -> bool {
+    let a = mosaic[y * w + x];
+    [
+        (-2, -2),
+        (-2, 2),
+        (2, -2),
+        (2, 2),
+        (-4, 0),
+        (4, 0),
+        (0, -4),
+        (0, 4),
+    ]
+    .into_iter()
+    .any(|(dx, dy)| {
+        let (Some(xx), Some(yy)) = (x.checked_add_signed(dx), y.checked_add_signed(dy)) else {
+            return false;
+        };
+        if xx >= w || yy >= h {
+            return false;
+        }
+        let b = mosaic[yy * w + xx];
+        (a - b).abs() > 0.1 * a.abs().max(b.abs()).max(0.05)
+    })
+}
+
 #[cfg(test)]
 pub(crate) fn interpolate(
     mosaic: &[f32],

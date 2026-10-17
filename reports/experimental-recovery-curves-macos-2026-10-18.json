@@ -1,0 +1,802 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-18",
+  "started": "2026-10-17",
+  "baseline_commit": "ac6f121920f794244d29d1f5b538cdf3ff785012",
+  "scope": "Correct two reproduced near-clipping shoulder overshoots and supported curved-edge demosaic in the existing autonomous RAW engine. Photographic regression using the 40 authorized Downloads originals. No absolute colour calibration or global superiority claim.",
+  "platform": {
+    "system": "Darwin",
+    "release": "27.0.0",
+    "machine": "arm64"
+  },
+  "independent_engine_was_already_installed": true,
+  "legacy_engine_retained": true,
+  "recipe": {
+    "before": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-neutral2-extended1",
+    "after": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir7-xt7-wb3-mat2-hl7-neutral2-extended1"
+  },
+  "implementation": {
+    "HL7": "Bayer only. Replace an already admitted affine estimate with a continuous ramp/plateau only when original surviving colours demonstrate it. All valid sensor sites remain bit-exact; only previously censored sites can be written. Require same-colour flat runs, matching transverse slopes, both-side coverage, joint residual/censoring checks and existing support/write policy.",
+    "dir7": "Expand only the supported two-surface edge gate to same-phase diagonal/outer Bayer neighbours that cover the colour-residual footprint. Keep the separately qualified unsupported-colour interpolation gate unchanged.",
+    "additional_raster_buffers": false,
+    "stack_within_existing_16KiB_allowance": true,
+    "XTrans_reconstruction_and_demosaic_unchanged": true,
+    "camera_profiles_unchanged": true,
+    "provenance_label": "HL7 Bayer/HL6 X-Trans; descriptive worker label corrected after pixel qualification, followed by worker tests and final bundle checks."
+  },
+  "analytical": {
+    "scope": "Correlated generated signals with declared camera-RGB truth, not independent photographs or a measured sensor model. All metric shifts retained; no thresholds relaxed to hide failures.",
+    "cases": 2464,
+    "regions": 4928,
+    "fresh_cases_after_final_freeze": 704,
+    "fresh_seeds": [
+      101723,
+      101729
+    ],
+    "changed_renders": 69,
+    "improved_region_metrics": 634,
+    "worsened_region_metrics": 6,
+    "largest_metric_increase": 1.1920928955078125e-07,
+    "fresh_worsened_metrics": 0,
+    "valid_CFA_sites_bit_exact": true,
+    "repack_sensor_and_render_exact": true,
+    "sets": [
+      {
+        "seed": 715163,
+        "fresh_after_final_freeze": false,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 11,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 90,
+        "worsened_region_metrics": [
+          {
+            "id": "s715163-d750-p2-shoulder",
+            "region": 0,
+            "metric": "rgb_rmse",
+            "before": 0.00031011712035122974,
+            "after": 0.0003101176304249351,
+            "delta": 5.100737053326428e-10
+          },
+          {
+            "id": "s715163-d750-p2-shoulder",
+            "region": 0,
+            "metric": "chroma_rmse",
+            "before": 0.00015080854901993644,
+            "after": 0.00015080862176191588,
+            "delta": 7.27419794321546e-11
+          },
+          {
+            "id": "s715163-d750-p2-shoulder",
+            "region": 1,
+            "metric": "rgb_rmse",
+            "before": 3.532880853836457e-05,
+            "after": 3.5333980270279e-05,
+            "delta": 5.171731914432648e-09
+          },
+          {
+            "id": "s715163-d750-p2-shoulder",
+            "region": 1,
+            "metric": "chroma_rmse",
+            "before": 9.323092785281488e-06,
+            "after": 9.32441334383211e-06,
+            "delta": 1.320558550622794e-09
+          },
+          {
+            "id": "s715163-d750-p2-shoulder",
+            "region": 1,
+            "metric": "gradient_max_abs",
+            "before": 0.00054931640625,
+            "after": 0.0005493760108947754,
+            "delta": 5.960464477539063e-08
+          }
+        ],
+        "improved_sensor_metrics": 4,
+        "worsened_sensor_metrics": [
+          {
+            "id": "s715163-d750-p2-shoulder",
+            "metric": "saturated_rmse",
+            "before": 2.1394544652966058e-05,
+            "after": 2.139820964160823e-05,
+            "delta": 3.664988642171368e-09
+          }
+        ],
+        "maximum_ideal_curved_interior_error": 4.76837158203125e-07
+      },
+      {
+        "seed": 101703,
+        "fresh_after_final_freeze": false,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 10,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 90,
+        "worsened_region_metrics": [
+          {
+            "id": "s101703-d750-p3-shoulder",
+            "region": 1,
+            "metric": "gradient_max_abs",
+            "before": 0.0024192333221435547,
+            "after": 0.0024193525314331055,
+            "delta": 1.1920928955078125e-07
+          }
+        ],
+        "improved_sensor_metrics": 4,
+        "worsened_sensor_metrics": [],
+        "maximum_ideal_curved_interior_error": 3.5762786865234375e-07
+      },
+      {
+        "seed": 101709,
+        "fresh_after_final_freeze": false,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 10,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 105,
+        "worsened_region_metrics": [],
+        "improved_sensor_metrics": 4,
+        "worsened_sensor_metrics": [],
+        "maximum_ideal_curved_interior_error": 4.76837158203125e-07
+      },
+      {
+        "seed": 101711,
+        "fresh_after_final_freeze": false,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 10,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 104,
+        "worsened_region_metrics": [],
+        "improved_sensor_metrics": 4,
+        "worsened_sensor_metrics": [],
+        "maximum_ideal_curved_interior_error": 4.76837158203125e-07
+      },
+      {
+        "seed": 101719,
+        "fresh_after_final_freeze": false,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 8,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 68,
+        "worsened_region_metrics": [],
+        "improved_sensor_metrics": 0,
+        "worsened_sensor_metrics": [],
+        "maximum_ideal_curved_interior_error": 4.76837158203125e-07
+      },
+      {
+        "seed": 101723,
+        "fresh_after_final_freeze": true,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 10,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 83,
+        "worsened_region_metrics": [],
+        "improved_sensor_metrics": 4,
+        "worsened_sensor_metrics": [],
+        "maximum_ideal_curved_interior_error": 4.76837158203125e-07
+      },
+      {
+        "seed": 101729,
+        "fresh_after_final_freeze": true,
+        "cases": 352,
+        "regions": 704,
+        "changed_renders": 10,
+        "valid_preserved": true,
+        "repack_exact": true,
+        "improved_region_metrics": 94,
+        "worsened_region_metrics": [],
+        "improved_sensor_metrics": 4,
+        "worsened_sensor_metrics": [],
+        "maximum_ideal_curved_interior_error": 4.76837158203125e-07
+      }
+    ],
+    "reproduced_shoulder_errors": [
+      {
+        "case": "s715163-d750-p0-shoulder",
+        "clipped_max_error": 8.90493392944336e-05,
+        "HL6_max_error": 0.005591630935668945,
+        "HL7_max_error": 8.90493392944336e-05,
+        "HL6_rmse": 0.0011019653282803928,
+        "HL7_rmse": 8.90493392944336e-05,
+        "reconstructed_sites_before": 38,
+        "reconstructed_sites_after": 0
+      },
+      {
+        "case": "s715163-d800-p2-shoulder",
+        "clipped_max_error": 0.00010836124420166016,
+        "HL6_max_error": 0.00572657585144043,
+        "HL7_max_error": 2.7418136596679688e-06,
+        "HL6_rmse": 0.0012419520421713915,
+        "HL7_rmse": 1.2727509468957797e-06,
+        "reconstructed_sites_before": 760,
+        "reconstructed_sites_after": 798
+      }
+    ],
+    "ideal_CFA_curved_edges": {
+      "cases": 56,
+      "known_interior_max_before_range": [
+        0.12119030579924583,
+        0.25516998767852783
+      ],
+      "interior_max_after_all_sets": 4.76837158203125e-07,
+      "oracle_is_diagnostic_only": true,
+      "diagnostic_correction": "Clear both clipping state and neutral-fallback confidence when supplying an ideal unclipped CFA; both baseline and candidate use this corrected diagnostic."
+    }
+  },
+  "stability": {
+    "configurations": 11760,
+    "fresh_configurations_after_final_freeze": 3360,
+    "seeds": [
+      0,
+      101703,
+      101709,
+      101711,
+      101719,
+      101723,
+      101729
+    ],
+    "phases": {
+      "Bayer": 4,
+      "XTrans": 36
+    },
+    "sensor_quantization_bits": [
+      12,
+      14,
+      16
+    ],
+    "perturbations": [
+      "sensor exposure -0.02/0/+0.02 EV before clipping",
+      "sensor codes +/-1",
+      "relative WB",
+      "CFA-period translation",
+      "declared bounded noise, not calibrated"
+    ],
+    "all_measured_sensor_and_render_metrics_identical_to_HL6": true
+  },
+  "photographic": {
+    "originals": 40,
+    "cameras": {
+      "D750": 30,
+      "D800": 9,
+      "XT5": 1
+    },
+    "full_resolution_render_hashes_identical_to_previous": true,
+    "EV": [
+      -2,
+      0,
+      2
+    ],
+    "views_per_original": 10,
+    "native_EV_views_before_after": 2400,
+    "final_candidate_EV_views_rechecked": 1200,
+    "EV_native_gain_exact": true,
+    "PNG_roundtrips_exact": true,
+    "original_hashes_unchanged": true,
+    "gallery": "var/recovery-curves-20261017/photos/index.html",
+    "sampling": "Overview plus nine 320x320 native crops per original; full image equality separately established by complete fp32 RGBA hashes.",
+    "colour_reference": "No measured colour chart/illuminant data found. The books sequence varies ISO and shutter; it is not a fixed-ISO exposure bracket. Editing EV does not replace bracketing at capture.",
+    "other_engines": "Earlier five-engine photographic campaign remains separate; this increment compares autonomous baseline/current and checks all five engines in full-resolution export parity.",
+    "sources": [
+      {
+        "id": "raw-00",
+        "source_sha256": "5eff1d8ecc4ece481d038f1fe925f5172dd0433a1ab942e96c5ae32feb287345",
+        "full_render_sha256": "52cc40713d4f7126be2a65a175f6e59d221b7b54235177b2ad3323edad94abac",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-01",
+        "source_sha256": "ffea711a0cd8820c8f75da41bc2ab65f34cc11256621cd1cb102e1fbaed118b5",
+        "full_render_sha256": "e6e33b769f0f8986dfb3867361d1a3685c4edcb2a4a9e7f39a5fcdd969713c7e",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-02",
+        "source_sha256": "130635ce465d4bb7ff4724855f2fa592146e9bfeb208098fa5bc41f8f6800eb1",
+        "full_render_sha256": "b47a443c62ea8a00fb122e0bf607a66bb407e7bd50d4a05431c82a0fc5ba54af",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-03",
+        "source_sha256": "88acbb343b33fa378c04ae2e9f297b27ac6edf161cd14c2f2c08d599faee22f6",
+        "full_render_sha256": "41bf5418f0cf210984a7d55c7090d33e45466dacdf4f94c95f5ff0e38ae9282a",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-04",
+        "source_sha256": "f31a345b1d5040ff78ac188d262585f4f8bf7da7f949d6fc3a147c98dc8c7cd0",
+        "full_render_sha256": "c89968ba124d1188ba7b597b9bf24345bd580498e809cadd371447686e6fb5aa",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-05",
+        "source_sha256": "03d332b0a262aa080095f54db1ea90253fdefd3efcf5aafb33d2b80a6a8e667b",
+        "full_render_sha256": "80598ed35fb118652a599a79b5bec922146d50262a7393df82c1e9b115a551c6",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-06",
+        "source_sha256": "bf3fcfa065d42c94f45fa27383c74c1b8c1cc5ac384e057f06b48ac830f2cf56",
+        "full_render_sha256": "ee4a10eafe4b22b45eb68092bc070c3fb416b0042b3279e6b8fdec6c9ee006a4",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-07",
+        "source_sha256": "85acbca86c5c026fb62d79322eeffaad309dc604dd4e2ed2b6e99aee4109d620",
+        "full_render_sha256": "2aa874a5d2e8edfcbbf25939cc1583cdd99680e14ddffb4123990ee4bcaff8fc",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-08",
+        "source_sha256": "27e19e3f26063f06a6a7a4b5155736b48590862f5e1a3507607d574a465594e6",
+        "full_render_sha256": "64f1525d37743419f2376f0d471d247047acca93bf6bb733e04eb2426fdde9ef",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-09",
+        "source_sha256": "a4ab182e886fab6c5391d6480227fb5bb2c67c11fd9ee3f78d45278fc69b77f0",
+        "full_render_sha256": "877dab5c1f215448ec017c25117b3c5677967c5b322da326c8ddd8aab0a6d308",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-10",
+        "source_sha256": "f9b19ce41a871a6ba7e5dce4b26e3dc50c59fd8ce61a9ec5102d0ba26a7c3872",
+        "full_render_sha256": "71be476b4e114e6cf42c1edbeef4e57da30092b0c5d06ce6a1be3053d050d2dc",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-11",
+        "source_sha256": "bc40194d5af8eb000dda0fda1b3992e994aa3865d374aec8909d806dd3f0117b",
+        "full_render_sha256": "85604a6a3866dd070bf520dae6373f70690518d7261095a29e1af1d0986ab583",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-12",
+        "source_sha256": "a87c9ff499cbbe8895fc6bf4d879ac7c2475fe24758e1c94ac8a348ca398e283",
+        "full_render_sha256": "c8f1aa67698264e91a3a69499a56012ef091e11e7678b4bfda4d9ab432007fd3",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-13",
+        "source_sha256": "75a408949e7a6c90d0b94f635bbcdf01df5d10a71ed6d679e55168e052e8998e",
+        "full_render_sha256": "52aa99396863e3e085a052d4f185e6be4ac92776f7f3e8158fef97fa74e815b4",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-14",
+        "source_sha256": "43119681222323fa9719326be42ffbcae542e13aa54041c4bdc28484eaa54166",
+        "full_render_sha256": "ce7522b25416e5b12fce50ca0bd962ffd513f6f0cb138c09976c8472e5d445e3",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-15",
+        "source_sha256": "c7f17566e3f81a6fd1eabbb6afd567c207a15b0d4a2b053d3f14e7744443dbb3",
+        "full_render_sha256": "45929acc44aea61758db7e84331d4caaec75aee0eb300290320ca74d3eb2b540",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-16",
+        "source_sha256": "d8f957db7b3efffe573385134c6ac35f2da2785a22a63303d769947a7134bf71",
+        "full_render_sha256": "929dcdc5cbd491749a8a6a510ca08b418ad3bbf0123cd59f72812720b5bd3ea3",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-17",
+        "source_sha256": "643baed579adcbb8c7cfb8b65be4ce100c8d80e093f4155e4a9ee48aa390cc94",
+        "full_render_sha256": "a1af1ed6880d64f1143ecfd1f0f588bb2cc70586315230e893296cd498f0805e",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-18",
+        "source_sha256": "a7590bf5357701bd8db9c43ce54ea9ed7a9cb7f34462536b61db367e0796a32c",
+        "full_render_sha256": "0370dcfdbd71789bf6c633043f2e7ff978b74ba994e43a6a3ddc401f51c16bf6",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-19",
+        "source_sha256": "f40fb7309c22e98fe74fec80feeb491f4439445e16739e6360b324e9b0033d04",
+        "full_render_sha256": "5de063ffd7e48c1ab74d8b1caa0bb7e329fd28027b484093772ccb0e00d32229",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-20",
+        "source_sha256": "85d6decf9d9e37cb82fb94ca46b71a4f6cdd2a25dbe3cc5b19bffbbf88921129",
+        "full_render_sha256": "7bf08ef8a0cd18ccdc9fc2ca470d022cf57f36ddc8ade527d6abc47dde88c44c",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-21",
+        "source_sha256": "5b029de7f7d4b6adc6bcdec8365158ff7ba6471e18597b3d662d83aa46a3e4ca",
+        "full_render_sha256": "5c17de3b0845318f63a61e94153246f955c2f047f53b076a52e9e05b352f5d9c",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-22",
+        "source_sha256": "6cd324899633045ec7c79c5af03fbcf8847cc9cb01f23c79d07ed424b2a9d74c",
+        "full_render_sha256": "f2d1d08e0d353c241cc40ec0d925be4d497a6e77982ec8aec5f855840e34ab22",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-23",
+        "source_sha256": "c6270143a75f154a1dba22dd45398e6158c5ed2ca2478618b2b94844bf6fe575",
+        "full_render_sha256": "e014f7fe5da45ad4b97d02777e327ff6c4c8ba3b0152c64c179040e65c66dd97",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-24",
+        "source_sha256": "a87d7545f7ccb65e261c77ff0233f61eea90fe4843eb8bc93879f8724e3a9358",
+        "full_render_sha256": "060d9afdc561e13c16a906a0217b295cf5ff690a07da2af5570aac87a97bc0a8",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-25",
+        "source_sha256": "b40e2d5d4b0ec5bfe147b3aded723cf0bae5da1af08c7533e3a2823f1b7aa6e0",
+        "full_render_sha256": "cde356feed6394dbed7c63d5e7d3d9e29dfa23a2b37980fb0160516b642bb55e",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-26",
+        "source_sha256": "53e1e52be64c2b5970cb46f9f5afbb5a5f4977692aeb3d6979b86e839c2c2d75",
+        "full_render_sha256": "9341caa407e143baa2615500454041ae8e36380645db8585793a2e1d53e54268",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-27",
+        "source_sha256": "b498ddca401d08c938e9e2b008e138b9ff26a384b0f6ce30e207f78c728baa34",
+        "full_render_sha256": "1a951d200165c344affbaccfdb97f4c669e9606e4ec9e7fdf009358854685d1d",
+        "size": [
+          4016,
+          6016
+        ]
+      },
+      {
+        "id": "raw-28",
+        "source_sha256": "522fab9eb905bc541b7da5a98b4191bf4892a354a7ae5499990cf1c500440b17",
+        "full_render_sha256": "da2209b379fa526879a0be8cf1754033bef30bf1da758daad4b4051fd17108af",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-29",
+        "source_sha256": "59df24b80aeb6fa626052450a9ab34a7c789925cc55c9fc0eab663fa11ea0b9f",
+        "full_render_sha256": "9a9d8f99bcaac6ed72bfe2c3c4ee3b781ffd43ce08f7d2cee29af347acbdc15b",
+        "size": [
+          6016,
+          4016
+        ]
+      },
+      {
+        "id": "raw-30",
+        "source_sha256": "e77d85a5e7ba5d49ad4cc4cb729c008667f3ccad647b369d85bfa99cc4c09e80",
+        "full_render_sha256": "af203fd819d841433a4e0b1e19e1a50c528fe63a002cb8b50723a21b89850313",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-31",
+        "source_sha256": "ed4411f79e19ec323586717e84b1de124396813008f4ebd9ac134c5ec5b30f0d",
+        "full_render_sha256": "8c3053caafa2ae16e078b7cff01f81cb9c03e47bbed13ac9812d1919b7d2b43c",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-32",
+        "source_sha256": "cedea30543bc8cd2ec9d1349c788d5b2f6e055bc486a75258e4a8e8b6ffc1ffe",
+        "full_render_sha256": "eab4fd9898ece32f8c2ab566c6ad746913d438f435334ba4bb7b9105506a51ee",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-33",
+        "source_sha256": "892987c2b110fb7bacda31d0fdbc29397edfefb4ebd531b42f590b712029ff20",
+        "full_render_sha256": "7fc1f0ce7a41b19ad856f60d9a8ede58b1f7838d637f27fdf008cc8c5a623081",
+        "size": [
+          4912,
+          7360
+        ]
+      },
+      {
+        "id": "raw-34",
+        "source_sha256": "c8eb91ac00e2df4d010d9c7f864834ce8ad8e4a332b05d6680b5df076d910cd2",
+        "full_render_sha256": "bbce13b09c841dd9ef7bd580984f78b0711f7c8dd0c934ee2c5e2e424ece7a81",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-35",
+        "source_sha256": "9f1bc82fead8b4f1089623b0d2b9a0b0bedbf833604a9e042e7c5e6aae572b53",
+        "full_render_sha256": "11c9bc27664707753c3dd802a7f896647c3da570e44cdfc26d4e8b0190f4de4c",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-36",
+        "source_sha256": "e5418da954d09532604d301bf7c852eb82844c8631e049071286cefb619875cd",
+        "full_render_sha256": "9b0e0c594ae1f8ec0eaabac99ac51797524b603dc971c1cd964fa14f6ea12c66",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-37",
+        "source_sha256": "2f7d8cd14ecd2f007a5fb59191e5275f45759eaaeb39cd254294a14e0f656e72",
+        "full_render_sha256": "8c1d0b402e7bb936b8607817fe6ed220bd17c47058241e218e15c34f7961bd32",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-38",
+        "source_sha256": "aeafca69620c0d6032dafc9de353b8a2b08f0be35bda0faa350e95d3fdd94337",
+        "full_render_sha256": "5060c9c418eba1e8dc8b01d5b11fa80b2838ebe7f705cf25a4be9ace02a2564c",
+        "size": [
+          7360,
+          4912
+        ]
+      },
+      {
+        "id": "raw-39",
+        "source_sha256": "840f12a78fde873ae9e0214dfabb830c9a6491922724f7111dc343a146d79693",
+        "full_render_sha256": "2f1af61daa27b9527e3fb2adc401a4a074be4d0fc386f09ceb468420da0f28db",
+        "size": [
+          5152,
+          7728
+        ]
+      }
+    ]
+  },
+  "rejected_candidates": [
+    {
+      "change": "Widen edge gate for unsupported censored colours too",
+      "reason": "Curved D750 case regression; final widens only supported surfaces."
+    },
+    {
+      "change": "Plateau fit with residual checks only",
+      "reason": "Partial oblique-shoulder corrections worsen chromaticity/gradient peaks; final requires matching transverse slopes."
+    },
+    {
+      "change": "Axial plateau fit without directly observed flat runs",
+      "reason": "Fresh seed 101719 rounded light, four translated Bayer phases: sensor maximum increased up to 0.0001285076, rendered maximum up to 0.0000447631; final requires flat same-colour original runs.",
+      "seeds_used_for_development_after_rejection": [
+        101711,
+        101719
+      ]
+    }
+  ],
+  "verification": {
+    "ordinary_Rust_passed": 604,
+    "ignored_integration_Rust_passed": 14,
+    "Python_passed": 50,
+    "fmt_clippy": true,
+    "worker_protocol_checks": 8,
+    "sampling_signal_cases": 24,
+    "GUI_debug_passed": true,
+    "worker_tests_after_label_correction": "final-label-tests.log",
+    "two_XPC_slots": true,
+    "integration_inputs": 9,
+    "integration_cases": 18,
+    "repack_and_WB_exact": true,
+    "reduced_PNG16_TIFF16_exports": 36,
+    "reduced_export_max_error_u16": 0,
+    "full_resolution_PNG16_exports": 10,
+    "full_resolution_export_codes_exact": true,
+    "output_proof_within_one_u8_code": true,
+    "release_smoke_screenshots": 8,
+    "release_native_surface_passed": true
+  },
+  "delivery": {
+    "installed_bundle": "dist/TrueRenderer.app",
+    "files_and_modes_exact": 23,
+    "signature_verified": true,
+    "installed_XPC_rechecked": true,
+    "previous_bundle": "var/recovery-curves-20261017/installed-previous.app",
+    "source_files_frozen": 468,
+    "originals_license_architecture_preserved": true,
+    "committed_or_pushed": false
+  },
+  "qualification_notes": [
+    "Early local test setup used a wrong relative manifest; rerun with absolute paths.",
+    "Initial photographic script needed the existing NumPy path and an empty dark-region mask guard; rerun completed.",
+    "First new oblique unit test used the wrong WB for the frozen campaign bounds; corrected to the actual WB, without changing bounds.",
+    "One earlier full verification was interrupted after a new candidate was rejected; final full suite completed with the accepted algorithm.",
+    "First bundle integration was interrupted at RAF with a partial report; final bundle was checked in a new root.",
+    "The durable library.sqlite changed after the initial inventory and before cleanup. Its current content is preserved and checked against a separate pre-cleanup inventory; no older database is restored."
+  ],
+  "limits": [
+    "Exact flat-run requirement deliberately excludes noisy/spatially varying plateaus until a measured noise model is available.",
+    "Oblique shoulders, rounded/complex highlights, ambiguous clipped colours and arbitrary curved/textured boundaries remain outside this narrow correction.",
+    "The ideal-CFA demosaic fix does not reconstruct lost scene information from a clipped RAW.",
+    "No measurable photographic colour improvement was established on these 40 originals; their pixels are unchanged.",
+    "No controlled performance/RSS qualification for this recipe; campaign timings are diagnostic only.",
+    "Absolute colour requires measured scene references and separate fit/validation captures.",
+    "No R0-R4, SF or E4 gate is closed; ad-hoc signature and RSS supervision are not release guarantees."
+  ],
+  "private_evidence_sha256": {
+    "final-source.json": "76946443166844ad27dde29336d0110e8a86eb854c2f0097c3d85d39f01e534c",
+    "plateau-verified-freeze.json": "937ad570e4fa0616a76c4dae3689ca503e38a35391ffdb04e9afa0c9c63bbd59",
+    "baseline-source.json": "a346e2ec25e441447119fb07499fb2b2bba662b3ce2aac024f857439c22ded00",
+    "protocol.json": "bbd6d1fdb65cd5811fc1cd5ecf1acc0ffd91793d2455f040874287030b2d4e41",
+    "plateau-analysis.json": "cb8507e069a2f80f66d207bea440616c41ad0b015582c406c6292fdd12668411",
+    "plateau-stability-analysis.json": "0130fea6b2b01b021fab3303084e927c5ba1f28a6e66b67faa1311404b511a83",
+    "downloads-inventory.json": "2cfb97fcc31846bea840a351a38f14aa63f7d33aa0aa69ede21232fdaa26a82e",
+    "photo-flat-recheck/report.json": "129b16a011b8d7b978120e0937507175ebc7811a6e89b743df0d11bd2e77f0d6",
+    "photos/report.json": "8ced208f6a84b20522bb80c1a8faa01180049b8ef0cf39c32c0269443c8339c9",
+    "final-bundle-checks.json": "9cc672c9a44d896cb0146a7fc7ec847f416521a4319b2c0ec7163eb4c86fb70b",
+    "installation.json": "3f3f6a9cf4f1018540356e28b7857d082ae761093f5e3a9a58a2fb038795d6ce",
+    "verify-plateau-final.log": "1c5c09ede2d5f0023e3faef6c7ab004e434cd97bfad70dd398ea22d016e9be4a",
+    "final-label-clippy.log": "4ed68b70d5e0256b7930b5cab919473de7fdcda0118b99b7296a40f84b7234e0",
+    "final-label-tests.log": "b58ed04cb1b7fd14b8e89e904c15e164ef2b1afb0eb82390ae6432720a9da741",
+    "xpc-final/reports/xpc-qualification-macos.json": "feece41ebb7c392422c6e170c70f7268af53ec25ed66a5126e116c566cedd1ed",
+    "integration-final/reports/experimental-private.json": "1be7d23b8adf9e646c81e01ae9d97ac458982700bf3c2b423dfb8a1465586bfd",
+    "gui-final/reports/smoke-macos.json": "214e7b845dde3a97b00fdcdf9bd4ba6f566c8f2802d463065e5269e0d1bc22fe",
+    "gui-final/reports/sampling-presentation-macos.json": "b4bd6b866bd3a51e1cb0b4025e394f49aee14a79e19db1f35f05eea91e466aa3",
+    "installed-xpc/reports/xpc-qualification-macos.json": "cbbb6bd8ea222d2dbd6a9c01754411768378d8497166685f6f606a17a6c77699",
+    "exports-final/var/photo-export-parity-UyRzUO/report.json": "00e2e95e660d9cb07597888a1cee8c81cf368fdebc2ba8500074eccf17f6b72f",
+    "plateau-715163.json": "a7e7a52025473ae685004933fc952015165a0265313ff751ab5b826c42ec8a99",
+    "plateau-101703.json": "d91efb439926632c67b3edc0e40f57fa39620403519ba147948fb1f70d82927f",
+    "plateau-101709.json": "6e2e51f465956f11f7795798d800373b7bf28019f85a620a5b85977c8d896b0f",
+    "plateau-101711.json": "359661a4612ff8091c08d3f5a46f1ae84192c3e2a673a57fce251e050597d326",
+    "plateau-101719.json": "ef9cb4d5b529f1f5ca7083d1073dddf7d1ebe8b4a835b9aa7660fcc30cdc4e33",
+    "plateau-101723.json": "40b095881ac0e66d697169f230519c179c2322ca82e74741b5e7d76a9990b9bd",
+    "plateau-101729.json": "1c89d986a61e18b162fdb4b9dddb6e4c762486f2855f18affdba6c339b610458",
+    "stability-0-plateau.json": "40d176167d4dd40a9f5ad81671e432e8e1207b681fe44dd232bad1a958833233",
+    "stability-101703-plateau.json": "48b3292d1f84d0b157d0bae64e3b7dce41b8e0f9f51ca8bb634d83a76c533f18",
+    "stability-101709-plateau.json": "aab26613bb41c8268f1aaef144048dad446859cba87fd2aa9e91d4bc9d535436",
+    "stability-101711-plateau.json": "916134eebfb77951afeb8050e64d28dffe6f321bbf15733f1517e70ce76f871f",
+    "stability-101719-plateau.json": "0000fbdf43a9d746d7d7e48fcd0bbd62dc1b8bfca24e512401b6126e2df72bf2",
+    "stability-101723-plateau.json": "43549baa96ff0493de3b41baef11443ef8de612c5ef06ebf33fd8ff0d2605c14",
+    "stability-101729-plateau.json": "0c52d4fc4a5611172f9a515e2f42273494b7880ebac6c3211068967ce0ac24ae",
+    "cleanup-result.json": "41b2ebbcfab8af40a2ba3db92c687b0281518f24341d99f6929a501cd9dddb46",
+    "cleanup-final-audit.json": "37216f20ea232d8cb99358def494680f23129ab792cf245313814fa3c18ea6bd"
+  },
+  "modified_implementation_sha256": {
+    "crates/tr-raw/src/highlights/shoulder.rs": "5889defb63e8c16d7ac7bbdb47f6902f8429eb44f535b75a734dd140741d8756",
+    "crates/tr-raw/src/highlights.rs": "be2778bb0622d6d8e292e0a037e490573155077f03349e8e12c874e6bfe9dc6f",
+    "crates/tr-raw/src/render.rs": "9903ea406b68e286174c34ae57832bb62dc1d7a6ab41c105b7dc3d57998d8fb7",
+    "crates/tr-raw/src/edge_planes.rs": "ec96f9079203cb228c8d351c3a8075fb512a4eadc8504ac2cdc88c926dc1de4e",
+    "crates/tr-raw/research/highlight_stability.rs": "1b9f6745cc9b0a7701e8f132ca3659bf0adaa5ea0cbd0407162e5cacaa01c4d2",
+    "crates/tr-raw/research/highlights.rs": "e0419d2cf2d5d683b066bc5b7d7b08db27f5f0e3a8bcf0044e2aeee9f02d81a1",
+    "crates/tr-core/src/decoder.rs": "958c5b84711fd9a42bd67688b7cbc3211f30054de67dff4aa86168d8b944f663",
+    "crates/tr-worker/src/experimental.rs": "16a06e782b479089f089188ac5860a1bd3e13380cd8947d0779a7eab35df99c1"
+  },
+  "retention": {
+    "before_bytes": {
+      "repository": 25618321408,
+      "campaign": 4803043328,
+      "target": 7411007488
+    },
+    "after_bytes": {
+      "repository": 13411921920,
+      "campaign": 444301312
+    },
+    "removed_files": 5037,
+    "removed_trees": [
+      "target",
+      "var/recovery-curves-20261017/candidate.app",
+      "var/recovery-curves-20261017/final.app",
+      "var/recovery-curves-20261017/gui-final/corpus/.truerenderer-cache",
+      "var/verify-nWPPu5I0/corpus/.truerenderer-cache",
+      "var/verify-hPJyOFJ6/corpus/.truerenderer-cache"
+    ],
+    "compressed_reports": 45,
+    "new_hard_links": 58,
+    "preserved_contents_verified": 6396,
+    "gallery_references_valid": 2400,
+    "protected_files_verified": 183,
+    "original_RAWs_verified": 40,
+    "all_passed": true,
+    "regeneration": "Analytical .f32/.cfa files require generating the recorded seed into a new directory. Compressed reports require decompression. No originals, durable data or previous installed bundle were removed.",
+    "final_inventory_audit": {
+      "entries": 6396,
+      "unchanged_contents": 6395,
+      "expected_finalized_output_log": {
+        "path": "var/recovery-curves-20261017/cleanup.log",
+        "sha256": "08f17633e8d3bf2a5e2ab3b982a078a92ee1ed49f25a984b04b36e4b4b1fa7ad"
+      },
+      "all_passed": true
+    }
+  },
+  "evidence_compression": "Some private JSON reports are stored as .json.gz; published evidence hashes refer to their decompressed contents."
+}

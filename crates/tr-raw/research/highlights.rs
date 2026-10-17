@@ -5,6 +5,101 @@ use sha2::{Digest, Sha256};
 use std::{fs, path::Path};
 use tr_core::color::LinearImage;
 
+#[test]
+#[ignore = "explicit private RAW manifest, id and output directory"]
+fn research_campaign_photographic_regression() {
+    use std::io::Write;
+    let manifest: Value =
+        serde_json::from_slice(&fs::read(std::env::var("TR_PHOTO_MANIFEST").unwrap()).unwrap())
+            .unwrap();
+    let id = std::env::var("TR_PHOTO_ID").unwrap();
+    let source = manifest["sources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["id"] == id)
+        .unwrap();
+    let path = Path::new(source["source"].as_str().unwrap());
+    let output = std::path::PathBuf::from(std::env::var("TR_PHOTO_OUTPUT").unwrap());
+    fs::create_dir(&output).unwrap();
+    let bytes = fs::read(path).unwrap();
+    let hash = format!("{:x}", Sha256::digest(&bytes));
+    assert_eq!(hash, source["sha256"]);
+    let started = std::time::Instant::now();
+    let image = crate::develop(&bytes, [1.; 3]).unwrap();
+    let seconds = started.elapsed().as_secs_f64();
+    let mut full_hash = Sha256::new();
+    for pixel in &image.pixels {
+        assert!(pixel.iter().all(|v| v.is_finite()) && pixel[3] == 1.);
+        for channel in pixel {
+            full_hash.update(channel.to_le_bytes());
+        }
+    }
+    let (w, h) = (image.width as usize, image.height as usize);
+    let edge = 320usize;
+    assert!(w >= edge && h >= edge);
+    let mut views = vec![("overview".to_string(), [0, 0, w, h], image.reduced(640))];
+    for fy in [0.2, 0.5, 0.8] {
+        for fx in [0.2, 0.5, 0.8] {
+            let x = ((fx * w as f64).round() as usize)
+                .saturating_sub(edge / 2)
+                .min(w - edge);
+            let y = ((fy * h as f64).round() as usize)
+                .saturating_sub(edge / 2)
+                .min(h - edge);
+            let pixels = (y..y + edge)
+                .flat_map(|yy| image.pixels[yy * w + x..yy * w + x + edge].iter().copied())
+                .collect();
+            let crop = LinearImage::new(edge as u32, edge as u32, pixels).unwrap();
+            views.push((
+                format!("zone-{}", views.len() - 1),
+                [x, y, edge, edge],
+                crop,
+            ));
+        }
+    }
+    let mut rows = vec![];
+    for (name, rect, view) in views {
+        let mut writer =
+            std::io::BufWriter::new(fs::File::create(output.join(format!("{name}.f32"))).unwrap());
+        for p in &view.pixels {
+            for v in &p[..3] {
+                writer.write_all(&v.to_le_bytes()).unwrap();
+            }
+        }
+        writer.flush().unwrap();
+        for (index, ev) in [-2_f32, 0., 2.].into_iter().enumerate() {
+            let recipe = tr_core::editing::EditRecipe {
+                exposure_ev: ev,
+                ..tr_core::editing::EditRecipe::neutral(
+                    tr_core::decoder::RawEngine::TrueRendererExperimental,
+                )
+            };
+            let mut edited = view.clone();
+            recipe.apply(&mut edited).unwrap();
+            assert!(view.pixels.iter().zip(&edited.pixels).all(|(a, b)| {
+                (0..3).all(|c| b[c].to_bits() == (a[c] * ev.exp2()).to_bits()) && a[3] == b[3]
+            }));
+            fs::write(
+                output.join(format!("{name}-ev-{index}.rgba")),
+                edited.to_display(),
+            )
+            .unwrap();
+        }
+        rows.push(json!({"name":name,"source_rect":rect,"size":[view.width,view.height],"EV":[-2,0,2],"native_edit_gain_exact":true}));
+    }
+    assert_eq!(
+        hash,
+        format!("{:x}", Sha256::digest(fs::read(path).unwrap()))
+    );
+    let report = json!({"id":id,"source_sha256":hash,"source_unchanged":true,"recipe":crate::RECIPE,"size":[w,h],"full_render_sha256":format!("{:x}",full_hash.finalize()),"decode_seconds":seconds,"views":rows,"scope":"Offline production RAW core; XPC qualification is separate. Same-source differences are not measured colour accuracy; timing is diagnostic only."});
+    fs::write(
+        output.join("report.json"),
+        serde_json::to_vec_pretty(&report).unwrap(),
+    )
+    .unwrap();
+}
+
 // Frozen photographic HL2 policy, retained solely as a numerical comparator.
 #[allow(dead_code)]
 #[path = "highlights_hl2.rs"]
@@ -596,6 +691,10 @@ fn research_campaign_highlights() {
                 let mut oracle = mosaic(&bytes);
                 oracle.values = read_f32(&path.with_extension("cfa"));
                 oracle.saturation.fill(0);
+                // The ideal CFA has no censoring evidence. Carrying the
+                // original shoulder into it would test neutral rendering,
+                // not isolate the demosaic response.
+                oracle.highlight_confidence.fill(0);
                 let oracle_image = oracle.develop([1.; 3]).unwrap();
                 row["unclipped_reference_demosaic"] = json!(
                     source["patches"]

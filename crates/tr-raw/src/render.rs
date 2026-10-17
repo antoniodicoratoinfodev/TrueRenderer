@@ -308,7 +308,11 @@ pub(crate) fn develop_supported(
                 rgb[2 - measured] = green[x] + delta / 4.;
             }
             let near_edge = crate::edge_planes::near_edge(mosaic, width, height, x, y, 2);
-            let supported = near_edge && support.allows(x, y);
+            // Widen only the supported two-surface path. Censored colours
+            // retain their separately qualified interpolation/admission.
+            let supported = (near_edge
+                || crate::edge_planes::outer_bayer_edge(mosaic, width, height, x, y))
+                && support.allows(x, y);
             if supported
                 && let Some(model) = crate::edge_planes::interpolate_with_bounds(
                     mosaic,
@@ -392,6 +396,50 @@ pub(crate) fn develop_supported(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn curved_affine_surfaces_cover_the_colour_residual_footprint() {
+        let (w, h) = (106usize, 78usize);
+        let identity = [[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]];
+        for phase in 0..4 {
+            let cfa = Cfa::bayer([0, 1, 1, 2]).shifted(phase % 2, phase / 2);
+            for axis in 0..2 {
+                let truth: Vec<[f32; 3]> = (0..w * h)
+                    .map(|i| {
+                        let [p, q] = if axis == 0 {
+                            [i % w, i / w]
+                        } else {
+                            [i / w, i % w]
+                        };
+                        if (p as f64) < 0.39 * q as f64 + 23. + 3.1 * (0.13 * q as f64).sin() {
+                            [-0.03, 0.13, 0.04]
+                        } else {
+                            [0.67, 1.21, 0.93].map(|v| v + 0.0017 * p as f32 + 0.0004 * q as f32)
+                        }
+                    })
+                    .collect();
+                let mosaic: Vec<_> = truth
+                    .iter()
+                    .enumerate()
+                    .map(|(i, p)| p[cfa.color(i % w, i / w)])
+                    .collect();
+                let image = develop(&mosaic, w, h, cfa, identity, [0, 0, w, h], 1).unwrap();
+                for y in 7..h - 7 {
+                    for x in 7..w - 7 {
+                        let i = y * w + x;
+                        for (c, &expected) in truth[i].iter().enumerate() {
+                            assert!(
+                                (image.pixels[i][c] - expected).abs() < 2e-6,
+                                "phase={phase} axis={axis} site={x},{y} channel={c}"
+                            );
+                        }
+                        let c = cfa.color(x, y);
+                        assert_eq!(image.pixels[i][c].to_bits(), mosaic[i].to_bits());
+                    }
+                }
+            }
+        }
+    }
 
     #[test]
     fn original_clipping_bits_keep_partial_bytes_stride_and_shifted_coordinates() {

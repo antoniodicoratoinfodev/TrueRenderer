@@ -1,0 +1,1253 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-17",
+  "started": "2026-10-16",
+  "baseline_commit": "ac6f121920f794244d29d1f5b538cdf3ff785012",
+  "scope": "Fix position-dependent protection of admitted highlights in the existing independent RAW engine; no change to HL6 reconstruction, demosaic, camera profiles or other engines.",
+  "platform": {
+    "system": "Darwin",
+    "release": "27.0.0",
+    "machine": "arm64"
+  },
+  "independent_engine_was_already_installed": true,
+  "legacy_engine_retained": true,
+  "recipe": {
+    "before": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-neutral1-extended1",
+    "after": "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-neutral2-extended1"
+  },
+  "implementation": {
+    "previous": "Same-colour protection in a 3x3 group of 6x6 cells: distance from the admitted site varied with cell placement.",
+    "current": "Exact per-colour dilation of originally saturated sites admitted by HL6, Chebyshev radius 11. Contains every site protected before, independently of the protection-grid origin.",
+    "support_is_not_physical_truth": true,
+    "rolling_counts": {
+      "temporary_bytes_per_active_column": 3,
+      "vertical_max": 23,
+      "horizontal_max": 529,
+      "counts_released_before_activity_map": true,
+      "memory_plans_updated": true
+    },
+    "cache_recipe_changed": true,
+    "HL6_and_demosaic_unchanged": true
+  },
+  "analytical": {
+    "scope": "Correlated analytical configurations, not independent photographs; error against declared analytical camera RGB and geometry; clipping can destroy identifying information.",
+    "scene_families": [
+      "affine ramp",
+      "capped ramp",
+      "localized Gaussian coloured light",
+      "near-clipping plateau",
+      "step, with declared bounded noise in held-out runs",
+      "fully clipped neutral camera RGB"
+    ],
+    "sensor_exposure_ev": [
+      -0.02,
+      0,
+      0.02
+    ],
+    "other_perturbations": [
+      "one sensor code up/down before clipping",
+      "relative red WB +0.001",
+      "translation by one CFA period, then comparison in the same interior region"
+    ],
+    "phases": {
+      "Bayer": 4,
+      "XTrans": 36
+    },
+    "development_configurations": 1680,
+    "held_out_configurations": 10080,
+    "total_configurations": 11760,
+    "improved_configurations": 480,
+    "worsened_metrics_above_1e_9": 0,
+    "sets": [
+      {
+        "name": "development",
+        "cases": 1680,
+        "changed_regional_metrics": 240,
+        "metrics": {
+          "rmse": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.011432801570232232
+          },
+          "max": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.1075788140296936
+          },
+          "chroma_max": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.024807840585708618
+          },
+          "gradient_max": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.08029866218566895
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "809c595b3ea34a733876eae39b8548e1eeacc49b210908b8408995ed6638b8c9",
+          "after": "3d9d280d43d95c9ac94354f38947f932496fc246ef80a3b99d07657e0dd56e2b"
+        }
+      },
+      {
+        "name": "holdout-940123",
+        "cases": 1680,
+        "changed_regional_metrics": 240,
+        "metrics": {
+          "rmse": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.015524547137940096
+          },
+          "max": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.13920092582702637
+          },
+          "chroma_max": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.03157639503479004
+          },
+          "gradient_max": {
+            "improved": 240,
+            "worsened": 0,
+            "equal_within_1e_9": 1440,
+            "largest_increase": 0.0,
+            "largest_reduction": 0.142828106880188
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "44c37ee2ff570605700ae64844be2d82bb78e221681b88e2bc8dc46b3bc2afec",
+          "after": "a7860c1faf468e9c9b90c3fdb38aa899b2d0a57a8578ef728ac80d4c0ea5f264"
+        }
+      },
+      {
+        "name": "holdout-940124",
+        "cases": 1680,
+        "changed_regional_metrics": 0,
+        "metrics": {
+          "rmse": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "chroma_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "gradient_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "194dae31fe1fb5a49635689ab8a19cc42fc861fe5400675d54bdc03a079aed68",
+          "after": "67726dbebe1b2a0933c978272eed945110d76c0479c6f9b649ef4322c3d8ab93"
+        }
+      },
+      {
+        "name": "holdout-940125",
+        "cases": 1680,
+        "changed_regional_metrics": 0,
+        "metrics": {
+          "rmse": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "chroma_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "gradient_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "03edacd0de26f8b194db85adeecfb339fd9a5b1df37b3a33d3f3f47efe66841a",
+          "after": "80df86f73501058c376447d7d6a842edd3c9bc7d530ddcadf3bfb70c2dd253e2"
+        }
+      },
+      {
+        "name": "coloured-940129",
+        "cases": 1680,
+        "changed_regional_metrics": 0,
+        "metrics": {
+          "rmse": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "chroma_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "gradient_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "cac1ba6faf867c1f800138c9d7f1c35ccef177b3d3280b168980a7949a14e71e",
+          "after": "cac1ba6faf867c1f800138c9d7f1c35ccef177b3d3280b168980a7949a14e71e"
+        }
+      },
+      {
+        "name": "coloured-940130",
+        "cases": 1680,
+        "changed_regional_metrics": 0,
+        "metrics": {
+          "rmse": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "chroma_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "gradient_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "9ff800ce8166da6625f621a82ff32b37cc345de59f9a2cd8eb60c71e0b68ff39",
+          "after": "9ff800ce8166da6625f621a82ff32b37cc345de59f9a2cd8eb60c71e0b68ff39"
+        }
+      },
+      {
+        "name": "coloured-940131",
+        "cases": 1680,
+        "changed_regional_metrics": 0,
+        "metrics": {
+          "rmse": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "chroma_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          },
+          "gradient_max": {
+            "improved": 0,
+            "worsened": 0,
+            "equal_within_1e_9": 1680,
+            "largest_increase": 0.0,
+            "largest_reduction": -0.0
+          }
+        },
+        "sensor_and_without_fallback_identical": true,
+        "report_sha256": {
+          "before": "834c3002ae1d9b39a4a2629ae9daefcba1e3e67dae250c1bb8aa907ecb82cfce",
+          "after": "834c3002ae1d9b39a4a2629ae9daefcba1e3e67dae250c1bb8aa907ecb82cfce"
+        }
+      }
+    ],
+    "known_regression": {
+      "cases": 352,
+      "pixels_identical": true,
+      "repack_sensor_and_render_exact": true
+    },
+    "known_diagnostic_subset": 24,
+    "sampled_CFA_and_no_fallback_render_identical_between_versions": true,
+    "example_localized_light": {
+      "size": [
+        96,
+        72
+      ],
+      "common_region": [
+        24,
+        18,
+        48,
+        36
+      ],
+      "translation": [
+        2,
+        2
+      ],
+      "linear_RGB_errors": {
+        "base": {
+          "before": {
+            "channel_samples": 5184,
+            "chroma_max": 0.002213120460510254,
+            "gradient_max": 0.0069626569747924805,
+            "max": 0.009248554706573486,
+            "rmse": 0.0006614664868022269
+          },
+          "after": {
+            "channel_samples": 5184,
+            "chroma_max": 0.0002467632293701172,
+            "gradient_max": 0.0009166598320007324,
+            "max": 0.0012646913528442383,
+            "rmse": 0.0001647808723508308
+          }
+        },
+        "translate": {
+          "before": {
+            "channel_samples": 5184,
+            "chroma_max": 0.024985432624816895,
+            "gradient_max": 0.08130884170532227,
+            "max": 0.10847729444503784,
+            "rmse": 0.011586729075004402
+          },
+          "after": {
+            "channel_samples": 5184,
+            "chroma_max": 0.00035262107849121094,
+            "gradient_max": 0.0010101795196533203,
+            "max": 0.0008984804153442383,
+            "rmse": 0.00015393498992186165
+          }
+        }
+      },
+      "aligned_translation_max_before_after": [
+        0.10848814249038696,
+        0.0017996430397033691
+      ]
+    }
+  },
+  "photographic": {
+    "originals": 5,
+    "cameras": {
+      "Nikon D750": 3,
+      "Nikon D800": 1,
+      "Fujifilm X-T5": 1
+    },
+    "new_captures": 0,
+    "engines": 5,
+    "EV": [
+      -2.0,
+      0.0,
+      2.0
+    ],
+    "accepted_per_version": 21,
+    "expected_refusals_per_version": 4,
+    "unexpected_failures": 0,
+    "verified_EV_views": 1260,
+    "scope": "Full native decodes; 640-long-edge overview and nine 320x320 native crops per render, three editing exposures. No fitting of WB/profile/exposure and no absolute scene colour reference.",
+    "all_189_standard_native_crops_identical": true,
+    "unchanged_overviews": 20,
+    "changed_overview": {
+      "id": "raw-25",
+      "engine": "TrueRendererExperimental",
+      "pixels": 6,
+      "region": "glass facade, outside the frozen sky diagnostic rectangle"
+    },
+    "fixed_region_diagnostics": [
+      {
+        "id": "raw-11",
+        "engine": "TrueRendererExperimental",
+        "regions": [
+          {
+            "name": "Apertura luminosa sotto la volta: diagnostica",
+            "rect": [
+              275,
+              146,
+              8,
+              8
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                1.97991131991148,
+                1.97991131991148,
+                1.97991131991148
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "after": {
+              "mean_linear_rgb": [
+                1.97991131991148,
+                1.97991131991148,
+                1.97991131991148
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "difference": {
+              "pixels": 64,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-11",
+        "engine": "Apple",
+        "regions": [
+          {
+            "name": "Apertura luminosa sotto la volta: diagnostica",
+            "rect": [
+              275,
+              146,
+              8,
+              8
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                3.625662252306938,
+                3.625663422048092,
+                3.6256643794476986
+              ],
+              "relative_channel_spread_median": 5.891338332730811e-07,
+              "relative_magenta_excess_median": -3.2729656140872976e-07
+            },
+            "after": {
+              "mean_linear_rgb": [
+                3.625662252306938,
+                3.625663422048092,
+                3.6256643794476986
+              ],
+              "relative_channel_spread_median": 5.891338332730811e-07,
+              "relative_magenta_excess_median": -3.2729656140872976e-07
+            },
+            "difference": {
+              "pixels": 64,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-11",
+        "engine": "LibRawAhd",
+        "regions": [
+          {
+            "name": "Apertura luminosa sotto la volta: diagnostica",
+            "rect": [
+              275,
+              146,
+              8,
+              8
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.9979729084298015,
+                0.9979726755991578,
+                0.9979729084298015
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.9979729084298015,
+                0.9979726755991578,
+                0.9979729084298015
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "difference": {
+              "pixels": 64,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-11",
+        "engine": "LibRawBilinear",
+        "regions": [
+          {
+            "name": "Apertura luminosa sotto la volta: diagnostica",
+            "rect": [
+              275,
+              146,
+              8,
+              8
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.9999895095825195,
+                0.9999700784683228,
+                0.9999971389770508
+              ],
+              "relative_channel_spread_median": 2.7060586944571696e-05,
+              "relative_magenta_excess_median": 1.9431170585448854e-05
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.9999895095825195,
+                0.9999700784683228,
+                0.9999971389770508
+              ],
+              "relative_channel_spread_median": 2.7060586944571696e-05,
+              "relative_magenta_excess_median": 1.9431170585448854e-05
+            },
+            "difference": {
+              "pixels": 64,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-11",
+        "engine": "TrueRenderer",
+        "regions": [
+          {
+            "name": "Apertura luminosa sotto la volta: diagnostica",
+            "rect": [
+              275,
+              146,
+              8,
+              8
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                1.8751401863992214,
+                1.8751375675201416,
+                1.8751405514776707
+              ],
+              "relative_channel_spread_median": 1.5861530755501008e-06,
+              "relative_magenta_excess_median": 1.3958147064840887e-06
+            },
+            "after": {
+              "mean_linear_rgb": [
+                1.8751401863992214,
+                1.8751375675201416,
+                1.8751405514776707
+              ],
+              "relative_channel_spread_median": 1.5861530755501008e-06,
+              "relative_magenta_excess_median": 1.3958147064840887e-06
+            },
+            "difference": {
+              "pixels": 64,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-25",
+        "engine": "TrueRendererExperimental",
+        "regions": [
+          {
+            "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                2.3006879393373216,
+                2.301287319830486,
+                2.3065633458069392
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "after": {
+              "mean_linear_rgb": [
+                2.3006879393373216,
+                2.301287319830486,
+                2.3065633458069392
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-25",
+        "engine": "Apple",
+        "regions": [
+          {
+            "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                2.6733347226551603,
+                2.674507127557482,
+                2.6802774977684023
+              ],
+              "relative_channel_spread_median": 4.305458105591242e-07,
+              "relative_magenta_excess_median": -3.444366427629575e-07
+            },
+            "after": {
+              "mean_linear_rgb": [
+                2.6733347226551603,
+                2.674507127557482,
+                2.6802774977684023
+              ],
+              "relative_channel_spread_median": 4.305458105591242e-07,
+              "relative_magenta_excess_median": -3.444366427629575e-07
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-25",
+        "engine": "LibRawAhd",
+        "regions": [
+          {
+            "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.9704808924027851,
+                0.9707769111054284,
+                0.9727723572935377
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.9704808924027851,
+                0.9707769111054284,
+                0.9727723572935377
+              ],
+              "relative_channel_spread_median": 0.0,
+              "relative_magenta_excess_median": 0.0
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-25",
+        "engine": "LibRawBilinear",
+        "regions": [
+          {
+            "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.99586777646201,
+                0.9961670133045741,
+                0.9992210597991943
+              ],
+              "relative_channel_spread_median": 2.7060586944571696e-05,
+              "relative_magenta_excess_median": 1.9431170585448854e-05
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.99586777646201,
+                0.9961670133045741,
+                0.9992210597991943
+              ],
+              "relative_channel_spread_median": 2.7060586944571696e-05,
+              "relative_magenta_excess_median": 1.9431170585448854e-05
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-25",
+        "engine": "TrueRenderer",
+        "regions": [
+          {
+            "name": "Plateau del cielo saturo: criterio di neutralita della resa",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                2.1796484714916775,
+                2.180189585821969,
+                2.18469615650177
+              ],
+              "relative_channel_spread_median": 1.6983697150863009e-06,
+              "relative_magenta_excess_median": 1.4860735291222227e-06
+            },
+            "after": {
+              "mean_linear_rgb": [
+                2.1796484714916775,
+                2.180189585821969,
+                2.18469615650177
+              ],
+              "relative_channel_spread_median": 1.6983697150863009e-06,
+              "relative_magenta_excess_median": 1.4860735291222227e-06
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-26",
+        "engine": "TrueRendererExperimental",
+        "regions": [
+          {
+            "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.5335455163036074,
+                0.5800500103746141,
+                0.78061360846247
+              ],
+              "relative_channel_spread_median": 0.3163195848464966,
+              "relative_magenta_excess_median": -0.059621430933475494
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.5335455163036074,
+                0.5800500103746141,
+                0.78061360846247
+              ],
+              "relative_channel_spread_median": 0.3163195848464966,
+              "relative_magenta_excess_median": -0.059621430933475494
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-26",
+        "engine": "Apple",
+        "regions": [
+          {
+            "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.9625472633838653,
+                1.0266501989705221,
+                1.4321915905135019
+              ],
+              "relative_channel_spread_median": 0.32768380641937256,
+              "relative_magenta_excess_median": -0.04474041610956192
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.9625472633838653,
+                1.0266501989705221,
+                1.4321915905135019
+              ],
+              "relative_channel_spread_median": 0.32768380641937256,
+              "relative_magenta_excess_median": -0.04474041610956192
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-26",
+        "engine": "LibRawAhd",
+        "regions": [
+          {
+            "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.2255743817601885,
+                0.2451468601993152,
+                0.33009255622114453
+              ],
+              "relative_channel_spread_median": 0.31639528274536133,
+              "relative_magenta_excess_median": -0.059308867901563644
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.2255743817601885,
+                0.2451468601993152,
+                0.33009255622114453
+              ],
+              "relative_channel_spread_median": 0.31639528274536133,
+              "relative_magenta_excess_median": -0.059308867901563644
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-26",
+        "engine": "LibRawBilinear",
+        "regions": [
+          {
+            "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.5031521740811211,
+                0.5468064707347325,
+                0.736288293327604
+              ],
+              "relative_channel_spread_median": 0.3164360523223877,
+              "relative_magenta_excess_median": -0.059323035180568695
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.5031521740811211,
+                0.5468064707347325,
+                0.736288293327604
+              ],
+              "relative_channel_spread_median": 0.3164360523223877,
+              "relative_magenta_excess_median": -0.059323035180568695
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      },
+      {
+        "id": "raw-26",
+        "engine": "TrueRenderer",
+        "regions": [
+          {
+            "name": "Cielo azzurro non bruciato: controllo prima/dopo",
+            "rect": [
+              365,
+              25,
+              35,
+              50
+            ],
+            "before": {
+              "mean_linear_rgb": [
+                0.5031572639601571,
+                0.546833287698882,
+                0.7363085971559797
+              ],
+              "relative_channel_spread_median": 0.3163936734199524,
+              "relative_magenta_excess_median": -0.059345245361328125
+            },
+            "after": {
+              "mean_linear_rgb": [
+                0.5031572639601571,
+                0.546833287698882,
+                0.7363085971559797
+              ],
+              "relative_channel_spread_median": 0.3163936734199524,
+              "relative_magenta_excess_median": -0.059345245361328125
+            },
+            "difference": {
+              "pixels": 1750,
+              "changed_pixels": 0,
+              "max_abs_rgb": 0.0,
+              "rgb_rmse": 0.0
+            }
+          }
+        ]
+      }
+    ],
+    "targeted_native_ROI": {
+      "rect": [
+        3552,
+        2512,
+        256,
+        256
+      ],
+      "statistics": {
+        "pixels": 65536,
+        "changed_pixels": 107,
+        "max_abs_rgb": 0.3640604615211487,
+        "rgb_rmse": 0.006772359956027777,
+        "magenta_changed_pixels": [
+          {
+            "positive_pixels": 0,
+            "maximum": -0.0671219527721405,
+            "median": -0.23911365866661072
+          },
+          {
+            "positive_pixels": 5,
+            "maximum": 0.016161847859621048,
+            "median": -0.047623585909605026
+          }
+        ]
+      },
+      "inspection": "107 native pixels change in the glass reflection; small shift away from added green. Five changed pixels have a positive magenta index, maximum 0.016162, while the frozen sky region stays neutral. This is not measured colour accuracy; no physical reference selects the correct glass colour.",
+      "selection": "Post-hoc diagnosis of the changed overview, not an independent validation sample."
+    }
+  },
+  "validation": {
+    "ordinary_Rust_tests": 600,
+    "opt_in_Rust_integrations": 14,
+    "Python_tests": 50,
+    "fmt_and_Clippy": true,
+    "worker_protocol_checks": 8,
+    "sampling_signals": 24,
+    "native_debug_GUI_and_surface": true,
+    "release_GUI": true,
+    "release_GUI_screenshots": 8,
+    "private_inputs": 9,
+    "XPC_cases": 18,
+    "XPC_distinct_slots": 2,
+    "repack_exact": true,
+    "WB_probe_decode_match": true,
+    "reduced_PNG16_TIFF16_exports": 36,
+    "maximum_export_code_error": 0,
+    "full_resolution_PNG16_exports": 10,
+    "native_export_exact": true,
+    "output_proof_max_error_u8": 1,
+    "originals_unchanged": true,
+    "installed_XPC_passed": true,
+    "production_fault_injection_refused": true,
+    "full_sandbox_gate_passed": false,
+    "setup_notes": [
+      "A Clippy identity operation in the new test was corrected before the passing full suite.",
+      "The optional external-RAW test on the pipe worker was refused as designed; full suite used its corpus configuration, and external RAWs were qualified separately through XPC.",
+      "The first XPC invocation lacked the required isolated corpus directory; prepared it and reran successfully.",
+      "LaunchServices smoke timed out without screenshot delivery and recorded passed=false; a fresh direct native launch produced all eight screenshots and passed the surface checks."
+    ],
+    "gallery_browser_interaction_tested": false
+  },
+  "delivery": {
+    "bundle": "dist/TrueRenderer.app",
+    "file_count": 23,
+    "all_files_and_modes_equal_to_qualified_candidate": true,
+    "previous_bundle_preserved": true,
+    "codesign_deep_strict_passed": true,
+    "qualified_source_files": 335,
+    "license_and_original_architecture_unchanged": true,
+    "commit_or_push": false
+  },
+  "acquisition_preparation": {
+    "plan": "var/highlight-stability-20261016/acquisitions/plan.json",
+    "existing_bracket_template_prepared": true,
+    "new_physical_measurements": false
+  },
+  "retention": {
+    "after_cleanup_disk_bytes": {
+      "repository": 12643938304,
+      "campaign": 346394624
+    },
+    "protected_entries_verified_at_cleanup": 2941,
+    "protected_contents_unchanged": true,
+    "duplicate_candidate_manifests_verified_in_installed_bundle": 3,
+    "removed_regenerable_files": 800,
+    "removed_build_bundle_cache_directories": 5,
+    "deduplicated_gallery_PNGs": 1048,
+    "gallery_image_references_verified": 1260,
+    "losslessly_compressed_reports": 29,
+    "uncompressed_report_bytes": 94177701,
+    "compressed_report_bytes": 15036878,
+    "native_ROI_float_crops_retained": true,
+    "initial_total_not_persisted": true,
+    "audit_note": "The cleanup completed, but its first final assertion incorrectly expected three duplicate candidate-bundle manifests at their removed paths. This read-only reconciliation verifies their identical installed copies and all other protected content. No deletion was repeated.",
+    "removed_intermediates_require_regeneration": true
+  },
+  "limits": [
+    "The known HL6 capped-ramp over-recovery remains: it is a separate sensor-model error.",
+    "Curve-edge demosaic errors remain outside this change.",
+    "The 98-100% neutral fallback is still a rendering convention; some near-clipping genuine colours can be attenuated, and lost colour is not recovered by this protection change.",
+    "Only one original X-T5 and the existing photographic corpus were used. No absolute colour qualification, measured camera profile or noise model was produced.",
+    "No controlled performance or pressure/RSS qualification was performed for neutral2; previous speed figures do not describe this recipe.",
+    "No R0-R4, SF0-SF10 or E4 gate is closed."
+  ],
+  "evidence": [
+    {
+      "private_relative_path": "protocol.json",
+      "sha256": "37f7cea9c7fa7a8575e189af8ea98b07f9eed63b4b3ca9170d0a67fd4e158f71"
+    },
+    {
+      "private_relative_path": "additional-protocol.json",
+      "sha256": "c9615b0214f63d17fa0a3ead31efe54efacce2541f4a77e0d739893a252f5c84"
+    },
+    {
+      "private_relative_path": "baseline-source.json",
+      "sha256": "6477669fd6105d59997d5abb779f83bef0a98f781b49cd1a7f66b2ce34b8341c"
+    },
+    {
+      "private_relative_path": "qualified-source.json",
+      "sha256": "2c4db82da7e4375f872dc8c134c2deca8afbc08f2eddbd5996a035dcdca08917"
+    },
+    {
+      "private_relative_path": "baseline-bundle.json",
+      "sha256": "6797ccb65a214cb427ba0a6f3e442e615a4ef38baabcd89e346b08d1e9c6a02b"
+    },
+    {
+      "private_relative_path": "candidate-bundle.json",
+      "sha256": "98b46d269e3e6cef85a7a347b26209222279068e9c1dca155cb7825d48d5ef12"
+    },
+    {
+      "private_relative_path": "installed-bundle.json",
+      "sha256": "3fdaad55596926b699fecbfeb9d1355f30c21a6a46d3df462cc80e4a3747ba4a"
+    },
+    {
+      "private_relative_path": "stability-analysis.json",
+      "sha256": "bd4eff70b059f8c2eb0889276a055eec83a6f317c3347d6a2cdfe6c6b7b9c7f3"
+    },
+    {
+      "private_relative_path": "gallery/analysis.json",
+      "sha256": "c11f487e9cd8c46c1fa8ea9f34084923cc1e763a91da32965b99c3e39e002750"
+    },
+    {
+      "private_relative_path": "gallery/index.html",
+      "sha256": "bd32683853fecf3023fee4d3648071579282388235f56ff9d252008e2f27d7f4"
+    },
+    {
+      "private_relative_path": "roi-analysis.json",
+      "sha256": "312ee57c127234aefc99c5b6d498fb5811b3e855e6aeee61c83eb1cc4f699685"
+    },
+    {
+      "private_relative_path": "roi_probe.rs",
+      "sha256": "c1db82be7205bb2d2861cccafdf915b5d1018d4c26fb5879d38fe5a1476ebc63"
+    },
+    {
+      "private_relative_path": "roi-before/manifest.json",
+      "sha256": "2dd14320e6662d31590b4982574a9da87161854c4633e0cf94ea35670658b2c6"
+    },
+    {
+      "private_relative_path": "roi-after/manifest.json",
+      "sha256": "2dd14320e6662d31590b4982574a9da87161854c4633e0cf94ea35670658b2c6"
+    },
+    {
+      "private_relative_path": "roi-before/crop-minus2ev.png",
+      "sha256": "f255145332e6a03aa86190c7f214e238dbfabb6dcc303ca734c13b378a11dbb1"
+    },
+    {
+      "private_relative_path": "roi-after/crop-minus2ev.png",
+      "sha256": "8c389096627409e0147e86705b06b36b354c38630b876fcc0a65bd1831d6c9db"
+    },
+    {
+      "private_relative_path": "verify-qualified.log",
+      "sha256": "af5fb6fdd1b589610fe5d5fa115b6b4597de05cfcc1e3efa84b78b2509a24613"
+    },
+    {
+      "private_relative_path": "photo-manifest.json",
+      "sha256": "92e72893f5ce7a5ba8a122feb2c1331756cef3798adc741cc956ea9989035ceb"
+    },
+    {
+      "private_relative_path": "photo-regions.json",
+      "sha256": "9b9db58c333ea604f3f293e2a9673f1b766a8648a0ebe58d989aeec2a4a10c68"
+    },
+    {
+      "private_relative_path": "photos-before/comparison/manifest.json",
+      "sha256": "ab7c4b25442dcfb47a365485f8f49bd2f8f2a218b4c05b57bac133d0e6fca542"
+    },
+    {
+      "private_relative_path": "photos-after/comparison/manifest.json",
+      "sha256": "32107b410b0b019813676d8d0090ff588dd56a71f9610ec4686ddd8ae0cbac6d"
+    },
+    {
+      "private_relative_path": "integration/reports/experimental-private.json",
+      "sha256": "fb29ead512b5f6962cf2322ea2deb01ffc7e06daec67a6ff13f41be496736802"
+    },
+    {
+      "private_relative_path": "exports/var/photo-export-parity-nMR1ZN/report.json",
+      "sha256": "1433126b3014467df26982bbed61b4404b08ed3fa852c3dce3ba9155e3ca79bc"
+    },
+    {
+      "private_relative_path": "gui/reports/smoke-macos.json",
+      "sha256": "7e91128a03a7f48e3212f6289a5e2fd627e6cc9cdca4213538f76e40f69c364b"
+    },
+    {
+      "private_relative_path": "installed-xpc/reports/xpc-qualification-macos.json",
+      "sha256": "3e1c247eff8f8ecd4afd3ec6bb3d7eaca6a4aa9df1db3972e2f464478732f602"
+    },
+    {
+      "private_relative_path": "installed-xpc/reports/xpc-integration-macos.json",
+      "sha256": "0ed394ca238301346529b59c923615da2ed9beff853478e92132b4a334fde66b"
+    },
+    {
+      "private_relative_path": "acquisitions/plan.json",
+      "sha256": "b0b338200e28af8e503fce37d1de78216bfefc553e6f4a699da17daa2b2c1ba7"
+    },
+    {
+      "private_relative_path": "cleanup-report.json",
+      "sha256": "86f6e69d14c434793e3dadc1720cff91b703ac2ad39bb55ab9ccd5e0a8ca5cbc"
+    },
+    {
+      "private_relative_path": "cleanup-plan.json",
+      "sha256": "698a75a4609e09f4401ae460181c2cd8c9cf54655aaf81ecc5574f9769d3a229"
+    },
+    {
+      "private_relative_path": "cleanup-protected.json.gz",
+      "sha256": "b1299aecc522b765437f5ddbccf94073add3bf245bbad653ef589aca33db64fd"
+    },
+    {
+      "private_relative_path": "audit-cleanup.py",
+      "sha256": "ce298a16ce042ea912006bd655d260726ec0bf9dc06ffeafb6db297388d865e9"
+    },
+    {
+      "private_relative_path": "finalize.py",
+      "sha256": "b03a183e4114fdcf4593ac4076a78bb750a002d9364c81d5e1e47d1be53a83b1"
+    }
+  ]
+}

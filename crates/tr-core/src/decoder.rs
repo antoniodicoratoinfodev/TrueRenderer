@@ -47,7 +47,7 @@ impl RawEngine {
             Self::LibRawAhd => "LibRaw-0.22.2-TR-ahd-rec2020-sensor-highlights-v2",
             Self::TrueRenderer => "LibRaw-0.22.2-TR-directional-f32-sensor-highlights-v2",
             Self::TrueRendererExperimental => {
-                "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir6-xt7-wb3-mat2-hl6-neutral1-extended1"
+                "TRExp-raw3-nikon2-fuji1-lj2-cal2-dir7-xt7-wb3-mat2-hl7-neutral2-extended1"
             }
         }
     }

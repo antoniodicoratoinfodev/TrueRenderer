@@ -304,6 +304,12 @@ impl<'a> Nef<'a> {
                         sensor_pixels * 5
                             + crate::highlights::scratch_bytes(self.width, self.height),
                     )
+                    .max(
+                        sensor_pixels * 6
+                            + sensor_pixels.div_ceil(8)
+                            + crate::highlights::support_bytes(self.width, self.height)
+                            + crate::highlight_render::scratch_bytes(self.width),
+                    )
                     + 64 * 1024 * 1024,
             },
         })

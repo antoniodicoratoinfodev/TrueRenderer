@@ -499,6 +499,9 @@ impl<'a> Dng<'a> {
             .max(sensor_pixels * 2 + self.tile[0] * self.tile[1] * 2)
             .max(demosaic_peak + crate::highlights::support_bytes(self.active[2], self.active[3]))
             .max(active_pixels * 5 + crate::highlights::scratch_bytes(self.active[2], self.active[3]))
+            .max(active_pixels * 6 + active_pixels.div_ceil(8)
+                + crate::highlights::support_bytes(self.active[2], self.active[3])
+                + crate::highlight_render::scratch_bytes(self.active[2]))
             .max(sensor_pixels * 2 + active_pixels * 6)
             // Export can hold copied profile fields, a metadata payload and
             // its final output copy together (each <=16 MiB). The remaining
