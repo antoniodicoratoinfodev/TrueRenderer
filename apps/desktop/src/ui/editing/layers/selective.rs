@@ -1,4 +1,5 @@
-use super::{Controls, color_wheel, palette, slider};
+use super::super::help;
+use super::{Controls, palette, slider};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::layers::{
@@ -28,6 +29,7 @@ impl Controls {
                 };
                 if palette::choice(
                     ui,
+                    lang,
                     self.selective_family == i,
                     &label,
                     palette::family(name),
@@ -39,20 +41,22 @@ impl Controls {
             }
         });
         ui.horizontal(|ui| {
-            *commit |= ui
-                .selectable_value(
-                    &mut g.method,
-                    SelectiveMethod::Relative,
-                    lang.text("Relativo"),
-                )
-                .changed();
-            *commit |= ui
-                .selectable_value(
-                    &mut g.method,
-                    SelectiveMethod::Absolute,
-                    lang.text("Assoluto"),
-                )
-                .changed();
+            *commit |= help::selectable_value(
+                ui,
+                lang,
+                "Relativo",
+                &mut g.method,
+                SelectiveMethod::Relative,
+            )
+            .changed();
+            *commit |= help::selectable_value(
+                ui,
+                lang,
+                "Assoluto",
+                &mut g.method,
+                SelectiveMethod::Absolute,
+            )
+            .changed();
         });
         ui.small(lang.text(match g.method {
             SelectiveMethod::Relative => "Relativo: percentuale del segnale RGB",
@@ -65,7 +69,7 @@ impl Controls {
         {
             slider(ui, lang, name, value, -100. ..=100., 0., commit);
         }
-        if ui.button(lang.text("Ripristina famiglia")).clicked() {
+        if help::button(ui, lang, "Ripristina famiglia").clicked() {
             *family = [0.; 4];
             *commit = true;
         }
@@ -97,8 +101,8 @@ impl Controls {
         ui.with_layout(layout, |ui| {
             let side = if compact { 112. } else { 132. };
             ui.allocate_ui(egui::vec2(side, side), |ui| {
-                let wheel = color_wheel(ui, lang, &mut g.hue, &mut g.chroma);
-                *commit |= wheel.drag_stopped() || (wheel.changed() && !wheel.dragged());
+                let field = super::super::visuals::color_field(ui, lang, &mut g.hue, &mut g.chroma);
+                *commit |= field.drag_stopped() || (field.changed() && !field.dragged());
             });
             ui.vertical(|ui| {
                 slider(
@@ -151,7 +155,7 @@ impl Controls {
         ] {
             slider(ui, lang, name, value, -100. ..=100., 0., commit);
         }
-        egui::CollapsingHeader::new(lang.text("Transizioni tonali")).show(ui, |ui| {
+        help::CollapsingHeader::new(lang, "Transizioni tonali").show(ui, |ui| {
             slider(
                 ui,
                 lang,

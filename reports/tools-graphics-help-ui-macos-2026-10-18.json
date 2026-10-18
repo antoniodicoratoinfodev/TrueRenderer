@@ -1,0 +1,207 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-10-18T02:47:53.747424+00:00",
+  "base_git_revision": "c0cf5c39ea3549ddab371bfeeea483c85b1377ba",
+  "scope": "Photographic tool graphics and bilingual help on tool, section and parameter names. Includes inspector layer-row width correction. Rendering algorithms and recipe schemas unchanged.",
+  "tool_count": 16,
+  "implemented": [
+    "Contextual IT/EN help on tool catalogue names and icons, operator headings, parameter labels, advanced sections, mask selectors and photographic action controls; disabled help retained.",
+    "Sixteen distinct photographic symbols; grading reference rings; rectangular hue/chroma field for Colorize; filter tint/density swatch; RGB channel connections; tonal levels guides; point-curve axes and parametric zone bands.",
+    "Measured layer-menu width and truncated long layer names prevent the inspector from expanding beyond the viewport."
+  ],
+  "desktop_tests": {
+    "passed": 249,
+    "failed": 0,
+    "ignored": 8,
+    "log": "var/tool-ui-20261018/desktop-tests.log"
+  },
+  "static_checks": {
+    "fmt": "passed",
+    "clippy_desktop_all_targets": "passed without warnings"
+  },
+  "targeted_checks": [
+    "All 16 tool titles and visible parameters covered in IT/EN without recipe writes.",
+    "Advanced geometry, detail, color and five mask shapes covered without recipe writes.",
+    "Parameter-name hover displays the explanation in both languages, enabled and disabled, without changing values.",
+    "Colorize field pointer input, keyboard Home reset and disabled state.",
+    "All 16 tools fit the actual inspector size limits in IT/EN; pre-fix Italian Sample Color reproduced a panel right edge of 1447 on a 1440-point viewport."
+  ],
+  "native": [
+    {
+      "case": "catalogue",
+      "language": "Italian",
+      "report": "var/tool-ui-20261018/catalogue/reports/develop-ui.json",
+      "saved_generation": 1,
+      "source_unchanged": true,
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1797,
+          1198
+        ]
+      },
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      }
+    },
+    {
+      "case": "grading",
+      "language": "English",
+      "report": "var/tool-ui-20261018/grading/reports/develop-ui.json",
+      "saved_generation": 1,
+      "source_unchanged": true,
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 41,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      }
+    },
+    {
+      "case": "selective",
+      "language": "Italian",
+      "report": "var/tool-ui-20261018/selective/reports/develop-ui.json",
+      "saved_generation": 1,
+      "source_unchanged": true,
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 26,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      }
+    },
+    {
+      "case": "curves",
+      "language": "English",
+      "report": "var/tool-ui-20261018/curves/reports/develop-ui.json",
+      "saved_generation": 1,
+      "source_unchanged": true,
+      "output_proof_surface": {
+        "compute": "GPU",
+        "differing_channels": 24,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      }
+    }
+  ],
+  "retry_note": "The first final-bundle native run timed out in stage 3 while waiting for screenshot delivery, without a decode/presenter error. Native app lookup was also unavailable and one desktop-control call stalled. All four cases subsequently passed with the same unchanged binary. The precise cause was not established; failed reports are retained in evidence_sha256.",
+  "visual_review": {
+    "automated_screenshots": 8,
+    "reviewed": [
+      "catalogue symbols",
+      "grading wheel",
+      "selective color",
+      "Colorize field",
+      "parametric zones",
+      "point-curve axes"
+    ],
+    "interactive": [
+      "channel diagram",
+      "filter swatch",
+      "levels input/output guides"
+    ],
+    "interaction_root": "var/tool-ui-20261018/before-layout-fix-catalogue",
+    "interactive_revision": "Before the final layer-menu width correction; final layout verified by regression and the final native screenshot cases.",
+    "note": "Hover behavior is verified by synthetic pointer events in the desktop regression; native review checks appearance and layout. No claim of a complete accessibility qualification."
+  },
+  "installation": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/tool-ui-20261018/previous.app",
+    "files_matching_candidate": 23,
+    "changed_from_previous": [
+      "Contents/MacOS/TrueRenderer"
+    ],
+    "ad_hoc_signature_verified": true,
+    "xpc_candidate": "var/tool-ui-20261018/reports/xpc-qualification-macos.json",
+    "xpc_installed": "var/tool-ui-20261018/installed-check/reports/xpc-qualification-macos.json"
+  },
+  "source_files_hashed": 366,
+  "protected_files_unchanged": 15,
+  "evidence_sha256": {
+    "var/tool-ui-20261018/bundle-before.json": "6985d4b00bca3732d91c3252800a170f61f8e2c46bde9f8ee54995d9b9c60b1e",
+    "var/tool-ui-20261018/bundle-candidate.json": "97d7a94d7146c1d7af82a6c6dcfbac843e840de6c2966ee97241dd7a95fbfcc8",
+    "var/tool-ui-20261018/bundle-installed.json": "97d7a94d7146c1d7af82a6c6dcfbac843e840de6c2966ee97241dd7a95fbfcc8",
+    "var/tool-ui-20261018/capture-timeout-catalogue/reports/develop-ui.json": "41b52ec7c77cbb63838ad656d754128a5213a9ab79b12f38c6bbf771af7a6bf8",
+    "var/tool-ui-20261018/capture-timeout-curves/reports/develop-ui.json": "5843aa32494bd0b97b050a25736d62e6652ec91595e8fb1fe2cd2fb4582e5d8a",
+    "var/tool-ui-20261018/capture-timeout-grading/reports/develop-ui.json": "e2019a9785adca918bc2c389fa496cbbc6ab333c1e059d0e5172ecd10d7ca723",
+    "var/tool-ui-20261018/capture-timeout-selective/reports/develop-ui.json": "94dcfb64c8d9e6de81baa21cdd03258c47ef723ccf9c6e5bad12808fc43270ea",
+    "var/tool-ui-20261018/catalogue/reports/develop-grid.png": "70da74eb884e5f9321559a9fdcd9289b48e4a819bd0aec5fda29937307b9323a",
+    "var/tool-ui-20261018/catalogue/reports/develop-ui.json": "5e83a09282b97dff5f37badbe580da9e2df0e3fc2785e8ec9fca6592b9c6e0cb",
+    "var/tool-ui-20261018/catalogue/reports/develop-viewer.png": "23714eb323e5c10f724732f353ee87d49a367259fd2ead83f1aa9d4bf1410b8d",
+    "var/tool-ui-20261018/catalogue/var/develop-export/02_Paesaggio_analitico-export.png": "0772b8a1c7fd7660836f60ed899b87e5687a3cd9aa959f506feeeefbfc3ea03a",
+    "var/tool-ui-20261018/clippy.log": "d2900cddad1017f521555add1809c0a5765b1bffc9c32bfb6fb02004a0c36671",
+    "var/tool-ui-20261018/curves/reports/develop-grid.png": "04bef20d38c5ca7bbb1ebab9ce651a4706259c2d411599bcabdfb07250dcfb89",
+    "var/tool-ui-20261018/curves/reports/develop-ui.json": "e54da4a100951371c4cb7971d0a2d81dbe9f6997236e69520405ee12483913fd",
+    "var/tool-ui-20261018/curves/reports/develop-viewer.png": "14c34050b9a58fe33f7d6b33c08d7a7671750d6103372740f4690833c1119ff6",
+    "var/tool-ui-20261018/curves/var/develop-export/02_Paesaggio_analitico-export.png": "d2c2e3e0c3f4d72c5d2370580167645e0d9cc3a012c983d56b811778a9c099ec",
+    "var/tool-ui-20261018/desktop-tests.log": "6cb64e3c0f0f9db076dd7c068c56889e8dfbc1a4bcb7a2055b53d6da5a1ba214",
+    "var/tool-ui-20261018/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/tool-ui-20261018/grading/reports/develop-grid.png": "7897fd6cf3c11b3743e6140323f96945682a303c6cfdb8d1fb1d2b6d3235e5b8",
+    "var/tool-ui-20261018/grading/reports/develop-ui.json": "d77adee4be47ce5586ae81108dbfe11c1da1f952d4fc7a5d092195fc273ecf65",
+    "var/tool-ui-20261018/grading/reports/develop-viewer.png": "b89e14bda6cf666b3778eceef16d336a69741d37ea9dc4ed2f8b0b7195ddf322",
+    "var/tool-ui-20261018/grading/var/develop-export/02_Paesaggio_analitico-export.png": "b15cf2d0e3ac59b3c4a649529ad9cdaec682411ada6f3450c95c591e450c5b2c",
+    "var/tool-ui-20261018/installed-check/reports/xpc-qualification-macos.json": "0d1b07d99ee816ebbc2b91c5c54789540f71667a5dc2ea92138d8d7f7c2b7a4b",
+    "var/tool-ui-20261018/layout-tests.log": "c3f5bd9bc5ceae611062fb5997c4439167052650c1a99abe9fe0b16fe9853d2e",
+    "var/tool-ui-20261018/protected-before.json": "b85a4c44c9183e8ff75001bd09e628ae0fdde09b5d2bd2535268661abbb980ad",
+    "var/tool-ui-20261018/release-build.log": "d1235ea4563620b53ef5bdd2da5f595fec9d54f9efb48376378c20547dd95e57",
+    "var/tool-ui-20261018/reports/native-capture-timeouts.json": "0f94502b24ab2c5b65fdb65f5918b64d1a9b64aee06946f4b3736c3623affc7a",
+    "var/tool-ui-20261018/reports/xpc-qualification-macos.json": "627c44a0c03017d95e6dbafe8504cf46b6c925141e8c9ef9b3f89b5ffde76e9c",
+    "var/tool-ui-20261018/selective/reports/develop-grid.png": "f32fde20531cbac076dfaf9a5c81a8d04927b6fc3cfcc8e75492ce93281f4230",
+    "var/tool-ui-20261018/selective/reports/develop-ui.json": "932d4c0dafcdd93a45dc8d4a43e4a9906454fb9d6a05391936796e5ea1b0b5c5",
+    "var/tool-ui-20261018/selective/reports/develop-viewer.png": "4974d0a486f5b68abdf8b3fef97354f9ef19a78be60ace96a0762d6b0719eff9",
+    "var/tool-ui-20261018/selective/var/develop-export/02_Paesaggio_analitico-export.png": "df6fd98b753df27e2366df9452b01cb6111cb5589ea3ee23ab1e676cd1eecb5c",
+    "var/tool-ui-20261018/source-manifest.json": "fe1f7da4cf38b72b4f0a4769eab857f4641cad300d909ab5226cf6e24405dd57"
+  },
+  "limits": [
+    "Parameter diagrams are not measured image histograms or calibrated pixel previews.",
+    "Native tests use generated corpus images; no new photographic color qualification.",
+    "VoiceOver, all UI scales and cross-platform accessibility remain separate open gates.",
+    "No R0–R4 or SF0–SF10 gate closed; no commit or push performed."
+  ]
+}

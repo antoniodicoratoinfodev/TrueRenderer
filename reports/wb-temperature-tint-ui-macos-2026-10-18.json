@@ -1,0 +1,303 @@
+{
+  "application": "TrueRenderer",
+  "passed": true,
+  "checked_at": "2026-10-18T00:50:01.277869+00:00",
+  "scope": "Relative Temperature/Tint UI for four sensor-gain RAW engines; Apple retains kelvin. Stored gain contracts, decoder algorithms and IPC unchanged.",
+  "limits": [
+    "Relative coordinates are not calibrated kelvin or a camera illuminant model.",
+    "The two UI ranges share the pre-existing sensor-gain bounds.",
+    "Synthetic DNG only; no new photographic colour qualification or R/SF gate closure."
+  ],
+  "desktop_tests": {
+    "passed": 244,
+    "failed": 0,
+    "ignored": 8,
+    "log": "var/wb-ui-20261018-kcXeBgXy/desktop-tests.log"
+  },
+  "static_checks": [
+    "cargo fmt --all --check",
+    "cargo clippy -p truerenderer --all-targets --locked --offline -- -D warnings"
+  ],
+  "native": [
+    {
+      "engine": "Apple",
+      "language": "Italian",
+      "passed": true,
+      "raw_wb": {
+        "apple_temperature": 4500,
+        "apple_tint": 12,
+        "blue": 1000,
+        "red": 1000
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 45,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1528,
+          1146
+        ]
+      },
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "report": "var/wb-ui-20261018-kcXeBgXy/Apple/reports/develop-ui.json",
+      "sha256": "21a210cca8b22ee721af2b2a004f07fda1e27dd841ec649522b16179d8224779"
+    },
+    {
+      "engine": "LibRawBilinear",
+      "language": "English",
+      "passed": true,
+      "raw_wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 750,
+        "red": 1500
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 42,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1528,
+          1146
+        ]
+      },
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "report": "var/wb-ui-20261018-kcXeBgXy/LibRawBilinear/reports/develop-ui.json",
+      "sha256": "d8ab38e839f379ee17c79db17912712f4c3889b1e37fc06314fdd156efaca80c"
+    },
+    {
+      "engine": "LibRawAhd",
+      "language": "Italian",
+      "passed": true,
+      "raw_wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 750,
+        "red": 1500
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 60,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1528,
+          1146
+        ]
+      },
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "report": "var/wb-ui-20261018-kcXeBgXy/LibRawAhd/reports/develop-ui.json",
+      "sha256": "6b44d104aa058ac7b0aa28ff2468c65fe961b0371776426c387c809c533e6db8"
+    },
+    {
+      "engine": "TrueRenderer",
+      "language": "English",
+      "passed": true,
+      "raw_wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 750,
+        "red": 1500
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 81,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1528,
+          1146
+        ]
+      },
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "report": "var/wb-ui-20261018-kcXeBgXy/TrueRenderer/reports/develop-ui.json",
+      "sha256": "b4426d1f1245ce8d6d9a4fcdd019409183ec8c1296c168970d21b05c924600ea"
+    },
+    {
+      "engine": "TrueRendererExperimental",
+      "language": "Italian",
+      "passed": true,
+      "raw_wb": {
+        "apple_temperature": 0,
+        "apple_tint": 0,
+        "blue": 750,
+        "red": 1500
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 51,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1528,
+          1146
+        ]
+      },
+      "export": {
+        "file": "07-bayer-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "report": "var/wb-ui-20261018-kcXeBgXy/TrueRendererExperimental/reports/develop-ui.json",
+      "sha256": "150fc98ba1acfc8edbf0c17f501019bd3b73d6bde18d8d9b077b0d25f354c172"
+    }
+  ],
+  "xpc_candidate": "var/wb-ui-20261018-kcXeBgXy/reports/xpc-qualification-macos.json",
+  "xpc_installed": "var/wb-ui-20261018-kcXeBgXy/installed-check/reports/xpc-qualification-macos.json",
+  "installation": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/wb-ui-20261018-kcXeBgXy/previous.app",
+    "changed_files": [
+      "Contents/MacOS/TrueRenderer"
+    ],
+    "files": {
+      "Contents/Info.plist": {
+        "sha256": "48cdac15e7c7f50bb178b45b08c5b457c119cbe97b5be43c789e932b3798bc87",
+        "mode": 420
+      },
+      "Contents/_CodeSignature/CodeResources": {
+        "sha256": "7d62182d41288fde0888e3ad83bc6a5eff4e8721161e3396e3198850bf627a81",
+        "mode": 420
+      },
+      "Contents/MacOS/tr-worker": {
+        "sha256": "2b59adf95e62c5ec20fd336ca6a2d8db4f0d3915beb32abba1adc84c5c2c03ce",
+        "mode": 493
+      },
+      "Contents/MacOS/TrueRenderer": {
+        "sha256": "3d741d812ecad21da2affc442ae7dd567f759a24cb3a1ebce51dcfaf77d12b85",
+        "mode": 493
+      },
+      "Contents/Resources/ThirdPartyNotices/Colour-Robertson-BSD-3-Clause.txt": {
+        "sha256": "bb6b55d2116ab8053b302c065f22d3c346168b38f91447f8f19c0a74ce8d0076",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/manifest.json": {
+        "sha256": "35b54081e4b55cc87c81be655a47a0ab66c24756d13e0149e85ccd595606a5c6",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/xt5.rs": {
+        "sha256": "9c878e03cc6eef5c1ddf8892ca854608cdb7c702042e5791ab564bac41f3eb0e",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Fuji-Codec/fuji.rs": {
+        "sha256": "81e58edc140d940b1c7c0e15452cca824c75840864c673c89d9c4f1f1080fd54",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/nikon_d750.rs": {
+        "sha256": "6c6e21eaf7de0494eca185d493a0fd3aab0161288fdd4e2e690b509361461fcf",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/LICENSE.CDDL": {
+        "sha256": "0e3098d2d54a12434715f6679ea408d57da5e8d613c385c58ecc6fe5d30cc81f",
+        "mode": 420
+      },
+      "Contents/Resources/ThirdPartyNotices/Nikon-Reference-Data/manifest.json": {
+        "sha256": "3cb21c41a80a6c586245c97153b6d0106d998b2ede2ec79be1055a530ffb8b8b",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Sunrise.jpg": {
+        "sha256": "1edc0f5791059eaa1b8c4fe9fe22baffebd1b64cd1e861e01c7af4e99f9a01e1",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Grand Teton - Winter.jpg": {
+        "sha256": "85c6b5edac663bc664e62288a0b5672b1d54f514b9283272accdc3ab416d7029",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Avalanche Lake.jpg": {
+        "sha256": "65eb0044d55044d6118e7f289caa669fa1abb6438d57ae95642126a15a770df5",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/manifest.json": {
+        "sha256": "b7d9e8260570db17cb0512694926dbad5ab2f1035ee381d0910d9c5232f772e0",
+        "mode": 420
+      },
+      "Contents/Resources/SamplePhotos/Zion - The Watchman.jpg": {
+        "sha256": "8a616a9d30209bee696bbbda38df4da3c51c9eaea3c0259ee4786b6ab5337298",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/Info.plist": {
+        "sha256": "26734d212bd4559d45b225db4ba77da2e69663fe24437a612ceb9c85f1106990",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": {
+        "sha256": "08120ad12f01b08c97c4a5e01d41b315edd9efc5daa93360a87684085fcfab30",
+        "mode": 493
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/Info.plist": {
+        "sha256": "1321cf9550a138102ff12e331b998890311b771823224c91ca339f5d81eef51e",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/_CodeSignature/CodeResources": {
+        "sha256": "6686de10a28a2fe11b36cbb86dcbacc827cfc4ea116b4dabf1845e5aee629e9b",
+        "mode": 420
+      },
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": {
+        "sha256": "6c6950eb9d69cc8aa24ddc698be96280c3a65b169c40cef87531d0a71b916e89",
+        "mode": 493
+      }
+    }
+  },
+  "ui_inspection": "Native Experimental panel inspected via accessibility and screenshot: Temperature 25.00 and Tint 4.25, two coloured ramps and As-shot reset; test instance closed.",
+  "setup_notes": [
+    "The first installation precheck incorrectly required CodeResources to change; it correctly remained identical because the main executable carries its own signature. Precheck corrected to allow only executable/signature changes, then installed and requalified. The premature installed-XPC invocation had no report root and exited before running; final invocation passed."
+  ],
+  "source_sha256": {
+    "apps/desktop/src/i18n.rs": "cdb2e34a59890998e0443b6aacba7766b75bac59466509db270337a2bdec7db8",
+    "apps/desktop/src/ui/editing.rs": "29cd5f7586d4c14001c3063e5ef998de956e5b4499246d02688f212098c6dcb9",
+    "apps/desktop/src/ui/editing/white_balance.rs": "6e7dbbbad1b6a996ad9fdb54f90e25bf1238d39174e2e004a0297db4125d398e",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "a0edf13bd14b58fed641e174b4c4f3b9481bb14921db3c5c88bda37be31f6343",
+    "apps/desktop/src/ui/editing/palette.rs": "cf27d5bc09419f638458b9643b6e8a0084106a4dd40988eb931c7dfe3a1d72b0",
+    "docs/progetto-sviluppo-fotografico.md": "fa94498b8c11476dc4e90a949ae5ff45c99db17c9a24b96774bf19af7dcbbba4",
+    "README.md": "956ced0bc24869b881dedbd47559ead3e348f69ab76c7dd3858860cb51007b75"
+  },
+  "evidence_sha256": {
+    "var/wb-ui-20261018-kcXeBgXy/desktop-tests.log": "33377ed75ad897c693ff51bbf5a0769ebcb457cb7e5f563ce2f984d65eae12f3",
+    "var/wb-ui-20261018-kcXeBgXy/clippy.log": "fbdb5b17f17b1de32e6cc49c2a3574bf80e506ae4d86fd82ce3b6233375f54d1",
+    "var/wb-ui-20261018-kcXeBgXy/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/wb-ui-20261018-kcXeBgXy/release-build.log": "de4fc499d4286d1730e860756543df365304abd7ab4df59db8b5e9ab641b7b44",
+    "var/wb-ui-20261018-kcXeBgXy/reports/installation.json": "62f4e2f8e72ec424f9f613f5f1bcdc0ad00c7c75a127c0a1b76ecdd00a2c45ea",
+    "var/wb-ui-20261018-kcXeBgXy/reports/xpc-qualification-macos.json": "f1258c6045e40041cd1f81e24aa3196025a7e71211892e077738c962868e032e",
+    "var/wb-ui-20261018-kcXeBgXy/installed-check/reports/xpc-qualification-macos.json": "50392d65b731e9954ed7d3bb5bfd66f6bd83346c7f3806a89c182217c2bc07b1"
+  }
+}

@@ -34,7 +34,9 @@ pub(super) fn ramp(label: &str) -> Option<Vec<Color32>> {
     match label {
         "Temperatura RGB" | "RGB warmth" | "Temperatura" | "Temperature" | "Temperatura RAW"
         | "RAW temperature" => Some(vec![BLUE, GRAY, WARM]),
-        "Tinta RGB" | "RGB tint" | "Tinta RAW" | "RAW tint" => Some(vec![GREEN, GRAY, MAGENTA]),
+        "Tinta" | "Tint" | "Tinta RGB" | "RGB tint" | "Tinta RAW" | "RAW tint" => {
+            Some(vec![GREEN, GRAY, MAGENTA])
+        }
         "Tonalità (°)" | "Hue (°)" | "Tonalità" | "Hue" => {
             Some(vec![RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA, RED])
         }
@@ -80,6 +82,7 @@ pub(super) fn strip(ui: &egui::Ui, rect: egui::Rect, colors: &[Color32]) {
 
 pub(super) fn choice(
     ui: &mut egui::Ui,
+    lang: crate::i18n::Language,
     selected: bool,
     label: &str,
     color: Option<Color32>,
@@ -92,54 +95,234 @@ pub(super) fn choice(
         );
         ui.painter().rect_filled(rect, 1, enabled(ui, color));
     }
-    response
+    super::help::attach(ui, response, lang, label.trim_end_matches(" •"))
 }
 
-pub(super) fn icon(ui: &mut egui::Ui, id: &str) {
-    let (rect, _) = ui.allocate_exact_size(egui::vec2(22., 22.), egui::Sense::hover());
-    let (color, group) = tool(id);
-    let c = enabled(ui, color);
+pub(super) fn icon(ui: &mut egui::Ui, lang: crate::i18n::Language, id: &str) {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(26., 26.), egui::Sense::hover());
+    let c = enabled(ui, tool(id).0);
+    ui.painter().rect_filled(rect, 5, c.gamma_multiply(0.10));
+    draw_symbol(ui, rect.shrink(4.), id, c);
+    if let Some(text) = super::help::tool_text(lang, id) {
+        response.on_hover_text(text).on_disabled_hover_text(text);
+    }
+}
+
+// Each diagram describes a photographic operation; shape distinguishes tools even without color.
+fn draw_symbol(ui: &egui::Ui, rect: egui::Rect, id: &str, c: Color32) {
     let p = ui.painter();
-    p.rect_filled(rect, 5, c.gamma_multiply(0.12));
-    let inside = rect.shrink(5.);
-    match group {
-        "Curve" => {
-            p.line_segment(
-                [inside.left_bottom(), inside.right_bottom()],
-                egui::Stroke::new(1., c),
+    let at = |x: f32, y: f32| {
+        egui::pos2(
+            rect.left() + x * rect.width(),
+            rect.top() + y * rect.height(),
+        )
+    };
+    let line = |a: [f32; 2], b: [f32; 2], color| {
+        p.line_segment(
+            [at(a[0], a[1]), at(b[0], b[1])],
+            egui::Stroke::new(1.35, color),
+        );
+    };
+    let path = |points: &[[f32; 2]], color| {
+        p.add(egui::Shape::line(
+            points.iter().map(|v| at(v[0], v[1])).collect(),
+            egui::Stroke::new(1.5, color),
+        ));
+    };
+    let dot = |x, y, r, color| {
+        p.circle_filled(at(x, y), r, enabled(ui, color));
+    };
+    match id {
+        "sample" => {
+            p.circle_stroke(
+                at(0.45, 0.45),
+                rect.width() * 0.3,
+                egui::Stroke::new(1.4, c),
             );
-            p.line_segment(
-                [inside.left_bottom(), inside.left_top()],
-                egui::Stroke::new(1., c),
-            );
-            p.add(egui::Shape::line(
-                vec![inside.left_bottom(), inside.center(), inside.right_top()],
-                egui::Stroke::new(2., c),
-            ));
+            line([0.45, 0.], [0.45, 0.22], c);
+            line([0.45, 0.68], [0.45, 0.9], c);
+            line([0., 0.45], [0.22, 0.45], c);
+            line([0.68, 0.45], [0.9, 0.45], c);
+            dot(0.82, 0.85, 2.6, WARM);
         }
-        "Tono" | "Bianco e nero" => {
-            for i in 0..3 {
-                let x = inside.left() + i as f32 * 4.;
-                p.line_segment(
-                    [
-                        egui::pos2(x, inside.bottom()),
-                        egui::pos2(x, inside.bottom() - 4. - i as f32 * 4.),
-                    ],
-                    egui::Stroke::new(2., c),
+        "light" => {
+            p.circle_stroke(at(0.35, 0.35), 3., egui::Stroke::new(1.4, c));
+            for n in 0..8 {
+                let a = n as f32 * std::f32::consts::TAU / 8.;
+                line(
+                    [0.35 + 0.27 * a.cos(), 0.35 + 0.27 * a.sin()],
+                    [0.35 + 0.38 * a.cos(), 0.35 + 0.38 * a.sin()],
+                    c,
+                );
+            }
+            line([0.1, 0.88], [1., 0.88], c);
+            dot(0.65, 0.88, 2., c);
+        }
+        "curves" => {
+            path(
+                &[[0., 1.], [0.15, 0.7], [0.6, 0.55], [1., 0.]],
+                enabled(ui, RED),
+            );
+            path(
+                &[[0., 1.], [0.4, 0.85], [0.7, 0.25], [1., 0.]],
+                enabled(ui, GREEN),
+            );
+            path(
+                &[[0., 1.], [0.3, 0.4], [0.8, 0.2], [1., 0.]],
+                enabled(ui, BLUE),
+            );
+        }
+        "levels" => {
+            strip(
+                ui,
+                egui::Rect::from_min_max(at(0., 0.2), at(1., 0.65)),
+                &[Color32::from_gray(35), Color32::from_gray(230)],
+            );
+            for (x, col) in [(0., GRAY), (0.5, c), (1., Color32::WHITE)] {
+                path(
+                    &[[x - 0.1, 0.98], [x, 0.72], [x + 0.1, 0.98]],
+                    enabled(ui, col),
                 );
             }
         }
-        _ => {
-            for (offset, color) in [
-                (egui::vec2(-3., 2.), RED),
-                (egui::vec2(3., 2.), BLUE),
-                (
-                    egui::vec2(0., -3.),
-                    if group == "Viraggio" { VIOLET } else { GREEN },
-                ),
-            ] {
-                p.circle_filled(rect.center() + offset, 3., enabled(ui, color));
+        "mixer" => {
+            for (i, col) in [RED, WARM, YELLOW, GREEN, CYAN, BLUE, VIOLET, MAGENTA]
+                .into_iter()
+                .enumerate()
+            {
+                let a = i as f32 * std::f32::consts::TAU / 8.;
+                line(
+                    [0.5 + 0.23 * a.cos(), 0.5 + 0.23 * a.sin()],
+                    [0.5 + 0.47 * a.cos(), 0.5 + 0.47 * a.sin()],
+                    enabled(ui, col),
+                );
             }
+            line([0.15, 0.95], [0.85, 0.95], c);
+        }
+        "channels" => {
+            for (i, col) in [RED, GREEN, BLUE].into_iter().enumerate() {
+                let y = 0.15 + i as f32 * 0.35;
+                line(
+                    [0.13, y],
+                    [0.87, 1. - y],
+                    enabled(ui, col).gamma_multiply(0.65),
+                );
+                line([0.13, y], [0.87, y], enabled(ui, col));
+                dot(0.1, y, 2., col);
+                dot(0.9, y, 2., col);
+            }
+        }
+        "grading" => {
+            for (x, y, col) in [
+                (0.2, 0.25, BLUE),
+                (0.8, 0.25, WARM),
+                (0.2, 0.8, MAGENTA),
+                (0.8, 0.8, GRAY),
+            ] {
+                p.circle_stroke(at(x, y), 3., egui::Stroke::new(1.4, enabled(ui, col)));
+                line([x, y], [x + 0.12, y - 0.12], enabled(ui, col));
+            }
+        }
+        "black_white" => {
+            p.circle_filled(at(0.5, 0.5), rect.width() * 0.44, Color32::from_gray(215));
+            let mut points = vec![at(0.5, 0.5)];
+            points.extend((0..=16).map(|i| {
+                let a = std::f32::consts::FRAC_PI_2 + i as f32 * std::f32::consts::PI / 16.;
+                at(0.5 + 0.44 * a.cos(), 0.5 + 0.44 * a.sin())
+            }));
+            p.add(egui::Shape::convex_polygon(
+                points,
+                Color32::from_gray(50),
+                egui::Stroke::NONE,
+            ));
+            p.circle_stroke(at(0.5, 0.5), rect.width() * 0.44, egui::Stroke::new(1., c));
+        }
+        "filter" => {
+            path(
+                &[[0., 0.32], [0.5, 0.02], [1., 0.32], [0.5, 0.62], [0., 0.32]],
+                c,
+            );
+            path(&[[0., 0.55], [0.5, 0.85], [1., 0.55]], enabled(ui, WARM));
+            path(
+                &[[0.15, 0.8], [0.5, 1.], [0.85, 0.8]],
+                c.gamma_multiply(0.5),
+            );
+        }
+        "gradient_map" => {
+            strip(
+                ui,
+                egui::Rect::from_min_max(at(0., 0.25), at(1., 0.7)),
+                &[BLUE, VIOLET, WARM],
+            );
+            for x in [0., 0.5, 1.] {
+                path(&[[x - 0.08, 0.96], [x, 0.77], [x + 0.08, 0.96]], c);
+            }
+        }
+        "selective_color" => {
+            for (x, y, col) in [
+                (0.25, 0.25, CYAN),
+                (0.75, 0.25, MAGENTA),
+                (0.25, 0.75, YELLOW),
+                (0.75, 0.75, GRAY),
+            ] {
+                dot(x, y, 3., col);
+            }
+            path(&[[0.55, 0.04], [0.98, 0.04], [0.98, 0.45]], Color32::WHITE);
+        }
+        "colorize" => {
+            strip(
+                ui,
+                egui::Rect::from_min_max(at(0., 0.05), at(1., 0.55)),
+                &[RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA],
+            );
+            line([0.15, 0.95], [0.8, 0.35], c);
+            line([0.25, 1.], [0.9, 0.4], c);
+            dot(0.18, 0.93, 2., c);
+        }
+        "tonal" => {
+            for (i, h) in [0.25, 0.55, 0.9, 0.7, 0.4].into_iter().enumerate() {
+                let x = 0.05 + i as f32 * 0.22;
+                p.rect_filled(
+                    egui::Rect::from_min_max(at(x, 1. - h), at(x + 0.13, 1.)),
+                    1,
+                    enabled(ui, Color32::from_gray(65 + i as u8 * 40)),
+                );
+            }
+        }
+        "exposure_gamma" => {
+            path(
+                &[[0., 0.8], [0.2, 0.74], [0.45, 0.6], [0.7, 0.36], [1., 0.]],
+                c,
+            );
+            line([0., 1.], [1., 1.], GRAY);
+            line([0., 0.8], [0., 1.], c);
+            line([0.15, 0.12], [0.15, 0.45], c);
+            line([0., 0.28], [0.3, 0.28], c);
+        }
+        "luminance_curve" => {
+            line([0., 1.], [1., 0.], GRAY.gamma_multiply(0.4));
+            path(&[[0., 1.], [0.25, 0.9], [0.6, 0.2], [1., 0.]], c);
+            dot(0.25, 0.9, 1.7, GRAY);
+            dot(0.6, 0.2, 1.7, Color32::WHITE);
+        }
+        "parametric_curve" => {
+            for (i, shade) in [45, 65, 85, 105].into_iter().enumerate() {
+                p.rect_filled(
+                    egui::Rect::from_min_max(
+                        at(i as f32 / 4., 0.),
+                        at((i + 1) as f32 / 4. - 0.02, 1.),
+                    ),
+                    0,
+                    Color32::from_gray(shade),
+                );
+            }
+            path(
+                &[[0., 1.], [0.25, 0.8], [0.5, 0.5], [0.75, 0.13], [1., 0.]],
+                c,
+            );
+        }
+        _ => {
+            line([0., 0.5], [1., 0.5], c);
         }
     }
 }

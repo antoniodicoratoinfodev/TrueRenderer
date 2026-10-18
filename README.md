@@ -20,6 +20,8 @@ Choose **Standard or Full preview quality**, globally or for an individual photo
 
 TrueRenderer's **linear Rec.2020 floating-point working space** gives tonal and colour operations a wide numerical range. RAW white balance, editable curves, histograms and pixel inspection connect creative decisions to the image data. Native-resolution export applies the saved photographic recipe to the source.
 
+RAW **Temperature and Tint** control all supported engines. Apple RAW uses kelvin; the other engines use relative adjustments around As shot. Saved white balances retain their rendering. Double-click either relative slider to reset that axis, or choose As shot to reset both. At extreme settings, each slider’s available range depends on the other.
+
 Start with a natural rendering or develop a distinctive style. Refine a sampled colour, balance individual tonal zones, build a monochrome treatment or combine adjustments in a reusable look.
 
 ![Four-wheel colour grading and editable layer-mask controls in TrueRenderer](reports/readme-2026-10-11/colour.jpg)
@@ -28,7 +30,7 @@ Start with a natural rendering or develop a distinctive style. Refine a sampled 
 |---|---|
 | Light and contrast | Exposure, brightness, contrast, highlights, shadows, whites and blacks; automatic exposure |
 | Tone shaping | Editable point curves, individual RGB curves, luminance and parametric curves; tonal levels with histograms and black/gray/white sampling |
-| White balance | As-shot, manual, automatic and neutral-area sampling for supported RAW files |
+| White balance | Temperature and Tint, As-shot, automatic and neutral-area sampling for supported RAW files |
 | Colour refinement | Warmth, tint, saturation, vibrance, warm-tone protection, eight-band HSL and channel mixers |
 | Creative colour | Four-wheel grading, selective colour, colorize, colour filters, gradient maps and black-and-white mixing |
 | Targeted adjustments | Sampled hue/chroma/luminance corrections and separate uniformity controls |
@@ -39,6 +41,10 @@ Start with a natural rendering or develop a distinctive style. Refine a sampled 
 ## Build the look, layer by layer
 
 The searchable **Tools** catalogue lets you apply an adjustment to a new photographic layer or the selected layer. Name, duplicate, reorder and hide layers; refine their contribution with separate **Opacity** and **Fill** controls.
+
+The **Develop** panel groups adjustments in collapsible sections. Its **Actions** menu contains looks, crop, copy/paste, output verification and Reset all. The **Layers** panel separates the stack, layer properties, adjustments and mask, with visibility controls and percentage-based Opacity and Fill.
+
+Hover over a tool or adjustment name to see what it does, in Italian or English, including disabled controls. Distinct photographic symbols, colour fields, channel connections and tonal guides help explain each operation as you work.
 
 Combine brush, radial and linear gradients, luminance and hue masks. Add, subtract or intersect selections, feather their edges and invert their coverage. Masks follow the photograph through crop and rotation.
 

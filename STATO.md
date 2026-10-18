@@ -23,6 +23,53 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 **Controllo prima della pubblicazione, 18 ottobre:** il commit riunisce i due incrementi sotto descritti in 18 file: sorgenti, test, specifiche, stato e due rapporti aggregati. Tutti i 468 sorgenti congelati della versione finale coincidono con quelli da pubblicare; nessuno è omesso o escluso per errore. Verificati anche i 68 hash delle evidenze citate dai rapporti. Fotografie e gallerie private, database, backup, bundle, toolchain, cache e log restano locali; LICENSE e diritti delle dipendenze sono conservati. Le diciture «nessun commit/push» nei resoconti e i corrispondenti campi nei rapporti registrano la chiusura delle qualifiche, precedente a questa pubblicazione.
 
+**Pubblicazione UI del 18 ottobre:** riuniti in 20 file i tre incrementi WB Temperatura/Tinta, grafica/aiuti degli strumenti e pannelli Livelli/Sviluppo, con sorgenti, regressioni, guida, specifica e tre rapporti. Verificati i 367 sorgenti congelati del bundle finale e tutti i 65 hash delle evidenze dei rapporti. Le diciture «nessun commit/push» descrivono la chiusura delle campagne, precedente a questa pubblicazione richiesta dal titolare. Dati durevoli, fotografie, gallerie, bundle, backup e toolchain restano locali.
+
+### Pannelli Livelli e Sviluppo — consegnati il 18 ottobre
+
+Richiesta del titolare: estendere la cura della UI ai pannelli Livelli e Sviluppo. Piano: barra comandi compatta e navigazione coerente; regolazioni raggruppate in sezioni richiudibili; pila con visibilità e stato leggibili; proprietà del livello distinte dagli strumenti e dalla maschera. Conservare aiuti IT/EN, tastiera, ricette e formule fotografiche.
+
+- [x] Riorganizzare Sviluppo e Livelli con componenti grafici condivisi e larghezze controllate.
+- [x] Verificare selezione, visibilità, proprietà, sezioni e apertura senza modifiche involontarie.
+- [x] Provare il bundle nativo, export e XPC; installare con backup e rapporto.
+
+**Implementato:** barra compatta Annulla/Ripeti e Prima/Dopo; Azioni raccoglie look, ritaglio, copia/incolla, verifica resa e reset totale. Schede Regolazioni/Livelli/Strumenti uniformi; WB, luce, curve, colore e avanzate in sezioni richiudibili. Pila con occhio, nome, numero di regolazioni e stato maschera/blocco; proprietà, operatori e maschera separati. Opacità e Riempimento in percentuale; aiuti sui nomi conservati, valori interni invariati all’apertura.
+
+**Verificato:** 252 test desktop passati, otto ignorati; fmt e Clippy desktop/all-targets senza avvisi. Selezione e chiusura/riapertura dei gruppi senza modifiche alla ricetta, valori percentuali precisi e commit unico, trascinamento stabile quando compare il segno di modifica, 16 strumenti entro i limiti dell’ispettore in IT/EN, esposizione e menu raggiungibili anche a 550×360. Corrette durante le prove la quantizzazione involontaria delle percentuali e la visibilità dei primi controlli nelle finestre basse; il banco disabilita ora le animazioni dei gruppi nelle due configurazioni di tema prima di verificare i clic. Tre prove native finali (Sviluppo IT, pila/proprietà EN, strumento/maschera IT), sei schermate e tre export passati; superficie GPU entro un codice u8. Controllati visivamente barra, schede, luce, pila, proprietà, strumento e albero della maschera. Originali sintetici invariati.
+
+**Consegnato:** `dist/TrueRenderer.app` coincide nei 23 file e permessi col candidato; cambia soltanto l’host. Firma ad hoc e due XPC verificati sul candidato e dopo l’installazione. Backup in `var/develop-panels-20261018/previous.app`; 367 sorgenti congelati e 15 file protetti verificati. [Rapporto](reports/develop-layers-ui-macos-2026-10-18.json) con 25 evidenze locali e hash. Motori, formule e ricette conservano il contratto precedente; il WB Temperatura/Tinta resta presente. Nessun commit/push né gate R/SF chiuso; qualifica completa VoiceOver, scale UI e altre piattaforme ancora aperta.
+
+### Grafica e aiuti degli strumenti — consegnati il 18 ottobre
+
+Richiesta del titolare: curare e distinguere la parte grafica degli strumenti in base alla funzione; spiegare l’effetto al passaggio del mouse sul nome in Regolazioni, Strumenti e livelli. Piano: catalogo bilingue di aiuti condivisi; simboli fotografici distinti, grafici e selettori coerenti con il parametro; verifiche di hover sul testo, controlli disabilitati, tastiera, larghezze ridotte e conservazione delle ricette. Le grafiche dei controlli descrivono parametri e trasformazioni: nessun istogramma o dato fotografico inventato.
+
+- [x] Scrivere gli aiuti di strumenti e parametri e collegarli ai rispettivi nomi in IT/EN.
+- [x] Differenziare simboli, selettori cromatici e rappresentazioni di curve/livelli senza cambiare le formule fotografiche.
+- [x] Verificare interazione, copertura degli aiuti, apertura senza riscritture e layout nativo.
+- [x] Consegnare il bundle verificato con backup, XPC e rapporto della campagna.
+
+**Implementato:** aiuti contestuali per i 16 strumenti, parametri di base/avanzati, maschere e azioni fotografiche, anche sui controlli disabilitati. Simboli distinti, campo tonalità/cromia di Colorizza, campione del filtro, collegamenti RGB e guide di livelli/curve; il grading mantiene la ruota con riferimenti più leggibili. Corretto anche l’allargamento progressivo dell’ispettore: la riga del livello riserva ora la larghezza effettiva del menu e tronca i nomi lunghi, conservandone il testo completo nell’aiuto.
+
+**Verificato:** 249 test desktop passati, otto ignorati; fmt e Clippy desktop/all-targets senza avvisi. Copertura degli aiuti e apertura senza riscritture per tutti i 16 strumenti in IT/EN, sezioni avanzate e cinque forme di maschera; hover sul nome con controlli abilitati/disabilitati, interazione e tastiera di Colorizza. La regressione di layout riproduceva prima della correzione il bordo dell’ispettore a 1447 punti su una finestra da 1440; tutti gli strumenti ora rientrano nei limiti in entrambe le lingue. Quattro prove native finali (catalogo, grading, selettivo, curve), otto schermate, export e superficie GPU entro un codice u8; originali sintetici invariati. Controllati visivamente i pannelli finali; diagramma dei canali, campione del filtro e guide dei livelli controllati anche interattivamente prima dell’ultima correzione della larghezza. L’hover è verificato da eventi sintetici nei test desktop, non da una prova manuale nativa.
+
+**Consegnato:** `dist/TrueRenderer.app` coincide nei 23 file e permessi col candidato; cambia soltanto l’eseguibile host. Firma ad hoc e integrazione dei due XPC verificate sul candidato e nella posizione definitiva. Backup in `var/tool-ui-20261018/previous.app`; 366 sorgenti congelati e 15 file protetti invariati. [Rapporto](reports/tools-graphics-help-ui-macos-2026-10-18.json) con hash ed evidenze locali. Il primo giro nativo finale si era fermato in attesa delle schermate; anche lo strumento di controllo macOS ha avuto un lungo blocco. Ripetute le quattro prove con lo stesso binario immutato: tutte passate. Causa precisa non accertata, rapporti dei tentativi incompleti conservati.
+
+**Limiti:** nessun cambio alle formule fotografiche o allo schema delle ricette; i diagrammi non sostituiscono istogrammi misurati o anteprime dei pixel. Qualifica completa VoiceOver, scale UI e altre piattaforme ancora aperta. Nessun gate R/SF concluso e nessun commit/push di questo incremento.
+
+### WB fotografico nella UI — consegnato il 18 ottobre
+
+Richiesta del titolare: mantenere i guadagni R/B sotto il cofano per motore e test, mostrando Temperatura e Tinta nei motori che ancora esponevano Rosso RAW/Blu RAW. Implementata la parametrizzazione relativa logaritmica per LibRaw bilineare/AHD, TrueRenderer storico e Experimental; Apple mantiene Kelvin e tinta. Rampe freddo/caldo e verde/magenta, scala relativa dichiarata e limiti accoppiati al dominio RAW esistente. Doppio clic azzera un asse; Come scattato ripristina entrambi. Ricette, decoder, precisione interna, Auto/contagocce, export e cache conservano i guadagni esistenti. Nessuna migrazione né Kelvin attribuiti ai motori relativi.
+
+- [x] Modificare UI IT/EN, contratto e guida senza esporre guadagni diretti nel pannello fotografico.
+- [x] Verificare apertura senza riscrittura, direzioni, limiti, trascinamento/commit e reset nei quattro motori e nelle due lingue; regressioni desktop.
+- [x] Preparare e verificare il bundle aggiornato, inclusi XPC e smoke nativo, conservando quello precedente.
+
+**Verificato:** 244 test desktop passati, otto ignorati; fmt e Clippy desktop/all-targets senza avvisi. Cinque smoke nativi su DNG sintetico (un motore per esecuzione, IT/EN): ricetta salvata, WB RAW osservato, viewer/griglia ed export PNG 1024×768 passati; prova della superficie GPU entro un codice u8 in tutti e cinque. Dieci schermate prodotte; controllati i pannelli Apple/LibRaw e i due cursori del pannello Experimental anche nell’istanza interattiva, poi chiusa. Originali sintetici invariati.
+
+**Consegnato:** `dist/TrueRenderer.app` coincide nei 23 file e permessi col candidato; cambia soltanto l’eseguibile host, mentre decoder/servizi XPC e risorse restano identici. Firma ad hoc verificata e integrazione dei due XPC ripetuta sia sul candidato sia nella posizione definitiva. Bundle precedente in `var/wb-ui-20261018-kcXeBgXy/previous.app`. [Rapporto](reports/wb-temperature-tint-ui-macos-2026-10-18.json), con limiti, hash ed evidenze locali. La prima verifica di installazione pretendeva erroneamente una variazione di CodeResources e si è fermata prima di modificare il bundle; criterio corretto e controlli finali passati.
+
+**Limiti:** scala relativa al WB Come scattato, non calibrazione Kelvin; agli estremi la corsa di un asse dipende dall’altro. Nessun cambio alla resa delle ricette già salvate, nessuna nuova qualifica fotografica e nessun gate R/SF chiuso.
+
 ### Recupero HL e bordi curvi — incremento consegnato, 17–18 ottobre
 
 **Aggiornato il motore autonomo già disponibile a `hl7-dir7-neutral2`.** La correzione riguarda i due recuperi eccessivi riprodotti vicino al plateau e il difetto del controllo di bordo nel demosaic Bayer. Non costituisce una calibrazione cromatica né una soluzione generale del recupero delle alte luci. Bundle corrente in `dist/TrueRenderer.app`; motore storico conservato.

@@ -1,3 +1,4 @@
+use super::super::help;
 use super::{Controls, color_wheel, palette, slider};
 use crate::i18n::Language;
 use eframe::egui;
@@ -18,6 +19,7 @@ impl Controls {
             {
                 if palette::choice(
                     ui,
+                    lang,
                     self.grade_zone == i,
                     lang.text(name),
                     palette::family(name),
@@ -63,11 +65,11 @@ impl Controls {
                 );
             });
         });
-        if ui.button(lang.text("Ripristina zona")).clicked() {
+        if help::button(ui, lang, "Ripristina zona").clicked() {
             *zone = Default::default();
             *commit = true;
         }
-        egui::CollapsingHeader::new(lang.text("Transizioni tonali")).show(ui, |ui| {
+        help::CollapsingHeader::new(lang, "Transizioni tonali").show(ui, |ui| {
             slider(
                 ui,
                 lang,
@@ -97,11 +99,11 @@ impl Controls {
         commit: &mut bool,
     ) {
         ui.horizontal_wrapped(|ui| {
-            if ui.button(lang.text("Converti in B&N")).clicked() {
+            if help::button(ui, lang, "Converti in B&N").clicked() {
                 g.amount = 100.;
                 *commit = true;
             }
-            if ui.button(lang.text("Ripristina famiglie")).clicked() {
+            if help::button(ui, lang, "Ripristina famiglie").clicked() {
                 g.bands = [0.; 8];
                 *commit = true;
             }
@@ -181,9 +183,9 @@ impl Controls {
                 );
             });
         });
-        *commit |= ui
-            .checkbox(&mut g.preserve_luminance, lang.text("Conserva luminanza"))
-            .changed();
+        super::super::visuals::filter_swatch(ui, lang, g.hue, g.saturation, g.density);
+        *commit |=
+            help::checkbox(ui, lang, "Conserva luminanza", &mut g.preserve_luminance).changed();
     }
     pub(super) fn gradient_map(
         &mut self,
@@ -201,9 +203,7 @@ impl Controls {
             0.,
             commit,
         );
-        *commit |= ui
-            .checkbox(&mut g.reverse, lang.text("Inverti tavolozza"))
-            .changed();
+        *commit |= help::checkbox(ui, lang, "Inverti tavolozza", &mut g.reverse).changed();
         let (rect, _) =
             ui.allocate_exact_size(egui::vec2(ui.available_width(), 24.), egui::Sense::hover());
         for x in 0..80 {
@@ -293,7 +293,7 @@ impl Controls {
         {
             slider(ui, lang, name, value, -1. ..=4., 0., commit);
         }
-        egui::CollapsingHeader::new(lang.text("Intervallo luminanza")).show(ui, |ui| {
+        help::CollapsingHeader::new(lang, "Intervallo luminanza").show(ui, |ui| {
             let high = g.input[1];
             slider(
                 ui,

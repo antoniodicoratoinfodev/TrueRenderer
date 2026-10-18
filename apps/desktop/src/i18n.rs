@@ -16,6 +16,35 @@ impl Language {
             return source;
         }
         match source {
+            "Questa sezione contiene modifiche." => "This section contains adjustments.",
+            "Torna a Sviluppo" => "Back to Develop",
+            "Nascondi livello" => "Hide layer",
+            "Mostra livello" => "Show layer",
+            "Azioni del livello" => "Layer actions",
+            "regolazioni" => "adjustments",
+            "regolazione" => "adjustment",
+            "Foto intera" => "Whole photo",
+            "Con maschera" => "Masked",
+            "Bloccato" => "Locked",
+            "Livello bloccato · sbloccalo dal menu del livello" => {
+                "Layer locked · unlock it in the layer menu"
+            }
+            "Proprietà del livello" => "Layer properties",
+            "Nome del livello" => "Layer name",
+
+            "Campo tonalità e cromia" => "Hue and chroma field",
+            "Orizzontale: tonalità. Verticale: cromia. Frecce: regolazione fine; Maiusc: passo 10; Home o doppio clic: azzera." => {
+                "Horizontal: hue. Vertical: chroma. Arrows: fine adjustment; Shift: step 10; Home or double-click: reset."
+            }
+            "Campione del colore scelto e della densità. Non è un’anteprima dei pixel della foto." => {
+                "Swatch of the chosen color and density. It does not preview the photo pixels."
+            }
+            "Da ingresso a uscita: lo spessore indica il peso del canale. Le linee tratteggiate indicano coefficienti negativi." => {
+                "From input to output: line width indicates channel weight. Dashed lines indicate negative coefficients."
+            }
+            "Sopra: nero, mezzitoni e bianco in ingresso. Sotto: limiti di uscita. Sono i parametri dei livelli, non un istogramma." => {
+                "Top: input black, midtones and white. Bottom: output limits. These are level parameters, not a histogram."
+            }
             "Look salvati…" => "Saved looks…",
             "I look aggiungono copie indipendenti dei livelli. RAW, base e ritaglio restano quelli della foto." => {
                 "Looks append independent copies of layers. RAW, base adjustments and crop stay with the photo."
@@ -606,6 +635,17 @@ impl Language {
             }
             "Temperatura" => "Temperature",
             "Tinta RAW" => "RAW tint",
+            "Tinta" => "Tint",
+            "Temperatura e tinta relative a Come scattato" => {
+                "Temperature and tint relative to As shot"
+            }
+            "Freddo ↔ caldo · scala relativa, non Kelvin" => {
+                "Cool ↔ warm · relative scale, not kelvin"
+            }
+            "Verde ↔ magenta · scala relativa" => "Green ↔ magenta · relative scale",
+            "La corsa disponibile dipende dall’altro controllo per rispettare i limiti del WB RAW." => {
+                "The available range depends on the other control to stay within the RAW WB limits."
+            }
             "Bilanciamento del bianco RAW" => "RAW white balance",
             "Guadagni sensore relativi a come scattato · prima del demosaic" => {
                 "Sensor gains relative to as-shot · before demosaicing"

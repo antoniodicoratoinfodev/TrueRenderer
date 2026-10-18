@@ -1,0 +1,173 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-10-18T10:40:32.655319+00:00",
+  "base_git_revision": "c0cf5c39ea3549ddab371bfeeea483c85b1377ba",
+  "scope": "Develop and Layers panel organization and presentation; recipes, rendering, RAW white-balance mapping and decoder services unchanged.",
+  "implemented": [
+    "Compact history and Before/After toolbar, secondary actions menu, consistent three-page navigation, visible save status.",
+    "Collapsible WB, light, curve, color and advanced sections; shared neutral frames, tool symbols and contextual name help.",
+    "Layer cards with eye control, selected outline, adjustment count and mask/lock status; separate properties, operator and mask sections.",
+    "Opacity and Fill displayed as percentages without quantizing untouched stored values; stable widget IDs when a modified badge appears.",
+    "Compact presentation retains the exposure control in a 550x360 window in Italian and English."
+  ],
+  "desktop_tests": {
+    "passed": 252,
+    "failed": 0,
+    "ignored": 8,
+    "log": "var/develop-panels-20261018/desktop-tests-final.log"
+  },
+  "static_checks": {
+    "fmt": "passed",
+    "clippy_desktop_all_targets": "passed without warnings"
+  },
+  "regression_checks": [
+    "Layer selection and actual section closing/reopening do not write recipe values.",
+    "Percentage numeric entry writes the expected fraction and commits once.",
+    "A slider drag continues across the first modified badge and commits on release.",
+    "All 16 photographic tools fit the inspector limits in both languages.",
+    "Compact inspector action menu and exposure editing remain reachable; history, WB and mask regressions pass."
+  ],
+  "development_findings": [
+    "A fixed decimal slider step quantized displayed percentage values on open; removed that step and verified exact stored values.",
+    "Compact section chrome hid Exposure at a short viewport; reduced decorative spacing and put reset after the primary controls.",
+    "The custom collapsing state reads global animation duration; the UI test harness now disables animation in both global themes so click assertions observe settled state."
+  ],
+  "native": [
+    {
+      "case": "develop-it",
+      "report": "var/develop-panels-20261018/develop-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 2,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1799,
+          1200
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "layers-en",
+      "report": "var/develop-panels-20261018/layers-en/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "layer-details-it",
+      "report": "var/develop-panels-20261018/layer-details-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    }
+  ],
+  "visual_review": {
+    "screenshots": 6,
+    "reviewed": [
+      "Develop toolbar, navigation and light section",
+      "Layer stack, visibility, properties, operator section and mask tree"
+    ],
+    "method": "Native diagnostic screenshot capture and visual inspection"
+  },
+  "installation": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/develop-panels-20261018/previous.app",
+    "files_matching_candidate": 23,
+    "changed_from_previous": [
+      "Contents/MacOS/TrueRenderer"
+    ],
+    "ad_hoc_signature_verified": true,
+    "xpc_candidate": "var/develop-panels-20261018/reports/xpc-qualification-macos.json",
+    "xpc_installed": "var/develop-panels-20261018/installed-check/reports/xpc-qualification-macos.json"
+  },
+  "source_files_hashed": 367,
+  "changed_source_files": [
+    "apps/desktop/src/i18n.rs",
+    "apps/desktop/src/ui/editing.rs",
+    "apps/desktop/src/ui/editing/advanced.rs",
+    "apps/desktop/src/ui/editing/controls_tests.rs",
+    "apps/desktop/src/ui/editing/help.rs",
+    "apps/desktop/src/ui/editing/layers.rs",
+    "apps/desktop/src/ui/editing/panels.rs"
+  ],
+  "protected_files_unchanged": 15,
+  "evidence_sha256": {
+    "var/develop-panels-20261018/bundle-before.json": "945a24e4d4a479d7f18c7c81c8cf29d7a07c023179e4000ffb106dd5872059f1",
+    "var/develop-panels-20261018/bundle-candidate.json": "f7e3627c3b36417270362ca032e3bb5768d68c366838a87aefc14d94d73e5269",
+    "var/develop-panels-20261018/bundle-installed.json": "f7e3627c3b36417270362ca032e3bb5768d68c366838a87aefc14d94d73e5269",
+    "var/develop-panels-20261018/clippy.log": "379b407dbe0265b09845fcd0e8ae3916157f6a666025a77051087958f64e10d6",
+    "var/develop-panels-20261018/desktop-tests-final.log": "482de9c9a9be472dd33bdc988fa92a8b4e40480a10c60cf5eb7e5193ee31fb62",
+    "var/develop-panels-20261018/develop-it/reports/develop-grid.png": "66a68f3d2cf73070880b53123bda4ee42fb2c4a438dc3408e4efb390ecf17af5",
+    "var/develop-panels-20261018/develop-it/reports/develop-ui.json": "1129f7bf02436b01f19d3e72fc1b211cc9a672c360a43b9e9d080f255412994a",
+    "var/develop-panels-20261018/develop-it/reports/develop-viewer.png": "c5db22ec4d55ddc6bb1ea57832471ef582fd05392526719e5abcaf8ceacec3b3",
+    "var/develop-panels-20261018/develop-it/var/develop-export/02_Paesaggio_analitico-export.png": "0772b8a1c7fd7660836f60ed899b87e5687a3cd9aa959f506feeeefbfc3ea03a",
+    "var/develop-panels-20261018/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/develop-panels-20261018/installed-check/reports/xpc-integration-macos.json": "71e82e642bc81a90e18ec66e2116fcd8f8e97a1e940ba880881900c78c1f6b6f",
+    "var/develop-panels-20261018/installed-check/reports/xpc-qualification-macos.json": "4be37d15a2d835f73baf665ac85f912db95527c4e3964f0c14fa6b4b1f55d7e1",
+    "var/develop-panels-20261018/layer-details-it/reports/develop-grid.png": "c642778487d21d82670a1768d70210a7a10af24a451b4c0951572190da534d77",
+    "var/develop-panels-20261018/layer-details-it/reports/develop-ui.json": "2f0ef0eb23e7ba958562c0f692e1115a250c8df68dc768ebcdd44d714cb58d92",
+    "var/develop-panels-20261018/layer-details-it/reports/develop-viewer.png": "70c5e91b608630010c30c33bcfdee4a1f062a5fac8430cf7be327b8d93e26467",
+    "var/develop-panels-20261018/layer-details-it/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/develop-panels-20261018/layers-en/reports/develop-grid.png": "c9b1c7d496558961e2691828fda7b708d44979f6c5fc794f0985b9f1f8f1ae86",
+    "var/develop-panels-20261018/layers-en/reports/develop-ui.json": "d3e4e57a11f0698a4220f4593df11cda42b7040d1d6e040d6fc84de4c3caa09d",
+    "var/develop-panels-20261018/layers-en/reports/develop-viewer.png": "3dc2d2562e82042e07fc9a30e7dda67d01ec5d1ac797b28cbb59d18dcea76000",
+    "var/develop-panels-20261018/layers-en/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/develop-panels-20261018/protected-before.json": "b85a4c44c9183e8ff75001bd09e628ae0fdde09b5d2bd2535268661abbb980ad",
+    "var/develop-panels-20261018/release-build.log": "e0e378c6a9719814d1ebe9d82a79e6cc695a75ba5b52ab82d54b8530bdcd8f31",
+    "var/develop-panels-20261018/reports/xpc-integration-macos.json": "40242fcb78eb3963bf48c1491d8f15a5f52b3bd1e6ee884a57ae03c06f3d3b7e",
+    "var/develop-panels-20261018/reports/xpc-qualification-macos.json": "776b0805c6d00b97289f7356dee5486b108a1e20ed3b7831805d6895fdbf4861",
+    "var/develop-panels-20261018/source-manifest.json": "ec57d54d52f8eff580d453d6afb4c03f842946a6909d825f88c78fda6c04cf74"
+  },
+  "limits": [
+    "Native cases use generated corpus images; no new photographic color qualification.",
+    "Full VoiceOver, 200% UI scale and other platforms are not qualified by this campaign.",
+    "No R0–R4 or SF0–SF10 gate closed; no commit or push performed."
+  ]
+}

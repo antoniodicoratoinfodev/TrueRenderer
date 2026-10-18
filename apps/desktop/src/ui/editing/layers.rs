@@ -1,4 +1,5 @@
 use super::{EditRecipe, adjustment_default, palette};
+use super::{help, panels};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::{
@@ -115,6 +116,30 @@ pub(super) fn color_wheel(
             }
         }
         ui.painter().add(egui::Shape::mesh(mesh));
+        for fraction in [0.5, 1.] {
+            ui.painter().circle_stroke(
+                center,
+                radius * fraction,
+                egui::Stroke::new(0.7, egui::Color32::from_white_alpha(55)),
+            );
+        }
+        for n in 0..12 {
+            let angle = n as f32 * std::f32::consts::TAU / 12.;
+            let direction = egui::vec2(angle.cos(), -angle.sin());
+            ui.painter().line_segment(
+                [
+                    center + direction * (radius + 1.),
+                    center + direction * (radius + 4.),
+                ],
+                egui::Stroke::new(1., egui::Color32::from_gray(140)),
+            );
+        }
+        for axis in [egui::vec2(1., 0.), egui::vec2(0., 1.)] {
+            ui.painter().line_segment(
+                [center - axis * 3., center + axis * 3.],
+                egui::Stroke::new(1., egui::Color32::from_gray(215)),
+            );
+        }
         let angle = hue.to_radians();
         let handle = center + radius * *amount / 100. * egui::vec2(angle.cos(), -angle.sin());
         ui.painter()
@@ -148,8 +173,33 @@ fn slider(
     // Reading a valid extended-domain recipe must never clamp its saved values
     // to the compact slider's default display interval.
     let range = range.start().min(*v)..=range.end().max(*v);
-    let r = adjustment_default(ui, lang.text(name), v, range, "", None, default).0;
+    let r = adjustment_default(ui, lang, lang.text(name), v, range, "", None, default).0;
     *commit |= r.drag_stopped() || (r.changed() && !r.dragged());
+}
+
+pub(super) fn percent_slider(
+    ui: &mut egui::Ui,
+    lang: Language,
+    name: &str,
+    value: &mut f32,
+    commit: &mut bool,
+) {
+    let mut percent = *value * 100.;
+    let response = adjustment_default(
+        ui,
+        lang,
+        lang.text(name),
+        &mut percent,
+        0. ..=100.,
+        " %",
+        None,
+        100.,
+    )
+    .0;
+    if response.changed() {
+        *value = percent / 100.;
+    }
+    *commit |= response.drag_stopped() || (response.changed() && !response.dragged());
 }
 
 fn mask_rows(graph: &layers::MaskGraph) -> Vec<(usize, Id)> {
@@ -217,7 +267,7 @@ impl Controls {
     }
     fn overlay_control(&mut self, ui: &mut egui::Ui, lang: Language, operator: Option<usize>) {
         let mut active = self.overlay && self.overlay_operator == operator;
-        if ui.checkbox(&mut active, lang.text("Mostra area")).changed() {
+        if help::checkbox(ui, lang, "Mostra area", &mut active).changed() {
             self.cancel_analysis();
             self.pick = false;
             self.paint = false;
@@ -326,11 +376,15 @@ impl Controls {
             recipe.layers.as_ref().map_or(0, |s| s.layers.len()) < layers::MAX_LAYERS
         };
         if !allowed {
-            ui.label(lang.text(if self.apply_selected {
-                "Seleziona un livello modificabile con spazio per uno strumento."
-            } else {
-                "Massimo 16 livelli fotografici"
-            }));
+            help::label(
+                ui,
+                lang,
+                if self.apply_selected {
+                    "Seleziona un livello modificabile con spazio per uno strumento."
+                } else {
+                    "Massimo 16 livelli fotografici"
+                },
+            );
         }
         let search = ui.add(
             egui::TextEdit::singleline(&mut self.search).hint_text(lang.text("Cerca strumento…")),
@@ -361,13 +415,13 @@ impl Controls {
             && ui.input(|i| i.key_pressed(egui::Key::Enter));
         let mut chosen = None;
         if matches.is_empty() {
-            ui.label(lang.text("Nessuno strumento trovato"));
+            help::label(ui, lang, "Nessuno strumento trovato");
         }
         ui.add_enabled_ui(allowed, |ui| {
             for (i, tool) in matches.into_iter().enumerate() {
                 let response = ui
                     .horizontal(|ui| {
-                        palette::icon(ui, tool.id);
+                        palette::icon(ui, lang, tool.id);
                         ui.add_sized(
                             [ui.available_width(), 28.],
                             egui::Button::new(lang.text(tool.name))
@@ -376,11 +430,12 @@ impl Controls {
                         )
                     })
                     .inner
-                    .on_hover_text(format!(
-                        "{} · {}",
-                        lang.text(palette::tool(tool.id).1),
-                        lang.text(tool.description)
-                    ));
+                    .on_hover_text(
+                        help::tool_text(lang, tool.id).unwrap_or(lang.text(tool.description)),
+                    )
+                    .on_disabled_hover_text(
+                        help::tool_text(lang, tool.id).unwrap_or(lang.text(tool.description)),
+                    );
                 if response.clicked() || (allowed && activate && i == self.search_index) {
                     chosen = Some(tool);
                 }
@@ -440,65 +495,143 @@ impl Controls {
         for i in (0..stack.layers.len()).rev() {
             let layer = &mut stack.layers[i];
             ui.push_id(layer.id, |ui| {
-                ui.horizontal(|ui| {
-                    commit |= ui
-                        .checkbox(&mut layer.enabled, "")
-                        .on_hover_text(lang.text("Visibilità livello"))
-                        .changed();
-                    let r = ui.add_sized(
-                        [ui.available_width() - 34., 32.],
-                        egui::Button::new(&layer.name).selected(self.selected == Some(layer.id)),
-                    );
-                    let colors: Vec<_> = layer
-                        .operators
-                        .iter()
-                        .map(|op| palette::tool(op.tool().id).0)
-                        .collect();
-                    if let Some(first) = colors.first() {
-                        let mut colors = colors.clone();
-                        if colors.len() == 1 {
-                            colors.push(*first);
-                        }
-                        let rect = egui::Rect::from_min_max(
-                            egui::pos2(r.rect.left() + 5., r.rect.bottom() - 3.),
-                            egui::pos2(r.rect.right() - 5., r.rect.bottom() - 1.),
-                        );
-                        palette::strip(ui, rect, &colors);
-                    }
-                    if r.clicked() && self.selected != Some(layer.id) {
-                        self.cancel_analysis();
-                        self.selected = Some(layer.id);
-                        self.component = None;
-                        self.pick = false;
-                        self.overlay = false;
-                        self.paint = false;
-                    }
-                    ui.menu_button("…", |ui| {
-                        if ui
-                            .checkbox(&mut layer.locked, lang.text("Blocca modifiche"))
-                            .changed()
-                        {
-                            commit = true;
-                        }
-                        for (code, label, enabled) in [
-                            (0, "Duplica livello", count < layers::MAX_LAYERS),
-                            (1, "Sposta sopra", i + 1 < count && !layer.locked),
-                            (2, "Sposta sotto", i > 0 && !layer.locked),
-                            (3, "Elimina livello", !layer.locked),
-                        ] {
-                            if ui
-                                .add_enabled(enabled, egui::Button::new(lang.text(label)))
-                                .clicked()
+                let selected = self.selected == Some(layer.id);
+                egui::Frame::new()
+                    .fill(if selected {
+                        crate::ui::style::SELECTED
+                    } else {
+                        crate::ui::style::SURFACE
+                    })
+                    .stroke(egui::Stroke::new(
+                        1.,
+                        if selected {
+                            crate::ui::style::SELECTION_EDGE
+                        } else {
+                            crate::ui::style::LINE
+                        },
+                    ))
+                    .corner_radius(5)
+                    .inner_margin(5)
+                    .show(ui, |ui| {
+                        ui.spacing_mut().item_spacing = egui::vec2(4., 3.);
+                        ui.horizontal(|ui| {
+                            if panels::icon_button(
+                                ui,
+                                panels::Glyph::Eye,
+                                lang.text(if layer.enabled {
+                                    "Nascondi livello"
+                                } else {
+                                    "Mostra livello"
+                                }),
+                                true,
+                                layer.enabled,
+                            )
+                            .clicked()
                             {
-                                action = Some((i, code));
-                                ui.close();
+                                layer.enabled = !layer.enabled;
+                                commit = true;
                             }
-                        }
+                            let menu_width = ui
+                                .painter()
+                                .layout_no_wrap(
+                                    "…".into(),
+                                    egui::TextStyle::Button.resolve(ui.style()),
+                                    ui.visuals().text_color(),
+                                )
+                                .size()
+                                .x
+                                + 2. * ui.spacing().button_padding.x;
+                            let menu_width = menu_width.max(ui.spacing().interact_size.x);
+                            let name_width =
+                                (ui.available_width() - menu_width - ui.spacing().item_spacing.x)
+                                    .max(0.);
+                            let r = ui
+                                .add_sized(
+                                    [name_width, 28.],
+                                    egui::Button::new(())
+                                        .left_text(egui::RichText::new(&layer.name).strong())
+                                        .truncate()
+                                        .frame(false),
+                                )
+                                .on_hover_text(&layer.name);
+                            if r.clicked() && !selected {
+                                self.select_layer(layer.id);
+                            }
+                            ui.menu_button("…", |ui| {
+                                if help::checkbox(ui, lang, "Blocca modifiche", &mut layer.locked)
+                                    .changed()
+                                {
+                                    commit = true;
+                                }
+                                for (code, label, enabled) in [
+                                    (0, "Duplica livello", count < layers::MAX_LAYERS),
+                                    (1, "Sposta sopra", i + 1 < count && !layer.locked),
+                                    (2, "Sposta sotto", i > 0 && !layer.locked),
+                                    (3, "Elimina livello", !layer.locked),
+                                ] {
+                                    if ui
+                                        .add_enabled(enabled, egui::Button::new(lang.text(label)))
+                                        .clicked()
+                                    {
+                                        action = Some((i, code));
+                                        ui.close();
+                                    }
+                                }
+                            })
+                            .response
+                            .on_hover_text(lang.text("Azioni del livello"));
+                        });
+                        ui.horizontal(|ui| {
+                            ui.add_space(32.);
+                            let summary = format!(
+                                "{} {} · {}{}{}",
+                                layer.operators.len(),
+                                lang.text(if layer.operators.len() == 1 {
+                                    "regolazione"
+                                } else {
+                                    "regolazioni"
+                                }),
+                                lang.text(if layer.mask.nodes.is_empty() {
+                                    "Foto intera"
+                                } else {
+                                    "Con maschera"
+                                }),
+                                if layer.locked { " · " } else { "" },
+                                if layer.locked {
+                                    lang.text("Bloccato")
+                                } else {
+                                    ""
+                                }
+                            );
+                            ui.add(
+                                egui::Label::new(
+                                    egui::RichText::new(summary)
+                                        .small()
+                                        .color(crate::ui::style::MUTED),
+                                )
+                                .wrap(),
+                            );
+                        });
                     });
-                });
             });
         }
-        ui.label(lang.text("Base fotografica · sorgente in sola lettura"));
+        ui.horizontal(|ui| {
+            panels::icon_button(
+                ui,
+                panels::Glyph::Lock,
+                lang.text("Base fotografica · sorgente in sola lettura"),
+                false,
+                false,
+            );
+            ui.add(
+                egui::Label::new(
+                    egui::RichText::new(lang.text("Base fotografica · sorgente in sola lettura"))
+                        .small()
+                        .color(crate::ui::style::MUTED),
+                )
+                .wrap(),
+            );
+        });
         if let Some((i, action)) = action {
             self.cancel_analysis();
             match action {
@@ -525,57 +658,70 @@ impl Controls {
             .iter_mut()
             .find(|l| Some(l.id) == self.selected)
         {
-            ui.separator();
-            ui.label(format!("{}: {}", lang.text("Modifica livello"), layer.name));
-            ui.add_enabled_ui(!layer.locked, |ui| {
-                let rename = ui.text_edit_singleline(&mut layer.name);
-                commit |= rename.lost_focus();
-                slider(
-                    ui,
-                    lang,
-                    "Opacità",
-                    &mut layer.opacity,
-                    0. ..=1.,
-                    1.,
-                    &mut commit,
-                );
-                slider(
-                    ui,
-                    lang,
-                    "Riempimento",
-                    &mut layer.fill,
-                    0. ..=1.,
-                    1.,
-                    &mut commit,
-                );
-                ui.small(lang.text("Fusione normale · prima di ritaglio e rotazione"));
-                if ui
-                    .add_enabled(
-                        layer.operators.len() < layers::MAX_OPERATORS,
-                        egui::Button::new(lang.text("Applica uno strumento a questo livello")),
+            if layer.locked {
+                ui.label(
+                    egui::RichText::new(
+                        lang.text("Livello bloccato · sbloccalo dal menu del livello"),
                     )
-                    .clicked()
-                {
-                    self.open_tools(true);
-                }
-                if layer.operators.is_empty() {
-                    ui.label(lang.text("Livello vuoto"));
-                }
+                    .small()
+                    .color(crate::ui::style::MUTED),
+                );
+            }
+            ui.push_id(("selected-layer", layer.id), |ui| {
+                ui.add_enabled_ui(!layer.locked, |ui| {
+                    panels::Section::new(lang, "layer-properties", "Proprietà del livello").show(
+                        ui,
+                        |ui| {
+                            let name_label = help::label(ui, lang, "Nome del livello");
+                            let rename = ui
+                                .add(
+                                    egui::TextEdit::singleline(&mut layer.name)
+                                        .desired_width(ui.available_width()),
+                                )
+                                .labelled_by(name_label.id);
+                            commit |= rename.lost_focus();
+                            percent_slider(ui, lang, "Opacità", &mut layer.opacity, &mut commit);
+                            percent_slider(ui, lang, "Riempimento", &mut layer.fill, &mut commit);
+                            ui.small(lang.text("Fusione normale · prima di ritaglio e rotazione"));
+                        },
+                    );
+                    if ui
+                        .add_enabled(
+                            layer.operators.len() < layers::MAX_OPERATORS,
+                            egui::Button::new(lang.text("Applica uno strumento a questo livello"))
+                                .wrap(),
+                        )
+                        .clicked()
+                    {
+                        self.open_tools(true);
+                    }
+                    if layer.operators.is_empty() {
+                        help::label(ui, lang, "Livello vuoto");
+                    }
 
-                for (i, op) in layer.operators.iter_mut().enumerate() {
-                    ui.push_id((layer.id, "operator", i), |ui| {
-                        let heading = ui.horizontal(|ui| {
-                            palette::icon(ui, op.tool().id);
-                            ui.heading(lang.text(op.tool().name));
+                    for (i, op) in layer.operators.iter_mut().enumerate() {
+                        ui.push_id((layer.id, "operator", i), |ui| {
+                            let tool = op.tool();
+                            let heading = panels::Section::new(lang, "operator-panel", tool.name)
+                                .icon(tool.id)
+                                .modified(!op.is_neutral())
+                                .show(ui, |ui| {
+                                    help::scope(ui, tool.id, |ui| {
+                                        self.operator(ui, lang, op, i, &mut commit)
+                                    });
+                                });
+                            if i == 0 && std::env::args().any(|a| a == "--color-controls-ui-smoke")
+                            {
+                                heading.scroll_to_me(Some(egui::Align::Min));
+                            }
                         });
-                        if i == 0 && std::env::args().any(|a| a == "--color-controls-ui-smoke") {
-                            heading.response.scroll_to_me(Some(egui::Align::Min));
-                        }
-                        self.operator(ui, lang, op, i, &mut commit);
-                    });
-                }
-                ui.separator();
-                self.mask_controls(ui, lang, layer, &mut commit);
+                    }
+                    panels::Section::new(lang, "layer-mask", "Maschera del livello")
+                        .modified(!layer.mask.nodes.is_empty())
+                        .show(ui, |ui| {
+                            self.mask_controls(ui, lang, layer, &mut commit);
+                        });
+                });
             });
         }
         commit |= self.apply_auto_request(recipe);
@@ -606,10 +752,7 @@ impl Controls {
                         && !self.pick_component
                         && self.level_pick.is_none()
                         && self.sample_operator == index;
-                    if ui
-                        .selectable_label(selected, lang.text("Campiona sulla foto"))
-                        .clicked()
-                    {
+                    if help::selectable_label(ui, lang, "Campiona sulla foto", selected).clicked() {
                         self.cancel_analysis();
                         self.pick = !selected;
                         self.pick_component = false;
@@ -631,7 +774,7 @@ impl Controls {
                     );
                 }
                 ui.small(lang.text("Intervallo: tonalità, cromia e luminanza Rec.2020 lineari"));
-                egui::CollapsingHeader::new(lang.text("Intervallo del campione")).show(ui, |ui| {
+                help::CollapsingHeader::new(lang, "Intervallo del campione").show(ui, |ui| {
                     for (i, name) in ["Rosso", "Verde", "Blu"].into_iter().enumerate() {
                         slider(
                             ui,
@@ -695,21 +838,18 @@ impl Controls {
                         commit,
                     );
                 }
-                egui::CollapsingHeader::new(lang.text("Uniformità verso il campione")).show(
-                    ui,
-                    |ui| {
-                        for (i, name) in [
-                            "Uniformità tonalità",
-                            "Uniformità cromia",
-                            "Uniformità luminanza",
-                        ]
-                        .into_iter()
-                        .enumerate()
-                        {
-                            slider(ui, lang, name, &mut s.uniformity[i], 0. ..=100., 0., commit);
-                        }
-                    },
-                );
+                help::CollapsingHeader::new(lang, "Uniformità verso il campione").show(ui, |ui| {
+                    for (i, name) in [
+                        "Uniformità tonalità",
+                        "Uniformità cromia",
+                        "Uniformità luminanza",
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        slider(ui, lang, name, &mut s.uniformity[i], 0. ..=100., 0., commit);
+                    }
+                });
             }
             Operator::Light {
                 exposure,
@@ -765,9 +905,7 @@ impl Controls {
             Operator::LuminanceCurve(g) => self.luminance_curve(ui, lang, g, commit),
             Operator::ParametricCurve(g) => self.parametric_curve(ui, lang, g, commit),
             Operator::Mixer(m) => {
-                *commit |= ui
-                    .checkbox(&mut m.monochrome, lang.text("Bianco e nero"))
-                    .changed();
+                *commit |= help::checkbox(ui, lang, "Bianco e nero", &mut m.monochrome).changed();
                 ui.horizontal_wrapped(|ui| {
                     for (i, name) in [
                         "Rosso",
@@ -784,6 +922,7 @@ impl Controls {
                     {
                         if palette::choice(
                             ui,
+                            lang,
                             self.band == i,
                             lang.text(name),
                             palette::family(name),
@@ -804,6 +943,7 @@ impl Controls {
                 }
             }
             Operator::Channels { matrix, offset } => {
+                super::visuals::channels(ui, lang, matrix);
                 ui.small(lang.text("Coefficienti RGB · valori negativi conservati"));
                 for i in 0..3 {
                     ui.push_id(i, |ui| {
@@ -833,7 +973,7 @@ impl Controls {
             Operator::ExposureGamma(g) => self.exposure_gamma(ui, lang, g, commit),
         }
         ui.menu_button(lang.text("Azioni regolazione"), |ui| {
-            if ui.button(lang.text("Ripristina sezione")).clicked() {
+            if help::button(ui, lang, "Ripristina sezione").clicked() {
                 self.cancel_analysis();
                 *op = op.tool().operator();
                 *commit = true;
@@ -847,6 +987,7 @@ impl Controls {
             for (i, name) in ["RGB", "Rosso", "Verde", "Blu"].into_iter().enumerate() {
                 if palette::choice(
                     ui,
+                    lang,
                     self.channel == i,
                     lang.text(name),
                     palette::family(name),
@@ -869,7 +1010,6 @@ impl Controls {
         layer: &mut Layer,
         commit: &mut bool,
     ) {
-        ui.strong(lang.text("Maschera del livello"));
         let mut add = None;
         ui.horizontal_wrapped(|ui| {
             for (combine, name) in [
@@ -885,7 +1025,7 @@ impl Controls {
                             (Shape::Radial, "Radiale"),
                             (Shape::Luminance, "Luminanza"),
                         ] {
-                            if ui.button(lang.text(label)).clicked() {
+                            if help::button(ui, lang, label).clicked() {
                                 add = Some((
                                     combine,
                                     MaskKind::Shape(Mask {
@@ -896,7 +1036,7 @@ impl Controls {
                                 ui.close();
                             }
                         }
-                        if ui.button(lang.text("Colore a campioni")).clicked() {
+                        if help::button(ui, lang, "Colore a campioni").clicked() {
                             let range = layer
                                 .operators
                                 .iter()
@@ -924,7 +1064,7 @@ impl Controls {
             *commit = true;
         }
         if layer.mask.nodes.is_empty() {
-            ui.label(lang.text("Maschera bianca · foto intera"));
+            help::label(ui, lang, "Maschera bianca · foto intera");
         }
         let mut remove = None;
         for (depth, id) in mask_rows(&layer.mask) {
@@ -948,8 +1088,10 @@ impl Controls {
                 let selected = ui
                     .horizontal(|ui| {
                         ui.add_space(depth as f32 * 10.);
-                        ui.selectable_label(self.component == Some(node.id), lang.text(label))
-                            .clicked()
+                        help::scope(ui, "mask", |ui| {
+                            help::selectable_label(ui, lang, label, self.component == Some(node.id))
+                                .clicked()
+                        })
                     })
                     .inner;
                 if selected {
@@ -961,12 +1103,13 @@ impl Controls {
                     return;
                 }
                 if let MaskKind::Color(c) = &mut node.kind {
-                    if ui
-                        .selectable_label(
-                            self.pick && self.pick_component,
-                            lang.text("Campiona sulla foto"),
-                        )
-                        .clicked()
+                    if help::selectable_label(
+                        ui,
+                        lang,
+                        "Campiona sulla foto",
+                        self.pick && self.pick_component,
+                    )
+                    .clicked()
                     {
                         self.cancel_analysis();
                         self.pick = !self.pick;
@@ -1027,7 +1170,7 @@ impl Controls {
                 }
                 if let MaskKind::Shape(m) = &mut node.kind {
                     if matches!(m.shape, Shape::Brush | Shape::Linear | Shape::Radial) {
-                        ui.checkbox(&mut self.paint, lang.text("Disegna sulla foto"));
+                        help::checkbox(ui, lang, "Disegna sulla foto", &mut self.paint);
                         slider(
                             ui,
                             lang,
@@ -1079,11 +1222,10 @@ impl Controls {
                         0.5,
                         commit,
                     );
-                    *commit |= ui
-                        .checkbox(&mut m.invert, lang.text("Inverti maschera"))
-                        .changed();
+                    *commit |=
+                        help::checkbox(ui, lang, "Inverti maschera", &mut m.invert).changed();
                 }
-                if ui.button(lang.text("Elimina componente")).clicked() {
+                if help::button(ui, lang, "Elimina componente").clicked() {
                     remove = Some(node.id);
                 }
             });
@@ -1106,7 +1248,7 @@ impl Controls {
                 *commit = true;
             }
             self.overlay_control(ui, lang, None);
-            if ui.button(lang.text("Fine selezione")).clicked() {
+            if help::button(ui, lang, "Fine selezione").clicked() {
                 self.cancel_analysis();
                 self.paint = false;
                 self.pick = false;

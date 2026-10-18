@@ -1,3 +1,4 @@
+use super::super::help;
 use super::{Controls, EditRecipe, slider};
 use crate::i18n::Language;
 use eframe::egui;
@@ -240,7 +241,7 @@ impl Controls {
                 self.load_native = true;
             }
             if self.analysis_operator == Some(index)
-                && ui.button(lang.text("Fine analisi")).clicked()
+                && help::button(ui, lang, "Fine analisi").clicked()
             {
                 self.cancel_analysis();
             }
@@ -272,10 +273,8 @@ impl Controls {
                 (LevelsAction::AutoComposite, "Auto composito"),
                 (LevelsAction::AutoChannels, "Auto canali indipendenti"),
             ] {
-                if ui
-                    .add_enabled(ready, egui::Button::new(lang.text(name)))
-                    .clicked()
-                {
+                let response = ui.add_enabled(ready, egui::Button::new(lang.text(name)));
+                if help::attach(ui, response, lang, name).clicked() {
                     self.pending_auto = Some((index, action));
                 }
             }
@@ -288,7 +287,7 @@ impl Controls {
                 (LevelsAction::White, "Campiona bianco"),
             ] {
                 let selected = self.pick && self.level_pick == Some((index, self.channel, action));
-                if ui.selectable_label(selected, lang.text(name)).clicked() {
+                if help::selectable_label(ui, lang, name, selected).clicked() {
                     self.cancel_analysis();
                     if !selected {
                         self.level_pick = Some((index, self.channel, action));
@@ -309,6 +308,7 @@ impl Controls {
         }
         let before = g.channels;
         let l = &mut g.channels[self.channel];
+        super::super::visuals::levels(ui, lang, l.black, l.white, l.gamma, l.output);
         slider(
             ui,
             lang,
@@ -348,7 +348,7 @@ impl Controls {
             1.,
             commit,
         );
-        if ui.button(lang.text("Ripristina canale")).clicked() {
+        if help::button(ui, lang, "Ripristina canale").clicked() {
             *l = Default::default();
             *commit = true;
         }
@@ -383,12 +383,11 @@ impl Controls {
         commit: &mut bool,
     ) {
         ui.horizontal_wrapped(|ui| {
-            *commit |= ui
-                .selectable_value(&mut g.space, CurveSpace::Luminance, lang.text("Luminanza"))
-                .changed();
-            *commit |= ui
-                .selectable_value(&mut g.space, CurveSpace::Rgb, "RGB")
-                .changed();
+            *commit |=
+                help::selectable_value(ui, lang, "Luminanza", &mut g.space, CurveSpace::Luminance)
+                    .changed();
+            *commit |=
+                help::selectable_value(ui, lang, "RGB", &mut g.space, CurveSpace::Rgb).changed();
         });
         let (rect, _) =
             ui.allocate_exact_size(egui::vec2(ui.available_width(), 96.), egui::Sense::hover());
@@ -400,9 +399,19 @@ impl Controls {
                 rect.bottom() - y * rect.height(),
             )
         };
+        for (i, pair) in [0., g.boundaries[0], g.boundaries[1], g.boundaries[2], 1.]
+            .windows(2)
+            .enumerate()
+        {
+            ui.painter().rect_filled(
+                egui::Rect::from_min_max(pos(pair[0], 1.), pos(pair[1], 0.)),
+                0,
+                egui::Color32::from_gray(25 + i as u8 * 9),
+            );
+        }
         ui.painter().line_segment(
             [rect.left_bottom(), rect.right_top()],
-            egui::Stroke::new(1., egui::Color32::from_gray(64)),
+            egui::Stroke::new(1., egui::Color32::from_gray(90)),
         );
         for b in g.boundaries {
             ui.painter().line_segment(
@@ -426,7 +435,7 @@ impl Controls {
         {
             slider(ui, lang, name, v, -100. ..=100., 0., commit);
         }
-        egui::CollapsingHeader::new(lang.text("Confini delle zone")).show(ui, |ui| {
+        help::CollapsingHeader::new(lang, "Confini delle zone").show(ui, |ui| {
             for i in 0..3 {
                 let lo = if i == 0 {
                     0.02

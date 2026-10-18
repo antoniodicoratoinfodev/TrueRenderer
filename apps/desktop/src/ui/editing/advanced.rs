@@ -1,4 +1,5 @@
 use super::{EditRecipe, adjustment_default};
+use super::{help, panels};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::masks::{Mask, Shape};
@@ -22,7 +23,7 @@ fn slider(
     default: f32,
     commit: &mut bool,
 ) {
-    let r = adjustment_default(ui, lang.text(label), value, range, "", None, default).0;
+    let r = adjustment_default(ui, lang, lang.text(label), value, range, "", None, default).0;
     *commit |= r.drag_stopped() || (r.changed() && !r.dragged());
 }
 fn reset<T: Default + PartialEq>(
@@ -55,8 +56,8 @@ impl Controls {
         let before = a.clone();
         let mut commit = false;
         ui.separator();
-        egui::CollapsingHeader::new(lang.text("Ritaglio e geometria"))
-            .id_salt("geometry")
+        panels::Section::new(lang, "geometry", "Ritaglio e geometria")
+            .default_open(false)
             .show(ui, |ui| {
                 let g = &mut a.geometry;
                 ui.horizontal_wrapped(|ui| {
@@ -77,13 +78,13 @@ impl Controls {
                         } else {
                             g.flip_vertical
                         };
-                        if ui.checkbox(&mut reflected, lang.text(label)).changed() {
+                        if help::checkbox(ui, lang, label, &mut reflected).changed() {
                             g.reflect_crop(horizontal);
                             commit = true;
                         }
                     }
                 });
-                ui.label(lang.text("Rapporto ritaglio"));
+                help::label(ui, lang, "Rapporto ritaglio");
                 ui.horizontal_wrapped(|ui| {
                     for (label, ratio) in [
                         ("Originale", 0.),
@@ -148,11 +149,7 @@ impl Controls {
                     0.,
                     &mut commit,
                 );
-                if ui
-                    .checkbox(
-                        &mut self.horizon,
-                        lang.text("Traccia linea per raddrizzare"),
-                    )
+                if help::checkbox(ui, lang, "Traccia linea per raddrizzare", &mut self.horizon)
                     .changed()
                 {
                     self.horizon_start = None;
@@ -225,7 +222,7 @@ impl Controls {
                     let [w, h] = g.output_size(native);
                     ui.small(format!("{w} × {h} px"));
                 }
-                if ui.button(lang.text("Ripristina geometria")).clicked() {
+                if help::button(ui, lang, "Ripristina geometria").clicked() {
                     let previous = g.clone();
                     *g = Default::default();
                     g.distortion = previous.distortion;
@@ -236,8 +233,8 @@ impl Controls {
                     commit = true;
                 }
             });
-        egui::CollapsingHeader::new(lang.text("Ottica manuale"))
-            .id_salt("optics")
+        panels::Section::new(lang, "optics", "Ottica manuale")
+            .default_open(false)
             .show(ui, |ui| {
                 ui.small(lang.text(
                     "Correzioni manuali aggiuntive. Verifica quelle già applicate dal motore.",
@@ -272,7 +269,7 @@ impl Controls {
                     0.,
                     &mut commit,
                 );
-                if ui.button(lang.text("Ripristina ottica")).clicked() {
+                if help::button(ui, lang, "Ripristina ottica").clicked() {
                     g.distortion = 0.;
                     g.moustache = 0.;
                     g.vignette = 0.;
@@ -281,8 +278,8 @@ impl Controls {
                     commit = true;
                 }
             });
-        egui::CollapsingHeader::new(lang.text("Presenza e dettaglio"))
-            .id_salt("detail")
+        panels::Section::new(lang, "detail", "Presenza e dettaglio")
+            .default_open(false)
             .show(ui, |ui| {
                 for (label, v, min, max) in [
                     ("Texture", &mut a.detail.texture, -100., 100.),
@@ -313,12 +310,11 @@ impl Controls {
                 );
                 reset(ui, lang, &mut a.detail, &mut commit);
             });
-        egui::CollapsingHeader::new(lang.text("Colore avanzato"))
-            .id_salt("advanced-color")
+        panels::Section::new(lang, "advanced-color", "Colore avanzato")
+            .default_open(false)
             .show(ui, |ui| {
-                commit |= ui
-                    .checkbox(&mut a.color.monochrome, lang.text("Bianco e nero"))
-                    .changed();
+                commit |=
+                    help::checkbox(ui, lang, "Bianco e nero", &mut a.color.monochrome).changed();
                 for (i, label) in [
                     "Rosso",
                     "Arancio",
@@ -332,7 +328,7 @@ impl Controls {
                 .iter()
                 .enumerate()
                 {
-                    egui::CollapsingHeader::new(lang.text(label))
+                    help::CollapsingHeader::new(lang, label)
                         .id_salt(("hsl", i))
                         .show(ui, |ui| {
                             let b = &mut a.color.bands[i];
@@ -349,7 +345,7 @@ impl Controls {
                     .iter()
                     .enumerate()
                 {
-                    egui::CollapsingHeader::new(lang.text(label))
+                    help::CollapsingHeader::new(lang, label)
                         .id_salt(("grading", i))
                         .show(ui, |ui| {
                             slider(
@@ -388,8 +384,8 @@ impl Controls {
                 }
                 reset(ui, lang, &mut a.color, &mut commit);
             });
-        egui::CollapsingHeader::new(lang.text("Maschere locali"))
-            .id_salt("local-masks")
+        panels::Section::new(lang, "local-masks", "Maschere locali")
+            .default_open(false)
             .show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
                     if ui
@@ -403,7 +399,7 @@ impl Controls {
                         self.mask = a.masks.len() - 1;
                         commit = true;
                     }
-                    if !a.masks.is_empty() && ui.button(lang.text("Elimina maschera")).clicked() {
+                    if !a.masks.is_empty() && help::button(ui, lang, "Elimina maschera").clicked() {
                         a.masks.remove(self.mask.min(a.masks.len() - 1));
                         self.mask = self.mask.saturating_sub(1);
                         commit = true;
@@ -426,9 +422,7 @@ impl Controls {
                         }
                     });
                 let m = &mut a.masks[self.mask];
-                commit |= ui
-                    .checkbox(&mut m.enabled, lang.text("Attiva maschera"))
-                    .changed();
+                commit |= help::checkbox(ui, lang, "Attiva maschera", &mut m.enabled).changed();
                 ui.horizontal_wrapped(|ui| {
                     for (shape, label) in [
                         (Shape::Radial, "Radiale"),
@@ -437,21 +431,19 @@ impl Controls {
                         (Shape::Luminance, "Luminanza"),
                         (Shape::Hue, "Tonalità"),
                     ] {
-                        commit |= ui
-                            .selectable_value(&mut m.shape, shape, lang.text(label))
-                            .changed();
+                        commit |= help::scope(ui, "mask", |ui| {
+                            help::selectable_value(ui, lang, label, &mut m.shape, shape).changed()
+                        });
                     }
                 });
                 if matches!(m.shape, Shape::Radial | Shape::Linear | Shape::Brush) {
-                    if ui
-                        .checkbox(&mut self.paint, lang.text("Disegna sulla foto"))
-                        .changed()
+                    if help::checkbox(ui, lang, "Disegna sulla foto", &mut self.paint).changed()
                         && self.paint
                     {
                         self.horizon = false;
                         self.horizon_start = None;
                     }
-                    ui.checkbox(&mut self.overlay, lang.text("Mostra area maschera"));
+                    help::checkbox(ui, lang, "Mostra area maschera", &mut self.overlay);
                     ui.small(
                         lang.text("Trascina sulla foto; disattiva Disegna per spostare la vista."),
                     );
@@ -494,7 +486,7 @@ impl Controls {
                         );
                     }
                     if m.shape == Shape::Brush
-                        && ui.button(lang.text("Cancella pennellate")).clicked()
+                        && help::button(ui, lang, "Cancella pennellate").clicked()
                     {
                         m.points.clear();
                         m.breaks.clear();
@@ -531,9 +523,7 @@ impl Controls {
                     Mask::default().feather,
                     &mut commit,
                 );
-                commit |= ui
-                    .checkbox(&mut m.invert, lang.text("Inverti maschera"))
-                    .changed();
+                commit |= help::checkbox(ui, lang, "Inverti maschera", &mut m.invert).changed();
                 slider(
                     ui,
                     lang,

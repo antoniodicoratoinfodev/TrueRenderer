@@ -2,56 +2,143 @@ use super::*;
 use std::path::Path;
 
 #[test]
-fn precise_sensor_wb_opens_without_requantizing_and_resets_one_channel() {
+fn sensor_wb_ui_preserves_saved_gains_and_resets_photographic_axes() {
     use tr_core::decoder::{RawEngine, RawWhiteBalance};
     for lang in [Language::Italian, Language::English] {
-        let ctx = egui::Context::default();
-        let legacy = RawWhiteBalance {
-            red: 1333,
-            blue: 800,
-            ..Default::default()
-        };
-        let mut reopened = legacy;
-        for _ in 0..3 {
-            frame(&ctx, vec![], |ui| {
-                assert_eq!(
-                    sensor_wb_controls(
-                        ui,
-                        lang,
-                        RawEngine::TrueRendererExperimental,
-                        &mut reopened
-                    ),
-                    (false, false)
-                );
-            });
-            assert_eq!(reopened, legacy);
-        }
-        for slider in 0..2 {
-            let ctx = egui::Context::default();
-            let original = RawWhiteBalance::precise_sensor_gains([1.333317, 1., 0.800273]).unwrap();
-            let mut wb = original;
-            let shapes = frame(&ctx, vec![], |ui| {
-                assert_eq!(
-                    sensor_wb_controls(ui, lang, RawEngine::TrueRendererExperimental, &mut wb),
-                    (false, false)
-                );
-            });
-            assert_eq!(wb, original);
-            let position = shapes.knobs[slider];
-            for pressed in [true, false, true, false] {
-                frame(&ctx, click(position, pressed), |ui| {
-                    sensor_wb_controls(ui, lang, RawEngine::TrueRendererExperimental, &mut wb);
-                });
+        for engine in [
+            RawEngine::LibRawBilinear,
+            RawEngine::LibRawAhd,
+            RawEngine::TrueRenderer,
+            RawEngine::TrueRendererExperimental,
+        ] {
+            let mut cases = vec![RawWhiteBalance::default()];
+            for red in [250, 251, 800, 1333, 3999, 4000] {
+                for blue in [250, 251, 800, 1333, 3999, 4000] {
+                    cases.push(RawWhiteBalance {
+                        red,
+                        blue,
+                        ..Default::default()
+                    });
+                }
             }
-            let mut expected = original.gains_f64();
-            expected[slider * 2] = 1.;
-            assert_eq!(wb.gains_f64(), expected);
-            wb.validate_for(RawEngine::TrueRendererExperimental)
-                .unwrap();
-            assert_ne!(
-                wb_draft_gains(RawEngine::TrueRendererExperimental, original, wb),
-                [1.; 3]
-            );
+            if engine == RawEngine::TrueRendererExperimental {
+                cases
+                    .push(RawWhiteBalance::precise_sensor_gains([1.333317, 1., 0.800273]).unwrap());
+            }
+            for original in cases {
+                let ctx = egui::Context::default();
+                let mut wb = original;
+                for _ in 0..3 {
+                    let shapes = frame(&ctx, vec![], |ui| {
+                        assert_eq!(
+                            sensor_wb_controls(ui, lang, engine, &mut wb),
+                            (false, false)
+                        );
+                    });
+                    assert!(
+                        shapes
+                            .texts
+                            .iter()
+                            .any(|(s, _)| s == lang.text("Temperatura"))
+                    );
+                    assert!(shapes.texts.iter().any(|(s, _)| s == lang.text("Tinta")));
+                    assert!(
+                        !shapes
+                            .texts
+                            .iter()
+                            .any(|(s, _)| s == lang.text("Rosso RAW") || s == lang.text("Blu RAW"))
+                    );
+                    assert_eq!(wb, original);
+                }
+            }
+            for axis in 0..2 {
+                let ctx = egui::Context::default();
+                let original = if engine == RawEngine::TrueRendererExperimental {
+                    RawWhiteBalance::precise_sensor_gains([1.333317, 1., 0.800273]).unwrap()
+                } else {
+                    RawWhiteBalance {
+                        red: 1333,
+                        blue: 800,
+                        ..Default::default()
+                    }
+                };
+                let mut wb = original;
+                let shapes = frame(&ctx, vec![], |ui| {
+                    sensor_wb_controls(ui, lang, engine, &mut wb);
+                });
+                let position = shapes.knobs[axis];
+                for pressed in [true, false, true, false] {
+                    frame(&ctx, click(position, pressed), |ui| {
+                        sensor_wb_controls(ui, lang, engine, &mut wb);
+                    });
+                }
+                let before = original.gains_f64();
+                let after = wb.gains_f64();
+                let tolerance = if engine == RawEngine::TrueRendererExperimental {
+                    0.000003
+                } else {
+                    0.003
+                };
+                if axis == 0 {
+                    assert!((after[0] - after[2]).abs() < tolerance);
+                    assert!((before[0] * before[2] - after[0] * after[2]).abs() < tolerance);
+                } else {
+                    assert!((after[0] * after[2] - 1.).abs() < tolerance);
+                    assert!((before[0] / before[2] - after[0] / after[2]).abs() < tolerance);
+                }
+                wb.validate_for(engine).unwrap();
+                assert_ne!(wb_draft_gains(engine, original, wb), [1.; 3]);
+            }
+        }
+    }
+}
+
+#[test]
+fn sensor_wb_temperature_and_tint_drag_commit_for_every_gain_engine() {
+    use tr_core::decoder::{RawEngine, RawWhiteBalance};
+    for lang in [Language::Italian, Language::English] {
+        for engine in [
+            RawEngine::LibRawBilinear,
+            RawEngine::LibRawAhd,
+            RawEngine::TrueRenderer,
+            RawEngine::TrueRendererExperimental,
+        ] {
+            for axis in 0..2 {
+                let ctx = egui::Context::default();
+                let mut wb = RawWhiteBalance::default();
+                let shapes = frame(&ctx, vec![], |ui| {
+                    sensor_wb_controls(ui, lang, engine, &mut wb);
+                });
+                let knob = shapes.knobs[axis];
+                frame(&ctx, click(knob, true), |ui| {
+                    sensor_wb_controls(ui, lang, engine, &mut wb);
+                });
+                let target = knob + egui::vec2(37., 0.);
+                frame(&ctx, vec![egui::Event::PointerMoved(target)], |ui| {
+                    sensor_wb_controls(ui, lang, engine, &mut wb);
+                });
+                let mut committed = false;
+                frame(&ctx, click(target, false), |ui| {
+                    committed = sensor_wb_controls(ui, lang, engine, &mut wb).1;
+                });
+                assert!(committed);
+                let [r, _, b] = wb.gains_f64();
+                assert!(r > 1.);
+                if axis == 0 {
+                    assert!(b < 1.);
+                } else {
+                    assert_eq!(r, b);
+                }
+                wb.validate_for(engine).unwrap();
+                let saved = wb;
+                frame(&ctx, vec![], |ui| {
+                    assert_eq!(
+                        sensor_wb_controls(ui, lang, engine, &mut wb),
+                        (false, false)
+                    );
+                });
+                assert_eq!(wb, saved);
+            }
         }
     }
 }
@@ -782,6 +869,9 @@ fn frame(
     events: Vec<egui::Event>,
     mut draw: impl FnMut(&mut egui::Ui),
 ) -> Shapes {
+    for theme in [egui::Theme::Dark, egui::Theme::Light] {
+        ctx.style_mut_of(theme, |style| style.animation_time = 0.);
+    }
     let mut output = ctx.run_ui(
         egui::RawInput {
             screen_rect: Some(egui::Rect::from_min_size(
@@ -862,7 +952,15 @@ fn adjustment_drag_survives_changing_sample_labels_before_the_control() {
         if sample {
             ui.label("Last RGB sample");
         }
-        let r = adjustment(ui, "Local exposure", &mut value, -5. ..=5., "", None);
+        let r = adjustment(
+            ui,
+            Language::English,
+            "Local exposure",
+            &mut value,
+            -5. ..=5.,
+            "",
+            None,
+        );
         commits += usize::from(r.drag_stopped() || (r.changed() && !r.dragged()));
     };
     let shapes = frame(&ctx, vec![], |ui| draw(ui, true));
@@ -916,12 +1014,24 @@ fn advanced_panels_open_without_mutating_recipe_and_mask_add_commits_once() {
                 recipe, original,
                 "Opening {title} must not rewrite stored parameters"
             );
+            if title != "Maschere locali" {
+                // Exercise closing too, keeping the next section visible in the viewport.
+                for pressed in [true, false] {
+                    frame(&ctx, click(rect.center(), pressed), |ui| {
+                        controls.show(ui, lang, &mut recipe, Some([6000, 4000]));
+                    });
+                }
+                shapes = frame(&ctx, vec![], |ui| {
+                    controls.show(ui, lang, &mut recipe, Some([6000, 4000]));
+                });
+                assert_eq!(recipe, original);
+            }
         }
         let add = shapes
             .texts
             .iter()
             .find(|(t, _)| t == lang.text("Aggiungi maschera"))
-            .unwrap()
+            .unwrap_or_else(|| panic!("Missing mask action in {lang:?}: {:?}", shapes.texts))
             .1
             .center();
         let mut commits = 0;
@@ -1286,6 +1396,7 @@ fn double_click_slider_resets_explicit_default_but_disabled_controls_do_not() {
                 ui.add_enabled_ui(enabled, |ui| {
                     let (r, reset) = adjustment_default(
                         ui,
+                        Language::English,
                         "Test",
                         &mut value,
                         range.clone(),
@@ -1593,4 +1704,367 @@ fn tools_keyboard_cannot_apply_while_editing_is_disabled() {
         });
     });
     assert_eq!(recipe, original);
+}
+
+#[test]
+fn tool_help_covers_titles_and_visible_parameters_without_changing_recipes() {
+    use tr_core::editing::layers::{Layer, TOOLS};
+    for lang in [Language::Italian, Language::English] {
+        for tool in TOOLS {
+            assert!(help::tool_text(lang, tool.id).is_some(), "{}", tool.id);
+            let ctx = egui::Context::default();
+            ctx.memory_mut(|m| m.set_everything_is_visible(true));
+            let mut recipe = EditRecipe::neutral(Default::default());
+            recipe
+                .layer_stack()
+                .layers
+                .push(Layer::new("Help coverage", tool.operator()));
+            let original = recipe.clone();
+            let mut controls = layers::Controls::default();
+            controls.bind("help");
+            for _ in 0..2 {
+                frame(&ctx, vec![], |ui| {
+                    assert_eq!(
+                        help::description(ui, lang, tool.name),
+                        help::tool_text(lang, tool.id)
+                    );
+                    assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+                });
+            }
+            assert_eq!(recipe, original, "{}", tool.id);
+            let missing = ctx
+                .data(|d| d.get_temp::<Vec<String>>(egui::Id::new("missing-control-help")))
+                .unwrap_or_default();
+            assert!(missing.is_empty(), "{} {lang:?}: {missing:?}", tool.id);
+        }
+    }
+}
+
+#[test]
+fn advanced_help_covers_parameters_without_rewriting_the_recipe() {
+    use tr_core::editing::masks::Shape;
+    for lang in [Language::Italian, Language::English] {
+        for shape in [
+            Shape::Radial,
+            Shape::Linear,
+            Shape::Brush,
+            Shape::Luminance,
+            Shape::Hue,
+        ] {
+            let ctx = egui::Context::default();
+            ctx.memory_mut(|m| m.set_everything_is_visible(true));
+            let mut recipe = crate::verify_advanced::recipe(Default::default());
+            recipe.advanced.as_mut().unwrap().masks[0].shape = shape;
+            let original = recipe.clone();
+            let mut controls = advanced::Controls::default();
+            for _ in 0..2 {
+                frame(&ctx, vec![], |ui| {
+                    assert_eq!(
+                        controls.show(ui, lang, &mut recipe, Some([1200, 800])),
+                        (false, false)
+                    );
+                });
+            }
+            assert_eq!(recipe, original);
+            let missing = ctx
+                .data(|d| d.get_temp::<Vec<String>>(egui::Id::new("missing-control-help")))
+                .unwrap_or_default();
+            assert!(missing.is_empty(), "{lang:?} {shape:?}: {missing:?}");
+        }
+    }
+}
+
+#[test]
+fn tooltip_opens_on_parameter_name_and_does_not_edit_the_value() {
+    for lang in [Language::Italian, Language::English] {
+        for enabled in [true, false] {
+            let ctx = egui::Context::default();
+            ctx.all_styles_mut(|s| {
+                s.interaction.tooltip_delay = 0.;
+                s.interaction.tooltip_grace_time = 0.;
+            });
+            let mut value = 0.;
+            let draw = |ui: &mut egui::Ui, value: &mut f32| {
+                ui.add_enabled_ui(enabled, |ui| {
+                    adjustment(
+                        ui,
+                        lang,
+                        lang.text("Esposizione"),
+                        value,
+                        -10. ..=10.,
+                        " EV",
+                        None,
+                    );
+                });
+            };
+            let shapes = frame(&ctx, vec![], |ui| draw(ui, &mut value));
+            let label = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == lang.text("Esposizione"))
+                .unwrap()
+                .1
+                .center();
+            frame(&ctx, vec![egui::Event::PointerMoved(label)], |ui| {
+                draw(ui, &mut value)
+            });
+            let shapes = frame(&ctx, vec![], |ui| draw(ui, &mut value));
+            assert_eq!(value, 0.);
+            assert!(
+                shapes.texts.iter().any(|(s, _)| s.contains("+1 EV")),
+                "{lang:?} enabled={enabled}: {:?}",
+                shapes.texts
+            );
+        }
+    }
+}
+
+#[test]
+fn colorize_field_drag_keyboard_and_disabled_state() {
+    for enabled in [true, false] {
+        let ctx = egui::Context::default();
+        let (mut hue, mut chroma) = (30., 50.);
+        let mut rect = egui::Rect::NOTHING;
+        frame(&ctx, vec![], |ui| {
+            ui.add_enabled_ui(enabled, |ui| {
+                rect = visuals::color_field(ui, Language::Italian, &mut hue, &mut chroma).rect;
+            });
+        });
+        let target = rect.center() + egui::vec2(20., -15.);
+        for pressed in [true, false] {
+            frame(&ctx, click(target, pressed), |ui| {
+                ui.add_enabled_ui(enabled, |ui| {
+                    visuals::color_field(ui, Language::Italian, &mut hue, &mut chroma);
+                });
+            });
+        }
+        if enabled {
+            assert!(hue > 180. && chroma > 50.);
+        } else {
+            assert_eq!((hue, chroma), (30., 50.));
+        }
+        let event = egui::Event::Key {
+            key: egui::Key::Home,
+            physical_key: None,
+            pressed: true,
+            repeat: false,
+            modifiers: egui::Modifiers::NONE,
+        };
+        frame(&ctx, vec![event], |ui| {
+            ui.add_enabled_ui(enabled, |ui| {
+                visuals::color_field(ui, Language::Italian, &mut hue, &mut chroma);
+            });
+        });
+        assert_eq!((hue, chroma), if enabled { (0., 0.) } else { (30., 50.) });
+    }
+}
+
+#[test]
+fn photographic_tools_fit_the_inspector_width() {
+    use tr_core::editing::layers::{Layer, TOOLS};
+    for lang in [Language::Italian, Language::English] {
+        for tool in TOOLS {
+            let ctx = egui::Context::default();
+            crate::ui::style::apply(&ctx);
+            let mut recipe = EditRecipe::neutral(Default::default());
+            recipe
+                .layer_stack()
+                .layers
+                .push(Layer::new(tool.name, tool.operator()));
+            let mut controls = layers::Controls::default();
+            let mut bounds = (egui::Rect::NOTHING, egui::Rect::NOTHING);
+            for _ in 0..8 {
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            egui::vec2(1440., 1600.),
+                        )),
+                        ..Default::default()
+                    },
+                    |ui| {
+                        let panel = egui::Panel::right("tool-width")
+                            .default_size(280.)
+                            .size_range(260. ..=360.)
+                            .frame(crate::ui::style::panel())
+                            .show(ui, |ui| {
+                                ui.style_mut().spacing.scroll.floating = false;
+                                egui::ScrollArea::vertical()
+                                    .auto_shrink([false, false])
+                                    .show(ui, |ui| {
+                                        controls.show(ui, lang, &mut recipe);
+                                        bounds.1 = ui.min_rect();
+                                    });
+                            });
+                        bounds.0 = panel.response.rect;
+                        egui::CentralPanel::default().show(ui, |_| {});
+                    },
+                );
+                output.textures_delta.clear();
+            }
+            assert!(
+                bounds.1.left() >= bounds.0.left()
+                    && bounds.1.right() <= bounds.0.right()
+                    && bounds.0.right() <= 1440.,
+                "{lang:?} {}: {bounds:?}",
+                tool.id
+            );
+        }
+    }
+}
+
+#[test]
+fn layer_navigation_and_section_folding_preserve_exact_recipe_values() {
+    use tr_core::editing::layers::{Layer, TOOLS};
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut recipe = EditRecipe::neutral(Default::default());
+        for name in ["Background correction", "Subject correction"] {
+            let mut layer = Layer::new(name, TOOLS[1].operator());
+            layer.opacity = 0.333317;
+            layer.fill = 0.712349;
+            recipe.layer_stack().layers.push(layer);
+        }
+        let original = recipe.clone();
+        let mut controls = layers::Controls::default();
+        for (step, label) in [
+            "Background correction",
+            lang.text("Proprietà del livello"),
+            lang.text("Proprietà del livello"),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let shapes = frame(&ctx, vec![], |ui| {
+                assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+            });
+            let pos = shapes
+                .texts
+                .iter()
+                .find(|(text, _)| text == label)
+                .expect(label)
+                .1
+                .center();
+            for pressed in [true, false] {
+                frame(&ctx, click(pos, pressed), |ui| {
+                    assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+                });
+            }
+            if step == 1 {
+                let folded = frame(&ctx, vec![], |ui| {
+                    controls.show(ui, lang, &mut recipe);
+                });
+                assert!(
+                    !folded
+                        .texts
+                        .iter()
+                        .any(|(text, _)| text == lang.text("Nome del livello"))
+                );
+            }
+            assert_eq!(recipe, original);
+        }
+        assert_eq!(
+            controls.selected,
+            Some(recipe.layers.as_ref().unwrap().layers[0].id)
+        );
+        let shapes = frame(&ctx, vec![], |ui| {
+            controls.show(ui, lang, &mut recipe);
+        });
+        assert!(
+            shapes
+                .texts
+                .iter()
+                .any(|(text, _)| text == lang.text("Nome del livello"))
+        );
+    }
+}
+
+#[test]
+fn layer_percentage_entry_changes_only_on_input_and_commits_once() {
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut value = 0.333317_f32;
+        let mut commits = 0;
+        let mut draw = |ui: &mut egui::Ui| {
+            let mut commit = false;
+            layers::percent_slider(ui, lang, "Opacità", &mut value, &mut commit);
+            commits += usize::from(commit);
+        };
+        let shapes = frame(&ctx, vec![], &mut draw);
+        let pos = shapes
+            .texts
+            .iter()
+            .find(|(text, _)| text.ends_with(" %"))
+            .unwrap()
+            .1
+            .center();
+        for pressed in [true, false] {
+            frame(&ctx, click(pos, pressed), &mut draw);
+        }
+        frame(
+            &ctx,
+            vec![
+                egui::Event::Key {
+                    key: egui::Key::A,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::COMMAND,
+                },
+                egui::Event::Text("42.5".into()),
+                egui::Event::Key {
+                    key: egui::Key::Enter,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::NONE,
+                },
+            ],
+            &mut draw,
+        );
+        assert_eq!(value, 0.425);
+        assert_eq!(commits, 1);
+    }
+}
+
+#[test]
+fn panel_modified_badge_does_not_interrupt_a_slider_gesture() {
+    let ctx = egui::Context::default();
+    let mut value = 0_f32;
+    let mut commits = 0;
+    let mut control_id = None;
+    let mut draw = |ui: &mut egui::Ui| {
+        panels::Section::new(Language::English, "gesture", "Luce")
+            .modified(value != 0.)
+            .show(ui, |ui| {
+                let r = adjustment(
+                    ui,
+                    Language::English,
+                    "Exposure",
+                    &mut value,
+                    -10. ..=10.,
+                    " EV",
+                    None,
+                );
+                if let Some(id) = control_id {
+                    assert_eq!(r.id, id);
+                } else {
+                    control_id = Some(r.id);
+                }
+                commits += usize::from(r.drag_stopped() || (r.changed() && !r.dragged()));
+            });
+    };
+    let shapes = frame(&ctx, vec![], &mut draw);
+    let knob = shapes.knobs[0];
+    frame(&ctx, click(knob, true), &mut draw);
+    for x in [10., 25., 40.] {
+        frame(
+            &ctx,
+            vec![egui::Event::PointerMoved(knob + egui::vec2(x, 0.))],
+            &mut draw,
+        );
+    }
+    frame(&ctx, click(knob + egui::vec2(40., 0.), false), &mut draw);
+    assert!(value > 0.);
+    assert_eq!(commits, 1);
 }

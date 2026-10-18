@@ -1,3 +1,4 @@
+use super::help;
 use super::{CurvePoint, adjustment_default};
 use crate::i18n::Language;
 use eframe::egui;
@@ -91,6 +92,7 @@ pub(super) fn midtone(
             |ui| {
                 adjustment_default(
                     ui,
+                    lang,
                     lang.text("Mezzitoni curva"),
                     &mut mid,
                     low..=high,
@@ -221,6 +223,26 @@ fn graph(
     }
     let painter = ui.painter();
     painter.rect_filled(outer, 4, egui::Color32::from_gray(22));
+    // Input and output tonal rulers share the graph coordinates; hit targets stay unchanged.
+    super::palette::strip(
+        ui,
+        egui::Rect::from_min_max(
+            egui::pos2(rect.left(), rect.bottom() + 3.),
+            egui::pos2(rect.right(), outer.bottom() - 1.),
+        ),
+        &[egui::Color32::from_gray(25), egui::Color32::from_gray(225)],
+    );
+    for n in 0..32 {
+        let y = rect.bottom() - rect.height() * n as f32 / 32.;
+        painter.rect_filled(
+            egui::Rect::from_min_max(
+                egui::pos2(outer.left() + 1., y - rect.height() / 32.),
+                egui::pos2(rect.left() - 3., y),
+            ),
+            0,
+            egui::Color32::from_gray(25 + n * 6),
+        );
+    }
     for n in 0..=4 {
         let t = n as f32 / 4.;
         let stroke = egui::Stroke::new(1., egui::Color32::from_gray(48));
@@ -326,7 +348,7 @@ pub(super) fn controls_with_color(
         .data_mut(|d| d.get_temp::<Selection>(id))
         .unwrap_or_default();
     selection.point = selection.point.filter(|i| *i < points(curve).len());
-    ui.label(lang.text(label));
+    help::label(ui, lang, label);
     let (_, mut commit) = graph(ui, curve, &mut selection, color);
     ui.small(
         lang.text("Clic per aggiungere, trascina per modificare. I punti vicini restano ancorati."),
@@ -382,6 +404,7 @@ pub(super) fn controls_with_color(
         };
         let input = adjustment_default(
             ui,
+            lang,
             lang.text("Ingresso"),
             &mut p.x,
             low.x..=high.x,
@@ -392,6 +415,7 @@ pub(super) fn controls_with_color(
         .0;
         let output = adjustment_default(
             ui,
+            lang,
             lang.text("Uscita"),
             &mut p.y,
             low.y..=high.y,
