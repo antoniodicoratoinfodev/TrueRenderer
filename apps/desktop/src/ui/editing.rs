@@ -721,6 +721,17 @@ impl TrueRenderer {
                         } else {
                             crate::verify_advanced::layered_recipe(recipe.raw_engine)
                         };
+                        if args.iter().any(|a| a == "--empty-layer-ui-smoke") {
+                            recipe = EditRecipe::neutral(recipe.raw_engine);
+                            // The layer is empty; a base edit still exercises the edited
+                            // thumbnail/export path expected by this diagnostic.
+                            recipe.exposure_ev = 0.25;
+                            recipe.layer_stack().layers.push(
+                                tr_core::editing::layers::Layer::empty(
+                                    self.cache_settings.language.text("Livello vuoto"),
+                                ),
+                            );
+                        }
                         self.editing.layers.bind(&item.id);
                         self.editing.layers.view_layers = true;
                         self.editing.layers.view_tools = false;
@@ -728,6 +739,8 @@ impl TrueRenderer {
                             .layers
                             .as_ref()
                             .and_then(|s| s.layers.first().map(|l| l.id));
+                        self.editing.layers.mask_view =
+                            args.iter().any(|a| a == "--mask-controls-ui-smoke");
                     }
                     if args.iter().any(|a| a == "--raw-wb-smoke") {
                         recipe.raw_wb = if recipe.raw_engine == tr_core::decoder::RawEngine::Apple {

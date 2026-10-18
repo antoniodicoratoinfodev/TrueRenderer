@@ -14,6 +14,11 @@ pub const SELECTION_EDGE: Color32 = Color32::from_gray(184);
 pub fn apply(ctx: &egui::Context) {
     // Cmd +/-/0 belong to the photograph; UI scale has its own control.
     ctx.options_mut(|options| options.zoom_with_keyboard = false);
+    // Chrome labels are controls and descriptions, not selectable document text.
+    // TextEdit and numeric entry keep their own editing/selection behavior.
+    for theme in [egui::Theme::Dark, egui::Theme::Light] {
+        ctx.style_mut_of(theme, |s| s.interaction.selectable_labels = false);
+    }
     ctx.set_theme(egui::Theme::Dark);
     let mut visuals = egui::Visuals::dark();
     visuals.panel_fill = PANEL;
@@ -169,4 +174,88 @@ pub fn icon_button(ui: &mut egui::Ui, enabled: bool, icon: Icon, label: &str) ->
 
 pub fn panel() -> egui::Frame {
     egui::Frame::new().fill(PANEL).inner_margin(16)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn chrome_text_keeps_the_arrow_and_cannot_be_selected_but_fields_still_edit() {
+        for theme in [egui::Theme::Dark, egui::Theme::Light] {
+            let ctx = egui::Context::default();
+            apply(&ctx);
+            ctx.set_theme(theme);
+            let mut value = String::from("Layer name");
+            let mut label_rect = egui::Rect::NOTHING;
+            let mut field_rect = egui::Rect::NOTHING;
+            let mut run = |events| {
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        screen_rect: Some(egui::Rect::from_min_size(
+                            egui::Pos2::ZERO,
+                            egui::vec2(400., 250.),
+                        )),
+                        events,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        label_rect = ui.label("Layer properties and adjustments").rect;
+                        field_rect = ui.text_edit_singleline(&mut value).rect;
+                    },
+                );
+                output.textures_delta.clear();
+                (output.platform_output, label_rect, field_rect)
+            };
+            let (_, label, field) = run(vec![]);
+            let start = label.left_center() + egui::vec2(2., 0.);
+            let end = label.right_center() - egui::vec2(2., 0.);
+            let button = |pos, pressed| egui::Event::PointerButton {
+                pos,
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::NONE,
+            };
+            for events in [
+                vec![egui::Event::PointerMoved(start)],
+                vec![button(start, true)],
+                vec![egui::Event::PointerMoved(end)],
+                vec![button(end, false)],
+                vec![egui::Event::Copy],
+            ] {
+                let (output, _, _) = run(events);
+                assert_eq!(output.cursor_icon, egui::CursorIcon::Default);
+                assert!(
+                    !output
+                        .commands
+                        .iter()
+                        .any(|command| matches!(command, egui::OutputCommand::CopyText(_)))
+                );
+                assert!(
+                    !ctx.plugin::<egui::text_selection::LabelSelectionState>()
+                        .lock()
+                        .has_selection()
+                );
+            }
+            let point = field.center();
+            run(vec![egui::Event::PointerMoved(point)]);
+            let (output, _, _) = run(vec![button(point, true), button(point, false)]);
+            assert_eq!(output.cursor_icon, egui::CursorIcon::Text);
+            run(vec![
+                egui::Event::Key {
+                    key: egui::Key::A,
+                    physical_key: None,
+                    pressed: true,
+                    repeat: false,
+                    modifiers: egui::Modifiers::COMMAND,
+                },
+                egui::Event::Copy,
+            ]);
+            let (output, _, _) = run(vec![egui::Event::Copy]);
+            assert!(output.commands.iter().any(|command| matches!(command,
+                egui::OutputCommand::CopyText(text) if text == "Layer name")));
+            run(vec![egui::Event::Text("Subject".into())]);
+            assert_eq!(value, "Subject");
+        }
+    }
 }

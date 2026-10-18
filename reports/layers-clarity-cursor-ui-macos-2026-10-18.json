@@ -1,0 +1,201 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-10-18T13:42:39.098009+00:00",
+  "base_git_revision": "f62a3d9e3c26f92a7018d56522d753427937d672",
+  "scope": "Layer panel clarity and non-selectable interface labels; no recipe, renderer, RAW or decoder changes.",
+  "implemented": [
+    "Compact bounded layer stack with visibility, selected edge, adjustment count, mask/lock state and context menu for rename, fill, lock, duplication and ordering.",
+    "Selected layer name and opacity followed by separate Layer effects and Mask views; New layer and Add adjustment offer tools directly.",
+    "Empty-layer and whole-photo mask guidance; mask composition tree stays above the selected component controls, with visible selection.",
+    "Static interface labels retain the arrow cursor and do not allow drag selection or copying; text fields keep text editing and clipboard behavior in both themes."
+  ],
+  "desktop_tests": {
+    "passed": 255,
+    "failed": 0,
+    "ignored": 8,
+    "log": "var/layers-clarity-20261018/desktop-tests-final.log"
+  },
+  "static_checks": {
+    "fmt": "passed",
+    "clippy_desktop_all_targets": "passed without warnings"
+  },
+  "regression_checks": [
+    "Layer selection, effects/mask navigation and menu inspection preserve exact opacity/fill values and do not write recipes.",
+    "Context changes stop picking, painting and overlays; mask creation commits once and component selection preserves the recipe.",
+    "A full 16-layer stack keeps opacity and view tabs near the top; every tool fits the inspector in Italian and English.",
+    "Hover/drag/copy over labels keeps the arrow and produces no text selection; field selection, copying and replacement remain functional.",
+    "Existing WB, slider gestures, editing continuity, persistence and short-window checks pass."
+  ],
+  "development_findings": [
+    "Native inspection of the previous bundle showed empty-layer properties consuming most of the inspector and hiding effects/masks.",
+    "Native inspection of the first candidate found the mask tree shrinking in the outer scroll area and lacking a visible selected row; fixed its minimum height and selected treatment.",
+    "Two early desktop runs failed the timing-sensitive continuity check with 7 and 4 distinct frames during concurrent compilation/native workloads. The unchanged check passed alone and in the final suite; no timing threshold or implementation was weakened.",
+    "The first empty-layer native fixture timed out at the edited-thumbnail stage because its whole recipe was neutral. The final fixture retains an empty layer and a base exposure edit to exercise the diagnostic’s edited-thumbnail/export path.",
+    "Earlier candidates, incomplete reports and test logs remain under the local campaign directory."
+  ],
+  "native": [
+    {
+      "case": "layers-it",
+      "report": "var/layers-clarity-20261018/layers-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "layers-en",
+      "report": "var/layers-clarity-20261018/layers-en/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "mask-it",
+      "report": "var/layers-clarity-20261018/mask-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "empty-it",
+      "report": "var/layers-clarity-20261018/empty-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1799,
+          1200
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    }
+  ],
+  "visual_review": {
+    "screenshots_produced": 8,
+    "viewer_screenshots_reviewed": 4,
+    "method": "Native diagnostic captures, visual inspection and interactive macOS review of the installed stack, properties menu and mask controls; dragging across a static label produced no highlight. Field selection/copy/edit behavior was verified by synthetic input tests in both themes."
+  },
+  "installation": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/layers-clarity-20261018/previous.app",
+    "files_matching_candidate": 23,
+    "changed_from_previous": [
+      "Contents/MacOS/TrueRenderer"
+    ],
+    "ad_hoc_signature_verified": true,
+    "xpc_candidate": "var/layers-clarity-20261018/reports/xpc-qualification-macos.json",
+    "xpc_installed": "var/layers-clarity-20261018/installed-check/reports/xpc-qualification-macos.json"
+  },
+  "source_files_hashed": 369,
+  "changed_source_files": [
+    "apps/desktop/src/i18n.rs",
+    "apps/desktop/src/ui/editing.rs",
+    "apps/desktop/src/ui/editing/controls_tests.rs",
+    "apps/desktop/src/ui/editing/help.rs",
+    "apps/desktop/src/ui/editing/layers.rs",
+    "apps/desktop/src/ui/editing/layers/mask_panel.rs",
+    "apps/desktop/src/ui/editing/layers/panel.rs",
+    "apps/desktop/src/ui/editing/panels.rs",
+    "apps/desktop/src/ui/style.rs"
+  ],
+  "protected_files_unchanged": 15,
+  "evidence_sha256": {
+    "var/layers-clarity-20261018/bundle-before.json": "f7e3627c3b36417270362ca032e3bb5768d68c366838a87aefc14d94d73e5269",
+    "var/layers-clarity-20261018/bundle-candidate.json": "ad6420ced1405def3c1e64d2aef1c02bd7abee90df824a4939a79e7d49bc7e22",
+    "var/layers-clarity-20261018/bundle-installed.json": "ad6420ced1405def3c1e64d2aef1c02bd7abee90df824a4939a79e7d49bc7e22",
+    "var/layers-clarity-20261018/clippy.log": "39882b07388c9979a169de42f0cba7ed72799db6427a6f25b8ac94de9ee52692",
+    "var/layers-clarity-20261018/desktop-tests-final.log": "4b340edf91751d4f4b079228c01759b4abdf41051a23e2a93ba5a82e01defba4",
+    "var/layers-clarity-20261018/empty-it/reports/develop-grid.png": "487de33fecdab8be1b750dffedef9121d820d68a6f1549c2468d1d069cbc8127",
+    "var/layers-clarity-20261018/empty-it/reports/develop-ui.json": "5999de6c9bb346cd466f6dad5e371e32286c9ef695e68c5db1a34da852373696",
+    "var/layers-clarity-20261018/empty-it/reports/develop-viewer.png": "d233fbc8cf30301c02eb8a0198caaba36e9b7d409a2110856844083d329dd23f",
+    "var/layers-clarity-20261018/empty-it/var/develop-export/02_Paesaggio_analitico-export.png": "ce8b57652189d12bd88ee2c28fb94fae6737e28ac2567863c0a4b469ac44861d",
+    "var/layers-clarity-20261018/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/layers-clarity-20261018/installed-check/reports/xpc-integration-macos.json": "b2b124a47e9ce94d38c7abccad2d46147c8a602e8cf27ed5258a8356d29e0fbe",
+    "var/layers-clarity-20261018/installed-check/reports/xpc-qualification-macos.json": "445939ae67b613d114a1a1b9d246cf3f45eaebb6020d10c3aa9dfb4679a1ace0",
+    "var/layers-clarity-20261018/layers-en/reports/develop-grid.png": "3abfeecaf77ab5157b60e452ae85eefc39184f7426b4def4b00ea60a240680d6",
+    "var/layers-clarity-20261018/layers-en/reports/develop-ui.json": "bf9c178fda2bdb5c18ae3318926bbcac89d602adf4cc40f0e2dc99a166beedd4",
+    "var/layers-clarity-20261018/layers-en/reports/develop-viewer.png": "e48aeae5165b537b851fdc68d1f9256ae1d8a6994dcb988ef5728673c93e2664",
+    "var/layers-clarity-20261018/layers-en/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/layers-clarity-20261018/layers-it/reports/develop-grid.png": "2c68a812ea740d09f2f55bf1e8f0d4759d789e27ebc7163be692f58ab6ac09af",
+    "var/layers-clarity-20261018/layers-it/reports/develop-ui.json": "41f366d3e466b8e800a90c1a26ce4a7387545b556d9d31ec6842600865f724cd",
+    "var/layers-clarity-20261018/layers-it/reports/develop-viewer.png": "447e09421bb625bd451630566f0f3749d597db873df6d2e18525f5c8d1200fcb",
+    "var/layers-clarity-20261018/layers-it/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/layers-clarity-20261018/mask-it/reports/develop-grid.png": "8bd92f4d6e1114af1614da3259ab04aa0392573799f1233c1ec113b5c1d8d3f9",
+    "var/layers-clarity-20261018/mask-it/reports/develop-ui.json": "915351c1b0dd12294fe7e24e25ae0effeab8f6cbd5fa980f34be565c9677c2e5",
+    "var/layers-clarity-20261018/mask-it/reports/develop-viewer.png": "17c6c9ac66438a989b5599472b2cde042a76cf8947537b70e32457f8c9eea593",
+    "var/layers-clarity-20261018/mask-it/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/layers-clarity-20261018/protected-before.json": "4900ece0d215c9e7dfe42b2c934ae39171377c4679723d79bb981a25b8c6885b",
+    "var/layers-clarity-20261018/release-build.log": "d7586f0326898c7ac48925b057ca6e88b69d2a8f1c1358eacaefb03760be7450",
+    "var/layers-clarity-20261018/reports/xpc-integration-macos.json": "5a7f294550bf812547bc4395e7461786edf68b84b3af5fd8df5826bd1d1396fb",
+    "var/layers-clarity-20261018/reports/xpc-qualification-macos.json": "fcca67180d61f36b3c70c995d388f62a9b0785485404f8302451ac8c1dc5729a",
+    "var/layers-clarity-20261018/source-manifest.json": "d1c90f97e43b0896e59184f437f0c3f032069637de5633997c5aa749fd5ac539"
+  },
+  "limits": [
+    "Generated corpus images only; no new photographic color qualification.",
+    "Full VoiceOver, all UI scales and other operating systems are not qualified by this campaign.",
+    "No R0–R4 or SF0–SF10 gate closed; no commit or push performed."
+  ]
+}

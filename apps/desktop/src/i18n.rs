@@ -16,6 +16,33 @@ impl Language {
             return source;
         }
         match source {
+            "Pila livelli" => "Layer stack",
+            "Nuovo livello" => "New layer",
+            "Crea con una regolazione" => "Create with an adjustment",
+            "Crea un livello vuoto o già pronto con uno strumento." => {
+                "Create an empty layer or start with a tool."
+            }
+            "Nessun livello aggiunto" => "No layers yet",
+            "Usa Nuovo livello per aggiungere una regolazione. Puoi limitarla a una parte della foto con una maschera." => {
+                "Use New layer to add an adjustment. A mask can limit it to part of the photo."
+            }
+            "Livello nascosto · attiva l’occhio per vedere l’effetto" => {
+                "Hidden layer · enable the eye to see its effect"
+            }
+            "Effetti del livello" => "Layer effects",
+            "Aggiunge uno strumento al livello selezionato, con la stessa opacità e maschera." => {
+                "Adds a tool to the selected layer, sharing its opacity and mask."
+            }
+            "Questo livello non modifica ancora la foto. Aggiungi la prima regolazione." => {
+                "This layer does not change the photo yet. Add its first adjustment."
+            }
+            "Sviluppo di base" => "Base adjustments",
+            "L’effetto si applica a tutta la foto. Crea una maschera per scegliere dove agisce." => {
+                "The effect applies to the whole photo. Create a mask to choose where it acts."
+            }
+            "Crea maschera" => "Create mask",
+            "Azioni maschera" => "Mask actions",
+
             "Questa sezione contiene modifiche." => "This section contains adjustments.",
             "Torna a Sviluppo" => "Back to Develop",
             "Nascondi livello" => "Hide layer",

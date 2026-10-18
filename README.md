@@ -42,7 +42,7 @@ Start with a natural rendering or develop a distinctive style. Refine a sampled 
 
 The searchable **Tools** catalogue lets you apply an adjustment to a new photographic layer or the selected layer. Name, duplicate, reorder and hide layers; refine their contribution with separate **Opacity** and **Fill** controls.
 
-The **Develop** panel groups adjustments in collapsible sections. Its **Actions** menu contains looks, crop, copy/paste, output verification and Reset all. The **Layers** panel separates the stack, layer properties, adjustments and mask, with visibility controls and percentage-based Opacity and Fill.
+The **Develop** panel groups adjustments in collapsible sections. Its **Actions** menu contains looks, crop, copy/paste, output verification and Reset all. **Layers** shows a compact stack above the selected layer’s Opacity and separate **Layer effects** / **Mask** views. **New layer** can start empty or with a tool; **Add adjustment** adds a tool directly to the selected layer. The layer’s **…** menu contains its name, Fill, lock, duplicate, reorder and delete actions. **Base adjustments** returns to global editing.
 
 Hover over a tool or adjustment name to see what it does, in Italian or English, including disabled controls. Distinct photographic symbols, colour fields, channel connections and tonal guides help explain each operation as you work.
 

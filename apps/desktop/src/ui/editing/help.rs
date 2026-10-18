@@ -96,6 +96,26 @@ struct ControlHelp {
 }
 const CONTROLS: &[ControlHelp] = &[
     ControlHelp {
+        names: "Pila livelli",
+        it: "I livelli si applicano dal basso verso l’alto. Seleziona una riga per modificarla; l’occhio ne alterna la visibilità e il menu contiene nome, riempimento e ordine.",
+        en: "Layers are applied from bottom to top. Select a row to edit it; the eye toggles visibility, and the menu contains name, fill and ordering.",
+    },
+    ControlHelp {
+        names: "Effetti del livello|Aggiungi regolazione",
+        it: "Le regolazioni di questo livello condividono opacità e maschera. Aggiungi regolazione inserisce uno strumento nel livello selezionato.",
+        en: "This layer’s adjustments share its opacity and mask. Add adjustment inserts a tool into the selected layer.",
+    },
+    ControlHelp {
+        names: "Maschera|Crea maschera",
+        it: "Sceglie dove agiscono gli effetti del livello. Senza maschera agiscono su tutta la foto; seleziona un componente per modificarne forma e sfumatura.",
+        en: "Chooses where this layer’s effects apply. Without a mask they affect the whole photo; select a component to edit its shape and feathering.",
+    },
+    ControlHelp {
+        names: "Sviluppo di base",
+        it: "Apre le regolazioni globali della foto, applicate prima della pila dei livelli. L’originale rimane in sola lettura.",
+        en: "Opens the photo’s global adjustments, applied before the layer stack. The original remains read-only.",
+    },
+    ControlHelp {
         names: "Regolazioni",
         it: "Corregge la foto intera con WB, luce, curve, colore e sezioni avanzate. Apri o richiudi un gruppo facendo clic sul suo titolo.",
         en: "Adjusts the whole photo with WB, light, curves, color and advanced sections. Click a group title to expand or collapse it.",

@@ -131,7 +131,6 @@ pub(super) enum Glyph {
     Undo,
     Redo,
     Eye,
-    Lock,
 }
 
 pub(super) fn icon_button(
@@ -202,19 +201,6 @@ pub(super) fn icon_button(
                 if !selected {
                     painter.line_segment([p(-8., 7.), p(8., -7.)], stroke);
                 }
-            }
-            Glyph::Lock => {
-                painter.rect_stroke(
-                    egui::Rect::from_min_max(p(-5., -1.), p(5., 7.)),
-                    2,
-                    stroke,
-                    egui::StrokeKind::Inside,
-                );
-                painter.add(egui::Shape::line(
-                    vec![p(-3., -1.), p(-3., -5.), p(0., -7.), p(3., -5.), p(3., -1.)],
-                    stroke,
-                ));
-                painter.circle_filled(p(0., 3.), 1., color);
             }
         }
     }

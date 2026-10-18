@@ -1503,8 +1503,9 @@ fn tools_create_layers_or_populate_selected_empty_layer_in_both_languages() {
         let mut recipe = EditRecipe::neutral(Default::default());
         let mut commits = 0;
         for label in [
+            "Nuovo livello",
             "Nuovo livello vuoto",
-            "Applica uno strumento a questo livello",
+            "Aggiungi regolazione",
             "Luce e colore locale",
         ] {
             let mut draw = |ui: &mut egui::Ui| {
@@ -1540,9 +1541,13 @@ fn tools_create_layers_or_populate_selected_empty_layer_in_both_languages() {
         let shapes = frame(&ctx, vec![], |ui| {
             controls.show(ui, lang, &mut recipe);
         });
-        for label in ["Opacità", "Riempimento"] {
-            assert!(shapes.texts.iter().any(|(s, _)| s == lang.text(label)));
-        }
+        assert!(shapes.texts.iter().any(|(s, _)| s == lang.text("Opacità")));
+        assert!(
+            !shapes
+                .texts
+                .iter()
+                .any(|(s, _)| s == lang.text("Riempimento"))
+        );
         controls.open_tools(false);
         let before = recipe.clone();
         let shapes = frame(&ctx, vec![], |ui| {
@@ -1642,6 +1647,24 @@ fn sampled_color_overlays_are_scoped_to_each_operator_and_separate_from_mask() {
         let before = recipe.clone();
         let mut controls = super::layers::Controls::default();
         for (which, expected) in [(0, [0.5, 0.]), (1, [0., 0.5]), (2, [0.5, 0.5])] {
+            if which == 2 {
+                let shapes = frame(&ctx, vec![], |ui| {
+                    controls.show(ui, lang, &mut recipe);
+                });
+                let pos = shapes
+                    .texts
+                    .iter()
+                    .find(|(s, _)| s == lang.text("Maschera"))
+                    .unwrap()
+                    .1
+                    .center();
+                for pressed in [true, false] {
+                    frame(&ctx, click(pos, pressed), |ui| {
+                        controls.show(ui, lang, &mut recipe);
+                    });
+                }
+                assert!(!controls.overlay);
+            }
             let mut draw = |ui: &mut egui::Ui| {
                 assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
             };
@@ -1650,7 +1673,7 @@ fn sampled_color_overlays_are_scoped_to_each_operator_and_separate_from_mask() {
                 .texts
                 .iter()
                 .filter(|(s, _)| s == lang.text("Mostra area"))
-                .nth(which)
+                .nth(if which == 2 { 0 } else { which })
                 .unwrap()
                 .1
                 .center();
@@ -1914,7 +1937,7 @@ fn photographic_tools_fit_the_inspector_width() {
 }
 
 #[test]
-fn layer_navigation_and_section_folding_preserve_exact_recipe_values() {
+fn layer_navigation_and_mask_tabs_preserve_exact_recipe_values() {
     use tr_core::editing::layers::{Layer, TOOLS};
     for lang in [Language::Italian, Language::English] {
         let ctx = egui::Context::default();
@@ -1927,14 +1950,11 @@ fn layer_navigation_and_section_folding_preserve_exact_recipe_values() {
         }
         let original = recipe.clone();
         let mut controls = layers::Controls::default();
-        for (step, label) in [
+        for label in [
             "Background correction",
-            lang.text("Proprietà del livello"),
-            lang.text("Proprietà del livello"),
-        ]
-        .into_iter()
-        .enumerate()
-        {
+            lang.text("Maschera"),
+            lang.text("Effetti del livello"),
+        ] {
             let shapes = frame(&ctx, vec![], |ui| {
                 assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
             });
@@ -1945,20 +1965,30 @@ fn layer_navigation_and_section_folding_preserve_exact_recipe_values() {
                 .expect(label)
                 .1
                 .center();
+            controls.pick = true;
+            controls.paint = true;
+            controls.overlay = true;
             for pressed in [true, false] {
                 frame(&ctx, click(pos, pressed), |ui| {
                     assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
                 });
             }
-            if step == 1 {
-                let folded = frame(&ctx, vec![], |ui| {
-                    controls.show(ui, lang, &mut recipe);
-                });
+            assert!(!controls.pick && !controls.paint && !controls.overlay);
+            let visible = frame(&ctx, vec![], |ui| {
+                controls.show(ui, lang, &mut recipe);
+            });
+            if label == lang.text("Maschera") {
                 assert!(
-                    !folded
+                    visible
                         .texts
                         .iter()
-                        .any(|(text, _)| text == lang.text("Nome del livello"))
+                        .any(|(text, _)| text == lang.text("Crea maschera"))
+                );
+                assert!(
+                    !visible
+                        .texts
+                        .iter()
+                        .any(|(text, _)| text == lang.text("Aggiungi regolazione"))
                 );
             }
             assert_eq!(recipe, original);
@@ -1970,12 +2000,34 @@ fn layer_navigation_and_section_folding_preserve_exact_recipe_values() {
         let shapes = frame(&ctx, vec![], |ui| {
             controls.show(ui, lang, &mut recipe);
         });
+        let menu = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == "…")
+            .unwrap()
+            .1
+            .center();
+        for pressed in [true, false] {
+            frame(&ctx, click(menu, pressed), |ui| {
+                controls.show(ui, lang, &mut recipe);
+            });
+        }
+        let shapes = frame(&ctx, vec![], |ui| {
+            assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+        });
         assert!(
             shapes
                 .texts
                 .iter()
-                .any(|(text, _)| text == lang.text("Nome del livello"))
+                .any(|(s, _)| s == lang.text("Nome del livello"))
         );
+        assert!(
+            shapes
+                .texts
+                .iter()
+                .any(|(s, _)| s == lang.text("Riempimento"))
+        );
+        assert_eq!(recipe, original);
     }
 }
 
@@ -2067,4 +2119,120 @@ fn panel_modified_badge_does_not_interrupt_a_slider_gesture() {
     frame(&ctx, click(knob + egui::vec2(40., 0.), false), &mut draw);
     assert!(value > 0.);
     assert_eq!(commits, 1);
+}
+
+#[test]
+fn layer_mask_creation_and_selection_keep_the_tree_separate_from_controls() {
+    use tr_core::editing::{
+        layers::{Combine, Layer, MaskKind, TOOLS},
+        masks::{Mask, Shape},
+    };
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut recipe = EditRecipe::neutral(Default::default());
+        let layer = Layer::new("Local", TOOLS[1].operator());
+        let id = layer.id;
+        recipe.layer_stack().layers.push(layer);
+        let mut controls = layers::Controls::default();
+        controls.selected = Some(id);
+        controls.mask_view = true;
+        let mut commits = 0;
+        for label in ["Crea maschera", "Pennello"] {
+            let mut draw = |ui: &mut egui::Ui| {
+                commits += usize::from(controls.show(ui, lang, &mut recipe).1);
+            };
+            let shapes = frame(&ctx, vec![], &mut draw);
+            let pos = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == lang.text(label))
+                .expect(label)
+                .1
+                .center();
+            for pressed in [true, false] {
+                frame(&ctx, click(pos, pressed), &mut draw);
+            }
+        }
+        assert_eq!(commits, 1);
+        assert!(controls.paint && controls.overlay);
+        let layer = &mut recipe.layers.as_mut().unwrap().layers[0];
+        assert_eq!(layer.mask.nodes.len(), 1);
+        layer.mask.append(
+            MaskKind::Shape(Mask {
+                shape: Shape::Radial,
+                ..Default::default()
+            }),
+            Combine::Subtract,
+        );
+        let before = recipe.clone();
+        let shapes = frame(&ctx, vec![], |ui| {
+            assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+        });
+        let brush = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == lang.text("Pennello"))
+            .unwrap()
+            .1;
+        let radial = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == lang.text("Radiale"))
+            .unwrap()
+            .1;
+        let radius = shapes
+            .texts
+            .iter()
+            .find(|(s, _)| s == lang.text("Raggio maschera"))
+            .unwrap()
+            .1;
+        assert!(radius.top() > brush.bottom() && radius.top() > radial.bottom());
+        for pressed in [true, false] {
+            frame(&ctx, click(radial.center(), pressed), |ui| {
+                assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+            });
+        }
+        assert!(!controls.paint && !controls.pick);
+        assert_eq!(recipe, before);
+        recipe.validate().unwrap();
+    }
+}
+
+#[test]
+fn a_full_layer_stack_keeps_the_selected_inspector_near_the_top() {
+    use tr_core::editing::layers::{Layer, MAX_LAYERS, TOOLS};
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        let mut recipe = EditRecipe::neutral(Default::default());
+        for i in 0..MAX_LAYERS {
+            recipe
+                .layer_stack()
+                .layers
+                .push(Layer::new(format!("Layer {i}"), TOOLS[1].operator()));
+        }
+        let before = recipe.clone();
+        let mut controls = layers::Controls::default();
+        for _ in 0..3 {
+            let shapes = frame(&ctx, vec![], |ui| {
+                assert_eq!(controls.show(ui, lang, &mut recipe), (false, false));
+            });
+            let opacity = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == lang.text("Opacità"))
+                .unwrap()
+                .1;
+            let effects = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == lang.text("Effetti del livello"))
+                .unwrap()
+                .1;
+            assert!(
+                opacity.bottom() < 340. && effects.bottom() < 420.,
+                "{lang:?}: {opacity:?}, {effects:?}"
+            );
+        }
+        assert_eq!(recipe, before);
+    }
 }

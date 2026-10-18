@@ -3517,6 +3517,10 @@ garantita attraverso volumi, permessi, processi concorrenti e cestini di sistema
    completabile senza puntatore; le azioni rare restano raggiungibili con focus/menu.
 6. **Nessuna animazione superflua.** Le transizioni esistono solo dove comunicano una relazione
    spaziale, e durano meno di 150 ms.
+7. **Etichette senza selezione del testo.** Titoli, descrizioni, metadati e nomi dei controlli
+   mantengono il puntatore ordinario e non permettono di evidenziare testo trascinando. I campi
+   modificabili conservano cursore di scrittura, selezione e copia/incolla; i cursori funzionali
+   degli strumenti fotografici e del ridimensionamento mantengono il proprio significato.
 
 ### 14.2 Layout principale
 
