@@ -1,0 +1,85 @@
+{
+  "application": "TrueRenderer",
+  "captured_at": "2026-10-19T22:09:11.929488+00:00",
+  "source_commit": "703484c24441cedb9a91a0de3afe07aa0a284636",
+  "bundle": {
+    "path": "dist/TrueRenderer.app",
+    "version": "0.1.5",
+    "binary_sha256": "998e1f97ed5a929e4128009fffb8ad4459f30cd61c53cff431b7404a432e68fb"
+  },
+  "language": "en",
+  "ui_scale_percent": 100,
+  "preview_quality": "Full",
+  "image_zoom": "Fit",
+  "capture_method": "Native macOS application window captures using the computer-use screenshot API. JPEG bytes saved exactly as returned, without cropping, resizing, compositing or retouching.",
+  "isolated_library": true,
+  "private_photographs_published": false,
+  "photograph_credits": "sample-photos/manifest.json",
+  "source_images": "The four public-domain JPEG photographs included in sample-photos; the RAW engine badge identifies the active engine preference, not the source format.",
+  "screenshots": [
+    {
+      "path": "reports/readme-2026-10-20/develop.jpg",
+      "role": "Light adjustments and final PNG/TIFF sRGB16 export preview at native dimensions",
+      "sha256": "9dbd457161882f02341bdbb489f14edb9efb9e9faec2e3aec5f1a3ed26b54bc2",
+      "bytes": 1085893,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true
+    },
+    {
+      "path": "reports/readme-2026-10-20/colour.jpg",
+      "role": "Four-wheel grading on a photographic layer",
+      "sha256": "4d31deb05dfedb5e2a509f73604d9b6dcf907024cd742dd1a8f8c0e1f97cbf75",
+      "bytes": 1086656,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true
+    },
+    {
+      "path": "reports/readme-2026-10-20/layers.jpg",
+      "role": "Layer stack and gradient mask with selection overlay enabled",
+      "sha256": "baf3434c8604ab48126eaac2e66ff1bd99d1a184bb9115cc5e34a6869a224dea",
+      "bytes": 1019436,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true
+    },
+    {
+      "path": "reports/readme-2026-10-20/crop.jpg",
+      "role": "Unconfirmed 16:9 crop with rule-of-thirds grid; cancelled after capture",
+      "sha256": "b04a2c298766afd235f796d836d73a100adf17ac8073910cb9e5b6fd7613a8a8",
+      "bytes": 1029184,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true
+    },
+    {
+      "path": "reports/readme-2026-10-20/compare.jpg",
+      "role": "Grand Teton Sunrise and Winter in synchronized side-by-side comparison",
+      "sha256": "c695c7ef0bdc66e5f54505de79539784a09346a4983079ec2ead478776e43ac9",
+      "bytes": 695147,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true
+    },
+    {
+      "path": "reports/readme-2026-10-20/library.jpg",
+      "role": "Four public-domain samples; five-star rating and green label in isolated library",
+      "sha256": "1a17f77339ab106c83c463e6ec1faec9bec48664dc61e7e674181c29e50212c1",
+      "bytes": 651176,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true
+    }
+  ],
+  "verification": {
+    "all_six_images_visually_reviewed": true,
+    "english_and_100_percent_ui_checked_in_settings": true,
+    "jpeg_integrity_checked": true,
+    "screenshot_exif_contains_only_dimensions": true,
+    "sample_original_hashes_match_manifest": true,
+    "protected_files_unchanged": 205,
+    "application_code_and_bundle_unchanged": true
+  },
+  "scope": "Product documentation and native screenshot capture. Existing historical screenshots preserved."
+}

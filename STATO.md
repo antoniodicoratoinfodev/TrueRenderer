@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 19 ottobre 2026.
+Aggiornato: 20 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
@@ -26,6 +26,16 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 **Pubblicazione UI del 18 ottobre:** riuniti in 20 file i tre incrementi WB Temperatura/Tinta, grafica/aiuti degli strumenti e pannelli Livelli/Sviluppo, con sorgenti, regressioni, guida, specifica e tre rapporti. Verificati i 367 sorgenti congelati del bundle finale e tutti i 65 hash delle evidenze dei rapporti. Le diciture «nessun commit/push» descrivono la chiusura delle campagne, precedente a questa pubblicazione richiesta dal titolare. Dati durevoli, fotografie, gallerie, bundle, backup e toolchain restano locali.
 
 **Pubblicazione chiarezza Livelli e puntatore, 18 ottobre:** su richiesta del titolare, preparati per commit/push i 14 file dell’incremento: sorgenti, test, guida, specifiche, stato e rapporto aggregato. Ricontrollati i 369 sorgenti congelati, i 15 file protetti e tutti i 29 hash delle evidenze. La dicitura «nessun commit/push» sotto e nel rapporto registra la chiusura della qualifica, precedente a questa pubblicazione.
+
+### Presentazione GitHub e schermate native — 20 ottobre
+
+README riscritto su richiesta del titolare come presentazione pubblica del prodotto: benefici fotografici, strumenti colore, livelli/maschere, look riutilizzabili, ritaglio, confronto, organizzazione, RAW ed esportazione. Conservati compatibilità, istruzioni di compilazione e attribuzioni; tolti i dettagli degli algoritmi e i resoconti dei lavori aperti. Le descrizioni riguardano funzioni presenti, senza attribuire nuove qualifiche di precisione o prestazioni.
+
+- [x] Acquisire sei schermate del bundle corrente: sviluppo con verifica dell'uscita PNG/TIFF sRGB16, grading, livelli/maschera, ritaglio, confronto e libreria. Solo i quattro JPEG pubblici di esempio, catalogo separato, interfaccia inglese al 100% e qualità Piena; immagini native conservate senza ritocchi, ridimensionamenti o composizioni. Il ritaglio dimostrativo è stato annullato.
+- [x] Controllare visivamente tutte le schermate, integrità JPEG, metadati e hash degli originali. I metadati EXIF delle schermate contengono soltanto le dimensioni; nessuna fotografia privata pubblicata. Verificati invariati **205 file protetti**, fra catalogo principale, impostazioni, backup, originali di esempio e binario.
+- [x] Verificare collegamenti locali, Markdown GFM con rendering locale, tabella degli strumenti, blocco richiudibile delle istruzioni e sei riferimenti alle immagini; controllare il diff e il perimetro della pubblicazione.
+
+[Provenienza delle schermate](reports/readme-showcase-macos-2026-10-20.json), con hash e descrizione delle viste. Codice applicativo e bundle invariati; nessuna nuova campagna di qualifica fotografica. Fonti delle specifiche anteprime invariate: non occorre sincronizzazione documentale.
 
 ### Motore autonomo: costo delle alte luci — consegnato il 19 ottobre
 

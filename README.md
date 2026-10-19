@@ -1,94 +1,97 @@
 # TrueRenderer
 
-### Your photographs. Your vision. Every detail under your control.
+### Your photographs. Your colour. Your way.
 
-TrueRenderer brings powerful RAW development, expressive colour tools and fast photographic browsing into one native desktop workspace. Select your best frames, shape light and colour, compare every decision and export the finished image, with your originals untouched and your work stored locally.
+RAW development, expressive colour tools and photographic layers in one desktop workspace. TrueRenderer takes you from choosing your best frames to shaping the final image, with your originals untouched and your work stored locally.
 
-Our ambition is simple: **exceptional colour fidelity, precise image processing and performance that keeps pace with the photographer.** TrueRenderer combines a floating-point foundation with direct creative controls, putting both the technical detail and the final look in your hands.
+![Avalanche Lake in TrueRenderer, with light adjustments, histogram and filmstrip](reports/readme-2026-10-20/develop.jpg)
 
-![Avalanche Lake in TrueRenderer's Develop workspace, with tonal controls and filmstrip](reports/readme-2026-10-11/develop.jpg)
+Bring out the light you remember. Give a series its own colour palette. Refine one part of a photograph without changing the rest. Compare your decisions as you work, then export at the size and precision you need.
 
-GPU acceleration, independent RAW development, photographic layers and masks, reversible editing and a local library.
+**No account, photo upload or cloud subscription is required.**
 
-## Power that keeps you in the creative flow
+## Shape the light. Make the colour yours.
 
-GPU acceleration for light and colour adjustments works alongside parallel CPU processing. Adaptive previews follow slider gestures and refine after you stop; background loading, nearby-image preloading and reusable previews help you move through a shoot.
+Start with the essentials: exposure, contrast, highlights, shadows and white balance. Go further with editable curves, sampled colour corrections and four-wheel grading for shadows, midtones, highlights and the whole image.
 
-Choose **Standard or Full preview quality**, globally or for an individual photograph. Tune CPU, GPU and memory preferences to your machine, switch between Fit and physical 1:1, and keep the filmstrip close while you work.
+TrueRenderer works in **linear Rec.2020 floating point**, giving its photographic adjustments a wide numerical range. Histograms, tonal-level sampling and pixel inspection help you connect what you see with the image data.
 
-## Colour deserves precision
+![Four-wheel grading on a photographic layer in TrueRenderer](reports/readme-2026-10-20/colour.jpg)
 
-TrueRenderer's **linear Rec.2020 floating-point working space** gives tonal and colour operations a wide numerical range. RAW white balance, editable curves, histograms and pixel inspection connect creative decisions to the image data. Native-resolution export applies the saved photographic recipe to the source.
-
-RAW **Temperature and Tint** control all supported engines. Apple RAW uses kelvin; the other engines use relative adjustments around As shot. Saved white balances retain their rendering. Double-click either relative slider to reset that axis, or choose As shot to reset both. At extreme settings, each slider’s available range depends on the other.
-
-Start with a natural rendering or develop a distinctive style. Refine a sampled colour, balance individual tonal zones, build a monochrome treatment or combine adjustments in a reusable look.
-
-![Four-wheel colour grading and editable layer-mask controls in TrueRenderer](reports/readme-2026-10-11/colour.jpg)
-
-| Creative control | Tools at your fingertips |
+| Make the image your own | Tools to get there |
 |---|---|
-| Light and contrast | Exposure, brightness, contrast, highlights, shadows, whites and blacks; automatic exposure |
-| Tone shaping | Editable point curves, individual RGB curves, luminance and parametric curves; tonal levels with histograms and black/gray/white sampling |
-| White balance | Temperature and Tint, As-shot, automatic and neutral-area sampling for supported RAW files |
-| Colour refinement | Warmth, tint, saturation, vibrance, warm-tone protection, eight-band HSL and channel mixers |
-| Creative colour | Four-wheel grading, selective colour, colorize, colour filters, gradient maps and black-and-white mixing |
-| Targeted adjustments | Sampled hue/chroma/luminance corrections and separate uniformity controls |
-| Detail and atmosphere | Texture, clarity, dehaze, sharpening and luminance/chroma noise reduction |
-| Composition | Interactive crop, aspect ratios, rotation, flips, straightening and perspective controls |
-| Optical adjustments | Manual distortion, vignette, chromatic aberration and defringe controls |
+| Balance light | Exposure, brightness, contrast, highlights, shadows, whites, blacks and automatic exposure |
+| Set the white balance | RAW Temperature and Tint, As shot, automatic balance and neutral-area sampling |
+| Sculpt the tones | Point curves, individual RGB curves, luminance and parametric curves; tonal levels with histograms and black, grey and white samplers |
+| Refine individual colours | Saturation, vibrance, eight-band HSL, sampled colour and uniformity controls; selective colour and channel mixing |
+| Create a signature palette | Four-wheel grading, colorize, colour filters, gradient maps and black-and-white mixing |
+| Bring out detail | Texture, clarity, dehaze, sharpening and luminance/chroma noise reduction |
+| Refine the optics | Manual distortion, vignette, chromatic aberration and defringe controls |
+
+The searchable **Tools** catalogue puts adjustments within reach. Each tool has its own photographic symbol and visual controls; hover over a name to see what it does, in English or Italian.
 
 ## Build the look, layer by layer
 
-The searchable **Tools** catalogue lets you apply an adjustment to a new photographic layer or the selected layer. Name, duplicate, reorder and hide layers; refine their contribution with separate **Opacity** and **Fill** controls.
+Keep different creative decisions independently editable. Add an adjustment to a new photographic layer or to the selected layer, then control where it acts and how strongly it contributes.
 
-The **Develop** panel groups adjustments in collapsible sections. Its **Actions** menu contains looks, crop, copy/paste, output verification and Reset all. **Layers** shows a compact stack above the selected layer’s Opacity and separate **Layer effects** / **Mask** views. **New layer** can start empty or with a tool; **Add adjustment** adds a tool directly to the selected layer. The layer’s **…** menu contains its name, Fill, lock, duplicate, reorder and delete actions. **Base adjustments** returns to global editing.
+- **A clear layer stack:** name, duplicate, reorder, hide or lock layers, with separate Opacity and Fill controls.
+- **Local adjustments:** combine brush, linear and radial gradients, luminance and hue masks. Add, subtract or intersect components, soften edges and invert coverage.
+- **Separate effects and masks:** switch between the selected layer's adjustments and its mask without losing your place in the stack.
+- **Reusable looks:** save selected layers, preview them on another photograph, choose their intensity and optionally include their masks. Applied looks remain editable layers.
 
-Hover over a tool or adjustment name to see what it does, in Italian or English, including disabled controls. Distinct photographic symbols, colour fields, channel connections and tonal guides help explain each operation as you work.
+![TrueRenderer's layer stack and gradient mask, with the selected area shown as a blue overlay](reports/readme-2026-10-20/layers.jpg)
 
-Combine brush, radial and linear gradients, luminance and hue masks. Add, subtract or intersect selections, feather their edges and invert their coverage. Masks follow the photograph through crop and rotation.
+**Experiment freely.** Undo, Redo, Reset all and Before/After keep decisions reversible. Double-click a photographic slider to restore its default. Copy selected light, curve and RGB colour adjustments between photographs to carry a treatment through a series.
 
-![TrueRenderer's searchable photographic tools, with colour-coded icons](reports/readme-2026-10-11/tools.jpg)
+## Give every frame the right composition
 
-**Saved looks** turn selected layers into reusable treatments. Preview a look on another photograph, choose its intensity and whether to include masks, then apply it as independently editable layers.
+Crop directly on the photograph with draggable edges, a rule-of-thirds grid and free, original, preset or custom aspect ratios. Lock the proportions, switch orientation, move the frame or move the photograph inside it. Keyboard controls help with fine adjustments.
 
-**Undo, Redo, Reset all and Before/After** keep experimentation reversible. Editing recipes, looks and annotations stay in your local library and its backups. Double-click a photographic slider to restore its default; copy selected light, curve and RGB colour adjustments between photographs for a consistent series.
+Rotation, flips, straightening and perspective controls complete the composition tools. Masks follow the photograph through crop and rotation, and the original remains available for a different framing later.
 
-## Independent RAW development
-
-On macOS, **trueRendererExperimental 32fp** provides an independent RAW decoding and development path. It reads supported Bayer/X-Trans DNGs, Nikon D750 FX lossless 14-bit NEFs, D800 FX lossless 12/14-bit NEFs and Fujifilm X-T5 lossy 14-bit RAFs. It uses its own X-Trans reconstruction and offers automatic and sampled white balance with precise sensor gains, plus DNG export of the decoded mosaic. See the [RAW format and engine guide](docs/progetto-truerenderer-experimental.md) for exact camera modes and technical details; codec and data attribution are in [NOTICE](NOTICE.md).
-
-Highlight reconstruction uses nearby unclipped colours when there is enough consistent information. The independent engine and LibRaw AHD also use sensor saturation information to suppress magenta casts in blown highlights, including when exposure is reduced. This neutral rendering cannot restore lost scene colour and can soften coloured lights near clipping.
+![Interactive crop in TrueRenderer, with aspect-ratio controls and a composition grid](reports/readme-2026-10-20/crop.jpg)
 
 ## See the differences that matter
 
-Compare photographs side by side with synchronized navigation, or compare the initial rendering with your current adjustments. Assign photographs to **A** and **B** from the context menu, keep the pair across folders, and inspect fine detail at physical 1:1.
+Choose between two frames with **side-by-side comparison and synchronized navigation**. Assign photographs to A and B from the context menu, keep the pair across folders, and inspect detail at physical 1:1. Use Before/After to compare the initial rendering with your current adjustments.
 
-![Two Grand Teton photographs in TrueRenderer's synchronized comparison view](reports/readme-2026-10-06/compare.jpg)
+![Two Grand Teton photographs side by side in TrueRenderer's comparison view](reports/readme-2026-10-20/compare.jpg)
 
-Histograms, a pixel sampler and shooting metadata sit alongside the image. Shutter speed, aperture, ISO, focal length and lens information help you understand each frame as you select and refine it.
+Shutter speed, aperture, ISO, focal length and lens information sit alongside the image, helping you understand each frame as you select and develop it.
 
-## Bring order to your photographs
+## Find your keepers. Keep them organized.
 
-Browse folders with **Explorer**, manage your selection in **Library**, scan a thumbnail grid or stay immersed in the viewer. Favourites, navigation history, search and filters bring useful photographs within reach.
+Browse folders in **Explorer**, review a thumbnail grid in **Library**, or stay with the photograph and its filmstrip. Favourites, navigation history, search and filters help you return to the images that matter.
 
-![TrueRenderer's photographic grid, folder navigation and information panel](reports/readme-2026-10-06/library.jpg)
+Use **star ratings, colour labels, reject flags and keywords** to organize a shoot. Context menus bring ratings, comparison, adjustments, file navigation and export to the photograph you are working on.
 
-Use **star ratings, colour labels, reject flags and keywords** to organize a shoot. Context menus bring ratings, geometry, comparison, export and file navigation to the photograph you are working on.
+![TrueRenderer's library with public-domain sample photographs, ratings and shooting information](reports/readme-2026-10-20/library.jpg)
 
-**Your originals remain read-only. Your library stays on your computer. No account, photo upload or cloud subscription is required.**
+Your originals remain read-only. Editing recipes, annotations and saved looks live in the local library and its backups.
+
+## Independent RAW development
+
+On macOS, **trueRendererExperimental 32fp** provides an independent RAW decoding and development engine for supported Bayer/X-Trans DNGs, Nikon D750/D800 NEFs and Fujifilm X-T5 RAFs. RAW white balance offers Temperature and Tint controls, automatic balance, neutral-area sampling and an As shot reset. The engine also offers DNG export of the decoded sensor mosaic.
+
+Compatibility depends on the camera and recording mode; see the [RAW format guide](docs/progetto-truerenderer-experimental.md) for supported combinations.
+
+## Stay in the photographic flow
+
+GPU acceleration for light and colour adjustments works alongside parallel CPU processing. Adaptive previews respond during slider gestures and refine after you stop. Background loading, nearby-image preparation and reusable previews help you move through a folder.
+
+Choose **Standard or Full preview quality**, globally or for an individual photograph. Set CPU, GPU and memory preferences to suit your machine, switch between Fit and physical 1:1, and choose an English or Italian interface with 100%, 150% or 200% UI scaling.
 
 ## Finish with the output you need
 
-Export individual photographs or a selection as **JPEG, PNG or TIFF**, with 8-bit or 16-bit options where supported and floating-point TIFF for extended numerical values. Set a target long edge for delivery and inspect the final PNG/TIFF rendering before writing the files.
+Export one photograph or a selection as **JPEG, PNG or TIFF**, at native resolution or with a target long edge for delivery. PNG and TIFF offer 16-bit output; floating-point TIFF preserves extended numerical values. Check the final PNG/TIFF rendering with output verification before writing the files.
 
 For scientific imagery, TrueRenderer also opens **2D FITS images**, with linear or asinh display, a histogram and native-value inspection.
 
-## Make it your workspace
+## Try it with the included photographs
 
-Open an image or a folder, choose a photograph and switch to **Develop**. Open **Settings**, then **Previews and RAW**, to choose preview quality and configure RAW development. English and Italian interfaces, 100%/150%/200% UI scaling and adjustable panels help the workspace fit your screen.
+Open an image or a folder, select a photograph and choose **Develop**. Use **Adjustments** for the essentials, **Tools** to find a creative control, and **Layers** to build a local treatment. The **Actions** menu gives you looks, crop, copy/paste and output verification.
 
-Try the four public-domain landscapes in **Library**, under **Sample photos**. Their originals and credits are included in [`sample-photos/`](sample-photos/manifest.json); the macOS bundle includes them for offline use.
+Four public-domain landscapes are included in **Library**, under **Sample photos**, including in the macOS bundle for offline use. Start there to explore the workspace. Photograph credits are included in the [sample collection](sample-photos/manifest.json).
 
 <details>
 <summary><strong>Build and run from source</strong></summary>
@@ -114,7 +117,7 @@ Use the macOS app bundle for external photographs: it includes the isolated deco
 .\target\debug\truerenderer.exe
 ```
 
-The [documentation index](docs/README.md) covers platform-specific formats, architecture and configuration. Camera and file compatibility depend on the supported format, camera mode and platform.
+The [documentation index](docs/README.md) covers platform-specific formats, architecture and configuration.
 
 Keep `var/library.sqlite` and `var/backups/`: they contain durable library data. To remove compilation artifacts, use `./scripts/cargo-local.sh clean`.
 
@@ -122,4 +125,4 @@ Keep `var/library.sqlite` and `var/backups/`: they contain durable library data.
 
 TrueRenderer is proprietary software. See the [license](LICENSE) and [third-party notices](NOTICE.md).
 
-Screenshots show the native English interface. Landscape photographs: National Park Service, including NPS / David Restivo; public-domain source credits and capture details: [photographs and comparison/library views](reports/readme-showcase-macos-2026-10-06.json), [development, tools and grading views](reports/readme-showcase-macos-2026-10-11.json).
+Screenshots show the native macOS app in English, using public-domain photographs by the National Park Service, including NPS / David Restivo. See the [photograph credits](sample-photos/manifest.json) and [screenshot provenance](reports/readme-showcase-macos-2026-10-20.json).
