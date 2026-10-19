@@ -35,6 +35,18 @@ pub(crate) struct Fallback {
 }
 
 impl Fallback {
+    fn inactive(width: usize, height: usize, cfa: Cfa) -> Self {
+        Self {
+            confidence: Vec::new(),
+            width,
+            height,
+            cfa,
+            neighbors: std::array::from_fn(|_| std::array::from_fn(|_| Vec::new())),
+            active: Vec::new(),
+            columns: width.div_ceil(6),
+        }
+    }
+
     pub(crate) fn new(
         mut confidence: Vec<u8>,
         state: &[u8],
@@ -44,16 +56,26 @@ impl Fallback {
         height: usize,
         cfa: Cfa,
     ) -> Self {
+        if confidence.iter().all(|q| *q == 0) {
+            return Self::inactive(width, height, cfa);
+        }
         // Separable square dilation of the original admitted sites, per colour.
         // Vertical counts are <=23, horizontal sums <=529; no full-size mask
         // or dependence on the recovery grid. Never read inactive sensor sites.
         let mut columns = vec![[0u8; 3]; active_width];
         let update_row = |columns: &mut [[u8; 3]], y: usize, add: bool| {
-            for (x, counts) in columns.iter_mut().enumerate() {
+            let mut admitted = 0;
+            for (x, (counts, &state)) in columns
+                .iter_mut()
+                .zip(&state[y * width..y * width + active_width])
+                .enumerate()
+            {
+                if state != crate::highlights::SATURATED {
+                    continue;
+                }
                 let c = cfa.color(x, y);
-                if state[y * width + x] == crate::highlights::SATURATED
-                    && !support.unsupported_colour(x, y, c)
-                {
+                if !support.unsupported_colour(x, y, c) {
+                    admitted += 1;
                     if add {
                         counts[c] += 1;
                     } else {
@@ -61,17 +83,27 @@ impl Fallback {
                     }
                 }
             }
+            admitted
         };
+        let mut admitted = 0;
         for y in 0..PROTECTION_RADIUS.min(height) {
-            update_row(&mut columns, y, true);
+            admitted += update_row(&mut columns, y, true);
         }
         let rows = height.div_ceil(6);
         for y in 0..height {
             if y > PROTECTION_RADIUS {
-                update_row(&mut columns, y - PROTECTION_RADIUS - 1, false);
+                admitted -= update_row(&mut columns, y - PROTECTION_RADIUS - 1, false);
             }
             if y + PROTECTION_RADIUS < height {
-                update_row(&mut columns, y + PROTECTION_RADIUS, true);
+                admitted += update_row(&mut columns, y + PROTECTION_RADIUS, true);
+            }
+            let row = &mut confidence[y * width..(y + 1) * width];
+            row[active_width..].fill(0);
+            // Zero confidence cannot become active through protection. Keep
+            // updating the vertical window even on skipped rows so that a
+            // later nonzero row sees exactly the same admitted sites.
+            if admitted == 0 || row[..active_width].iter().all(|q| *q == 0) {
+                continue;
             }
             let mut counts = [0u16; 3];
             for column in columns.iter().take(PROTECTION_RADIUS) {
@@ -79,7 +111,7 @@ impl Fallback {
                     counts[c] += u16::from(column[c]);
                 }
             }
-            for x in 0..active_width {
+            for (x, q) in row[..active_width].iter_mut().enumerate() {
                 if x > PROTECTION_RADIUS {
                     for c in 0..3 {
                         counts[c] -= u16::from(columns[x - PROTECTION_RADIUS - 1][c]);
@@ -90,15 +122,14 @@ impl Fallback {
                         counts[c] += u16::from(columns[x + PROTECTION_RADIUS][c]);
                     }
                 }
-                if counts[cfa.color(x, y)] != 0 {
-                    confidence[y * width + x] = 0;
+                if *q != 0 && counts[cfa.color(x, y)] != 0 {
+                    *q = 0;
                 }
             }
-            confidence[y * width + active_width..(y + 1) * width].fill(0);
         }
         drop(columns);
         if confidence.iter().all(|q| *q == 0) {
-            confidence = Vec::new();
+            return Self::inactive(width, height, cfa);
         }
         let columns = width.div_ceil(6);
         let mut active = vec![false; columns * rows];
@@ -409,6 +440,143 @@ mod tests {
                             "period={} phase={phase} site={x},{y}",
                             base.period
                         );
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn sparse_protection_matches_distance_oracle_across_empty_rows_and_margins() {
+        for base in [
+            Cfa::bayer([0, 1, 1, 2]),
+            Cfa::new(6, &crate::cfa::XTRANS).unwrap(),
+        ] {
+            for phase in 0..base.period * base.period {
+                let cfa = base.shifted(phase % base.period, phase / base.period);
+                for (w, h, active) in [
+                    (5usize, 3usize, 3usize),
+                    (13, 27, 11),
+                    (43, 47, 37),
+                    (43, 113, 37),
+                ] {
+                    for mode in 0..6 {
+                        let columns = active.div_ceil(6);
+                        let cells: Vec<_> = (0..columns * h.div_ceil(6))
+                            .map(|i| match mode {
+                                3 => 7,
+                                4 | 5 => 0,
+                                _ => ((i * 13 + phase) % 16) as u8,
+                            })
+                            .collect();
+                        let state: Vec<_> = (0..w * h)
+                            .map(|i| match mode {
+                                1 => 1,
+                                3 | 4 => crate::highlights::SATURATED,
+                                // Separated rows empty and reactivate the
+                                // vertical window on the tall geometry.
+                                // Saturated margins must never count as support.
+                                5 if i % w >= active || [0, h / 2, h - 1].contains(&(i / w)) => {
+                                    crate::highlights::SATURATED
+                                }
+                                5 => 0,
+                                _ if (i * 17 + phase) % 19 == 0 => crate::highlights::SATURATED,
+                                _ => 0,
+                            })
+                            .collect();
+                        let q: Vec<_> = (0..w * h)
+                            .map(|i| {
+                                // The middle supported row enters the window
+                                // while confidence is zero, then becomes
+                                // visible after confidence resumes.
+                                if mode == 0
+                                    || (mode == 2 && (i / w) % 17 < 14)
+                                    || (mode == 5 && (h / 4..h / 2).contains(&(i / w)))
+                                {
+                                    0
+                                } else {
+                                    [0, 1, 127, 254, 255][(i * 11 + phase) % 5]
+                                }
+                            })
+                            .collect();
+                        // Direct geometric oracle, independent of the sliding
+                        // column counts and of skipped rows in the implementation.
+                        let admitted: Vec<_> = (0..w * h)
+                            .filter_map(|i| {
+                                let (x, y) = (i % w, i / w);
+                                (x < active
+                                    && state[i] == crate::highlights::SATURATED
+                                    && cells[y / 6 * columns + x / 6] & (1 << cfa.color(x, y)) == 0)
+                                    .then_some((x, y))
+                            })
+                            .collect();
+                        let expected: Vec<_> = q
+                            .iter()
+                            .enumerate()
+                            .map(|(i, &q)| {
+                                let (x, y) = (i % w, i / w);
+                                if x >= active
+                                    || admitted.iter().any(|&(xx, yy)| {
+                                        x.abs_diff(xx) <= 11
+                                            && y.abs_diff(yy) <= 11
+                                            && cfa.color(x, y) == cfa.color(xx, yy)
+                                    })
+                                {
+                                    0
+                                } else {
+                                    q
+                                }
+                            })
+                            .collect();
+                        let fallback = Fallback::new(
+                            q,
+                            &state,
+                            Support::new(&cells, columns),
+                            w,
+                            active,
+                            h,
+                            cfa,
+                        );
+                        if expected.iter().all(|q| *q == 0) {
+                            assert_eq!(fallback.confidence.capacity(), 0);
+                            assert_eq!(fallback.active.capacity(), 0);
+                            assert!(
+                                fallback
+                                    .neighbors
+                                    .iter()
+                                    .flatten()
+                                    .all(|v| v.capacity() == 0)
+                            );
+                            for y in 0..h {
+                                for x in 0..w {
+                                    let rgb = [-0., -0.25, 2.5];
+                                    assert_eq!(
+                                        fallback.apply(rgb, x, y).map(f32::to_bits),
+                                        rgb.map(f32::to_bits)
+                                    );
+                                }
+                            }
+                        } else {
+                            assert_eq!(fallback.confidence, expected, "{phase} {mode} {w}x{h}");
+                            // Force interpolation everywhere to check the
+                            // activity pruning as well as the confidence map.
+                            let reference = Fallback {
+                                confidence: expected,
+                                neighbors: fallback.neighbors.clone(),
+                                active: vec![true; w.div_ceil(6) * h.div_ceil(6)],
+                                ..fallback
+                            };
+                            for y in 0..h {
+                                for x in 0..w {
+                                    let rgb = [-0., -0.25, 2.5];
+                                    assert_eq!(
+                                        fallback.apply(rgb, x, y).map(f32::to_bits),
+                                        reference.apply(rgb, x, y).map(f32::to_bits),
+                                        "{phase} {mode} {w}x{h} at {x},{y}"
+                                    );
+                                }
+                            }
+                        }
                     }
                 }
             }
