@@ -9,6 +9,7 @@ mod curve;
 mod help;
 mod layers;
 mod looks;
+mod mask_overlay;
 mod palette;
 mod panels;
 mod transfer;

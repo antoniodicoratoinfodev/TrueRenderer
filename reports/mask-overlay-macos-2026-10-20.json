@@ -1,0 +1,158 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-20T19:51:45.492797+00:00",
+  "passed": true,
+  "scope": "Selection visualization only; shared by local masks, layer mask graphs and sampled-color overlays. Photographic formulas and recipe schema unchanged. No R/SF gate completion or universal display/performance qualification.",
+  "cause": "Constant-alpha 40x40 and 48x48 tiles created visible staircase transitions.",
+  "implementation": "Shared vertex-interpolated coverage mesh, visible viewport only, target 4 physical pixels per cell, maximum 512 cells per axis. Includes zero coverage vertices and clamps raster-edge guide sampling.",
+  "tests": {
+    "core_passed": 107,
+    "desktop_passed": 262,
+    "desktop_ignored": 8,
+    "fmt": true,
+    "clippy_all_targets_deny_warnings": true,
+    "release_build": true,
+    "new_regressions": [
+      "spatial and luminance/hue selection intermediate coverage",
+      "continuous shared mesh and zoom coordinates",
+      "transparent endpoints and bounded mesh size"
+    ]
+  },
+  "native": {
+    "layers_and_local_export": true,
+    "surface_maximum_error_u8": 1,
+    "candidate_and_installed_xpc": true,
+    "visually_reviewed": [
+      "README gradient Fit",
+      "gradient 1:1"
+    ],
+    "screenshot_native_unmodified": true,
+    "screenshot_dimensions": [
+      2880,
+      1846
+    ],
+    "screenshot_exif_keys": [
+      34665
+    ]
+  },
+  "bundle": {
+    "installed": "dist/TrueRenderer.app",
+    "binary_sha256": "dfc0b3ff59da83c65e1d92ecd243f85cb19428cb823d0e19f47b4bb590c91a7d",
+    "backup": "var/mask-overlay-20261020/previous.app",
+    "candidate_identical_to_installed": true
+  },
+  "protected_files_unchanged": 480,
+  "protected_file_exceptions": {
+    "paths": [
+      "var/library.sqlite"
+    ],
+    "note": "Main application remained open. Main library hash changed during the campaign; binary invariance is not claimed. No restoration or overwrite of the main library was performed. All test and screenshot edits used isolated catalogs."
+  },
+  "iterations": [
+    "Initial test hue fixture crossed an achromatic point; replaced with a continuous saturated hue ramp.",
+    "First local native run timed out during concurrent compilation; repeated successfully after compilation.",
+    "Terminal sandbox prevented native startup/XPC; native checks repeated outside it."
+  ],
+  "evidence": [
+    {
+      "path": "reports/readme-ui-2026-10-20/layers.jpg",
+      "sha256": "272a98d0edb5be4bf80d8c0238db848faacc55c5f7086f06733d0e82e3902aa8"
+    },
+    {
+      "path": "var/mask-overlay-20261020/clippy.log",
+      "sha256": "2fbec30d41fabe28b237b0ceedc6c17630f42d039b168beaab54da0d476627a7"
+    },
+    {
+      "path": "var/mask-overlay-20261020/fmt.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "var/mask-overlay-20261020/layers-1to1.jpg",
+      "sha256": "75782b715ee5a237eeeb7baca83f98a568fb29cbd12f9acca0e764a02243a7d4"
+    },
+    {
+      "path": "var/mask-overlay-20261020/layers-before.jpg",
+      "sha256": "d8061757c2ca15c4084f7c669b216186ecb3ad11f5cbf3ca99dd58be3612a7a6"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/develop-grid-sampling.json",
+      "sha256": "7f564c3a59be22fd0b339e19b66fd55c9e080efa04f84263d23831cfd49e7a0c"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/develop-grid.png",
+      "sha256": "24f96d1addbe66e51d5243eff75e5dd1a637387c0b5bee86e864159741c2d92f"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/develop-progress.json",
+      "sha256": "222bc2b6c5fd6308f4f55c96a4c00786c59e2094e75a3679401708e7ce5b0bdc"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/develop-ui.json",
+      "sha256": "6b1ca5d7ddb40f34c585ff1d0e8eb2999cbe890bece02e315b91d1d7133d5ba7"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/develop-viewer-sampling.json",
+      "sha256": "375f41c093bda32d2e9b22dbdbe1358d02909e599e693c4d5c20a083d8f006aa"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/develop-viewer.png",
+      "sha256": "9faf4070573d73acd5e284303965af5f2a31e6eef49a3131db91a614744967df"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-layers/reports/preview-quality-gpu-macos.json",
+      "sha256": "10757896ee171fe54a39796081088bb95c49d5c03d83b21adc25275f5b32d7a2"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/develop-grid-sampling.json",
+      "sha256": "ff927aae231998b53853f5afd0248c0d0c903d5e223eefaa610ff6d46ab78201"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/develop-grid.png",
+      "sha256": "5f7472b1480c5205a1b168adf9d7197ad4cb0d02d67f384c60590cd8edac9890"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/develop-progress.json",
+      "sha256": "f60b99cf1accd16a59fc2877edc541d01f49d73839c8dc69b60ece833297eea4"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/develop-ui.json",
+      "sha256": "2e5770e6c9a0c15fba2c8e559c974fa197c1f734c07c14faa16e232d007c8adc"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/develop-viewer-sampling.json",
+      "sha256": "375f41c093bda32d2e9b22dbdbe1358d02909e599e693c4d5c20a083d8f006aa"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/develop-viewer.png",
+      "sha256": "312479a9397fa8abddc91c70c329a8f73f54dd948a9764483be147c26acae2dd"
+    },
+    {
+      "path": "var/mask-overlay-20261020/native-local/reports/preview-quality-gpu-macos.json",
+      "sha256": "ad16bcba672f6df865360d4cd559efb961517d95d69cdfe965c578eb9fde0827"
+    },
+    {
+      "path": "var/mask-overlay-20261020/release.log",
+      "sha256": "2ab38cc54f2d72463a8c74bf1cf6005d0ca99f6999a36e9e382acfa2d20e63f0"
+    },
+    {
+      "path": "var/mask-overlay-20261020/tests.log",
+      "sha256": "cb1af7f698cf5c47b46723f1578bd07a6252c24b3cfca4f26210ae10c15fa0c9"
+    },
+    {
+      "path": "var/mask-overlay-20261020/xpc/reports/xpc-integration-macos.json",
+      "sha256": "ab0c7d5170263c90739cee68bdcc0c08ee8252e07d1a4aeb7268aba934d2e1bd"
+    },
+    {
+      "path": "var/mask-overlay-20261020/xpc/reports/xpc-qualification-macos.json",
+      "sha256": "596fde4590ffcacaa68b584afca104fe7c8ab690b100fb60e6c280774fdd8bbc"
+    },
+    {
+      "path": "var/mask-overlay-20261020/xpc-installed/reports/xpc-integration-macos.json",
+      "sha256": "dc082e7f1a0dcc0493ae162d3e9cf60747f4341e3b15ec421c4658be11eb3738"
+    },
+    {
+      "path": "var/mask-overlay-20261020/xpc-installed/reports/xpc-qualification-macos.json",
+      "sha256": "36179a08fa6de03f2058990be47305671ba265c765366ddc0e7de103af7a7582"
+    }
+  ]
+}

@@ -859,42 +859,26 @@ impl super::TrueRenderer {
             && let Some(image) = image
         {
             let raster = image.source();
-            let painter = ui.painter().with_clip_rect(response.rect);
-            for y in 0..48 {
-                for x in 0..48 {
-                    let uv = [(x as f64 + 0.5) / 48., (y as f64 + 0.5) / 48.];
-                    let Some(xy) = geometry.source_point(uv, native) else {
-                        continue;
-                    };
-                    let px = (uv[0] * raster.width as f64) as usize;
-                    let py = (uv[1] * raster.height as f64) as usize;
-                    let p = raster.pixels[py * raster.width as usize + px];
-                    if p[3] <= 0.01 {
-                        continue;
-                    }
-                    let guide = std::array::from_fn(|c| p[c] / p[3]);
-                    let w = self.editing.layers.overlay_weight(
-                        layer,
-                        xy.map(|v| v as f32),
-                        guide,
-                        native[1] as f32 / native[0] as f32,
-                    );
-                    if w > 0.01 {
-                        painter.rect_filled(
-                            egui::Rect::from_min_size(
-                                top + egui::vec2(
-                                    x as f32 / 48. * physical.x,
-                                    y as f32 / 48. * physical.y,
-                                ),
-                                physical / 48.,
-                            ),
-                            0,
-                            egui::Color32::from_rgba_unmultiplied(40, 180, 240, (w * 85.) as u8),
-                        );
-                    }
+            super::mask_overlay::paint(ui, rect, response.rect, [40, 180, 240], 85, |uv| {
+                let Some(xy) = geometry.source_point(uv, native) else {
+                    return 0.;
+                };
+                let px = ((uv[0] * raster.width as f64) as usize).min(raster.width as usize - 1);
+                let py = ((uv[1] * raster.height as f64) as usize).min(raster.height as usize - 1);
+                let p = raster.pixels[py * raster.width as usize + px];
+                if p[3] <= 0.01 {
+                    return 0.;
                 }
-            }
+                let guide = std::array::from_fn(|c| p[c] / p[3]);
+                self.editing.layers.overlay_weight(
+                    layer,
+                    xy.map(|v| v as f32),
+                    guide,
+                    native[1] as f32 / native[0] as f32,
+                )
+            });
         }
+
         if layer.locked || !self.editing.layers.paint {
             return;
         }

@@ -714,34 +714,15 @@ impl super::TrueRenderer {
         if self.editing.advanced.overlay
             && matches!(mask.shape, Shape::Radial | Shape::Linear | Shape::Brush)
         {
-            let painter = ui.painter().with_clip_rect(response.rect);
-            for y in 0..40 {
-                for x in 0..40 {
-                    let uv = [(x as f64 + 0.5) / 40., (y as f64 + 0.5) / 40.];
-                    let Some(p) = a.geometry.source_point(uv, native) else {
-                        continue;
-                    };
-                    let weight = mask.weight(
+            super::mask_overlay::paint(ui, image_rect, response.rect, [230, 65, 75], 65, |uv| {
+                a.geometry.source_point(uv, native).map_or(0., |p| {
+                    mask.weight(
                         p.map(|v| v as f32),
                         [0.5; 3],
                         native[1] as f32 / native[0] as f32,
-                    );
-                    if weight > 0.01 {
-                        let min = top
-                            + egui::vec2(x as f32 / 40. * physical.x, y as f32 / 40. * physical.y);
-                        painter.rect_filled(
-                            egui::Rect::from_min_size(min, physical / 40.),
-                            0,
-                            egui::Color32::from_rgba_unmultiplied(
-                                230,
-                                65,
-                                75,
-                                (weight * 65.) as u8,
-                            ),
-                        );
-                    }
-                }
-            }
+                    )
+                })
+            });
         }
         if !self.photo_gesture_active(&item.id) {
             return;

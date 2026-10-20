@@ -50,13 +50,21 @@
     },
     {
       "path": "reports/readme-ui-2026-10-20/layers.jpg",
-      "role": "The same grading layer with a linear gradient mask and the blue selected-area overlay enabled; radius 0.25, angle 0°, feather 0.5.",
-      "sha256": "d8061757c2ca15c4084f7c669b216186ecb3ad11f5cbf3ca99dd58be3612a7a6",
-      "bytes": 750544,
+      "role": "Four-wheel grading, shadow hue 220 degrees and chroma 8; linear mask radius 0.25, angle 0 degrees, feather 0.5. Selected-area coverage now uses an interpolated mesh. Native capture from the candidate identical to the installed bundle.",
+      "sha256": "272a98d0edb5be4bf80d8c0238db848faacc55c5f7086f06733d0e82e3902aa8",
+      "bytes": 745911,
       "width": 2880,
       "height": 1846,
       "visually_reviewed": true,
-      "captured_at": "2026-10-20T12:48:00.469075+00:00"
+      "captured_at": "2026-10-20T19:51:45.492797+00:00",
+      "previous_capture": {
+        "sha256": "d8061757c2ca15c4084f7c669b216186ecb3ad11f5cbf3ca99dd58be3612a7a6",
+        "bytes": 750544,
+        "captured_at": "2026-10-20T12:48:00.469075+00:00"
+      },
+      "binary_sha256": "dfc0b3ff59da83c65e1d92ecd243f85cb19428cb823d0e19f47b4bb590c91a7d",
+      "qualification": "reports/mask-overlay-macos-2026-10-20.json",
+      "capture_bundle": "var/mask-overlay-20261020/candidate.app"
     },
     {
       "path": "reports/readme-ui-2026-10-20/crop.jpg",
@@ -101,5 +109,12 @@
     "crop_and_wb_demo_created_no_avalanche_edit_revision": true,
     "only_sunrise_has_demo_edit_revisions": true
   },
-  "scope": "Product documentation and native screenshot capture for the completed whole-interface visual review. Previous README screenshots and provenance preserved."
+  "scope": "Product documentation and native screenshot capture for the completed whole-interface visual review. Previous README screenshots and provenance preserved.",
+  "updates": [
+    {
+      "at": "2026-10-20T19:51:45.492797+00:00",
+      "image": "reports/readme-ui-2026-10-20/layers.jpg",
+      "reason": "Replace coarse tiled mask visualization with smooth interpolated coverage; other screenshots retain their original provenance."
+    }
+  ]
 }
