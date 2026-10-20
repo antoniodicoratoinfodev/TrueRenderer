@@ -73,11 +73,30 @@ Use **star ratings, colour labels, reject flags and keywords** to organize a sho
 
 Your originals remain read-only. Editing recipes, annotations and saved looks live in the local library and its backups.
 
-## Independent RAW development
+## Choose your RAW rendering engine
 
-On macOS, **trueRendererExperimental 32fp** provides an independent RAW decoding and development engine for supported Bayer/X-Trans DNGs, Nikon D750/D800 NEFs and Fujifilm X-T5 RAFs. RAW white balance offers Temperature and Tint controls, automatic balance, neutral-area sampling and an As shot reset. The engine also offers DNG export of the decoded sensor mosaic.
+Choose a rendering engine in Settings to explore different interpretations of your RAW files:
 
-Compatibility depends on the camera and recording mode; see the [RAW format guide](docs/progetto-truerenderer-experimental.md) for supported combinations.
+- **TrueRenderer** — our flagship independent RAW engine, available on macOS as **trueRendererExperimental 32fp**. Its 32-bit floating-point pipeline preserves negative values and values above nominal white, offering greater numerical headroom than the app's 16-bit integer LibRaw paths. Independent decoding, directional reconstruction and sensor-aware highlight treatment give it a dedicated path from the sensor mosaic to the developed image.
+- **Apple RAW** — native macOS RAW development through Apple's camera support and rendering pipeline. Camera compatibility follows the decoder installed with macOS.
+- **LibRaw AHD** — LibRaw decoding with Adaptive Homogeneity-Directed demosaicing, providing an alternative rendering for comparison.
+- **LibRaw bilinear** — LibRaw decoding with bilinear interpolation, a straightforward rendering option for comparison.
+
+TrueRenderer includes Temperature and Tint controls, neutral-area white-balance sampling, an As shot reset and DNG export of the decoded sensor mosaic. Its fp32 headroom is a concrete advantage; the best-looking rendering still depends on the photograph and the adjustments you choose.
+
+### Camera compatibility
+
+The following camera models and recording modes are currently supported by **TrueRenderer's independent engine**:
+
+| Camera | RAW format | Supported recording modes |
+|---|---|---|
+| **Nikon D750** | NEF · Bayer | Full-frame FX, 14-bit lossless compressed RAW |
+| **Nikon D800** | NEF · Bayer | Full-frame FX, 12-bit or 14-bit lossless compressed RAW |
+| **Fujifilm X-T5** | RAF · X-Trans | Full-resolution, 14-bit lossy compressed RAW |
+
+Supported Bayer and X-Trans **DNG files** can also use the independent engine. Compatibility depends on the file's compression and calibration features; see the [RAW format guide](docs/progetto-truerenderer-experimental.md) for the supported combinations. Apple RAW and LibRaw have their own camera coverage.
+
+**Camera compatibility is expanding week by week.** I am continually adding support for new models and recording modes. If you need a particular camera implemented, contact me with the manufacturer, exact model, RAW format, bit depth and compression settings, plus an original RAW sample if available. Your requests help shape the next additions.
 
 ## Stay in the photographic flow
 

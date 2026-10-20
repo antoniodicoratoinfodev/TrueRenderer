@@ -31,6 +31,8 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 ### Revisione visiva completa e nuove schermate README — consegnata il 20 ottobre
 
+**Aggiornamento della presentazione RAW, 20 ottobre:** su richiesta del titolare, il README presenta TrueRenderer come motore indipendente di punta, insieme alle alternative Apple RAW e LibRaw AHD/bilineare. Esplicitato il vantaggio di headroom fp32 rispetto ai percorsi LibRaw interi, senza attribuire una superiorità fotografica universale non dimostrata. Tabella dedicata a D750 FX lossless 14 bit, D800 FX lossless 12/14 bit e X-T5 lossy 14 bit; DNG descritti separatamente per capacità del formato. Aggiunti ampliamento settimanale della compatibilità e invito a contattare il titolare con modello, modalità e campione RAW. Verificati testo, corrispondenza con i contratti locali e collegamenti; nessuna modifica al codice, al bundle o alle schermate.
+
 Richiesta del titolare: rivedere proporzioni, pulizia e ordine dell'intera interfaccia attraverso schermate reali, iterare sul risultato e soltanto alla fine acquisire nuove immagini dedicate al README. Baseline del bundle, 475 sorgenti e 227 file protetti inventariati in `var/ui-review-20261020/`; conservate le modifiche precedenti a UI e contagocce WB.
 
 - [x] Ispezionare griglia, viewer, confronto, navigazione, ispettore, strumenti e finestre.
