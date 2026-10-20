@@ -2,6 +2,176 @@
 use super::{egui, help, palette};
 use crate::{i18n::Language, ui::style};
 
+/// The inspector uses one rhythm for buttons, fields and parameter rows.
+pub(super) fn control_style(ui: &mut egui::Ui) {
+    let compact = ui.ctx().content_rect().height() < 500.;
+    ui.spacing_mut().item_spacing = egui::vec2(6., if compact { 4. } else { 6. });
+    ui.spacing_mut().button_padding = egui::vec2(8., 5.);
+    ui.spacing_mut().interact_size.y = 28.;
+    let widgets = &mut ui.visuals_mut().widgets;
+    widgets.inactive.bg_stroke = egui::Stroke::new(1., egui::Color32::from_gray(66));
+    widgets.inactive.weak_bg_fill = egui::Color32::from_gray(37);
+    widgets.hovered.weak_bg_fill = egui::Color32::from_gray(49);
+    widgets.active.weak_bg_fill = egui::Color32::from_gray(55);
+}
+
+pub(super) fn segment(
+    ui: &mut egui::Ui,
+    selected: bool,
+    label: &str,
+    width: f32,
+) -> egui::Response {
+    style::segment(ui, selected, label, width)
+}
+
+fn focus_outline(ui: &egui::Ui, response: &egui::Response) {
+    if response.has_focus() {
+        ui.painter().rect_stroke(
+            response.rect,
+            4,
+            egui::Stroke::new(1., style::SELECTION_EDGE),
+            egui::StrokeKind::Inside,
+        );
+    }
+}
+
+pub(super) fn save_state(ui: &mut egui::Ui, lang: Language, pending: bool, dirty: bool) {
+    let label = lang.text(if pending {
+        "Salvataggio…"
+    } else if dirty {
+        "Modifiche in corso"
+    } else {
+        "Ricetta salvata nella libreria"
+    });
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(22., 28.), egui::Sense::hover());
+    let center = rect.center();
+    let stroke = egui::Stroke::new(1.3, style::MUTED);
+    if pending || dirty {
+        ui.painter().circle_stroke(center, 4., stroke);
+        if pending {
+            ui.painter()
+                .line_segment([center, center + egui::vec2(0., -3.)], stroke);
+        }
+    } else {
+        ui.painter().add(egui::Shape::line(
+            vec![
+                center + egui::vec2(-4., 0.),
+                center + egui::vec2(-1., 3.),
+                center + egui::vec2(5., -4.),
+            ],
+            stroke,
+        ));
+    }
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Label, true, label));
+    response.on_hover_text(label);
+}
+
+pub(super) fn tool_button(
+    ui: &mut egui::Ui,
+    lang: Language,
+    tool: &tr_core::editing::layers::Tool,
+    selected: bool,
+) -> egui::Response {
+    let response = ui
+        .scope(|ui| {
+            ui.spacing_mut().button_padding.x = 32.;
+            ui.add_sized(
+                [ui.available_width(), 32.],
+                egui::Button::new(())
+                    .left_text(lang.text(tool.name))
+                    .selected(selected)
+                    .frame_when_inactive(selected)
+                    .stroke(egui::Stroke::NONE)
+                    .truncate(),
+            )
+        })
+        .inner;
+    if ui.is_rect_visible(response.rect) {
+        focus_outline(ui, &response);
+        let icon = egui::Rect::from_center_size(
+            egui::pos2(response.rect.left() + 15., response.rect.center().y),
+            egui::vec2(20., 20.),
+        );
+        palette::paint_icon(ui, icon, tool.id);
+        let center = egui::pos2(response.rect.right() - 13., response.rect.center().y);
+        let stroke = egui::Stroke::new(1., ui.visuals().weak_text_color());
+        ui.painter().line_segment(
+            [center - egui::vec2(3., 0.), center + egui::vec2(3., 0.)],
+            stroke,
+        );
+        ui.painter().line_segment(
+            [center - egui::vec2(0., 3.), center + egui::vec2(0., 3.)],
+            stroke,
+        );
+    }
+    response
+        .on_hover_text(help::tool_text(lang, tool.id).unwrap_or(lang.text(tool.description)))
+        .on_disabled_hover_text(
+            help::tool_text(lang, tool.id).unwrap_or(lang.text(tool.description)),
+        )
+}
+
+pub(super) fn layer_state(ui: &mut egui::Ui, lang: Language, masked: bool, locked: bool) {
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(30., 28.), egui::Sense::hover());
+    let p = ui.painter();
+    let color = if masked {
+        style::TEXT
+    } else {
+        style::MUTED.gamma_multiply(0.55)
+    };
+    let stroke = egui::Stroke::new(1., color);
+    let mask = egui::Rect::from_center_size(
+        egui::pos2(rect.left() + 8., rect.center().y),
+        egui::vec2(12., 14.),
+    );
+    p.rect_stroke(mask, 2, stroke, egui::StrokeKind::Inside);
+    if masked {
+        p.line_segment(
+            [
+                mask.left_bottom() + egui::vec2(2., -2.),
+                mask.right_top() + egui::vec2(-2., 2.),
+            ],
+            stroke,
+        );
+    }
+    if locked {
+        let center = egui::pos2(rect.right() - 5., rect.center().y + 2.);
+        let lock = egui::Rect::from_center_size(center, egui::vec2(7., 6.));
+        p.rect_stroke(
+            lock,
+            1,
+            egui::Stroke::new(1., style::MUTED),
+            egui::StrokeKind::Inside,
+        );
+        p.add(egui::Shape::line(
+            vec![
+                center + egui::vec2(-2., -3.),
+                center + egui::vec2(-2., -6.),
+                center + egui::vec2(2., -6.),
+                center + egui::vec2(2., -3.),
+            ],
+            egui::Stroke::new(1., style::MUTED),
+        ));
+    }
+    let label = format!(
+        "{}{}",
+        lang.text(if masked {
+            "Con maschera"
+        } else {
+            "Foto intera"
+        }),
+        if locked {
+            format!(" · {}", lang.text("Bloccato"))
+        } else {
+            String::new()
+        }
+    );
+    response.widget_info(|| {
+        egui::WidgetInfo::labeled(egui::WidgetType::Label, ui.is_enabled(), &label)
+    });
+    response.on_hover_text(label);
+}
+
 pub(super) struct Section<'a> {
     lang: Language,
     id: &'a str,
@@ -43,9 +213,8 @@ impl<'a> Section<'a> {
         let compact = ui.ctx().content_rect().height() < 500.;
         egui::Frame::new()
             .fill(egui::Color32::from_gray(32))
-            .stroke(egui::Stroke::new(1., style::LINE))
             .corner_radius(6)
-            .inner_margin(if compact { 4 } else { 8 })
+            .inner_margin(if compact { 4 } else { 6 })
             .show(ui, |ui| {
                 ui.set_min_width(ui.available_width());
                 let mut clicked = false;
@@ -59,13 +228,13 @@ impl<'a> Section<'a> {
                     if let Some(icon) = self.icon.filter(|_| !compact) {
                         palette::icon(ui, self.lang, icon);
                     }
-                    let reserve = if self.modified { 12. } else { 0. };
+                    let reserve = 12.;
                     let response = ui.add_sized(
-                        [(ui.available_width() - reserve).max(0.), 28.],
+                        [(ui.available_width() - reserve).max(0.), 24.],
                         egui::Button::new(())
                             .left_text(egui::RichText::new(self.lang.text(self.title)).strong())
                             .frame(false)
-                            .wrap(),
+                            .truncate(),
                     );
                     clicked = response.clicked();
                     help::attach(ui, response, self.lang, self.title);
@@ -81,10 +250,7 @@ impl<'a> Section<'a> {
                     header.toggle();
                 }
                 let (_, heading, _) = header.body_unindented(|ui| {
-                    if !compact {
-                        ui.add_space(4.);
-                        ui.separator();
-                    }
+                    ui.add_space(2.);
                     // A modified badge appears on the first slider movement.
                     // Keep every body widget ID stable across that transition.
                     ui.scope_builder(egui::UiBuilder::new().id(id.with("body")), body)
@@ -111,12 +277,7 @@ pub(super) fn tabs(ui: &mut egui::Ui, lang: Language, current: usize) -> Option<
                     .into_iter()
                     .enumerate()
                 {
-                    let response = ui.add_sized(
-                        [width, 30.],
-                        egui::Button::selectable(current == i, lang.text(title))
-                            .wrap()
-                            .frame_when_inactive(current == i),
-                    );
+                    let response = segment(ui, current == i, lang.text(title), width);
                     if help::attach(ui, response, lang, title).clicked() {
                         selected = Some(i);
                     }
@@ -146,7 +307,7 @@ pub(super) fn icon_button(
             egui::Button::new(())
                 .min_size(egui::vec2(28., 28.))
                 .selected(selected)
-                .frame_when_inactive(selected),
+                .frame_when_inactive(false),
         )
         .on_hover_text(label)
         .on_disabled_hover_text(label);

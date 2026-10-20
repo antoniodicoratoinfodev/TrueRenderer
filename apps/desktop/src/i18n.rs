@@ -18,6 +18,7 @@ impl Language {
         match source {
             "Pila livelli" => "Layer stack",
             "Nuovo livello" => "New layer",
+            "Livello selezionato" => "Selected layer",
             "Crea con una regolazione" => "Create with an adjustment",
             "Crea un livello vuoto o già pronto con uno strumento." => {
                 "Create an empty layer or start with a tool."
@@ -635,6 +636,17 @@ impl Language {
             "Sviluppo" => "Develop",
             "Dimensione interfaccia" => "Interface size",
             "Auto WB RAW" => "Auto RAW WB",
+            "WB automatico" => "Auto white balance",
+            "Bilanciamento del bianco" => "White balance",
+            "Area" => "Area",
+            "Scegli un punto neutro · Esc annulla" => "Pick a neutral point · Esc cancels",
+            "Clicca una zona bianca o grigia non bruciata. Il WB si applica al clic." => {
+                "Click an unclipped white or grey area. White balance is applied on click."
+            }
+            "Attendi il dettaglio nativo e clicca dentro la foto." => {
+                "Wait for native detail, then click inside the photo."
+            }
+            "Punto fuori dalla fotografia originale." => "Point outside the original photograph.",
             "WB RAW da area 5×5" => "RAW WB from 5×5 area",
             "Analisi WB RAW annullata" => "RAW WB analysis cancelled",
             "Annullamento WB RAW…" => "Cancelling RAW WB…",

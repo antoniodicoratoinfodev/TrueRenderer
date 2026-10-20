@@ -4,19 +4,16 @@ use crate::ui::style;
 
 fn tools_menu(ui: &mut egui::Ui, lang: Language) -> Option<&'static layers::Tool> {
     let mut chosen = None;
-    ui.set_width(232.);
+    ui.set_width(280.);
     egui::ScrollArea::vertical()
         .id_salt("layer-tool-menu")
         .max_height(320.)
         .show(ui, |ui| {
             for tool in TOOLS {
-                ui.horizontal(|ui| {
-                    palette::icon(ui, lang, tool.id);
-                    if help::button(ui, lang, tool.name).clicked() {
-                        chosen = Some(tool);
-                        ui.close();
-                    }
-                });
+                if panels::tool_button(ui, lang, tool, false).clicked() {
+                    chosen = Some(tool);
+                    ui.close();
+                }
             }
         });
     chosen
@@ -128,7 +125,7 @@ impl Controls {
         let stack_height = if ui.ctx().content_rect().height() < 600. {
             104.
         } else {
-            196.
+            160.
         };
         egui::ScrollArea::vertical()
             .id_salt(("layer-stack", &self.photo))
@@ -144,7 +141,7 @@ impl Controls {
                             .fill(if selected {
                                 style::SELECTED
                             } else {
-                                style::SURFACE
+                                egui::Color32::from_gray(32)
                             })
                             .corner_radius(4)
                             .inner_margin(4)
@@ -167,7 +164,6 @@ impl Controls {
                                         layer.enabled = !layer.enabled;
                                         commit = true;
                                     }
-                                    // Reserve the menu's real native width, including its padding.
                                     let menu_width = ui
                                         .painter()
                                         .layout_no_wrap(
@@ -179,59 +175,62 @@ impl Controls {
                                         .x
                                         + 2. * ui.spacing().button_padding.x;
                                     let width = (ui.available_width()
-                                        - menu_width.max(ui.spacing().interact_size.x)
-                                        - ui.spacing().item_spacing.x)
+                                        - menu_width.max(28.)
+                                        - 48.
+                                        - 3. * ui.spacing().item_spacing.x)
                                         .max(0.);
-                                    ui.vertical(|ui| {
-                                        ui.set_width(width);
-                                        let name = ui
-                                            .add_sized(
-                                                [width, 22.],
-                                                egui::Button::selectable(selected, ())
-                                                    .left_text(
-                                                        egui::RichText::new(&layer.name).strong(),
-                                                    )
-                                                    .frame(false)
-                                                    .truncate(),
-                                            )
-                                            .on_hover_text(&layer.name);
-                                        if name.clicked() && !selected {
-                                            self.select_layer(layer.id);
+                                    let summary = format!(
+                                        "{} {} · {}{}",
+                                        layer.operators.len(),
+                                        lang.text(if layer.operators.len() == 1 {
+                                            "regolazione"
+                                        } else {
+                                            "regolazioni"
+                                        }),
+                                        lang.text(if layer.mask.nodes.is_empty() {
+                                            "Foto intera"
+                                        } else {
+                                            "Con maschera"
+                                        }),
+                                        if layer.locked {
+                                            format!(" · {}", lang.text("Bloccato"))
+                                        } else {
+                                            String::new()
                                         }
-                                        let summary = format!(
-                                            "{} {} · {}{}",
-                                            layer.operators.len(),
-                                            lang.text(if layer.operators.len() == 1 {
-                                                "regolazione"
-                                            } else {
-                                                "regolazioni"
-                                            }),
-                                            lang.text(if layer.mask.nodes.is_empty() {
-                                                "Foto intera"
-                                            } else {
-                                                "Con maschera"
-                                            }),
-                                            if layer.locked {
-                                                format!(" · {}", lang.text("Bloccato"))
-                                            } else {
-                                                String::new()
-                                            }
-                                        );
-                                        let response = ui
-                                            .add(
-                                                egui::Label::new(
-                                                    egui::RichText::new(&summary)
-                                                        .small()
-                                                        .color(style::MUTED),
-                                                )
-                                                .truncate()
-                                                .sense(egui::Sense::click()),
-                                            )
-                                            .on_hover_text(summary);
-                                        if response.clicked() && !selected {
-                                            self.select_layer(layer.id);
-                                        }
-                                    });
+                                    );
+                                    let name = ui
+                                        .add_sized(
+                                            [width, 28.],
+                                            egui::Button::selectable(selected, ())
+                                                .left_text(egui::RichText::new(&layer.name).color(
+                                                    if layer.enabled {
+                                                        style::TEXT
+                                                    } else {
+                                                        style::MUTED
+                                                    },
+                                                ))
+                                                .frame(false)
+                                                .truncate(),
+                                        )
+                                        .on_hover_text(format!("{} · {summary}", layer.name));
+                                    if name.clicked() && !selected {
+                                        self.select_layer(layer.id);
+                                    }
+                                    ui.add_sized(
+                                        [18., 28.],
+                                        egui::Label::new(
+                                            egui::RichText::new(layer.operators.len().to_string())
+                                                .small()
+                                                .color(style::MUTED),
+                                        ),
+                                    )
+                                    .on_hover_text(&summary);
+                                    panels::layer_state(
+                                        ui,
+                                        lang,
+                                        !layer.mask.nodes.is_empty(),
+                                        layer.locked,
+                                    );
                                     ui.menu_button("…", |ui| {
                                         action = layer_menu(ui, lang, layer, i, count, &mut commit);
                                     })
@@ -254,7 +253,6 @@ impl Controls {
                     });
                 }
             });
-        self.base_link(ui, lang);
         if let Some((i, code)) = action {
             match code {
                 0 => {
@@ -290,7 +288,14 @@ impl Controls {
         {
             ui.separator();
             ui.push_id(("selected-layer", layer.id), |ui| {
-                ui.add(egui::Label::new(egui::RichText::new(&layer.name).strong()).truncate()).on_hover_text(&layer.name);
+                ui.horizontal(|ui| {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        self.base_link(ui, lang);
+                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                            ui.add(egui::Label::new(egui::RichText::new(&layer.name).strong()).truncate()).on_hover_text(&layer.name);
+                        });
+                    });
+                });
                 if !layer.enabled { ui.small(lang.text("Livello nascosto · attiva l’occhio per vedere l’effetto")); }
                 if layer.locked { ui.small(lang.text("Livello bloccato · sbloccalo dal menu del livello")); }
                 ui.add_enabled_ui(!layer.locked, |ui| {
@@ -300,7 +305,7 @@ impl Controls {
                 ui.horizontal(|ui| {
                     let width = (ui.available_width() - ui.spacing().item_spacing.x) / 2.;
                     for (mask, title) in [(false, "Effetti del livello"), (true, "Maschera")] {
-                        let r = ui.add_sized([width, 28.], egui::Button::selectable(self.mask_view == mask, lang.text(title)).wrap());
+                        let r = panels::segment(ui, self.mask_view == mask, lang.text(title), width);
                         if help::attach(ui, r, lang, title).clicked() { self.mask_view = mask; }
                     }
                 });
@@ -363,7 +368,12 @@ impl Controls {
     }
 
     fn base_link(&mut self, ui: &mut egui::Ui, lang: Language) {
-        if help::button(ui, lang, "Sviluppo di base").clicked() {
+        let response = ui.add(
+            egui::Button::new(lang.text("Sviluppo di base"))
+                .frame_when_inactive(false)
+                .truncate(),
+        );
+        if help::attach(ui, response, lang, "Sviluppo di base").clicked() {
             self.open_tools(false);
             self.view_tools = false;
         }

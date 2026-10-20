@@ -4,7 +4,7 @@
 
 RAW development, expressive colour tools and photographic layers in one desktop workspace. TrueRenderer takes you from choosing your best frames to shaping the final image, with your originals untouched and your work stored locally.
 
-![Avalanche Lake in TrueRenderer, with light adjustments, histogram and filmstrip](reports/readme-2026-10-20/develop.jpg)
+![Avalanche Lake in TrueRenderer, with the white-balance eyedropper, sample areas and aligned light controls](reports/readme-ui-2026-10-20/develop.jpg)
 
 Bring out the light you remember. Give a series its own colour palette. Refine one part of a photograph without changing the rest. Compare your decisions as you work, then export at the size and precision you need.
 
@@ -14,9 +14,11 @@ Bring out the light you remember. Give a series its own colour palette. Refine o
 
 Start with the essentials: exposure, contrast, highlights, shadows and white balance. Go further with editable curves, sampled colour corrections and four-wheel grading for shadows, midtones, highlights and the whole image.
 
+In Develop, click **Auto white balance**, choose a **1×1, 3×3, 5×5 or 11×11** sample area, then click an unclipped white or neutral grey region in the photo. The correction applies automatically and can be undone; **Esc** cancels the eyedropper. The default area is 5×5 original pixels.
+
 TrueRenderer works in **linear Rec.2020 floating point**, giving its photographic adjustments a wide numerical range. Histograms, tonal-level sampling and pixel inspection help you connect what you see with the image data.
 
-![Four-wheel grading on a photographic layer in TrueRenderer](reports/readme-2026-10-20/colour.jpg)
+![Four-wheel grading on a photographic layer in TrueRenderer](reports/readme-ui-2026-10-20/colour.jpg)
 
 | Make the image your own | Tools to get there |
 |---|---|
@@ -30,6 +32,8 @@ TrueRenderer works in **linear Rec.2020 floating point**, giving its photographi
 
 The searchable **Tools** catalogue puts adjustments within reach. Each tool has its own photographic symbol and visual controls; hover over a name to see what it does, in English or Italian.
 
+![TrueRenderer's searchable Tools catalogue beside Grand Teton at sunrise](reports/readme-ui-2026-10-20/tools.jpg)
+
 ## Build the look, layer by layer
 
 Keep different creative decisions independently editable. Add an adjustment to a new photographic layer or to the selected layer, then control where it acts and how strongly it contributes.
@@ -39,7 +43,7 @@ Keep different creative decisions independently editable. Add an adjustment to a
 - **Separate effects and masks:** switch between the selected layer's adjustments and its mask without losing your place in the stack.
 - **Reusable looks:** save selected layers, preview them on another photograph, choose their intensity and optionally include their masks. Applied looks remain editable layers.
 
-![TrueRenderer's layer stack and gradient mask, with the selected area shown as a blue overlay](reports/readme-2026-10-20/layers.jpg)
+![TrueRenderer's layer stack and gradient mask, with the selected area shown as a blue overlay](reports/readme-ui-2026-10-20/layers.jpg)
 
 **Experiment freely.** Undo, Redo, Reset all and Before/After keep decisions reversible. Double-click a photographic slider to restore its default. Copy selected light, curve and RGB colour adjustments between photographs to carry a treatment through a series.
 
@@ -49,13 +53,13 @@ Crop directly on the photograph with draggable edges, a rule-of-thirds grid and 
 
 Rotation, flips, straightening and perspective controls complete the composition tools. Masks follow the photograph through crop and rotation, and the original remains available for a different framing later.
 
-![Interactive crop in TrueRenderer, with aspect-ratio controls and a composition grid](reports/readme-2026-10-20/crop.jpg)
+![Interactive crop in TrueRenderer, with aspect-ratio controls and a composition grid](reports/readme-ui-2026-10-20/crop.jpg)
 
 ## See the differences that matter
 
 Choose between two frames with **side-by-side comparison and synchronized navigation**. Assign photographs to A and B from the context menu, keep the pair across folders, and inspect detail at physical 1:1. Use Before/After to compare the initial rendering with your current adjustments.
 
-![Two Grand Teton photographs side by side in TrueRenderer's comparison view](reports/readme-2026-10-20/compare.jpg)
+![Two Grand Teton photographs side by side in TrueRenderer's comparison view](reports/readme-ui-2026-10-20/compare.jpg)
 
 Shutter speed, aperture, ISO, focal length and lens information sit alongside the image, helping you understand each frame as you select and develop it.
 
@@ -65,7 +69,7 @@ Browse folders in **Explorer**, review a thumbnail grid in **Library**, or stay 
 
 Use **star ratings, colour labels, reject flags and keywords** to organize a shoot. Context menus bring ratings, comparison, adjustments, file navigation and export to the photograph you are working on.
 
-![TrueRenderer's library with public-domain sample photographs, ratings and shooting information](reports/readme-2026-10-20/library.jpg)
+![TrueRenderer's library with public-domain sample photographs, ratings and shooting information](reports/readme-ui-2026-10-20/library.jpg)
 
 Your originals remain read-only. Editing recipes, annotations and saved looks live in the local library and its backups.
 
@@ -125,4 +129,4 @@ Keep `var/library.sqlite` and `var/backups/`: they contain durable library data.
 
 TrueRenderer is proprietary software. See the [license](LICENSE) and [third-party notices](NOTICE.md).
 
-Screenshots show the native macOS app in English, using public-domain photographs by the National Park Service, including NPS / David Restivo. See the [photograph credits](sample-photos/manifest.json) and [screenshot provenance](reports/readme-showcase-macos-2026-10-20.json).
+Screenshots show the native macOS app in English, using public-domain photographs by the National Park Service, including NPS / David Restivo. See the [photograph credits](sample-photos/manifest.json) and [screenshot provenance](reports/readme-ui-showcase-macos-2026-10-20.json).

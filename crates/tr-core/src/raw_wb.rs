@@ -107,7 +107,10 @@ pub fn estimate(
 ) -> Result<RawWhiteBalance> {
     initial.validate_for(engine)?;
     if let Analysis::Patch { side, .. } = analysis {
-        ensure!(matches!(side, 5 | 11), "WB RAW: area richiesta 5×5 o 11×11");
+        ensure!(
+            crate::editing::WB_PICKER_SIDES.contains(&side),
+            "WB RAW: area richiesta 1×1, 3×3, 5×5 o 11×11"
+        );
     }
     let start = if engine == RawEngine::Apple && initial.is_as_shot() {
         RawWhiteBalance {
@@ -164,14 +167,11 @@ mod tests {
     use super::*;
     #[test]
     fn native_fit_recovers_gains_and_rejects_unresponsive_or_bad_samples() {
-        for analysis in [
-            Analysis::Auto,
-            Analysis::Patch {
-                x: 8,
-                y: 8,
-                side: 5,
-            },
-        ] {
+        for analysis in std::iter::once(Analysis::Auto).chain(
+            crate::editing::WB_PICKER_SIDES
+                .into_iter()
+                .map(|side| Analysis::Patch { x: 8, y: 8, side }),
+        ) {
             let mut calls = 0;
             let wb = estimate(
                 RawEngine::TrueRenderer,

@@ -125,11 +125,13 @@ pub struct RgbAreaSample {
     pub chroma_spread: f32,
 }
 
+pub const WB_PICKER_SIDES: [u32; 4] = [1, 3, 5, 11];
+
 /// Estimate chromaticity using 20%-trimmed means of log(R/G), log(B/G).
 /// Brightness variation does not weight the estimate. Reject incomplete areas,
 /// too many unusable pixels and chromatically heterogeneous regions.
 pub fn sample_rgb_area(image: &LinearImage, x: u32, y: u32, side: u32) -> Result<RgbAreaSample> {
-    ensure!(matches!(side, 5 | 11), "Area RGB non supportata");
+    ensure!(WB_PICKER_SIDES.contains(&side), "Area RGB non supportata");
     let radius = side / 2;
     ensure!(
         x >= radius
@@ -930,6 +932,32 @@ mod tests {
     }
 
     #[test]
+    fn small_wb_areas_measure_the_requested_pixels_and_reject_invalid_sizes() {
+        let mut image = LinearImage::new(11, 11, vec![[0.3, 0.4, 0.5, 1.]; 121]).unwrap();
+        for side in WB_PICKER_SIDES {
+            let area = sample_rgb_area(&image, 5, 5, side).unwrap();
+            assert_eq!(
+                (area.valid, area.total),
+                ((side * side) as usize, (side * side) as usize)
+            );
+            assert!((area.working[0] / area.working[1] - 0.75).abs() < 1e-6);
+            assert!((area.working[2] / area.working[1] - 1.25).abs() < 1e-6);
+        }
+        image.pixels[5 * 11 + 5] = [0.4, 0.4, 0.4, 1.];
+        assert_eq!(
+            sample_rgb_area(&image, 5, 5, 1).unwrap().working,
+            [0.5, 0.5, 0.5, 1.]
+        );
+        assert!(sample_rgb_area(&image, 5, 5, 3).is_err());
+        assert!(sample_rgb_area(&image, 0, 0, 1).is_ok());
+        for side in [0, 2, 7, u32::MAX] {
+            assert!(sample_rgb_area(&image, 5, 5, side).is_err());
+        }
+        image.pixels[0] = [1., 1., 1., 1.];
+        assert!(sample_rgb_area(&image, 0, 0, 1).is_err());
+    }
+
+    #[test]
     fn area_picker_recovers_cast_despite_brightness_noise_and_outliers() {
         for side in [5, 11] {
             let mut recipe = EditRecipe::neutral(RawEngine::default());
@@ -967,7 +995,7 @@ mod tests {
             (5, 10, 5),
             (u32::MAX, 5, 11),
             (5, u32::MAX, 11),
-            (5, 5, 3),
+            (5, 5, 7),
         ] {
             assert!(sample_rgb_area(&image, x, y, side).is_err());
         }

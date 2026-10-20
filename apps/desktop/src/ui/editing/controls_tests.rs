@@ -1,6 +1,84 @@
 use super::*;
 use std::path::Path;
 
+#[cfg(any(windows, target_os = "macos"))]
+#[test]
+fn automatic_wb_button_reveals_area_options_without_editing_the_recipe() {
+    let (_dir, ctx, mut app) = crate::ui::settings_regressions::app();
+    crate::ui::settings_regressions::settle(&mut app, &ctx, true);
+    crate::ui::style::apply(&ctx);
+    let item = app.state.items[0].clone();
+    let recipe = EditRecipe::neutral(Default::default());
+    app.state.current = Some(item.id.clone());
+    app.editing.entries.insert(
+        item.id.clone(),
+        EditEntry {
+            loaded: Some(LoadedEdit {
+                asset_id: item.id.clone(),
+                source_digest: item.digest.clone(),
+                generation: 0,
+                revision: 0,
+                recipe: recipe.clone(),
+                can_undo: false,
+                can_redo: false,
+            }),
+            draft: Some(recipe.clone()),
+            ..Default::default()
+        },
+    );
+    for lang in [Language::Italian, Language::English] {
+        app.cache_settings.language = lang;
+        app.editing.wb_picker = Default::default();
+        app.editing.picker_side = 5;
+        let draw = |ui: &mut egui::Ui, app: &mut TrueRenderer| {
+            ui.set_width(260.);
+            panels::control_style(ui);
+            app.wb_picker_controls(ui, &item, true, &recipe);
+        };
+        let shapes = frame(&ctx, vec![], |ui| draw(ui, &mut app));
+        assert!(!shapes.texts.iter().any(|(text, _)| text == "1×1"));
+        let button = shapes
+            .texts
+            .iter()
+            .find(|(text, _)| text == lang.text("WB automatico"))
+            .unwrap()
+            .1
+            .center();
+        for pressed in [true, false] {
+            frame(&ctx, click(button, pressed), |ui| draw(ui, &mut app));
+        }
+        assert!(app.wb_picker_active(&item.id));
+        let shapes = frame(&ctx, vec![], |ui| draw(ui, &mut app));
+        for side in tr_core::editing::WB_PICKER_SIDES {
+            assert!(
+                shapes
+                    .texts
+                    .iter()
+                    .any(|(text, _)| text == &format!("{side}×{side}"))
+            );
+        }
+        let option = shapes
+            .texts
+            .iter()
+            .find(|(text, _)| text == "3×3")
+            .unwrap()
+            .1
+            .center();
+        for pressed in [true, false] {
+            frame(&ctx, click(option, pressed), |ui| draw(ui, &mut app));
+        }
+        assert_eq!(app.editing.picker_side, 3);
+        assert!(app.wb_picker_active(&item.id));
+        assert!(!app.editing.wb_pending);
+        assert!(!app.editing.entries[&item.id].pending);
+        assert_eq!(app.editing.entries[&item.id].draft.as_ref(), Some(&recipe));
+        for pressed in [true, false] {
+            frame(&ctx, click(button, pressed), |ui| draw(ui, &mut app));
+        }
+        assert!(!app.wb_picker_active(&item.id));
+    }
+}
+
 #[test]
 fn sensor_wb_ui_preserves_saved_gains_and_resets_photographic_axes() {
     use tr_core::decoder::{RawEngine, RawWhiteBalance};
@@ -852,10 +930,8 @@ fn collect(shape: &egui::Shape, out: &mut Shapes) {
             t.galley.job.text.clone(),
             t.galley.rect.translate(t.pos.to_vec2()),
         )),
-        egui::Shape::Circle(c) if c.radius < 15. => out.knobs.push(c.center),
-        egui::Shape::Rect(r) if r.rect.width() > 100. && r.rect.height() < 15. => {
-            out.knobs.push(r.rect.center())
-        }
+        // Locate the actual handle, not the rail midpoint or a section's status dot.
+        egui::Shape::Circle(c) if (4. ..15.).contains(&c.radius) => out.knobs.push(c.center),
         egui::Shape::Vec(v) => {
             for s in v {
                 collect(s, out);
@@ -1074,7 +1150,17 @@ fn slider_gesture_survives_histogram_layout_changes_and_saves_on_release() {
         ui.label("Histogram ready");
         app.editing_controls(ui, &item);
     });
-    let start = shapes.knobs[0];
+    let exposure = shapes
+        .texts
+        .iter()
+        .find(|(text, _)| text == app.cache_settings.language.text("Esposizione"))
+        .unwrap()
+        .1;
+    let start = *shapes
+        .knobs
+        .iter()
+        .find(|p| (p.y - exposure.center().y).abs() < 1.)
+        .unwrap();
     frame(&ctx, click(start, true), |ui| {
         ui.label("Histogram ready");
         app.editing_controls(ui, &item);
@@ -1887,51 +1973,54 @@ fn photographic_tools_fit_the_inspector_width() {
     use tr_core::editing::layers::{Layer, TOOLS};
     for lang in [Language::Italian, Language::English] {
         for tool in TOOLS {
-            let ctx = egui::Context::default();
-            crate::ui::style::apply(&ctx);
-            let mut recipe = EditRecipe::neutral(Default::default());
-            recipe
-                .layer_stack()
-                .layers
-                .push(Layer::new(tool.name, tool.operator()));
-            let mut controls = layers::Controls::default();
-            let mut bounds = (egui::Rect::NOTHING, egui::Rect::NOTHING);
-            for _ in 0..8 {
-                let mut output = ctx.run_ui(
-                    egui::RawInput {
-                        screen_rect: Some(egui::Rect::from_min_size(
-                            egui::Pos2::ZERO,
-                            egui::vec2(1440., 1600.),
-                        )),
-                        ..Default::default()
-                    },
-                    |ui| {
-                        let panel = egui::Panel::right("tool-width")
-                            .default_size(280.)
-                            .size_range(260. ..=360.)
-                            .frame(crate::ui::style::panel())
-                            .show(ui, |ui| {
-                                ui.style_mut().spacing.scroll.floating = false;
-                                egui::ScrollArea::vertical()
-                                    .auto_shrink([false, false])
-                                    .show(ui, |ui| {
-                                        controls.show(ui, lang, &mut recipe);
-                                        bounds.1 = ui.min_rect();
-                                    });
-                            });
-                        bounds.0 = panel.response.rect;
-                        egui::CentralPanel::default().show(ui, |_| {});
-                    },
+            for width in [280., 344., 420.] {
+                let ctx = egui::Context::default();
+                crate::ui::style::apply(&ctx);
+                let mut recipe = EditRecipe::neutral(Default::default());
+                recipe
+                    .layer_stack()
+                    .layers
+                    .push(Layer::new(tool.name, tool.operator()));
+                let mut controls = layers::Controls::default();
+                let mut bounds = (egui::Rect::NOTHING, egui::Rect::NOTHING);
+                for _ in 0..8 {
+                    let mut output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(
+                                egui::Pos2::ZERO,
+                                egui::vec2(1440., 1600.),
+                            )),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            let panel = egui::Panel::right("tool-width")
+                                .exact_size(width)
+                                .frame(crate::ui::style::panel())
+                                .show(ui, |ui| {
+                                    ui.set_min_width(ui.available_width());
+                                    panels::control_style(ui);
+                                    ui.style_mut().spacing.scroll.floating = false;
+                                    egui::ScrollArea::vertical()
+                                        .auto_shrink([false, false])
+                                        .show(ui, |ui| {
+                                            controls.show(ui, lang, &mut recipe);
+                                            bounds.1 = ui.min_rect();
+                                        });
+                                });
+                            bounds.0 = panel.response.rect;
+                            egui::CentralPanel::default().show(ui, |_| {});
+                        },
+                    );
+                    output.textures_delta.clear();
+                }
+                assert!(
+                    bounds.1.left() >= bounds.0.left()
+                        && bounds.1.right() <= bounds.0.right()
+                        && bounds.0.right() <= 1440.,
+                    "{lang:?} {width} {}: {bounds:?}",
+                    tool.id
                 );
-                output.textures_delta.clear();
             }
-            assert!(
-                bounds.1.left() >= bounds.0.left()
-                    && bounds.1.right() <= bounds.0.right()
-                    && bounds.0.right() <= 1440.,
-                "{lang:?} {}: {bounds:?}",
-                tool.id
-            );
         }
     }
 }
@@ -2119,6 +2208,67 @@ fn panel_modified_badge_does_not_interrupt_a_slider_gesture() {
     frame(&ctx, click(knob + egui::vec2(40., 0.), false), &mut draw);
     assert!(value > 0.);
     assert_eq!(commits, 1);
+}
+
+#[test]
+fn adjustment_rows_align_labels_sliders_and_values_without_wrapping() {
+    for lang in [Language::Italian, Language::English] {
+        for width in [220., 260., 306., 364.] {
+            let ctx = egui::Context::default();
+            crate::ui::style::apply(&ctx);
+            let mut values = [0.75_f32, -12.5, 33.3];
+            let original = values;
+            let mut responses = Vec::new();
+            let labels = ["Esposizione", "Alte luci", "Luminosità"];
+            let shapes = frame(&ctx, vec![], |ui| {
+                ui.set_width(width);
+                panels::control_style(ui);
+                responses.clear();
+                for (i, label) in labels.iter().enumerate() {
+                    let r = adjustment(
+                        ui,
+                        lang,
+                        label,
+                        &mut values[i],
+                        -100. ..=100.,
+                        if i == 0 { " EV" } else { "" },
+                        None,
+                    );
+                    assert!(!r.changed());
+                    responses.push(r.rect);
+                }
+            });
+            assert_eq!(values, original);
+            let first_label = shapes
+                .texts
+                .iter()
+                .find(|(s, _)| s == lang.text(labels[0]))
+                .unwrap()
+                .1;
+            for (i, label) in labels.iter().enumerate() {
+                let text = shapes
+                    .texts
+                    .iter()
+                    .find(|(s, _)| s == lang.text(label))
+                    .unwrap()
+                    .1;
+                assert!(text.height() < 20., "{lang:?} {width}: {text:?}");
+                assert!((text.left() - first_label.left()).abs() < 0.5);
+                assert!(
+                    (text.center().y - responses[i].center().y).abs() < 2.,
+                    "{lang:?} {width}: {text:?}, {:?}",
+                    responses[i]
+                );
+                assert!(
+                    responses[i].right() <= width + 0.5,
+                    "{width}: {:?}",
+                    responses[i]
+                );
+                assert!((responses[i].right() - responses[0].right()).abs() < 0.5);
+                assert!(responses[i].height() <= 28.);
+            }
+        }
+    }
 }
 
 #[test]

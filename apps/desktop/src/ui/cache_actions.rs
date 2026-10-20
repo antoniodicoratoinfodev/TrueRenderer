@@ -76,7 +76,10 @@ mod tests {
             extend: true,
         });
         app.state.transform.zoom = Some(1.75);
-        app.capture_picker_areas(&cached.pyramid, 5, 5, true);
+        let recipe = tr_core::editing::EditRecipe::neutral(Default::default());
+        app.start_wb_picker(&item, false, &recipe);
+        assert!(app.cancel_wb_picker());
+        app.start_wb_picker(&item, false, &recipe);
         let selected = app.state.selected.clone();
         let sources: Vec<_> = app
             .state
@@ -93,7 +96,7 @@ mod tests {
         let reader = manager.read_demand();
         app.start_cache_action(false);
         assert!(app.cache.is_empty());
-        assert!(app.editing.picker_areas.iter().all(Option::is_none));
+        assert!(!app.cancel_wb_picker());
         assert!(app.presenter.is_idle());
         app.ensure_image(&item, 512);
         app.background_demand(&ctx);

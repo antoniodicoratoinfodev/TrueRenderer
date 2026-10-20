@@ -12,6 +12,42 @@ pub const SELECTED: Color32 = Color32::from_gray(52);
 pub const SELECTION_EDGE: Color32 = Color32::from_gray(184);
 
 pub fn apply(ctx: &egui::Context) {
+    #[cfg(target_os = "macos")]
+    {
+        // Use fonts supplied by macOS; no system font is bundled or redistributed.
+        static FONTS: std::sync::OnceLock<egui::FontDefinitions> = std::sync::OnceLock::new();
+        ctx.set_fonts(
+            FONTS
+                .get_or_init(|| {
+                    let mut fonts = egui::FontDefinitions::default();
+                    for (name, path, family) in [
+                        (
+                            "system-ui",
+                            "/System/Library/Fonts/SFNS.ttf",
+                            egui::FontFamily::Proportional,
+                        ),
+                        (
+                            "system-mono",
+                            "/System/Library/Fonts/SFNSMono.ttf",
+                            egui::FontFamily::Monospace,
+                        ),
+                    ] {
+                        if let Ok(bytes) = std::fs::read(path) {
+                            fonts
+                                .font_data
+                                .insert(name.into(), egui::FontData::from_owned(bytes).into());
+                            fonts
+                                .families
+                                .entry(family)
+                                .or_default()
+                                .insert(0, name.into());
+                        }
+                    }
+                    fonts
+                })
+                .clone(),
+        );
+    }
     // Cmd +/-/0 belong to the photograph; UI scale has its own control.
     ctx.options_mut(|options| options.zoom_with_keyboard = false);
     // Chrome labels are controls and descriptions, not selectable document text.
@@ -29,9 +65,9 @@ pub fn apply(ctx: &egui::Context) {
     visuals.selection.bg_fill = SELECTED;
     visuals.selection.stroke = egui::Stroke::new(1., TEXT);
     visuals.widgets.inactive.bg_fill = Color32::from_gray(42);
-    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., Color32::from_gray(124));
+    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1., Color32::from_gray(66));
     visuals.widgets.inactive.fg_stroke.color = Color32::from_gray(156);
-    visuals.widgets.inactive.weak_bg_fill = Color32::TRANSPARENT;
+    visuals.widgets.inactive.weak_bg_fill = SURFACE;
     visuals.widgets.hovered.bg_fill = Color32::from_gray(56);
     visuals.widgets.hovered.weak_bg_fill = Color32::from_gray(48);
     visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1., MUTED);
@@ -51,10 +87,10 @@ pub fn apply(ctx: &egui::Context) {
     }
     ctx.set_visuals(visuals);
     ctx.style_mut_of(egui::Theme::Dark, |s| {
-        s.spacing.item_spacing = Vec2::new(8., 8.);
+        s.spacing.item_spacing = Vec2::new(8., 6.);
         s.spacing.button_padding = Vec2::new(10., 6.);
         s.spacing.interact_size = Vec2::new(28., 28.);
-        s.spacing.window_margin = egui::Margin::same(20);
+        s.spacing.window_margin = egui::Margin::same(16);
         s.spacing.slider_width = 140.;
         s.spacing.scroll = egui::style::ScrollStyle {
             bar_width: 6.,
@@ -67,7 +103,7 @@ pub fn apply(ctx: &egui::Context) {
             ..egui::style::ScrollStyle::thin()
         };
         s.text_styles
-            .insert(egui::TextStyle::Heading, egui::FontId::proportional(20.));
+            .insert(egui::TextStyle::Heading, egui::FontId::proportional(17.));
         s.text_styles
             .insert(egui::TextStyle::Body, egui::FontId::proportional(13.));
         s.text_styles
@@ -79,13 +115,26 @@ pub fn apply(ctx: &egui::Context) {
     });
 }
 
-/// Tabs share the same neutral selection treatment throughout the chrome.
-pub fn tab_button(ui: &mut egui::Ui, selected: bool, label: &str) -> egui::Response {
-    ui.add(
+/// Equal-width, single-line tabs with visible keyboard focus.
+pub fn segment(ui: &mut egui::Ui, selected: bool, label: &str, width: f32) -> egui::Response {
+    let response = ui.add_sized(
+        [width.max(0.), 28.],
         egui::Button::selectable(selected, label)
+            .truncate()
+            .stroke(egui::Stroke::NONE)
+            .corner_radius(4)
             .frame_when_inactive(selected)
             .min_size(egui::vec2(0., 28.)),
-    )
+    );
+    if response.has_focus() {
+        ui.painter().rect_stroke(
+            response.rect,
+            4,
+            egui::Stroke::new(1., SELECTION_EDGE),
+            egui::StrokeKind::Inside,
+        );
+    }
+    response.on_hover_text(label)
 }
 
 /// Matching top-level actions, whether they open a menu or a window.

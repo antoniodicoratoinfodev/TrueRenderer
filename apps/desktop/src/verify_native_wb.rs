@@ -12,22 +12,29 @@ pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
         broker.set_raw_engine(engine);
         let decoded = broker.decode(path, &digest, 0)?;
         let (w, h) = (decoded.raster.width, decoded.raster.height);
-        let mut patch = None;
-        for j in 1..8 {
-            for i in 1..8 {
-                let (x, y) = (w * i / 8, h * j / 8);
-                if patch.is_none()
-                    && tr_core::editing::sample_rgb_area(&decoded.raster, x, y, 5).is_ok()
-                {
-                    patch = Some(Analysis::Patch { x, y, side: 5 });
+        let mut patches = Vec::new();
+        for side in tr_core::editing::WB_PICKER_SIDES {
+            let mut patch = None;
+            for j in 1..8 {
+                for i in 1..8 {
+                    let (x, y) = (w * i / 8, h * j / 8);
+                    if patch.is_none()
+                        && tr_core::editing::sample_rgb_area(&decoded.raster, x, y, side).is_ok()
+                    {
+                        patch = Some(Analysis::Patch { x, y, side });
+                    }
                 }
+            }
+            if let Some(patch) = patch {
+                patches.push(patch);
+            } else {
+                cases.push(
+                    serde_json::json!({"engine":engine,"analysis":"Patch","side":side,
+                    "passed":false,"error":"Nessuna area valida: prova contagocce non eseguita"}),
+                );
             }
         }
         drop(decoded);
-        if patch.is_none() {
-            cases.push(serde_json::json!({"engine":engine,"analysis":"Patch",
-                "passed":false,"error":"Nessuna area 5×5 valida: prova contagocce non eseguita"}));
-        }
         let source = broker.prepare_snapshot(path, &digest, || false)?;
         let calls = std::cell::Cell::new(0);
         let stops = broker.statistics().forced_stops;
@@ -43,7 +50,7 @@ pub fn run(root: &Path, binary: &Path, path: &Path) -> Result<()> {
         cancellations.push(serde_json::json!({"engine":engine,"cancelled":true,
             "forced_stops":1,"seconds":start.elapsed().as_secs_f64()}));
         // The following analyses must recover on this same broker after cancellation.
-        for analysis in std::iter::once(Analysis::Auto).chain(patch) {
+        for analysis in std::iter::once(Analysis::Auto).chain(patches) {
             let start = Instant::now();
             broker.set_raw_white_balance(Default::default());
             let source = broker.prepare_snapshot(path, &digest, || false)?;
@@ -80,7 +87,7 @@ fn write_report(
 ) -> Result<()> {
     let engines = RawEngine::choices().count();
     let passed = source_unchanged
-        && cases.len() == engines * 2
+        && cases.len() == engines * (1 + tr_core::editing::WB_PICKER_SIDES.len())
         && cases.iter().all(|case| case["passed"] == true)
         && cancellations.len() == engines
         && cancellations.iter().all(|case| case["cancelled"] == true);
@@ -104,7 +111,7 @@ mod tests {
     fn failed_or_incomplete_campaigns_save_a_failed_report_and_return_error() {
         let root = tempfile::tempdir().unwrap();
         let cases: Vec<_> = RawEngine::choices().flat_map(|engine| {
-            ["Auto", "Patch"].map(|analysis| serde_json::json!({"engine":engine,"analysis":analysis,"passed":true}))
+            ["Auto", "Patch1", "Patch3", "Patch5", "Patch11"].map(|analysis| serde_json::json!({"engine":engine,"analysis":analysis,"passed":true}))
         }).collect();
         let cancellations: Vec<_> = RawEngine::choices()
             .map(|engine| serde_json::json!({"engine":engine,"cancelled":true}))

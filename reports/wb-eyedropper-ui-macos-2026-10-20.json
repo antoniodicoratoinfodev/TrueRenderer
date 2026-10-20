@@ -1,0 +1,240 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-10-20T12:09:41.101261+00:00",
+  "base_git_revision": "d68c5723a1b1f2b347aaa4fd6aff9e0d88ec08b3",
+  "scope": "WB button in Develop arms a direct eyedropper and reveals four original-pixel sample areas; RAW and RGB paths retain distinct semantics. Includes the existing uncommitted UI polish.",
+  "implemented": [
+    "Auto white balance arms a custom eyedropper cursor and requests native detail automatically; a valid click applies and saves once.",
+    "One-row area choices 1x1, 3x3, 5x5 and 11x11 below the button; default 5x5; selection alone never edits the recipe.",
+    "Escape or a second button click cancels picking. Photo, recipe, cache and panel changes invalidate the target; previous hover samples are never reused.",
+    "Current native coordinates map back through RAW geometry, including crop and rotation. Invalid, incomplete, stale or provisional samples are rejected without saving.",
+    "Experimental RAW uses the bounded native fitter for 1x1 and 3x3; existing CFA estimation is preserved for Auto, 5x5 and 11x11. Other RAW engines use the existing native fitter for all four areas.",
+    "JPEG/PNG/TIFF expose the same interaction with relative RGB warmth/tint, retaining compatibility and sample-validity limits.",
+    "Compact control spacing keeps exposure visible in a 550x360 logical inspector. Italian and English help and README usage updated."
+  ],
+  "tests": {
+    "core": {
+      "passed": 107,
+      "failed": 0,
+      "ignored": 0,
+      "log": "var/wb-picker-20261020/tests-native.log"
+    },
+    "worker": {
+      "passed": 60,
+      "failed": 0,
+      "ignored": 7,
+      "log": "var/wb-picker-20261020/tests-native.log"
+    },
+    "desktop_final": {
+      "passed": 259,
+      "failed": 0,
+      "ignored": 8,
+      "log": "var/wb-picker-20261020/desktop-final.log"
+    },
+    "total_passed": 426,
+    "layout_widths_points": [
+      220,
+      260,
+      306,
+      364
+    ],
+    "languages": [
+      "it",
+      "en"
+    ],
+    "scope": "Exact small-area measurements; geometry; native/provisional and edge handling; single commit; Escape; stale-session rejection; button and size selection; existing full desktop, core and worker regressions."
+  },
+  "static_checks": {
+    "fmt_all_check": "passed",
+    "clippy": "desktop/core/worker all-targets, -D warnings passed",
+    "release_build": "desktop and worker passed"
+  },
+  "native_wb": {
+    "passed": true,
+    "cases": 25,
+    "engines": 5,
+    "area_sizes": [
+      1,
+      3,
+      5,
+      11
+    ],
+    "includes_global_auto": true,
+    "cancellation_and_recovery_cases": 5,
+    "source_unchanged": true,
+    "report": "var/wb-picker-20261020/native-wb/reports/native-wb.json"
+  },
+  "native_views": [
+    {
+      "case": "rgb-ui",
+      "passed": true,
+      "source_unchanged": true,
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1711,
+          1141
+        ]
+      },
+      "report": "var/wb-picker-20261020/rgb-ui/reports/develop-ui.json"
+    },
+    {
+      "case": "raw-ui",
+      "passed": true,
+      "source_unchanged": true,
+      "export": {
+        "file": "fixture-export.png",
+        "passed": true,
+        "size": [
+          1024,
+          768
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 45,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          1528,
+          1146
+        ]
+      },
+      "report": "var/wb-picker-20261020/raw-ui/reports/develop-ui.json"
+    }
+  ],
+  "visual_review": {
+    "inspector_layouts_passed": 10,
+    "inspector_report": "var/wb-picker-20261020/inspector/reports/inspector-ui.json",
+    "native_screenshots_produced": 14,
+    "persisted_screenshots_reviewed": [
+      "rgb-ui/reports/develop-viewer.png",
+      "raw-ui/reports/develop-viewer.png",
+      "inspector/reports/inspector-07.png"
+    ],
+    "interactive_report": "var/wb-picker-20261020/interactive-review.json",
+    "interactive": "Final candidate: English RAW panel, default area and one-row selector, custom cursor, Escape, 3x3 click applying 8640 K/-11 and Undo. Public JPEG copy: 11x11 mixed area refused without a revision, 1x1 applied RGB warmth/tint, Undo restored zeros. Isolated database confirms exactly one edit revision per photo; computer-use screenshots remain in the conversation."
+  },
+  "development_findings": [
+    "Two Core Image tests failed in the terminal sandbox; rerun natively passed all 60 worker and 107 core tests.",
+    "The added WB section initially clipped the compact exposure row. Reduced compact vertical spacing from 6 to 4 points; all inspector tests and ten native layouts passed.",
+    "Updated the existing drag regression to locate Exposure by its label rather than assuming the first slider; explicitly consumed the new headless layout test texture delta.",
+    "Fixed a borrow conflict before the viewport call and collapsed the cursor hover conditional requested by Clippy; final build, format and Clippy checks passed."
+  ],
+  "installation": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/wb-picker-20261020/previous.app",
+    "files_and_modes_matching_candidate": 23,
+    "changed_from_previous": [
+      "Contents/MacOS/TrueRenderer",
+      "Contents/MacOS/tr-worker",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder",
+      "Contents/_CodeSignature/CodeResources"
+    ],
+    "ad_hoc_signature_verified": true,
+    "xpc_candidate": "var/wb-picker-20261020/xpc-candidate/reports/xpc-qualification-macos.json",
+    "xpc_installed": "var/wb-picker-20261020/xpc-installed/reports/xpc-qualification-macos.json"
+  },
+  "source_files_hashed_and_unchanged_since_packaging": 475,
+  "protected_files_unchanged": 221,
+  "evidence_sha256": {
+    "var/wb-picker-20261020/bundle-before.json": "b9692e67220edd1f544ba333339bd5a3c2fc7daf97e9a4373eed79f1711406b7",
+    "var/wb-picker-20261020/bundle-candidate.json": "1d34075b01acf8c7cfbe544b514dc271cb2198a6b4d6a37316170ed24576cec9",
+    "var/wb-picker-20261020/bundle-installed.json": "1d34075b01acf8c7cfbe544b514dc271cb2198a6b4d6a37316170ed24576cec9",
+    "var/wb-picker-20261020/clippy-final.log": "1f543af44ad2ebd3aa86eac2f8bff0f5c70523064ae65be3cfda3dcd1ebca450",
+    "var/wb-picker-20261020/delivery.py": "0c279a2298c409c5416ce229af8482341ace40d853595d3da2cd32b765744df8",
+    "var/wb-picker-20261020/desktop-final.log": "2e5fd382ca4d34b794ff02fdbdccc9fe1015234b57022f983955b6cd68448311",
+    "var/wb-picker-20261020/fmt-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/wb-picker-20261020/inspector/native.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/wb-picker-20261020/inspector/reports/inspector-00-layout.json": "b150615883fe4e67b7c964382dee7e3f734cbcc321db220ebf98196e04e851f5",
+    "var/wb-picker-20261020/inspector/reports/inspector-00-sampling.json": "478d45e3061af39595a47c73d37793599cdcf808524a984a369efdd30babe96a",
+    "var/wb-picker-20261020/inspector/reports/inspector-00.png": "1c5365770dd3422c0b7be5ce386e99cc9b48fbd7f9f290ef9e6f633fc009a82c",
+    "var/wb-picker-20261020/inspector/reports/inspector-01-layout.json": "aad378a40eb07da6762df3c59d8472b8aa0a891f85563fb3589f690fafeca9b4",
+    "var/wb-picker-20261020/inspector/reports/inspector-01-sampling.json": "478d45e3061af39595a47c73d37793599cdcf808524a984a369efdd30babe96a",
+    "var/wb-picker-20261020/inspector/reports/inspector-01.png": "b1b2604cf8f3b49d4f25ac87ab6d5ec9624b8501bdc517ee34d221f4875184cd",
+    "var/wb-picker-20261020/inspector/reports/inspector-02-layout.json": "a1598049984a19ef0aee64fa0c4bd5adab57b77132f792da2578b231edc07a90",
+    "var/wb-picker-20261020/inspector/reports/inspector-02-sampling.json": "478d45e3061af39595a47c73d37793599cdcf808524a984a369efdd30babe96a",
+    "var/wb-picker-20261020/inspector/reports/inspector-02.png": "c10d25a6d7ffd2deef3fab0e924db140cf176e271436bbb637f67be215094e36",
+    "var/wb-picker-20261020/inspector/reports/inspector-03-layout.json": "ec62f768ee334e90904f7d71b084f2075217d9445beb88f0274b6101b18c886e",
+    "var/wb-picker-20261020/inspector/reports/inspector-03-sampling.json": "478d45e3061af39595a47c73d37793599cdcf808524a984a369efdd30babe96a",
+    "var/wb-picker-20261020/inspector/reports/inspector-03.png": "62abf59ea17a6903ac4f28f6a3c8ee97893070afa814fb64d54554afb2bbf81c",
+    "var/wb-picker-20261020/inspector/reports/inspector-04-layout.json": "8252395c90bb5d2d340c01d664c82708c4c3ee32aa499c5a3367191844fee899",
+    "var/wb-picker-20261020/inspector/reports/inspector-04-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/inspector/reports/inspector-04.png": "c77d66c90de1617e5a896e557bf01c57627a70e8b94e72b0d0df2f0b11cb1c19",
+    "var/wb-picker-20261020/inspector/reports/inspector-05-layout.json": "937b3fa52611b5d1291cf5693f5e8d39a6232fadf91ffd7bfdb2f513aa281971",
+    "var/wb-picker-20261020/inspector/reports/inspector-05-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/inspector/reports/inspector-05.png": "4b46c30eb5503b93d2417be82fdf5cbde37033244df8c98f6df55ee3add1c6d2",
+    "var/wb-picker-20261020/inspector/reports/inspector-06-layout.json": "6d797f600bb0f462d1d7ba26359239631f603c47deaba2eaadf99a8be311a287",
+    "var/wb-picker-20261020/inspector/reports/inspector-06-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/inspector/reports/inspector-06.png": "fc15b2069d93d7b556ee846c8aa487058a2438ecca1c4b1294fa259485fec2a5",
+    "var/wb-picker-20261020/inspector/reports/inspector-07-layout.json": "1650e6e05bb7e18874bd2a1767b9dad75e0adaa274a66bceb277bf9957002940",
+    "var/wb-picker-20261020/inspector/reports/inspector-07-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/inspector/reports/inspector-07.png": "ca06ed521e46b3162ab87ad6027059e539ee22107c8d6d30d5dca18780f00cec",
+    "var/wb-picker-20261020/inspector/reports/inspector-08-layout.json": "0f610d7e470310416164d9d52157b1ab5e165e5935ed78ef04afe6c1bd63455c",
+    "var/wb-picker-20261020/inspector/reports/inspector-08-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/inspector/reports/inspector-08.png": "e140b9cbf9e6c0babc400cc28dbcd2c1fbbb84c1d69d0d04e656d7d7387b85ee",
+    "var/wb-picker-20261020/inspector/reports/inspector-09-layout.json": "44b228103dc37e6d46902cfb4164e32f5e40b087f7483b6c2f0ae23d66598053",
+    "var/wb-picker-20261020/inspector/reports/inspector-09-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/inspector/reports/inspector-09.png": "4978e03b006411135ddf722e1996dcaeeb0450026464dd75d96c006076ab64d8",
+    "var/wb-picker-20261020/inspector/reports/inspector-source.json": "9b500907c735f92945740ac4a0760d74bfdab3506de3d159bf47a7a1e408c9cd",
+    "var/wb-picker-20261020/inspector/reports/inspector-ui.json": "3741e0a1869abeced48ffa45743b04a3911a18a064fcf8c66d400a4c6d979fa5",
+    "var/wb-picker-20261020/inspector/reports/preview-quality-gpu-macos.json": "a6560a690231b11bcbea5567f24329e392e5f9dbea8a453892487737e428966e",
+    "var/wb-picker-20261020/interactive-review.json": "16e37dd3cfd606232c2dd275ba5664d43318060b664d9a3398bccb5bccee647a",
+    "var/wb-picker-20261020/native-checks.json": "9ed2cadb1b69de5d3e14a7ae4aaa2aaeac3777e99816e30fdd1f2ce06d5fae9b",
+    "var/wb-picker-20261020/native-checks.py": "6278ce22f38dddd0bebb696d0c6a9f27a56a2fe16816b72b41835d68fd9bb599",
+    "var/wb-picker-20261020/native-wb/native.log": "857db077d01af1749647afed34bf807263156b640eb7da39bc39ced9e67c72d1",
+    "var/wb-picker-20261020/native-wb/reports/native-wb.json": "38887a31143bb859791be068a5cd87dcf63a002d16bf894efe093d4a0ff29326",
+    "var/wb-picker-20261020/package.log": "37bc1c63a0ec41f3304b69213aa79d52c4920a1ebfb2a94a1caa936ed9678d72",
+    "var/wb-picker-20261020/protected-before.json": "08026be3a32c9e660c1e17b02d910b6e4dd14efdb76fdef51ddd4a4360acfc1e",
+    "var/wb-picker-20261020/raw-ui/native.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/wb-picker-20261020/raw-ui/reports/develop-grid-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/raw-ui/reports/develop-grid.png": "ebc5e2a738f6c571090e7812707398afb4dd5ce19f2125aedaa1c775fd4e533d",
+    "var/wb-picker-20261020/raw-ui/reports/develop-progress.json": "19a7339201e5e202ec43a8685679457f66e8d4aa77313e7d8713b58f24cc2b80",
+    "var/wb-picker-20261020/raw-ui/reports/develop-ui.json": "adf82cca738b459527fd3434ca80baac5f9da657f47e2586ccc4e5ce0e821e2f",
+    "var/wb-picker-20261020/raw-ui/reports/develop-viewer-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/wb-picker-20261020/raw-ui/reports/develop-viewer.png": "fc9c5fb44b8f46a923d689c15ec8008c62cc521959ec55e08de19087b68a2121",
+    "var/wb-picker-20261020/raw-ui/reports/preview-quality-gpu-macos.json": "79d04be888bce59079c60bee3c3dc1c5c237199996aae9abb3814e58d5247147",
+    "var/wb-picker-20261020/raw-ui/var/develop-export/fixture-export.png": "0119701a434aa89443f03dc6dd015baf1081bbe1f2ac36644a77e08c2fffef2c",
+    "var/wb-picker-20261020/release.log": "8d5af07ba51586009fb2369cf839d662f6ccf567559de00e94ef18b862103ca3",
+    "var/wb-picker-20261020/rgb-ui/native.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/wb-picker-20261020/rgb-ui/reports/develop-grid-sampling.json": "1084d92781a8909144fa5295624e0b790ddc6ae341ab5139e644fe870ce20b73",
+    "var/wb-picker-20261020/rgb-ui/reports/develop-grid.png": "697afe094acde49ebe4c68f7de738611c6c1319ec967a0e98e5d1e4d157b0196",
+    "var/wb-picker-20261020/rgb-ui/reports/develop-progress.json": "4ec74805452e83671394fa4df6c657319958012047c775de745cf94ae44894a4",
+    "var/wb-picker-20261020/rgb-ui/reports/develop-ui.json": "c72cfef480cd7adf3ab7978f21e0bddaa09b1e227c04b2448dbadc749bc3af6b",
+    "var/wb-picker-20261020/rgb-ui/reports/develop-viewer-sampling.json": "375f41c093bda32d2e9b22dbdbe1358d02909e599e693c4d5c20a083d8f006aa",
+    "var/wb-picker-20261020/rgb-ui/reports/develop-viewer.png": "8eb0c201b2fdef1dea03fb85d95aefaedd89e88fddb8683fdbb64a761ac0c830",
+    "var/wb-picker-20261020/rgb-ui/reports/preview-quality-gpu-macos.json": "85e65cd0c5777c8401e88817a253a8e6e2bbafa734cdd210a98e8819300e62e8",
+    "var/wb-picker-20261020/rgb-ui/var/develop-export/02_Paesaggio_analitico-export.png": "0772b8a1c7fd7660836f60ed899b87e5687a3cd9aa959f506feeeefbfc3ea03a",
+    "var/wb-picker-20261020/source-before.json": "c1c143a32fc4c9932ff6fcf89c6003db5de85992ec526f7f9dc594266b921e2f",
+    "var/wb-picker-20261020/source-manifest.json": "c43c67d11171817bacf650f899ee83b1e37ba1f7959c6f38d601ea1c411946c7",
+    "var/wb-picker-20261020/tests-native.log": "57bc8a5e844fd5d0acd67e66b69061f12a9d990fdcdc3cfcdd176bea3c91ec05",
+    "var/wb-picker-20261020/xpc-candidate/native.log": "a8ac3082c1399f508c0bab7348058c75188a8ffe49ca63370b4cbae101cc1854",
+    "var/wb-picker-20261020/xpc-candidate/reports/xpc-integration-macos.json": "06ba311cd6b878f0c557aa6c9016005fed5c1d48a823855c55a62a2c853facae",
+    "var/wb-picker-20261020/xpc-candidate/reports/xpc-qualification-macos.json": "a8ac3082c1399f508c0bab7348058c75188a8ffe49ca63370b4cbae101cc1854",
+    "var/wb-picker-20261020/xpc-installed/native.log": "3e2a6fe5737f13f8fa41020445261ac52f612167b8661b0316b563589a7d1846",
+    "var/wb-picker-20261020/xpc-installed/reports/xpc-integration-macos.json": "c78549ccec5a90a1cee40bfd77e38a0e319df17cbed95faefd88c0505fee7f8e",
+    "var/wb-picker-20261020/xpc-installed/reports/xpc-qualification-macos.json": "3e2a6fe5737f13f8fa41020445261ac52f612167b8661b0316b563589a7d1846"
+  },
+  "limits": [
+    "Tests use a synthetic Bayer DNG and public JPEG copies; no universal camera colour calibration or display accuracy qualification.",
+    "RGB picking retains existing restrictions with saturation, vibrance, advanced/layer edits and lifted curve black output.",
+    "No full R0-R4/SF0-SF10 or sandbox/release gate closed; Standard/Reference assurance modes are not available.",
+    "No complete screen-reader, other-platform or all-scale qualification."
+  ],
+  "commit_created": false,
+  "push_performed": false
+}

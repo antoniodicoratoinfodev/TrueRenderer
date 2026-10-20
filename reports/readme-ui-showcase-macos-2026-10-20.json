@@ -1,0 +1,105 @@
+{
+  "application": "TrueRenderer",
+  "captured_at": "2026-10-20T12:50:21.879576+00:00",
+  "base_source_commit": "d68c5723a1b1f2b347aaa4fd6aff9e0d88ec08b3",
+  "bundle": {
+    "path": "dist/TrueRenderer.app",
+    "version": "0.1.5",
+    "binary_sha256": "a3317bc9b7a685de21fb1911d8c70c74bfe8aa3795882eef44b9e9a5f68c40b9",
+    "qualification": "reports/ui-review-macos-2026-10-20.json"
+  },
+  "language": "en",
+  "ui_scale_percent": 100,
+  "preview_quality": "Full",
+  "image_zoom": "Fit",
+  "capture_method": "Dedicated native macOS application-window captures using the computer-use screenshot API after final UI build, native qualification and installation. JPEG bytes saved exactly as returned, without cropping, resizing, compositing or retouching.",
+  "isolated_library": true,
+  "private_photographs_published": false,
+  "photograph_credits": "sample-photos/manifest.json",
+  "source_images": "The four public-domain JPEG photographs included in sample-photos; the RAW engine badge identifies the active engine preference, not the source format.",
+  "screenshots": [
+    {
+      "path": "reports/readme-ui-2026-10-20/develop.jpg",
+      "role": "Avalanche Lake with the white-balance eyedropper armed and the 1×1/3×3/5×5/11×11 areas visible; default 5×5 selected, cancelled with Esc without sampling.",
+      "sha256": "d8b6633248a97b3f4f4365b128dc95a2d6a8bf674a9e80520b0bea05eb81307f",
+      "bytes": 987615,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:45:52.580703+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-20/colour.jpg",
+      "role": "Grand Teton Sunrise with a photographic grading layer: shadow hue 220°, chroma 8, opacity 100%; controls brought into view with the native inspector scrollbar.",
+      "sha256": "00a3632fb043dca2d2d4c68ebd833373fc34a2c379ec0567cab34fa8eec85ff4",
+      "bytes": 788303,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:47:33.509367+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-20/tools.jpg",
+      "role": "Searchable Tools catalogue beside Grand Teton Sunrise before the demonstration layer was added.",
+      "sha256": "78cb73cd24036a61906c941830d9691621ab9080e28488bc44cf9f5a9fe61088",
+      "bytes": 782615,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:46:09.042396+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-20/layers.jpg",
+      "role": "The same grading layer with a linear gradient mask and the blue selected-area overlay enabled; radius 0.25, angle 0°, feather 0.5.",
+      "sha256": "d8061757c2ca15c4084f7c669b216186ecb3ad11f5cbf3ca99dd58be3612a7a6",
+      "bytes": 750544,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:48:00.469075+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-20/crop.jpg",
+      "role": "Unconfirmed 16:9 crop on Avalanche Lake with rule-of-thirds grid; cancelled through Cancel crop after capture.",
+      "sha256": "f309eab70482514dbf3655fa9ae39ec3317dbf1d6688fdfc65e68b4e3ab95d32",
+      "bytes": 943611,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:48:55.247292+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-20/compare.jpg",
+      "role": "Grand Teton Sunrise and Winter in side-by-side Fit comparison with shooting information; Sunrise retains the demonstration grading layer and mask.",
+      "sha256": "69969a25cd4c49102e4d4aa251a8ec5f192ecd69fd10860d02fe9985e3ecb7aa",
+      "bytes": 676560,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:49:18.262219+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-20/library.jpg",
+      "role": "Four public-domain sample photos in a two-column grid; Avalanche Lake has five stars and a green label in the isolated library, with aligned file and shooting information.",
+      "sha256": "44fad5c1f5f76901a93437e4d2a6ee893f1ca5497fd2c9aa6bdf07fb89a99edc",
+      "bytes": 794241,
+      "width": 2880,
+      "height": 1846,
+      "visually_reviewed": true,
+      "captured_at": "2026-10-20T12:50:21.879576+00:00"
+    }
+  ],
+  "verification": {
+    "all_seven_images_visually_reviewed": true,
+    "english_and_100_percent_ui_checked_in_settings": true,
+    "jpeg_integrity_checked": true,
+    "screenshot_exif_contains_only_dimensions": true,
+    "sample_original_hashes_match_manifest": true,
+    "protected_files_unchanged": 227,
+    "frozen_sources_unchanged": 475,
+    "installed_bundle_unchanged_during_capture": true,
+    "crop_and_wb_demo_created_no_avalanche_edit_revision": true,
+    "only_sunrise_has_demo_edit_revisions": true
+  },
+  "scope": "Product documentation and native screenshot capture for the completed whole-interface visual review. Previous README screenshots and provenance preserved."
+}

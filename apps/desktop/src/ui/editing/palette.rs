@@ -40,17 +40,9 @@ pub(super) fn ramp(label: &str) -> Option<Vec<Color32>> {
         "Tonalità (°)" | "Hue (°)" | "Tonalità" | "Hue" => {
             Some(vec![RED, YELLOW, GREEN, CYAN, BLUE, MAGENTA, RED])
         }
-        _ => family(label).map(|c| vec![c.gamma_multiply(0.35), c]),
-    }
-}
-
-pub(super) fn tool(id: &str) -> (Color32, &'static str) {
-    match id {
-        "light" | "levels" | "tonal" | "exposure_gamma" => (WARM, "Tono"),
-        "curves" | "luminance_curve" | "parametric_curve" => (GREEN, "Curve"),
-        "grading" | "filter" | "gradient_map" | "colorize" => (VIOLET, "Viraggio"),
-        "black_white" => (GRAY, "Bianco e nero"),
-        _ => (CYAN, "Colore"),
+        _ => family(label)
+            .filter(|c| c.r() != c.g() || c.g() != c.b())
+            .map(|c| vec![c.gamma_multiply(0.35), c]),
     }
 }
 
@@ -88,7 +80,7 @@ pub(super) fn choice(
     color: Option<Color32>,
 ) -> egui::Response {
     let response = ui.selectable_label(selected, label);
-    if let Some(color) = color {
+    if let Some(color) = color.filter(|c| selected || c.r() != c.g() || c.g() != c.b()) {
         let rect = egui::Rect::from_min_max(
             egui::pos2(response.rect.left() + 5., response.rect.bottom() - 3.),
             egui::pos2(response.rect.right() - 5., response.rect.bottom() - 1.),
@@ -99,13 +91,20 @@ pub(super) fn choice(
 }
 
 pub(super) fn icon(ui: &mut egui::Ui, lang: crate::i18n::Language, id: &str) {
-    let (rect, response) = ui.allocate_exact_size(egui::vec2(26., 26.), egui::Sense::hover());
-    let c = enabled(ui, tool(id).0);
-    ui.painter().rect_filled(rect, 5, c.gamma_multiply(0.10));
-    draw_symbol(ui, rect.shrink(4.), id, c);
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(20., 20.), egui::Sense::hover());
+    paint_icon(ui, rect, id);
     if let Some(text) = super::help::tool_text(lang, id) {
         response.on_hover_text(text).on_disabled_hover_text(text);
     }
+}
+
+pub(super) fn paint_icon(ui: &egui::Ui, rect: egui::Rect, id: &str) {
+    draw_symbol(
+        ui,
+        rect.shrink(2.),
+        id,
+        enabled(ui, Color32::from_gray(174)),
+    );
 }
 
 // Each diagram describes a photographic operation; shape distinguishes tools even without color.

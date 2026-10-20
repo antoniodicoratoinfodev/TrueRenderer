@@ -744,14 +744,11 @@ mod tests {
                 blue: 750,
                 ..Default::default()
             };
-            for analysis in [
-                Analysis::Auto,
-                Analysis::Patch {
-                    x: 16,
-                    y: 12,
-                    side: 5,
-                },
-            ] {
+            for analysis in std::iter::once(Analysis::Auto).chain(
+                tr_core::editing::WB_PICKER_SIDES
+                    .into_iter()
+                    .map(|side| Analysis::Patch { x: 16, y: 12, side }),
+            ) {
                 let wb = estimate(engine, initial, analysis, |wb| {
                     Ok(crate::WhiteBalanced { base, engine, wb }
                         .decode(&bytes, 0)?

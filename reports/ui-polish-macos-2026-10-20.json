@@ -1,0 +1,292 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "passed": true,
+  "checked_at": "2026-10-20T11:31:32.744886+00:00",
+  "base_git_revision": "d68c5723a1b1f2b347aaa4fd6aff9e0d88ec08b3",
+  "scope": "Visual refinement of Adjustments, Layers and Tools; single-line controls, restrained sections, compact layer rows and consistent tool catalog. No photographic formula, recipe schema, broker or decoder change.",
+  "implemented": [
+    "Single-line label, native slider and monospaced numeric value, with stable columns, ellipsis and complete contextual help.",
+    "Shared spacing, quieter section surfaces, segmented navigation, neutral slider rails and small semantic color accents.",
+    "Left-aligned full-width catalog rows with integrated icon and add indicator; concise destination selector and full-width search.",
+    "One-row layer stack with visibility, name, adjustment count, mask/lock state and properties menu; bounded stack height.",
+    "Wider stable inspector and centered grading/filter wheels and Colorize field, avoiding premature two-column layouts.",
+    "macOS system UI and numeric fonts loaded at runtime, preserving toolkit fallback; no system font redistribution."
+  ],
+  "desktop_tests": {
+    "passed": 256,
+    "failed": 0,
+    "ignored": 8,
+    "log": "var/ui-polish-20261020/desktop-tests.log",
+    "scope": "Full desktop suite before the final wheel/Colorize centering adjustment; the complete editing-controls suite was repeated afterward."
+  },
+  "final_controls_tests": {
+    "passed": 41,
+    "failed": 0,
+    "log": "var/ui-polish-20261020/controls-final.log",
+    "tool_layout_combinations": 96,
+    "tool_layout_widths_points": [
+      280,
+      344,
+      420
+    ],
+    "parameter_row_widths_points": [
+      220,
+      260,
+      306,
+      364
+    ],
+    "languages": [
+      "it",
+      "en"
+    ],
+    "checks": "One-row alignment, containment, preserved numeric values, WB dragging/reset, single-commit gestures, menu/layer/mask navigation and contextual help."
+  },
+  "static_checks": {
+    "fmt_all_check": "passed on final source",
+    "clippy_desktop_all_targets": "passed with -D warnings on final source",
+    "release_build": "passed on final source"
+  },
+  "native": [
+    {
+      "case": "adjustments-it",
+      "report": "var/ui-polish-20261020/final/adjustments-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1711,
+          1141
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "layers-it",
+      "report": "var/ui-polish-20261020/final/layers-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "tools-it",
+      "report": "var/ui-polish-20261020/final/tools-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          1440,
+          960
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1711,
+          1141
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "mask-it",
+      "report": "var/ui-polish-20261020/final/mask-it/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "layers-en",
+      "report": "var/ui-polish-20261020/final/layers-en/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 36,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    },
+    {
+      "case": "grading-en",
+      "report": "var/ui-polish-20261020/final/grading-en/reports/develop-ui.json",
+      "export": {
+        "file": "02_Paesaggio_analitico-export.png",
+        "passed": true,
+        "size": [
+          749,
+          1210
+        ]
+      },
+      "surface": {
+        "compute": "GPU",
+        "differing_channels": 41,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          755,
+          1220
+        ]
+      },
+      "source_unchanged": true,
+      "saved_generation": 1
+    }
+  ],
+  "visual_review": {
+    "final_screenshots_produced": 12,
+    "final_viewer_screenshots_reviewed": 6,
+    "views": [
+      "adjustments-it",
+      "layers-it",
+      "tools-it",
+      "mask-it",
+      "layers-en",
+      "grading-en"
+    ],
+    "inspector_layout_report": "var/ui-polish-20261020/inspector/reports/inspector-ui.json",
+    "inspector_layouts_passed": 10,
+    "inspector_layout_scope": "IT/EN Information and Develop at 100% and compact 200%, plus grid Information, on candidate-v2 before the final centered color controls. Shared chrome was unchanged afterward.",
+    "inspector_candidate_host_sha256": "5b9cf8f684cd3c2d262d1b0ef4acf3ce0620b135ebd5d7620051686ccc2fb6e7",
+    "interactive": "Final candidate checked on a copy of the public Grand Teton - Sunrise.jpg in an isolated catalog: Adjustments and Tools inspected, grading added through the catalog, one-row layer and properties menu inspected, then Undo button restored the empty layer stack. Native screenshots and accessibility state observed through computer-use tools; captures remain in the conversation."
+  },
+  "development_findings": [
+    "Baseline inspection found repeated borders, centered tool labels, inconsistent alignment and excessive vertical space in layer rows.",
+    "First candidate inspection prompted left-aligned parameter labels, stable inspector width, numeric font and a compact saved-state indicator.",
+    "The grading screenshot exposed a left-biased wheel and premature two-column layout; centered color controls and delayed the breakpoint, then repeated the 41 controls tests and six native cases on the final binary.",
+    "Two initial WB tests counted the rail midpoint as an additional knob. The helper now locates actual circular handles and excludes rails/status dots; existing interaction assertions pass.",
+    "The initial native launch in the terminal sandbox exited 134; native reviews were rerun outside that sandbox with isolated roots.",
+    "The synthetic computer-use Undo key chord did not remove the test layer; the Undo button did. Manual keyboard-shortcut qualification is not claimed."
+  ],
+  "installation": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/ui-polish-20261020/previous.app",
+    "files_and_modes_matching_candidate": 23,
+    "changed_from_previous": [
+      "Contents/MacOS/TrueRenderer"
+    ],
+    "ad_hoc_signature_verified": true,
+    "xpc_candidate": "var/ui-polish-20261020/xpc-candidate/reports/xpc-qualification-macos.json",
+    "xpc_installed": "var/ui-polish-20261020/xpc-installed/reports/xpc-qualification-macos.json"
+  },
+  "source_files_hashed_and_unchanged_since_packaging": 277,
+  "protected_files_unchanged": 220,
+  "evidence_sha256": {
+    "var/ui-polish-20261020/before/reports/develop-viewer.png": "e64507bdc738d2874c7d79d31741547e428d9b268ebdd7d6012e003308f93dde",
+    "var/ui-polish-20261020/bundle-before.json": "6c90a51784e72373702d9e9b52a77dae024c86fb1847c47d34baff94896022d2",
+    "var/ui-polish-20261020/bundle-candidate.json": "b9692e67220edd1f544ba333339bd5a3c2fc7daf97e9a4373eed79f1711406b7",
+    "var/ui-polish-20261020/bundle-installed.json": "b9692e67220edd1f544ba333339bd5a3c2fc7daf97e9a4373eed79f1711406b7",
+    "var/ui-polish-20261020/clippy-final.log": "6309fa797b6a6685b6254f87791095cf7b78610e672eff5ccc6758ed6ccb31c6",
+    "var/ui-polish-20261020/controls-final.log": "29ddbc68bff4459f1638f68cfbeedcedc947d202e2b9aae5177167c621333fec",
+    "var/ui-polish-20261020/desktop-tests.log": "b1ff3172e2d3b8fa333ef3e070eb2eb2cc80cded8df4c3ada9de3b60eb58f58c",
+    "var/ui-polish-20261020/final/adjustments-it/reports/develop-grid.png": "5c1b1625a1fd0245fb47cd4f6bfd085baeaadea20216b4f8d24830ec80de6abb",
+    "var/ui-polish-20261020/final/adjustments-it/reports/develop-ui.json": "c72cfef480cd7adf3ab7978f21e0bddaa09b1e227c04b2448dbadc749bc3af6b",
+    "var/ui-polish-20261020/final/adjustments-it/reports/develop-viewer.png": "fdd489bde2463165942b8e4d3353cc1dfac75f847be36f4d4e1f15eb63d2d5c2",
+    "var/ui-polish-20261020/final/adjustments-it/var/develop-export/02_Paesaggio_analitico-export.png": "0772b8a1c7fd7660836f60ed899b87e5687a3cd9aa959f506feeeefbfc3ea03a",
+    "var/ui-polish-20261020/final/grading-en/reports/develop-grid.png": "0dc052237ce3fd656245003cac5049dbd47f84dd50b89bc20889c3bb7add4f7f",
+    "var/ui-polish-20261020/final/grading-en/reports/develop-ui.json": "ebbdd6d202de7f604ed007b5c17d3eb055e32dc815118d382e9b106191dd40b5",
+    "var/ui-polish-20261020/final/grading-en/reports/develop-viewer.png": "4e9955d8208807253182491d35cc67fa087154cb76aab3be0d092386f1b54352",
+    "var/ui-polish-20261020/final/grading-en/var/develop-export/02_Paesaggio_analitico-export.png": "b15cf2d0e3ac59b3c4a649529ad9cdaec682411ada6f3450c95c591e450c5b2c",
+    "var/ui-polish-20261020/final/layers-en/reports/develop-grid.png": "a7a545fd72b871adf35f478e9b292244405ebb88addde08317da47f134fa1343",
+    "var/ui-polish-20261020/final/layers-en/reports/develop-ui.json": "bd1d6b694fd0bb7b9f8e59de6a8dcb76b8b35e033ec755d5a15f5ba6545afccc",
+    "var/ui-polish-20261020/final/layers-en/reports/develop-viewer.png": "91922b03685dda2a060bbcc22114895a11e80e248d5781009442e02e9221ffdd",
+    "var/ui-polish-20261020/final/layers-en/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/ui-polish-20261020/final/layers-it/reports/develop-grid.png": "e29d0f09ba31ff4b3fe2c0ba193bf83bda2ff1e16178135a328c4051dd37b37c",
+    "var/ui-polish-20261020/final/layers-it/reports/develop-ui.json": "f1df9f7ccf2a1d3bca2d5438f15a559951b342bb0e7ce7fcc24a8f4a7ff9f1a0",
+    "var/ui-polish-20261020/final/layers-it/reports/develop-viewer.png": "d640d8cc2382f6585b68ab454771660fd6669578ea23a3132b21a86a9fea1762",
+    "var/ui-polish-20261020/final/layers-it/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/ui-polish-20261020/final/mask-it/reports/develop-grid.png": "71b46822f0dcc8f55b44d62602165048062a325eb381bc86bb193279f4826d89",
+    "var/ui-polish-20261020/final/mask-it/reports/develop-ui.json": "cebe9007979bd9ef7907dd59c912f2ea8ce614b9811a259d8849af740a7cb819",
+    "var/ui-polish-20261020/final/mask-it/reports/develop-viewer.png": "87836d5636b5c2206040ede3e41a033ef73186fb75ad2ae1fceb6518c060d34a",
+    "var/ui-polish-20261020/final/mask-it/var/develop-export/02_Paesaggio_analitico-export.png": "386fa899377f600c9de40396dea7a92b3f176b7e8311e395e0d17527c6d65f4b",
+    "var/ui-polish-20261020/final/native-review.json": "6c469f8407d0cdd6aa08b401dbf7435035d582ce86adb9d6bd061fbd840869b5",
+    "var/ui-polish-20261020/final/tools-it/reports/develop-grid.png": "2811ba366c28795c644910ac0b434b160f6befce56cc2cd0b721edac9413afa5",
+    "var/ui-polish-20261020/final/tools-it/reports/develop-ui.json": "c72cfef480cd7adf3ab7978f21e0bddaa09b1e227c04b2448dbadc749bc3af6b",
+    "var/ui-polish-20261020/final/tools-it/reports/develop-viewer.png": "e820ca6eb0639342cfc71b92c64054aaea9100f29e5be470126d1810bd2f93ad",
+    "var/ui-polish-20261020/final/tools-it/var/develop-export/02_Paesaggio_analitico-export.png": "0772b8a1c7fd7660836f60ed899b87e5687a3cd9aa959f506feeeefbfc3ea03a",
+    "var/ui-polish-20261020/inspector/reports/inspector-00.png": "bb6dd87b2c4687d7c790bc3d3b13ea03ad62f4ffa19b530842882a7411a0f1d7",
+    "var/ui-polish-20261020/inspector/reports/inspector-01.png": "e1b7761ffd40495c9e86233ae50f2683e8c6a6a348ad4003bdd8a106535fbb43",
+    "var/ui-polish-20261020/inspector/reports/inspector-02.png": "b2769ab1d986ddeede9bcb834fec91fa1d9f9b8bab59a1489e1829442710657c",
+    "var/ui-polish-20261020/inspector/reports/inspector-03.png": "f4a9551988b56d54fedfdf2ebc5c6b86b07f23dee16e58d6661aaea4289d927e",
+    "var/ui-polish-20261020/inspector/reports/inspector-04.png": "ff44a54b9d5b173c1ba83b69858185e259a05cb909d3f8b3ab35f02e66820bcf",
+    "var/ui-polish-20261020/inspector/reports/inspector-05.png": "9133edd98f646968a99aa1b788c72a9f557c49264a5ba956686e554ca1a703a6",
+    "var/ui-polish-20261020/inspector/reports/inspector-06.png": "fc15b2069d93d7b556ee846c8aa487058a2438ecca1c4b1294fa259485fec2a5",
+    "var/ui-polish-20261020/inspector/reports/inspector-07.png": "cea45332016655b20c87da667b2f8540216907ce540db4892cc090eb21ddde18",
+    "var/ui-polish-20261020/inspector/reports/inspector-08.png": "e140b9cbf9e6c0babc400cc28dbcd2c1fbbb84c1d69d0d04e656d7d7387b85ee",
+    "var/ui-polish-20261020/inspector/reports/inspector-09.png": "4978e03b006411135ddf722e1996dcaeeb0450026464dd75d96c006076ab64d8",
+    "var/ui-polish-20261020/inspector/reports/inspector-ui.json": "3741e0a1869abeced48ffa45743b04a3911a18a064fcf8c66d400a4c6d979fa5",
+    "var/ui-polish-20261020/protected-before.json": "854cf1bff17e5b7223e02b68dc3e1c20436e05f671df551a91b1db9e4f23eb87",
+    "var/ui-polish-20261020/release-final.log": "a2c0b47614c1029850f1f45d2f79672a9123edf4ec0f00b9cea8f9ca79d62398",
+    "var/ui-polish-20261020/source-manifest.json": "3500219edb7b907b295afd0c92acd8eef90e0c1e3b3eea837a4633b12810193e",
+    "var/ui-polish-20261020/xpc-candidate/reports/xpc-integration-macos.json": "e73c1375736a2a35fe9839745c9ed84a61b32e86366d80101edaee5f31411238",
+    "var/ui-polish-20261020/xpc-candidate/reports/xpc-qualification-macos.json": "f5b4b0b8e82dbf70efc60a51497c1a103083cb961c15ae8a3caccce8d35f4948",
+    "var/ui-polish-20261020/xpc-installed/reports/xpc-integration-macos.json": "c035d182461ed956612161b05488ddfcdd809090ff502ef50d341ece15206420",
+    "var/ui-polish-20261020/xpc-installed/reports/xpc-qualification-macos.json": "9aef1d9832e24da568aa97a526eddb819e0ac88c425657ddcac4ee82357e76c2"
+  },
+  "limits": [
+    "A visual/UI regression campaign, not a new photographic color, performance or physical display qualification.",
+    "Full VoiceOver, every UI scale and other operating systems remain outside this campaign.",
+    "Ad hoc signing and XPC checks do not close the full sandbox/release gates.",
+    "No R0–R4 or SF0–SF10 gate closed; no commit or push performed."
+  ]
+}

@@ -650,12 +650,19 @@ impl TrueRenderer {
         ui.visuals_mut().selection.bg_fill = style::SELECTED;
         ui.visuals_mut().selection.stroke = egui::Stroke::new(1., TEXT);
         ui.horizontal(|ui| {
+            ui.spacing_mut().item_spacing.x = 2.;
+            // Keep tab targets stationary when switching between saved panel widths.
+            let width = ((ui.available_width() - 2.) / 2.).min(86.);
             for (mode, title) in [
                 (PanelMode::Library, "Libreria"),
                 (PanelMode::Explorer, "Esplora"),
             ] {
-                let response =
-                    style::tab_button(ui, self.browser.session.mode == mode, lang.text(title));
+                let response = style::segment(
+                    ui,
+                    self.browser.session.mode == mode,
+                    lang.text(title),
+                    width,
+                );
                 if response.clicked()
                     || (response.has_focus()
                         && ui.input(|i| {
@@ -1425,7 +1432,7 @@ impl TrueRenderer {
                     .map(std::path::Path::to_path_buf)
                     .collect();
                 ancestors.reverse();
-                let keep = if ui.available_width() < 350. { 1 } else { 3 };
+                let keep = if ui.available_width() < 350. { 1 } else { 2 };
                 if ancestors.len() > keep {
                     ui.menu_button("…", |ui| {
                         for path in &ancestors[..ancestors.len() - keep] {
@@ -1436,23 +1443,37 @@ impl TrueRenderer {
                         }
                     });
                 }
-                for path in ancestors.iter().skip(ancestors.len().saturating_sub(keep)) {
+                let paths = &ancestors[ancestors.len().saturating_sub(keep)..];
+                let width =
+                    ((ui.available_width() - 40. - (paths.len().saturating_sub(1)) as f32 * 18.)
+                        / paths.len().max(1) as f32)
+                        .max(24.);
+                for (index, path) in paths.iter().enumerate() {
+                    if index > 0 {
+                        ui.label(RichText::new("›").color(MUTED));
+                    }
                     if ui
-                        .add(
-                            egui::Button::new(
-                                path.file_name()
-                                    .unwrap_or(path.as_os_str())
-                                    .to_string_lossy(),
-                            )
-                            .frame_when_inactive(false)
-                            .truncate(),
+                        .allocate_ui_with_layout(
+                            egui::vec2(width.min(180.), 28.),
+                            egui::Layout::left_to_right(egui::Align::Center),
+                            |ui| {
+                                ui.add(
+                                    egui::Button::new(
+                                        path.file_name()
+                                            .unwrap_or(path.as_os_str())
+                                            .to_string_lossy(),
+                                    )
+                                    .frame_when_inactive(false)
+                                    .truncate(),
+                                )
+                            },
                         )
+                        .inner
                         .on_hover_text(path.display().to_string())
                         .clicked()
                     {
                         self.open_folder(path.clone());
                     }
-                    ui.label("›");
                 }
                 if ui
                     .small_button("/")

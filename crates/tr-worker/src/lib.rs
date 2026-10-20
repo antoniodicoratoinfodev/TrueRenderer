@@ -1019,7 +1019,15 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                         && u64::from(info.width) * u64::from(info.height) <= 48_000_000,
                     "WB RAW: formato o dimensioni non supportati (massimo 48 MP)"
                 );
-                if request.raw_engine == RawEngine::TrueRendererExperimental {
+                // A 1×1 or 3×3 CFA patch does not contain enough sites of every
+                // color. Measure those exact areas after native demosaicing,
+                // using the bounded native fitter shared by the other engines.
+                if request.raw_engine == RawEngine::TrueRendererExperimental
+                    && !matches!(
+                        analysis,
+                        tr_core::raw_wb::Analysis::Patch { side: 1 | 3, .. }
+                    )
+                {
                     return experimental::estimate_white_balance(&bytes, analysis);
                 }
                 tr_core::raw_wb::estimate(request.raw_engine, request.raw_wb, analysis, |wb| {

@@ -31,7 +31,8 @@ impl Controls {
             }
         });
         let zone = &mut g.zones[self.grade_zone];
-        let compact = ui.available_width() >= 300.;
+        // Keep a complete parameter row beside the wheel before using two columns.
+        let compact = ui.available_width() >= 480.;
         let layout = if compact {
             egui::Layout::left_to_right(egui::Align::Min)
         } else {
@@ -39,10 +40,15 @@ impl Controls {
         };
         ui.with_layout(layout, |ui| {
             let side = if compact { 112. } else { 132. };
-            ui.allocate_ui(egui::vec2(side, side), |ui| {
-                let wheel = color_wheel(ui, lang, &mut zone.hue, &mut zone.amount);
-                *commit |= wheel.drag_stopped() || (wheel.changed() && !wheel.dragged());
-            });
+            let wheel_width = if compact { side } else { ui.available_width() };
+            ui.allocate_ui_with_layout(
+                egui::vec2(wheel_width, side),
+                egui::Layout::top_down(egui::Align::Center),
+                |ui| {
+                    let wheel = color_wheel(ui, lang, &mut zone.hue, &mut zone.amount);
+                    *commit |= wheel.drag_stopped() || (wheel.changed() && !wheel.dragged());
+                },
+            );
             ui.vertical(|ui| {
                 slider(
                     ui,
@@ -141,7 +147,7 @@ impl Controls {
         g: &mut ColorFilter,
         commit: &mut bool,
     ) {
-        let compact = ui.available_width() >= 300.;
+        let compact = ui.available_width() >= 480.;
         let layout = if compact {
             egui::Layout::left_to_right(egui::Align::Min)
         } else {
@@ -149,10 +155,15 @@ impl Controls {
         };
         ui.with_layout(layout, |ui| {
             let side = if compact { 112. } else { 132. };
-            ui.allocate_ui(egui::vec2(side, side), |ui| {
-                let wheel = color_wheel(ui, lang, &mut g.hue, &mut g.saturation);
-                *commit |= wheel.drag_stopped() || (wheel.changed() && !wheel.dragged());
-            });
+            let wheel_width = if compact { side } else { ui.available_width() };
+            ui.allocate_ui_with_layout(
+                egui::vec2(wheel_width, side),
+                egui::Layout::top_down(egui::Align::Center),
+                |ui| {
+                    let wheel = color_wheel(ui, lang, &mut g.hue, &mut g.saturation);
+                    *commit |= wheel.drag_stopped() || (wheel.changed() && !wheel.dragged());
+                },
+            );
             ui.vertical(|ui| {
                 slider(
                     ui,

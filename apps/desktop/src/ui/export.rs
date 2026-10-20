@@ -122,19 +122,37 @@ impl TrueRenderer {
         let mut open = true;
         let mut start = false;
         egui::Window::new(lang.text("Esporta fotografie")).id(egui::Id::new("photo-export")).open(&mut open)
-            .default_width(540.).resizable(true).vscroll(true)
+            .default_width(540.).max_width((ctx.content_rect().width() - 64.).max(280.))
+            .default_pos(egui::pos2(((ctx.content_rect().width() - 572.) / 2.).max(16.), 96.))
+            .collapsible(false).resizable(false).vscroll(true)
             .max_height((ctx.content_rect().height() - 70.).max(180.)).show(ctx, |ui| {
-                ui.label(lang.text("Nuovi file: nessun originale o export esistente viene sostituito."));
+                ui.label(RichText::new(lang.text("Nuovi file: nessun originale o export esistente viene sostituito.")).small().color(MUTED));
                 ui.add_enabled_ui(!state.active && state.remaining.is_empty(), |ui| {
-                    ui.label(localized_format!(lang, "{} fotografie selezionate · sviluppo nativo, non miniature", "{} selected photos · native development, not thumbnails", selected.len()));
-                    egui::ScrollArea::vertical().id_salt("export-targets").max_height(72.).show(ui,|ui| {for item in &selected {ui.small(&item.name);}});
-                    egui::ComboBox::from_id_salt("export-format").selected_text(lang.text(state.options.format.label())).show_ui(ui, |ui| {
-                        for format in Format::ALL { ui.selectable_value(&mut state.options.format, format, lang.text(format.label())); }
+                    egui::Frame::new().fill(style::SURFACE).corner_radius(5).inner_margin(10).show(ui, |ui| {
+                        ui.set_min_width(ui.available_width());
+                        let selection = if selected.len() == 1 {
+                            localized_format!(lang, "{} fotografia selezionata · sviluppo nativo", "{} selected photo · native development", 1)
+                        } else {
+                            localized_format!(lang, "{} fotografie selezionate · sviluppo nativo", "{} selected photos · native development", selected.len())
+                        };
+                        ui.label(RichText::new(selection).strong());
+                        egui::ScrollArea::vertical().id_salt("export-targets").max_height(72.).show(ui,|ui| {
+                            for item in &selected { ui.add(egui::Label::new(RichText::new(&item.name).small().color(MUTED)).truncate()).on_hover_text(&item.name); }
+                        });
+                    });
+                    ui.add_space(6.);
+                    let label_width = (ui.available_width() * 0.34).clamp(40., 220.);
+                    ui.horizontal(|ui| {
+                        export_label(ui, lang.text("Formato"), label_width);
+                        egui::ComboBox::from_id_salt("export-format").width(ui.available_width())
+                            .selected_text(lang.text(state.options.format.label())).show_ui(ui, |ui| {
+                            for format in Format::ALL { ui.selectable_value(&mut state.options.format, format, lang.text(format.label())); }
+                        });
                     });
                     match state.options.format {
                         Format::Jpeg => {
-                            ui.add(egui::Slider::new(&mut state.options.jpeg_quality, 1..=100).text(lang.text("Qualità JPEG")));
-                            ui.label(lang.text("sRGB 8 bit, compressione con perdita. Trasparenza composta su bianco."));
+                            super::preferences::preference_slider(ui, lang.text("Qualità JPEG"), &mut state.options.jpeg_quality, 1..=100, false, false);
+                            ui.label(RichText::new(lang.text("sRGB 8 bit, compressione con perdita. Trasparenza composta su bianco.")).small().color(MUTED));
                         }
                         Format::Png8 | Format::Png16 => {
                             ui.label(lang.text("sRGB, alpha conservata. La compressione non cambia la qualità."));
@@ -155,17 +173,23 @@ impl TrueRenderer {
                     }
                     if state.options.format != Format::DngRaw {
                         ui.horizontal(|ui| {
-                            ui.label(lang.text("Lato lungo (0 = originale)"));
-                            ui.add(egui::DragValue::new(&mut state.options.long_edge).range(0..=16384));
+                            export_label(ui, lang.text("Lato lungo (0 = originale)"), label_width);
+                            ui.add_sized([96., 28.], egui::DragValue::new(&mut state.options.long_edge).range(0..=16384).suffix(" px"));
                         });
-                        ui.label(lang.text("Motore salvato per foto · clamp nei formati interi, nessun dither"));
+                        ui.label(RichText::new(lang.text("Motore salvato per foto · clamp nei formati interi, nessun dither")).small().color(MUTED));
                     }
+                    ui.separator();
                     ui.horizontal(|ui| {
                         if ui.button(lang.text("Cartella destinazione…")).clicked() && let Some(folder) = rfd::FileDialog::new().pick_folder() { state.destination = Some(folder); }
-                        if let Some(folder) = &state.destination { ui.label(folder.display().to_string()); }
+                        if let Some(folder) = &state.destination {
+                            ui.add(egui::Label::new(RichText::new(folder.display().to_string()).small()).truncate()).on_hover_text(folder.display().to_string());
+                        }
                     });
                     if !ready {ui.label(lang.text("Attendere il caricamento o salvataggio delle ricette selezionate."));}
-                    start = ui.add_enabled(ready && !selected.is_empty() && selected.len() <= 1000 && state.destination.is_some(), egui::Button::new(lang.text("Esporta selezione"))).clicked();
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        start = ui.add_enabled(ready && !selected.is_empty() && selected.len() <= 1000 && state.destination.is_some(),
+                            egui::Button::new(lang.text("Esporta selezione")).fill(style::SELECTED)).clicked();
+                    });
                 });
                 if state.total > 0 {
                     ui.separator();
@@ -194,4 +218,16 @@ impl TrueRenderer {
             self.export_next();
         }
     }
+}
+
+fn export_label(ui: &mut egui::Ui, label: &str, width: f32) {
+    ui.allocate_ui_with_layout(
+        egui::vec2(width, 28.),
+        egui::Layout::left_to_right(egui::Align::Center),
+        |ui| {
+            ui.set_min_width(width);
+            ui.add(egui::Label::new(label).truncate())
+                .on_hover_text(label);
+        },
+    );
 }

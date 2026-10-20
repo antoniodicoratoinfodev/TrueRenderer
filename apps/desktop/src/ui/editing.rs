@@ -1,5 +1,5 @@
 use super::*;
-use tr_core::editing::{CurvePoint, EditRecipe, RgbAreaSample, sample_rgb_area};
+use tr_core::editing::{CurvePoint, EditRecipe, sample_rgb_area};
 use tr_store::LoadedEdit;
 mod advanced;
 #[cfg(test)]
@@ -13,6 +13,7 @@ mod palette;
 mod panels;
 mod transfer;
 mod visuals;
+mod wb_picker;
 mod white_balance;
 use white_balance::sensor_wb_controls;
 
@@ -126,9 +127,9 @@ fn adjustment_default<Num: egui::emath::Numeric>(
 ) -> (egui::Response, bool) {
     let control_id = ui.make_persistent_id(label);
     ui.scope_builder(egui::UiBuilder::new().id(control_id), |ui| {
-        ui.spacing_mut().item_spacing.y = 2.;
-        ui.spacing_mut().interact_size.y = 20.;
-        ui.spacing_mut().button_padding.y = 2.;
+        ui.spacing_mut().item_spacing = egui::vec2(8., 4.);
+        ui.spacing_mut().interact_size.y = 24.;
+        ui.spacing_mut().button_padding = egui::vec2(4., 3.);
         let speed = step.unwrap_or_else(|| {
             if Num::INTEGRAL {
                 1.
@@ -136,14 +137,63 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                 (range.end().to_f64() - range.start().to_f64()) / 1000.
             }
         });
-        let (label_id, number) = ui
+        let (number, slider) = ui
             .horizontal(|ui| {
+                let width = ui.available_width();
+                let number_width = if suffix == " K" { 72. } else { 64. };
+                // Round inward: fractional text layout must not widen a fixed inspector.
+                let label_width = (width * 0.36).clamp(72., 116.).floor();
+                let slider_width = (width - label_width - number_width - 16.).max(24.).floor();
                 #[cfg(test)]
                 help::audit_control(ui, lang, label);
-                let label_id = help::label(ui, lang, label).id;
+                let label_response = ui
+                    .allocate_ui_with_layout(
+                        egui::vec2(label_width, 28.),
+                        egui::Layout::left_to_right(egui::Align::Center),
+                        |ui| {
+                            ui.set_width(label_width);
+                            ui.add(egui::Label::new(lang.text(label)).truncate())
+                        },
+                    )
+                    .inner
+                    .on_hover_text(lang.text(label));
+                let label_id = help::attach(ui, label_response, lang, label).id;
+                let slider = ui
+                    .scope(|ui| {
+                        ui.spacing_mut().slider_width = slider_width;
+                        ui.spacing_mut().slider_rail_height = 3.;
+                        ui.spacing_mut().interact_size.y = 16.;
+                        let widgets = &mut ui.visuals_mut().widgets;
+                        widgets.inactive.bg_fill = Color32::from_gray(64);
+                        widgets.inactive.fg_stroke = egui::Stroke::new(1., Color32::from_gray(176));
+                        widgets.hovered.bg_fill = Color32::from_gray(112);
+                        widgets.active.bg_fill = Color32::from_gray(152);
+                        let mut slider = egui::Slider::new(value, range.clone())
+                            .show_value(false)
+                            .handle_shape(egui::style::HandleShape::Circle)
+                            .logarithmic(suffix == " K");
+                        if let Some(step) = step {
+                            slider = slider.step_by(step);
+                        }
+                        let response = ui.add(slider).labelled_by(label_id);
+                        if let Some(colors) = palette::ramp(label) {
+                            let rect = egui::Rect::from_min_max(
+                                egui::pos2(response.rect.left() + 7., response.rect.bottom() - 1.),
+                                egui::pos2(response.rect.right() - 7., response.rect.bottom() + 1.),
+                            );
+                            // The guide does not cover or replace the native handle.
+                            palette::strip(ui, rect, &colors);
+                        }
+                        response
+                    })
+                    .inner;
                 let number = ui
-                    .with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        ui.add(
+                    .scope(|ui| {
+                        ui.style_mut().drag_value_text_style = egui::TextStyle::Monospace;
+                        ui.visuals_mut().widgets.inactive.bg_stroke = egui::Stroke::NONE;
+                        ui.visuals_mut().widgets.inactive.weak_bg_fill = Color32::from_gray(38);
+                        ui.add_sized(
+                            [number_width, 24.],
                             egui::DragValue::new(value)
                                 .range(range.clone())
                                 .speed(speed)
@@ -152,29 +202,9 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                         .labelled_by(label_id)
                     })
                     .inner;
-                (label_id, number)
+                (number, slider)
             })
             .inner;
-        let slider = ui
-            .scope(|ui| {
-                ui.spacing_mut().slider_width = ui.available_width();
-                let mut slider = egui::Slider::new(value, range.clone())
-                    .show_value(false)
-                    .logarithmic(suffix == " K");
-                if let Some(step) = step {
-                    slider = slider.step_by(step);
-                }
-                ui.add(slider).labelled_by(label_id)
-            })
-            .inner;
-        if let Some(colors) = palette::ramp(label) {
-            // A slim colour guide leaves the native handle, focus and hit target intact.
-            let rect = egui::Rect::from_min_max(
-                egui::pos2(slider.rect.left() + 5., slider.rect.bottom() - 2.),
-                egui::pos2(slider.rect.right() - 5., slider.rect.bottom()),
-            );
-            palette::strip(ui, rect, &colors);
-        }
         // egui sliders have drag-only Sense; Response::double_clicked is false.
         // The pointer reports the double click on release, inside this slider.
         let reset = ui.is_enabled()
@@ -343,7 +373,7 @@ pub(super) struct EditingUi {
     preview_errors: HashMap<String, PreviewFailure>,
     pub picker_error: Option<(String, String)>,
     pub picker_side: u32,
-    pub picker_areas: [Option<Result<RgbAreaSample, String>>; 2],
+    wb_picker: wb_picker::Picker,
     smoke_ready_at: Option<Instant>,
     smoke_proof_capture: Option<ProofCapture>,
     smoke_proof_result: Option<serde_json::Value>,
@@ -416,7 +446,7 @@ impl Default for EditingUi {
             preview_errors: HashMap::new(),
             picker_error: None,
             picker_side: 5,
-            picker_areas: [None, None],
+            wb_picker: Default::default(),
             smoke_ready_at: None,
             smoke_proof_capture: None,
             smoke_proof_result: None,
@@ -494,21 +524,6 @@ impl TrueRenderer {
             Err(error) => self.editing.wb_error = Some((job.item.id, error)),
         }
     }
-    pub(super) fn capture_picker_areas(
-        &mut self,
-        image: &ImageLevels,
-        x: u32,
-        y: u32,
-        current: bool,
-    ) {
-        self.editing.picker_areas = [5, 11].map(|side| {
-            (current && image.base_level() == 0).then(|| {
-                sample_rgb_area(image.source(), x, y, side).map_err(|error| error.to_string())
-            })
-        });
-        self.editing.picker_error = None;
-    }
-
     pub(super) fn output_proof_for(&self, id: &str) -> bool {
         self.editing.output_proof && self.editing.verify_final.as_deref() == Some(id)
     }
@@ -1264,6 +1279,8 @@ impl TrueRenderer {
             return;
         }
         self.finish_look_preview(false);
+        self.cancel_wb_picker();
+        self.editing.wb_picker.error = None;
         if !self.output_proof_for(id) {
             self.editing.verify_final = None;
         }
@@ -1325,6 +1342,7 @@ impl TrueRenderer {
             expected_generation,
             undo,
         }) {
+            self.cancel_wb_picker();
             self.editing.entries.get_mut(id).unwrap().pending = true;
         }
     }
@@ -1398,6 +1416,7 @@ impl TrueRenderer {
         // gesture or lose the release event that saves the finished draft.
         let controls_id = ui.make_persistent_id(("photographic-edit", &item.id));
         ui.scope_builder(egui::UiBuilder::new().id(controls_id), |ui| {
+            panels::control_style(ui);
             let Some(entry) = self.editing.entries.get(&item.id) else {
                 ui.label(lang.text("Caricamento ricetta…"));
                 return;
@@ -1459,7 +1478,7 @@ impl TrueRenderer {
                 .map(|(_, cached)| cached.pyramid.source_size());
             let short = ui.ctx().content_rect().height() < 500.;
             let mut pasted = false;
-            ui.horizontal_wrapped(|ui| {
+            ui.horizontal(|ui| {
                 ui.spacing_mut().button_padding.x = 6.;
                 if panels::icon_button(
                     ui,
@@ -1489,6 +1508,7 @@ impl TrueRenderer {
                 if ui
                     .add(
                         egui::Button::new(lang.text("Prima/Dopo"))
+                            .truncate()
                             .frame_when_inactive(
                                 self.editing.show_original
                                     || (self.state.view == ViewMode::Compare
@@ -1502,6 +1522,7 @@ impl TrueRenderer {
                     )
                     .clicked()
                 {
+                    self.cancel_wb_picker();
                     if self.state.view == ViewMode::Compare && self.comparison.before_after {
                         self.state.view = ViewMode::Preview;
                         self.editing.show_original = false;
@@ -1548,6 +1569,7 @@ impl TrueRenderer {
                                         .selectable_label(page == title, lang.text(title))
                                         .clicked()
                                     {
+                                        self.cancel_wb_picker();
                                         self.editing.layers.open_tools(false);
                                         self.editing.layers.view_tools = title == "Strumenti";
                                         self.editing.layers.view_layers = title == "Livelli";
@@ -1559,6 +1581,11 @@ impl TrueRenderer {
                             });
                         });
                     }
+                }
+                if !short {
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        panels::save_state(ui, lang, pending, dirty);
+                    });
                 }
             });
             if pasted {
@@ -1576,19 +1603,6 @@ impl TrueRenderer {
                     }
                 }
             }
-            if !short {
-                ui.label(
-                    RichText::new(lang.text(if pending {
-                        "Salvataggio…"
-                    } else if dirty {
-                        "Modifiche in corso"
-                    } else {
-                        "Ricetta salvata nella libreria"
-                    }))
-                    .small()
-                    .color(MUTED),
-                );
-            }
             ui.add_enabled_ui(!pending, |ui| {
                 if !short {
                     let page = if self.editing.layers.view_tools {
@@ -1597,6 +1611,7 @@ impl TrueRenderer {
                         usize::from(self.editing.layers.view_layers)
                     };
                     if let Some(page) = panels::tabs(ui, lang, page) {
+                        self.cancel_wb_picker();
                         self.editing.layers.open_tools(false);
                         self.editing.layers.view_tools = page == 2;
                         self.editing.layers.view_layers = page == 1;
@@ -1641,69 +1656,7 @@ impl TrueRenderer {
                             {
                                 ui.colored_label(AMBER, lang.text(error));
                             }
-                            ui.small(lang.text(
-                        "WB nativo: analisi senza regolazioni creative; Auto assume grigio medio",
-                    ));
-                            let mut analysis = None;
-                            if help::button(ui, lang, "Auto WB RAW").clicked() {
-                                analysis = Some(tr_core::raw_wb::Analysis::Auto);
-                            }
-                            let point = self
-                                .sample
-                                .as_ref()
-                                .filter(|_| {
-                                    self.sample_item_id.as_deref() == Some(item.id.as_str())
-                                        && self.sample_level == Some(0)
-                                        && self.sample_from_current_render
-                                        && !self.output_proof_for(&item.id)
-                                })
-                                .and_then(|point| {
-                                    let native = native_size?;
-                                    if let Some(a) = &draft.advanced {
-                                        let output = a.geometry.output_size(native);
-                                        let p = a.geometry.source_point(
-                                            [
-                                                (point.x as f64 + 0.5) / output[0] as f64,
-                                                (point.y as f64 + 0.5) / output[1] as f64,
-                                            ],
-                                            native,
-                                        )?;
-                                        if p.iter().any(|v| !(0. ..1.).contains(v)) {
-                                            return None;
-                                        }
-                                        Some((
-                                            (p[0] * native[0] as f64).floor() as u32,
-                                            (p[1] * native[1] as f64).floor() as u32,
-                                        ))
-                                    } else {
-                                        Some((point.x, point.y))
-                                    }
-                                });
-                            if help::button_enabled(ui, lang, "WB RAW da area 5×5", point.is_some())
-                                .clicked()
-                            {
-                                let point = point.unwrap();
-                                analysis = Some(tr_core::raw_wb::Analysis::Patch {
-                                    x: point.0,
-                                    y: point.1,
-                                    side: 5,
-                                });
-                            }
-                            if let Some(analysis) = analysis {
-                                self.editing.wb_error = None;
-                                let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
-                                self.editing.wb_cancel = Some(cancel.clone());
-                                self.editing.wb_pending = self.request(Request::RawWhiteBalance(
-                                    Box::new(crate::photo_export::WbJob {
-                                        cancel,
-                                        item: item.clone(),
-                                        recipe: draft.clone(),
-                                        analysis,
-                                        generation: self.generation,
-                                        revision: saved.generation,
-                                    }),
-                                ));
-                            }
+                            self.wb_picker_controls(ui, item, true, &draft);
                             if engine == tr_core::decoder::RawEngine::Apple {
                                 let (wb_changed, wb_commit) =
                                     apple_wb_controls(ui, lang, &mut draft.raw_wb);
@@ -1720,6 +1673,23 @@ impl TrueRenderer {
                                     changed = true;
                                     commit = true;
                                 }
+                            }
+                        });
+                } else {
+                    panels::Section::new(lang, "rgb-wb-panel", "Bilanciamento del bianco")
+                        .default_open(!short)
+                        .modified(draft.temperature != 0. || draft.tint != 0.)
+                        .show(ui, |ui| {
+                            self.wb_picker_controls(ui, item, false, &draft);
+                            for (label, value) in [
+                                ("Temperatura RGB", &mut draft.temperature),
+                                ("Tinta RGB", &mut draft.tint),
+                            ] {
+                                let response =
+                                    adjustment(ui, lang, label, value, -100. ..=100., "", None);
+                                changed |= response.changed();
+                                commit |= response.drag_stopped()
+                                    || (response.changed() && !response.dragged());
                             }
                         });
                 }
@@ -1857,6 +1827,9 @@ impl TrueRenderer {
                             ("Tinta RGB", &mut draft.tint),
                             ("Saturazione", &mut draft.saturation),
                         ] {
+                            if !is_raw && label != "Saturazione" {
+                                continue;
+                            }
                             let response = adjustment(
                                 ui,
                                 lang,
@@ -1902,113 +1875,12 @@ impl TrueRenderer {
                             .small()
                             .color(MUTED),
                         );
-                        ui.horizontal_wrapped(|ui| {
-                            ui.label(lang.text("Area contagocce"));
-                            for side in [1, 5, 11] {
-                                if ui
-                                    .selectable_value(
-                                        &mut self.editing.picker_side,
-                                        side,
-                                        format!("{side}×{side}"),
-                                    )
-                                    .changed()
-                                {
-                                    self.editing.picker_error = None;
-                                }
-                            }
-                        });
-                        let sample = if !changed
-                            && self.sample_item_id.as_deref() == Some(item.id.as_str())
-                            && self.sample_level == Some(0)
-                            && self.sample_from_current_render
-                            && !self.output_proof_for(&item.id)
-                        {
-                            self.sample
-                                .as_ref()
-                                .map(|sample| (sample.working, sample.x, sample.y))
-                        } else {
-                            None
-                        };
-                        let area = match self.editing.picker_side {
-                            5 => self.editing.picker_areas[0].as_ref(),
-                            11 => self.editing.picker_areas[1].as_ref(),
-                            _ => None,
-                        };
-                        let picker_pixel = sample.and_then(|(pixel, _, _)| {
-                            if self.editing.picker_side == 1 {
-                                Some(pixel)
-                            } else {
-                                area.and_then(|result| result.as_ref().ok())
-                                    .map(|s| s.working)
-                            }
-                        });
-                        if sample.is_some()
-                            && let Some(area) = area
-                        {
-                            match area {
-                                Ok(area) => {
-                                    ui.label(localized_format!(
-                                        lang,
-                                        "Pixel validi: {}/{} · dispersione cromatica: {:.3}",
-                                        "Valid pixels: {}/{} · chromatic spread: {:.3}",
-                                        area.valid,
-                                        area.total,
-                                        area.chroma_spread
-                                    ));
-                                }
-                                Err(error) => {
-                                    ui.colored_label(AMBER, lang.text(error));
-                                }
-                            }
+                        if help::button(ui, lang, "Azzera correzione RGB").clicked() {
+                            draft.temperature = 0.;
+                            draft.tint = 0.;
+                            changed = true;
+                            commit = true;
                         }
-                        if let Some((_, x, y)) = sample {
-                            ui.label(localized_format!(
-                                lang,
-                                "Ultimo campione RGB: {}, {}",
-                                "Last RGB sample: {}, {}",
-                                x,
-                                y
-                            ));
-                        }
-                        if self.output_proof_for(&item.id) {
-                            ui.label(lang.text("Per il contagocce torna al render esteso fp32."));
-                        } else if self.sample_item_id.as_deref() == Some(item.id.as_str())
-                            && (self.sample_level != Some(0) || !self.sample_from_current_render)
-                        {
-                            ui.label(
-                                lang.text(
-                                    "Verifica la resa finale e campiona la vista modificata.",
-                                ),
-                            );
-                        }
-                        ui.horizontal_wrapped(|ui| {
-                            if help::button(ui, lang, "Azzera correzione RGB").clicked() {
-                                draft.temperature = 0.;
-                                draft.tint = 0.;
-                                changed = true;
-                                commit = true;
-                            }
-                            if ui
-                                .add_enabled(
-                                    picker_pixel.is_some(),
-                                    egui::Button::new(lang.text("Neutralizza campione RGB")),
-                                )
-                                .clicked()
-                                && let Some(pixel) = picker_pixel
-                            {
-                                match draft.neutralize_render_sample(pixel) {
-                                    Ok(()) => {
-                                        changed = true;
-                                        commit = true;
-                                        self.editing.picker_error = None;
-                                    }
-                                    Err(error) => {
-                                        self.editing.picker_error =
-                                            Some((item.id.clone(), format!("{error:#}")));
-                                    }
-                                }
-                            }
-                        });
                         if let Some((_, error)) = self
                             .editing
                             .picker_error

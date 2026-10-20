@@ -201,14 +201,9 @@ const CONTROLS: &[ControlHelp] = &[
         en: "Lets you draw the mask directly on the image.",
     },
     ControlHelp {
-        names: "Auto WB RAW",
-        it: "Stima un bilanciamento globale assumendo una scena mediamente neutra. I valori diventano regolabili; scene dominate da un solo colore possono richiedere una correzione manuale.",
-        en: "Estimates global white balance assuming an average neutral scene. The resulting values remain editable; scenes dominated by one color may need manual correction.",
-    },
-    ControlHelp {
-        names: "WB RAW da area 5×5",
-        it: "Stima il WB da una piccola zona che dovrebbe essere neutra. Evita campioni saturi, troppo scuri o con colori diversi.",
-        en: "Estimates WB from a small area that should be neutral. Avoid clipped, very dark or mixed-color samples.",
+        names: "WB automatico",
+        it: "Attiva il contagocce. Scegli l’area in pixel originali e clicca una zona bianca o grigia neutra: il bilanciamento si applica automaticamente. Evita alte luci bruciate, ombre profonde e aree di colori diversi. Esc annulla; i valori restano modificabili.",
+        en: "Activates the eyedropper. Choose an area in original pixels and click a neutral white or grey region: white balance is applied automatically. Avoid clipped highlights, deep shadows and mixed colors. Esc cancels; values remain editable.",
     },
     ControlHelp {
         names: "WB RAW come scattato",
@@ -896,7 +891,7 @@ pub(super) fn checkbox(
     attach(ui, response, lang, label)
 }
 pub(super) fn button(ui: &mut egui::Ui, lang: Language, label: &str) -> egui::Response {
-    let response = ui.button(lang.text(label));
+    let response = ui.add(egui::Button::new(lang.text(label)).truncate());
     attach(ui, response, lang, label)
 }
 
@@ -906,7 +901,7 @@ pub(super) fn button_enabled(
     label: &str,
     enabled: bool,
 ) -> egui::Response {
-    let response = ui.add_enabled(enabled, egui::Button::new(lang.text(label)));
+    let response = ui.add_enabled(enabled, egui::Button::new(lang.text(label)).truncate());
     attach(ui, response, lang, label)
 }
 

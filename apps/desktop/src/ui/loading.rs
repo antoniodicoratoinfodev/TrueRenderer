@@ -366,6 +366,33 @@ impl TrueRenderer {
         let lang = self.cache_settings.language;
         let (_, _, progress) = self.folder_progress();
         let clearing = self.clearing_current_folder();
+        // Completion stays inspectable without occupying a full progress track forever.
+        if progress >= 1.
+            && !self.scanning
+            && !clearing
+            && !self.folder_load.cancelled
+            && self.folder_load.errors == 0
+            && self.folder_load.skipped == 0
+        {
+            let response = ui
+                .add(
+                    egui::Button::new("✓")
+                        .min_size(Vec2::splat(28.))
+                        .frame_when_inactive(false),
+                )
+                .on_hover_text(lang.text("Caricamento cartella"));
+            response.widget_info(|| {
+                egui::WidgetInfo::labeled(
+                    egui::WidgetType::Button,
+                    true,
+                    lang.text("Caricamento cartella"),
+                )
+            });
+            if response.clicked() {
+                self.folder_load.popup = true;
+            }
+            return;
+        }
         let text = if clearing {
             lang.text("Svuotamento cache…").into()
         } else if self.scanning {
@@ -385,7 +412,7 @@ impl TrueRenderer {
             )
         };
         let width = if compact { 100. } else { 134. };
-        let (rect, response) = ui.allocate_exact_size(Vec2::new(width, 24.), egui::Sense::click());
+        let (rect, response) = ui.allocate_exact_size(Vec2::new(width, 28.), egui::Sense::click());
         ui.put(
             rect,
             egui::ProgressBar::new(if self.scanning || clearing {
@@ -394,7 +421,7 @@ impl TrueRenderer {
                 progress
             })
             .desired_width(width)
-            .desired_height(24.)
+            .desired_height(28.)
             .text(text)
             .animate(self.scanning || clearing),
         );

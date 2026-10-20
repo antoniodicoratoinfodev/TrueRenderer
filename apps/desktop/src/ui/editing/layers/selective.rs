@@ -92,7 +92,7 @@ impl Controls {
             0.,
             commit,
         );
-        let compact = ui.available_width() >= 300.;
+        let compact = ui.available_width() >= 480.;
         let layout = if compact {
             egui::Layout::left_to_right(egui::Align::Min)
         } else {
@@ -100,7 +100,8 @@ impl Controls {
         };
         ui.with_layout(layout, |ui| {
             let side = if compact { 112. } else { 132. };
-            ui.allocate_ui(egui::vec2(side, side), |ui| {
+            let field_width = if compact { side } else { ui.available_width() };
+            ui.allocate_ui(egui::vec2(field_width, side), |ui| {
                 let field = super::super::visuals::color_field(ui, lang, &mut g.hue, &mut g.chroma);
                 *commit |= field.drag_stopped() || (field.changed() && !field.dragged());
             });

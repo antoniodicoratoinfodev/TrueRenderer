@@ -97,9 +97,9 @@ fn preference_note(ui: &mut egui::Ui, text: impl Into<String>) -> egui::Response
     ui.label(RichText::new(text).small().color(MUTED))
 }
 
-// Labels and values stay on one row; the track below uses the available width.
+// Labels, tracks and values share one baseline, including compact preferences.
 // Binary storage units are unchanged when a quota is displayed and edited in MB.
-fn preference_slider<Num: egui::emath::Numeric>(
+pub(super) fn preference_slider<Num: egui::emath::Numeric>(
     ui: &mut egui::Ui,
     label: &str,
     value: &mut Num,
@@ -108,44 +108,44 @@ fn preference_slider<Num: egui::emath::Numeric>(
     decimal_mb: bool,
 ) -> egui::Response {
     ui.push_id(label, |ui| {
-        ui.spacing_mut().item_spacing.y = 3.;
-        ui.spacing_mut().interact_size.y = 22.;
-        ui.spacing_mut().button_padding.y = 3.;
-        let (label_id, number) = ui
-            .horizontal(|ui| {
-                let label_width =
-                    (ui.available_width() - 96. - ui.spacing().item_spacing.x).max(0.);
-                let label_id = ui
-                    .allocate_ui_with_layout(
-                        egui::vec2(label_width, 22.),
-                        egui::Layout::left_to_right(egui::Align::Center),
-                        |ui| {
-                            ui.set_min_width(label_width);
-                            ui.set_min_height(22.);
-                            ui.add(egui::Label::new(label).wrap())
-                        },
-                    )
-                    .inner
-                    .id;
-                let mut number = egui::DragValue::new(value).range(range.clone()).speed(1.);
-                if decimal_mb {
-                    number = number
-                        .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
-                        .custom_parser(crate::size_units::parse_mb_as_mib);
-                }
-                let number = ui.add_sized([96., 22.], number).labelled_by(label_id);
-                (label_id, number)
-            })
-            .inner;
-        ui.spacing_mut().slider_width = ui.available_width();
-        let slider = ui
-            .add(
-                egui::Slider::new(value, range)
-                    .show_value(false)
-                    .logarithmic(logarithmic),
-            )
-            .labelled_by(label_id);
-        number.union(slider)
+        ui.spacing_mut().interact_size.y = 28.;
+        let width = ui.available_width();
+        let label_width = (width * 0.34)
+            .clamp(40., 220.)
+            .min((width - 96. - 32. - 2. * ui.spacing().item_spacing.x).max(0.));
+        ui.spacing_mut().slider_width =
+            (width - label_width - 96. - 2. * ui.spacing().item_spacing.x).max(32.);
+        ui.horizontal(|ui| {
+            let label_id = ui
+                .allocate_ui_with_layout(
+                    egui::vec2(label_width, 28.),
+                    egui::Layout::left_to_right(egui::Align::Center),
+                    |ui| {
+                        ui.set_min_width(label_width);
+                        ui.set_min_height(28.);
+                        ui.add(egui::Label::new(label).truncate())
+                            .on_hover_text(label)
+                    },
+                )
+                .inner
+                .id;
+            let slider = ui
+                .add(
+                    egui::Slider::new(value, range.clone())
+                        .show_value(false)
+                        .logarithmic(logarithmic),
+                )
+                .labelled_by(label_id);
+            let mut number = egui::DragValue::new(value).range(range.clone()).speed(1.);
+            if decimal_mb {
+                number = number
+                    .custom_formatter(|value, _| crate::size_units::format_mib_as_mb(value))
+                    .custom_parser(crate::size_units::parse_mb_as_mib);
+            }
+            let number = ui.add_sized([96., 28.], number).labelled_by(label_id);
+            number.union(slider)
+        })
+        .inner
     })
     .inner
 }
@@ -230,19 +230,26 @@ impl TrueRenderer {
             .open(&mut open)
             .collapsible(false)
             .resizable(false)
-            .default_width(700.)
+            .default_width(660.)
             .max_width((ctx.content_rect().width() - 64.).max(280.))
-            .default_pos(egui::pos2(72., 64.))
+            .default_pos(egui::pos2(
+                ((ctx.content_rect().width() - 692.) / 2.).max(16.),
+                ((ctx.content_rect().height() - body_height - 180.) / 2.).max(16.),
+            ))
             .show(ctx, |ui| {
-                ui.horizontal_wrapped(|ui| {
+                ui.horizontal(|ui| {
+                    ui.spacing_mut().item_spacing.x = 2.;
+                    ui.spacing_mut().button_padding.x = 4.;
+                    let width = (ui.available_width() - 6.) / 4.;
                     for (page, title) in SettingsPage::ALL {
-                        ui.selectable_value(&mut self.settings_page, page, lang.text(title));
+                        if style::segment(ui, self.settings_page == page, lang.text(title), width).clicked() {
+                            self.settings_page = page;
+                        }
                     }
                 });
                 ui.separator();
                 ui.style_mut().spacing.scroll.floating = false;
                 egui::ScrollArea::vertical()
-                    .scroll_bar_visibility(egui::scroll_area::ScrollBarVisibility::AlwaysVisible)
                     .id_salt(("preferences-body", self.settings_page))
                     .max_height(body_height)
                     .auto_shrink([false, false])
@@ -277,14 +284,16 @@ impl TrueRenderer {
                     ui.add(egui::Label::new(lang.message(&self.status)).truncate())
                         .on_hover_text(lang.message(&self.status));
                 }
-                ui.horizontal_wrapped(|ui| {
+                ui.horizontal(|ui| {
                     if ui.add_enabled(dirty && self.cache_action.is_none(),
                         egui::Button::new(lang.text("Ripristina modifiche")).frame(false)).clicked() {
                         self.cache_settings = self.service.cache.settings();
                     }
-                    if ui.button(lang.text("Chiudi")).clicked() { close = true; }
-                    if ui.add_enabled(self.cache_action.is_none() && !self.scanning,
-                        egui::Button::new(lang.text("Applica e salva")).fill(Color32::from_gray(62))).clicked() { action = 1; }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.add_enabled(self.cache_action.is_none() && !self.scanning,
+                            egui::Button::new(lang.text("Applica e salva")).fill(Color32::from_gray(62))).clicked() { action = 1; }
+                        if ui.button(lang.text("Chiudi")).clicked() { close = true; }
+                    });
                 });
             });
         self.show_settings = open && !close;
@@ -808,8 +817,9 @@ mod tests {
                         button: egui::PointerButton::Primary,
                         modifiers: egui::Modifiers::NONE,
                     };
-                    let start = egui::pos2(rect.center().x, rect.bottom() - 10.);
-                    let end = egui::pos2(rect.right() - 20., start.y);
+                    // The track precedes the 96-point numeric field on the same row.
+                    let start = egui::pos2(rect.left() + 8., rect.center().y);
+                    let end = egui::pos2(rect.right() - 104., start.y);
                     frame(vec![egui::Event::PointerMoved(start), pointer(start, true)]);
                     frame(vec![egui::Event::PointerMoved(end)]);
                     let (_, dragged) = frame(vec![pointer(end, false)]);

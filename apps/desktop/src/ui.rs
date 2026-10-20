@@ -500,6 +500,12 @@ impl TrueRenderer {
         self.status = "Lettura della cartella…".into();
     }
     fn command(&mut self, command: Command) {
+        if matches!(
+            &command,
+            Command::SetView(_) | Command::Select { .. } | Command::Move(_)
+        ) {
+            self.cancel_wb_picker();
+        }
         if matches!(command, Command::SetView(_)) {
             self.photo_menu.navigation += 1;
         }
@@ -1058,7 +1064,7 @@ impl TrueRenderer {
         self.sample_item_id = None;
         self.sample_level = None;
         self.sample_from_current_render = false;
-        self.editing.picker_areas = [None, None];
+        self.cancel_wb_picker();
         self.errors.clear();
         // Filesystem scan IDs are independent of decoder generations.
     }
@@ -1503,6 +1509,10 @@ impl TrueRenderer {
         if self.photo_export.open || egui::Popup::is_any_open(ctx) {
             return;
         }
+        if ctx.input(|i| i.key_pressed(egui::Key::Escape)) && self.cancel_wb_picker() {
+            ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape));
+            return;
+        }
         if self.editing.crop.is_some() && ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
             self.finish_crop(false);
             return;
@@ -1652,13 +1662,14 @@ impl TrueRenderer {
             .frame(
                 egui::Frame::new()
                     .fill(PANEL)
-                    .inner_margin(egui::Margin::symmetric(16, 6)),
+                    .inner_margin(egui::Margin::symmetric(16, 4)),
             )
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    ui.set_height(34.);
-                    ui.label(RichText::new("TrueRenderer").size(17.).strong());
-                    ui.add_space(8.);
+                    ui.set_height(32.);
+                    style::toolbar_controls(ui);
+                    ui.label(RichText::new("TrueRenderer").size(14.).strong());
+                    ui.add_space(4.);
                     ui.menu_button(lang.text("Apri"), |ui| {
                         if ui.button(lang.text("Apri cartella…")).clicked() {
                             ui.close();
@@ -1813,7 +1824,8 @@ impl TrueRenderer {
             egui::TextEdit::singleline(&mut self.state.query)
                 .id(egui::Id::new("catalog-search"))
                 .hint_text(lang.text("Cerca nome o parola chiave"))
-                .desired_width(width),
+                .margin(egui::Margin::symmetric(9, 6))
+                .desired_width((width - 18.).max(24.)),
         );
         if self.search_focus {
             response.request_focus();
@@ -2014,6 +2026,7 @@ impl TrueRenderer {
         }
         ui.add_space(16.);
         section(ui, lang.text("Filtri"));
+        style::toolbar_controls(ui);
         ui.label(
             RichText::new(lang.text("Valutazione minima"))
                 .small()
@@ -2111,7 +2124,7 @@ impl TrueRenderer {
             .frame(frame)
             .title_frame(frame.inner_margin(egui::Margin::symmetric(12, 6)))
             .default_pos(bounds.min)
-            .default_width(300.)
+            .default_width(344.)
             .default_height(bounds.height())
             .max_width((bounds.width() - 24.).max(220.))
             .max_height(bounds.height())
@@ -2124,10 +2137,11 @@ impl TrueRenderer {
             self.show_inspector = open;
         } else {
             egui::Panel::right("inspector")
-                .default_size(280.)
-                .size_range(260.0..=360.0)
+                .default_size(344.)
+                .size_range(300.0..=420.0)
                 .frame(style::panel())
                 .show(ui, |ui| {
+                    ui.set_min_width(ui.available_width());
                     // Reserve a gutter: a floating scrollbar paints over image
                     // pixels and makes the inspector preview depend on hover.
                     ui.style_mut().spacing.scroll.floating = false;
@@ -2143,17 +2157,24 @@ impl TrueRenderer {
             return;
         };
         self.ensure_edit_loaded(&item);
-        ui.add(egui::Label::new(RichText::new(&item.name).size(14.).strong()).truncate())
-            .on_hover_text(&item.name);
-        ui.label(
-            RichText::new(if item.approved {
-                lang.text("ANTEPRIMA")
-            } else {
-                lang.text("ANTEPRIMA NON DISPONIBILE")
-            })
-            .small()
-            .color(AMBER),
-        );
+        ui.horizontal(|ui| {
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(RichText::new(lang.text("ANTEPRIMA")).size(10.).color(AMBER));
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    ui.add(
+                        egui::Label::new(RichText::new(&item.name).size(14.).strong()).truncate(),
+                    )
+                    .on_hover_text(&item.name);
+                });
+            });
+        });
+        if !item.approved {
+            ui.label(
+                RichText::new(lang.text("ANTEPRIMA NON DISPONIBILE"))
+                    .small()
+                    .color(AMBER),
+            );
+        }
         let edge = (ui.available_width() * ui.ctx().pixels_per_point()).ceil() as u32;
         let edge = tr_core::preview::thumbnail_edge(edge);
         self.ensure_image(&item, edge);
@@ -2163,17 +2184,21 @@ impl TrueRenderer {
         let context = usize::from(self.state.view != ViewMode::Grid);
         if !scientific {
             ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = 2.;
+                let width = (ui.available_width() - 2.) / 2.;
                 for (page, title) in [
                     (InspectorPage::Information, "Informazioni"),
                     (InspectorPage::Develop, "Sviluppo"),
                 ] {
-                    if style::tab_button(
+                    if style::segment(
                         ui,
                         self.inspector_pages[context] == page,
                         lang.text(title),
+                        width,
                     )
                     .clicked()
                     {
+                        self.cancel_wb_picker();
                         self.inspector_pages[context] = page;
                     }
                 }
@@ -2797,10 +2822,8 @@ impl TrueRenderer {
             .floor()
             .max(1.) as usize;
         self.grid_columns = columns as i32;
-        let size = Vec2::new(
-            (ui.available_width() - (columns - 1) as f32 * 12.) / columns as f32,
-            self.cell_size * 0.70 + 62.,
-        );
+        let width = (ui.available_width() - (columns - 1) as f32 * 12.) / columns as f32;
+        let size = Vec2::new(width, (width - 20.) * 0.70 + 62.);
         let count = self.state.visible.len();
         let rows = count.div_ceil(columns);
         egui::ScrollArea::vertical()
@@ -3218,6 +3241,7 @@ impl TrueRenderer {
             let pending_size = pending.then(|| self.view_source_size(&item.id, source_size));
             let crop_gesture =
                 self.crop_active(&item.id) && !ui.input(|i| i.key_down(egui::Key::Space));
+            let wb_gesture = self.wb_picker_active(&item.id);
             let (response, sample) = tr_render::viewport_with_options(
                 ui,
                 &mut self.presenter,
@@ -3226,7 +3250,7 @@ impl TrueRenderer {
                 &lane,
                 tr_render::ViewportOptions {
                     pending_size,
-                    editing_mask: editing_gesture || crop_gesture,
+                    editing_mask: editing_gesture || crop_gesture || wb_gesture,
                     progressive: !image.scientific(),
                     provisional,
                     live_edit,
@@ -3234,7 +3258,16 @@ impl TrueRenderer {
                 },
             );
             if !image.scientific() && !self.editing.show_original {
-                if self.crop_active(&item.id) {
+                if self.wb_picker_active(&item.id) {
+                    self.wb_picker_interaction(
+                        ui,
+                        item,
+                        &response,
+                        source_size,
+                        sample_from_current_render.then_some(image.as_ref()),
+                        sample.as_ref(),
+                    );
+                } else if self.crop_active(&item.id) {
                     self.crop_interaction(ui, item, &response, source_size);
                 } else {
                     self.layer_interaction(
@@ -3254,9 +3287,6 @@ impl TrueRenderer {
                 self.photo_context_menu(&response, item);
             }
             self.image_focus_ids.insert(response.id);
-            if let Some(sample) = &sample {
-                self.capture_picker_areas(&image, sample.x, sample.y, sample_from_current_render);
-            }
             if sample.is_some() {
                 self.sample_source = localized_format!(
                     lang,
@@ -3315,16 +3345,20 @@ impl TrueRenderer {
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
                     let name = self.folder_label().to_owned();
-                    ui.add_sized(
-                        [if compact { 135. } else { 200. }, 28.],
-                        egui::Label::new(RichText::new(name).small()).truncate(),
-                    )
-                    .on_hover_text(self.folder.display().to_string());
+                    ui.allocate_ui_with_layout(
+                        egui::vec2(if compact { 135. } else { 180. }, 28.),
+                        egui::Layout::left_to_right(egui::Align::Center),
+                        |ui| {
+                            ui.add(egui::Label::new(RichText::new(name).small()).truncate())
+                                .on_hover_text(self.folder.display().to_string());
+                        },
+                    );
+                    ui.separator();
                     ui.label(
                         RichText::new(localized_format!(
                             lang,
-                            "/ {} immagini · {} selezionate",
-                            "/ {} images · {} selected",
+                            "{} immagini · {} selezionate",
+                            "{} images · {} selected",
                             self.state.visible.len(),
                             self.state.selected.len()
                         ))
@@ -4073,16 +4107,19 @@ fn section(ui: &mut egui::Ui, title: &str) {
     ui.add_space(4.);
 }
 fn field(ui: &mut egui::Ui, key: &str, value: &str) {
-    ui.horizontal_top(|ui| {
+    ui.horizontal(|ui| {
+        let label_width = (ui.available_width() * 0.34).clamp(82., 120.);
         ui.allocate_ui_with_layout(
-            egui::vec2(82., 16.),
-            egui::Layout::top_down(egui::Align::Min),
+            egui::vec2(label_width, 20.),
+            egui::Layout::left_to_right(egui::Align::Center),
             |ui| {
-                ui.set_min_width(82.);
-                ui.add(egui::Label::new(RichText::new(key).small().color(MUTED)).wrap());
+                ui.set_min_width(label_width);
+                ui.add(egui::Label::new(RichText::new(key).small().color(MUTED)).truncate())
+                    .on_hover_text(key);
             },
         );
-        ui.add(egui::Label::new(value).wrap());
+        ui.add(egui::Label::new(value).truncate())
+            .on_hover_text(value);
     });
 }
 fn nav(ui: &mut egui::Ui, title: &str, count: &str, selected: bool) -> egui::Response {
@@ -4216,33 +4253,6 @@ mod settings_regressions {
             assert!(Instant::now() < deadline, "Timed out: {}", app.status);
             std::thread::sleep(Duration::from_millis(10));
         }
-    }
-
-    #[test]
-    fn area_picker_uses_native_current_render_and_discards_ineligible_samples() {
-        let (_dir, _ctx, mut app) = app();
-        let raster =
-            tr_core::color::LinearImage::new(11, 11, vec![[0.4, 0.4, 0.4, 1.]; 121]).unwrap();
-        let native = ImageLevels::from_source(raster.clone(), PreviewRequest::full()).unwrap();
-        app.capture_picker_areas(&native, 5, 5, true);
-        assert_eq!(app.editing.picker_side, 5);
-        for (area, count) in app.editing.picker_areas.iter().zip([25, 121]) {
-            let area = area.as_ref().unwrap().as_ref().unwrap();
-            assert_eq!(area.valid, count);
-            assert_eq!(area.total, count);
-        }
-        app.capture_picker_areas(&native, 0, 0, true);
-        assert!(
-            app.editing
-                .picker_areas
-                .iter()
-                .all(|area| area.as_ref().unwrap().is_err())
-        );
-        app.capture_picker_areas(&native, 5, 5, false);
-        assert!(app.editing.picker_areas.iter().all(Option::is_none));
-        let reduced = ImageLevels::from_reference_mip(raster, [22, 22], 1, true).unwrap();
-        app.capture_picker_areas(&reduced, 5, 5, true);
-        assert!(app.editing.picker_areas.iter().all(Option::is_none));
     }
 
     #[test]

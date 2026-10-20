@@ -9,8 +9,13 @@ pub(super) fn color_field(
     chroma: &mut f32,
 ) -> egui::Response {
     let width = ui.available_width().clamp(40., 180.);
-    let (outer, mut response) =
-        ui.allocate_exact_size(egui::vec2(width, 112.), egui::Sense::click_and_drag());
+    let (outer, mut response) = ui
+        .allocate_ui_with_layout(
+            egui::vec2(ui.available_width(), 112.),
+            egui::Layout::top_down(egui::Align::Center),
+            |ui| ui.allocate_exact_size(egui::vec2(width, 112.), egui::Sense::click_and_drag()),
+        )
+        .inner;
     let rect = outer.shrink(7.);
     let before = (*hue, *chroma);
     if ui.is_enabled() {

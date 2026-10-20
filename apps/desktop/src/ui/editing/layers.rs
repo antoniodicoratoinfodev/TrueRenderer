@@ -357,17 +357,19 @@ impl Controls {
         lang: Language,
         recipe: &mut EditRecipe,
     ) -> bool {
-        ui.horizontal_wrapped(|ui| {
-            ui.selectable_value(
-                &mut self.apply_selected,
-                false,
-                lang.text("Su un nuovo livello"),
-            );
-            ui.selectable_value(
-                &mut self.apply_selected,
-                true,
-                lang.text("Sul livello selezionato"),
-            );
+        ui.horizontal(|ui| {
+            let width = (ui.available_width() - ui.spacing().item_spacing.x) / 2.;
+            for (selected, title, description) in [
+                (false, "Nuovo livello", "Su un nuovo livello"),
+                (true, "Livello selezionato", "Sul livello selezionato"),
+            ] {
+                if panels::segment(ui, self.apply_selected == selected, lang.text(title), width)
+                    .on_hover_text(lang.text(description))
+                    .clicked()
+                {
+                    self.apply_selected = selected;
+                }
+            }
         });
         let selected = recipe
             .layers
@@ -375,7 +377,8 @@ impl Controls {
             .and_then(|s| s.layers.iter().find(|l| Some(l.id) == self.selected));
         let allowed = if self.apply_selected {
             if let Some(layer) = selected {
-                ui.label(&layer.name);
+                ui.add(egui::Label::new(&layer.name).truncate())
+                    .on_hover_text(&layer.name);
             }
             selected.is_some_and(|l| !l.locked && l.operators.len() < layers::MAX_OPERATORS)
         } else {
@@ -393,7 +396,10 @@ impl Controls {
             );
         }
         let search = ui.add(
-            egui::TextEdit::singleline(&mut self.search).hint_text(lang.text("Cerca strumento…")),
+            egui::TextEdit::singleline(&mut self.search)
+                .desired_width(ui.available_width())
+                .margin(egui::Margin::symmetric(10, 7))
+                .hint_text(lang.text("Cerca strumento…")),
         );
         if search.changed() {
             self.search_index = 0;
@@ -425,23 +431,12 @@ impl Controls {
         }
         ui.add_enabled_ui(allowed, |ui| {
             for (i, tool) in matches.into_iter().enumerate() {
-                let response = ui
-                    .horizontal(|ui| {
-                        palette::icon(ui, lang, tool.id);
-                        ui.add_sized(
-                            [ui.available_width(), 28.],
-                            egui::Button::new(lang.text(tool.name))
-                                .wrap()
-                                .selected(i == self.search_index),
-                        )
-                    })
-                    .inner
-                    .on_hover_text(
-                        help::tool_text(lang, tool.id).unwrap_or(lang.text(tool.description)),
-                    )
-                    .on_disabled_hover_text(
-                        help::tool_text(lang, tool.id).unwrap_or(lang.text(tool.description)),
-                    );
+                let response = panels::tool_button(
+                    ui,
+                    lang,
+                    tool,
+                    i == self.search_index && (search.has_focus() || !self.search.is_empty()),
+                );
                 if response.clicked() || (allowed && activate && i == self.search_index) {
                     chosen = Some(tool);
                 }
