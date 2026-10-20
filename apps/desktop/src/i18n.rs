@@ -1373,6 +1373,12 @@ impl Language {
             }
             "Vista · questa sessione" => "View · this session",
             "Mostra ispettore" => "Show inspector",
+            "Nascondi pannello destro (I)" => "Hide right panel (I)",
+            "Mostra pannello destro (I)" => "Show right panel (I)",
+            "Nascondi pannello sinistro (Cmd/Ctrl+B)" => "Hide left panel (Cmd/Ctrl+B)",
+            "Mostra pannello sinistro (Cmd/Ctrl+B)" => "Show left panel (Cmd/Ctrl+B)",
+            "Nascondi miniature (T)" => "Hide filmstrip (T)",
+            "Mostra miniature (T)" => "Show filmstrip (T)",
             "Mostra miniature nel viewer" => "Show viewer filmstrip",
             "Dati locali" => "Local data",
             "Resa delle anteprime" => "Preview rendering",

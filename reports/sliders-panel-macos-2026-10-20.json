@@ -1,0 +1,114 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-20T20:41:00.185454+00:00",
+  "passed": true,
+  "scope": "Shared chromatic slider tracks and collapsible Develop/Information inspector; UI-only change.",
+  "desktop_tests": {
+    "passed": 262,
+    "failed": 0,
+    "ignored": 8
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_all_targets_warnings_denied": true,
+    "release_build": true,
+    "document_links": {
+      "checked": 574,
+      "failed": 0
+    },
+    "native/reports/inspector-ui.json": true,
+    "native/reports/develop-ui.json": true,
+    "native/reports/xpc-qualification-macos.json": true,
+    "interactive/reports/xpc-qualification-macos.json": true
+  },
+  "interactive": {
+    "isolated_data_root": "var/sliders-panel-20261020/interactive/data",
+    "header_arrow_hides_panel": true,
+    "toolbar_icon_reopens_panel": true,
+    "develop_tab_preserved": true,
+    "recipe_values_preserved": true
+  },
+  "installed_bundle": "dist/TrueRenderer.app",
+  "backup": "var/sliders-panel-20261020/previous.app",
+  "installed_matches_candidate": true,
+  "protected_files_checked": 14,
+  "protected_files_unchanged": true,
+  "evidence": [
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-ui.json",
+      "sha256": "3741e0a1869abeced48ffa45743b04a3911a18a064fcf8c66d400a4c6d979fa5"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/develop-ui.json",
+      "sha256": "c72cfef480cd7adf3ab7978f21e0bddaa09b1e227c04b2448dbadc749bc3af6b"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/xpc-qualification-macos.json",
+      "sha256": "e703963f266ad249b4331ea9ae49a1ea6597cc601d54697fdf3f13a2d29597f8"
+    },
+    {
+      "path": "var/sliders-panel-20261020/interactive/reports/xpc-qualification-macos.json",
+      "sha256": "e10c7ea85802300747caf538451046fae39e85f129f0c2e548a0a27aa11b8cb7"
+    },
+    {
+      "path": "var/sliders-panel-20261020/desktop-tests.log",
+      "sha256": "20566b4b5fc01901637c1a52867d26401899d868367f8624aa84353901fe33a5"
+    },
+    {
+      "path": "var/sliders-panel-20261020/clippy.log",
+      "sha256": "a8ad3e24b6d90d73fe0fe8b14c95ce866274cb08fe9c673cd85c35e731c7425d"
+    },
+    {
+      "path": "var/sliders-panel-20261020/build.log",
+      "sha256": "799a2b7ff1503a55aad2ba1d586d10db32446ec42a623a5d182eae7cbc25dcb2"
+    },
+    {
+      "path": "var/sliders-panel-20261020/installed-inventory.json",
+      "sha256": "aef073127f8cbd127bfbbcaae7742e651afe10ac9f701c79481b158b699c4a2d"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-00.png",
+      "sha256": "7990d0a32707feff72f4e07ab9c3729d12ab86a8ea0001917b91693dd86abe41"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-01.png",
+      "sha256": "66ab45d2a35cc099e6c9e5723712d43a7bde5a24aa3c1578f68732136d4320d6"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-02.png",
+      "sha256": "db075487d1c758d7a8bab83703e55ba71748e9bbd49b202820d10ed4762fb005"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-03.png",
+      "sha256": "3abe1b97444b2c79ba07c1e2db199801e44ccc2beb364a3185453fe159e3a370"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-04.png",
+      "sha256": "00efadc0afbbe8d29ff41d79db5018e3c4fd0891894879483d4c4502d632a121"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-05.png",
+      "sha256": "326fc603965ecf1a4cc2298033d08bd992a5546e8edc8fd98bef52727fbdf77c"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-06.png",
+      "sha256": "98fcb494ea0a4d25f7efceb248af6b633853ddf364a95fbbbe747add2f83cf53"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-07.png",
+      "sha256": "b7843f564b105fc872879cbe4e471a5337f6f287275c553dac6b07575bca43f9"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-08.png",
+      "sha256": "76a476a343468d790e6e6e10eb62ada7a34db6b2716d00d15ce076f4af62360c"
+    },
+    {
+      "path": "var/sliders-panel-20261020/native/reports/inspector-09.png",
+      "sha256": "e668d2cf0afd64352c96171b9cac1bfb9c584454b58a3329aa56a083176bb2e1"
+    }
+  ],
+  "limitations": [
+    "No R/SF gate completion or new colour/display qualification.",
+    "Full screen-reader and cross-platform qualification remains open."
+  ]
+}

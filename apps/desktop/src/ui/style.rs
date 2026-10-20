@@ -157,6 +157,8 @@ pub enum Icon {
     Forward,
     Up,
     Refresh,
+    SidePanel { open: bool, left: bool },
+    Filmstrip { open: bool },
 }
 
 /// Native button semantics with a consistent 20-point vector glyph.
@@ -185,6 +187,40 @@ pub fn icon_button(ui: &mut egui::Ui, enabled: bool, icon: Icon, label: &str) ->
         let point = |x: f32, y: f32| center + egui::vec2(x, y);
         let painter = ui.painter();
         match icon {
+            Icon::SidePanel { open, left } => {
+                let direction = if left { -1. } else { 1. };
+                let rect = egui::Rect::from_min_max(point(-9., -7.), point(9., 7.));
+                if open {
+                    painter.rect_filled(
+                        egui::Rect::from_two_pos(
+                            point(direction * 3., -7.),
+                            point(direction * 9., 7.),
+                        ),
+                        1,
+                        color.gamma_multiply(0.35),
+                    );
+                }
+                painter.rect_stroke(rect, 2, stroke, egui::StrokeKind::Inside);
+                painter.line_segment(
+                    [point(direction * 3., -7.), point(direction * 3., 7.)],
+                    stroke,
+                );
+            }
+            Icon::Filmstrip { open } => {
+                let rect = egui::Rect::from_min_max(point(-9., -7.), point(9., 7.));
+                if open {
+                    painter.rect_filled(
+                        egui::Rect::from_min_max(point(-9., 2.), point(9., 7.)),
+                        1,
+                        color.gamma_multiply(0.35),
+                    );
+                }
+                painter.rect_stroke(rect, 2, stroke, egui::StrokeKind::Inside);
+                painter.line_segment([point(-9., 2.), point(9., 2.)], stroke);
+                for x in [-3., 3.] {
+                    painter.line_segment([point(x, 2.), point(x, 7.)], stroke);
+                }
+            }
             Icon::Back | Icon::Forward => {
                 let direction = if matches!(icon, Icon::Back) { -1. } else { 1. };
                 painter.add(egui::Shape::line(

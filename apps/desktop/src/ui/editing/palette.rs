@@ -58,6 +58,11 @@ pub(super) fn strip(ui: &egui::Ui, rect: egui::Rect, colors: &[Color32]) {
     if colors.len() < 2 || !ui.is_rect_visible(rect) {
         return;
     }
+    ui.painter()
+        .add(egui::Shape::mesh(strip_mesh(ui, rect, colors)));
+}
+
+fn strip_mesh(ui: &egui::Ui, rect: egui::Rect, colors: &[Color32]) -> egui::Mesh {
     let mut mesh = egui::Mesh::default();
     for (i, color) in colors.iter().enumerate() {
         let x = egui::lerp(rect.x_range(), i as f32 / (colors.len() - 1) as f32);
@@ -69,7 +74,26 @@ pub(super) fn strip(ui: &egui::Ui, rect: egui::Rect, colors: &[Color32]) {
             mesh.add_triangle(a - 1, a + 1, a);
         }
     }
-    ui.painter().add(egui::Shape::mesh(mesh));
+    mesh
+}
+
+/// A continuous rounded track, centered under the native slider handle.
+pub(super) fn slider_track(ui: &egui::Ui, rect: egui::Rect, colors: &[Color32]) -> egui::Shape {
+    if colors.len() < 2 || !ui.is_rect_visible(rect) {
+        return egui::Shape::Noop;
+    }
+    let radius = 2.5;
+    let track = egui::Rect::from_center_size(rect.center(), egui::vec2(rect.width(), 2. * radius));
+    let middle = track.shrink2(egui::vec2(radius, 0.));
+    egui::Shape::Vec(vec![
+        egui::Shape::circle_filled(middle.left_center(), radius, enabled(ui, colors[0])),
+        egui::Shape::circle_filled(
+            middle.right_center(),
+            radius,
+            enabled(ui, colors[colors.len() - 1]),
+        ),
+        egui::Shape::mesh(strip_mesh(ui, middle, colors)),
+    ])
 }
 
 pub(super) fn choice(

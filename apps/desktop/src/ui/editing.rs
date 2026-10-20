@@ -161,8 +161,12 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                 let label_id = help::attach(ui, label_response, lang, label).id;
                 let slider = ui
                     .scope(|ui| {
+                        let colors = palette::ramp(label);
+                        // Reserve the track below egui's handle in paint order.
+                        let track = colors.as_ref().map(|_| ui.painter().add(egui::Shape::Noop));
                         ui.spacing_mut().slider_width = slider_width;
-                        ui.spacing_mut().slider_rail_height = 3.;
+                        ui.spacing_mut().slider_rail_height =
+                            if colors.is_some() { 0. } else { 3. };
                         ui.spacing_mut().interact_size.y = 16.;
                         let widgets = &mut ui.visuals_mut().widgets;
                         widgets.inactive.bg_fill = Color32::from_gray(64);
@@ -171,19 +175,16 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                         widgets.active.bg_fill = Color32::from_gray(152);
                         let mut slider = egui::Slider::new(value, range.clone())
                             .show_value(false)
+                            .trailing_fill(false)
                             .handle_shape(egui::style::HandleShape::Circle)
                             .logarithmic(suffix == " K");
                         if let Some(step) = step {
                             slider = slider.step_by(step);
                         }
                         let response = ui.add(slider).labelled_by(label_id);
-                        if let Some(colors) = palette::ramp(label) {
-                            let rect = egui::Rect::from_min_max(
-                                egui::pos2(response.rect.left() + 7., response.rect.bottom() - 1.),
-                                egui::pos2(response.rect.right() - 7., response.rect.bottom() + 1.),
-                            );
-                            // The guide does not cover or replace the native handle.
-                            palette::strip(ui, rect, &colors);
+                        if let (Some(colors), Some(track)) = (colors, track) {
+                            ui.painter()
+                                .set(track, palette::slider_track(ui, response.rect, &colors));
                         }
                         response
                     })

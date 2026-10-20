@@ -3610,6 +3610,13 @@ Ogni campo di metadato modificabile è tale in linea, senza aprire finestre. In 
 modificabili soltanto rating, label e keyword mappati alla libreria/sidecar; EXIF tecnico e i pochi
 campi MakerNote qualificati restano in sola lettura.
 
+Le schede Sviluppo/Informazioni si mostrano e nascondono dall’icona all’estremità destra
+della barra del percorso. L’icona specchiata all’estremità sinistra alterna Esplora/Libreria;
+il pulsante accanto a quello destro alterna la striscia di miniature nel viewer/confronto.
+Le icone restano raggiungibili a pannelli nascosti e nelle finestre compatte. Restano disponibili
+`I`, `Cmd/Ctrl+B` e `T` nei rispettivi contesti. La riapertura conserva le schede selezionate
+e non modifica la ricetta fotografica.
+
 **Barra di stato (B).** Conteggi, spazio occupato, catena colore corrente in forma compatta,
 stato del render, interruttori rapidi per avviso di gamut e di clipping, cursore della dimensione
 delle celle. La catena colore in barra di stato è una firma di questo programma: l'utente vede

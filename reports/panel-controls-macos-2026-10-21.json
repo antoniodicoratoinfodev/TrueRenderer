@@ -1,0 +1,109 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-20T22:00:42.909976+00:00",
+  "passed": true,
+  "scope": "Path bar controls for left panel, right inspector and filmstrip; removal of inspector header arrow and top toolbar toggle.",
+  "desktop_tests": {
+    "passed": 262,
+    "failed": 0,
+    "ignored": 8
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_all_targets_warnings_denied": true,
+    "release_build": true,
+    "document_links": {
+      "checked": 575,
+      "failed": 0
+    },
+    "native/reports/inspector-ui.json": true,
+    "native/reports/xpc-qualification-macos.json": true,
+    "installed-check/reports/xpc-qualification-macos.json": true
+  },
+  "interactive": {
+    "isolated_data_root": "var/panel-controls-20261020/native/interactive-data",
+    "all_three_panels_hide_and_reopen": true,
+    "left_library_tab_preserved": true,
+    "right_develop_tab_preserved": true,
+    "filmstrip_restored": true,
+    "photograph_expands_when_hidden": true,
+    "grid_filmstrip_button_disabled": true
+  },
+  "installed_bundle": "dist/TrueRenderer.app",
+  "backup": "var/panel-controls-20261020/previous.app",
+  "installed_matches_candidate": true,
+  "evidence": [
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-ui.json",
+      "sha256": "3741e0a1869abeced48ffa45743b04a3911a18a064fcf8c66d400a4c6d979fa5"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/xpc-qualification-macos.json",
+      "sha256": "f5e6b2083856e88e6534f4a822ba3ba19369de4f27a77134224d75bfbe48a648"
+    },
+    {
+      "path": "var/panel-controls-20261020/installed-check/reports/xpc-qualification-macos.json",
+      "sha256": "e60f2e444ca58ae84e8a6086e7c2e5fd11b67586acedbc6b0dfa849a25624780"
+    },
+    {
+      "path": "var/panel-controls-20261020/desktop-tests.log",
+      "sha256": "2d267b53f0e3098422d1083fb5c55a45bf8082ba55f3205d8dba3d7e4ed06a8d"
+    },
+    {
+      "path": "var/panel-controls-20261020/clippy.log",
+      "sha256": "3098247298e8ead926491a30d24de5ff0ef6b534d5ba1efcd0fe38c7fc734c33"
+    },
+    {
+      "path": "var/panel-controls-20261020/build.log",
+      "sha256": "0280ba436aa0d1267498d03ffa64eb7685524a35218a526876d0f01e50aa1969"
+    },
+    {
+      "path": "var/panel-controls-20261020/installed-inventory.json",
+      "sha256": "fb0357aa43a6cac14c49b1155eca6d8f9dd167a86699a2afe62fa65f5c4ec5ad"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-00.png",
+      "sha256": "d920f708d6a150707ce214f71e66403641de0fa9f24bb4225382810dd3d5b5a3"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-01.png",
+      "sha256": "eabdc083ae81b070d191a2eea4037446bd56f69f0f241aa975205173816bd38c"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-02.png",
+      "sha256": "9df2dddf870c42955f6a901bc7f2b3ea8db986ab984c1cfb6b6aa11c998f9e5b"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-03.png",
+      "sha256": "1bc21d13dafe552bcdaa53cb30f4276bc108c59682a2df2bdcf996a235dc763e"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-04.png",
+      "sha256": "47adf01a7f8b47f758e20733d8f5a8b47aff8bf417dd3ea6dfff3ddeeefc7af0"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-05.png",
+      "sha256": "b15e1c527b1febe71e2d7d440124616297432b57b0ab52ace2bd3968dcbac210"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-06.png",
+      "sha256": "015da6b7d43e25ed7675e751fbebb8f3f962081c77de78c289f5d03e3e8d4ba9"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-07.png",
+      "sha256": "0225a776b0d3d6c0cc18b275fd077114e049ce8a1bd94a0b9a3463e927bcc06c"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-08.png",
+      "sha256": "cfa5e815b7c5895a588c81281beaf0fa00550905ee32f6831638c0976b0d2efa"
+    },
+    {
+      "path": "var/panel-controls-20261020/native/reports/inspector-09.png",
+      "sha256": "d79392d6e258e6835f7bd5dfc280cba639d7026ff4e3f4559b72b631271f11ae"
+    }
+  ],
+  "limitations": [
+    "No R/SF gate completion or new colour/display qualification.",
+    "Full screen-reader and cross-platform qualification remains open."
+  ]
+}

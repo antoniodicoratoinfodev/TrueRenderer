@@ -1356,12 +1356,25 @@ impl TrueRenderer {
     fn location_navigation(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         ui.horizontal(|ui| {
-            if ui
-                .add(egui::Button::new(lang.text("Pannello")).frame_when_inactive(false))
-                .on_hover_text("Cmd/Ctrl+B")
-                .clicked()
+            let compact = ui.ctx().content_rect().width() < 1000.;
+            let open = if compact {
+                self.browser.temporary
+            } else {
+                self.browser.session.visible
+            };
+            if style::icon_button(
+                ui,
+                true,
+                style::Icon::SidePanel { open, left: true },
+                lang.text(if open {
+                    "Nascondi pannello sinistro (Cmd/Ctrl+B)"
+                } else {
+                    "Mostra pannello sinistro (Cmd/Ctrl+B)"
+                }),
+            )
+            .clicked()
             {
-                if ui.ctx().content_rect().width() < 1000. {
+                if compact {
                     self.browser.temporary = !self.browser.temporary;
                 } else {
                     self.browser.session.visible = !self.browser.session.visible;
@@ -1495,19 +1508,60 @@ impl TrueRenderer {
                     .inner_margin(egui::Margin::symmetric(16, 6)),
             )
             .show(ui, |ui| {
-                if self.state.view != ViewMode::Grid && ui.ctx().content_rect().width() >= 1200. {
-                    ui.horizontal(|ui| {
-                        let navigation_width = (ui.available_width() - 650.).max(280.);
-                        ui.allocate_ui_with_layout(
-                            egui::vec2(navigation_width, 28.),
-                            egui::Layout::left_to_right(egui::Align::Center),
-                            |ui| self.location_navigation(ui),
-                        );
-                        self.viewer_controls(ui);
-                    });
-                } else {
-                    self.location_navigation(ui);
-                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if style::icon_button(
+                        ui,
+                        true,
+                        style::Icon::SidePanel {
+                            open: self.show_inspector,
+                            left: false,
+                        },
+                        lang.text(if self.show_inspector {
+                            "Nascondi pannello destro (I)"
+                        } else {
+                            "Mostra pannello destro (I)"
+                        }),
+                    )
+                    .clicked()
+                    {
+                        self.show_inspector = !self.show_inspector;
+                    }
+                    if style::icon_button(
+                        ui,
+                        self.state.view != ViewMode::Grid,
+                        style::Icon::Filmstrip {
+                            open: self.show_filmstrip && self.state.view != ViewMode::Grid,
+                        },
+                        lang.text(if self.show_filmstrip {
+                            "Nascondi miniature (T)"
+                        } else {
+                            "Mostra miniature (T)"
+                        }),
+                    )
+                    .clicked()
+                    {
+                        self.show_filmstrip = !self.show_filmstrip;
+                    }
+                    ui.allocate_ui_with_layout(
+                        egui::vec2(ui.available_width(), 28.),
+                        egui::Layout::left_to_right(egui::Align::Center),
+                        |ui| {
+                            if self.state.view != ViewMode::Grid
+                                && ui.ctx().content_rect().width() >= 1200.
+                            {
+                                let navigation_width = (ui.available_width() - 650.).max(280.);
+                                ui.allocate_ui_with_layout(
+                                    egui::vec2(navigation_width, 28.),
+                                    egui::Layout::left_to_right(egui::Align::Center),
+                                    |ui| self.location_navigation(ui),
+                                );
+                                self.viewer_controls(ui);
+                            } else {
+                                self.location_navigation(ui);
+                            }
+                        },
+                    );
+                });
                 if self.state.targeted.is_some() {
                     ui.horizontal(|ui| {
                         ui.label(lang.text("Filtri sospesi per apertura diretta"));

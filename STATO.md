@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 20 ottobre 2026.
+Aggiornato: 21 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
@@ -28,6 +28,29 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 **Pubblicazione chiarezza Livelli e puntatore, 18 ottobre:** su richiesta del titolare, preparati per commit/push i 14 file dell’incremento: sorgenti, test, guida, specifiche, stato e rapporto aggregato. Ricontrollati i 369 sorgenti congelati, i 15 file protetti e tutti i 29 hash delle evidenze. La dicitura «nessun commit/push» sotto e nel rapporto registra la chiusura della qualifica, precedente a questa pubblicazione.
 
 **Pubblicazione richiesta il 20 ottobre:** preparati per commit/push i 38 file dei tre incrementi: rifinitura dei pannelli, contagocce WB e revisione complessiva della UI, con specifica, README, sette nuove schermate native e quattro rapporti. Ricontrollati i 475 sorgenti/risorse congelati del bundle finale, i 227 file protetti e tutti i 372 riferimenti con hash delle evidenze dei tre rapporti di qualifica; verificati anche provenienza, hash e collegamenti delle sette immagini del README. Le diciture «nessun commit/push» nelle campagne registrano la loro chiusura, precedente a questa pubblicazione richiesta dal titolare. Originali, cataloghi, impostazioni, backup, bundle e strumenti locali restano esclusi dalla pubblicazione.
+
+**Pubblicazione richiesta il 21 ottobre:** riuniti in 11 file i due incrementi slider/pannelli, con sorgenti, guida, specifiche, stato e due rapporti aggregati. Ricontrollati i 35 hash delle evidenze; bundle, cataloghi, fotografie, backup e toolchain restano locali.
+
+### Comandi dei tre pannelli nella barra del percorso — consegnati il 21 ottobre
+
+Richiesta successiva del titolare: togliere la freccia accanto al badge Preview, spostare il comando destro dalla barra Menu alla barra del percorso, sostituire Pannello con l’icona specchiata e rendere nascondibili le miniature da un pulsante dedicato.
+
+- [x] Icone coerenti per pannello sinistro, destro e filmstrip; comandi laterali alle estremità della barra del percorso, miniature accanto al destro. Aiuti IT/EN e stato visivo aperto/chiuso; scorciatoie e schede conservate. La filmstrip è disponibile in Anteprima/Confronto; il comando è disabilitato in Griglia.
+- [x] Passati 262 test desktop, otto ignorati; fmt, Clippy desktop/all-targets con `-D warnings` e build release. Dieci layout nativi IT/EN al 100% e compatti al 200% passati, schermate ispezionate. Provati via UI tutti e tre i comandi in chiusura e riapertura: schede Libreria/Sviluppo conservate, miniature ripristinate e più spazio alla foto quando nascosti.
+- [x] Aggiornato `dist/TrueRenderer.app`, identico al candidato nei file e permessi; backup in `var/panel-controls-20261020/previous.app`. Firma e due servizi XPC verificati sul candidato e sul bundle installato. Prove su cataloghi separati; corpus sintetico invariato. [Rapporto](reports/panel-controls-macos-2026-10-21.json) con hash delle evidenze.
+
+Evidenze in `var/panel-controls-20261020/`. Nessuna modifica alle formule fotografiche o alle fonti della specifica anteprime.
+
+### Piste degli slider colorate e pannello destro richiudibile — 20 ottobre
+
+Richiesta del titolare: integrare nella pista tutte le guide cromatiche sotto gli slider e rendere nascondibile il pannello Sviluppo/Informazioni.
+
+- [x] Componente condiviso: sfumatura continua centrata sulla pista, estremità arrotondate e cursore nativo sopra; coperti WB RGB/RAW, tonalità e canali cromatici in regolazioni e livelli. Controlli disabilitati desaturati; valori e formule fotografiche conservati.
+- [x] Freccia di chiusura nell’intestazione e icona sempre disponibile in alto a destra per mostrare/nascondere l’ispettore, con aiuti IT/EN. Conservati scorciatoia `I` e selezione della scheda.
+- [x] Verificati 262 test desktop, otto ignorati; fmt, Clippy desktop/all-targets con `-D warnings` e build release passati. Dieci layout nativi IT/EN al 100% e compatti al 200%, viewer/export PNG16 e due servizi XPC sul candidato e sul bundle installato passati. Ispezionate le schermate; provati via UI chiusura dalla freccia e ripristino dalla barra, conservando scheda Sviluppo e valori.
+- [x] Aggiornato `dist/TrueRenderer.app`, identico al candidato nei file e permessi; backup in `var/sliders-panel-20261020/previous.app`. Firma verificata, 14 file monitorati di corpus/dati invariati; test su cataloghi isolati. [Rapporto](reports/sliders-panel-macos-2026-10-20.json) con hash delle evidenze.
+
+Prove e backup isolati in `var/sliders-panel-20261020/`. Fonti della specifica anteprime invariate; nessuna sincronizzazione documentale necessaria. Nessun gate R/SF concluso.
 
 ### Sfumature delle sovrapposizioni di maschere e selezioni — 20 ottobre
 

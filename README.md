@@ -47,6 +47,8 @@ Keep different creative decisions independently editable. Add an adjustment to a
 
 **Experiment freely.** Undo, Redo, Reset all and Before/After keep decisions reversible. Double-click a photographic slider to restore its default. Copy selected light, curve and RGB colour adjustments between photographs to carry a treatment through a series.
 
+Colour guides appear directly in the slider tracks. The path bar has matching icons to show or hide the left and right panels, plus a filmstrip toggle beside the right panel icon. Keyboard shortcuts remain **Cmd/Ctrl+B** for the left panel, **I** for Develop / Information and **T** for the viewer filmstrip.
+
 ## Give every frame the right composition
 
 Crop directly on the photograph with draggable edges, a rule-of-thirds grid and free, original, preset or custom aspect ratios. Lock the proportions, switch orientation, move the frame or move the photograph inside it. Keyboard controls help with fine adjustments.
