@@ -77,10 +77,10 @@ Your originals remain read-only. Editing recipes, annotations and saved looks li
 
 Choose a rendering engine in Settings to explore different interpretations of your RAW files:
 
-- **TrueRenderer** — our flagship independent RAW engine, available on macOS as **trueRendererExperimental 32fp**. Its 32-bit floating-point pipeline preserves negative values and values above nominal white, offering greater numerical headroom than the app's 16-bit integer LibRaw paths. Independent decoding, directional reconstruction and sensor-aware highlight treatment give it a dedicated path from the sensor mosaic to the developed image.
-- **Apple RAW** — native macOS RAW development through Apple's camera support and rendering pipeline. Camera compatibility follows the decoder installed with macOS.
-- **LibRaw AHD** — LibRaw decoding with Adaptive Homogeneity-Directed demosaicing, providing an alternative rendering for comparison.
-- **LibRaw bilinear** — LibRaw decoding with bilinear interpolation, a straightforward rendering option for comparison.
+- **TrueRenderer**: our flagship independent RAW engine, available on macOS as **trueRendererExperimental 32fp**. Its 32-bit floating-point pipeline preserves negative values and values above nominal white, offering greater numerical headroom than the app's 16-bit integer LibRaw paths. Independent decoding, directional reconstruction and sensor-aware highlight treatment give it a dedicated path from the sensor mosaic to the developed image.
+- **Apple RAW**: native macOS RAW development through Apple's camera support and rendering pipeline. Camera compatibility follows the decoder installed with macOS.
+- **LibRaw AHD**: LibRaw decoding with Adaptive Homogeneity-Directed demosaicing, providing an alternative rendering for comparison.
+- **LibRaw bilinear**: LibRaw decoding with bilinear interpolation, a straightforward rendering option for comparison.
 
 TrueRenderer includes Temperature and Tint controls, neutral-area white-balance sampling, an As shot reset and DNG export of the decoded sensor mosaic. Its fp32 headroom is a concrete advantage; the best-looking rendering still depends on the photograph and the adjustments you choose.
 
