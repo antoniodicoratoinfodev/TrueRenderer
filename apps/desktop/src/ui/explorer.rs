@@ -1526,22 +1526,6 @@ impl TrueRenderer {
                     {
                         self.show_inspector = !self.show_inspector;
                     }
-                    if style::icon_button(
-                        ui,
-                        self.state.view != ViewMode::Grid,
-                        style::Icon::Filmstrip {
-                            open: self.show_filmstrip && self.state.view != ViewMode::Grid,
-                        },
-                        lang.text(if self.show_filmstrip {
-                            "Nascondi miniature (T)"
-                        } else {
-                            "Mostra miniature (T)"
-                        }),
-                    )
-                    .clicked()
-                    {
-                        self.show_filmstrip = !self.show_filmstrip;
-                    }
                     ui.allocate_ui_with_layout(
                         egui::vec2(ui.available_width(), 28.),
                         egui::Layout::left_to_right(egui::Align::Center),

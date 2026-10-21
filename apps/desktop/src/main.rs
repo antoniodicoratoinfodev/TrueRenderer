@@ -14,6 +14,7 @@ mod source_monitor;
 mod ui;
 mod verify_advanced;
 mod verify_cache;
+mod verify_denoise;
 mod verify_develop;
 mod verify_experimental;
 mod verify_exports;
@@ -184,6 +185,20 @@ fn run() -> Result<()> {
             "WB camera probe requires isolated --root"
         );
         return verify_wb_camera::run(&root, &worker, &folder);
+    }
+    if let Some(source) = option("--verify-denoise-export") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "Denoise probe requires isolated --root"
+        );
+        return verify_denoise::export(&root, &worker, &source);
+    }
+    if let Some(source) = option("--verify-denoise") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "Denoise probe requires isolated --root"
+        );
+        return verify_denoise::run(&root, &worker, &source);
     }
     if let Some(source) = option("--verify-advanced-editing") {
         anyhow::ensure!(

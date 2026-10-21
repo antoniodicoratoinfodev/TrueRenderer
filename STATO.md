@@ -31,6 +31,31 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 **Pubblicazione richiesta il 21 ottobre:** riuniti in 11 file i due incrementi slider/pannelli, con sorgenti, guida, specifiche, stato e due rapporti aggregati. Ricontrollati i 35 hash delle evidenze; bundle, cataloghi, fotografie, backup e toolchain restano locali.
 
+**Pubblicazione denoiser e rifiniture richiesta il 21 ottobre:** riuniti in 22 file il filtro per alti ISO, il comando miniature nella barra di stato e la rimozione dei rimandi Experimental dai README, con regressioni, specifiche e due rapporti aggregati. Ricontrollati 476 sorgenti congelati, 57 hash delle evidenze e 251 file protetti. Le diciture «nessun commit/push» descrivono la chiusura delle qualifiche, precedente a questa pubblicazione richiesta dal titolare. Fotografie, gallerie private, cataloghi, backup, bundle e toolchain restano locali.
+
+### Riduzione rumore ad alti ISO — consegnata il 21 ottobre
+
+Richiesta del titolare: pulizia molto più forte con conservazione del dettaglio, verificata sui RAW in Download. Baseline e bundle precedente conservati in `var/denoise-20261021/`; inventariati 251 file protetti (RAW, backup e architettura originale). Modifiche UI/documentali preesistenti conservate.
+
+- [x] Sostituita per le nuove regolazioni la media 5×5 con `SpectralV1`: DCT 16×16 sovrapposta, griglia sfalsata con otto stime per pixel, stima adattiva per frequenza/canale e quantità luminanza/cromia indipendenti. Alpha, valori estesi, bordi e cancellazione coperti dalle regressioni; nessuno sharpening implicito. Le vecchie ricette conservano pixel e serializzazione, finché il titolare modifica una quantità o sceglie **Aggiorna riduzione rumore**, con revisione annullabile. Aiuti IT/EN aggiornati.
+- [x] Confronti nativi su D750 ISO 6400/7200/12800 e D800 ISO 6400; D750 ISO 100 usata come riferimento imperfetto della stessa scena. Galleria privata in `var/denoise-20261021/gallery/`. Nei quattro ritagli allineati, RMSE di luminanza inferiore dell’11,6–57,1% rispetto al vecchio filtro 80/80; cromia inferiore dell’11,7–56,2%. Esposizione/allineamento fissati sull’originale, non adattati al risultato filtrato; non è una calibrazione del sensore.
+- [x] Passati 20 controlli sintetici su due semi e rumore indipendente/correlato: a 80/80 l’MSE RGB nelle aree uniformi diminuisce del 95,4–96,0% rispetto all’ingresso; texture, bordi e linee sottili migliorano rispetto al filtro storico. Queste percentuali riguardano il banco generato. Risultati fp32 identici con uno e quattro thread; tasselli contro riferimento indipendente e trasformata contro coseni diretti verificati.
+- [x] Filtro solo, quattro thread: 2,35–2,42 s a 24 MP, 3,74 s a 36 MP. Il primo prototipo superava il budget di export; la griglia sfalsata dimezza circa il costo CPU, mantenendo i controlli di qualità. PNG16/TIFF16 nativi a 24/36 MP via i due XPC coincidono in **ogni codice di canale** con la ricetta CPU; PNG in 27,9/36,0 s, TIFF in 6,45/10,01 s. Picco RSS osservato del worker circa 0,83/1,23 GB; quote e isolamento del prodotto invariati. Corretto soltanto nel verificatore il limite di lettura del TIFF a 36 MP.
+- [x] Passati 637 test workspace (45 ignorati), fmt, Clippy/all-targets con `-D warnings`, build release, prova UI nativa con salvataggio, viewer/griglia, resa finale ed export. I due test Core Image non eseguibili nel sandbox del terminale passano nella sessione macOS. Aggiornato `dist/TrueRenderer.app`, identico al candidato nei file e permessi; backup precedente conservato. Ricontrollati 476 sorgenti congelati e 251 file protetti. [Rapporto aggregato](reports/denoise-macos-2026-10-21.json) con hash delle evidenze; fotografie, cataloghi e prove restano locali.
+
+La stima resta euristica: trame deboli possono attenuarsi ad alte quantità; bande, macchie estese e scene interamente strutturate non sono risolte universalmente. Valutare al 100% con **Verifica resa finale**, perché i mip provvisori sono approssimativi. Nessun gate R/SF concluso, nessuna qualifica universale del colore o garanzia di rilascio dalla firma ad hoc. Fonti della specifica anteprime invariate; nessun commit/push eseguito.
+
+### Rimozione del rimando alla specifica Experimental dai README — 21 ottobre
+
+Su richiesta del titolare, rimosso dal README principale il collegamento al documento «trueRendererExperimental — motore RAW autonomo e fedeltà cromatica» e tolte le due voci corrispondenti dall’indice `docs/README.md`. Verificati il diff e l’assenza di rimandi al file nei due README. Il documento tecnico è conservato nel repository.
+
+### Comando miniature nella barra di stato — 21 ottobre
+
+Richiesta del titolare: spostare il pulsante della filmstrip dalla barra del percorso alla barra inferiore con «Corpus di prova».
+
+- [x] Pulsante all’estremità destra della barra di stato, accanto al controllo dimensione miniature, anche nel layout compatto. Resta disponibile a filmstrip nascosta; scorciatoia `T` conservata.
+- [x] Passati 262 test desktop (otto ignorati), fmt, Clippy/all-targets con `-D warnings`, build release e dieci layout nativi IT/EN al 100%/200%. Ispezionata la nuova posizione nelle schermate normale e compatta. Aggiornato `dist/TrueRenderer.app`, identico al candidato; firma e due XPC verificati. Backup in `var/filmstrip-footer-20261021/previous.app`, prove su corpus/catalogo isolati. [Rapporto](reports/filmstrip-footer-macos-2026-10-21.json). Nessun gate R/SF concluso; fonti anteprime invariate.
+
 ### Comandi dei tre pannelli nella barra del percorso — consegnati il 21 ottobre
 
 Richiesta successiva del titolare: togliere la freccia accanto al badge Preview, spostare il comando destro dalla barra Menu alla barra del percorso, sostituire Pannello con l’icona specchiata e rendere nascondibili le miniature da un pulsante dedicato.

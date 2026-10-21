@@ -32,6 +32,8 @@ TrueRenderer works in **linear Rec.2020 floating point**, giving its photographi
 
 The searchable **Tools** catalogue puts adjustments within reach. Each tool has its own photographic symbol and visual controls; hover over a name to see what it does, in English or Italian.
 
+For high-ISO photographs, open **Presence and detail** and adjust **Luminance noise** and **Chroma noise** independently. The adaptive filter estimates noise from the image and preserves stronger edges and texture; high amounts can soften weak detail. Start around 60–80 and judge at 100% with **Verify final rendering**. Older edits keep their original rendering until you change a noise slider or choose **Update noise reduction**; Undo restores the previous revision.
+
 ![TrueRenderer's searchable Tools catalogue beside Grand Teton at sunrise](reports/readme-ui-2026-10-20/tools.jpg)
 
 ## Build the look, layer by layer
@@ -47,7 +49,7 @@ Keep different creative decisions independently editable. Add an adjustment to a
 
 **Experiment freely.** Undo, Redo, Reset all and Before/After keep decisions reversible. Double-click a photographic slider to restore its default. Copy selected light, curve and RGB colour adjustments between photographs to carry a treatment through a series.
 
-Colour guides appear directly in the slider tracks. The path bar has matching icons to show or hide the left and right panels, plus a filmstrip toggle beside the right panel icon. Keyboard shortcuts remain **Cmd/Ctrl+B** for the left panel, **I** for Develop / Information and **T** for the viewer filmstrip.
+Colour guides appear directly in the slider tracks. The path bar has matching icons to show or hide the left and right panels. The filmstrip toggle is at the right of the bottom status bar. Keyboard shortcuts remain **Cmd/Ctrl+B** for the left panel, **I** for Develop / Information and **T** for the viewer filmstrip.
 
 ## Give every frame the right composition
 
@@ -96,7 +98,7 @@ The following camera models and recording modes are currently supported by **Tru
 | **Nikon D800** | NEF · Bayer | Full-frame FX, 12-bit or 14-bit lossless compressed RAW |
 | **Fujifilm X-T5** | RAF · X-Trans | Full-resolution, 14-bit lossy compressed RAW |
 
-Supported Bayer and X-Trans **DNG files** can also use the independent engine. Compatibility depends on the file's compression and calibration features; see the [RAW format guide](docs/progetto-truerenderer-experimental.md) for the supported combinations. Apple RAW and LibRaw have their own camera coverage.
+Supported Bayer and X-Trans **DNG files** can also use the independent engine. Compatibility depends on the file's compression and calibration features. Apple RAW and LibRaw have their own camera coverage.
 
 **Camera compatibility is expanding week by week.** I am continually adding support for new models and recording modes. If you need a particular camera implemented, contact me with the manufacturer, exact model, RAW format, bit depth and compression settings, plus an original RAW sample if available. Your requests help shape the next additions.
 

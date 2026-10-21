@@ -127,6 +127,7 @@ fn odd_crop_mips_keep_canonical_dimensions_and_transparent_boundaries() {
 fn flat_fields_and_alpha_survive_detail_and_noise_is_reduced() {
     let mut r = recipe();
     let d = &mut r.advanced.as_mut().unwrap().detail;
+    d.denoise = detail::Denoise::Legacy;
     d.texture = 45.;
     d.clarity = 60.;
     d.sharpen = 80.;

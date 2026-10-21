@@ -1,0 +1,91 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-20T23:57:33.690510+00:00",
+  "passed": true,
+  "scope": "Move existing filmstrip visibility button from path bar to bottom status bar in wide and compact layouts.",
+  "desktop_tests": {
+    "passed": 262,
+    "failed": 0,
+    "ignored": 8
+  },
+  "checks": {
+    "fmt": true,
+    "clippy_all_targets": true,
+    "release_build": true,
+    "native_layouts": 10,
+    "installed_xpc": true,
+    "document_links": 576
+  },
+  "installed_bundle": "dist/TrueRenderer.app",
+  "backup": "var/filmstrip-footer-20261021/previous.app",
+  "installed_matches_candidate": true,
+  "evidence": [
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-ui.json",
+      "sha256": "3741e0a1869abeced48ffa45743b04a3911a18a064fcf8c66d400a4c6d979fa5"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/xpc-qualification-macos.json",
+      "sha256": "4e98c75a02c3ed8f6d958755649704416a8f1040e54dd505c03ba0b22872f46f"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/desktop-tests.log",
+      "sha256": "561ff062a4efdbef6e5b8dce5b14921603d4fb8c8677f8eaa96ac4a3cdf82c57"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/clippy.log",
+      "sha256": "c082a753f9e936fdbd6547810f175ffc2e489823df309d3744985e09d40f19c3"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/build.log",
+      "sha256": "2313813dade09cf5bb539b6a5243c30b03b494f93d587bb3fe53a2a5601727cc"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/installed-inventory.json",
+      "sha256": "7f1670b734caf4be1c572ceb277925af67b7fb50d97693dce7f39416ddf658a9"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-00.png",
+      "sha256": "3f2cf5ec732928c7a6cda52d12be975dfb032efc46fd74bca65482e990aaf8f3"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-01.png",
+      "sha256": "68cdc2a963507094ef98bea8929e0cf8a99ebb1f3e47db4ee1e224190cb20371"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-02.png",
+      "sha256": "d1744257a156e967ef379cc29d9c8af03d4bcdc4cf7a570aa55e873f2f85eb5b"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-03.png",
+      "sha256": "732538dd41e0a12fa2e3f62978c470b27c6ae658f4fd9f8c02f7f4a43a8d6c30"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-04.png",
+      "sha256": "152abc0cb5a4210258790ad0a1fd97043a967ecfcccb708720b06911be7e118e"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-05.png",
+      "sha256": "e5f038426629aaf348a494704b113becb9c023264dc2fa2ef29f12b83a5e69f6"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-06.png",
+      "sha256": "df1a655dcc74513bbf7fb33212eb260d3d03e1054d729dc1e2b3fdaeac05c6dd"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-07.png",
+      "sha256": "d308b1f0e6fec1327955764ab6242cbb21de59bdb80841ec3133e440786b6fba"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-08.png",
+      "sha256": "d9625788cbb41217ccd88c9a0d58dfdd0c4a8df1f8e64821989afd804c39d962"
+    },
+    {
+      "path": "var/filmstrip-footer-20261021/native/reports/inspector-09.png",
+      "sha256": "2db98548a7736237c14de322414c7317fd8ec1df938acb419531d577427bb77d"
+    }
+  ],
+  "limitations": [
+    "No new R/SF gate or full accessibility/platform qualification."
+  ]
+}

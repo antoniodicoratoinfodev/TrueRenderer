@@ -3333,6 +3333,26 @@ impl TrueRenderer {
         ui.label(RichText::new(lang.text("Miniature")).small().color(MUTED));
     }
 
+    fn filmstrip_toggle(&mut self, ui: &mut egui::Ui) {
+        let lang = self.cache_settings.language;
+        if style::icon_button(
+            ui,
+            self.state.view != ViewMode::Grid,
+            style::Icon::Filmstrip {
+                open: self.show_filmstrip && self.state.view != ViewMode::Grid,
+            },
+            lang.text(if self.show_filmstrip {
+                "Nascondi miniature (T)"
+            } else {
+                "Mostra miniature (T)"
+            }),
+        )
+        .clicked()
+        {
+            self.show_filmstrip = !self.show_filmstrip;
+        }
+    }
+
     fn footer(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         let compact = ui.available_width() < 1000.;
@@ -3374,6 +3394,7 @@ impl TrueRenderer {
                                 .color(MUTED),
                         );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            self.filmstrip_toggle(ui);
                             self.thumbnail_size_control(ui);
                             ui.add(
                                 egui::Label::new(
@@ -3395,6 +3416,7 @@ impl TrueRenderer {
                                 .color(MUTED),
                         );
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            self.filmstrip_toggle(ui);
                             self.thumbnail_size_control(ui);
                         });
                     });

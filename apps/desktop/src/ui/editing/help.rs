@@ -567,13 +567,18 @@ const CONTROLS: &[ControlHelp] = &[
     },
     ControlHelp {
         names: "Rumore luminanza",
-        it: "Attenua le variazioni di luminosità dovute al rumore, con possibile perdita di dettaglio.",
-        en: "Reduces brightness noise, potentially softening detail.",
+        it: "Riduce la grana stimando il rumore della foto e proteggendo i dettagli più forti. Aumenta gradualmente; valori elevati possono attenuare le trame fini. Valuta al 100% con Verifica resa finale.",
+        en: "Reduces grain using the photo’s estimated noise while protecting stronger detail. Increase gradually; high values can soften fine texture. Evaluate at 100% with Verify final rendering.",
     },
     ControlHelp {
         names: "Rumore cromatico",
-        it: "Attenua le variazioni di colore dovute al rumore.",
-        en: "Reduces color variations caused by noise.",
+        it: "Riduce puntini e macchie colorate separatamente dalla grana di luminanza. Valori elevati possono attenuare dettagli cromatici molto fini.",
+        en: "Reduces colored speckles and blotches separately from luminance grain. High values may soften very fine color detail.",
+    },
+    ControlHelp {
+        names: "Aggiorna riduzione rumore",
+        it: "Applica il nuovo filtro con le quantità già impostate. La revisione precedente rimane disponibile con Annulla; aprire una vecchia ricetta conserva la sua resa.",
+        en: "Applies the new filter at the current amounts. The previous revision remains available through Undo; opening an old recipe preserves its rendering.",
     },
     ControlHelp {
         names: "Distorsione",

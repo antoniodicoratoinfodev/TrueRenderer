@@ -564,6 +564,7 @@ impl Language {
             "Soglia rumore" => "Noise threshold",
             "Rumore luminanza" => "Luminance noise",
             "Rumore cromatico" => "Chroma noise",
+            "Aggiorna riduzione rumore" => "Update noise reduction",
             "Per valutare il dettaglio usa Verifica resa finale e zoom 100%." => {
                 "Use Verify final rendering and 100% zoom to assess detail."
             }

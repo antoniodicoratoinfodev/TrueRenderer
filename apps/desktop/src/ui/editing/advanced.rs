@@ -281,6 +281,7 @@ impl Controls {
         panels::Section::new(lang, "detail", "Presenza e dettaglio")
             .default_open(false)
             .show(ui, |ui| {
+                let previous_noise = (a.detail.luminance_noise, a.detail.chroma_noise);
                 for (label, v, min, max) in [
                     ("Texture", &mut a.detail.texture, -100., 100.),
                     ("Chiarezza", &mut a.detail.clarity, -100., 100.),
@@ -304,6 +305,16 @@ impl Controls {
                         },
                         &mut commit,
                     );
+                }
+                if previous_noise != (a.detail.luminance_noise, a.detail.chroma_noise) {
+                    a.detail.denoise = tr_core::editing::detail::Denoise::SpectralV1;
+                }
+                if a.detail.denoise == tr_core::editing::detail::Denoise::Legacy
+                    && (a.detail.luminance_noise > 0. || a.detail.chroma_noise > 0.)
+                    && help::button(ui, lang, "Aggiorna riduzione rumore").clicked()
+                {
+                    a.detail.denoise = tr_core::editing::detail::Denoise::SpectralV1;
+                    commit = true;
                 }
                 ui.small(
                     lang.text("Per valutare il dettaglio usa Verifica resa finale e zoom 100%."),

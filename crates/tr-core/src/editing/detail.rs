@@ -4,10 +4,28 @@ use crate::color::{LinearImage, Pixel};
 use anyhow::Result;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+mod denoise;
+#[cfg(test)]
+mod denoise_tests;
+
+/// Missing in historical recipes: retain the original arithmetic and digest.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Denoise {
+    #[default]
+    Legacy,
+    SpectralV1,
+}
+impl Denoise {
+    fn is_legacy(&self) -> bool {
+        *self == Self::Legacy
+    }
+}
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Detail {
+    #[serde(default, skip_serializing_if = "Denoise::is_legacy")]
+    pub denoise: Denoise,
     pub texture: f32,
     pub clarity: f32,
     pub dehaze: f32,
@@ -20,6 +38,7 @@ pub struct Detail {
 impl Default for Detail {
     fn default() -> Self {
         Self {
+            denoise: Denoise::SpectralV1,
             texture: 0.,
             clarity: 0.,
             dehaze: 0.,
@@ -68,7 +87,17 @@ impl Detail {
             return Ok(());
         }
         let scale = image.width.max(image.height) as f32 / native[0].max(native[1]) as f32;
-        if self.luminance_noise > 0. || self.chroma_noise > 0. {
+        if (self.luminance_noise > 0. || self.chroma_noise > 0.)
+            && self.denoise == Denoise::SpectralV1
+        {
+            denoise::apply(
+                image,
+                scale,
+                self.luminance_noise / 100.,
+                self.chroma_noise / 100.,
+                cancelled,
+            )?;
+        } else if self.luminance_noise > 0. || self.chroma_noise > 0. {
             let blurred = blur(image, (2. * scale).round().max(1.) as u32);
             super::pixels_mut(&mut image.pixels, |i, p| {
                 let b = blurred[i];

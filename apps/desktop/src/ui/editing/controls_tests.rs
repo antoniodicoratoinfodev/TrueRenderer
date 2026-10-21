@@ -2386,3 +2386,44 @@ fn a_full_layer_stack_keeps_the_selected_inspector_near_the_top() {
         assert_eq!(recipe, before);
     }
 }
+
+#[test]
+fn historical_noise_updates_only_after_explicit_action_and_commits_once() {
+    use tr_core::editing::detail::Denoise;
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        ctx.memory_mut(|m| m.set_everything_is_visible(true));
+        let mut controls = advanced::Controls::default();
+        let mut recipe = crate::verify_advanced::recipe(Default::default());
+        recipe.advanced.as_mut().unwrap().detail.denoise = Denoise::Legacy;
+        let original = recipe.clone();
+        let mut shapes = Shapes::default();
+        for _ in 0..2 {
+            shapes = frame(&ctx, vec![], |ui| {
+                assert_eq!(
+                    controls.show(ui, lang, &mut recipe, Some([6000, 4000])),
+                    (false, false)
+                );
+            });
+        }
+        assert_eq!(recipe, original);
+        let position = shapes
+            .texts
+            .iter()
+            .find(|(t, _)| t == lang.text("Aggiorna riduzione rumore"))
+            .unwrap()
+            .1
+            .center();
+        let mut commits = 0;
+        for pressed in [true, false] {
+            frame(&ctx, click(position, pressed), |ui| {
+                commits += usize::from(controls.show(ui, lang, &mut recipe, Some([6000, 4000])).1);
+            });
+        }
+        assert_eq!(commits, 1);
+        let mut expected = original;
+        expected.advanced.as_mut().unwrap().detail.denoise = Denoise::SpectralV1;
+        assert_eq!(recipe, expected);
+        recipe.validate().unwrap();
+    }
+}

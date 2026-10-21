@@ -1,0 +1,528 @@
+{
+  "application": "TrueRenderer",
+  "checked_at": "2026-10-21T11:11:05.898762+00:00",
+  "passed": true,
+  "scope": "Versioned adaptive spectral denoising; private Nikon high-ISO samples, synthetic truth, native UI and exact native-resolution PNG16/TIFF16 parity through sandboxed XPC.",
+  "implementation": {
+    "algorithm": "SpectralV1",
+    "domain": "extended linear Rec.2020; independent Y / R-Y / B-Y shrinkage",
+    "native_patch": [
+      16,
+      16
+    ],
+    "lattice": "4-pixel grid, even index parity; eight overlapping estimates per opaque pixel",
+    "noise_model": "up to 1024 deterministic patches, per-channel/frequency robust estimate with signal dependence",
+    "legacy_recipes": "Absent denoise field preserves historical serialization/filter; explicit slider change or upgrade button creates undoable SpectralV1 revision.",
+    "dependencies_added": [],
+    "generative_reconstruction": false
+  },
+  "validation": {
+    "workspace_tests": {
+      "passed": 637,
+      "failed": 0,
+      "ignored": 45,
+      "groups": 22
+    },
+    "fmt": true,
+    "clippy_workspace_all_targets_deny_warnings": true,
+    "release_build": true,
+    "synthetic_checks": 20,
+    "native_ui": true,
+    "native_output_proof_and_export": true,
+    "installed_two_xpc": true,
+    "source_files_frozen": 476,
+    "protected_files_unchanged": 251,
+    "thread_counts_1_and_4_bit_exact": true
+  },
+  "photographic_samples": [
+    {
+      "camera": "Nikon D750",
+      "iso": [
+        100,
+        6400,
+        7200,
+        12800
+      ],
+      "size": [
+        6016,
+        4016
+      ],
+      "iso100_role": "imperfect low-noise reference, not denoised in this campaign"
+    },
+    {
+      "camera": "Nikon D800",
+      "iso": [
+        6400
+      ],
+      "size": [
+        7360,
+        4912
+      ]
+    }
+  ],
+  "synthetic_quality": {
+    "amounts": [
+      80,
+      80
+    ],
+    "seeds": [
+      42021,
+      42029
+    ],
+    "noise": "independent and spatially correlated, signal-dependent, known scene-linear truth",
+    "ranges": {
+      "flat": {
+        "rgb_mse_reduction_percent_vs_input": [
+          95.38054254290151,
+          96.01433454063068
+        ],
+        "rgb_mse_reduction_percent_vs_legacy80": [
+          73.54359309079771,
+          85.71646179153991
+        ]
+      },
+      "texture": {
+        "rgb_mse_reduction_percent_vs_input": [
+          87.2127235575541,
+          94.22411511892672
+        ],
+        "rgb_mse_reduction_percent_vs_legacy80": [
+          73.56845336797473,
+          81.90094281050808
+        ]
+      },
+      "edges": {
+        "rgb_mse_reduction_percent_vs_input": [
+          94.10772766412639,
+          94.97982334935557
+        ],
+        "rgb_mse_reduction_percent_vs_legacy80": [
+          73.6499406543761,
+          83.45159397650959
+        ]
+      },
+      "thin_lines": {
+        "rgb_mse_reduction_percent_vs_input": [
+          88.80287074445212,
+          91.44725073806583
+        ],
+        "rgb_mse_reduction_percent_vs_legacy80": [
+          62.387364319435434,
+          73.3942540383387
+        ]
+      }
+    },
+    "scope": "Error reductions on these generated signals only, not universal photographic noise percentages."
+  },
+  "matched_photo_quality": {
+    "comparison": "D750 ISO12800 against ISO100, linear patches, translation/exposure alignment selected on original only and fixed across variants",
+    "patches": [
+      {
+        "patch": "text",
+        "rect": [
+          2600,
+          1500,
+          512,
+          512
+        ],
+        "registration_pixels": [
+          0,
+          1
+        ],
+        "reference_exposure_gain": 1.2138875722885132,
+        "luma_rmse_reduction_percent_vs_legacy80": 11.5730263463637,
+        "chroma_rmse_reduction_percent_vs_legacy80": 15.510242151774833
+      },
+      {
+        "patch": "fine_print",
+        "rect": [
+          1800,
+          3000,
+          512,
+          512
+        ],
+        "registration_pixels": [
+          1,
+          0
+        ],
+        "reference_exposure_gain": 1.1482748985290527,
+        "luma_rmse_reduction_percent_vs_legacy80": 30.884296248130195,
+        "chroma_rmse_reduction_percent_vs_legacy80": 11.69543988273103
+      },
+      {
+        "patch": "smooth_shelf",
+        "rect": [
+          3000,
+          3700,
+          512,
+          256
+        ],
+        "registration_pixels": [
+          0,
+          -1
+        ],
+        "reference_exposure_gain": 1.1022955179214478,
+        "luma_rmse_reduction_percent_vs_legacy80": 38.80532475322103,
+        "chroma_rmse_reduction_percent_vs_legacy80": 22.41875301699957
+      },
+      {
+        "patch": "shadow",
+        "rect": [
+          2800,
+          100,
+          512,
+          256
+        ],
+        "registration_pixels": [
+          0,
+          1
+        ],
+        "reference_exposure_gain": 1.215363621711731,
+        "luma_rmse_reduction_percent_vs_legacy80": 57.06538512750612,
+        "chroma_rmse_reduction_percent_vs_legacy80": 56.20251217808849
+      }
+    ],
+    "scope": "Different captures and exposures; not calibrated ground truth."
+  },
+  "filter_performance": {
+    "threads": 4,
+    "measurements": [
+      {
+        "case": "d800a",
+        "wall_seconds": 4.819970791,
+        "cpu_user_seconds": 15.135945,
+        "cpu_system_seconds": 0.6421859999999999,
+        "peak_rss_bytes_macos_cumulative": 1159823360,
+        "probe": {
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "SpectralV1",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 0.0
+          },
+          "seconds": 3.744565583,
+          "size": [
+            7360,
+            4912
+          ]
+        }
+      },
+      {
+        "case": "iso12800",
+        "wall_seconds": 3.067732209,
+        "cpu_user_seconds": 9.380262000000002,
+        "cpu_system_seconds": 0.46246300000000007,
+        "peak_rss_bytes_macos_cumulative": 1159823360,
+        "probe": {
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "SpectralV1",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 0.0
+          },
+          "seconds": 2.3550106250000002,
+          "size": [
+            6016,
+            4016
+          ]
+        }
+      },
+      {
+        "case": "iso6400",
+        "wall_seconds": 3.1890491670000003,
+        "cpu_user_seconds": 9.661141999999998,
+        "cpu_system_seconds": 0.47310300000000005,
+        "peak_rss_bytes_macos_cumulative": 1159823360,
+        "probe": {
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "SpectralV1",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 0.0
+          },
+          "seconds": 2.421931542,
+          "size": [
+            6016,
+            4016
+          ]
+        }
+      },
+      {
+        "case": "d750scene",
+        "wall_seconds": 3.108642917000001,
+        "cpu_user_seconds": 9.654930999999998,
+        "cpu_system_seconds": 0.4367089999999998,
+        "peak_rss_bytes_macos_cumulative": 1159823360,
+        "probe": {
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "SpectralV1",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 0.0
+          },
+          "seconds": 2.405515417,
+          "size": [
+            6016,
+            4016
+          ]
+        }
+      }
+    ],
+    "scope": "Filter-only seconds exclude RAW decode, encoding and UI; process wall/RSS includes the offline probe. RSS is cumulative across child processes and peaks are observational."
+  },
+  "native_exports": [
+    {
+      "size": [
+        6016,
+        4016
+      ],
+      "native_reference_recipe_seconds": 2.265836334,
+      "scratch_reservation_bytes": 784564224,
+      "cases": [
+        {
+          "format": "Png16",
+          "slot": 0,
+          "seconds": 27.916138041,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 832176128,
+          "worker_cpu_seconds_sampled": 31.97
+        },
+        {
+          "format": "Tiff16",
+          "slot": 1,
+          "seconds": 6.449045042,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 832208896,
+          "worker_cpu_seconds_sampled": 13.77
+        }
+      ]
+    },
+    {
+      "size": [
+        7360,
+        4912
+      ],
+      "native_reference_recipe_seconds": 3.289567708,
+      "scratch_reservation_bytes": 1169686528,
+      "cases": [
+        {
+          "format": "Png16",
+          "slot": 0,
+          "seconds": 36.023385542,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1229357056,
+          "worker_cpu_seconds_sampled": 45.03
+        },
+        {
+          "format": "Tiff16",
+          "slot": 1,
+          "seconds": 10.006420666,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1229062144,
+          "worker_cpu_seconds_sampled": 21.01
+        }
+      ]
+    }
+  ],
+  "installed_bundle": "dist/TrueRenderer.app",
+  "backup": "var/denoise-20261021/previous.app",
+  "replaced_distribution": "var/denoise-20261021/replaced-distribution.app",
+  "installed_matches_candidate": true,
+  "negative_results_and_resolution": [
+    "Initial sixteen-overlap prototype exceeded service runtime/resource budget at 36 MP; eight-overlap staggered lattice reduces filter CPU by about half. XPC limits unchanged; final native exports pass.",
+    "Two workspace native tests could not access Core Image from the terminal sandbox; both pass in the full macOS test run.",
+    "TIFF36 export succeeded but the first parity reader hit its generic 512 MiB allocation limit. The diagnostic now reserves a finite amount from known frame dimensions; final all-pixel comparison passes. Product decoder quotas are unchanged."
+  ],
+  "limitations": [
+    "Heuristic noise estimate, no physical camera calibration. Weak texture may soften at high strength; banding, large blotches and entirely textured scenes are not universally handled.",
+    "Provisional mip rendering is approximate. Assess at 100% using final rendering; native reference and export share the full-frame algorithm.",
+    "Performance and quality measurements apply to these samples and this machine. No new R0–R4 or SF0–SF10 gate, universal RAW quality qualification, Standard/Reference assurance, or release signing guarantee.",
+    "Original photos, gallery, databases, backups and binaries remain local. No commit or push performed."
+  ],
+  "evidence": [
+    {
+      "path": "var/denoise-20261021/workspace-tests-native.log",
+      "sha256": "d0888e33a7a40f6e1138558a10482a69f024769b36994b4cb9af25b40e4e7f8f"
+    },
+    {
+      "path": "var/denoise-20261021/workspace-test-counts.json",
+      "sha256": "99979c348c468db74971e055defbc1c8c06a0c944b8e7d22914bc3951dc40f19"
+    },
+    {
+      "path": "var/denoise-20261021/clippy-qualified-final.log",
+      "sha256": "53be7fd8585de5d6311aab9f42ea9ce99a04279aa0fc9701d2a4b74f870b108e"
+    },
+    {
+      "path": "var/denoise-20261021/build-staggered.log",
+      "sha256": "1cc44a219a51cffd3ca5bc2b8952e1e1c44c2f49c44dc13163da5ee836395118"
+    },
+    {
+      "path": "var/denoise-20261021/build-qualified-final.log",
+      "sha256": "c9b9d0658a8814e163e861edc976e854c0a37c9ec724e4a9fc8ab4c76e7f9df7"
+    },
+    {
+      "path": "var/denoise-20261021/package-qualified-final.log",
+      "sha256": "9dadca2c4d03e7bdf46114c1a8db8fce04f2aead8e0b86c3fd92624694ad983f"
+    },
+    {
+      "path": "var/denoise-20261021/qualified-source.json",
+      "sha256": "ca9171d878ffef11d49c3ca27e6d044853dfeaaa49439395065c819ed126190c"
+    },
+    {
+      "path": "var/denoise-20261021/quality-probe-final",
+      "sha256": "c8a8112ba3ec2720e24b427450660e691e9cbbb067f511cd7163218c1cf1c710"
+    },
+    {
+      "path": "var/denoise-20261021/synthetic-staggered/quality.json",
+      "sha256": "286e1521aa4542c8705fd46ac6aa61ac491106e5865265107414838e2fd0a214"
+    },
+    {
+      "path": "var/denoise-20261021/staggered-performance.json",
+      "sha256": "1f06707e235a0e9d59db24c3a0531cfbdc369eb4ee5d6293c5f020c2768eefa9"
+    },
+    {
+      "path": "var/denoise-20261021/thread-parity.json",
+      "sha256": "e0376a2c3f42ff68c87b889a06ad7bde70baeea3047e9f13c7ab0e9a43468bf5"
+    },
+    {
+      "path": "var/denoise-20261021/matched-reference-staggered.json",
+      "sha256": "c6443af85a782fe1baf4c53289961d9cb9ed89185d4175e24acd0056837ee9d4"
+    },
+    {
+      "path": "var/denoise-20261021/input-inventory.json",
+      "sha256": "4e85b4e83048c24604683222be8b87e54f5d288a8b2d446b632c20793a35385f"
+    },
+    {
+      "path": "var/denoise-20261021/protected-after.json",
+      "sha256": "0f814242d5886d54da1c6cbfae53ecc99376620df7e4c48aa2a68edd0847afc5"
+    },
+    {
+      "path": "var/denoise-20261021/installed-inventory.json",
+      "sha256": "285f82c5037a6bb35e0805e18bdc4b43f6487253eee1f920566c37443f5a4b84"
+    },
+    {
+      "path": "var/denoise-20261021/final-checks.json",
+      "sha256": "c7fe3ac235c36d7d4bdc055d2432701e62f7717465afa7e20eee4f32a978e7f2"
+    },
+    {
+      "path": "var/denoise-20261021/native-final/reports/develop-ui.json",
+      "sha256": "4e6832b1c693f1d3058d541441650e7c5556234a0fbcc6925bc0779727676ad7"
+    },
+    {
+      "path": "var/denoise-20261021/native-final/reports/develop-viewer.png",
+      "sha256": "83502d58a4b0bb3836ff4500b8a01c9d46d208b450d8b246e536fb9bcccae497"
+    },
+    {
+      "path": "var/denoise-20261021/native-final/reports/develop-grid.png",
+      "sha256": "a29babd1164b506e580c8133f850a5887e0a2e0d8cb9f62704c04c39d235d6ff"
+    },
+    {
+      "path": "var/denoise-20261021/native-final/reports/develop-viewer-sampling.json",
+      "sha256": "375f41c093bda32d2e9b22dbdbe1358d02909e599e693c4d5c20a083d8f006aa"
+    },
+    {
+      "path": "var/denoise-20261021/native-final/reports/develop-grid-sampling.json",
+      "sha256": "ff927aae231998b53853f5afd0248c0d0c903d5e223eefaa610ff6d46ab78201"
+    },
+    {
+      "path": "var/denoise-20261021/installed-check/reports/xpc-qualification-macos.json",
+      "sha256": "d41e4afb913680072cdc365b218e8f32e5ac1e32eef26ebdde6494164d35a250"
+    },
+    {
+      "path": "var/denoise-20261021/installed-check/reports/xpc-integration-macos.json",
+      "sha256": "cd4bc0e467d5fc3a0e7aa6679e29f6c482dfe5fb0d70ddd06ab132df29dffe80"
+    },
+    {
+      "path": "var/denoise-20261021/gallery/index.html",
+      "sha256": "149366c5d109cea1272266d560efc7c54c1bd25c4db6123a37c7ffa0e45d1f72"
+    },
+    {
+      "path": "var/denoise-20261021/gallery/crop-positions.json",
+      "sha256": "0c0a289574c4dda2374b085d8f0b874e996da311c9c6246a7620ad4cb184d6e2"
+    },
+    {
+      "path": "var/denoise-20261021/export36.log",
+      "sha256": "7e26e15180dc6ac45f2f98ad55c4ffe62667baaf847d3c88cfb447d56a046d36"
+    },
+    {
+      "path": "var/denoise-20261021/export36-staggered.log",
+      "sha256": "1b483a94544b034ef01b34fd110ce1e8d3a4cb5524251767301d597e6d4246ad"
+    },
+    {
+      "path": "var/denoise-20261021/export36-staggered/performance-sampled.json",
+      "sha256": "87f9e343a987410ef75b3b89f5364358959e21d1f13999cd535221b734bfbdd5"
+    },
+    {
+      "path": "var/denoise-20261021/workspace-tests.log",
+      "sha256": "2f5819e69f864c5edca412ae94016d6266a8d4cadf55cffade44e4833b4298bf"
+    },
+    {
+      "path": "var/denoise-20261021/export24-final/denoise-export/parity.json",
+      "sha256": "a7dc78e19799653236965cd8ac0def6a48c760b53319357312a66670f7715c7e"
+    },
+    {
+      "path": "var/denoise-20261021/export24-final/performance-sampled.json",
+      "sha256": "744c4f61cd379e37937a221ef603a7b3df2a42a4a67a2789326e095bce6b6eac"
+    },
+    {
+      "path": "var/denoise-20261021/export24-final.log",
+      "sha256": "738cd84db83c25df37db150f4e08c44ba18a5210efbf859705a7bfbc47a49439"
+    },
+    {
+      "path": "var/denoise-20261021/export36-final/denoise-export/parity.json",
+      "sha256": "e42322c165cdf7b2c626bbae47278655fad960860ed3792071128afca929a94e"
+    },
+    {
+      "path": "var/denoise-20261021/export36-final/performance-sampled.json",
+      "sha256": "fe99cbfeaf3013553f32dc85d8366e06bbc9a8b4cf9007fb54e57cf4db150be0"
+    },
+    {
+      "path": "var/denoise-20261021/export36-final.log",
+      "sha256": "cca159ae8cce2483ddc33a10df2dc2108decf11693f126c21a033ce70d97ec0f"
+    },
+    {
+      "path": "var/denoise-20261021/iso12800/text-comparison.png",
+      "sha256": "1878fc1db77a4d1861922d15806a2f181d7aef64e1cea5509f7fbfb3307808c2"
+    },
+    {
+      "path": "var/denoise-20261021/iso12800/fine_print-comparison.png",
+      "sha256": "2e81af945da364073d04f57d8769d3737d9e73fa5b61b8a9a6d7827c841a8744"
+    },
+    {
+      "path": "var/denoise-20261021/iso12800/smooth_shelf-comparison.png",
+      "sha256": "b4c721844ba0fc30ea9cf2eda99b64cb2d8bc67c07bb799e6fdde81c0f0d298a"
+    },
+    {
+      "path": "var/denoise-20261021/iso12800/shadow-comparison.png",
+      "sha256": "6d4b71ec30fc8089170f6ffac30186fecb8f25c9f681b61ec3ca352f0bdb38f9"
+    },
+    {
+      "path": "var/denoise-20261021/d800a/chandelier-compare.png",
+      "sha256": "0af846595bb3ddfdcb3befd8db79c19f023093deb0ad9cfc5f5a260c05cce9ab"
+    },
+    {
+      "path": "var/denoise-20261021/d800a/ornament-compare.png",
+      "sha256": "3d270e0f0cdb12a220cf765626e4ec0921496f73f4ce4884d00e11fa92932f31"
+    }
+  ]
+}

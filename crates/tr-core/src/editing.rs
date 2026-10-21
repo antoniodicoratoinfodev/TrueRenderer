@@ -519,7 +519,16 @@ impl EditRecipe {
             } else {
                 u64::from(a.geometry.has_mapping())
             };
-            u64::from(width) * u64::from(height) * 16 * frames + 1024 * 1024
+            let spectral = a.detail.denoise == detail::Denoise::SpectralV1
+                && (a.detail.luminance_noise > 0. || a.detail.chroma_noise > 0.);
+            // The DCT model is bounded to 1024 patches; each parallel 64-row
+            // stripe uses a 64 KiB accumulator and fixed transform scratch.
+            let stripe_scratch = if spectral {
+                4 * 1024 * 1024 + u64::from(height.div_ceil(64).min(256)) * 96 * 1024
+            } else {
+                0
+            };
+            u64::from(width) * u64::from(height) * 16 * frames + 1024 * 1024 + stripe_scratch
         });
         historical.max(if self.layers.as_ref().is_some_and(|s| !s.is_neutral()) {
             1024 * 1024

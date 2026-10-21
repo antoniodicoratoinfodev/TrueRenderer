@@ -3612,7 +3612,7 @@ campi MakerNote qualificati restano in sola lettura.
 
 Le schede Sviluppo/Informazioni si mostrano e nascondono dall’icona all’estremità destra
 della barra del percorso. L’icona specchiata all’estremità sinistra alterna Esplora/Libreria;
-il pulsante accanto a quello destro alterna la striscia di miniature nel viewer/confronto.
+il pulsante all’estremità destra della barra di stato in basso alterna la striscia di miniature nel viewer/confronto.
 Le icone restano raggiungibili a pannelli nascosti e nelle finestre compatte. Restano disponibili
 `I`, `Cmd/Ctrl+B` e `T` nei rispettivi contesti. La riapertura conserva le schede selezionate
 e non modifica la ricetta fotografica.
