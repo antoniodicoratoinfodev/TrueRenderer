@@ -17,6 +17,7 @@ pub(super) struct FolderLoad {
     finishing: bool,
     viewer_edge: u32,
     refining: Option<(String, PreviewRequest)>,
+    pub(super) cache_miss: Option<(String, PreviewRequest)>,
 }
 
 #[derive(Default)]
@@ -65,8 +66,11 @@ impl TrueRenderer {
     pub(super) fn start_folder_preparation(&mut self, force: bool) {
         // Existing measurement probes deliberately control their own demand.
         if (self.smoke || self.navigation_probe.is_some())
-            && !std::env::args()
-                .any(|a| a == "--folder-loading-smoke" || a == "--navigation-prepared-folder")
+            && !std::env::args().any(|a| {
+                a == "--folder-loading-smoke"
+                    || a == "--navigation-prepared-folder"
+                    || a == "--cache-reopen-smoke"
+            })
         {
             return;
         }
@@ -114,6 +118,7 @@ impl TrueRenderer {
         self.folder_load.finishing = true;
         self.folder_load.viewer_edge = 0;
         self.folder_load.refining = None;
+        self.folder_load.cache_miss = None;
         if self.folder_load.foreground {
             self.preparation_paused = false;
             self.cache.clear();
@@ -232,6 +237,42 @@ impl TrueRenderer {
             {
                 self.folder_load.refining = None;
             }
+            if self.cache.contains_key(&viewer_key)
+                || self
+                    .errors
+                    .contains_key(&format!("{}:{:?}", viewer_key.0, viewer_key.1))
+            {
+                self.folder_load.refining = Some(viewer_key.clone());
+            }
+            if self.folder_load.refining.is_none()
+                && !self.cache.contains_key(&native_key)
+                && !self.pending_images.contains(&native_key)
+                && !self
+                    .errors
+                    .contains_key(&format!("{}:{:?}", native_key.0, native_key.1))
+                && self.folder_load.cache_miss.as_ref() != Some(&viewer_key)
+            {
+                if !self.pending_images.contains(&viewer_key)
+                    && (self.service.cache.under_pressure()
+                        || self.demand.iter().any(|key| {
+                            !self.cache.contains_key(key)
+                                && !self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
+                        }))
+                {
+                    self.folder_load.waiting = true;
+                    return true;
+                }
+                // A previous launch may have retained only the viewing tail.
+                // Validate it on the normal source/cache lane before requesting
+                // native detail. A miss resumes the original full preparation.
+                self.ensure_preview_lookup(
+                    &item,
+                    viewer_key.1,
+                    self.folder_preparation_priority(),
+                    true,
+                );
+                return true;
+            }
             if self.folder_load.refining.is_none() && self.cache.contains_key(&native_key) {
                 self.folder_load.refining = Some(viewer_key.clone());
             }
@@ -262,6 +303,7 @@ impl TrueRenderer {
                 }
                 self.rebuild.pop_front();
                 self.folder_load.refining = None;
+                self.folder_load.cache_miss = None;
                 self.folder_load.errors += usize::from(failed);
             } else if self.folder_load.refining.is_some() {
                 // This phase also runs with persistence disabled or over quota.
@@ -546,6 +588,37 @@ impl TrueRenderer {
             .clicked()
         {
             self.start_cache_action(false);
+        }
+    }
+
+    pub(super) fn cache_reopen_smoke(&mut self, ctx: &egui::Context) {
+        ctx.request_repaint_after(Duration::from_millis(50));
+        let (done, total, _) = self.folder_progress();
+        let failed = self.fatal
+            || self.folder_load.errors > 0
+            || self.started.elapsed() > Duration::from_secs(600);
+        let complete = !self.scanning
+            && total > 0
+            && done == total
+            && !self.folder_load.finishing
+            && self.pending_images.is_empty()
+            && !self.service.cache.preview_writes_pending();
+        if failed || complete {
+            let stats = self.service.cache.stats();
+            let report = serde_json::json!({
+                "passed": complete && !failed, "processed": done, "total": total,
+                "errors": self.folder_load.errors, "decode_jobs": stats.decode_jobs,
+                "cache_hits": stats.hits, "writes": stats.writes,
+                "elapsed_seconds": self.started.elapsed().as_secs_f64(),
+                "quality": self.service.cache.settings().quality,
+                "viewer_edge": self.folder_load.viewer_edge,
+                "scope": "Normal folder preparation in a separate process; original validation retained; no cache deletion."
+            });
+            let _ = std::fs::write(
+                self.root.join("reports/cache-reopen.json"),
+                serde_json::to_vec_pretty(&report).unwrap(),
+            );
+            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
         }
     }
 

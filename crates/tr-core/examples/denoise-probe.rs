@@ -15,8 +15,8 @@ use tr_core::{
 fn main() -> Result<()> {
     let args: Vec<_> = std::env::args().skip(1).collect();
     ensure!(
-        args.len() == 6 || args.len() == 10,
-        "INPUT_DIR NEW_OUTPUT_PREFIX LUMA CHROMA legacy|spectral THREADS [X Y W H]"
+        [6, 7, 10, 11].contains(&args.len()),
+        "INPUT_DIR NEW_OUTPUT_PREFIX LUMA CHROMA legacy|spectral|multiscale THREADS [X Y W H] [THRESHOLD]"
     );
     let input = PathBuf::from(&args[0]);
     let output = PathBuf::from(&args[1]);
@@ -40,9 +40,9 @@ fn main() -> Result<()> {
     );
     file.read_exact(bytemuck::cast_slice_mut(&mut pixels))?;
     let mut image = LinearImage::new(w, h, pixels)?;
-    if args.len() == 10 {
+    if args.len() >= 10 {
         let mut rect = [0_u32; 4];
-        for (v, s) in rect.iter_mut().zip(&args[6..]) {
+        for (v, s) in rect.iter_mut().zip(&args[6..10]) {
             *v = s.parse()?;
         }
         let [x, y, cw, ch] = rect;
@@ -68,7 +68,13 @@ fn main() -> Result<()> {
         denoise: match args[4].as_str() {
             "legacy" => Denoise::Legacy,
             "spectral" => Denoise::SpectralV1,
+            "multiscale" => Denoise::MultiscaleV2,
             _ => anyhow::bail!("unknown method"),
+        },
+        threshold: if args.len() % 2 == 1 {
+            args.last().unwrap().parse()?
+        } else {
+            0.
         },
         ..Default::default()
     };

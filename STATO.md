@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 21 ottobre 2026.
+Aggiornato: 22 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
@@ -32,6 +32,43 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 **Pubblicazione richiesta il 21 ottobre:** riuniti in 11 file i due incrementi slider/pannelli, con sorgenti, guida, specifiche, stato e due rapporti aggregati. Ricontrollati i 35 hash delle evidenze; bundle, cataloghi, fotografie, backup e toolchain restano locali.
 
 **Pubblicazione denoiser e rifiniture richiesta il 21 ottobre:** riuniti in 22 file il filtro per alti ISO, il comando miniature nella barra di stato e la rimozione dei rimandi Experimental dai README, con regressioni, specifiche e due rapporti aggregati. Ricontrollati 476 sorgenti congelati, 57 hash delle evidenze e 251 file protetti. Le diciture «nessun commit/push» descrivono la chiusura delle qualifiche, precedente a questa pubblicazione richiesta dal titolare. Fotografie, gallerie private, cataloghi, backup, bundle e toolchain restano locali.
+
+### Grana creativa — consegnata il 22 ottobre
+
+- [x] Aggiunta nel pannello Presenza e dettaglio: attivazione indipendente, Uniforme/Gaussiana, monocromia/colore, quantità, dimensione 1–20 px nativi di uscita, opacità, nuova trama e ripristino dedicato; etichette e aiuti IT/EN.
+- [x] Effetto deterministico nel working lineare dopo sviluppo e geometria, prima di ridimensionamento/export. Alpha conservata, nessun clipping intermedio, nessun raster temporaneo; seme persistito. Vecchie ricette e algoritmo denoiser conservati. Modifiche preesistenti del repository mantenute.
+- [x] Passati 420 test mirati: 129 core, 8 renderer, 15 store, 268 desktop (otto ignorati); gli otto test grana ripetuti in esecuzione seriale. Coperti distribuzioni, scala, opacità, alpha, identità, compatibilità JSON, cancellazione, trama deterministica, percorso CPU, controlli IT/EN e persistenza/annulla/ripeti da backup. Fmt e Clippy workspace/all-targets con warning negati passati; build release completata.
+- [x] Quattro export PNG16/TIFF16 della foto dimostrativa Avalanche Lake tramite XPC: Uniforme/Gaussiana e monocromia/colore, crop/rotazione e uscita nativa/ridotta a 800 px. Ogni codice di canale coincide con il riferimento CPU (errore massimo zero).
+- [x] Prova nativa su corpus/catalogo isolati: ricetta salvata, viewer al 100%, griglia, export PNG16 e superficie identica al riferimento CPU (errore massimo u8 zero); due schermate ispezionate. I controlli sono stati esercitati nei test UI IT/EN; nessuna qualifica manuale completa dei controlli nativi.
+- [x] Installato `dist/TrueRenderer.app`, identico al candidato in file e permessi, con firma verificata e distribuzione precedente conservata in `var/grain-20261021/replaced-distribution.app`. Due servizi XPC verificati sul candidato e nella posizione definitiva, nella sessione macOS (handshake impedito dal sandbox del terminale). Ricontrollati 321 sorgenti e 242 file protetti, invariati. [Rapporto aggregato](reports/grain-macos-2026-10-22.json); prove, screenshot, cataloghi e backup restano locali.
+
+Nessun gate R/SF concluso; nessun commit/push. Fonti della specifica anteprime invariate.
+
+### Riduzione rumore cromatico, luminanza e soglia — consegnata il 21 ottobre
+
+- [x] Conservati bundle e baseline `SpectralV1` in `var/denoise-chroma-20261021/`, insieme al diff iniziale; modifiche preesistenti alla cache conservate.
+- [x] Individuati limite spaziale del filtro cromatico e soglia storica riservata alla presenza/nitidezza.
+- [x] Implementato `MultiscaleV2`: stima adattata alla luminosità, attenuazione congiunta della cromia e piramide guidata da luminanza/colore per le macchie più ampie. Soglia 0 automatica, 100 raddoppia la soglia stimata. Quantità indipendenti; ricette `Legacy`/`SpectralV1` conservate fino alla modifica di uno dei tre controlli o all’aggiornamento esplicito annullabile.
+- [x] Sei confronti fotografici alla stessa quantità 80/80 e soglia 0, elaborati a risoluzione nativa prima dei 19 ritagli: quattro RAW D750/D800 e due JPEG derivati dal medesimo RAW rumoroso. Galleria privata in `var/denoise-chroma-20261021/comparison/`. Riferimento ISO 100 imperfetto, esposizione/allineamento fissati sull’ingresso: RMSE cromatico nelle ombre ridotto del 53,5% sul RAW e del 59,5–60,1% sui JPEG; beneficio non uniforme, con peggioramento del 5,8% nella stampa fine RAW. Nessuna promessa di miglioramento universale.
+- [x] Passati 58 controlli sintetici su sei casi/due semi; parità fp32 fra uno/quattro thread e compatibilità pixel `SpectralV1` contro l’eseguibile iniziale. PNG16/TIFF16 a 24/36 MP RAW e 24 MP JPEG tramite i due XPC identici in ogni codice di canale alla ricetta CPU. Firma e XPC del primo candidato verificati.
+- [x] La prova nativa ha esposto la crescita della barra del percorso con apertura diretta/filtri attivi: confinata la prima riga a 28 punti, con regressione IT/EN e due dimensioni che fallisce prima e passa dopo. Nessuna modifica alle formule fotografiche in questa rifinitura.
+- [x] Completata la qualifica: 646 test workspace passati (45 ignorati nella corsa ordinaria), più 14 integrazioni native selezionate e 50 test Python. I due test Core Image impediti dal sandbox passano nel contesto macOS; completati separatamente gli altri controlli di `verify.sh`. Dopo la rifinitura ripetuti tutti i 267 test desktop, Clippy workspace/all-targets con `-D warnings` e build release; fmt e diff puliti.
+- [x] Due prove native finali su copie RAW/JPEG: una revisione salvata per foto, viewer 1:1, griglia ed export PNG16; superficie acquisita identica al riferimento CPU (errore massimo u8 zero), quattro schermate ispezionate. Installato `dist/TrueRenderer.app`, identico al candidato in 23 file e permessi; firma e due XPC verificati anche nella posizione definitiva. Backup iniziale e distribuzione sostituita conservati. Ricontrollati 480 sorgenti e 549 file protetti, invariati; [rapporto aggregato](reports/denoise-chroma-macos-2026-10-21.json).
+- [x] Chiarite su richiesta le etichette della galleria: **Foto senza riduzione rumore**, **Filtro precedente** e **Filtro aggiornato**. Il pulsante indica il risultato da mostrare, l’etichetta sovrapposta quello visibile. Conservato l’HTML precedente e aggiornata la provenienza nel rapporto; pixel e misure invariati. Questa sola rifinitura del generatore è successiva al congelamento della qualifica.
+
+Filtro soltanto, quattro thread: circa 3,83 s su RAW 24 MP, 5,07 s su RAW 36 MP e 3,42 s su JPEG 24 MP. Export PNG16 in 29,2/38,0/28,9 s e TIFF16 in 8,0/11,7/4,3 s; picchi RSS campionati del worker circa 1,12/1,66/1,30 GB. Tempi osservati, non garanzie; quote CPU/RSS e isolamento invariati. I tempi della galleria, acquisiti anche durante compilazioni concorrenti, non sono confronti di velocità.
+
+La riduzione opera sui RAW sviluppati e sui JPEG decodificati, prima del ridimensionamento finale/export, senza modificare il mosaico o introdurre decoder. Quantità/soglia elevate possono attenuare dettagli cromatici deboli; valutare al 100% con **Verifica resa finale**, dato che i mip provvisori restano approssimativi. Originali e backup sono rimasti invariati; prove e gallerie private restano locali. Nessun gate R/SF concluso, nessun commit/push. Fonti della specifica anteprime invariate in questo incremento; nessuna sincronizzazione documentale necessaria.
+
+### Riuso delle anteprime tra avvii — consegnato il 21 ottobre
+
+- [x] Individuata la richiesta sistematica del dettaglio nativo durante la preparazione Piena, anche con mip di visualizzazione già persistiti; cache D750 prossima alla quota di 4 GiB.
+- [x] Preparazione preceduta da un lookup asincrono dell'anteprima per la finestra: hit valido completa la foto; miss riprende sviluppo nativo e derivazione autonoma. Conservati priorità delle viste, lavori già ammessi, pausa, cancellazione, verifica dell'originale, ricetta e versione. Nessuna lettura disco nella UI e nessun mip ridotto dichiarato nativo.
+- [x] Tre processi distinti su copie D750/D800, qualità Piena e quota di 512 MiB: primo avvio 2 sviluppi RAW; riapertura 0 sviluppi e 2 hit in 0,94 s di preparazione; riapertura background 0 sviluppi e 6 hit. Anteprime complete riusate anche con blocchi nativi espulsi. Sono misure su due foto, non una garanzia generale di velocità.
+- [x] Passati 266 test desktop e 7 integrazioni con worker, fmt, Clippy workspace/all-targets e build release. Regressione per persistenza tra manager distinti e invalidazione al cambio versione, pixel identici; probe senza worker e ripresa dopo miss. Test temporizzato editing passato nella verifica finale senza compilazioni concorrenti. Campagna research opzionale esclusa secondo `verify.sh`.
+- [x] Firma e due servizi XPC verificati sul candidato; installato `dist/TrueRenderer.app`, identico nei file e permessi. Ulteriore riapertura del bundle installato: 0 sviluppi RAW. Controllati 478 sorgenti e 255 file protetti, invariati. Backup e prove in `var/cache-reopen-20261021/`; [rapporto aggregato](reports/cache-reopen-macos-2026-10-21.json).
+
+La validazione continua a leggere gli originali senza modificarli. Cache eliminata, scaduta, corrotta, incompatibile o espulsa per quota può richiedere rigenerazione; zoom superiore può richiedere dettaglio non conservato. Aggiornata la specifica anteprime e sincronizzate le appendici con `scripts/sync-docs.py`. Nessun gate R/SF concluso; nessun commit/push di questo incremento.
 
 ### Riduzione rumore ad alti ISO — consegnata il 21 ottobre
 

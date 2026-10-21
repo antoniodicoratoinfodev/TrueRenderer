@@ -290,3 +290,163 @@ fn repeated_runs_and_provisional_scales_remain_finite_and_deterministic() {
         assert!(mse(&image, &fixture().0, 16, 48) < mse(&source, &fixture().0, 16, 48));
     }
 }
+
+#[test]
+fn multiscale_preserves_clean_isoluminant_edges_and_color_gradients() {
+    for pattern in 0..3 {
+        let source = LinearImage::new(
+            257,
+            193,
+            (0..257 * 193)
+                .map(|i| {
+                    let x = (i % 257) as f32;
+                    let y = (i / 257) as f32;
+                    let (r, b) = match pattern {
+                        0 => (
+                            if x < 128. { -0.1 } else { 0.1 },
+                            if y < 96. { 0.12 } else { -0.12 },
+                        ),
+                        1 => (x / 257. * 0.2 - 0.1, y / 193. * 0.1 - 0.05),
+                        _ => (0.04 * (x * 0.17).sin(), 0.03 * (y * 0.13).cos()),
+                    };
+                    [
+                        0.3 + r,
+                        0.3 - (0.2627 * r + 0.0593 * b) / 0.678,
+                        0.3 + b,
+                        1.,
+                    ]
+                })
+                .collect(),
+        )
+        .unwrap();
+        let mut output = source.clone();
+        Detail {
+            chroma_noise: 100.,
+            threshold: 100.,
+            ..Default::default()
+        }
+        .apply(&mut output, [257, 193]);
+        let maximum = source
+            .pixels
+            .iter()
+            .flatten()
+            .zip(output.pixels.iter().flatten())
+            .map(|(a, b)| (a - b).abs())
+            .fold(0_f32, f32::max);
+        assert!(maximum < 2e-4, "clean color pattern {pattern}: {maximum}");
+    }
+}
+
+#[test]
+fn multiscale_reduces_broad_chroma_noise_without_changing_luminance() {
+    let (clean, noisy) = fixture();
+    let mut noise = noisy.clone();
+    for (p, q) in noise.pixels.iter_mut().zip(&clean.pixels) {
+        let dy = luma(straight(*p)) - luma(straight(*q));
+        for c in 0..3 {
+            p[c] -= q[c] + dy;
+        }
+    }
+    let broad = blur(&noise, 3);
+    let mut source = clean.clone();
+    for ((p, q), r) in source.pixels.iter_mut().zip(&broad).zip(&noise.pixels) {
+        for c in 0..3 {
+            p[c] += q[c] * 7. + r[c] * 0.2;
+        }
+    }
+    let mut previous = source.clone();
+    Detail {
+        denoise: Denoise::SpectralV1,
+        chroma_noise: 80.,
+        ..Default::default()
+    }
+    .apply(&mut previous, [256, 192]);
+    let mut output = source.clone();
+    Detail {
+        chroma_noise: 80.,
+        ..Default::default()
+    }
+    .apply(&mut output, [256, 192]);
+    let before = mse(&previous, &clean, 16, 48);
+    let after = mse(&output, &clean, 16, 48);
+    assert!(
+        after < before * 0.6,
+        "broad color noise: V1 {before}, V2 {after}"
+    );
+    for (p, q) in output.pixels.iter().zip(&source.pixels) {
+        assert!((luma(straight(*p)) - luma(straight(*q))).abs() < 5e-7);
+    }
+}
+
+#[test]
+fn multiscale_threshold_is_effective_but_zero_amounts_stay_identity() {
+    let (truth, source) = fixture();
+    let mut low = source.clone();
+    let mut high = source.clone();
+    let detail = Detail {
+        luminance_noise: 40.,
+        chroma_noise: 40.,
+        ..Default::default()
+    };
+    detail.apply(&mut low, [256, 192]);
+    Detail {
+        threshold: 60.,
+        ..detail
+    }
+    .apply(&mut high, [256, 192]);
+    assert!(mse(&high, &truth, 16, 48) < mse(&low, &truth, 16, 48) * 0.8);
+    let mut zero = source.clone();
+    Detail {
+        threshold: 100.,
+        ..Default::default()
+    }
+    .apply(&mut zero, [256, 192]);
+    assert_eq!(zero.pixels, source.pixels);
+}
+
+#[test]
+fn multiscale_cancellation_never_commits_a_partial_pyramid() {
+    let source = fixture().1;
+    let calls = AtomicUsize::new(0);
+    let mut complete = source.clone();
+    denoise_multiscale::apply(&mut complete, 1., 0.8, 0.8, 0., &|| {
+        calls.fetch_add(1, Ordering::Relaxed);
+        false
+    })
+    .unwrap();
+    let count = calls.load(Ordering::Relaxed);
+    for stop in [1, count / 4, count / 2, count - 1] {
+        calls.store(0, Ordering::Relaxed);
+        let mut output = source.clone();
+        assert!(
+            denoise_multiscale::apply(&mut output, 1., 0.8, 0.8, 0., &|| calls
+                .fetch_add(1, Ordering::Relaxed)
+                >= stop)
+            .is_err()
+        );
+        assert!(output.pixels == source.pixels, "cancel at {stop}/{count}");
+    }
+}
+
+#[test]
+fn spectral_v1_recipe_remains_explicit_and_distinct_from_v2() {
+    let previous = Detail {
+        denoise: Denoise::SpectralV1,
+        luminance_noise: 80.,
+        chroma_noise: 80.,
+        ..Default::default()
+    };
+    let encoded = serde_json::to_string(&previous).unwrap();
+    let decoded: Detail = serde_json::from_str(&encoded).unwrap();
+    assert_eq!(decoded, previous);
+    assert_eq!(serde_json::to_string(&decoded).unwrap(), encoded);
+    assert_eq!(Detail::default().denoise, Denoise::MultiscaleV2);
+    assert_ne!(
+        encoded,
+        serde_json::to_string(&Detail {
+            denoise: Denoise::MultiscaleV2,
+            ..previous
+        })
+        .unwrap()
+    );
+}

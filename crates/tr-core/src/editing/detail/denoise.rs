@@ -88,7 +88,7 @@ butterfly!(forward4, inverse4, forward2, inverse2, 4, 2, 2);
 butterfly!(forward8, inverse8, forward4, inverse4, 8, 4, 3);
 butterfly!(forward16, inverse16, forward8, inverse8, 16, 8, 4);
 
-struct Transform<const N: usize> {
+pub(super) struct Transform<const N: usize> {
     #[cfg(test)]
     basis: [[f32; N]; N],
     factors: [[f32; N]; 5],
@@ -97,7 +97,7 @@ struct Transform<const N: usize> {
 // Indexed row/column and butterfly coordinates are clearer than nested zips.
 #[allow(clippy::needless_range_loop)]
 impl<const N: usize> Transform<N> {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self {
             norm: [(1. / N as f32).sqrt(), (2. / N as f32).sqrt()],
             factors: std::array::from_fn(|level| {
@@ -189,7 +189,12 @@ impl<const N: usize> Transform<N> {
         }
     }
     /// Subtract a patch constant before transforming: flat fields stay bit exact.
-    fn block(&self, image: &LinearImage, x: isize, y: isize) -> Option<([[Pixel; N]; N], f32)> {
+    pub(super) fn block(
+        &self,
+        image: &LinearImage,
+        x: isize,
+        y: isize,
+    ) -> Option<([[Pixel; N]; N], f32)> {
         let mut block = [[[0.; 4]; N]; N];
         let mut mean = [0_f64; 3];
         for (dy, row) in block.iter_mut().enumerate() {
@@ -230,7 +235,7 @@ fn quantile(values: &mut [f32], q: f32) -> f32 {
     *values.select_nth_unstable_by(i, f32::total_cmp).1
 }
 
-fn model<const N: usize>(
+pub(super) fn model<const N: usize>(
     image: &LinearImage,
     transform: &Transform<N>,
     cancelled: &(impl Fn() -> bool + Sync),
@@ -305,6 +310,30 @@ fn run<const N: usize>(
     if noise.iter().flatten().flatten().all(|v| *v <= 1e-8) {
         return Ok(());
     }
+    image.pixels = filter(image, &transform, cancelled, &|block, level| {
+        for y in 0..N {
+            for x in 0..N {
+                for (c, amount) in amounts.iter().enumerate() {
+                    let threshold = noise[y][x][c] * level * amount * 3.;
+                    let t = (block[y][x][c].abs() / threshold.max(1e-12) - 0.75) / 0.75;
+                    let t = t.clamp(0., 1.);
+                    let keep = t * t * (3. - 2. * t);
+                    block[y][x][c] *= if *amount == 0. { 0. } else { 1. - keep };
+                }
+            }
+        }
+    })?;
+    Ok(())
+}
+
+/// Transactional shared transform/aggregation kernel; versioned coefficient
+/// rules stay separate so historical recipes keep their floating-point result.
+pub(super) fn filter<const N: usize>(
+    image: &LinearImage,
+    transform: &Transform<N>,
+    cancelled: &(impl Fn() -> bool + Sync),
+    shrink: &(impl Fn(&mut [[Pixel; N]; N], f32) + Sync),
+) -> Result<Vec<Pixel>> {
     let (w, h) = (image.width as usize, image.height as usize);
     let mut output = vec![[0.; 4]; image.pixels.len()];
     crate::compute::install(|| {
@@ -331,20 +360,7 @@ fn run<const N: usize>(
                             let Some((mut block, level)) = transform.block(image, px, py) else {
                                 continue;
                             };
-                            for y in 0..N {
-                                for x in 0..N {
-                                    for (c, amount) in amounts.iter().enumerate() {
-                                        let threshold = noise[y][x][c] * level * amount * 3.;
-                                        let t = (block[y][x][c].abs() / threshold.max(1e-12)
-                                            - 0.75)
-                                            / 0.75;
-                                        let t = t.clamp(0., 1.);
-                                        let keep = t * t * (3. - 2. * t);
-                                        block[y][x][c] *=
-                                            if *amount == 0. { 0. } else { 1. - keep };
-                                    }
-                                }
-                            }
+                            shrink(&mut block, level);
                             block[0][0] = [0.; 4];
                             transform.inverse(&mut block);
                             for yy in y0.max(py.max(0) as usize)
@@ -383,8 +399,7 @@ fn run<const N: usize>(
             })
     })?;
     ensure!(!cancelled(), "Editing annullato");
-    image.pixels = output;
-    Ok(())
+    Ok(output)
 }
 
 pub(super) fn apply(

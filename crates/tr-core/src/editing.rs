@@ -12,6 +12,7 @@ pub mod color;
 mod curves_levels_tests;
 pub mod detail;
 pub mod geometry;
+pub mod grain;
 pub mod layers;
 #[cfg(test)]
 mod layers_tests;
@@ -503,6 +504,7 @@ impl EditRecipe {
         ensure!(!cancelled(), "Editing annullato");
         if let Some(a) = &self.advanced {
             output = a.geometry.apply(image, native, base)?;
+            a.detail.grain.apply_cancellable(image, output, cancelled)?;
         }
         ensure!(!cancelled(), "Editing annullato");
         ensure!(
@@ -514,15 +516,17 @@ impl EditRecipe {
 
     pub fn scratch_bytes(&self, width: u32, height: u32) -> u64 {
         let historical = self.advanced.as_ref().map_or(0, |a| {
-            let frames = if a.detail.active() || a.geometry.defringe != 0. {
+            let frames = if a.detail.spatial_active() || a.geometry.defringe != 0. {
                 2
             } else {
                 u64::from(a.geometry.has_mapping())
             };
-            let spectral = a.detail.denoise == detail::Denoise::SpectralV1
+            let spectral = a.detail.denoise != detail::Denoise::Legacy
                 && (a.detail.luminance_noise > 0. || a.detail.chroma_noise > 0.);
             // The DCT model is bounded to 1024 patches; each parallel 64-row
             // stripe uses a 64 KiB accumulator and fixed transform scratch.
+            // V2's recursively halved chroma frames, output and merge scratch
+            // stay below the two full frames already reserved above.
             let stripe_scratch = if spectral {
                 4 * 1024 * 1024 + u64::from(height.div_ceil(64).min(256)) * 96 * 1024
             } else {

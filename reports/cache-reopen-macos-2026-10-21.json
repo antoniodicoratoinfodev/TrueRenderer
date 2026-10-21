@@ -1,0 +1,186 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-21",
+  "passed": true,
+  "issue": "Folder preparation requested native detail on every launch even when valid viewing mip tails remained on disk.",
+  "change": "Asynchronous cache-only viewer lookup before native folder preparation; preserve source, recipe and software version validation.",
+  "native_campaign": {
+    "cameras": [
+      "Nikon D750",
+      "Nikon D800"
+    ],
+    "isolated_raw_copies": 2,
+    "quality": "Full",
+    "disk_quota_mib": 512,
+    "experiments": {
+      "cold": {
+        "cache_hits": 0,
+        "decode_jobs": 2,
+        "elapsed_seconds": 25.920895333,
+        "errors": 0,
+        "passed": true,
+        "processed": 2,
+        "quality": "Full",
+        "scope": "Normal folder preparation in a separate process; original validation retained; no cache deletion.",
+        "total": 2,
+        "viewer_edge": 2880,
+        "writes": 4,
+        "process_returncode": 0,
+        "wall_seconds": 27.523965959
+      },
+      "warm": {
+        "cache_hits": 2,
+        "decode_jobs": 0,
+        "elapsed_seconds": 0.940689709,
+        "errors": 0,
+        "passed": true,
+        "processed": 2,
+        "quality": "Full",
+        "scope": "Normal folder preparation in a separate process; original validation retained; no cache deletion.",
+        "total": 2,
+        "viewer_edge": 2880,
+        "writes": 0,
+        "process_returncode": 0,
+        "wall_seconds": 1.4122417919999997
+      },
+      "warm-background": {
+        "cache_hits": 6,
+        "decode_jobs": 0,
+        "elapsed_seconds": 1.512596708,
+        "errors": 0,
+        "passed": true,
+        "processed": 2,
+        "quality": "Full",
+        "scope": "Normal folder preparation in a separate process; original validation retained; no cache deletion.",
+        "total": 2,
+        "viewer_edge": 2880,
+        "writes": 0,
+        "process_returncode": 0,
+        "wall_seconds": 1.9192144170000027
+      },
+      "installed-warm": {
+        "cache_hits": 6,
+        "decode_jobs": 0,
+        "elapsed_seconds": 1.4646275,
+        "errors": 0,
+        "passed": true,
+        "processed": 2,
+        "quality": "Full",
+        "scope": "Normal folder preparation in a separate process; original validation retained; no cache deletion.",
+        "total": 2,
+        "viewer_edge": 2880,
+        "writes": 0,
+        "process_returncode": 0
+      }
+    },
+    "cache_inventory": {
+      "bytes": 343379972,
+      "descriptors": [
+        {
+          "request": {
+            "raw_engine": "TrueRendererExperimental",
+            "quality": "Full",
+            "edge": 2880
+          },
+          "base": 1,
+          "geometry": [
+            3008,
+            2008
+          ],
+          "blocks_present": 42,
+          "blocks_total": 42
+        },
+        {
+          "request": {
+            "raw_engine": "TrueRendererExperimental",
+            "quality": "Full",
+            "edge": 2880
+          },
+          "base": 1,
+          "geometry": [
+            3680,
+            2456
+          ],
+          "blocks_present": 57,
+          "blocks_total": 57
+        },
+        {
+          "request": {
+            "raw_engine": "TrueRendererExperimental",
+            "quality": "Full",
+            "edge": 2048
+          },
+          "base": 1,
+          "geometry": [
+            3680,
+            2456
+          ],
+          "blocks_present": 57,
+          "blocks_total": 57
+        },
+        {
+          "request": {
+            "raw_engine": "TrueRendererExperimental",
+            "quality": "Full",
+            "edge": 0
+          },
+          "base": 0,
+          "geometry": [
+            6016,
+            4016
+          ],
+          "blocks_present": 48,
+          "blocks_total": 135
+        }
+      ]
+    }
+  },
+  "validation": {
+    "desktop_tests_passed": 266,
+    "additional_integration_tests_passed": 7,
+    "research_campaign_excluded": true,
+    "fmt": true,
+    "clippy_workspace_all_targets": true,
+    "release_workspace_build": true,
+    "xpc_two_services": true,
+    "installed_identical_to_candidate": true,
+    "file_integrity": {
+      "source-manifest.json": {
+        "checked": 478,
+        "changed": 0
+      },
+      "protected-before.json": {
+        "checked": 255,
+        "changed": 0
+      }
+    },
+    "initial_failures": "Two loading regressions corrected. Timed editing test passed in final idle serial run after failures during concurrent builds. Optional research campaign requires separate environment and was excluded as prescribed by verify.sh."
+  },
+  "limits": [
+    "Source validation still reads originals; cache reuse avoids native RAW development.",
+    "Deleted, corrupt, expired, incompatible or evicted previews can require regeneration. Higher zoom can require detail no longer retained.",
+    "Two-photo measurements are not a general timing guarantee. No R/SF gate completed or release isolation guarantee."
+  ],
+  "evidence_sha256": {
+    "var/cache-reopen-20261021/desktop-tests.log": "0ba33754b6c9a1451b2de392c817d050a32f450e118f3b5b7fe171ce0aec232e",
+    "var/cache-reopen-20261021/integration-tests.log": "4e0bb7668c285b16cb6af64b61b938d2cae97c01143d26ff033d324b1cb529fb",
+    "var/cache-reopen-20261021/clippy.log": "b7079ee033c9140ca6c1f4fe6f1a6d3c36088b07e6f21b9f1f0c22439dc2aa0d",
+    "var/cache-reopen-20261021/build.log": "8ca4f6121938f7a1e51c290b94687391bb49ffa3e988246ddea1848fc0483f8b",
+    "var/cache-reopen-20261021/package.log": "9e3916c49a34f57626278acac1fd472d7d1a709a359c3a118402fe6073f28efe",
+    "var/cache-reopen-20261021/xpc.log": "8223572945b176021384c786825831ada4dfcbad6fdd9dd784028a5266f1d60e",
+    "var/cache-reopen-20261021/initial-tests.log": "48dfa13c2c59b9f4a50cc71a7e169848e7276e8fde3149cfc5733d4e688be09a",
+    "var/cache-reopen-20261021/serial-with-build-tests.log": "2e30438bd5c0de7228a5ec580db4bfca854e4c5da29559dbc90b2b091cebc085",
+    "var/cache-reopen-20261021/unconfigured-research-test.log": "f6ba13f457f44152ff41b7cb40839a01ca30946d6cb1988e8a70aa605222b504",
+    "var/cache-reopen-20261021/cold.json": "e20afffbdacb85fc0e5f5a16b917ea86be7427318d3f9b9d323a1cf100cc24b2",
+    "var/cache-reopen-20261021/warm.json": "49d3274e97fa05686ddf1e66078cb7ef45293cf48524acb492d60a74ae5df8a4",
+    "var/cache-reopen-20261021/warm-background.json": "3c5efea7496dbd6e1433c04679a1ce45ae6447092be3472479165a76e96317de",
+    "var/cache-reopen-20261021/installed-warm.json": "12fb0db56d1adc68b362ca0303a2e5f5052fcb3f98feaec039764c71c00f180b",
+    "var/cache-reopen-20261021/cache-inventory.json": "05b0a3cf6cfdd9af13ff04a54f0984480b2a19fb54406ea4fc41bc29b269b71d",
+    "var/cache-reopen-20261021/source-manifest.json": "fec7e12d587e1ef8634af1e69413f780f61806a3f72a7068f8d4dd0d6b9b66ef",
+    "var/cache-reopen-20261021/protected-before.json": "6fbe631c801031f2d78d6811def04f347d575f8904fa5b8b2fdcb20459b6cdc0",
+    "var/cache-reopen-20261021/installed-manifest.json": "bc46beb949c119d891fbe9a52ec352a29612c32763ade7b931cabe42e637587f",
+    "var/cache-reopen-20261021/probe/reports/xpc-integration-macos.json": "bd28a56411f222731c0112913fcee91528ca1e93a896ef9f1d09d3c37f3a40fb",
+    "var/cache-reopen-20261021/probe/reports/xpc-qualification-macos.json": "8223572945b176021384c786825831ada4dfcbad6fdd9dd784028a5266f1d60e"
+  }
+}

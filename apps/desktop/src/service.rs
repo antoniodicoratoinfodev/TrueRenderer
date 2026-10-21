@@ -114,6 +114,11 @@ pub enum Event {
         error: String,
     },
     MemoryPressure,
+    PreviewMissing {
+        id: String,
+        request: PreviewRequest,
+        generation: u64,
+    },
     DecodeDeferred {
         id: String,
         request: PreviewRequest,
@@ -667,6 +672,7 @@ mod tests {
             .send(Request::ViewDemand {
                 wanted: vec![(item.id.clone(), PreviewRequest::full())],
                 jobs: vec![Job {
+                    cache_only: false,
                     resident: None,
                     item: item.clone(),
                     request: PreviewRequest::full(),

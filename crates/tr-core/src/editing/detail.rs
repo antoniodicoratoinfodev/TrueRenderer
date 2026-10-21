@@ -5,6 +5,7 @@ use anyhow::Result;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 mod denoise;
+mod denoise_multiscale;
 #[cfg(test)]
 mod denoise_tests;
 
@@ -14,6 +15,7 @@ pub enum Denoise {
     #[default]
     Legacy,
     SpectralV1,
+    MultiscaleV2,
 }
 impl Denoise {
     fn is_legacy(&self) -> bool {
@@ -24,6 +26,8 @@ impl Denoise {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Detail {
+    #[serde(default, skip_serializing_if = "super::grain::Grain::is_default")]
+    pub grain: super::grain::Grain,
     #[serde(default, skip_serializing_if = "Denoise::is_legacy")]
     pub denoise: Denoise,
     pub texture: f32,
@@ -38,7 +42,8 @@ pub struct Detail {
 impl Default for Detail {
     fn default() -> Self {
         Self {
-            denoise: Denoise::SpectralV1,
+            grain: Default::default(),
+            denoise: Denoise::MultiscaleV2,
             texture: 0.,
             clarity: 0.,
             dehaze: 0.,
@@ -52,6 +57,9 @@ impl Default for Detail {
 }
 impl Detail {
     pub fn active(&self) -> bool {
+        self.spatial_active() || self.grain.active()
+    }
+    pub(super) fn spatial_active(&self) -> bool {
         [
             self.texture,
             self.clarity,
@@ -64,6 +72,7 @@ impl Detail {
         .any(|v| *v != 0.)
     }
     pub fn validate(&self) -> Result<()> {
+        self.grain.validate()?;
         for v in [self.texture, self.clarity, self.dehaze] {
             super::range(v, -100., 100., "Presenza")?;
         }
@@ -83,11 +92,22 @@ impl Detail {
         native: [u32; 2],
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<()> {
-        if !self.active() {
+        if !self.spatial_active() {
             return Ok(());
         }
         let scale = image.width.max(image.height) as f32 / native[0].max(native[1]) as f32;
         if (self.luminance_noise > 0. || self.chroma_noise > 0.)
+            && self.denoise == Denoise::MultiscaleV2
+        {
+            denoise_multiscale::apply(
+                image,
+                scale,
+                self.luminance_noise / 100.,
+                self.chroma_noise / 100.,
+                self.threshold / 100.,
+                cancelled,
+            )?;
+        } else if (self.luminance_noise > 0. || self.chroma_noise > 0.)
             && self.denoise == Denoise::SpectralV1
         {
             denoise::apply(

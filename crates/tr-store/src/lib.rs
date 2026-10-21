@@ -707,6 +707,15 @@ mod tests {
         advanced.geometry.crop = [0.1, 0.2, 0.9, 0.8];
         advanced.geometry.quarter_turns = 1;
         advanced.detail.sharpen = 35.;
+        advanced.detail.grain = tr_core::editing::grain::Grain {
+            enabled: true,
+            distribution: tr_core::editing::grain::Distribution::Gaussian,
+            monochrome: false,
+            amount: 42.,
+            size: 3.4,
+            opacity: 65.,
+            seed: 147,
+        };
         advanced.masks.push(tr_core::editing::masks::Mask {
             shape: tr_core::editing::masks::Shape::Brush,
             points: vec![[0.1, 0.2], [0.2, 0.3], [0.7, 0.8], [0.8, 0.9]],

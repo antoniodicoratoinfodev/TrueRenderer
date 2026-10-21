@@ -1,0 +1,136 @@
+{
+  "application": "TrueRenderer",
+  "increment": "Creative grain",
+  "checked_at": "2026-10-21T22:33:58.913955+00:00",
+  "passed": true,
+  "bundle": "dist/TrueRenderer.app",
+  "previous_bundle": "var/grain-20261021/replaced-distribution.app",
+  "controls": [
+    "enabled",
+    "uniform/gaussian",
+    "monochrome/color",
+    "amount 0–100",
+    "size 1–20 native output pixels",
+    "opacity 0–100",
+    "new pattern",
+    "reset grain"
+  ],
+  "pipeline": "Extended linear Rec.2020, after all editing and geometry, before output resizing; alpha preserved; deterministic saved seed; no intermediate clipping; provisional mip approximation.",
+  "tests": {
+    "tr_core": 129,
+    "tr_render": 8,
+    "tr_store": 15,
+    "desktop": 268,
+    "total_passed": 420,
+    "desktop_ignored": 8,
+    "focused_grain_serial": 8,
+    "clippy_workspace_all_targets_warnings_denied": true,
+    "fmt": true,
+    "release_build": true
+  },
+  "native": {
+    "passed": true,
+    "source_unchanged": true,
+    "saved_generation": 1,
+    "surface": {
+      "compute": "GPU",
+      "differing_channels": 0,
+      "maximum_error_u8": 0,
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "export": {
+      "file": "02_Paesaggio_analitico-export.png",
+      "passed": true,
+      "size": [
+        1440,
+        960
+      ]
+    },
+    "screenshots_visually_inspected": 2,
+    "scope": "Generated corpus, saved Gaussian monochrome grain, 100% viewer and grid, PNG16 export. Control interaction tested headlessly in Italian and English; no manual native-control qualification."
+  },
+  "export": {
+    "passed": true,
+    "source_unchanged": true,
+    "source": "included public-domain Avalanche Lake sample",
+    "cases": [
+      {
+        "format": "Png16",
+        "long_edge": 0,
+        "distribution": "Uniform",
+        "monochrome": true,
+        "maximum_error_u16": 0
+      },
+      {
+        "format": "Tiff16",
+        "long_edge": 0,
+        "distribution": "Gaussian",
+        "monochrome": false,
+        "maximum_error_u16": 0
+      },
+      {
+        "format": "Png16",
+        "long_edge": 800,
+        "distribution": "Gaussian",
+        "monochrome": true,
+        "maximum_error_u16": 0
+      },
+      {
+        "format": "Tiff16",
+        "long_edge": 800,
+        "distribution": "Uniform",
+        "monochrome": false,
+        "maximum_error_u16": 0
+      }
+    ]
+  },
+  "xpc_candidate": {
+    "passed": true,
+    "two_services": true,
+    "ad_hoc_signature_verified": true,
+    "initial_terminal_sandbox_handshake_failed": true,
+    "native_session_passed": true
+  },
+  "source_files_checked_unchanged": 321,
+  "protected_files_checked_unchanged": 242,
+  "evidence": {
+    "var/grain-20261021/tests.log": "14824addf7f96ebaaa9169ec3c5d4e94799a64ea066496efc5c0fb8d8de4a311",
+    "var/grain-20261021/focused.log": "8b5d188359414916547dd47e7eb34f6a2a6de72ccfdf26b7bf47a9ae772ada23",
+    "var/grain-20261021/desktop.log": "6805440d73d597768c7b484d504a66ff28e9864260b6465129faa3fa7fc08592",
+    "var/grain-20261021/clippy.log": "91a1aaa42336d929ee7c1e77264fbcc1e1e8f8e3bb1786d0a5944e5025aab779",
+    "var/grain-20261021/build.log": "2e7a218540614a8d072edd13a9f6acc0d6ddabd11553f86cfd066770b1f0a7d0",
+    "var/grain-20261021/xpc-native.log": "a37ca6a74cc9c24c6199d95e03bba400a793649bf8cbd20268511160494f1f47",
+    "var/grain-20261021/export.log": "92c89331e91dd51f90bc0e8d07f81dee96b2f0a7238bef6fe0fd5e4cce423847",
+    "var/grain-20261021/native.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/grain-20261021/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/grain-20261021/source-hashes.json": "fc69f4cb684a90fbc6e26eae2aac3fb5dabcd2a20c0b8435acc60b617dcad188",
+    "var/grain-20261021/protected-hashes.json": "961fa824ff0395290caefdce7d09fdfa2cc128d5b4edb716c79622440fa87baf",
+    "var/grain-20261021/export/grain-export/parity.json": "294e9f10fb40481041b6d1345f5f720de48641b7d125f8cdf49329ccfff11b3a",
+    "var/grain-20261021/native/reports/develop-ui.json": "a5b043d268bf899a1898ba9420dfacee23338a2fd8c3954f6329372631c098f4",
+    "var/grain-20261021/native/reports/develop-viewer.png": "2c3289ce4440c1762dedf157b7f6be71a4b96dddac48af401493e37437643224",
+    "var/grain-20261021/native/reports/develop-grid.png": "de0387f6cc1de31703f9db7f5b15b1875378e25b491fcd3f82a98c56efc93074",
+    "var/grain-20261021/xpc/reports/xpc-qualification-macos.json": "a37ca6a74cc9c24c6199d95e03bba400a793649bf8cbd20268511160494f1f47",
+    "var/grain-20261021/installed-xpc/reports/xpc-qualification-macos.json": "9a55e227469153b338af894a17ac9c43db793aa4acb14c96374cc6277122c1b9",
+    "var/grain-20261021/installed-xpc.log": "9a55e227469153b338af894a17ac9c43db793aa4acb14c96374cc6277122c1b9"
+  },
+  "limitations": [
+    "No R/SF gate closed.",
+    "No full workspace/native format campaign; targeted crates and XPC suite passed.",
+    "Fine grain on provisional mips is approximate; final native rendering is authoritative.",
+    "Ad hoc signature is not release signing or notarization.",
+    "No commit or push."
+  ],
+  "xpc_installed": {
+    "passed": true,
+    "bundle_matches_candidate": true,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "cb403b2de89f6c740edfde5e03de5a57da1541363fb289eb62f89bff3ec4f092",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "abca73863d127163fb2b792e0aa0c53d08f9ed120b9bd15ad03a51c5af2e080b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "5669f0b27b77555af0582a61d9585bd60fadf7abb45aa1c96d69fc56cef55bf6"
+    }
+  }
+}

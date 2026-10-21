@@ -716,6 +716,12 @@ impl TrueRenderer {
                     if args.iter().any(|a| a == "--advanced-edit-smoke") {
                         recipe = crate::verify_advanced::recipe(recipe.raw_engine);
                     }
+                    if args.iter().any(|a| a == "--denoise-edit-smoke") {
+                        recipe = crate::verify_denoise::recipe(recipe.raw_engine);
+                    }
+                    if args.iter().any(|a| a == "--grain-edit-smoke") {
+                        recipe = crate::verify_grain::recipe(recipe.raw_engine);
+                    }
                     if args.iter().any(|a| {
                         matches!(
                             a.as_str(),

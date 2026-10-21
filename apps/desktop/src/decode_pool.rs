@@ -26,6 +26,8 @@ use tr_platform::{Broker, SourceSnapshot};
 
 #[derive(Clone)]
 pub struct Job {
+    /// Probe persisted/resident previews without admitting a native decode.
+    pub cache_only: bool,
     pub item: Item,
     pub request: PreviewRequest,
     pub priority: PreviewPriority,
@@ -484,6 +486,21 @@ impl DecodePool {
                             .is_some_and(|wanted| !wanted.contains(&job.key()))
                         {
                             q.pending.remove(&job.key());
+                            return Ok(None);
+                        }
+                        if job.cache_only {
+                            q.pending.remove(&job.key());
+                            drop(q);
+                            deliver(
+                                &events,
+                                Event::PreviewMissing {
+                                    id: job.item.id.clone(),
+                                    request: job.request,
+                                    generation: job.generation,
+                                },
+                                &ctx,
+                                &stop,
+                            );
                             return Ok(None);
                         }
                         let ready = Ready {
@@ -1378,6 +1395,7 @@ mod tests {
         let path = root.join("corpus/01_Studio_cromatico.png");
         let (bytes, digest) = tr_platform::snapshot(&path).unwrap();
         Job {
+            cache_only: false,
             resident: None,
             item: Item {
                 id: id.into(),
@@ -1400,6 +1418,40 @@ mod tests {
             generation: 1,
         }
     }
+    #[test]
+    fn cache_only_miss_never_starts_a_worker_and_normal_demand_can_retry() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut job = navigation_job("cache-probe");
+        let path = dir.path().join("source.png");
+        std::fs::copy(&job.item.path, &path).unwrap();
+        job.item.path = path;
+        job.cache_only = true;
+        let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings::default()));
+        let (tx, rx) = mpsc::sync_channel(16);
+        let pool = DecodePool::start(
+            PathBuf::from("nonexistent-worker"),
+            Arc::new(AtomicU64::new(1)),
+            tx,
+            egui::Context::default(),
+            cache.clone(),
+        );
+        pool.submit(job.clone())
+            .unwrap_or_else(|_| panic!("queue rejected"));
+        assert!(matches!(
+            rx.recv_timeout(Duration::from_secs(5)).unwrap(),
+            Event::PreviewMissing { .. }
+        ));
+        assert_eq!(cache.stats().decode_jobs, 0);
+        job.cache_only = false;
+        job.priority = PreviewPriority::Immediate;
+        pool.submit(job)
+            .unwrap_or_else(|_| panic!("queue rejected retry"));
+        assert!(matches!(
+            rx.recv_timeout(Duration::from_secs(5)).unwrap(),
+            Event::Image { .. }
+        ));
+    }
+
     #[test]
     fn another_engine_cannot_keep_an_abandoned_development_alive() {
         let old = navigation_job("same-source");
@@ -1474,6 +1526,12 @@ mod tests {
                 &|| false,
             )
             .unwrap();
+        // Recreate the manager as on relaunch; the cache-only path must reuse
+        // exactly the persisted pixels even though no worker binary exists.
+        let settings = cache.settings();
+        drop(cache);
+        let cache = Arc::new(crate::cache::Manager::new(settings));
+        job.cache_only = true;
         // Admit the source snapshot, but leave too little for the cached pixels
         // plus reader scratch. No native worker should ever be started.
         let usage = cache.memory.usage();
@@ -2022,6 +2080,7 @@ mod tests {
         let mut jobs = Vec::new();
         for (id, priority) in priorities.into_iter().enumerate() {
             let job = Job {
+                cache_only: false,
                 resident: None,
                 item: Item {
                     id: id.to_string(),
@@ -2067,6 +2126,7 @@ mod tests {
             workers: Vec::new(),
         };
         let job = |n: usize| Job {
+            cache_only: false,
             resident: None,
             item: Item {
                 id: n.to_string(),
@@ -2152,6 +2212,7 @@ mod tests {
             let mut q = pool.queues.0.lock().unwrap();
             for request in requests {
                 let job = Job {
+                    cache_only: false,
                     resident: None,
                     item: item.clone(),
                     request,
@@ -2234,6 +2295,7 @@ mod tests {
         let (bytes, digest) = tr_platform::snapshot(&path).unwrap();
         assert!(
             pool.submit(Job {
+                cache_only: false,
                 resident: None,
                 item: Item {
                     id: "idle-domain-test".into(),

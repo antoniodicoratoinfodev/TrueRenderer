@@ -565,6 +565,17 @@ impl Language {
             "Rumore luminanza" => "Luminance noise",
             "Rumore cromatico" => "Chroma noise",
             "Aggiorna riduzione rumore" => "Update noise reduction",
+            "Grana creativa" => "Creative grain",
+            "Aggiungi grana" => "Add grain",
+            "Distribuzione grana" => "Grain distribution",
+            "Uniforme" => "Uniform",
+            "Gaussiana" => "Gaussian",
+            "Grana monocromatica" => "Monochrome grain",
+            "Quantità grana" => "Grain amount",
+            "Dimensione grana (px)" => "Grain size (px)",
+            "Opacità grana" => "Grain opacity",
+            "Nuova trama" => "New pattern",
+            "Ripristina grana" => "Reset grain",
             "Per valutare il dettaglio usa Verifica resa finale e zoom 100%." => {
                 "Use Verify final rendering and 100% zoom to assess detail."
             }

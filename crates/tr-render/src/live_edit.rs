@@ -78,6 +78,22 @@ pub(crate) fn scaled_region(region: Region, raster: [u32; 2], native: [u32; 2]) 
 #[cfg(test)]
 mod tests {
     #[test]
+    fn creative_grain_uses_cpu_until_disabled() {
+        let mut recipe = tr_core::editing::EditRecipe::neutral(Default::default());
+        recipe.process_version = 3;
+        recipe.advanced = Some(Box::default());
+        recipe.advanced.as_mut().unwrap().detail.grain.enabled = true;
+        let mut live = super::LiveEdit {
+            recipe,
+            input_gains: [1.; 3],
+            max_edge: 1024,
+            revision: 1,
+        };
+        assert!(!live.gpu_supported());
+        live.recipe.advanced.as_mut().unwrap().detail.grain.enabled = false;
+        assert!(live.gpu_supported());
+    }
+    #[test]
     fn active_new_layers_never_use_the_historical_shader() {
         use tr_core::editing::{
             EditRecipe,

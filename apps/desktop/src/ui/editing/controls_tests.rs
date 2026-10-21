@@ -1,6 +1,79 @@
 use super::*;
 use std::path::Path;
 
+#[test]
+fn creative_grain_controls_commit_and_keep_settings_when_disabled() {
+    use tr_core::editing::grain::{Distribution, Grain};
+    for lang in [Language::Italian, Language::English] {
+        let ctx = egui::Context::default();
+        crate::ui::style::apply(&ctx);
+        let mut grain = Grain::default();
+        let draw = |events, grain: &mut Grain, commits: &mut usize| {
+            frame(&ctx, events, |ui| {
+                ui.set_width(260.);
+                panels::control_style(ui);
+                let mut commit = false;
+                advanced::grain_controls(ui, lang, grain, &mut commit);
+                *commits += usize::from(commit);
+            })
+        };
+        let mut commits = 0;
+        let mut shapes = draw(vec![], &mut grain, &mut commits);
+        assert_eq!(commits, 0);
+        for label in [
+            "Aggiungi grana",
+            "Gaussiana",
+            "Grana monocromatica",
+            "Nuova trama",
+            "Aggiungi grana",
+        ] {
+            let position = shapes
+                .texts
+                .iter()
+                .find(|(text, _)| text == lang.text(label))
+                .unwrap()
+                .1
+                .center();
+            let before = commits;
+            for pressed in [true, false] {
+                draw(click(position, pressed), &mut grain, &mut commits);
+            }
+            assert_eq!(commits, before + 1, "{label} {lang:?}");
+            shapes = draw(vec![], &mut grain, &mut commits);
+        }
+        assert!(!grain.enabled);
+        assert_eq!(grain.distribution, Distribution::Gaussian);
+        assert!(!grain.monochrome);
+        assert_eq!(grain.seed, 1);
+        // Disabled controls cannot change the retained pattern.
+        let position = shapes
+            .texts
+            .iter()
+            .find(|(text, _)| text == lang.text("Nuova trama"))
+            .unwrap()
+            .1
+            .center();
+        let before = grain.clone();
+        for pressed in [true, false] {
+            draw(click(position, pressed), &mut grain, &mut commits);
+        }
+        assert_eq!(grain, before);
+        grain.enabled = true;
+        let shapes = draw(vec![], &mut grain, &mut commits);
+        let position = shapes
+            .texts
+            .iter()
+            .find(|(text, _)| text == lang.text("Ripristina grana"))
+            .unwrap()
+            .1
+            .center();
+        for pressed in [true, false] {
+            draw(click(position, pressed), &mut grain, &mut commits);
+        }
+        assert_eq!(grain, Grain::default());
+    }
+}
+
 #[cfg(any(windows, target_os = "macos"))]
 #[test]
 fn automatic_wb_button_reveals_area_options_without_editing_the_recipe() {
@@ -2390,12 +2463,17 @@ fn a_full_layer_stack_keeps_the_selected_inspector_near_the_top() {
 #[test]
 fn historical_noise_updates_only_after_explicit_action_and_commits_once() {
     use tr_core::editing::detail::Denoise;
-    for lang in [Language::Italian, Language::English] {
+    for (lang, version) in [
+        (Language::Italian, Denoise::Legacy),
+        (Language::English, Denoise::Legacy),
+        (Language::Italian, Denoise::SpectralV1),
+        (Language::English, Denoise::SpectralV1),
+    ] {
         let ctx = egui::Context::default();
         ctx.memory_mut(|m| m.set_everything_is_visible(true));
         let mut controls = advanced::Controls::default();
         let mut recipe = crate::verify_advanced::recipe(Default::default());
-        recipe.advanced.as_mut().unwrap().detail.denoise = Denoise::Legacy;
+        recipe.advanced.as_mut().unwrap().detail.denoise = version;
         let original = recipe.clone();
         let mut shapes = Shapes::default();
         for _ in 0..2 {
@@ -2422,7 +2500,7 @@ fn historical_noise_updates_only_after_explicit_action_and_commits_once() {
         }
         assert_eq!(commits, 1);
         let mut expected = original;
-        expected.advanced.as_mut().unwrap().detail.denoise = Denoise::SpectralV1;
+        expected.advanced.as_mut().unwrap().detail.denoise = Denoise::MultiscaleV2;
         assert_eq!(recipe, expected);
         recipe.validate().unwrap();
     }

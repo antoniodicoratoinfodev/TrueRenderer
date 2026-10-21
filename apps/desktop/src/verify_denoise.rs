@@ -7,6 +7,17 @@ use std::{
 };
 use tr_core::decoder::RawEngine;
 
+pub fn recipe(engine: RawEngine) -> tr_core::editing::EditRecipe {
+    let mut r = tr_core::editing::EditRecipe::neutral(engine);
+    r.process_version = 3;
+    r.advanced = Some(Box::default());
+    let d = &mut r.advanced.as_mut().unwrap().detail;
+    d.luminance_noise = 80.;
+    d.chroma_noise = 80.;
+    d.threshold = 25.;
+    r
+}
+
 pub fn run(root: &Path, worker: &Path, source: &Path) -> Result<()> {
     let output = root.join("denoise");
     std::fs::create_dir(&output)?;
@@ -50,20 +61,12 @@ pub fn run(root: &Path, worker: &Path, source: &Path) -> Result<()> {
 }
 
 pub fn export(root: &Path, worker: &Path, source: &Path) -> Result<()> {
-    use tr_core::{
-        editing::EditRecipe,
-        export::{Format, MAX_ENCODED, Options},
-    };
+    use tr_core::export::{Format, MAX_ENCODED, Options};
     let output = root.join("denoise-export");
     std::fs::create_dir(&output)?;
     let (_, digest) = tr_platform::snapshot(source)?;
     let engine = RawEngine::TrueRendererExperimental;
-    let mut r = EditRecipe::neutral(engine);
-    r.process_version = 3;
-    r.advanced = Some(Box::default());
-    let d = &mut r.advanced.as_mut().unwrap().detail;
-    d.luminance_noise = 80.;
-    d.chroma_noise = 80.;
+    let r = recipe(engine);
     let mut broker = tr_platform::Broker::with_slot(worker.into(), 0);
     broker.set_raw_engine(engine);
     let mut expected = broker.decode(source, &digest, 0)?.raster;

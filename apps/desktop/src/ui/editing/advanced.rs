@@ -281,7 +281,11 @@ impl Controls {
         panels::Section::new(lang, "detail", "Presenza e dettaglio")
             .default_open(false)
             .show(ui, |ui| {
-                let previous_noise = (a.detail.luminance_noise, a.detail.chroma_noise);
+                let previous_noise = (
+                    a.detail.luminance_noise,
+                    a.detail.chroma_noise,
+                    a.detail.threshold,
+                );
                 for (label, v, min, max) in [
                     ("Texture", &mut a.detail.texture, -100., 100.),
                     ("Chiarezza", &mut a.detail.clarity, -100., 100.),
@@ -306,19 +310,26 @@ impl Controls {
                         &mut commit,
                     );
                 }
-                if previous_noise != (a.detail.luminance_noise, a.detail.chroma_noise) {
-                    a.detail.denoise = tr_core::editing::detail::Denoise::SpectralV1;
+                if previous_noise
+                    != (
+                        a.detail.luminance_noise,
+                        a.detail.chroma_noise,
+                        a.detail.threshold,
+                    )
+                {
+                    a.detail.denoise = tr_core::editing::detail::Denoise::MultiscaleV2;
                 }
-                if a.detail.denoise == tr_core::editing::detail::Denoise::Legacy
+                if a.detail.denoise != tr_core::editing::detail::Denoise::MultiscaleV2
                     && (a.detail.luminance_noise > 0. || a.detail.chroma_noise > 0.)
                     && help::button(ui, lang, "Aggiorna riduzione rumore").clicked()
                 {
-                    a.detail.denoise = tr_core::editing::detail::Denoise::SpectralV1;
+                    a.detail.denoise = tr_core::editing::detail::Denoise::MultiscaleV2;
                     commit = true;
                 }
                 ui.small(
                     lang.text("Per valutare il dettaglio usa Verifica resa finale e zoom 100%."),
                 );
+                grain_controls(ui, lang, &mut a.detail.grain, &mut commit);
                 reset(ui, lang, &mut a.detail, &mut commit);
             });
         panels::Section::new(lang, "advanced-color", "Colore avanzato")
@@ -571,6 +582,65 @@ impl Controls {
         }
         (changed, commit)
     }
+}
+
+pub(super) fn grain_controls(
+    ui: &mut egui::Ui,
+    lang: Language,
+    grain: &mut tr_core::editing::grain::Grain,
+    commit: &mut bool,
+) {
+    use tr_core::editing::grain::{Distribution, Grain};
+    ui.separator();
+    help::label(ui, lang, "Grana creativa");
+    *commit |= help::checkbox(ui, lang, "Aggiungi grana", &mut grain.enabled).changed();
+    ui.add_enabled_ui(grain.enabled, |ui| {
+        help::label(ui, lang, "Distribuzione grana");
+        ui.horizontal_wrapped(|ui| {
+            for (value, label) in [
+                (Distribution::Uniform, "Uniforme"),
+                (Distribution::Gaussian, "Gaussiana"),
+            ] {
+                *commit |= ui
+                    .selectable_value(&mut grain.distribution, value, lang.text(label))
+                    .changed();
+            }
+        });
+        *commit |= help::checkbox(ui, lang, "Grana monocromatica", &mut grain.monochrome).changed();
+        let defaults = Grain::default();
+        for (label, value, range, default) in [
+            (
+                "Quantità grana",
+                &mut grain.amount,
+                0. ..=100.,
+                defaults.amount,
+            ),
+            (
+                "Dimensione grana (px)",
+                &mut grain.size,
+                1. ..=20.,
+                defaults.size,
+            ),
+            (
+                "Opacità grana",
+                &mut grain.opacity,
+                0. ..=100.,
+                defaults.opacity,
+            ),
+        ] {
+            slider(ui, lang, label, value, range, default, commit);
+        }
+        ui.horizontal_wrapped(|ui| {
+            if help::button(ui, lang, "Nuova trama").clicked() {
+                grain.seed = grain.seed.wrapping_add(1);
+                *commit = true;
+            }
+            if help::button(ui, lang, "Ripristina grana").clicked() {
+                *grain = Grain::default();
+                *commit = true;
+            }
+        });
+    });
 }
 
 impl super::TrueRenderer {

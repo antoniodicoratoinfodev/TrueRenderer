@@ -19,6 +19,7 @@ mod verify_develop;
 mod verify_experimental;
 mod verify_exports;
 mod verify_formats;
+mod verify_grain;
 mod verify_native_wb;
 mod verify_photo_export;
 mod verify_precision;
@@ -120,7 +121,19 @@ fn run() -> Result<()> {
             "Develop smoke requires an isolated --root and --data"
         );
     }
+    if args.iter().any(|a| a == "--cache-reopen-smoke") {
+        anyhow::ensure!(
+            option("--root").is_some() && option("--data").is_some(),
+            "Cache reopen probe requires isolated --root and --data"
+        );
+        std::fs::create_dir_all(root.join("reports"))?;
+        std::fs::write(
+            root.join("reports/cache-reopen.json"),
+            br#"{"passed":false,"complete":false}"#,
+        )?;
+    }
     let smoke = navigation
+        || args.iter().any(|a| a == "--cache-reopen-smoke")
         || args.iter().any(|a| a == "--folder-loading-smoke")
         || args.iter().any(|a| a == "--filesystem-smoke")
         || source_smoke
@@ -185,6 +198,13 @@ fn run() -> Result<()> {
             "WB camera probe requires isolated --root"
         );
         return verify_wb_camera::run(&root, &worker, &folder);
+    }
+    if let Some(source) = option("--verify-grain-export") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "Grain probe requires isolated --root"
+        );
+        return verify_grain::export(&root, &worker, &source);
     }
     if let Some(source) = option("--verify-denoise-export") {
         anyhow::ensure!(

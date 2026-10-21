@@ -32,7 +32,9 @@ TrueRenderer works in **linear Rec.2020 floating point**, giving its photographi
 
 The searchable **Tools** catalogue puts adjustments within reach. Each tool has its own photographic symbol and visual controls; hover over a name to see what it does, in English or Italian.
 
-For high-ISO photographs, open **Presence and detail** and adjust **Luminance noise** and **Chroma noise** independently. The adaptive filter estimates noise from the image and preserves stronger edges and texture; high amounts can soften weak detail. Start around 60–80 and judge at 100% with **Verify final rendering**. Older edits keep their original rendering until you change a noise slider or choose **Update noise reduction**; Undo restores the previous revision.
+For noisy RAW or JPEG photographs, open **Presence and detail** and adjust **Luminance noise** and **Chroma noise** independently. The filter adapts to image brightness and treats both fine colour speckles and larger blotches while protecting stronger edges. **Noise threshold** increases its sensitivity: zero keeps the automatic estimate, and higher values remove more weak variations. The threshold also protects against grain enhancement by Texture, Clarity and Sharpening. Start with moderate amounts and threshold zero, then judge at 100% with **Verify final rendering**; high amounts or thresholds can soften weak detail. Older edits keep their original rendering until you change one of these three controls or choose **Update noise reduction**; Undo restores the previous revision.
+
+For a vintage texture, use **Creative grain** in the same panel. Enable **Add grain**, choose **Uniform** or **Gaussian**, then adjust **Grain amount**, **Grain size (px)** and **Grain opacity**. **Monochrome grain** adds neutral grain; turn it off for coloured speckles. **New pattern** changes the arrangement, which is saved with the edit. Disabling the effect keeps its settings. Judge fine grain at 100% with **Verify final rendering**; smaller exports naturally soften it.
 
 ![TrueRenderer's searchable Tools catalogue beside Grand Teton at sunrise](reports/readme-ui-2026-10-20/tools.jpg)
 

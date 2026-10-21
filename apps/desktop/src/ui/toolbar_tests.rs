@@ -40,6 +40,43 @@ fn click(app: &mut TrueRenderer, ctx: &egui::Context, label: &str, in_settings: 
 }
 
 #[test]
+fn opening_a_file_or_showing_filters_keeps_space_for_the_photograph() {
+    let (_dir, ctx, mut app) = test_app();
+    settle(&mut app, &ctx, true);
+    app.state.view = ViewMode::Preview;
+    for lang in [Language::Italian, Language::English] {
+        app.set_language(lang);
+        for targeted in [true, false] {
+            app.state.targeted = targeted.then(|| app.state.items[0].id.clone());
+            app.state.minimum_rating = if targeted { 0 } else { 1 };
+            for size in [Vec2::new(1440., 940.), Vec2::new(1100., 720.)] {
+                // The extra row must not enlarge the location bar on every pass.
+                for _ in 0..32 {
+                    let mut remaining = 0.;
+                    let mut output = ctx.run_ui(
+                        egui::RawInput {
+                            screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, size)),
+                            ..Default::default()
+                        },
+                        |ui| {
+                            app.toolbar(ui);
+                            app.location_bar(ui);
+                            app.footer(ui);
+                            remaining = ui.available_height();
+                        },
+                    );
+                    output.textures_delta.clear();
+                    assert!(
+                        remaining > size.y * 0.5,
+                        "Lost photograph area: {lang:?}, targeted={targeted}, {size:?}, remaining={remaining}"
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn toolbar_and_preferences_quality_clicks_share_applied_and_saved_value() {
     let (_dir, ctx, mut app) = test_app();
     settle(&mut app, &ctx, true);

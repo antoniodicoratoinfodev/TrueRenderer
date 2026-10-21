@@ -628,6 +628,15 @@ impl TrueRenderer {
         request: PreviewRequest,
         priority: PreviewPriority,
     ) {
+        self.ensure_preview_lookup(item, request, priority, false);
+    }
+    fn ensure_preview_lookup(
+        &mut self,
+        item: &Item,
+        request: PreviewRequest,
+        priority: PreviewPriority,
+        cache_only: bool,
+    ) {
         if self.clearing_current_folder() {
             return;
         }
@@ -685,9 +694,11 @@ impl TrueRenderer {
             .find(|job| job.item.id == item.id && job.request == key.1)
         {
             job.priority = job.priority.min(priority);
+            job.cache_only &= cache_only;
             return;
         }
         self.demand_jobs.push(crate::decode_pool::Job {
+            cache_only,
             resident: compatible.map(|cached| crate::service::PreviewDecoded {
                 digest: cached.digest,
                 info: cached.info,
@@ -1325,6 +1336,19 @@ impl TrueRenderer {
                     } else {
                         let needed = self.service.cache.memory.take_reclaim_request();
                         self.trim_images_for_headroom(needed);
+                    }
+                }
+                Event::PreviewMissing {
+                    id,
+                    request,
+                    generation,
+                } => {
+                    if generation == self.generation {
+                        let key = (id, request);
+                        self.pending_images.remove(&key);
+                        self.requested_at.remove(&key);
+                        self.folder_load.cache_miss = Some(key);
+                        ctx.request_repaint();
                     }
                 }
                 Event::DecodeDeferred {
@@ -3770,6 +3794,10 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
     }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
+        if std::env::args().any(|a| a == "--cache-reopen-smoke") {
+            self.cache_reopen_smoke(ctx);
+            return;
+        }
         if std::env::args().any(|a| a == "--inspector-layout-smoke") {
             self.inspector_layout_smoke(ctx);
             return;

@@ -1509,6 +1509,9 @@ impl TrueRenderer {
             )
             .show(ui, |ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    // A second row (direct opening or active filters) must not
+                    // feed the panel's previous height back into this row.
+                    ui.set_height(28.);
                     if style::icon_button(
                         ui,
                         true,

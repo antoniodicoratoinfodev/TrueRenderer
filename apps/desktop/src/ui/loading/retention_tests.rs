@@ -295,7 +295,7 @@ fn recipe_change_and_cache_clear_revoke_the_refinement_phase() {
     assert!(
         app.demand_jobs
             .iter()
-            .any(|j| j.request.edge == 0 && j.request.raw_wb.red == 1500)
+            .any(|j| j.cache_only && j.request.edge == 64 && j.request.raw_wb.red == 1500)
     );
     let generation = app.generation;
     app.cancel_folder_preparation();
@@ -604,4 +604,35 @@ fn preparation_recovers_after_a_large_request_or_pressure_reduces_the_budget() {
             );
         }
     }
+}
+
+#[test]
+fn folder_probes_viewer_first_and_only_requests_native_after_a_miss() {
+    let (_dir, ctx, mut app) = app();
+    settle(&mut app, &ctx, true);
+    app.start_folder_preparation(true);
+    app.rebuild.truncate(1);
+    app.rebuild_total = 1;
+    app.folder_load.viewer_edge = 64;
+    let item = app.rebuild[0].clone();
+    neutral(&mut app, &item);
+    app.folder_preparation_demand(&ctx);
+    assert_eq!(app.demand_jobs.len(), 1);
+    let probe = app.demand_jobs.pop().unwrap();
+    assert!(probe.cache_only);
+    assert_eq!(probe.request.edge, 64);
+    app.demand.clear();
+    app.folder_load.cache_miss = Some((item.id.clone(), probe.request));
+    app.folder_preparation_demand(&ctx);
+    assert_eq!(app.demand_jobs.len(), 1);
+    assert!(!app.demand_jobs[0].cache_only);
+    assert_eq!(app.demand_jobs[0].request.edge, 0);
+    app.demand.clear();
+    app.demand_jobs.clear();
+    app.folder_load.cache_miss = None;
+    app.cache
+        .insert((item.id.clone(), probe.request), cached(&app, 64));
+    app.folder_preparation_demand(&ctx);
+    assert_eq!(app.folder_progress(), (1, 1, 1.));
+    assert!(app.demand_jobs.is_empty());
 }

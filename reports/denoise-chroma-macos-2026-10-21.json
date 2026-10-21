@@ -1,0 +1,1090 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-21",
+  "passed": true,
+  "baseline": "SpectralV1 from the application at task start; frozen executable and bundle, unchanged quantities 80/80 and threshold0. Not the older Legacy averaging filter.",
+  "implementation": {
+    "denoiser": "MultiscaleV2",
+    "domain": "extended linear Rec.2020 after RAW development or JPEG decode, before final downsampling/export",
+    "chroma": "native DCT plus three halved scales, joint opponent attenuation, luma/color-guided residual reconstruction",
+    "luminance": "frequency noise model adapted using robust gains in up to four brightness bands",
+    "threshold": "0 preserves automatic estimate; 100 doubles detection threshold, with both amounts zero still identity. Historic sharpening protection retained.",
+    "history": "Legacy and SpectralV1 preserve old arithmetic/serialization; change any noise control or explicit update to create undoable V2 revision.",
+    "new_dependencies": []
+  },
+  "synthetic": {
+    "passed": true,
+    "cases": 6,
+    "checks": 58,
+    "flat_chroma_mse_reduction_percent_vs_v1": [
+      92.0359239936451,
+      80.31894549458798,
+      50.7887303477959,
+      92.22297244592212,
+      77.18968405687318,
+      56.85827287752838
+    ],
+    "scope": "Generated scene-linear signals; fixed seeds, independent and correlated noise. Not a physical sensor calibration or a universal photo-quality claim."
+  },
+  "photographic_comparison": [
+    {
+      "label": "RAW · Nikon D750 · ISO 12800",
+      "size": [
+        6016,
+        4016
+      ],
+      "reference_crops": [
+        {
+          "label": "Scritte e bordi colorati",
+          "before": {
+            "rgb_rmse": 0.020203045384412064,
+            "luma_rmse": 0.015913373278365523,
+            "chroma_rmse": 0.01289915138857869
+          },
+          "after": {
+            "rgb_rmse": 0.020498595414788226,
+            "luma_rmse": 0.015945207696387707,
+            "chroma_rmse": 0.013013258563033333
+          },
+          "reduction_percent": {
+            "rgb_rmse": -1.4628984133461254,
+            "luma_rmse": -0.20004820766357234,
+            "chroma_rmse": -0.8846099329889112
+          }
+        },
+        {
+          "label": "Stampa fine e superfici colorate",
+          "before": {
+            "rgb_rmse": 0.010490495787738056,
+            "luma_rmse": 0.0071234886939874455,
+            "chroma_rmse": 0.008747661154480833
+          },
+          "after": {
+            "rgb_rmse": 0.01091826418177958,
+            "luma_rmse": 0.007125101653000863,
+            "chroma_rmse": 0.009251294153976497
+          },
+          "reduction_percent": {
+            "rgb_rmse": -4.077675666592673,
+            "luma_rmse": -0.022642824081109403,
+            "chroma_rmse": -5.757344627342897
+          }
+        },
+        {
+          "label": "Superficie uniforme",
+          "before": {
+            "rgb_rmse": 0.01293667406058927,
+            "luma_rmse": 0.004902929239753969,
+            "chroma_rmse": 0.01218389171852886
+          },
+          "after": {
+            "rgb_rmse": 0.01248378214406667,
+            "luma_rmse": 0.005026089115909686,
+            "chroma_rmse": 0.011590773723070226
+          },
+          "reduction_percent": {
+            "rgb_rmse": 3.500837343520191,
+            "luma_rmse": -2.5119651973989576,
+            "chroma_rmse": 4.868050448582373
+          }
+        },
+        {
+          "label": "Ombre",
+          "before": {
+            "rgb_rmse": 0.002404535765520562,
+            "luma_rmse": 0.00129881546418519,
+            "chroma_rmse": 0.0021841178843313947
+          },
+          "after": {
+            "rgb_rmse": 0.0015038319272255624,
+            "luma_rmse": 0.001250929245907391,
+            "chroma_rmse": 0.0010166244231856673
+          },
+          "reduction_percent": {
+            "rgb_rmse": 37.45853362676037,
+            "luma_rmse": 3.6869147002218994,
+            "chroma_rmse": 53.45377506961453
+          }
+        }
+      ]
+    },
+    {
+      "label": "JPEG qualità 85 · da D750 ISO 12800",
+      "size": [
+        6016,
+        4016
+      ],
+      "reference_crops": [
+        {
+          "label": "Scritte e bordi colorati",
+          "before": {
+            "rgb_rmse": 0.020648764136086753,
+            "luma_rmse": 0.016008196731735484,
+            "chroma_rmse": 0.013757157206079406
+          },
+          "after": {
+            "rgb_rmse": 0.020556182431718865,
+            "luma_rmse": 0.0160709416038962,
+            "chroma_rmse": 0.013393989452597779
+          },
+          "reduction_percent": {
+            "rgb_rmse": 0.4483643851889818,
+            "luma_rmse": -0.3919546543073471,
+            "chroma_rmse": 2.6398459219550086
+          }
+        },
+        {
+          "label": "Stampa fine e superfici colorate",
+          "before": {
+            "rgb_rmse": 0.010949753115834224,
+            "luma_rmse": 0.007252584147326697,
+            "chroma_rmse": 0.009134927101665004
+          },
+          "after": {
+            "rgb_rmse": 0.010903503603863671,
+            "luma_rmse": 0.007243626437093982,
+            "chroma_rmse": 0.009163976095219628
+          },
+          "reduction_percent": {
+            "rgb_rmse": 0.4223794955127591,
+            "luma_rmse": 0.12351060050804774,
+            "chroma_rmse": -0.3179991830403184
+          }
+        },
+        {
+          "label": "Superficie uniforme",
+          "before": {
+            "rgb_rmse": 0.012927221200968767,
+            "luma_rmse": 0.004913945264515417,
+            "chroma_rmse": 0.012274269148838045
+          },
+          "after": {
+            "rgb_rmse": 0.012142425241021304,
+            "luma_rmse": 0.005107925839136588,
+            "chroma_rmse": 0.011343198528824932
+          },
+          "reduction_percent": {
+            "rgb_rmse": 6.070879021460939,
+            "luma_rmse": -3.9475526115836823,
+            "chroma_rmse": 7.585548342821324
+          }
+        },
+        {
+          "label": "Ombre",
+          "before": {
+            "rgb_rmse": 0.0028656153222025153,
+            "luma_rmse": 0.0013629919665451332,
+            "chroma_rmse": 0.0027091543871765457
+          },
+          "after": {
+            "rgb_rmse": 0.0015691278965368337,
+            "luma_rmse": 0.001325780903526903,
+            "chroma_rmse": 0.001081372889961488
+          },
+          "reduction_percent": {
+            "rgb_rmse": 45.242898292056864,
+            "luma_rmse": 2.7301014189064943,
+            "chroma_rmse": 60.08448632237293
+          }
+        }
+      ]
+    },
+    {
+      "label": "JPEG qualità 98 · da D750 ISO 12800",
+      "size": [
+        6016,
+        4016
+      ],
+      "reference_crops": [
+        {
+          "label": "Scritte e bordi colorati",
+          "before": {
+            "rgb_rmse": 0.020547498196258205,
+            "luma_rmse": 0.015970146995038275,
+            "chroma_rmse": 0.013645985387391285
+          },
+          "after": {
+            "rgb_rmse": 0.020461353551030546,
+            "luma_rmse": 0.016009080911482943,
+            "chroma_rmse": 0.01328354885957531
+          },
+          "reduction_percent": {
+            "rgb_rmse": 0.41924639391547336,
+            "luma_rmse": -0.24379184773166696,
+            "chroma_rmse": 2.6559938144947948
+          }
+        },
+        {
+          "label": "Stampa fine e superfici colorate",
+          "before": {
+            "rgb_rmse": 0.010820930958451238,
+            "luma_rmse": 0.007219321302983041,
+            "chroma_rmse": 0.009027919915502176
+          },
+          "after": {
+            "rgb_rmse": 0.010837215157331862,
+            "luma_rmse": 0.007211952402588031,
+            "chroma_rmse": 0.009121181484588091
+          },
+          "reduction_percent": {
+            "rgb_rmse": -0.15048796580581225,
+            "luma_rmse": 0.10207192734260628,
+            "chroma_rmse": -1.0330349621929136
+          }
+        },
+        {
+          "label": "Superficie uniforme",
+          "before": {
+            "rgb_rmse": 0.01290627177648258,
+            "luma_rmse": 0.004865354393963419,
+            "chroma_rmse": 0.012268124030621707
+          },
+          "after": {
+            "rgb_rmse": 0.012038134273001964,
+            "luma_rmse": 0.004995994185065336,
+            "chroma_rmse": 0.01126444106250005
+          },
+          "reduction_percent": {
+            "rgb_rmse": 6.7264777816201775,
+            "luma_rmse": -2.6851032940993003,
+            "chroma_rmse": 8.18122612403025
+          }
+        },
+        {
+          "label": "Ombre",
+          "before": {
+            "rgb_rmse": 0.002822805612125513,
+            "luma_rmse": 0.0013074696593571445,
+            "chroma_rmse": 0.0026784402725132748
+          },
+          "after": {
+            "rgb_rmse": 0.0015479400957870394,
+            "luma_rmse": 0.0012841319766360567,
+            "chroma_rmse": 0.0010850464764117914
+          },
+          "reduction_percent": {
+            "rgb_rmse": 45.16306439459452,
+            "luma_rmse": 1.7849502322342614,
+            "chroma_rmse": 59.489614625841405
+          }
+        }
+      ]
+    },
+    {
+      "label": "RAW · Nikon D750 · ISO 6400",
+      "size": [
+        6016,
+        4016
+      ],
+      "reference_crops": []
+    },
+    {
+      "label": "RAW · Nikon D800 · ISO 6400",
+      "size": [
+        7360,
+        4912
+      ],
+      "reference_crops": []
+    },
+    {
+      "label": "RAW · Nikon D750 · ISO 7200",
+      "size": [
+        6016,
+        4016
+      ],
+      "reference_crops": []
+    }
+  ],
+  "private_gallery": "var/denoise-chroma-20261021/comparison/index.html",
+  "photographic_limits": "ISO100 is an imperfect reference of the same scene. Registration and exposure were frozen from the original input. JPEGs use two compression qualities of the same unfiltered RAW. Improvements are not uniform: see all crops, including negative reductions on fine color detail. Not a universal quality or sensor calibration claim.",
+  "exports": [
+    {
+      "case": "export24",
+      "size": [
+        6016,
+        4016
+      ],
+      "filter_seconds": 3.827902875,
+      "scratch_bound_bytes": 784564224,
+      "recipe": {
+        "advanced": {
+          "color": {
+            "bands": [
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              }
+            ],
+            "grading": [
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              },
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              },
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              }
+            ],
+            "monochrome": false,
+            "rgb_midtones": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "MultiscaleV2",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 25.0
+          },
+          "geometry": {
+            "angle": 0.0,
+            "ca": [
+              0.0,
+              0.0
+            ],
+            "crop": [
+              0.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            "defringe": 0.0,
+            "distortion": 0.0,
+            "flip_horizontal": false,
+            "flip_vertical": false,
+            "moustache": 0.0,
+            "perspective": [
+              0.0,
+              0.0
+            ],
+            "quarter_turns": 0,
+            "scale": 1.0,
+            "vignette": 0.0
+          },
+          "masks": []
+        },
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.0,
+        "highlights": 0.0,
+        "process_version": 3,
+        "raw_engine": "TrueRendererExperimental",
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 0.0,
+        "tint": 0.0,
+        "whites": 0.0
+      },
+      "cases": [
+        {
+          "slot": 0,
+          "format": "Png16",
+          "seconds": 29.221402417,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1122533376,
+          "peak_worker_cpu_nanoseconds": 0
+        },
+        {
+          "slot": 1,
+          "format": "Tiff16",
+          "seconds": 8.021427875,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1122500608,
+          "peak_worker_cpu_nanoseconds": 0
+        }
+      ]
+    },
+    {
+      "case": "export36",
+      "size": [
+        7360,
+        4912
+      ],
+      "filter_seconds": 5.071615292,
+      "scratch_bound_bytes": 1169686528,
+      "recipe": {
+        "advanced": {
+          "color": {
+            "bands": [
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              }
+            ],
+            "grading": [
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              },
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              },
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              }
+            ],
+            "monochrome": false,
+            "rgb_midtones": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "MultiscaleV2",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 25.0
+          },
+          "geometry": {
+            "angle": 0.0,
+            "ca": [
+              0.0,
+              0.0
+            ],
+            "crop": [
+              0.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            "defringe": 0.0,
+            "distortion": 0.0,
+            "flip_horizontal": false,
+            "flip_vertical": false,
+            "moustache": 0.0,
+            "perspective": [
+              0.0,
+              0.0
+            ],
+            "quarter_turns": 0,
+            "scale": 1.0,
+            "vignette": 0.0
+          },
+          "masks": []
+        },
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.0,
+        "highlights": 0.0,
+        "process_version": 3,
+        "raw_engine": "TrueRendererExperimental",
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 0.0,
+        "tint": 0.0,
+        "whites": 0.0
+      },
+      "cases": [
+        {
+          "slot": 0,
+          "format": "Png16",
+          "seconds": 37.976749,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1664679936,
+          "peak_worker_cpu_nanoseconds": 0
+        },
+        {
+          "slot": 1,
+          "format": "Tiff16",
+          "seconds": 11.6829515,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1663614976,
+          "peak_worker_cpu_nanoseconds": 0
+        }
+      ]
+    },
+    {
+      "case": "export-jpeg",
+      "size": [
+        6016,
+        4016
+      ],
+      "filter_seconds": 3.424047417,
+      "scratch_bound_bytes": 784564224,
+      "recipe": {
+        "advanced": {
+          "color": {
+            "bands": [
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              },
+              {
+                "hue": 0.0,
+                "luminance": 0.0,
+                "saturation": 0.0
+              }
+            ],
+            "grading": [
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              },
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              },
+              {
+                "amount": 0.0,
+                "hue": 0.0
+              }
+            ],
+            "monochrome": false,
+            "rgb_midtones": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "detail": {
+            "chroma_noise": 80.0,
+            "clarity": 0.0,
+            "dehaze": 0.0,
+            "denoise": "MultiscaleV2",
+            "luminance_noise": 80.0,
+            "radius": 1.0,
+            "sharpen": 0.0,
+            "texture": 0.0,
+            "threshold": 25.0
+          },
+          "geometry": {
+            "angle": 0.0,
+            "ca": [
+              0.0,
+              0.0
+            ],
+            "crop": [
+              0.0,
+              0.0,
+              1.0,
+              1.0
+            ],
+            "defringe": 0.0,
+            "distortion": 0.0,
+            "flip_horizontal": false,
+            "flip_vertical": false,
+            "moustache": 0.0,
+            "perspective": [
+              0.0,
+              0.0
+            ],
+            "quarter_turns": 0,
+            "scale": 1.0,
+            "vignette": 0.0
+          },
+          "masks": []
+        },
+        "blacks": 0.0,
+        "brightness": 0.0,
+        "contrast": 0.0,
+        "curve": [],
+        "exposure_ev": 0.0,
+        "highlights": 0.0,
+        "process_version": 3,
+        "raw_engine": "TrueRendererExperimental",
+        "saturation": 0.0,
+        "schema_version": 1,
+        "shadows": 0.0,
+        "temperature": 0.0,
+        "tint": 0.0,
+        "whites": 0.0
+      },
+      "cases": [
+        {
+          "slot": 0,
+          "format": "Png16",
+          "seconds": 28.931937542,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1296678912,
+          "peak_worker_cpu_nanoseconds": 0
+        },
+        {
+          "slot": 1,
+          "format": "Tiff16",
+          "seconds": 4.267247583,
+          "maximum_error_u16": 0,
+          "peak_worker_rss_bytes": 1296678912,
+          "peak_worker_cpu_nanoseconds": 0
+        }
+      ]
+    }
+  ],
+  "native_ui": [
+    {
+      "case": "ui-raw",
+      "report": "var/denoise-chroma-20261021/ui-raw/reports/develop-ui.json",
+      "passed": true,
+      "saved_generation": 1,
+      "source_unchanged": true,
+      "output_proof_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1711,
+          1094
+        ]
+      },
+      "export": {
+        "file": "photo-export.png",
+        "passed": true,
+        "size": [
+          6016,
+          4016
+        ]
+      }
+    },
+    {
+      "case": "ui-jpeg",
+      "report": "var/denoise-chroma-20261021/ui-jpeg/reports/develop-ui.json",
+      "passed": true,
+      "saved_generation": 1,
+      "source_unchanged": true,
+      "output_proof_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          1711,
+          1094
+        ]
+      },
+      "export": {
+        "file": "photo-export.png",
+        "passed": true,
+        "size": [
+          6016,
+          4016
+        ]
+      }
+    }
+  ],
+  "verification": {
+    "passed": true,
+    "fmt": true,
+    "clippy_workspace_all_targets_deny_warnings": true,
+    "release_workspace": true,
+    "regular_workspace_tests": {
+      "passed": 646,
+      "ignored": 45,
+      "desktop_passed": 267,
+      "core_passed": 121,
+      "worker_passed": 60
+    },
+    "native_ignored_integrations_passed": 14,
+    "python_reporting_tests_passed": 50,
+    "doc_tests_completed": true,
+    "verify_sh_completion": "verify.sh stopped at two Core Image tests unavailable in the terminal sandbox; both passed using the same test executable in the native macOS session. Remaining workspace targets, doc tests, selected ignored integrations, worker protocol and resampling checks were completed separately. After the layout correction all desktop tests, workspace Clippy and release build were repeated.",
+    "optional_research_and_private_camera_tests": "Skipped as specified by verify.sh with TR_RAW_SAMPLE unset; explicit photographic campaign described separately.",
+    "worker_protocol_checks_passed": 8,
+    "resampling_cases_passed": 24,
+    "resampling_exact_one_to_one": true,
+    "synthetic_cases": 6,
+    "synthetic_checks_passed": 58,
+    "historical_spectral_v1_byte_parity": true,
+    "one_and_four_threads_byte_parity": true,
+    "native_ui_cases": 2,
+    "native_ui_maximum_error_u8": 0,
+    "native_png16_tiff16_cases": 6,
+    "export_maximum_error_u16": 0,
+    "installed_two_xpc_processes": true,
+    "installed_xpc_corpus_images": 12,
+    "installed_files_and_permissions_identical": true,
+    "source_files_checked": 480,
+    "protected_files_unchanged": 549,
+    "preexisting_changes_preserved": true,
+    "layout_regression_before_failed_after_passed": true,
+    "native_screenshots_visually_inspected": [
+      "ui-raw/reports/develop-viewer.png",
+      "ui-raw/reports/develop-grid.png",
+      "ui-jpeg/reports/develop-viewer.png",
+      "ui-jpeg/reports/develop-grid.png"
+    ]
+  },
+  "ui_correction": "Native direct-open testing exposed a pre-existing location-bar feedback loop with a second row. The first row now has a bounded height; regression fails before and passes after in Italian/English at two window sizes. Only explorer.rs and toolbar_tests.rs changed after photographic/export qualification; rendering code and both decoder executables are unchanged.",
+  "performance_limit": "Gallery filter timings include concurrent compilation and are not used as speed comparisons. Export timings are observed native runs, not guaranteed budgets.",
+  "installed_bundle": "dist/TrueRenderer.app",
+  "backup": "var/denoise-chroma-20261021/previous.app",
+  "source_file_count": 480,
+  "protected_file_count": 549,
+  "privacy": "Photographs and their copies, galleries, databases, backups, local toolchain and bundles remain local; only sources and aggregate report are publishable. Original files outside the repository were read only. Protected hashes cover 549 inventoried originals, backups, corpus/sample data and historical architecture, not a binary invariance claim for the main live catalogue. No commit or push performed.",
+  "gates": {
+    "R0_R4_complete": false,
+    "SF0_SF10_complete": false,
+    "Standard_Reference_assurance_available": false,
+    "release_signature": "ad hoc only"
+  },
+  "evidence": [
+    {
+      "path": "var/denoise-chroma-20261021/qualified-source.json",
+      "sha256": "6e4f61f59b7828f9a4c8d4ca4904e0d47ada2358102911e83f9d5a2fecb216f7"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/final-checks.json",
+      "sha256": "aa1cc0d532b9df3a4d1ea45063f13416268dbb628e0acfe882b533a1736b92e7"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/thread-and-probe-parity.json",
+      "sha256": "3a8533cbb3af239f601ec6b0f64e777d2045769dbd9f6b0c85bba61e460ff639"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/preexisting-changes-preserved.json",
+      "sha256": "3a86302cf6821f9fb4a8e7ba0717c0ceb8480860b620757d3cbd89b5d63619f3"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/synthetic-final/quality.json",
+      "sha256": "093686dfbc3ffdfb70da750aefa5ab04702161f21835045ace893c4c5e6e645b"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/comparison/comparison.json",
+      "sha256": "58e63a97512beb154c0a77f3a0a339f84d61205c7b4c37e2217608fd8f94b0c2"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/gallery-display-check.json",
+      "sha256": "43f201f943267d3625f6789551b51d43dfa77228db5127f2a24713f7c8b41fbb"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/native/reports/xpc-qualification-macos.json",
+      "sha256": "206ebe3412a223a68595722e0daf702003028aa737e059516db21610bd361ffd"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/native/reports/xpc-integration-macos.json",
+      "sha256": "3370dc3f6fc971b2e41addb16b043a9dc9a4ecb9283d954a9262ef2145d5bbc4"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/installed-inventory.json",
+      "sha256": "2288986ccc69978a5cfcbb5f3b85ea4ab592aa12b8c6c41966719ab3bce445ea"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/protected-after.json",
+      "sha256": "0d442a37d8e65ca855ed07ed38b4ec58481f3a5eb32c81573e79de402fa2dceb"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/verify.log",
+      "sha256": "8398be6407421217e1fad9335d1fde2a27752fa77d705180b189a411b29c5bba"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/release-workspace.log",
+      "sha256": "d8a0a4b77f6708064a403851a2b6fae02d454d0c568e800295e89b1cee895319"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/package.log",
+      "sha256": "a896a6809a9a552c7360b7f30b3a756b0da89f27920c895debfce42424747c31"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/xpc.log",
+      "sha256": "206ebe3412a223a68595722e0daf702003028aa737e059516db21610bd361ffd"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/export24/denoise-export/parity.json",
+      "sha256": "cb6d356328a744c1a64316fcd96f0383e8311c0daa0d77b596d05aed30fb3637"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/export36/denoise-export/parity.json",
+      "sha256": "c2e7967a245b016ee740f33b74bb7ffff871b2574189b34215837e3a01e43f4c"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/export-jpeg/denoise-export/parity.json",
+      "sha256": "7737472b8ca77d8f47e86d5480eb3698b39da28dac4bb021620dfdd771ffe69f"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/export24/performance.json",
+      "sha256": "792e8b84864a2e297db41f2345d01cc89ef31102d7739fe54acf05b8b5d32d06"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/export36/performance.json",
+      "sha256": "2353a649910d734650f7261b20eac15575f8b418a91d67508355f254e3c33764"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/export-jpeg/performance.json",
+      "sha256": "fb9410dc661e246c30fc758580a8c5ee888a0f0fcc0b9accc7850a5eed1c0a5c"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-raw/reports/develop-ui.json",
+      "sha256": "8fe081a7784631645a09d5263104d08a48ab9e80287f969ab0a36dcee72519ff"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-raw/reports/develop-viewer.png",
+      "sha256": "b8d564655612aadd54769c8ecff71ee587008bbcdd250790d5d7df7b1d9614c9"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-raw/reports/develop-grid.png",
+      "sha256": "0dd57fc4285abaea780c970a2c8b76a01a77ed5f621a54b96df7bd74243820c4"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-raw/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-raw/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-jpeg/reports/develop-ui.json",
+      "sha256": "bf3a95dc307b92647afbb06d9a3663cfa0ed09e8633011ce48a5fbbba91da8e0"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-jpeg/reports/develop-viewer.png",
+      "sha256": "eedfba02e503d50d2bddbc622653ea1bf54a842bad888fa279003d8954bd7d57"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-jpeg/reports/develop-grid.png",
+      "sha256": "ccd21cb5d38efaeba7304260de38e6d8220edb0b984ffaef70dae9953c38934e"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-jpeg/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/ui-jpeg/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/ignored-native.log",
+      "sha256": "2061789c5a711c5a02fec9c014c773ece90fb591e87e32aa1273bcfd70e0f03e"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/verify-rest.log",
+      "sha256": "043a385ec465b3cfb79083797bc67e1462bea3082d6ccc46b8b0069ac49cfb68"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/core-image-native.log",
+      "sha256": "5818ee365e4c73ddd56ea69df9325c3f39164a6ebe0ace778bd2335581653b4e"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/test-truerenderer.log",
+      "sha256": "77a1077b0d243e690bacc518e274c93ab3d2548302734484c5e13c2e1b3b4032"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/test-tr-worker.log",
+      "sha256": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/doc-tests.log",
+      "sha256": "19d77e21ac40124132b18cae4e2d007aa86cc98af4a18b413d874bc26dd6d48d"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/location-regression-before.log",
+      "sha256": "d3cd7b35a86f69d60bc98c4ac2e9c64322e636ecbf6aa39f3c760591bd377580"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/location-regression-after.log",
+      "sha256": "7be23713339c40a717ff0c6e09d514e8d40c0a0a7dade97af714f2807319274c"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/desktop-after-layout.log",
+      "sha256": "fc33d5cb6900270d026ff1b3e62ed2e67331d5f68d42109b5abe79bdbef99bac"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/clippy-after-layout.log",
+      "sha256": "16cc2a0dd7a10ede756ff408a0cdd608e1b4d455befa3b70c5ad568c7dfede8e"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/release-after-layout.log",
+      "sha256": "1387e401e8d261480f5dde08d8ecd3951bdd488ce481d3ead73d7249aa62a145"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/package-after-layout.log",
+      "sha256": "a896a6809a9a552c7360b7f30b3a756b0da89f27920c895debfce42424747c31"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/ui-raw-native.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/ui-jpeg-native.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/installed-xpc.log",
+      "sha256": "ddce45aab1ae9bbcbeef97e05a5991d548c2f576bf2da3cb60c95b33beae5b71"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/spectral-v1-compatibility.json",
+      "sha256": "4f8c3dbc405ae770d9d8f60b6e00945426e690b91ff8516846452dea55c2b444"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/layout-only-source-changes.json",
+      "sha256": "e541a8da0069b6a067c090f9c2f04230e612c9270e93ebb89cb1f5a8bead459c"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/installed-native/reports/xpc-qualification-macos.json",
+      "sha256": "ddce45aab1ae9bbcbeef97e05a5991d548c2f576bf2da3cb60c95b33beae5b71"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/installed-native/reports/xpc-integration-macos.json",
+      "sha256": "b82f3e71ccaf1c6901fa1c3018f46b87654afe0360cf1fea3d1c5a8879443f94"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/protected-check.json",
+      "sha256": "58862d8fcece32f669255777002fdede7ad38b824850f27a5aebd6e7a5146c76"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/comparison/index.html",
+      "sha256": "2a28b37a7b23d389a99af92d259df4ebe8c3f24b8b9753e56229dbe23814aabc"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/qualified-source-before-layout.json",
+      "sha256": "fc0b3790bc18623aa3b84bfcadb11a252afc264ff85cd4bf400561e07eb1638e"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/protected-before.json",
+      "sha256": "0d442a37d8e65ca855ed07ed38b4ec58481f3a5eb32c81573e79de402fa2dceb"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/decoder-binaries-unchanged.json",
+      "sha256": "4ec78092e20d4d0fee05411d7dc0b2f0e1380ece4c552133bda4a235cfb9070a"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/native-ui-commands.json",
+      "sha256": "d7f3e7a98f5638cfa1baaddd5244b9c5c84b29cec31e7c4de2d8a83622c29d84"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/fmt-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "var/denoise-chroma-20261021/logs/diff-final.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "gallery_presentation_update": {
+    "date": "2026-10-21",
+    "change": "Consistent labels distinguish unfiltered photograph, previous filter and updated filter. Toggle button names the result it will show; overlay names the visible result. Image pixels and numerical comparisons unchanged.",
+    "previous_html": "var/denoise-chroma-20261021/comparison-labels-before.html",
+    "previous_html_sha256": "364c15da98c5927cc9b551f15174533003d56c0f4d4a4687aa2f3955a202ccb6",
+    "current_generator_sha256": "539e306f4257db9e83cf01f32a307e7a2ac88cc299a4043103410ac52ffe8d40",
+    "qualified_source_manifest": "The frozen qualification manifest predates this presentation-only generator change; application sources and bundle unchanged."
+  }
+}

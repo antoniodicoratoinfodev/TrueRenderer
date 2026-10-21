@@ -748,6 +748,35 @@ mod tests {
         })
     }
     #[test]
+    fn persisted_preview_survives_relaunch_but_not_a_different_app_version() {
+        let folder = tempfile::tempdir().unwrap();
+        let (info, preview, request) = fixture();
+        let cache = manager();
+        cache
+            .store_preview(folder.path(), "source", request, &info, &preview, &|| false)
+            .unwrap();
+        drop(cache);
+        let mut reopened = manager();
+        let Lookup::Hit(_, decoded) =
+            reopened.load_preview(folder.path(), "source", request, &reopened.memory, &|| {
+                false
+            })
+        else {
+            panic!("Same version must reuse persisted preview");
+        };
+        assert_eq!(decoded.image.source().pixels, preview.image.source().pixels);
+        drop(decoded);
+        let (_, pipeline) = reopened.fingerprint.split_once(':').unwrap();
+        reopened.fingerprint = format!("different-app-version:{pipeline}");
+        assert!(matches!(
+            reopened.load_preview(folder.path(), "source", request, &reopened.memory, &|| {
+                false
+            }),
+            Lookup::Missing
+        ));
+    }
+
+    #[test]
     fn aggregate_admission_is_applied_to_real_preview_publication() {
         let root = tempfile::tempdir().unwrap();
         let a = root.path().join("a");

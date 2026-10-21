@@ -96,6 +96,46 @@ struct ControlHelp {
 }
 const CONTROLS: &[ControlHelp] = &[
     ControlHelp {
+        names: "Grana creativa|Aggiungi grana",
+        it: "Aggiunge rumore digitale per un effetto vintage, dopo lo sviluppo e il ritaglio. Disattivalo per confrontare la foto conservando le impostazioni. Valuta al 100% con Verifica resa finale.",
+        en: "Adds digital noise for a vintage effect, after development and cropping. Turn it off to compare while keeping your settings. Assess at 100% with Verify final rendering.",
+    },
+    ControlHelp {
+        names: "Distribuzione grana",
+        it: "Uniforme genera valori con uguale probabilità entro un intervallo. Gaussiana concentra più valori vicino a zero, con picchi più marcati. La quantità nominale è comparabile fra le due distribuzioni.",
+        en: "Uniform generates equally likely values within a range. Gaussian concentrates more values near zero, with stronger peaks. Nominal strength is comparable between distributions.",
+    },
+    ControlHelp {
+        names: "Grana monocromatica",
+        it: "Attiva: stessa variazione nei tre canali, per grana neutra. Disattiva: variazioni indipendenti, per puntini colorati. Non converte la foto in bianco e nero.",
+        en: "On: the same variation in all three channels, for neutral grain. Off: independent variations, for colored speckles. Does not convert the photo to black and white.",
+    },
+    ControlHelp {
+        names: "Quantità grana",
+        it: "Regola l’ampiezza delle variazioni chiare e scure. Zero lascia la foto invariata; quantità alte possono produrre ombre e luci tagliate in uscita.",
+        en: "Sets the amplitude of light and dark variations. Zero leaves the photo unchanged; high amounts can clip shadows and highlights at output.",
+    },
+    ControlHelp {
+        names: "Dimensione grana (px)",
+        it: "Regola la dimensione da 1 a 20 pixel dell’immagine finale a risoluzione nativa, indipendentemente dallo zoom. Grana più grande forma chiazze più morbide; ridurre l’export attenua la grana fine.",
+        en: "Sets size from 1 to 20 native output pixels, independently of zoom. Larger grain forms softer patches; downsizing the export attenuates fine grain.",
+    },
+    ControlHelp {
+        names: "Opacità grana",
+        it: "Miscela l’effetto con la foto sviluppata: zero lo nasconde, 100% applica tutta la quantità scelta. Non modifica la trasparenza della fotografia.",
+        en: "Blends the effect with the developed photo: zero hides it, 100% applies the full chosen amount. Does not change the photograph’s transparency.",
+    },
+    ControlHelp {
+        names: "Nuova trama",
+        it: "Genera una diversa disposizione dei granelli, salvata con la foto e annullabile. Gli altri controlli conservano la trama, senza sfarfallio.",
+        en: "Generates a different grain pattern, saved with the photo and undoable. Other controls keep the pattern stable, without flicker.",
+    },
+    ControlHelp {
+        names: "Ripristina grana",
+        it: "Disattiva la grana e ripristina soltanto le sue impostazioni iniziali.",
+        en: "Turns grain off and restores only its initial settings.",
+    },
+    ControlHelp {
         names: "Pila livelli",
         it: "I livelli si applicano dal basso verso l’alto. Seleziona una riga per modificarla; l’occhio ne alterna la visibilità e il menu contiene nome, riempimento e ordine.",
         en: "Layers are applied from bottom to top. Select a row to edit it; the eye toggles visibility, and the menu contains name, fill and ordering.",
@@ -562,18 +602,18 @@ const CONTROLS: &[ControlHelp] = &[
     },
     ControlHelp {
         names: "Soglia rumore",
-        it: "Limita l’accentuazione delle piccole variazioni che possono essere rumore.",
-        en: "Limits sharpening of small variations that may be noise.",
+        it: "Aumenta la sensibilità della nuova riduzione rumore e limita l’accentuazione della grana con Texture, Chiarezza e Nitidezza. A zero resta la stima automatica; valori alti possono attenuare dettagli deboli.",
+        en: "Increases the new noise reduction’s sensitivity and limits grain enhancement by Texture, Clarity and Sharpening. Zero keeps the automatic estimate; high values may soften weak detail.",
     },
     ControlHelp {
         names: "Rumore luminanza",
-        it: "Riduce la grana stimando il rumore della foto e proteggendo i dettagli più forti. Aumenta gradualmente; valori elevati possono attenuare le trame fini. Valuta al 100% con Verifica resa finale.",
-        en: "Reduces grain using the photo’s estimated noise while protecting stronger detail. Increase gradually; high values can soften fine texture. Evaluate at 100% with Verify final rendering.",
+        it: "Riduce la grana adattando la stima del rumore alle diverse luminosità della foto, sia RAW sia JPEG, e proteggendo i dettagli più forti. Aumenta gradualmente; valori elevati possono attenuare le trame fini. Valuta al 100% con Verifica resa finale.",
+        en: "Reduces grain by adapting the noise estimate to the photo’s brightness levels, for both RAW and JPEG, while protecting stronger detail. Increase gradually; high values can soften fine texture. Evaluate at 100% with Verify final rendering.",
     },
     ControlHelp {
         names: "Rumore cromatico",
-        it: "Riduce puntini e macchie colorate separatamente dalla grana di luminanza. Valori elevati possono attenuare dettagli cromatici molto fini.",
-        en: "Reduces colored speckles and blotches separately from luminance grain. High values may soften very fine color detail.",
+        it: "Riduce puntini e macchie colorate su più scale, separatamente dalla grana di luminanza e senza desaturare globalmente la foto. Aumenta gradualmente e valuta bordi e trame colorate al 100%: valori elevati possono attenuarli.",
+        en: "Reduces colored speckles and blotches at several scales, separately from luminance grain, without globally desaturating the photo. Increase gradually and assess colored edges and textures at 100%: high values can soften them.",
     },
     ControlHelp {
         names: "Aggiorna riduzione rumore",
