@@ -4,7 +4,7 @@
 
 RAW development, expressive colour tools and photographic layers in one desktop workspace. TrueRenderer takes you from choosing your best frames to shaping the final image, with your originals untouched and your work stored locally.
 
-![Avalanche Lake in TrueRenderer, with the white-balance eyedropper, sample areas and aligned light controls](reports/readme-ui-2026-10-20/develop.jpg)
+![Avalanche Lake in TrueRenderer, with the white-balance eyedropper, sample areas and aligned light controls](reports/readme-ui-2026-10-22/develop.jpg)
 
 Bring out the light you remember. Give a series its own colour palette. Refine one part of a photograph without changing the rest. Compare your decisions as you work, then export at the size and precision you need.
 
@@ -18,7 +18,7 @@ In Develop, click **Auto white balance**, choose a **1×1, 3×3, 5×5 or 11×11*
 
 TrueRenderer works in **linear Rec.2020 floating point**, giving its photographic adjustments a wide numerical range. Histograms, tonal-level sampling and pixel inspection help you connect what you see with the image data.
 
-![Four-wheel grading on a photographic layer in TrueRenderer](reports/readme-ui-2026-10-20/colour.jpg)
+![Four-wheel grading on a photographic layer in TrueRenderer](reports/readme-ui-2026-10-22/colour.jpg)
 
 | Make the image your own | Tools to get there |
 |---|---|
@@ -34,9 +34,13 @@ The searchable **Tools** catalogue puts adjustments within reach. Each tool has 
 
 For noisy RAW or JPEG photographs, open **Presence and detail** and adjust **Luminance noise** and **Chroma noise** independently. The filter adapts to image brightness and treats both fine colour speckles and larger blotches while protecting stronger edges. **Noise threshold** increases its sensitivity: zero keeps the automatic estimate, and higher values remove more weak variations. The threshold also protects against grain enhancement by Texture, Clarity and Sharpening. Start with moderate amounts and threshold zero, then judge at 100% with **Verify final rendering**; high amounts or thresholds can soften weak detail. Older edits keep their original rendering until you change one of these three controls or choose **Update noise reduction**; Undo restores the previous revision.
 
+![Before and after noise reduction on an ISO 800 Canon PowerShot SX100 IS RAW, viewed at 100% with the denoiser controls visible](reports/readme-ui-2026-10-22/denoise.jpg)
+
+**Before/After at 100%:** a real ISO 800 RAW from a Canon PowerShot SX100 IS, with Luminance noise 80, Chroma noise 80 and Noise threshold 0. The right-hand image shows the current filter’s final rendering at native resolution; creative grain is off.
+
 For a vintage texture, use **Creative grain** in the same panel. Enable **Add grain**, choose **Uniform** or **Gaussian**, then adjust **Grain amount**, **Grain size (px)** and **Grain opacity**. **Monochrome grain** adds neutral grain; turn it off for coloured speckles. **New pattern** changes the arrangement, which is saved with the edit. Disabling the effect keeps its settings. Judge fine grain at 100% with **Verify final rendering**; smaller exports naturally soften it.
 
-![TrueRenderer's searchable Tools catalogue beside Grand Teton at sunrise](reports/readme-ui-2026-10-20/tools.jpg)
+![TrueRenderer's searchable Tools catalogue beside Grand Teton at sunrise](reports/readme-ui-2026-10-22/tools.jpg)
 
 ## Build the look, layer by layer
 
@@ -47,7 +51,7 @@ Keep different creative decisions independently editable. Add an adjustment to a
 - **Separate effects and masks:** switch between the selected layer's adjustments and its mask without losing your place in the stack.
 - **Reusable looks:** save selected layers, preview them on another photograph, choose their intensity and optionally include their masks. Applied looks remain editable layers.
 
-![TrueRenderer's layer stack and gradient mask, with the selected area shown as a blue overlay](reports/readme-ui-2026-10-20/layers.jpg)
+![TrueRenderer's layer stack and gradient mask, with the selected area shown as a blue overlay](reports/readme-ui-2026-10-22/layers.jpg)
 
 **Experiment freely.** Undo, Redo, Reset all and Before/After keep decisions reversible. Double-click a photographic slider to restore its default. Copy selected light, curve and RGB colour adjustments between photographs to carry a treatment through a series.
 
@@ -59,13 +63,13 @@ Crop directly on the photograph with draggable edges, a rule-of-thirds grid and 
 
 Rotation, flips, straightening and perspective controls complete the composition tools. Masks follow the photograph through crop and rotation, and the original remains available for a different framing later.
 
-![Interactive crop in TrueRenderer, with aspect-ratio controls and a composition grid](reports/readme-ui-2026-10-20/crop.jpg)
+![Interactive crop in TrueRenderer, with aspect-ratio controls and a composition grid](reports/readme-ui-2026-10-22/crop.jpg)
 
 ## See the differences that matter
 
 Choose between two frames with **side-by-side comparison and synchronized navigation**. Assign photographs to A and B from the context menu, keep the pair across folders, and inspect detail at physical 1:1. Use Before/After to compare the initial rendering with your current adjustments.
 
-![Two Grand Teton photographs side by side in TrueRenderer's comparison view](reports/readme-ui-2026-10-20/compare.jpg)
+![Two Grand Teton photographs side by side in TrueRenderer's comparison view](reports/readme-ui-2026-10-22/compare.jpg)
 
 Shutter speed, aperture, ISO, focal length and lens information sit alongside the image, helping you understand each frame as you select and develop it.
 
@@ -75,7 +79,7 @@ Browse folders in **Explorer**, review a thumbnail grid in **Library**, or stay 
 
 Use **star ratings, colour labels, reject flags and keywords** to organize a shoot. Context menus bring ratings, comparison, adjustments, file navigation and export to the photograph you are working on.
 
-![TrueRenderer's library with public-domain sample photographs, ratings and shooting information](reports/readme-ui-2026-10-20/library.jpg)
+![TrueRenderer's library with public-domain sample photographs, ratings and shooting information](reports/readme-ui-2026-10-22/library.jpg)
 
 Your originals remain read-only. Editing recipes, annotations and saved looks live in the local library and its backups.
 
@@ -154,4 +158,4 @@ Keep `var/library.sqlite` and `var/backups/`: they contain durable library data.
 
 TrueRenderer is proprietary software. See the [license](LICENSE) and [third-party notices](NOTICE.md).
 
-Screenshots show the native macOS app in English, using public-domain photographs by the National Park Service, including NPS / David Restivo. See the [photograph credits](sample-photos/manifest.json) and [screenshot provenance](reports/readme-ui-showcase-macos-2026-10-20.json).
+Screenshots show the native macOS app in English. Landscapes are public-domain photographs by the National Park Service, including NPS / David Restivo; the denoising example uses a [CC0 RAW sample from raw.pixls.us](https://raw.pixls.us/). See the [landscape credits](sample-photos/manifest.json) and [screenshot provenance and RAW source](reports/readme-ui-showcase-macos-2026-10-22.json).

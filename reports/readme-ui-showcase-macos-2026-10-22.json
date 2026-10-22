@@ -1,0 +1,283 @@
+{
+  "application": "TrueRenderer",
+  "captured_at": "2026-10-22T03:38:16.540177+00:00",
+  "base_source_commit": "4312685c104d20dd5af5e11c8fb2998eac840121",
+  "bundle": {
+    "path": "dist/TrueRenderer.app",
+    "version": "0.1.5",
+    "binary_sha256": "cb403b2de89f6c740edfde5e03de5a57da1541363fb289eb62f89bff3ec4f092",
+    "qualification": "reports/grain-macos-2026-10-22.json"
+  },
+  "language": "en",
+  "ui_scale_percent": 100,
+  "preview_quality": "Full",
+  "capture_method": "Native macOS application-window captures using the computer-use screenshot API. JPEG bytes saved exactly as returned, without cropping, resizing, compositing, retouching or synthetic image noise.",
+  "isolated_library": true,
+  "private_photographs_published": false,
+  "reference_desktop_screenshot_reused": false,
+  "photograph_credits": "sample-photos/manifest.json for the four NPS landscapes; additional CC0 RAW sample documented below.",
+  "denoise_source": {
+    "repository": "https://raw.pixls.us/",
+    "repository_entry_id": 3823,
+    "raw_download_url": "https://raw.pixls.us/getfile.php/3823/nice/Canon%20-%20PowerShot%20SX100%20IS%20-%2010bit%2010bit%20CHDK%20ver.%201.4.1%20%284:3%29.DNG",
+    "exif_url": "https://raw.pixls.us/getfile.php/3823/exif/CRW_0964_01.DNG.exif.txt",
+    "rights": "CC0 1.0 Universal, as declared by raw.pixls.us for this entry",
+    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "raw_sha256": "5c5e2d15b81778d1b48b44c53f4f0b454e4bdde5d683532828328a7842508400",
+    "camera": "Canon PowerShot SX100 IS",
+    "iso": 800,
+    "shutter": "1/17 s",
+    "aperture": "f/3.5",
+    "raw_file_published": false,
+    "rendered_dimensions": [
+      3264,
+      2448
+    ]
+  },
+  "denoise_comparison": {
+    "algorithm": "MultiscaleV2",
+    "luminance_noise": 80,
+    "chroma_noise": 80,
+    "threshold": 0,
+    "creative_grain_enabled": false,
+    "image_zoom": "100%",
+    "same_source_and_synchronized_frame": true,
+    "before": "Initial development, no edit recipe",
+    "after": "Native final rendering with only noise reduction enabled",
+    "recipe": {
+      "advanced": {
+        "geometry": {
+          "crop": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "quarter_turns": 0,
+          "flip_horizontal": false,
+          "flip_vertical": false,
+          "angle": 0.0,
+          "perspective": [
+            0.0,
+            0.0
+          ],
+          "scale": 1.0,
+          "distortion": 0.0,
+          "moustache": 0.0,
+          "vignette": 0.0,
+          "ca": [
+            0.0,
+            0.0
+          ],
+          "defringe": 0.0
+        },
+        "detail": {
+          "denoise": "MultiscaleV2",
+          "texture": 0.0,
+          "clarity": 0.0,
+          "dehaze": 0.0,
+          "sharpen": 0.0,
+          "radius": 1.0,
+          "threshold": 0.0,
+          "luminance_noise": 80.0,
+          "chroma_noise": 80.0
+        },
+        "color": {
+          "bands": [
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            },
+            {
+              "hue": 0.0,
+              "saturation": 0.0,
+              "luminance": 0.0
+            }
+          ],
+          "grading": [
+            {
+              "hue": 0.0,
+              "amount": 0.0
+            },
+            {
+              "hue": 0.0,
+              "amount": 0.0
+            },
+            {
+              "hue": 0.0,
+              "amount": 0.0
+            }
+          ],
+          "monochrome": false,
+          "rgb_midtones": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "masks": []
+      },
+      "schema_version": 1,
+      "process_version": 3,
+      "raw_engine": "TrueRendererExperimental",
+      "exposure_ev": 0.0,
+      "brightness": 0.0,
+      "contrast": 0.0,
+      "highlights": 0.0,
+      "shadows": 0.0,
+      "whites": 0.0,
+      "blacks": 0.0,
+      "temperature": 0.0,
+      "tint": 0.0,
+      "saturation": 0.0,
+      "curve": []
+    },
+    "scope": "A real ISO 800 compact-camera example; not a universal quality claim. The source also contains dead pixels, clipped highlights and optical softness; no extra correction of those defects."
+  },
+  "screenshots": [
+    {
+      "path": "reports/readme-ui-2026-10-22/develop.jpg",
+      "role": "Avalanche Lake, white-balance picker armed with the 5×5 area selected; no sample taken.",
+      "sha256": "130cd29afc7ed9f3fcc448c04ded5d927770e79a1a2f877000439468940906ab",
+      "bytes": 990665,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:20:38.924305+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/colour.jpg",
+      "role": "Grand Teton Sunrise, Four-wheel grading layer with shadow hue 220 degrees, chroma 8 and opacity 100%.",
+      "sha256": "99ff3b5182cb0dc82da380225045974d477d107c4755827eb4560f46e09adaa5",
+      "bytes": 800252,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:27:13.316849+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/tools.jpg",
+      "role": "Grand Teton Sunrise with the searchable Tools catalogue before adding the demonstration layer.",
+      "sha256": "36183052869e78bb97f24c283fa13678abc3697eadab4c0a8cb55386019befb2",
+      "bytes": 787214,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:26:19.865614+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/layers.jpg",
+      "role": "Grand Teton Sunrise, grading layer with a linear gradient mask, radius 0.25, angle 0 and feather 0.5; Show area enabled.",
+      "sha256": "b06d053cdc015bf3072fa74ab38804440158503a6607f5216eb0a004c3a65a65",
+      "bytes": 754298,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:27:45.395249+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/crop.jpg",
+      "role": "Avalanche Lake, unconfirmed 16:9 crop with rule-of-thirds grid; cancelled after capture.",
+      "sha256": "4fa30ed03523cd509bc4b3eaedf1d70ad2e6e6842ad3a74a16c3e94f2e1a0f35",
+      "bytes": 948598,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:25:46.379472+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/compare.jpg",
+      "role": "Grand Teton Sunrise and Winter in side-by-side Fit comparison, with the Information inspector.",
+      "sha256": "594ff6bf1c4e0bdf22c3c43992827cb7aefc4e1df5a4dcced9b6139ff94d2492",
+      "bytes": 674703,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:28:49.424432+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/library.jpg",
+      "role": "Four included sample photographs in a two-column grid; Avalanche Lake has five stars and a green label in the isolated catalogue.",
+      "sha256": "7180a466bdc85185caaa96be7d47411b35787d216d8613a4139618f2c8141b3a",
+      "bytes": 873016,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:29:53.964112+00:00"
+    },
+    {
+      "path": "reports/readme-ui-2026-10-22/denoise.jpg",
+      "role": "Canon PowerShot SX100 IS DNG at ISO 800, actual Before/After at 100%, synchronized framing, current MultiscaleV2 luminance 80/chroma 80/threshold 0, creative grain off; B reports Final rendering at native resolution.",
+      "sha256": "783410d1ffa61a503e78be2a2ef407a579ae514440a4c62e054cf3827a5aefd6",
+      "bytes": 1141649,
+      "width": 2880,
+      "height": 1846,
+      "exif_tags": [
+        34665
+      ],
+      "visually_reviewed": true,
+      "captured_at": "2026-10-22T03:36:54.939551+00:00"
+    }
+  ],
+  "verification": {
+    "all_eight_images_visually_reviewed": true,
+    "jpeg_integrity_checked": true,
+    "included_originals_unchanged": 4,
+    "raw_hash_matches_repository": true,
+    "installed_binary_matches_qualified_grain_bundle": true,
+    "readme_links_checked": true
+  },
+  "scope": "README screenshot refresh only, no application source or rendering changes. Previous screenshot sets and provenance preserved."
+}

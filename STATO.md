@@ -33,6 +33,13 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 **Pubblicazione denoiser e rifiniture richiesta il 21 ottobre:** riuniti in 22 file il filtro per alti ISO, il comando miniature nella barra di stato e la rimozione dei rimandi Experimental dai README, con regressioni, specifiche e due rapporti aggregati. Ricontrollati 476 sorgenti congelati, 57 hash delle evidenze e 251 file protetti. Le diciture «nessun commit/push» descrivono la chiusura delle qualifiche, precedente a questa pubblicazione richiesta dal titolare. Fotografie, gallerie private, cataloghi, backup, bundle e toolchain restano locali.
 
+### Schermate README aggiornate e confronto denoiser — 22 ottobre
+
+- [x] Rifatte le sette schermate del README con `dist/TrueRenderer.app` corrente e catalogo separato; lingua inglese, UI 100%, qualità Piena. Conservati i set e i rapporti precedenti.
+- [x] Aggiunta una nuova acquisizione nativa Prima/Dopo al 100% con i controlli visibili: Canon PowerShot SX100 IS, RAW ISO 800, campione pubblico CC0 da raw.pixls.us (voce 3823). Usato `MultiscaleV2` corrente, luminanza 80/cromia 80/soglia 0 e grana creativa disattivata; B indica resa finale alla risoluzione nativa. Lo screenshot del Desktop è stato consultato soltanto come riferimento compositivo.
+- [x] Otto JPEG 2880×1846 salvati come restituiti dall’API di acquisizione, senza ritocco, ridimensionamento o compositing; schermate ispezionate, integrità JPEG, hash del RAW contro il catalogo e collegamenti README verificati. Le quattro fotografie dimostrative originali sono invariate; il binario coincide con quello qualificato per la grana. Nessuna modifica ai sorgenti dell’app.
+- [x] Aggiornati README, crediti e [rapporto di provenienza](reports/readme-ui-showcase-macos-2026-10-22.json). RAW, cataloghi di prova e dati locali restano in `var/readme-ui-20261022/`; per la pubblicazione richiesta sono incluse soltanto le otto schermate e la documentazione. Nessun gate R/SF concluso; fonti anteprime invariate.
+
 ### Grana creativa — consegnata il 22 ottobre
 
 - [x] Aggiunta nel pannello Presenza e dettaglio: attivazione indipendente, Uniforme/Gaussiana, monocromia/colore, quantità, dimensione 1–20 px nativi di uscita, opacità, nuova trama e ripristino dedicato; etichette e aiuti IT/EN.
