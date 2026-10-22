@@ -35,6 +35,8 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 ### Schermate README aggiornate e confronto denoiser — 22 ottobre
 
+- [x] Aggiornato nuovamente il confronto rumore con `Pasted 2026-10-22 at 3.32.25 PM.tiff`, scelto dal titolare: PNG con pixel RGBA identici al TIFF e dimensioni invariate. Didascalia e provenienza allineate a zoom 105%, luminanza 62/cromia 72/soglia 10, Texture 33 e Nitidezza 30 con raggio 1,3 px; grana disattivata. Verificati hash delle otto schermate e collegamenti README.
+
 - [x] Sostituito il confronto rumore con `Pasted 2026-10-22 at 3.27.32 PM.tiff`, scelto dal titolare sul Desktop: PNG senza ritocco/ridimensionamento, pixel RGBA identici verificati. Didascalia e provenienza allineate ai controlli visibili: UI italiana, zoom 108%, luminanza 62/cromia 72/soglia 10, Texture −5, grana disattivata. Verificati hash e collegamenti README; nessuna modifica al codice applicativo.
 
 - [x] Sostituito nel README il confronto denoiser con `Pasted 2026-10-22 at 2.59.43 PM.tiff`, scelto dal titolare sul Desktop: PNG senza ridimensionamento/ritocco, pixel RGBA identici al TIFF verificati; confronto D750 ISO 12800 al 129%, quantità 80/80 e soglia 0. Spiegazione, screenshot e didascalia restano nella sezione finale; aggiornata la provenienza.

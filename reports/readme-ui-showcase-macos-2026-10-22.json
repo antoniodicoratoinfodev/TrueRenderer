@@ -37,13 +37,15 @@
     "chroma_noise": 72,
     "threshold": 10,
     "creative_grain_enabled": false,
-    "image_zoom": "108%",
+    "image_zoom": "105%",
     "same_source_and_synchronized_frame": true,
     "before": "Initial development, no edit recipe",
     "after": "Native final rendering as labelled in the owner-supplied screenshot",
-    "scope": "Owner-selected Nikon D750 ISO 12800 screenshot, Before/After at displayed 108% zoom, final native rendering and 62/72/10 controls visible; Texture -5 and creative grain off. One example, not a universal quality claim.",
-    "texture": -5,
-    "settings_basis": "Visible controls in the owner-supplied screenshot; complete recipe and algorithm revision not independently verified for this capture."
+    "scope": "Owner-selected Nikon D750 ISO 12800 screenshot, Before/After at displayed 105% zoom, final native rendering and 62/72/10 controls visible; Texture 33, Sharpening 30 with radius 1.3 px and creative grain off. One example, not a universal quality claim.",
+    "texture": 33,
+    "settings_basis": "Visible controls in the owner-supplied screenshot; complete recipe and algorithm revision not independently verified for this capture.",
+    "sharpening": 30,
+    "sharpening_radius_px": 1.3
   },
   "screenshots": [
     {
@@ -139,16 +141,16 @@
     },
     {
       "path": "reports/readme-ui-2026-10-22/denoise.png",
-      "role": "Owner-supplied D750 ISO 12800 Before/After at 108%, Italian UI, denoiser controls 62/72/10 and Texture -5 visible, creative grain off.",
-      "sha256": "d04816980567936d224a30ccc5907d8db93b936ad82da02402f1851005378e18",
-      "bytes": 6726543,
+      "role": "Owner-supplied D750 ISO 12800 Before/After at 105%, Italian UI, denoiser controls 62/72/10 and Texture 33, Sharpening 30 with radius 1.3 px visible, creative grain off.",
+      "sha256": "d32e030028d275f4d2e71b31d7dfbc995cec9dc72bfa32ba1587d4ce39b7821d",
+      "bytes": 6882806,
       "width": 3164,
       "height": 2070,
       "exif_tags": [],
       "visually_reviewed": true,
-      "captured_at": "2026-10-22T15:27:32+02:00",
-      "source_file": "Pasted 2026-10-22 at 3.27.32 PM.tiff",
-      "source_sha256": "60e12d9284adc0396a4c27e7fc137439e191418d9dc4dc4674eba48d131cddb4",
+      "captured_at": "2026-10-22T15:32:25+02:00",
+      "source_file": "Pasted 2026-10-22 at 3.32.25 PM.tiff",
+      "source_sha256": "f0dd6632fd7a6c796ba02ebf1c5fcd6a2cbf568471c538e6ee862cb32f201acb",
       "conversion": "TIFF to PNG via macOS sips; decoded RGBA pixels verified identical, dimensions unchanged.",
       "capture_time_basis": "Owner-supplied source filename; capture time not independently verified."
     }
@@ -162,5 +164,5 @@
     "readme_links_checked": true
   },
   "scope": "README screenshot refresh only, no application source or rendering changes. Previous screenshot sets and provenance preserved.",
-  "denoise_recaptured_at": "2026-10-22T15:27:32+02:00"
+  "denoise_recaptured_at": "2026-10-22T15:32:25+02:00"
 }
