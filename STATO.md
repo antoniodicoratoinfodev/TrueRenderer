@@ -35,6 +35,10 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 ### Schermate README aggiornate e confronto denoiser — 22 ottobre
 
+- [x] Sostituito nel README il confronto denoiser con `Pasted 2026-10-22 at 2.59.43 PM.tiff`, scelto dal titolare sul Desktop: PNG senza ridimensionamento/ritocco, pixel RGBA identici al TIFF verificati; confronto D750 ISO 12800 al 129%, quantità 80/80 e soglia 0. Spiegazione, screenshot e didascalia restano nella sezione finale; aggiornata la provenienza.
+
+- [x] Spostati spiegazione del denoiser, screenshot D750 e didascalia in una sezione finale del README, come richiesto; chiarito il rimando al pannello della grana e verificati contenuto e collegamenti.
+
 - [x] Rifatte le sette schermate del README con `dist/TrueRenderer.app` corrente e catalogo separato; lingua inglese, UI 100%, qualità Piena. Conservati i set e i rapporti precedenti.
 - [x] Aggiunta una nuova acquisizione nativa Prima/Dopo al 100% con i controlli visibili: Nikon D750, RAW ISO 12800 già usato nelle campagne del denoiser (`nikon_d750_08.nef`), scelto espressamente dal titolare per questa schermata pubblica; sostituisce il primo esempio Canon. Nessuna licenza CC0 attribuita alla foto D750; diritti fotografici originali conservati. Usato `MultiscaleV2` corrente, luminanza 80/cromia 80/soglia 0 e grana creativa disattivata; B indica resa finale alla risoluzione nativa. Lo screenshot del Desktop è stato consultato soltanto come riferimento compositivo.
 - [x] Otto JPEG 2880×1846 salvati come restituiti dall’API di acquisizione, senza ritocco, ridimensionamento o compositing; schermate ispezionate, integrità JPEG, hash del RAW D750 contro l’originale già usato e collegamenti README verificati. Le quattro fotografie dimostrative originali sono invariate; il binario coincide con quello qualificato per la grana. Nessuna modifica ai sorgenti dell’app.

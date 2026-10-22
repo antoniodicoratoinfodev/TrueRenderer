@@ -11,7 +11,7 @@
   "language": "en",
   "ui_scale_percent": 100,
   "preview_quality": "Full",
-  "capture_method": "Native macOS application-window captures using the computer-use screenshot API. JPEG bytes saved exactly as returned, without cropping, resizing, compositing, retouching or synthetic image noise.",
+  "capture_method": "Seven native macOS application-window JPEG captures saved as returned by the computer-use screenshot API. The denoiser screenshot is the owner-supplied Desktop TIFF identified in its entry, converted losslessly to PNG for README display; no crop, resizing or retouching performed by the agent.",
   "isolated_library": true,
   "private_photographs_published": false,
   "reference_desktop_screenshot_reused": false,
@@ -38,7 +38,7 @@
     "chroma_noise": 80,
     "threshold": 0,
     "creative_grain_enabled": false,
-    "image_zoom": "100%",
+    "image_zoom": "129%",
     "same_source_and_synchronized_frame": true,
     "before": "Initial development, no edit recipe",
     "after": "Native final rendering with only noise reduction enabled",
@@ -161,7 +161,7 @@
       "saturation": 0.0,
       "curve": []
     },
-    "scope": "Real Nikon D750 ISO 12800 bookshelf example from the existing test corpus; synchronized 100% native Before/After, current denoiser, no synthetic noise. One example, not a universal quality claim."
+    "scope": "Owner-selected Nikon D750 ISO 12800 screenshot, synchronized Before/After at displayed 129% zoom, final native rendering and 80/80/0 controls visible; creative grain off. One example, not a universal quality claim."
   },
   "screenshots": [
     {
@@ -256,17 +256,19 @@
       "captured_at": "2026-10-22T03:29:53.964112+00:00"
     },
     {
-      "path": "reports/readme-ui-2026-10-22/denoise.jpg",
-      "role": "Nikon D750 ISO 12800 RAW, synchronized Before/After at 100%, current MultiscaleV2 final native rendering and denoiser controls visible; creative grain off.",
-      "sha256": "ad7712121fe3e66788829b6c5fa030ed3d6f61042950fe64d07d54ed17fac8ba",
-      "bytes": 1110576,
-      "width": 2880,
-      "height": 1846,
-      "exif_tags": [
-        34665
-      ],
+      "path": "reports/readme-ui-2026-10-22/denoise.png",
+      "role": "Owner-supplied D750 ISO 12800 Before/After at 129%, denoiser controls 80/80/0 visible and creative grain off.",
+      "sha256": "577ae96d944d09d151b899d1de602dd77d19f56e20f35a702254ea43aacfd22d",
+      "bytes": 5712898,
+      "width": 3164,
+      "height": 2070,
+      "exif_tags": [],
       "visually_reviewed": true,
-      "captured_at": "2026-10-22T12:42:16.236991+00:00"
+      "captured_at": "2026-10-22T14:59:43+02:00",
+      "source_file": "Pasted 2026-10-22 at 2.59.43 PM.tiff",
+      "source_sha256": "857dfa120ca322e59d4859d92bc865e103d9198c622ae15b7180e3bff1bb3d2f",
+      "conversion": "TIFF to PNG via macOS sips; decoded RGBA pixels verified identical, dimensions unchanged.",
+      "capture_time_basis": "Owner-supplied source filename; capture time not independently verified."
     }
   ],
   "verification": {
