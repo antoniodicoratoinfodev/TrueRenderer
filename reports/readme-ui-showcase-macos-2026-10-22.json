@@ -8,7 +8,7 @@
     "binary_sha256": "cb403b2de89f6c740edfde5e03de5a57da1541363fb289eb62f89bff3ec4f092",
     "qualification": "reports/grain-macos-2026-10-22.json"
   },
-  "language": "en",
+  "language": "en; owner-supplied denoiser screenshot in it",
   "ui_scale_percent": 100,
   "preview_quality": "Full",
   "capture_method": "Seven native macOS application-window JPEG captures saved as returned by the computer-use screenshot API. The denoiser screenshot is the owner-supplied Desktop TIFF identified in its entry, converted losslessly to PNG for README display; no crop, resizing or retouching performed by the agent.",
@@ -33,135 +33,17 @@
     ]
   },
   "denoise_comparison": {
-    "algorithm": "MultiscaleV2",
-    "luminance_noise": 80,
-    "chroma_noise": 80,
-    "threshold": 0,
+    "luminance_noise": 62,
+    "chroma_noise": 72,
+    "threshold": 10,
     "creative_grain_enabled": false,
-    "image_zoom": "129%",
+    "image_zoom": "108%",
     "same_source_and_synchronized_frame": true,
     "before": "Initial development, no edit recipe",
-    "after": "Native final rendering with only noise reduction enabled",
-    "recipe": {
-      "advanced": {
-        "geometry": {
-          "crop": [
-            0.0,
-            0.0,
-            1.0,
-            1.0
-          ],
-          "quarter_turns": 0,
-          "flip_horizontal": false,
-          "flip_vertical": false,
-          "angle": 0.0,
-          "perspective": [
-            0.0,
-            0.0
-          ],
-          "scale": 1.0,
-          "distortion": 0.0,
-          "moustache": 0.0,
-          "vignette": 0.0,
-          "ca": [
-            0.0,
-            0.0
-          ],
-          "defringe": 0.0
-        },
-        "detail": {
-          "denoise": "MultiscaleV2",
-          "texture": 0.0,
-          "clarity": 0.0,
-          "dehaze": 0.0,
-          "sharpen": 0.0,
-          "radius": 1.0,
-          "threshold": 0.0,
-          "luminance_noise": 80.0,
-          "chroma_noise": 80.0
-        },
-        "color": {
-          "bands": [
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            },
-            {
-              "hue": 0.0,
-              "saturation": 0.0,
-              "luminance": 0.0
-            }
-          ],
-          "grading": [
-            {
-              "hue": 0.0,
-              "amount": 0.0
-            },
-            {
-              "hue": 0.0,
-              "amount": 0.0
-            },
-            {
-              "hue": 0.0,
-              "amount": 0.0
-            }
-          ],
-          "monochrome": false,
-          "rgb_midtones": [
-            0.0,
-            0.0,
-            0.0
-          ]
-        },
-        "masks": []
-      },
-      "schema_version": 1,
-      "process_version": 3,
-      "raw_engine": "TrueRendererExperimental",
-      "exposure_ev": 0.0,
-      "brightness": 0.0,
-      "contrast": 0.0,
-      "highlights": 0.0,
-      "shadows": 0.0,
-      "whites": 0.0,
-      "blacks": 0.0,
-      "temperature": 0.0,
-      "tint": 0.0,
-      "saturation": 0.0,
-      "curve": []
-    },
-    "scope": "Owner-selected Nikon D750 ISO 12800 screenshot, synchronized Before/After at displayed 129% zoom, final native rendering and 80/80/0 controls visible; creative grain off. One example, not a universal quality claim."
+    "after": "Native final rendering as labelled in the owner-supplied screenshot",
+    "scope": "Owner-selected Nikon D750 ISO 12800 screenshot, Before/After at displayed 108% zoom, final native rendering and 62/72/10 controls visible; Texture -5 and creative grain off. One example, not a universal quality claim.",
+    "texture": -5,
+    "settings_basis": "Visible controls in the owner-supplied screenshot; complete recipe and algorithm revision not independently verified for this capture."
   },
   "screenshots": [
     {
@@ -257,16 +139,16 @@
     },
     {
       "path": "reports/readme-ui-2026-10-22/denoise.png",
-      "role": "Owner-supplied D750 ISO 12800 Before/After at 129%, denoiser controls 80/80/0 visible and creative grain off.",
-      "sha256": "577ae96d944d09d151b899d1de602dd77d19f56e20f35a702254ea43aacfd22d",
-      "bytes": 5712898,
+      "role": "Owner-supplied D750 ISO 12800 Before/After at 108%, Italian UI, denoiser controls 62/72/10 and Texture -5 visible, creative grain off.",
+      "sha256": "d04816980567936d224a30ccc5907d8db93b936ad82da02402f1851005378e18",
+      "bytes": 6726543,
       "width": 3164,
       "height": 2070,
       "exif_tags": [],
       "visually_reviewed": true,
-      "captured_at": "2026-10-22T14:59:43+02:00",
-      "source_file": "Pasted 2026-10-22 at 2.59.43 PM.tiff",
-      "source_sha256": "857dfa120ca322e59d4859d92bc865e103d9198c622ae15b7180e3bff1bb3d2f",
+      "captured_at": "2026-10-22T15:27:32+02:00",
+      "source_file": "Pasted 2026-10-22 at 3.27.32 PM.tiff",
+      "source_sha256": "60e12d9284adc0396a4c27e7fc137439e191418d9dc4dc4674eba48d131cddb4",
       "conversion": "TIFF to PNG via macOS sips; decoded RGBA pixels verified identical, dimensions unchanged.",
       "capture_time_basis": "Owner-supplied source filename; capture time not independently verified."
     }
@@ -280,5 +162,5 @@
     "readme_links_checked": true
   },
   "scope": "README screenshot refresh only, no application source or rendering changes. Previous screenshot sets and provenance preserved.",
-  "denoise_recaptured_at": "2026-10-22T12:42:16.236991+00:00"
+  "denoise_recaptured_at": "2026-10-22T15:27:32+02:00"
 }
