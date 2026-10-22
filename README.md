@@ -34,9 +34,9 @@ The searchable **Tools** catalogue puts adjustments within reach. Each tool has 
 
 For noisy RAW or JPEG photographs, open **Presence and detail** and adjust **Luminance noise** and **Chroma noise** independently. The filter adapts to image brightness and treats both fine colour speckles and larger blotches while protecting stronger edges. **Noise threshold** increases its sensitivity: zero keeps the automatic estimate, and higher values remove more weak variations. The threshold also protects against grain enhancement by Texture, Clarity and Sharpening. Start with moderate amounts and threshold zero, then judge at 100% with **Verify final rendering**; high amounts or thresholds can soften weak detail. Older edits keep their original rendering until you change one of these three controls or choose **Update noise reduction**; Undo restores the previous revision.
 
-![Before and after noise reduction on an ISO 800 Canon PowerShot SX100 IS RAW, viewed at 100% with the denoiser controls visible](reports/readme-ui-2026-10-22/denoise.jpg)
+![Before and after noise reduction on an ISO 12800 Nikon D750 RAW, viewed at 100% with the denoiser controls visible](reports/readme-ui-2026-10-22/denoise.jpg)
 
-**Before/After at 100%:** a real ISO 800 RAW from a Canon PowerShot SX100 IS, with Luminance noise 80, Chroma noise 80 and Noise threshold 0. The right-hand image shows the current filter’s final rendering at native resolution; creative grain is off.
+**Before/After at 100%:** a real ISO 12800 RAW from a Nikon D750, with Luminance noise 80, Chroma noise 80 and Noise threshold 0. The right-hand image shows the current filter’s final rendering at native resolution; creative grain is off.
 
 For a vintage texture, use **Creative grain** in the same panel. Enable **Add grain**, choose **Uniform** or **Gaussian**, then adjust **Grain amount**, **Grain size (px)** and **Grain opacity**. **Monochrome grain** adds neutral grain; turn it off for coloured speckles. **New pattern** changes the arrangement, which is saved with the edit. Disabling the effect keeps its settings. Judge fine grain at 100% with **Verify final rendering**; smaller exports naturally soften it.
 
@@ -158,4 +158,4 @@ Keep `var/library.sqlite` and `var/backups/`: they contain durable library data.
 
 TrueRenderer is proprietary software. See the [license](LICENSE) and [third-party notices](NOTICE.md).
 
-Screenshots show the native macOS app in English. Landscapes are public-domain photographs by the National Park Service, including NPS / David Restivo; the denoising example uses a [CC0 RAW sample from raw.pixls.us](https://raw.pixls.us/). See the [landscape credits](sample-photos/manifest.json) and [screenshot provenance and RAW source](reports/readme-ui-showcase-macos-2026-10-22.json).
+Screenshots show the native macOS app in English. Landscapes are public-domain photographs by the National Park Service, including NPS / David Restivo; the denoising example uses a Nikon D750 ISO 12800 RAW from the existing test corpus (original photographic rights retained). See the [landscape credits](sample-photos/manifest.json) and [screenshot provenance and RAW source](reports/readme-ui-showcase-macos-2026-10-22.json).

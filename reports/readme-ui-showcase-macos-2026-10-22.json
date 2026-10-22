@@ -15,23 +15,21 @@
   "isolated_library": true,
   "private_photographs_published": false,
   "reference_desktop_screenshot_reused": false,
-  "photograph_credits": "sample-photos/manifest.json for the four NPS landscapes; additional CC0 RAW sample documented below.",
+  "photograph_credits": "sample-photos/manifest.json for the four NPS landscapes; D750 example from the existing RAW test corpus, explicitly selected by the project owner for this README screenshot.",
   "denoise_source": {
-    "repository": "https://raw.pixls.us/",
-    "repository_entry_id": 3823,
-    "raw_download_url": "https://raw.pixls.us/getfile.php/3823/nice/Canon%20-%20PowerShot%20SX100%20IS%20-%2010bit%2010bit%20CHDK%20ver.%201.4.1%20%284:3%29.DNG",
-    "exif_url": "https://raw.pixls.us/getfile.php/3823/exif/CRW_0964_01.DNG.exif.txt",
-    "rights": "CC0 1.0 Universal, as declared by raw.pixls.us for this entry",
-    "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "raw_sha256": "5c5e2d15b81778d1b48b44c53f4f0b454e4bdde5d683532828328a7842508400",
-    "camera": "Canon PowerShot SX100 IS",
-    "iso": 800,
-    "shutter": "1/17 s",
-    "aperture": "f/3.5",
+    "origin": "Existing local RAW test corpus, D750--FX-24-85_3-5-4-5G2--PHBL/nikon_d750_08.nef; same ISO 12800 source used in the denoiser qualification campaigns",
+    "selection_authorization": "Project owner explicitly requested a high-ISO D750 RAW already used by the project for the public README screenshot",
+    "rights": "No CC0 or other open licence claimed for this source; original photographic rights retained. Only the requested application screenshot is included.",
+    "raw_sha256": "85acbca86c5c026fb62d79322eeffaad309dc604dd4e2ed2b6e99aee4109d620",
+    "camera": "Nikon D750",
+    "iso": 12800,
+    "shutter": "1/200 s",
+    "aperture": "f/8",
+    "focal_length": "24 mm",
     "raw_file_published": false,
     "rendered_dimensions": [
-      3264,
-      2448
+      6016,
+      4016
     ]
   },
   "denoise_comparison": {
@@ -163,7 +161,7 @@
       "saturation": 0.0,
       "curve": []
     },
-    "scope": "A real ISO 800 compact-camera example; not a universal quality claim. The source also contains dead pixels, clipped highlights and optical softness; no extra correction of those defects."
+    "scope": "Real Nikon D750 ISO 12800 bookshelf example from the existing test corpus; synchronized 100% native Before/After, current denoiser, no synthetic noise. One example, not a universal quality claim."
   },
   "screenshots": [
     {
@@ -259,16 +257,16 @@
     },
     {
       "path": "reports/readme-ui-2026-10-22/denoise.jpg",
-      "role": "Canon PowerShot SX100 IS DNG at ISO 800, actual Before/After at 100%, synchronized framing, current MultiscaleV2 luminance 80/chroma 80/threshold 0, creative grain off; B reports Final rendering at native resolution.",
-      "sha256": "783410d1ffa61a503e78be2a2ef407a579ae514440a4c62e054cf3827a5aefd6",
-      "bytes": 1141649,
+      "role": "Nikon D750 ISO 12800 RAW, synchronized Before/After at 100%, current MultiscaleV2 final native rendering and denoiser controls visible; creative grain off.",
+      "sha256": "ad7712121fe3e66788829b6c5fa030ed3d6f61042950fe64d07d54ed17fac8ba",
+      "bytes": 1110576,
       "width": 2880,
       "height": 1846,
       "exif_tags": [
         34665
       ],
       "visually_reviewed": true,
-      "captured_at": "2026-10-22T03:36:54.939551+00:00"
+      "captured_at": "2026-10-22T12:42:16.236991+00:00"
     }
   ],
   "verification": {
@@ -279,5 +277,6 @@
     "installed_binary_matches_qualified_grain_bundle": true,
     "readme_links_checked": true
   },
-  "scope": "README screenshot refresh only, no application source or rendering changes. Previous screenshot sets and provenance preserved."
+  "scope": "README screenshot refresh only, no application source or rendering changes. Previous screenshot sets and provenance preserved.",
+  "denoise_recaptured_at": "2026-10-22T12:42:16.236991+00:00"
 }
