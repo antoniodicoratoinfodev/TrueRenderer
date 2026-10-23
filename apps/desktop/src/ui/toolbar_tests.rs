@@ -10,6 +10,58 @@ fn frame(app: &mut TrueRenderer, ctx: &egui::Context, size: Vec2) -> Vec<(String
     text
 }
 
+#[test]
+fn engine_badge_shows_applied_default_and_only_raw_recipe_overrides() {
+    use tr_core::decoder::RawEngine;
+    let (_dir, ctx, mut app) = test_app();
+    settle(&mut app, &ctx, true);
+    app.set_language(Language::English);
+    let item = app.state.current_item().unwrap().clone();
+    app.edit_result(
+        item.id.clone(),
+        Ok(tr_store::LoadedEdit {
+            asset_id: item.id.clone(),
+            source_digest: item.digest.clone(),
+            generation: 1,
+            revision: 1,
+            recipe: tr_core::editing::EditRecipe::neutral(RawEngine::TrueRendererExperimental),
+            can_undo: false,
+            can_redo: false,
+        }),
+    );
+    for bitmap in [false, true] {
+        if bitmap {
+            app.bitmap_inputs.insert(
+                item.id.clone(),
+                (
+                    item.observation.clone(),
+                    RawEngine::TrueRendererExperimental,
+                ),
+            );
+        }
+        for engine in RawEngine::choices() {
+            app.cache_settings.raw_engine = engine;
+            app.apply_settings();
+            // An unapplied preference must not replace the applied indicator.
+            app.cache_settings.raw_engine = RawEngine::TrueRendererExperimental;
+            let text = frame(&mut app, &ctx, Vec2::new(1440., 940.));
+            let label = if engine == RawEngine::LibRawBilinear {
+                "LibRaw bilinear"
+            } else {
+                engine.label()
+            };
+            assert!(
+                text.iter().any(|(s, _)| s == label),
+                "Missing {label}: {text:?}"
+            );
+            assert_eq!(
+                text.iter().any(|(s, _)| s.starts_with("Photo: ")),
+                !bitmap && engine != RawEngine::TrueRendererExperimental
+            );
+        }
+    }
+}
+
 fn click(app: &mut TrueRenderer, ctx: &egui::Context, label: &str, in_settings: bool) {
     let size = Vec2::new(1440., 940.);
     let text = frame(app, ctx, size);

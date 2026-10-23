@@ -17,7 +17,7 @@ bytemuck = "=1.25.2"
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "=0.2.189"
 
-# Unificata sull'intero grafo: abilita l'assembly di sha2 su ogni target
-# tranne MSVC, che non sa compilarne i sorgenti .S.
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
+# Unificata sull'intero grafo: sha2-asm non supporta Windows, nemmeno GNU.
+# Su Windows si usa l'implementazione Rust.
+[target.'cfg(not(target_os = "windows"))'.dependencies]
 sha2 = { workspace = true, features = ["asm"] }

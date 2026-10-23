@@ -15,6 +15,9 @@ use tr_core::{
 pub struct ComputeCheck {
     pub editing: crate::editing_compute::EditingCheck,
     pub cases: usize,
+    pub resident_zoom_cases: usize,
+    pub prefetched_zoom_cases: usize,
+    pub concurrent_source_cases: usize,
     pub display_channels: usize,
     pub display_failures: usize,
     pub display_max_error: u8,
@@ -209,6 +212,9 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
     let mut result = ComputeCheck {
         editing: Default::default(),
         cases: 0,
+        resident_zoom_cases: 0,
+        prefetched_zoom_cases: 0,
+        concurrent_source_cases: 0,
         display_channels: 0,
         display_failures: 0,
         display_max_error: 0,
@@ -221,7 +227,7 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
     };
     let memory = tr_core::budget::MemoryBudget::new(512 * 1024 * 1024);
     let gpu = tr_core::budget::MemoryBudget::new(256 * 1024 * 1024);
-    let mut renderer = crate::resident_compute::GpuFilter::new(device.clone());
+    let renderer = crate::resident_compute::GpuFilter::new(device.clone());
     // SDR, transparent edges and out-of-range linear highlights. No RGB clamp.
     for (opaque, range) in [(true, 1.), (false, 1.), (true, 1000.)] {
         let source = LinearImage::new(
@@ -305,6 +311,73 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
             }
             result.cases += 1;
         }
+        // A subset of an uploaded linear region must use exactly the same
+        // canonical coefficients, including alpha and fractional zoom phase.
+        for step in [0.5, 0.73, 1.37, 1.99] {
+            let region = Region {
+                size: [95, 63],
+                origin: [150.3, 70.7],
+                step: [step; 2],
+            };
+            let mut working = memory.try_reserve(64 * 1024 * 1024).unwrap();
+            let mut frame =
+                renderer.render_resident(&levels, region, &memory, &gpu, &mut working)?;
+            frame.submit(queue);
+            let display = read_display(device, queue, &frame)?;
+            let expected = levels.render(region)?.to_display();
+            for (a, b) in display.iter().zip(&expected) {
+                let error = a.abs_diff(*b);
+                result.display_channels += 1;
+                result.display_max_error = result.display_max_error.max(error);
+                if error > 1 {
+                    result.display_failures += 1;
+                }
+            }
+            result.resident_zoom_cases += 1;
+        }
+        renderer.clear();
+        let mut working = memory.try_reserve(64 * 1024 * 1024).unwrap();
+        ensure!(
+            renderer
+                .render_resident(
+                    &levels,
+                    Region::fitted([513, 257], [257, 129]),
+                    &memory,
+                    &gpu,
+                    &mut working
+                )
+                .is_err(),
+            "Resident rendering uploaded a missing source"
+        );
+        drop(working);
+        // Upload a partial region with optional source padding, then zoom both
+        // ways into that padding without another source upload. Compare alpha,
+        // fractional phases and highlights against the canonical CPU path.
+        for step in [1., 0.5, 0.73, 1.37, 1.75] {
+            let region = Region {
+                size: [95, 63],
+                origin: [197.8 - 47.5 * step, 102.2 - 31.5 * step],
+                step: [step; 2],
+            };
+            let mut working = memory.try_reserve(64 * 1024 * 1024).unwrap();
+            let mut frame = if step == 1. {
+                renderer.render_zoom(&levels, region, &memory, &gpu, &mut working)?
+            } else {
+                renderer.render_resident(&levels, region, &memory, &gpu, &mut working)?
+            };
+            frame.submit(queue);
+            let display = read_display(device, queue, &frame)?;
+            for (a, b) in display.iter().zip(levels.render(region)?.to_display()) {
+                let error = a.abs_diff(b);
+                result.display_channels += 1;
+                result.display_max_error = result.display_max_error.max(error);
+                if error > 1 {
+                    result.display_failures += 1;
+                }
+            }
+            result.prefetched_zoom_cases += 1;
+        }
+        renderer.clear();
     }
     drop(renderer);
     device.poll(wgpu::PollType::Wait {
@@ -316,9 +389,94 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
         "GPU credits leaked after completion"
     );
     result.editing = crate::editing_compute::check(device, queue)?;
+    result.concurrent_source_cases = check_concurrent_sources(device, queue)?;
     result.failures += result.editing.failures;
     result.display_failures += result.editing.display_failures;
     Ok(result)
+}
+
+// Encode on two threads, submit only on the presentation thread. Clearing the
+// cache before submission must neither invalidate commands nor release credits
+// that still protect those commands. Compare both immutable source identities.
+fn check_concurrent_sources(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<usize> {
+    let memory = tr_core::budget::MemoryBudget::new(64 * 1024 * 1024);
+    let gpu = tr_core::budget::MemoryBudget::new(64 * 1024 * 1024);
+    let renderer = crate::resident_compute::GpuFilter::new(device.clone());
+    let sources = [0.2, 0.7].map(|red| {
+        tr_core::provider::ImageLevels::from_source(
+            LinearImage::new(
+                257,
+                129,
+                (0..257 * 129)
+                    .map(|i| [red, (i % 31) as f32 / 31., -0.01, 1.])
+                    .collect(),
+            )
+            .unwrap(),
+            tr_core::preview::PreviewRequest::full(),
+        )
+        .unwrap()
+    });
+    let initial = Region::fitted([257, 129], [257, 129]);
+    let mut warm_work = memory.try_reserve(8 * 1024 * 1024).unwrap();
+    let mut warm = renderer.render(&sources[0], initial, &memory, &gpu, &mut warm_work)?;
+    warm.submit(queue);
+    drop(warm);
+    drop(warm_work);
+    let barrier = std::sync::Barrier::new(2);
+    let region = Region {
+        size: [111, 67],
+        origin: [50.3, 20.7],
+        step: [0.73; 2],
+    };
+    let (mut frames, (other, work)) = std::thread::scope(|scope| -> Result<_> {
+        let task = scope.spawn(|| -> Result<_> {
+            let mut work = memory.try_reserve(8 * 1024 * 1024).unwrap();
+            barrier.wait();
+            let frame = renderer.render(&sources[1], region, &memory, &gpu, &mut work)?;
+            Ok((frame, work))
+        });
+        barrier.wait();
+        let mut frames = Vec::new();
+        for _ in 0..8 {
+            let mut work = memory.try_reserve(2 * 1024 * 1024).unwrap();
+            if let Ok(frame) =
+                renderer.render_resident(&sources[0], region, &memory, &gpu, &mut work)
+            {
+                frames.push((frame, work));
+            }
+        }
+        Ok((frames, task.join().unwrap()?))
+    })?;
+    ensure!(
+        !frames.is_empty(),
+        "Concurrent resident source never available"
+    );
+    let count = frames.len() + 1;
+    frames.push((other, work));
+    renderer.clear();
+    for (i, (mut frame, _work)) in frames.into_iter().enumerate() {
+        frame.submit(queue);
+        let display = read_display(device, queue, &frame)?;
+        let expected = sources[usize::from(i + 1 == count)]
+            .render(region)?
+            .to_display();
+        ensure!(
+            display
+                .iter()
+                .zip(expected)
+                .all(|(a, b)| a.abs_diff(b) <= 1),
+            "Concurrent source or fused display mismatch"
+        );
+    }
+    device.poll(wgpu::PollType::Wait {
+        submission_index: None,
+        timeout: Some(Duration::from_secs(10)),
+    })?;
+    ensure!(
+        memory.usage().reserved == 0 && gpu.usage().reserved == 0,
+        "Concurrent frames leaked credits"
+    );
+    Ok(count)
 }
 
 /// Readback is restricted to verification; the interactive renderer shares textures.
@@ -407,7 +565,7 @@ pub fn performance(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Vec<Per
     use tr_core::{budget::MemoryBudget, preview::PreviewRequest, provider::ImageLevels};
     let memory = MemoryBudget::new(768 * 1024 * 1024);
     let gpu = MemoryBudget::new(256 * 1024 * 1024);
-    let mut renderer = crate::resident_compute::GpuFilter::new(device.clone());
+    let renderer = crate::resident_compute::GpuFilter::new(device.clone());
     let source = LinearImage::new(
         2048,
         1365,
@@ -431,7 +589,7 @@ pub fn performance(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Vec<Per
                 == levels.render(region)?.pixels,
             "Scalar/parallel reference changed"
         );
-        let mut gpu_trial = || -> Result<f64> {
+        let gpu_trial = || -> Result<f64> {
             let mut work = memory.try_reserve(128 * 1024 * 1024).unwrap();
             let start = Instant::now();
             let mut frame = renderer.render(&levels, region, &memory, &gpu, &mut work)?;

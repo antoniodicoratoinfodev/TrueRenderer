@@ -5,6 +5,7 @@ pub mod live_edit;
 pub mod presenter;
 pub mod preview_compute;
 pub mod resident_compute;
+pub mod timings;
 use eframe::egui::{self, Color32, Pos2, Rect, Sense, Stroke, Vec2};
 use presenter::Presenter;
 use std::sync::Arc;
@@ -68,6 +69,7 @@ pub struct ViewportOptions {
     pub provisional: bool,
     pub live_edit: Option<live_edit::LiveEdit>,
     pub photographic: bool,
+    pub refining: bool,
 }
 
 pub fn viewport_with_options(
@@ -85,6 +87,7 @@ pub fn viewport_with_options(
         provisional,
         live_edit,
         photographic,
+        refining,
     } = options;
     let raster = image.source();
     // During editing, `image` is the unedited source used only as an identity.
@@ -110,11 +113,14 @@ pub fn viewport_with_options(
         transform.center[1] =
             (transform.center[1] - delta.y / (source_height as f32 * scale)).clamp(0.0, 1.0);
     }
+    let was_fitted = transform.zoom.is_none();
+    let mut wheel_zoom = false;
     if response.hovered() {
         let delta = ui.input(|i| i.smooth_scroll_delta.y);
         if delta.abs() > 0.01 {
             let old_zoom = transform.zoom.unwrap_or(scale * ppp);
             transform.set_zoom(old_zoom * (delta * 0.002).exp());
+            wheel_zoom = true;
         }
     }
     let scale = transform.scale(
@@ -137,6 +143,8 @@ pub fn viewport_with_options(
     let max = egui::pos2((visible.max.x * ppp).floor(), (visible.max.y * ppp).floor());
     let mut current = false;
     if max.x > min.x && max.y > min.y {
+        let mut image_ui = ui.new_child(egui::UiBuilder::new().max_rect(rect));
+        image_ui.set_clip_rect(rect.intersect(ui.clip_rect()));
         let region = Region {
             size: [(max.x - min.x) as u32, (max.y - min.y) as u32],
             origin: [
@@ -149,14 +157,23 @@ pub fn viewport_with_options(
             ],
         };
         let rect = Rect::from_min_max(min / ppp, max / ppp);
-        if pending_size.is_some() {
-            presenter.paint_pending(ui, id, image.id(), rect, region);
+        let missing_detail = image.base_level() > 0
+            && (0..2).any(|a| {
+                let resident = [raster.width, raster.height][a];
+                region.step[a] * f64::from(resident) / f64::from(image.source_size()[a]) < 1.
+            });
+        let hold = (provisional || missing_detail && (refining || wheel_zoom && was_fitted))
+            && presenter.hold_scale_change(&image_ui, id, image.id(), rect, region);
+        if hold {
+            ui.ctx().request_repaint();
+        } else if pending_size.is_some() {
+            presenter.paint_pending(&image_ui, id, image.id(), rect, region);
         } else {
             if let Some(edit) = &live_edit {
-                presenter.paint_edit(ui, id.to_owned(), image, rect, region, edit.clone());
+                presenter.paint_edit(&image_ui, id.to_owned(), image, rect, region, edit.clone());
             } else if progressive {
                 presenter.paint_progressive(
-                    ui,
+                    &image_ui,
                     id.to_owned(),
                     image,
                     rect,
@@ -165,7 +182,7 @@ pub fn viewport_with_options(
                     photographic,
                 );
             } else {
-                presenter.paint(ui, id.to_owned(), image, rect, region);
+                presenter.paint(&image_ui, id.to_owned(), image, rect, region);
             }
             current =
                 !provisional && live_edit.is_none() && presenter.is_current(id, image.id(), region);

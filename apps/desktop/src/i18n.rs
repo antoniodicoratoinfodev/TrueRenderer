@@ -1164,8 +1164,8 @@ impl Language {
                 "Settings apply to all folders; the disk quota applies to each folder separately."
             }
             "Motore RAW" => "RAW engine",
-            "Applica e salva aggiorna le immagini. Ogni motore conserva le proprie anteprime in cache." => {
-                "Apply and save refreshes images. Each engine keeps its own cached previews."
+            "Applica e salva cambia il motore per le foto RAW senza regolazioni. Le ricette già modificate conservano il proprio motore; le anteprime compatibili restano in memoria." => {
+                "Apply and save changes the engine for unedited RAW photos. Existing edits keep their engine; compatible previews stay in memory."
             }
             "Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore." => {
                 "Experimental: Nikon D750 and D40 Bayer. Colour accuracy and superiority over other engines remain unqualified. Unsupported RAW files show an error."

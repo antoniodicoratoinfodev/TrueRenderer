@@ -1,0 +1,1879 @@
+{
+  "date": "2026-10-23",
+  "scope": "Windows preview interactions, selective RAW engine changes and sharp point-edit previews; no R/SF gate or universal camera/display qualification",
+  "implemented": [
+    "Interactive drafts follow the pointer gesture that changed the recipe; later UI, tab and zoom clicks do not reactivate them.",
+    "Numeric controls fit their allotted width without reducing stored or drag precision, preventing inspector growth during curve edits.",
+    "Pointwise edits preserve normal viewer mip selection, including LOD 0 at 1:1, with a bounded visible crop and filter halo on CPU/GPU.",
+    "Engine changes preserve compatible bitmap inputs and resident variants, refresh only affected preparation jobs and retain saved or dirty recipes.",
+    "Main badge reports the applied global engine; a distinct Photo label reports a saved RAW recipe override."
+  ],
+  "toolchain": "Rust 1.98.1 x86_64-pc-windows-gnu; local cargo wrapper; optimized dev build",
+  "adapter": "NVIDIA GeForce RTX 3060 · Vulkan",
+  "rust_workspace": {
+    "passed": 668,
+    "failed": 0,
+    "ignored": 41
+  },
+  "desktop_repeat": {
+    "passed": 271,
+    "failed": 0,
+    "ignored": 5
+  },
+  "python_checks": 50,
+  "worker_protocol_checks": 8,
+  "fmt": "passed",
+  "clippy_workspace_all_targets_deny_warnings": "passed",
+  "native_cases": [
+    {
+      "case": "LibRawBilinear-jpg",
+      "engine": "LibRawBilinear",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 112,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 41119,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            570
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 42283,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            570
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 40993,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            570
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          854,
+          570
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "LibRawBilinear-nef",
+      "engine": "LibRawBilinear",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 108,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 44832,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45625,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44587,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          572
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "LibRawAhd-jpg",
+      "engine": "LibRawAhd",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 111,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 41081,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 42518,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 40965,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          570
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "LibRawAhd-nef",
+      "engine": "LibRawAhd",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 108,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 45315,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44940,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44969,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          572
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "TrueRenderer-jpg",
+      "engine": "TrueRenderer",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 111,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 41081,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 42518,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 40965,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          570
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "TrueRenderer-nef",
+      "engine": "TrueRenderer",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 110,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 44490,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45392,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44969,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            572
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          572
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "TrueRendererExperimental-jpg",
+      "engine": "TrueRendererExperimental",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 112,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 41081,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 42518,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 40965,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            570
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          570
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "TrueRendererExperimental-nef",
+      "engine": "TrueRendererExperimental",
+      "zoom": null,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 108,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 43334,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            571
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45180,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            571
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 43962,
+          "input_base_level": 2,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            571
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          571
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "JPEG-zoom",
+      "engine": "LibRawBilinear",
+      "zoom": 1.0,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 116,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 40312,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47249,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 43963,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "LibRawBilinear-RAW-zoom",
+      "engine": "LibRawBilinear",
+      "zoom": 1.0,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 116,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 44590,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46988,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45010,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "LibRawAhd-RAW-zoom",
+      "engine": "LibRawAhd",
+      "zoom": 1.0,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 114,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 46775,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46457,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46897,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "TrueRenderer-RAW-zoom",
+      "engine": "TrueRenderer",
+      "zoom": 1.0,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 115,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 44618,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46458,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44547,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          854,
+          596
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "TrueRendererExperimental-RAW-zoom",
+      "engine": "TrueRendererExperimental",
+      "zoom": 1.0,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 116,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 43565,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45954,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44197,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "original_unchanged": true
+    },
+    {
+      "case": "JPEG-zoom-CPU",
+      "engine": "LibRawBilinear",
+      "zoom": 1.0,
+      "passed": true,
+      "changes": 120,
+      "distinct_frames": 77,
+      "minimum_coverage": 1.0,
+      "live_surface_checks": [
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "input_base_level": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "input_base_level": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "input_base_level": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "original_unchanged": true
+    }
+  ],
+  "navigation": {
+    "passed": true,
+    "screenshots": 8,
+    "images": 12,
+    "sampling_comparison": true,
+    "decode_errors": {}
+  },
+  "protected_hashes_verified": 4,
+  "source_hashes_verified": 261,
+  "installation": {
+    "directory": "dist/TrueRenderer-windows",
+    "backup": "var/preview-interactions-20261023/replaced-windows-distribution",
+    "sha256": {
+      "truerenderer.exe": "892e9d7e57929a8e9c25960d590b0ab5e38ce7c6ed789b7c86d9da15f1c5eec0",
+      "tr-worker.exe": "02af989d67b33a43b707ed4ef578bd91da40ff10a693dabe5913baaf2571d558"
+    },
+    "previous_sha256": {
+      "LICENSE": "f54c6c6ee279ba06a1b1618009826fe2a3f3af97083e962d3a3ae76f50cc039e",
+      "NOTICE.md": "9cfc9361ae1cb818d872f61d34d89053be969b8e9b152d9d26ab8288006790e4",
+      "tr-worker.exe": "ae6c00560add0771d90eb3fd1e172e7bc8b250ac888e9efecaf2dfed5af6aa66",
+      "truerenderer.exe": "36b0f32031c381edc8ae21fd12684a1e122515b1ab27a854dca899427920584a"
+    },
+    "license_and_notice_preserved": true,
+    "native_installed_smoke": {
+      "passed": true,
+      "screenshots": 8,
+      "decode_errors": {},
+      "presentation_errors": false,
+      "sampling_comparison_passed": true,
+      "evidence_directory": "var/preview-interactions-20261023/navigation-installed/reports"
+    }
+  },
+  "limits": [
+    "Native RAW sample: Nikon D750 NEF; JPEG sample and synthetic patterns. All four engines available on Windows exercised.",
+    "Apple RAW is unavailable on Windows; no macOS native/XPC campaign performed.",
+    "Spatial filters, geometry, masks and active photographic layers retain the documented reduced provisional path during a gesture.",
+    "Initial zoom captures were provisional while native detail was loading; final campaign requires ready input and verifies LOD 0 at 100%.",
+    "The AppContainer test fails in the terminal sandbox; all workspace tests passed when repeated in the Windows session with worker LPAC retained.",
+    "No 60 fps, latency percentile, release signing or colour-fidelity qualification. No commit or publication."
+  ],
+  "evidence": [
+    {
+      "path": "var/preview-interactions-20261023/build-native-detail.log",
+      "sha256": "b81759ac6398c0869d79ad355f2690e37a4f904af0bee78459ea70962acefa8b"
+    },
+    {
+      "path": "var/preview-interactions-20261023/clippy-native-detail.log",
+      "sha256": "54e5377835b252b0b1cbe4bf09452e2eb89081c29876dd5d20e6d805f7b8bf62"
+    },
+    {
+      "path": "var/preview-interactions-20261023/install.json",
+      "sha256": "bab8fc192055245ec5e4b03251bfc3d9612b2b41040b01a3be932329943f5e84"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/develop-grid.png",
+      "sha256": "e3ef07629342208e858082b910acf01c913b26710e9466a9b99029f9d89af41a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/develop-progress.json",
+      "sha256": "e56232cad87f37b994c487376f0388f3090a811e5ca4fa7b5ff0480f652f2caa"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/develop-ui.json",
+      "sha256": "aea3caecc55be42acdf7b444ee0dc652e6f0d4c2bb16d39e45a000c16684fde4"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/develop-viewer.png",
+      "sha256": "a5034c6abc1c7c064c098a925bd634a1b045f81e7744eacaafb5bd68fbb67ade"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/edit-continuity.json",
+      "sha256": "8943105a8615a91474af1ba04cc049b8f1b3714eb258fc6404922d9c1e767879"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/live-edit-30.png",
+      "sha256": "753e939cc8f1047c11ec557324c729b1778a45223f7a705c77bd667b734445b4"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/live-edit-60.png",
+      "sha256": "e121de81d6ac634ac17fd64ef3bf95fc98b91ec5bb65d4f92394e0a6230254f9"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-cpu-native-detail/reports/live-edit-90.png",
+      "sha256": "c604749d753d18efcd2bacf4e18fdf1218b2f60868f6257bb152199a4188efbb"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/develop-grid.png",
+      "sha256": "e3ef07629342208e858082b910acf01c913b26710e9466a9b99029f9d89af41a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/develop-progress.json",
+      "sha256": "712c80dbdfc7fe8310de0a79e0d6a568fc52f50f925243aa49888f8b6f320271"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/develop-ui.json",
+      "sha256": "aea3caecc55be42acdf7b444ee0dc652e6f0d4c2bb16d39e45a000c16684fde4"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/develop-viewer.png",
+      "sha256": "a5034c6abc1c7c064c098a925bd634a1b045f81e7744eacaafb5bd68fbb67ade"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/edit-continuity.json",
+      "sha256": "4f0131155f83e2af29609dd72fc82efb2d1694cb97c6fa334003ff43a155187f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/live-edit-30.png",
+      "sha256": "6c0fa2e781920c333b0d1a53efe517b31c230c0a453bd21213496c7abf5b9ede"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/live-edit-60.png",
+      "sha256": "b1b32bc916d20c4cb79c5aa41cf1a0b2173dc03459af69d1d68fd80abb667141"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/JPEG-zoom-native-detail/reports/live-edit-90.png",
+      "sha256": "dd8591f6cc84fffd9ee535bf76a0b9f0eab990816e7fb69f0d8c767d2057b94e"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/develop-grid.png",
+      "sha256": "f25c920747067efca353ba0979450ca4d0954f4e98734da29837208b64db3646"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/develop-progress.json",
+      "sha256": "990a72427dcc15fc57ac6879dcee148aa2cb0b39e5485bcc7f671aff37d5332b"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/develop-ui.json",
+      "sha256": "c174ae852b232b795727723f35cf9797c510c1e614f752a676bed629925bd656"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/develop-viewer.png",
+      "sha256": "c4d5cf74b02bb935adb4e15344d9156d2298b16c0f74618189fa17c97b8bafb9"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/edit-continuity.json",
+      "sha256": "1313be5f33bff6309cea33bf1069b1533adc0e3bd5097b26dff7c9ba59f9e9f8"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/live-edit-30.png",
+      "sha256": "42dddac6b68ce40ca690c3fe183c7eb14a89476f7013771b2be65b93f1ca6a34"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/live-edit-60.png",
+      "sha256": "7eeb175a10aeb75d8994782d06ede2eeca3b343f9de16870d9f2edced76ec50e"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-jpg-native-detail/reports/live-edit-90.png",
+      "sha256": "5ead819b39e9afefc6f9845ef3a08f0f551f46c23e3802c9a1d86c7df3059387"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/develop-grid.png",
+      "sha256": "de5bd437fef30a7c555b40a2131a8df1cb4090c83fab6f4e314575b15553ae1a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/develop-progress.json",
+      "sha256": "9983d190387a93a709603cab218238727fe87a49b55b78e2ea4f888397354998"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/develop-ui.json",
+      "sha256": "da1383b18a1362642080edd7fc0b2a180fe4fbf1a9076bb50c1b0e58cd32e69c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/develop-viewer.png",
+      "sha256": "8980f4c27ab2b8b2be98a625786c9508e38d61320e203e4558763f5622c8a1cd"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/edit-continuity.json",
+      "sha256": "026f098d34fbb46016e0b70d019db2c95d3ba51a9ff57b5224da78e547fcc9de"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/live-edit-30.png",
+      "sha256": "e000f3c2d34d598788f2e227d550bc4d342351f9ff29e16995097707e8b45a90"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/live-edit-60.png",
+      "sha256": "a90c9979fcac6061a5fa71596598fcd2734ad1d8bba4c5536926b0cc8051226d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-nef-native-detail/reports/live-edit-90.png",
+      "sha256": "b18fffd55e147a5ba18c9675b9ef25a3df73d85c8e5579d736af7488c7b54938"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/develop-grid.png",
+      "sha256": "de5bd437fef30a7c555b40a2131a8df1cb4090c83fab6f4e314575b15553ae1a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/develop-progress.json",
+      "sha256": "475b65f29999ee3509cdc31d0b6531d7fa92334c4346a46cbe73b59d188d4973"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/develop-ui.json",
+      "sha256": "631d5d0fa90a2578ce18ee7d5e3b0276a24296177fa60e450dbd6f4811b68527"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/develop-viewer.png",
+      "sha256": "bc4a06905d87773f73e72875a5849c8891cd8a07b516a419581d202d5a43c418"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/edit-continuity.json",
+      "sha256": "71ec2edf53d8784c4a6fa6227809844814a203c45cbb6cf3d2964c0a9ee5825c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/live-edit-30.png",
+      "sha256": "cc3daea018801e4a745a3858175a34bd2f1cc41eb170ca8cbdf5ceb5ccbee76c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/live-edit-60.png",
+      "sha256": "a18155b76cd60889055f83461882f5c904be1ea8e1f3d936eaa09ca760bba462"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawAhd-RAW-zoom-native-detail/reports/live-edit-90.png",
+      "sha256": "07ab96b2a70b99c0509a8e254d05bc4f1e1b286c114ac84a8d1aa29032290777"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/develop-grid.png",
+      "sha256": "adccfc8090977aacd04f65cd6bc2826fff0df79082e11b97d5a1718bc84321da"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/develop-progress.json",
+      "sha256": "1e6c7ec7f638a0bab7fdcf114a2057664277045a4d5db7b4afebbe383a3ac068"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/develop-ui.json",
+      "sha256": "bada71f9f5f52a6f13b6ad46ce4a36b8ff1d01f48c72262a4dbb763aef701ec4"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/develop-viewer.png",
+      "sha256": "179f1f062116dde5dc9b779ff825b3a87a984c569d03d4c52b78999347950646"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/edit-continuity.json",
+      "sha256": "7ee191a9d65e80f02c975abf7dc3c70b6c9d9dfcc4eb99aee11d3e8cb4cd5393"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/live-edit-30.png",
+      "sha256": "45d45d4908cb01a3893a823b976feaaac4bad61a9f61fbf5dd6b884f497bee6a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/live-edit-60.png",
+      "sha256": "36e433b8ab8e63ac8b55dc05dd8bedd6be6113c14aa7379470148c9e8ef6b046"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-jpg-native-detail/reports/live-edit-90.png",
+      "sha256": "ebeef04fdf7f38098d797ccb8099c9184acd5e01ac45e176f41ea032cfbab19f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/develop-grid.png",
+      "sha256": "7efcfadb61418710f23e0e56131058d2a1797c810832b385eb6ab23a8e9a8901"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/develop-progress.json",
+      "sha256": "a051eb1d2cd348122a9e6fbb4b133d21ebf744b4c4deb671ee699191e8d8e472"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/develop-ui.json",
+      "sha256": "35a702cac7c4e81f851119c6278e7a9da9bef10138a5f8100b5b6557b9de6e28"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/develop-viewer.png",
+      "sha256": "a48701e7167a9c048ebff9bb8e43f1067b219065b324026580e8545069a5ad7e"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/edit-continuity.json",
+      "sha256": "ae26797aff6d37fe86511a5f634bda3121e895e06fa00aff53aa3ea84efebb90"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/live-edit-30.png",
+      "sha256": "7786fc6edf00ea2a04ee21237df0b3ad6da555d2de7c91b146150ac48ee873f0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/live-edit-60.png",
+      "sha256": "052375b7e3f57e3d71561dbfc272280593c3a60935cc91a46f25d767b6d69b83"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-nef-native-detail/reports/live-edit-90.png",
+      "sha256": "fc0ecc06ec584f51893a4563ca5172e37c57df0288a12a0851d2958efdf4cae8"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/develop-grid.png",
+      "sha256": "c6d37b25a2261089abf7c68b181ca6d9b253ea4ec5466b252371637c8d288890"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/develop-progress.json",
+      "sha256": "6780b509d9e43031089e2524350525853090eb3749d7e8aa4fe09c4f217d6ee1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/develop-ui.json",
+      "sha256": "1e5c38217fff1bfb274fd15f29ef1b5c78db2b90fddd9a8a9cdfee33df15a073"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/develop-viewer.png",
+      "sha256": "8a2b21e0ce29544878f48d9ce0e6fc01b57b5f0ba45d9046420b3337b9d5ae4c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/edit-continuity.json",
+      "sha256": "faaf6a6daa0485377747d37965b353443f3c9d0ea2ecda6cb3114285359d7d35"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/live-edit-30.png",
+      "sha256": "0777f7de119101e477aad84cd635c9f06ca208b343a94ee98dbf357008481e3f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/live-edit-60.png",
+      "sha256": "d9e94b7d406f708f65f4e0e5bcd61ed4df689942a125a8f3a8cfe1bacdf1dc4c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/LibRawBilinear-RAW-zoom-native-detail/reports/live-edit-90.png",
+      "sha256": "3ac192d3413b6d0b06af997f83288438d14fdbd9dd30b2cf885e626eb915d5e0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/01-grid-sampling.json",
+      "sha256": "39ea8b614877aaaba529797f5c453ae78681453e11fa1f06936fe96c2e4cef8a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/01-grid.png",
+      "sha256": "8298b394ba00b121e247a6a514e7e671590e37d6f812ca3d1dee2ecb5e25f439"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/02-preview-sampling.json",
+      "sha256": "860cbe89d84c452999caaa75563d56342227fca2d4c5b9b827f0916da2c55eb2"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/02-preview.png",
+      "sha256": "f75051146ec61ac136c9b95a7a51ee38551e0aac32ee7aab19fe17a786273872"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/03-compare-sampling.json",
+      "sha256": "023b5c2870bd7730679b07ccfcef02c2f4a4d85276ea228e67bae884e40711d0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/03-compare.png",
+      "sha256": "f041a2272a9d4309f6f1aeb251535b9c5a7d0060a772be17815051b7c9a90180"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/04-radial-1to1-sampling.json",
+      "sha256": "7d07c4174266642c1f460449dc37456550af9b5131c106ab21e5c08ddd7fed72"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/04-radial-1to1.png",
+      "sha256": "223c3b5e610082b4cdc4075af55efc64084b61dc13b6a3c6835f5c959cb45f5c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/05-radial-fit-sampling.json",
+      "sha256": "76350f9d6bdb2d820c3d5053afcbc9e994c5c3f3c3ea26037435cee6a76fa544"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/05-radial-fit.png",
+      "sha256": "39ef9d1bff7084977c95064296ee64c0256d853c9b8ffb0066b3a2e32558c20c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/06-radial-37percent-sampling.json",
+      "sha256": "b276d16ffd4eb0be620f2f17c0c857f33184fae26b7d0956e798b742e6cb56fc"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/06-radial-37percent.png",
+      "sha256": "93a43690a58dc857db018bf99db1dcaf7aa788aec9632a98845ea0bbb63b28bf"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/07-grid-small-sampling.json",
+      "sha256": "cce32e6d6495fb8924680978473afebc40eb0647037029ecbea4771d2e4b04d0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/07-grid-small.png",
+      "sha256": "8ad0825ec527d2580e4feac52d3832814ce2f70fbc12edebf211d1b5c5c4d42d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/08-grid-large-sampling.json",
+      "sha256": "f31badfa26a2a816b443941b788a4082fab97904c59bf52c800a4c9f8890a98d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/08-grid-large.png",
+      "sha256": "aac5e112987b63f11a7207d504f5aa48ca4f61115ffb009909e84e83104cd797"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/legacy-nearest-1440x960.png",
+      "sha256": "d7230cecab8609d8c8d6aa7df04b4f1e2b8136ce4056a1119e6638feeee1fb8f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/legacy-nearest-160x107.png",
+      "sha256": "8b07fceb0b855ce49f351a8a9f23a2b23f0596a35c6f0f3227859c42d45353a1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/legacy-nearest-320x213.png",
+      "sha256": "0b9fdcfc7615d71a38eaedc490ce11e6adcd835562c40de28e042ed243dd76c1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/legacy-nearest-444x296.png",
+      "sha256": "eeab629e69d07efcaa85bf512b09e409b866f6e66d9d9e6cdb3722691eef3b06"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/legacy-nearest-860x573.png",
+      "sha256": "8f7e939a445a790b536c5063131b4574d2ea5b5cb0af110af6140ca10ea77e8b"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/radial-1440x960.png",
+      "sha256": "8a5903a00c27ded5a703bdff48837e653680323b6d8ad49ace9f6aec6b9b9be6"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/radial-160x107.png",
+      "sha256": "d7b812779e444a881e44baf4cf4448ee3d4bbe06d4d94a2e3fb2706aa8152673"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/radial-1to1.png",
+      "sha256": "ec848c142501133d6591fd1fdac1d2cc28cf1b8fc934821f0201c738ee622c53"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/radial-320x213.png",
+      "sha256": "4bd60b2874f554b1373db776d47b1fcf692052615e90fbc24f6e440c6b76afd2"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/radial-444x296.png",
+      "sha256": "c19cda74e42fae0ed21ee5c5422db269ca40dc82939bb58a3f843e64b1587a3d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling/radial-860x573.png",
+      "sha256": "0653ecfb56b59d0abfc02df82c8bf6999fc36667bdedd919c5430be152e1911e"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/resampling-windows.json",
+      "sha256": "a385e706e432ffe57d329267598f42443b42166af32531d12db289c9223c3a68"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/sampling-presentation-windows.json",
+      "sha256": "a4aae6b048d288d53b80caa486abc351514a76a77507ddc2d00f015aa81a6e97"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-final/reports/smoke-windows.json",
+      "sha256": "0e57a04aabe83e6009aefbc829cccbacfa8c37d31d595fbb2a1a886594e06c3e"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/01-grid-sampling.json",
+      "sha256": "39ea8b614877aaaba529797f5c453ae78681453e11fa1f06936fe96c2e4cef8a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/01-grid.png",
+      "sha256": "4c370438c0041a352540d75b0094abe37549e612be6deadadfc5d107602aab63"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/02-preview-sampling.json",
+      "sha256": "860cbe89d84c452999caaa75563d56342227fca2d4c5b9b827f0916da2c55eb2"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/02-preview.png",
+      "sha256": "fb1847b13abf991d9e4a36fb64e8e2368980c96a2f0ce05940e2cd891790b711"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/03-compare-sampling.json",
+      "sha256": "023b5c2870bd7730679b07ccfcef02c2f4a4d85276ea228e67bae884e40711d0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/03-compare.png",
+      "sha256": "6cd4b507543a39dfdd2700dc6e6c1e9f6177eedf32dd219a5cc057c3e2f09a1d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/04-radial-1to1-sampling.json",
+      "sha256": "7d07c4174266642c1f460449dc37456550af9b5131c106ab21e5c08ddd7fed72"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/04-radial-1to1.png",
+      "sha256": "d01d7826b170242dd1f1d5852e7ccef24d05f71363f93526cef75381a3b744b9"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/05-radial-fit-sampling.json",
+      "sha256": "76350f9d6bdb2d820c3d5053afcbc9e994c5c3f3c3ea26037435cee6a76fa544"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/05-radial-fit.png",
+      "sha256": "7ba023f1e0f4ae9e84c6592e86ad22ac857250d00f49dd868db97a037ea06a63"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/06-radial-37percent-sampling.json",
+      "sha256": "b276d16ffd4eb0be620f2f17c0c857f33184fae26b7d0956e798b742e6cb56fc"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/06-radial-37percent.png",
+      "sha256": "72dd510238e9e8c4f56c573b10f65fcb1e2abbf35b10b48ad6306a168da35bf6"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/07-grid-small-sampling.json",
+      "sha256": "cce32e6d6495fb8924680978473afebc40eb0647037029ecbea4771d2e4b04d0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/07-grid-small.png",
+      "sha256": "ee980d166db84e6c0ef002ccaea2ca742d4fd2122eddcea91043dca8fe5fb9dc"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/08-grid-large-sampling.json",
+      "sha256": "f31badfa26a2a816b443941b788a4082fab97904c59bf52c800a4c9f8890a98d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/08-grid-large.png",
+      "sha256": "7a3c4e09d3d126c798ce5f0fdb1ff7e234d1d40149eb32de38f1bc149ea29355"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/legacy-nearest-1440x960.png",
+      "sha256": "d7230cecab8609d8c8d6aa7df04b4f1e2b8136ce4056a1119e6638feeee1fb8f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/legacy-nearest-160x107.png",
+      "sha256": "8b07fceb0b855ce49f351a8a9f23a2b23f0596a35c6f0f3227859c42d45353a1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/legacy-nearest-320x213.png",
+      "sha256": "0b9fdcfc7615d71a38eaedc490ce11e6adcd835562c40de28e042ed243dd76c1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/legacy-nearest-444x296.png",
+      "sha256": "eeab629e69d07efcaa85bf512b09e409b866f6e66d9d9e6cdb3722691eef3b06"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/legacy-nearest-860x573.png",
+      "sha256": "8f7e939a445a790b536c5063131b4574d2ea5b5cb0af110af6140ca10ea77e8b"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/radial-1440x960.png",
+      "sha256": "8a5903a00c27ded5a703bdff48837e653680323b6d8ad49ace9f6aec6b9b9be6"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/radial-160x107.png",
+      "sha256": "d7b812779e444a881e44baf4cf4448ee3d4bbe06d4d94a2e3fb2706aa8152673"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/radial-1to1.png",
+      "sha256": "ec848c142501133d6591fd1fdac1d2cc28cf1b8fc934821f0201c738ee622c53"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/radial-320x213.png",
+      "sha256": "4bd60b2874f554b1373db776d47b1fcf692052615e90fbc24f6e440c6b76afd2"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/radial-444x296.png",
+      "sha256": "c19cda74e42fae0ed21ee5c5422db269ca40dc82939bb58a3f843e64b1587a3d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling/radial-860x573.png",
+      "sha256": "0653ecfb56b59d0abfc02df82c8bf6999fc36667bdedd919c5430be152e1911e"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/resampling-windows.json",
+      "sha256": "a385e706e432ffe57d329267598f42443b42166af32531d12db289c9223c3a68"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/sampling-presentation-windows.json",
+      "sha256": "a4aae6b048d288d53b80caa486abc351514a76a77507ddc2d00f015aa81a6e97"
+    },
+    {
+      "path": "var/preview-interactions-20261023/navigation-installed/reports/smoke-windows.json",
+      "sha256": "2becb3ad2b1e840841c2fa1bf03c49b0a7c90f5bff1131cac609bc9ed1d3b53c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/source-snapshot.json",
+      "sha256": "9c3e7a13a80c939d4ea434c027e045d07da38e6efa8104ad15b5ae9ae1456622"
+    },
+    {
+      "path": "var/preview-interactions-20261023/tests-desktop-qualified.log",
+      "sha256": "7d1c0b7b86cfc8a4a8ce90aa1df96a0ed140eff7c3e3552f2030cfd982dd283b"
+    },
+    {
+      "path": "var/preview-interactions-20261023/tests-workspace-native.log",
+      "sha256": "c2cb79097aac7debce003e43de2e4806a4994b25c9b6994ad178df6b35fe4ca0"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/develop-grid.png",
+      "sha256": "23c81011390ebbfb5e278fdafd3ed0d9def283eaedf50e4af796bc9c0559074f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/develop-progress.json",
+      "sha256": "feaebee72abf70d656cb20d40d9a33db935741524768d304539070527717111d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/develop-ui.json",
+      "sha256": "62bb71e65032b73a3b2ae59665219d7dccc38e60709d712a97a2bc1a7057a16c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/develop-viewer.png",
+      "sha256": "b7e24ca050e1fd954e4e785e37516336fba2cd64c9fd9f5eb53d08d6775078ef"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/edit-continuity.json",
+      "sha256": "92c2a260e561cdf1a4e4845d9dd03b9088be2702463b60562b2a99827ee91a56"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/live-edit-30.png",
+      "sha256": "5e5ff5b70378dab1c99cb81aa7592256f699337120f466d235d5b450f599de1d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/live-edit-60.png",
+      "sha256": "29da59aa390e68eb0ca29dab931861e256e296635f179c01759ed8d54d1337df"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-jpg-native-detail/reports/live-edit-90.png",
+      "sha256": "fef2989f4e16a243e1a18a41224c4d3d531361776ebd5992d4e4b2dc42696e6c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/develop-grid.png",
+      "sha256": "023d0cb1b0409a4286e5c4e58cd1ee3f68b9a0e52e4286134fcba7c8ebd0ff8a"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/develop-progress.json",
+      "sha256": "96bee90ecb04c4c678b4c7cb62ed61dfb2623e6b98368f06e14a4c54abb530e1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/develop-ui.json",
+      "sha256": "e2f56a672f29c87fd2c89a7271275c790caa22c4af4b213130d659b2655cfed3"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/develop-viewer.png",
+      "sha256": "8c7c87d6e88a1d246be9221b3c2aa341c4209f750197c974df40e35b8856de33"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/edit-continuity.json",
+      "sha256": "74e56ca97e3164f580f397a564161bd39d4e036e7cf97bebdc649d9d4cda3b44"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/live-edit-30.png",
+      "sha256": "c35608f8d3df609f287129c8246c1eeeaa471d48dcea9e795b8cc996a752d6c7"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/live-edit-60.png",
+      "sha256": "ec63ec657b71b40b0c2d5c1fe927c3aab2c9a27aa844986f3053b2fb16e8d6cb"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-nef-native-detail/reports/live-edit-90.png",
+      "sha256": "f83619b60333fb10425c2819d6c4eb0b91a67241df3dc1166dab14e9aaedfa69"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/develop-grid.png",
+      "sha256": "201c085a994ce1b9f45dc8276d77f5b40768e2fe08fbd87e23d7ce4b394dde1d"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/develop-progress.json",
+      "sha256": "c6a99a8e26c54d917a516946b68c2b5c48c59c18ad19b7f308a885a5ac91a65f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/develop-ui.json",
+      "sha256": "c12629ceb2012d14320e4fecbe0c0f56460004141991273582a0b6117ba190a4"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/develop-viewer.png",
+      "sha256": "fc47570df2011dbb68710b23b8c3a04849349121edcf416fc1229533aa8c8d02"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/edit-continuity.json",
+      "sha256": "f35e8235c23564ff77ca8e81f5195dd39f92fe3a5698568c75bea04dc8006dd8"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/live-edit-30.png",
+      "sha256": "daffe231c832e530bf59fb3bf7e74772a5311ae5b5ac13bb003544aa1fedc110"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/live-edit-60.png",
+      "sha256": "b354122e089e2af2018ccfdf13b2609ca1995af2d08c77b72595678e4ac5db81"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRenderer-RAW-zoom-native-detail/reports/live-edit-90.png",
+      "sha256": "a20cab44603be90777823667442b3b53ca36aa868841e5931d3e4fb791948ede"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/develop-grid.png",
+      "sha256": "0cad776d461da2098c6fab0ac0b4a80894be4b011c8874d50db749ed8fdc3435"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/develop-progress.json",
+      "sha256": "c7c3c8acaffbeca4e93b2468628cd3a51e0d6001c7a5643591f132069f33e3f8"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/develop-ui.json",
+      "sha256": "64a735658b85cfc29e65d144765bacb0a9b36f3f93412343fe552eec11a431f9"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/develop-viewer.png",
+      "sha256": "6d28fb829e93c6a52f6fad7b1dcd26a4062a8e6d5888e63dfe284cf421f4030c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/edit-continuity.json",
+      "sha256": "c89d54c234eef8886a85137c2b917d8e6928051768a150ff52d06774441b8e79"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/live-edit-30.png",
+      "sha256": "fb3ebca7ddb935cbceb8409a8e475ab5e75692dc513949a47aa7d238efc54b90"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/live-edit-60.png",
+      "sha256": "35e54612f666a87e390c4162222113f7394ff63cbfd88ca478879c14b0a80792"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-jpg-native-detail/reports/live-edit-90.png",
+      "sha256": "fc3a4f74836bcabe627645e3148cbab18c103d74eeb2f4d7cc9209785f1185f6"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/develop-grid.png",
+      "sha256": "178e6b77802b1c7fe473a9933ea947b4751bb298d24eecea9ff2587b3d6bfa2c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/develop-progress.json",
+      "sha256": "ee90b652d3b2849d83ae4e1a2e24948ff1e735265720e3fe2a03047113ad17ac"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/develop-ui.json",
+      "sha256": "49a4a766c0edd0d9ed78b14e2f54c28a00ef289ca26f2142241dda9001ca3cf9"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/develop-viewer.png",
+      "sha256": "b9689b5059a16dbc715f629241831b5b9dafb7b40be8de8ef209b281298fd205"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/edit-continuity.json",
+      "sha256": "cd7153835d3e52693c79d4165e7cd0195477e871756228a3af89ff91954d3155"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/live-edit-30.png",
+      "sha256": "aa794b5338b354ca0f7708b209c542f0d4e3e42614f8d502feb1b60d8e68ca2c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/live-edit-60.png",
+      "sha256": "779c965aeccbe973b2a43ddaa80bfb924ebb0aa6c40493237d49921ccdda0456"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-nef-native-detail/reports/live-edit-90.png",
+      "sha256": "04c6a78db742106c222ee7c0cb83632bf7840ba494ee9c450104de8017ea190f"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/develop-grid.png",
+      "sha256": "178e6b77802b1c7fe473a9933ea947b4751bb298d24eecea9ff2587b3d6bfa2c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/develop-progress.json",
+      "sha256": "ae1d3ae67e6c385c45f32023cda1e3c272951153889eafaeb5308ed0b0d2e9cb"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/develop-ui.json",
+      "sha256": "5b98edd6d92d2657a60a8fd14cd2eca4d06acb082aa98c5dc47df071e77563a1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/develop-viewer.png",
+      "sha256": "bc0bffc3b3ee54851dcc08732acd49326ad71b944a51ab24527dae849ed0e97c"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/edit-continuity.json",
+      "sha256": "b655c86b51f68fd2d05ffb57ca9945dfa2c2f5fabb5b3bb04541cb5adc9eeaa1"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/live-edit-30.png",
+      "sha256": "b92e2d762a20e5a53d815c778de898741bdfd8d8695d8aa3b30b21bd3e45ddfb"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/live-edit-60.png",
+      "sha256": "c6a1c437962bb64e0910eb0a0db3c319a264b1922d9da96df9e60d45812de068"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/preview-interactions-20261023/TrueRendererExperimental-RAW-zoom-native-detail/reports/live-edit-90.png",
+      "sha256": "6ce3a8413521f17679351a3bc831c3663b4b8620445495ededdfc3040ffaf95b"
+    },
+    {
+      "path": "var/preview-interactions-20261023/worker-protocol-final.json",
+      "sha256": "992f6c683ee8d724162e586fa03c5cd467b3f366656a7342fcd9f1a2a8aa4fd4"
+    }
+  ]
+}

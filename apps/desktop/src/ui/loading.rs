@@ -29,6 +29,62 @@ pub(super) struct Probe {
 }
 
 impl TrueRenderer {
+    fn folder_preparation_signature(&self, request: PreviewRequest) -> u64 {
+        let mut signature = 0u64;
+        for item in &self.state.items {
+            let mut hash = std::collections::hash_map::DefaultHasher::new();
+            (&item.id, &item.observation, item.approved).hash(&mut hash);
+            signature ^= hash.finish();
+        }
+        let mut hash = std::collections::hash_map::DefaultHasher::new();
+        (signature, self.state.items.len(), &self.folder, request).hash(&mut hash);
+        hash.finish()
+    }
+
+    pub(super) fn refresh_engine_preparation(
+        &mut self,
+        previous: &HashMap<String, PreviewRequest>,
+    ) {
+        if self.folder_load.scan_failed {
+            return;
+        }
+        let Some(mut request) = self.folder_load.request else {
+            return;
+        };
+        request.raw_engine = self.service.cache.settings().raw_engine;
+        self.folder_load.request = Some(request);
+        self.folder_load.signature = Some(self.folder_preparation_signature(request));
+        let affected: Vec<_> = self
+            .state
+            .items
+            .iter()
+            .filter(|item| {
+                item.approved
+                    && previous
+                        .get(&item.id)
+                        .is_some_and(|old| *old != self.preview_request_for_mode(item, 0, false))
+            })
+            .cloned()
+            .collect();
+        if affected.is_empty() {
+            return;
+        }
+        for item in affected {
+            self.errors
+                .retain(|key, _| !key.starts_with(&format!("{}:", item.id)));
+            if !self.rebuild.iter().any(|pending| pending.id == item.id) {
+                self.rebuild.push_back(item);
+            }
+        }
+        self.rebuild_total = self.state.items.iter().filter(|item| item.approved).count();
+        self.folder_load.refining = None;
+        self.folder_load.cache_miss = None;
+        self.folder_load.cancelled = false;
+        self.folder_load.cancelled_remaining = 0;
+        self.folder_load.finishing = true;
+        // The next ViewDemand cancels only incompatible consumers. Resident
+        // engine variants, bitmap work and saved RAW recipes remain usable.
+    }
     pub(super) fn begin_folder_loading(&mut self) {
         let foreground =
             self.service.cache.settings().folder_loading == crate::cache::FolderLoading::Foreground;
@@ -87,15 +143,7 @@ impl TrueRenderer {
             // fitted viewer and zoom, without a second RAW development.
             edge: 0,
         };
-        let mut signature = 0u64;
-        for item in &self.state.items {
-            let mut hash = std::collections::hash_map::DefaultHasher::new();
-            (&item.id, &item.observation, item.approved).hash(&mut hash);
-            signature ^= hash.finish();
-        }
-        let mut hash = std::collections::hash_map::DefaultHasher::new();
-        (signature, self.state.items.len(), &self.folder, request).hash(&mut hash);
-        let signature = hash.finish();
+        let signature = self.folder_preparation_signature(request);
         // Periodic rescans, filters and sorting must not restart a completed job.
         if !force && self.folder_load.signature == Some(signature) {
             return;
@@ -121,7 +169,6 @@ impl TrueRenderer {
         self.folder_load.cache_miss = None;
         if self.folder_load.foreground {
             self.preparation_paused = false;
-            self.cache.clear();
             self.presenter.release_optional_frames();
         }
     }
@@ -560,7 +607,6 @@ impl TrueRenderer {
             {
                 self.folder_load.foreground = true;
                 self.preparation_paused = false;
-                self.cache.clear();
                 self.presenter.release_optional_frames();
             }
             if !self.rebuild.is_empty() {

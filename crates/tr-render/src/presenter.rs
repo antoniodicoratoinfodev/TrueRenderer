@@ -26,9 +26,11 @@ struct Key {
 struct Job {
     lane: String,
     key: Key,
+    placement: Placement,
     image: Arc<ImageLevels>,
     lease: Lease,
     gpu_lease: Lease,
+    zooming: bool,
 }
 enum Rendered {
     Cpu(Vec<u8>),
@@ -38,6 +40,7 @@ enum Rendered {
 struct Completed {
     lane: String,
     key: Key,
+    placement: Placement,
     result: Result<Rendered, String>,
     lease: Arc<Lease>,
     gpu_lease: Arc<Lease>,
@@ -51,11 +54,18 @@ struct Shared {
 }
 struct Entry {
     key: Key,
+    placement: Placement,
     superseded: bool,
     texture: FrameTexture,
     touched: u64,
+    zoomed_at: Option<f64>,
     lease: Arc<Lease>,
     gpu_lease: Arc<Lease>,
+}
+#[derive(Clone, Copy)]
+struct Placement {
+    rect: Rect,
+    region: Region,
 }
 enum FrameTexture {
     Cpu(TextureHandle),
@@ -110,6 +120,17 @@ impl Drop for FrameTexture {
 pub struct ComputeStatistics {
     pub cpu_frames: u64,
     pub gpu_frames: u64,
+    pub resident_zoom_frames: u64,
+    pub resident_edit_frames: u64,
+    pub resident_edit_encode_us: u64,
+    pub resident_zoom_busy: u64,
+    pub resident_zoom_misses: u64,
+    pub resident_zoom_encode_us: u64,
+    pub resident_zoom_max_us: u64,
+    pub resident_zoom_pixels: u64,
+    pub worker_render_us: u64,
+    pub worker_render_max_us: u64,
+    pub worker_pixels: u64,
     pub cpu_edit_frames: u64,
     pub gpu_edit_frames: u64,
     pub fallbacks: u64,
@@ -130,12 +151,16 @@ pub struct Capture {
 }
 /// Draw-command coverage for diagnostic traces, not compositor visibility.
 pub struct PaintCoverage {
+    pub region: Region,
+    pub displayed_region: Option<Region>,
     pub lane: String,
     pub source: u64,
     pub displayed_source: Option<u64>,
     pub displayed_revision: Option<u64>,
     pub fraction: f32,
     pub exact: bool,
+    /// Previous complete scale held without resampling while a new one loads.
+    pub held: bool,
 }
 pub struct Presenter {
     stretch: tr_core::science::Stretch,
@@ -161,6 +186,8 @@ pub struct Presenter {
     pressure: Arc<AtomicBool>,
     compute_verified: Arc<AtomicBool>,
     compute_mode: Arc<AtomicU8>,
+    filter: Arc<Mutex<Option<Arc<crate::resident_compute::GpuFilter>>>>,
+    clear_filter: Arc<AtomicBool>,
 }
 impl Presenter {
     pub fn new(
@@ -181,6 +208,10 @@ impl Presenter {
         let worker_gpu = render_state.clone();
         let worker_memory = memory.clone();
         let worker_gpu_memory = gpu_memory.clone();
+        let filter = Arc::new(Mutex::new(None));
+        let worker_filter = filter.clone();
+        let clear_filter = Arc::new(AtomicBool::new(false));
+        let worker_clear_filter = clear_filter.clone();
         let high_precision = render_state.as_ref().is_some_and(|s| {
             matches!(
                 s.target_format,
@@ -189,26 +220,28 @@ impl Presenter {
             )
         });
         let worker = thread::spawn(move || {
-            let mut filter = worker_gpu
+            let initialized = worker_gpu
                 .as_ref()
                 .filter(|r| r.device.limits().max_storage_buffers_per_shader_stage >= 7)
                 .map(|r| {
-                    crate::resident_compute::GpuFilter::with_precision(
+                    Arc::new(crate::resident_compute::GpuFilter::with_precision(
                         r.device.clone(),
                         high_precision,
-                    )
+                    ))
                 });
+            *worker_filter.lock().unwrap() = initialized;
             loop {
                 let mut job = {
                     let (lock, ready) = &*worker_shared;
                     let mut state = lock.lock().unwrap();
                     while state.jobs.is_empty() && !state.stop {
-                        let (next, timeout) = ready
+                        let (next, _) = ready
                             .wait_timeout(state, std::time::Duration::from_secs(2))
                             .unwrap();
                         state = next;
-                        if (timeout.timed_out() || worker_pressure.load(Ordering::Acquire))
-                            && let Some(filter) = &mut filter
+                        if (worker_clear_filter.swap(false, Ordering::AcqRel)
+                            || worker_pressure.load(Ordering::Acquire))
+                            && let Some(filter) = worker_filter.lock().unwrap().clone()
                         {
                             filter.clear();
                         }
@@ -218,26 +251,42 @@ impl Presenter {
                     }
                     state.jobs.pop_front().unwrap()
                 };
+                let started = std::time::Instant::now();
                 let pixels = job.key.region.size[0] as u64 * job.key.region.size[1] as u64;
                 let choice = mode.load(Ordering::Acquire);
                 if (choice == 1
+                    || worker_clear_filter.swap(false, Ordering::AcqRel)
                     || worker_pressure.load(Ordering::Acquire)
                     || worker_gpu_memory.usage().reserved > worker_gpu_memory.usage().limit
                     || worker_memory.usage().reserved > worker_memory.usage().limit)
-                    && let Some(filter) = &mut filter
+                    && let Some(filter) = worker_filter.lock().unwrap().clone()
                 {
                     filter.clear();
                 }
                 let mut fallback = None;
+                let filter_wait = crate::timings::CpuSpan::new("filter_lock_wait_cpu");
+                let filter = worker_filter.lock().unwrap().clone();
+                drop(filter_wait);
                 let gpu = if verified.load(Ordering::Acquire)
                     && !job.image.scientific()
                     && choice != 1
                     && job.key.edit.as_ref().is_none_or(|e| e.gpu_supported())
-                    && (choice == 2 || job.key.edit.is_some() || pixels >= 512 * 1024)
-                    && let Some(filter) = &mut filter
+                    && (choice == 2
+                        || job.zooming
+                        || job.key.edit.is_some()
+                        || pixels >= 512 * 1024)
+                    && let Some(filter) = filter
                 {
-                    filter
-                        .render_edit(
+                    let result = if job.zooming && job.key.edit.is_none() {
+                        filter.render_zoom(
+                            &job.image,
+                            job.key.region,
+                            &worker_memory,
+                            &worker_gpu_memory,
+                            &mut job.lease,
+                        )
+                    } else {
+                        filter.render_edit(
                             &job.image,
                             job.key.region,
                             &worker_memory,
@@ -245,6 +294,8 @@ impl Presenter {
                             &mut job.lease,
                             job.key.edit.as_ref(),
                         )
+                    };
+                    result
                         .map_err(|e| {
                             fallback = Some(format!("{e:#}"));
                             e
@@ -257,6 +308,7 @@ impl Presenter {
                 let result = if let Some(frame) = gpu {
                     Ok(Rendered::Gpu(frame))
                 } else {
+                    let _cpu = crate::timings::CpuSpan::new("cpu_filter_and_display");
                     job.key
                         .edit
                         .as_ref()
@@ -290,6 +342,11 @@ impl Presenter {
                 let lease = Arc::new(job.lease);
                 let gpu_lease = Arc::new(job.gpu_lease);
                 let mut state = worker_shared.0.lock().unwrap();
+                let elapsed = started.elapsed().as_micros() as u64;
+                state.statistics.worker_render_us += elapsed;
+                state.statistics.worker_render_max_us =
+                    state.statistics.worker_render_max_us.max(elapsed);
+                state.statistics.worker_pixels += pixels;
                 if state.stop {
                     break;
                 }
@@ -315,6 +372,7 @@ impl Presenter {
                 state.completed.push_back(Completed {
                     lane: job.lane,
                     key: job.key,
+                    placement: job.placement,
                     result,
                     lease,
                     gpu_lease,
@@ -346,6 +404,8 @@ impl Presenter {
             pressure,
             compute_verified,
             compute_mode,
+            filter,
+            clear_filter,
         }
     }
     pub fn statistics(&self) -> ComputeStatistics {
@@ -389,6 +449,8 @@ impl Presenter {
     /// Optional coverage must not pin credits needed by decode/source work.
     pub fn release_optional_frames(&mut self) {
         self.discard_wide();
+        self.clear_filter.store(true, Ordering::Release);
+        self.shared.1.notify_all();
     }
     fn trim_wide(&mut self) {
         // Existing leases travel with the texture: retention reserves no new
@@ -424,7 +486,7 @@ impl Presenter {
             *peak = (*peak).max(value);
         }
     }
-    fn install(&mut self, lane: String, entry: Entry) {
+    fn install(&mut self, lane: String, mut entry: Entry) {
         if self.wide.get(&lane).is_some_and(|old| {
             source_area(old.key.region) <= source_area(entry.key.region)
                 || ((old.key.photographic || entry.key.photographic)
@@ -434,6 +496,9 @@ impl Presenter {
             self.retire(old);
         }
         if let Some(old) = self.entries.remove(&lane) {
+            if old.key.source == entry.key.source && entry.key.region == entry.placement.region {
+                entry.zoomed_at = old.zoomed_at;
+            }
             let retain = lane.starts_with("view:")
                 && !old.superseded
                 && (old.key.source == entry.key.source
@@ -468,6 +533,8 @@ impl Presenter {
         &self.coverage
     }
     pub fn clear(&mut self) {
+        self.clear_filter.store(true, Ordering::Release);
+        self.shared.1.notify_all();
         self.discard_wide();
         self.waiting.clear();
         for (_, entry) in self.entries.drain() {
@@ -572,9 +639,11 @@ impl Presenter {
                         finished.lane,
                         Entry {
                             key: finished.key,
+                            placement: finished.placement,
                             superseded: false,
                             texture,
                             touched: self.clock,
+                            zoomed_at: None,
                             lease: finished.lease,
                             gpu_lease: finished.gpu_lease,
                         },
@@ -696,6 +765,10 @@ impl Presenter {
     pub fn configure_gpu_limit(&mut self, bytes: u64) {
         if self.gpu_memory.usage().limit != bytes {
             self.errors.clear();
+            if bytes < self.gpu_memory.usage().limit {
+                self.clear_filter.store(true, Ordering::Release);
+                self.shared.1.notify_all();
+            }
         }
         self.gpu_memory.configure(bytes);
         self.trim_wide();
@@ -760,7 +833,7 @@ impl Presenter {
         edit: Option<crate::live_edit::LiveEdit>,
         photographic: bool,
     ) {
-        let key = Key {
+        let mut key = Key {
             stretch: if image.scientific() {
                 self.stretch
             } else {
@@ -772,20 +845,62 @@ impl Presenter {
             edit,
             photographic,
         };
+        let placement = Placement { rect, region };
+        let changing_scale = self
+            .entries
+            .get(&lane)
+            .is_some_and(|e| e.placement.region.step != region.step);
+        let now = ui.input(|i| i.time);
+        if lane.starts_with("view:")
+            && changing_scale
+            && let Some(entry) = self.entries.get_mut(&lane)
+        {
+            entry.zoomed_at = Some(now);
+        }
+        // A pan margin is useful at a stable scale. During zoom it multiplies
+        // the work and competes with the next visible frame for the GPU input.
+        let zooming = self
+            .entries
+            .get(&lane)
+            .is_some_and(|e| e.zoomed_at.is_some_and(|t| now - t < 0.12));
+        if zooming {
+            ui.ctx()
+                .request_repaint_after(std::time::Duration::from_millis(120));
+        }
+        let needs_frame = self.entries.get(&lane).is_none_or(|e| {
+            e.superseded || !same_content(&e.key, &key) || exact_uv(e.key.region, region).is_none()
+        });
+        if lane.starts_with("view:")
+            && ((key.edit.is_none() && (changing_scale || zooming && needs_frame))
+                || (needs_frame && key.edit.as_ref().is_some_and(|e| e.gpu_supported())))
+        {
+            self.render_resident_frame(ui, &lane, image, &key, placement);
+        }
+        let pan = lane.starts_with("view:")
+            && key.edit.is_none()
+            && progressive != Some(true)
+            && !self.pressure.load(Ordering::Acquire);
+        let mut painted = false;
         if let Some(entry) = self
             .entries
             .get_mut(&lane)
-            .filter(|e| e.key == key && !e.superseded)
+            .filter(|e| same_content(&e.key, &key) && !e.superseded)
+            .filter(|e| exact_uv(e.key.region, region).is_some())
         {
+            let uv = exact_uv(entry.key.region, region).unwrap();
             entry.touched = self.clock;
+            entry.placement = placement;
             if self.capturing {
                 self.coverage.push(PaintCoverage {
+                    region,
+                    displayed_region: Some(entry.key.region),
                     lane: lane.clone(),
                     source: image.id(),
                     displayed_source: Some(image.id()),
                     displayed_revision: entry.key.edit.as_ref().map(|e| e.revision),
                     fraction: 1.,
                     exact: progressive != Some(true),
+                    held: false,
                 });
                 self.captures.push(Capture {
                     compute: if matches!(&entry.texture, FrameTexture::Gpu { .. }) {
@@ -799,15 +914,54 @@ impl Presenter {
                     region,
                 });
             }
-            ui.painter().image(
-                entry.texture.id(),
-                rect,
-                Rect::from_min_max(Pos2::ZERO, Pos2::new(1., 1.)),
-                Color32::WHITE,
-            );
-            return;
+            ui.painter()
+                .image(entry.texture.id(), rect, uv, Color32::WHITE);
+            painted = true;
+            // Refresh before the cursor reaches the edge of the resident
+            // frame. A pure crop on the same sample grid stays pixel-exact.
+            if !pan
+                || zooming
+                || exact_uv(
+                    entry.key.region,
+                    pan_region(region, image.source_size(), 0.25),
+                )
+                .is_some()
+            {
+                return;
+            }
         }
-        self.paint_previous(ui, &lane, image.id(), rect, region);
+        if !painted {
+            self.paint_previous(ui, &lane, image.id(), rect, region);
+        }
+        if pan && !zooming {
+            // Extra coverage is optional and must fit existing admission and
+            // device limits. Never reduce sampling resolution to obtain it.
+            let memory = self.memory.usage();
+            let gpu = self.gpu_memory.usage();
+            let mut margin = 0.5;
+            while margin >= 0.0625 {
+                let guarded = pan_region(region, image.source_size(), margin);
+                let pixels = u64::from(guarded.size[0]) * u64::from(guarded.size[1]);
+                if pixels <= tr_core::color::MAX_PRESENTATION_PIXELS as u64
+                    && guarded.size.iter().all(|n| *n <= 16384)
+                    && pixels * 80 + 4 * 1024 * 1024 <= memory.limit.saturating_sub(memory.reserved)
+                    && pixels * if key.high_precision { 8 } else { 4 }
+                        <= gpu.limit.saturating_sub(gpu.reserved)
+                {
+                    key.region = guarded;
+                    break;
+                }
+                margin *= 0.5;
+            }
+            if painted
+                && self
+                    .entries
+                    .get(&lane)
+                    .is_some_and(|e| exact_uv(e.key.region, key.region).is_some())
+            {
+                return;
+            }
+        }
         if let Some((_, error)) = self.errors.get(&lane).filter(|(failed, _)| *failed == key) {
             ui.painter().text(
                 rect.center(),
@@ -821,17 +975,158 @@ impl Presenter {
         self.errors.remove(&lane);
         // One admitted render per lane. Keep it publishable while the next
         // draft changes; the following paint observes only the latest request.
-        if progressive.is_some() && self.waiting.contains_key(&lane) {
+        if (progressive.is_some() || pan) && self.waiting.contains_key(&lane) {
             return;
         }
-        self.enqueue(ui, lane, image, rect, key);
+        self.enqueue(ui, lane, image, placement, key, zooming);
+    }
+
+    /// Encode only from resident, validated linear input. Never wait for the
+    /// worker lock, scan a source, upload pixels or read GPU results on the UI.
+    fn render_resident_frame(
+        &mut self,
+        ui: &egui::Ui,
+        lane: &str,
+        image: &Arc<ImageLevels>,
+        key: &Key,
+        placement: Placement,
+    ) -> Option<()> {
+        if image.scientific()
+            || self.pressure.load(Ordering::Acquire)
+            || self.clear_filter.load(Ordering::Acquire)
+            || !self.compute_verified.load(Ordering::Acquire)
+            || self.compute_mode.load(Ordering::Acquire) == 1
+        {
+            return None;
+        }
+        let pixels = u64::from(key.region.size[0]) * u64::from(key.region.size[1]);
+        if pixels > tr_core::color::MAX_PRESENTATION_PIXELS as u64 {
+            return None;
+        }
+        let memory = self.memory.usage();
+        let gpu = self.gpu_memory.usage();
+        // Optional immediate work must not trigger global cache reclamation
+        // merely because the larger candidate margin does not fit.
+        let working_bytes = pixels * 80
+            + 4 * 1024 * 1024
+            + key
+                .edit
+                .as_ref()
+                .map_or(0, |edit| edit.working_bytes(image, key.region));
+        if working_bytes > memory.limit.saturating_sub(memory.reserved)
+            || pixels * if key.high_precision { 8 } else { 4 }
+                > gpu.limit.saturating_sub(gpu.reserved)
+        {
+            return None;
+        }
+        let mut working = self.memory.try_reserve(working_bytes)?;
+        let gpu_lease = Arc::new(
+            self.gpu_memory
+                .try_reserve(pixels * if key.high_precision { 8 } else { 4 })?,
+        );
+        let started = std::time::Instant::now();
+        let result = {
+            let Ok(filter) = self.filter.try_lock() else {
+                self.shared.0.lock().unwrap().statistics.resident_zoom_busy += 1;
+                return None;
+            };
+            let renderer = filter.as_ref()?.clone();
+            drop(filter);
+            renderer.render_resident_edit(
+                image,
+                key.region,
+                &self.memory,
+                &self.gpu_memory,
+                &mut working,
+                key.edit.as_ref(),
+            )
+        };
+        let Ok(mut frame) = result else {
+            self.shared
+                .0
+                .lock()
+                .unwrap()
+                .statistics
+                .resident_zoom_misses += 1;
+            return None;
+        };
+        working.shrink(pixels * if key.high_precision { 24 } else { 12 });
+        let lease = Arc::new(working);
+        let state = self.render_state.as_ref()?.clone();
+        frame.submit(&state.queue);
+        let retained = (lease.clone(), gpu_lease.clone());
+        state.queue.on_submitted_work_done(move || drop(retained));
+        let id = state.renderer.write().register_native_texture(
+            &state.device,
+            &frame.texture.create_view(&Default::default()),
+            eframe::wgpu::FilterMode::Nearest,
+        );
+        self.install(
+            lane.into(),
+            Entry {
+                key: key.clone(),
+                placement,
+                superseded: false,
+                touched: self.clock,
+                zoomed_at: None,
+                texture: FrameTexture::Gpu { id, frame, state },
+                lease,
+                gpu_lease,
+            },
+        );
+        self.errors.remove(lane);
+        // An older asynchronous margin must not overwrite this newer scale.
+        self.waiting.remove(lane);
+        let mut shared = self.shared.0.lock().unwrap();
+        shared.jobs.retain(|job| job.lane != lane);
+        shared.completed.retain(|job| job.lane != lane);
+        shared.statistics.gpu_frames += 1;
+        let elapsed = started.elapsed().as_micros() as u64;
+        if key.edit.is_some() {
+            shared.statistics.resident_edit_frames += 1;
+            shared.statistics.gpu_edit_frames += 1;
+            shared.statistics.resident_edit_encode_us += elapsed;
+        } else {
+            shared.statistics.resident_zoom_frames += 1;
+            shared.statistics.resident_zoom_encode_us += elapsed;
+        }
+        shared.statistics.resident_zoom_max_us =
+            shared.statistics.resident_zoom_max_us.max(elapsed);
+        shared.statistics.resident_zoom_pixels += pixels;
+        ui.ctx().request_repaint();
+        Some(())
+    }
+
+    pub(crate) fn hold_scale_change(
+        &mut self,
+        ui: &egui::Ui,
+        lane: &str,
+        source: u64,
+        rect: Rect,
+        region: Region,
+    ) -> bool {
+        if !self
+            .entries
+            .get(lane)
+            .is_some_and(|e| e.placement.region.step != region.step)
+        {
+            return false;
+        }
+        self.waiting.remove(lane);
+        {
+            let mut shared = self.shared.0.lock().unwrap();
+            shared.jobs.retain(|job| job.lane != lane);
+            shared.completed.retain(|job| job.lane != lane);
+        }
+        self.paint_previous(ui, lane, source, rect, region);
+        true
     }
 
     pub(crate) fn is_current(&self, lane: &str, source: u64, region: Region) -> bool {
         self.entries.get(lane).is_some_and(|e| {
             !e.superseded
                 && e.key.source == source
-                && e.key.region == region
+                && exact_uv(e.key.region, region).is_some()
                 && e.key.edit.is_none()
         })
     }
@@ -875,64 +1170,129 @@ impl Presenter {
         rect: Rect,
         region: Region,
     ) {
-        let mut covered = 0.;
+        if let Some(entry) = self.entries.get_mut(lane).filter(|e| {
+            e.placement.region.step != region.step
+                || (e.zoomed_at.is_some() && exact_uv(e.key.region, region).is_none())
+        }) && let Some((held_rect, uv)) = reproject(
+            entry.key.region,
+            entry.placement.region,
+            entry.placement.rect,
+        ) {
+            // A scale transition is atomic: retain the last complete scale
+            // until the next one is ready, without filtering display pixels a
+            // second time. UI clipping also protects neighbouring panels.
+            entry.touched = self.clock;
+            ui.painter()
+                .image(entry.texture.id(), held_rect, uv, Color32::WHITE);
+            if self.capturing {
+                let visible = held_rect.intersect(rect).intersect(ui.clip_rect());
+                self.coverage.push(PaintCoverage {
+                    region,
+                    displayed_region: Some(entry.placement.region),
+                    lane: lane.into(),
+                    source,
+                    displayed_source: Some(entry.key.source),
+                    displayed_revision: entry.key.edit.as_ref().map(|e| e.revision),
+                    fraction: if visible.is_positive() {
+                        (visible.area() / rect.area()).clamp(0., 1.)
+                    } else {
+                        0.
+                    },
+                    exact: false,
+                    held: true,
+                });
+                self.captures.push(Capture {
+                    compute: if matches!(&entry.texture, FrameTexture::Gpu { .. }) {
+                        "GPU"
+                    } else {
+                        "CPU"
+                    },
+                    source: entry.key.source,
+                    rect: held_rect,
+                    clip: ui.clip_rect(),
+                    region: entry.placement.region,
+                });
+            }
+            return;
+        }
+        let mut drawn = Vec::with_capacity(2);
         let mut displayed_source = None;
         let mut displayed_revision = None;
-        let wide_is_better = self
-            .wide
-            .get(lane)
-            .and_then(|e| reproject(e.key.region, region, rect))
-            .is_some_and(|(wide, _)| {
-                let current = self
-                    .entries
-                    .get(lane)
-                    .and_then(|e| reproject(e.key.region, region, rect))
-                    .map_or(0., |(r, _)| r.area());
-                wide.area() > current
-            });
-        let previous = if wide_is_better {
-            self.wide_reprojections += 1;
-            self.wide.get_mut(lane)
-        } else {
-            self.entries.get_mut(lane)
-        };
-        if let Some(entry) = previous {
+        let mut displayed_region = None;
+        let mut previous: Vec<_> = [
+            (true, self.wide.get_mut(lane)),
+            (false, self.entries.get_mut(lane)),
+        ]
+        .into_iter()
+        .filter_map(|(wide, entry)| entry.map(|e| (wide, e)))
+        .collect();
+        // Fill missing coverage first, then preserve the finest available
+        // samples on top. A wider fitted view must not replace sharp detail.
+        previous.sort_by(|(_, a), (_, b)| {
+            (b.key.region.step[0] * b.key.region.step[1])
+                .total_cmp(&(a.key.region.step[0] * a.key.region.step[1]))
+        });
+        for (wide, entry) in previous {
             entry.touched = self.clock;
             if let Some((coverage, uv)) = reproject(entry.key.region, region, rect) {
-                covered = coverage.intersect(rect).area() / rect.area();
+                if wide {
+                    self.wide_reprojections += 1;
+                }
+                drawn.push(coverage.intersect(rect));
                 displayed_source = Some(entry.key.source);
                 displayed_revision = entry.key.edit.as_ref().map(|e| e.revision);
+                displayed_region = Some(entry.key.region);
                 ui.painter()
                     .image(entry.texture.id(), coverage, uv, Color32::WHITE);
             }
         }
+        let overlap = if drawn.len() == 2 {
+            let intersection = drawn[0].intersect(drawn[1]);
+            if intersection.is_positive() {
+                intersection.area()
+            } else {
+                0.
+            }
+        } else {
+            0.
+        };
+        let covered = drawn.iter().map(|r| r.area()).sum::<f32>() - overlap;
         if self.capturing {
             self.coverage.push(PaintCoverage {
+                region,
+                displayed_region,
                 lane: lane.into(),
                 source,
                 displayed_source,
                 displayed_revision,
-                fraction: covered,
+                fraction: (covered / rect.area()).clamp(0., 1.),
                 exact: false,
+                held: false,
             });
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn enqueue(
         &mut self,
         ui: &egui::Ui,
         lane: String,
         image: &Arc<ImageLevels>,
-        rect: Rect,
+        placement: Placement,
         key: Key,
+        zooming: bool,
     ) {
+        let rect = placement.rect;
         let region = key.region;
         if self.waiting.get(&lane) != Some(&key) {
             let pixels = region.size[0] as u64 * region.size[1] as u64;
             let display_bytes = pixels * if self.high_precision { 8 } else { 4 };
             let required = pixels * 80
                 + 4 * 1024 * 1024
-                + key.edit.as_ref().map_or(0, |e| e.working_bytes(image));
+                + key
+                    .edit
+                    .as_ref()
+                    .map_or(0, |e| e.working_bytes(image, region));
             if required > self.memory.usage().limit || display_bytes > self.gpu_memory.usage().limit
             {
                 self.errors.insert(
@@ -1002,9 +1362,11 @@ impl Presenter {
                 shared.jobs.push_back(Job {
                     lane: lane.clone(),
                     key: key.clone(),
+                    placement,
                     image: image.clone(),
                     lease,
                     gpu_lease,
+                    zooming,
                 });
                 self.waiting.insert(lane, key);
                 self.shared.1.notify_one();
@@ -1013,6 +1375,68 @@ impl Presenter {
         ui.ctx()
             .request_repaint_after(std::time::Duration::from_millis(25));
     }
+}
+
+fn same_content(a: &Key, b: &Key) -> bool {
+    a.source == b.source
+        && a.stretch == b.stretch
+        && a.high_precision == b.high_precision
+        && a.edit == b.edit
+        && a.photographic == b.photographic
+}
+
+/// A nearest texture crop is exact only at the same scale and integer sample
+/// offset. Fractional zooms must retain their original sampling phase too.
+fn exact_uv(previous: Region, current: Region) -> Option<Rect> {
+    let mut offset = [0.; 2];
+    for (a, offset) in offset.iter_mut().enumerate() {
+        if previous.size[a] == 0
+            || current.size[a] == 0
+            || !previous.step[a].is_finite()
+            || previous.step[a] <= 0.
+            || (previous.step[a] - current.step[a]).abs() > previous.step[a] * 1e-12
+        {
+            return None;
+        }
+        let delta = (current.origin[a] - previous.origin[a]) / previous.step[a];
+        if !delta.is_finite()
+            || (delta - delta.round()).abs() > 1e-6
+            || delta.round() < 0.
+            || delta.round() + f64::from(current.size[a]) > f64::from(previous.size[a])
+        {
+            return None;
+        }
+        *offset = delta.round();
+    }
+    Some(Rect::from_min_max(
+        Pos2::new(
+            (offset[0] / f64::from(previous.size[0])) as f32,
+            (offset[1] / f64::from(previous.size[1])) as f32,
+        ),
+        Pos2::new(
+            ((offset[0] + f64::from(current.size[0])) / f64::from(previous.size[0])) as f32,
+            ((offset[1] + f64::from(current.size[1])) / f64::from(previous.size[1])) as f32,
+        ),
+    ))
+}
+
+fn pan_region(mut region: Region, source: [u32; 2], margin: f64) -> Region {
+    for (a, extent) in source.into_iter().enumerate() {
+        if !region.step[a].is_finite() || region.step[a] <= 0. {
+            return region;
+        }
+        let border = (f64::from(region.size[a]) * margin).ceil().min(512.);
+        let before = (region.origin[a] / region.step[a])
+            .floor()
+            .clamp(0., border);
+        let end = region.origin[a] + f64::from(region.size[a]) * region.step[a];
+        let after = ((f64::from(extent) - end) / region.step[a])
+            .floor()
+            .clamp(0., border);
+        region.origin[a] -= before * region.step[a];
+        region.size[a] += before as u32 + after as u32;
+    }
+    region
 }
 
 /// Reuse only source coverage present in the previous frame; panning must not
@@ -1125,8 +1549,475 @@ pub fn fitted_pending(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn zoom_prioritizes_visible_frame_then_restores_pan_margin() {
+        let ctx = egui::Context::default();
+        let mut p = Presenter::new(ctx.clone(), MemoryBudget::new(128 * 1024 * 1024), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(1024, 768, vec![[0.4, 0.3, 0.2, 1.]; 1024 * 768])
+                    .unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let initial = Region {
+            size: [160, 120],
+            origin: [432., 324.],
+            step: [1.; 2],
+        };
+        let lane = "view:zoom-priority";
+        p.install(lane.into(), fixture_entry(&ctx, &p, image.id(), initial));
+        let draw = |p: &mut Presenter, region, time| {
+            p.begin_capture();
+            let mut out = ctx.run_ui(
+                egui::RawInput {
+                    time: Some(time),
+                    ..Default::default()
+                },
+                |ui| {
+                    p.paint(
+                        ui,
+                        lane.into(),
+                        &image,
+                        Rect::from_min_size(Pos2::ZERO, egui::vec2(160., 120.)),
+                        region,
+                    );
+                },
+            );
+            out.textures_delta.clear();
+        };
+        let zoom = Region {
+            step: [0.8; 2],
+            ..initial
+        };
+        draw(&mut p, zoom, 1.);
+        assert_eq!(
+            p.waiting[lane].region, zoom,
+            "Zoom must not render an invisible margin"
+        );
+        let wait = |p: &mut Presenter, region, time| {
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+            loop {
+                p.poll(&ctx);
+                draw(p, region, time);
+                if p.is_current(lane, image.id(), region) {
+                    break;
+                }
+                assert!(std::time::Instant::now() < deadline);
+                std::thread::sleep(std::time::Duration::from_millis(2));
+            }
+        };
+        wait(&mut p, zoom, 1.01);
+        let pan = Region {
+            origin: [456., 332.],
+            ..zoom
+        };
+        draw(&mut p, pan, 1.02);
+        assert!(
+            p.coverage()[0].held,
+            "Pan immediately after zoom must hold a complete frame until ready"
+        );
+        assert_eq!(p.coverage()[0].displayed_region, Some(zoom));
+        assert_eq!(p.waiting[lane].region, pan);
+        wait(&mut p, pan, 1.03);
+        draw(&mut p, pan, 1.1);
+        assert!(
+            p.is_idle(),
+            "Do not start optional work between zoom inputs"
+        );
+        draw(&mut p, pan, 1.2);
+        assert_eq!(
+            p.waiting[lane].region,
+            pan_region(pan, image.source_size(), 0.5)
+        );
+    }
+
+    #[test]
+    fn zoom_never_stretches_the_previous_display_frame_while_render_is_pending() {
+        let ctx = egui::Context::default();
+        let mut p = Presenter::new(ctx.clone(), MemoryBudget::new(128 * 1024 * 1024), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(1024, 768, vec![[0.4, 0.3, 0.2, 1.]; 1024 * 768])
+                    .unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let rect = Rect::from_min_size(Pos2::new(20., 20.), egui::vec2(160., 120.));
+        let initial = Region {
+            size: [160, 120],
+            origin: [432., 324.],
+            step: [1.; 2],
+        };
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            p.poll(&ctx);
+            let mut out = ctx.run_ui(Default::default(), |ui| {
+                p.paint(ui, "view:zoom".into(), &image, rect, initial)
+            });
+            out.textures_delta.clear();
+            if p.is_current("view:zoom", image.id(), initial) {
+                break;
+            }
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        let texture = p.entries["view:zoom"].texture.id();
+        let size = p.entries["view:zoom"].texture.size();
+        // No worker publication: wheel changes and direction reversals must
+        // not stretch already filtered display pixels to the requested zoom.
+        for step in [0.73, 0.62, 0.9, 1.12, 1.33] {
+            let region = Region {
+                size: initial.size,
+                origin: [512. - 80. * step, 384. - 60. * step],
+                step: [step; 2],
+            };
+            let mut out = ctx.run_ui(Default::default(), |ui| {
+                p.paint(ui, "view:zoom".into(), &image, rect, region)
+            });
+            out.textures_delta.clear();
+            let meshes: Vec<_> = out
+                .shapes
+                .iter()
+                .filter_map(|s| match &s.shape {
+                    egui::Shape::Mesh(m) if m.texture_id == texture => Some(m),
+                    _ => None,
+                })
+                .collect();
+            assert!(!meshes.is_empty());
+            for mesh in meshes {
+                let a = mesh.vertices[0];
+                for b in &mesh.vertices[1..] {
+                    for (axis, size) in size.iter().enumerate() {
+                        let screen = (b.pos[axis] - a.pos[axis]).abs();
+                        let texels = (b.uv[axis] - a.uv[axis]).abs() * *size as f32;
+                        assert!(
+                            (screen - texels).abs() < 0.001,
+                            "Zoom rescaled the old display frame: {screen} backing pixels from {texels} texels"
+                        );
+                    }
+                }
+            }
+        }
+    }
+    #[test]
+    fn wheel_waits_for_missing_detail_then_publishes_native_scale() {
+        let ctx = egui::Context::default();
+        let mut p = Presenter::new(ctx.clone(), MemoryBudget::new(128 * 1024 * 1024), None);
+        let source =
+            tr_core::color::LinearImage::new(1024, 768, vec![[0.4, 0.2, 0.3, 1.]; 1024 * 768])
+                .unwrap();
+        let small = Arc::new(
+            ImageLevels::from_source(
+                source.clone(),
+                tr_core::preview::PreviewRequest {
+                    edge: 64,
+                    ..tr_core::preview::PreviewRequest::full()
+                },
+            )
+            .unwrap(),
+        );
+        let native = Arc::new(
+            ImageLevels::from_source(source, tr_core::preview::PreviewRequest::full()).unwrap(),
+        );
+        let mut transform = tr_core::ViewTransform::default();
+        let draw = |p: &mut Presenter,
+                    t: &mut tr_core::ViewTransform,
+                    image: &Arc<ImageLevels>,
+                    refining,
+                    events| {
+            p.begin_capture();
+            let mut sampled = false;
+            let mut out = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(180., 140.))),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    let (_, sample) = crate::viewport_with_options(
+                        ui,
+                        p,
+                        image,
+                        t,
+                        "view:wheel",
+                        crate::ViewportOptions {
+                            refining,
+                            ..Default::default()
+                        },
+                    );
+                    sampled = sample.is_some();
+                },
+            );
+            out.textures_delta.clear();
+            sampled
+        };
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            p.poll(&ctx);
+            draw(&mut p, &mut transform, &small, false, vec![]);
+            if p.coverage().iter().any(|c| c.exact) {
+                break;
+            }
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        let old = p.entries["view:wheel"].texture.id();
+        assert!(!draw(
+            &mut p,
+            &mut transform,
+            &small,
+            false,
+            vec![
+                egui::Event::PointerMoved(Pos2::new(80., 70.)),
+                egui::Event::MouseWheel {
+                    phase: egui::TouchPhase::Move,
+                    unit: egui::MouseWheelUnit::Point,
+                    delta: egui::vec2(0., 600.),
+                    modifiers: Default::default()
+                },
+            ]
+        ));
+        assert!(transform.zoom.is_some());
+        for _ in 0..5 {
+            assert!(!draw(&mut p, &mut transform, &small, true, vec![]));
+            assert_eq!(p.entries["view:wheel"].texture.id(), old);
+            assert!(p.coverage()[0].held);
+            assert!(
+                p.waiting.is_empty(),
+                "Missing detail must not render an enlarged reduced source"
+            );
+        }
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            p.poll(&ctx);
+            draw(&mut p, &mut transform, &native, false, vec![]);
+            if p.coverage()
+                .iter()
+                .any(|c| c.exact && c.source == native.id())
+            {
+                break;
+            }
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        assert_ne!(p.entries["view:wheel"].texture.id(), old);
+        assert!(!p.coverage()[0].held);
+    }
+
+    #[test]
+    fn pan_margin_preserves_filter_phase_and_pixels_at_fractional_zoom_and_edges() {
+        let image = ImageLevels::from_source(
+            tr_core::color::LinearImage::new(
+                257,
+                193,
+                (0..257 * 193)
+                    .map(|i| {
+                        [
+                            ((i * 17) % 113) as f32 / 112.,
+                            ((i * 31) % 97) as f32 / 96.,
+                            (i % 3) as f32 / 2.,
+                            if i % 11 == 0 { 0.4 } else { 1. },
+                        ]
+                    })
+                    .collect(),
+            )
+            .unwrap(),
+            tr_core::preview::PreviewRequest::full(),
+        )
+        .unwrap();
+        for step in [0.5, 1., 1. / 1.37, 2.25] {
+            for origin in [[0., 0.], [0.3, 0.7], [55.3, 40.7], [180., 125.]] {
+                let visible = Region {
+                    size: [31, 23],
+                    origin,
+                    step: [step; 2],
+                };
+                let guarded = pan_region(visible, image.source_size(), 0.5);
+                assert!(exact_uv(guarded, visible).is_some());
+                let frame = image.render(guarded).unwrap().to_display();
+                let direct = image.render(visible).unwrap().to_display();
+                let offset: [usize; 2] = std::array::from_fn(|a| {
+                    ((visible.origin[a] - guarded.origin[a]) / step).round() as usize
+                });
+                for y in 0..visible.size[1] as usize {
+                    let start = ((y + offset[1]) * guarded.size[0] as usize + offset[0]) * 4;
+                    let width = visible.size[0] as usize * 4;
+                    for (a, b) in frame[start..start + width]
+                        .iter()
+                        .zip(&direct[y * width..(y + 1) * width])
+                    {
+                        assert!(a.abs_diff(*b) <= 1, "Guard changed sampling at {visible:?}");
+                    }
+                }
+                assert!(
+                    exact_uv(
+                        guarded,
+                        Region {
+                            origin: [origin[0] + step * 0.25, origin[1]],
+                            ..visible
+                        }
+                    )
+                    .is_none()
+                );
+                assert!(
+                    exact_uv(
+                        guarded,
+                        Region {
+                            step: [step * 1.001; 2],
+                            ..visible
+                        }
+                    )
+                    .is_none()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn pointer_drag_keeps_resident_detail_on_every_move_and_release() {
+        let ctx = egui::Context::default();
+        let mut p = Presenter::new(ctx.clone(), MemoryBudget::new(128 * 1024 * 1024), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(1024, 768, vec![[0.3, 0.4, 0.5, 1.]; 1024 * 768])
+                    .unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let mut transform = tr_core::ViewTransform::default();
+        transform.set_zoom(1.37);
+        let draw = |p: &mut Presenter,
+                    transform: &mut tr_core::ViewTransform,
+                    events: Vec<egui::Event>| {
+            p.begin_capture();
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(Rect::from_min_size(Pos2::ZERO, egui::vec2(180., 140.))),
+                    events,
+                    ..Default::default()
+                },
+                |ui| {
+                    crate::viewport(ui, p, &image, transform, "view:pointer-pan", None, false);
+                },
+            );
+            output.textures_delta.clear();
+        };
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            p.poll(&ctx);
+            draw(&mut p, &mut transform, vec![]);
+            if p.coverage().first().is_some_and(|c| c.exact) {
+                break;
+            }
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        let center = transform.center;
+        draw(
+            &mut p,
+            &mut transform,
+            vec![
+                egui::Event::PointerMoved(Pos2::new(80., 70.)),
+                egui::Event::PointerButton {
+                    pos: Pos2::new(80., 70.),
+                    button: egui::PointerButton::Primary,
+                    pressed: true,
+                    modifiers: Default::default(),
+                },
+            ],
+        );
+        for x in [100., 120., 90., 65., 40., 75.] {
+            draw(
+                &mut p,
+                &mut transform,
+                vec![egui::Event::PointerMoved(Pos2::new(x, 70.))],
+            );
+            assert!(p.coverage().iter().all(|c| c.exact && c.fraction >= 0.999));
+            assert_eq!(p.captures().len(), 1);
+        }
+        assert_ne!(transform.center, center);
+        draw(
+            &mut p,
+            &mut transform,
+            vec![egui::Event::PointerButton {
+                pos: Pos2::new(75., 70.),
+                button: egui::PointerButton::Primary,
+                pressed: false,
+                modifiers: Default::default(),
+            }],
+        );
+        assert!(p.coverage().iter().all(|c| c.exact && c.fraction >= 0.999));
+    }
+
+    #[test]
+    fn resident_pan_reuses_full_detail_before_the_next_render_completes() {
+        let ctx = egui::Context::default();
+        let mut presenter = Presenter::new(ctx.clone(), MemoryBudget::new(128 * 1024 * 1024), None);
+        let image = Arc::new(
+            ImageLevels::from_source(
+                tr_core::color::LinearImage::new(
+                    1024,
+                    768,
+                    (0..1024 * 768)
+                        .map(|i| [if i % 2 == 0 { 0.1 } else { 0.9 }, 0.2, 0.3, 1.])
+                        .collect(),
+                )
+                .unwrap(),
+                tr_core::preview::PreviewRequest::full(),
+            )
+            .unwrap(),
+        );
+        let region = Region {
+            size: [160, 120],
+            origin: [400., 300.],
+            step: [1., 1.],
+        };
+        let rect = Rect::from_min_size(Pos2::ZERO, egui::vec2(160., 120.));
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            presenter.poll(&ctx);
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                presenter.paint(ui, "view:pan".into(), &image, rect, region)
+            });
+            output.textures_delta.clear();
+            if presenter.is_current("view:pan", image.id(), region) {
+                break;
+            }
+            assert!(std::time::Instant::now() < deadline);
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        // No poll: the first displaced draw must use resident samples, even if
+        // the next render is slow or the cursor reverses before it completes.
+        for origin in [[432., 316.], [368., 280.], [448., 324.]] {
+            presenter.begin_capture();
+            let pan = Region { origin, ..region };
+            let mut output = ctx.run_ui(Default::default(), |ui| {
+                presenter.paint(ui, "view:pan".into(), &image, rect, pan)
+            });
+            output.textures_delta.clear();
+            assert!(
+                presenter.coverage()[0].fraction >= 0.999,
+                "Pan left uncovered pixels"
+            );
+            assert!(
+                presenter.coverage()[0].exact,
+                "Pan substituted a reduced or rescaled frame"
+            );
+            assert_eq!(presenter.captures()[0].region, pan);
+        }
+    }
+
     fn fixture_entry(ctx: &egui::Context, p: &Presenter, source: u64, region: Region) -> Entry {
         Entry {
+            placement: Placement {
+                rect: Rect::from_min_size(Pos2::ZERO, egui::vec2(2., 2.)),
+                region,
+            },
             superseded: false,
             key: Key {
                 source,
@@ -1142,6 +2033,7 @@ mod tests {
                 TextureOptions::NEAREST,
             )),
             touched: p.clock,
+            zoomed_at: None,
             lease: Arc::new(p.memory.try_reserve(48).unwrap()),
             gpu_lease: Arc::new(p.gpu_memory.try_reserve(16).unwrap()),
         }
@@ -1155,6 +2047,44 @@ mod tests {
         };
         p.install(lane.into(), fixture_entry(ctx, p, source, full));
         p.install(lane.into(), fixture_entry(ctx, p, source, crop));
+    }
+    #[test]
+    fn provisional_wide_coverage_does_not_replace_sharper_overlap() {
+        let ctx = egui::Context::default();
+        let mut p = Presenter::new(ctx.clone(), MemoryBudget::new(4096), None);
+        seed_wide(&ctx, &mut p, "view:pan", 7);
+        let sharp = p.entries["view:pan"].texture.id();
+        let coarse = p.wide["view:pan"].texture.id();
+        p.begin_capture();
+        let mut output = ctx.run_ui(Default::default(), |ui| {
+            p.paint_previous(
+                ui,
+                "view:pan",
+                7,
+                Rect::from_min_size(Pos2::ZERO, egui::vec2(20., 20.)),
+                Region {
+                    size: [2, 2],
+                    origin: [0.5, 0.],
+                    step: [0.5, 1.],
+                },
+            );
+        });
+        output.textures_delta.clear();
+        let textures: Vec<_> = output
+            .shapes
+            .iter()
+            .filter_map(|s| match &s.shape {
+                egui::Shape::Mesh(m) => Some(m.texture_id),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(textures, vec![coarse, sharp]);
+        assert_eq!(p.coverage()[0].fraction, 1.);
+        assert_eq!(
+            p.coverage()[0].displayed_region,
+            Some(p.entries["view:pan"].key.region)
+        );
+        assert!(!p.coverage()[0].exact);
     }
     #[test]
     fn superseded_edits_hold_only_the_last_texture_and_reject_late_work() {
@@ -1175,6 +2105,7 @@ mod tests {
         assert!(!p.is_current(lane, 1, region));
         // An already active worker can still finish after logical revocation.
         p.shared.0.lock().unwrap().completed.push_back(Completed {
+            placement: Placement { rect, region },
             lane: lane.into(),
             key: old_key,
             result: Ok(Rendered::Cpu(vec![0; 16])),
@@ -1269,7 +2200,9 @@ mod tests {
             output.textures_delta.clear();
             assert!(p.coverage().iter().all(|c| c.fraction == 1. && !c.exact));
         }
-        assert!(p.statistics().wide_reprojections >= 2);
+        // Pan composes wide coverage; zoom holds the previous sharp scale.
+        assert!(p.statistics().wide_reprojections >= 1);
+        assert!(p.coverage()[0].held);
         p.invalidate_sources(&std::collections::HashSet::from([
             image.id(),
             image.id() + 100,
@@ -1372,6 +2305,10 @@ mod tests {
         presenter.entries.insert(
             "view".into(),
             Entry {
+                placement: Placement {
+                    rect: Rect::from_min_size(Pos2::ZERO, egui::vec2(2., 2.)),
+                    region,
+                },
                 superseded: false,
                 key: Key {
                     stretch: Default::default(),
@@ -1383,6 +2320,7 @@ mod tests {
                 },
                 texture: FrameTexture::Cpu(texture),
                 touched: 0,
+                zoomed_at: None,
                 lease: Arc::new(budget.try_reserve(0).unwrap()),
                 gpu_lease: Arc::new(budget.try_reserve(0).unwrap()),
             },

@@ -374,7 +374,7 @@ impl TrueRenderer {
                 lang.text(self.service.cache.settings().raw_engine.label())
             ),
         );
-        preference_note(ui, lang.text("Applica e salva aggiorna le immagini. Ogni motore conserva le proprie anteprime in cache."));
+        preference_note(ui, lang.text("Applica e salva cambia il motore per le foto RAW senza regolazioni. Le ricette già modificate conservano il proprio motore; le anteprime compatibili restano in memoria."));
         if self.cache_settings.raw_engine == tr_core::decoder::RawEngine::TrueRenderer {
             ui.label(RichText::new(lang.text("Sperimentale: Nikon D750 e D40 Bayer. Colore e superiorità rispetto agli altri motori ancora da qualificare. I RAW non supportati mostrano un errore.")).small().color(AMBER));
         }

@@ -1,0 +1,2327 @@
+{
+  "date": "2026-10-23",
+  "platform": "Windows",
+  "adapter": "NVIDIA GeForce RTX 3060 · Vulkan",
+  "passed": true,
+  "problem": "Changing zoom rescaled previously filtered display pixels while waiting for a new frame; the image blurred then sharpened. First zoom from Fit could also enlarge an insufficient mip during native loading.",
+  "implementation": [
+    "Resample resident linear input immediately at the requested scale using canonical coefficients and existing verified compute shaders.",
+    "Use a nonblocking renderer lock and existing memory admission; pixel upload remains on the worker.",
+    "Keep the last complete scale without resampling when input is absent, busy or over quota; publish the new scale when ready.",
+    "Reject asynchronous frames superseded by an already presented newer scale.",
+    "Retain the fitted image during missing native detail; preserve the declared limit of a completed Standard request."
+  ],
+  "rust_tests": {
+    "passed": 674,
+    "failed": 0,
+    "ignored": 41
+  },
+  "clippy_workspace_all_targets_warnings_denied": true,
+  "fmt": true,
+  "source_files_verified": 263,
+  "native_zoom_cases": [
+    {
+      "case": "JPEG-Automatic-1.0",
+      "passed": true,
+      "engine": "LibRawBilinear",
+      "steps": 120,
+      "observed_draws": 180,
+      "held_draws": 62,
+      "distinct_visible_scales": 81,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 82,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 39490,
+          "displayed_sample_step": [
+            0.6,
+            0.6
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 199,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 41167,
+          "displayed_sample_step": [
+            0.6865315852205006,
+            0.6865315852205006
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 240,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 43176,
+          "displayed_sample_step": [
+            1.5586289837642815,
+            1.558160504959423
+          ],
+          "draw_candidates": 2,
+          "held": false,
+          "matched_draw": 287,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 42079,
+          "displayed_sample_step": [
+            1.2659340659340659,
+            1.2659340659340659
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 337,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 49809,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": null,
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 2,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 87,
+        "last_fallback": "",
+        "resident_zoom_frames": 82,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "JPEG-Cpu-1.0",
+      "passed": true,
+      "engine": "LibRawBilinear",
+      "steps": 120,
+      "observed_draws": 221,
+      "held_draws": 217,
+      "distinct_visible_scales": 41,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 0,
+      "surface_checks": [
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "displayed_sample_step": [
+            0.6666666666666666,
+            0.6666666666666666
+          ],
+          "draw_candidates": 2,
+          "held": true,
+          "matched_draw": 291,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "displayed_sample_step": [
+            0.6501128668171557,
+            0.6501128668171557
+          ],
+          "draw_candidates": 2,
+          "held": true,
+          "matched_draw": 351,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "displayed_sample_step": [
+            1.3827687383302214,
+            1.382953181272509
+          ],
+          "draw_candidates": 2,
+          "held": true,
+          "matched_draw": 404,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "displayed_sample_step": [
+            1.33677153171738,
+            1.336943907156673
+          ],
+          "draw_candidates": 3,
+          "held": true,
+          "matched_draw": 454,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "CPU",
+        "differing_channels": 0,
+        "maximum_error_u8": 0,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": null,
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 45,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 0,
+        "last_fallback": "",
+        "resident_zoom_frames": 0,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "JPEG-fit-cold",
+      "passed": true,
+      "engine": "LibRawBilinear",
+      "steps": 120,
+      "observed_draws": 171,
+      "held_draws": 40,
+      "distinct_visible_scales": 92,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 93,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 39490,
+          "displayed_sample_step": [
+            0.6,
+            0.6
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 315,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 41167,
+          "displayed_sample_step": [
+            0.6865315852205006,
+            0.6865315852205006
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 353,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 43176,
+          "displayed_sample_step": [
+            1.5586289837642815,
+            1.558160504959423
+          ],
+          "draw_candidates": 2,
+          "held": false,
+          "matched_draw": 397,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 42079,
+          "displayed_sample_step": [
+            1.2659340659340659,
+            1.2659340659340659
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 440,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 49809,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": {
+        "passed": true,
+        "observed_draws": 218,
+        "starting_base_level": 2,
+        "final_base_level": 0
+      },
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 4,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 103,
+        "last_fallback": "",
+        "resident_zoom_frames": 93,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "Experimental-fit-cold",
+      "passed": true,
+      "engine": "TrueRendererExperimental",
+      "steps": 120,
+      "observed_draws": 171,
+      "held_draws": 33,
+      "distinct_visible_scales": 96,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 96,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 45150,
+          "displayed_sample_step": [
+            0.5999800538545926,
+            0.6000298819662334
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 799,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44938,
+          "displayed_sample_step": [
+            0.6865228802921374,
+            0.6864957264957265
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 837,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46172,
+          "displayed_sample_step": [
+            1.4950298210735586,
+            1.4951600893521966
+          ],
+          "draw_candidates": 1,
+          "held": true,
+          "matched_draw": 881,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45761,
+          "displayed_sample_step": [
+            1.2657269093204293,
+            1.2656791679798298
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 925,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 45821,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": {
+        "passed": true,
+        "observed_draws": 690,
+        "starting_base_level": 2,
+        "final_base_level": 0
+      },
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 4,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 105,
+        "last_fallback": "",
+        "resident_zoom_frames": 96,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "LibRawBilinear",
+      "passed": true,
+      "engine": "LibRawBilinear",
+      "steps": 120,
+      "observed_draws": 174,
+      "held_draws": 36,
+      "distinct_visible_scales": 96,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 96,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 46626,
+          "displayed_sample_step": [
+            0.6000198945588382,
+            0.6
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 238,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46673,
+          "displayed_sample_step": [
+            0.6864686468646864,
+            0.6865315852205006
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 278,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46980,
+          "displayed_sample_step": [
+            1.4952900347050075,
+            1.4949944382647387
+          ],
+          "draw_candidates": 1,
+          "held": true,
+          "matched_draw": 321,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46870,
+          "displayed_sample_step": [
+            1.265897166841553,
+            1.2659340659340659
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 365,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 46870,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": null,
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 2,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 105,
+        "last_fallback": "",
+        "resident_zoom_frames": 96,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "LibRawAhd",
+      "passed": true,
+      "engine": "LibRawAhd",
+      "steps": 120,
+      "observed_draws": 164,
+      "held_draws": 35,
+      "distinct_visible_scales": 93,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 93,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 46755,
+          "displayed_sample_step": [
+            0.6000198945588382,
+            0.6
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 317,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47005,
+          "displayed_sample_step": [
+            0.6864686468646864,
+            0.6865315852205006
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 353,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46873,
+          "displayed_sample_step": [
+            1.558253681219323,
+            1.5585620409741012
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 395,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46593,
+          "displayed_sample_step": [
+            1.265897166841553,
+            1.2659340659340659
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 436,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 46628,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": null,
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 2,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 104,
+        "last_fallback": "",
+        "resident_zoom_frames": 93,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "TrueRenderer",
+      "passed": true,
+      "engine": "TrueRenderer",
+      "steps": 120,
+      "observed_draws": 167,
+      "held_draws": 39,
+      "distinct_visible_scales": 95,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 95,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 45997,
+          "displayed_sample_step": [
+            0.6000198945588382,
+            0.6
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 441,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46056,
+          "displayed_sample_step": [
+            0.6864686468646864,
+            0.6865315852205006
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 477,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46713,
+          "displayed_sample_step": [
+            1.4368747022391615,
+            1.4369208838203849
+          ],
+          "draw_candidates": 2,
+          "held": true,
+          "matched_draw": 521,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46650,
+          "displayed_sample_step": [
+            1.265897166841553,
+            1.2659340659340659
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 566,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 46136,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": null,
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 2,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 106,
+        "last_fallback": "",
+        "resident_zoom_frames": 95,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    },
+    {
+      "case": "TrueRendererExperimental",
+      "passed": true,
+      "engine": "TrueRendererExperimental",
+      "steps": 120,
+      "observed_draws": 169,
+      "held_draws": 36,
+      "distinct_visible_scales": 96,
+      "all_draws_fresh_source_resampling_or_unscaled_hold": true,
+      "resident_zoom_frames": 96,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 45150,
+          "displayed_sample_step": [
+            0.5999800538545926,
+            0.6000298819662334
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 410,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 20
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44938,
+          "displayed_sample_step": [
+            0.6865228802921374,
+            0.6864957264957265
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 448,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 50
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46018,
+          "displayed_sample_step": [
+            1.5585492227979274,
+            1.5584012417539774
+          ],
+          "draw_candidates": 2,
+          "held": false,
+          "matched_draw": 494,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 80
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45761,
+          "displayed_sample_step": [
+            1.2657269093204293,
+            1.2656791679798298
+          ],
+          "draw_candidates": 1,
+          "held": false,
+          "matched_draw": 537,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 110
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 45821,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      },
+      "fit_transition": null,
+      "compute": {
+        "cpu_edit_frames": 0,
+        "cpu_frames": 2,
+        "fallbacks": 0,
+        "gpu_edit_frames": 0,
+        "gpu_frames": 107,
+        "last_fallback": "",
+        "resident_zoom_frames": 96,
+        "wide_frames": 1,
+        "wide_gpu_bytes": 8158048,
+        "wide_peak_frames": 1,
+        "wide_peak_gpu_bytes": 8158048,
+        "wide_peak_memory_bytes": 24474144,
+        "wide_reprojections": 0
+      }
+    }
+  ],
+  "native_pan_regressions": [
+    {
+      "case": "LibRawBilinear-1.37",
+      "passed": true,
+      "steps": 120,
+      "observed_draws": 166,
+      "minimum_coverage": 1.0,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 46258,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47094,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47584,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ]
+    },
+    {
+      "case": "LibRawAhd-1.37",
+      "passed": true,
+      "steps": 120,
+      "observed_draws": 161,
+      "minimum_coverage": 1.0,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 47846,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47071,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47211,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ]
+    },
+    {
+      "case": "TrueRenderer-1.37",
+      "passed": true,
+      "steps": 120,
+      "observed_draws": 160,
+      "minimum_coverage": 1.0,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 45878,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 46114,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47415,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ]
+    },
+    {
+      "case": "TrueRendererExperimental-1.37",
+      "passed": true,
+      "steps": 120,
+      "observed_draws": 164,
+      "minimum_coverage": 1.0,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 44871,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45821,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45954,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            854,
+            596
+          ],
+          "step": 90
+        }
+      ]
+    },
+    {
+      "case": "JPEG-Automatic-1.37",
+      "passed": true,
+      "steps": 120,
+      "observed_draws": 170,
+      "minimum_coverage": 1.0,
+      "surface_checks": [
+        {
+          "compute": "GPU",
+          "differing_channels": 45962,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44723,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 40961,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ]
+    },
+    {
+      "case": "JPEG-Cpu-1.37",
+      "passed": true,
+      "steps": 120,
+      "observed_draws": 189,
+      "minimum_coverage": 1.0,
+      "surface_checks": [
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ]
+    }
+  ],
+  "editing_regressions": [
+    {
+      "case": "JPEG-zoom-regression",
+      "passed": true,
+      "distinct_updates": 116,
+      "live_surfaces": [
+        {
+          "compute": "GPU",
+          "differing_channels": 40312,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 47249,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 43963,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 45814,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      }
+    },
+    {
+      "case": "TrueRendererExperimental-RAW-zoom-regression",
+      "passed": true,
+      "distinct_updates": 116,
+      "live_surfaces": [
+        {
+          "compute": "GPU",
+          "differing_channels": 43565,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 30
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 45954,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 60
+        },
+        {
+          "compute": "GPU",
+          "differing_channels": 44197,
+          "input_base_level": 0,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ],
+          "step": 90
+        }
+      ],
+      "final_surface": {
+        "compute": "GPU",
+        "differing_channels": 46536,
+        "maximum_error_u8": 1,
+        "passed": true,
+        "size": [
+          855,
+          596
+        ]
+      }
+    }
+  ],
+  "gpu_initial_qualification": {
+    "passed": true,
+    "resident_subregion_cases": 12,
+    "includes_alpha_fractional_scale_and_missing_input_rejection": true,
+    "status": "GPU/CPU: 1593672 campioni · errore max 6.10e-5 · filtro e uscita verificati"
+  },
+  "navigation": {
+    "passed": true,
+    "images": 12,
+    "screenshots": 8
+  },
+  "installation": {
+    "application_sha256": "83b93c556ea334f8a2b86d2b0901ec6830922b7f693ebeea3de9191439ed2cd2",
+    "previous_application_sha256": "e7457b39551f0d8a91b113d6c7a1d68c28cbfa21f3a820782dfa899ccfbf5a91",
+    "worker_sha256": "02af989d67b33a43b707ed4ef578bd91da40ff10a693dabe5913baaf2571d558",
+    "executable": "dist/TrueRenderer-windows/truerenderer.exe",
+    "backup": "var/zoom-preview-20261023/replaced-application/truerenderer.exe",
+    "pid": 27960,
+    "window_title": "TrueRenderer",
+    "window_handle": 68048,
+    "responding": true,
+    "user_catalog_reset": false
+  },
+  "original_photos_unchanged": true,
+  "user_catalog_reset": false,
+  "commit_or_push": false,
+  "limits": [
+    "Apple RAW is unavailable on Windows.",
+    "A missing input or busy renderer holds the previous scale, so scale changes can be delayed; no universal fluidity or p95/p99 claim.",
+    "The screenshot backend may return a later draw: reference candidates are limited to at most four regions actually drawn between request and receipt; matched draw and held status are recorded.",
+    "Software draw traces and surface readbacks do not measure every physical display refresh or all monitor/DPI/device combinations.",
+    "No R0-R4 or photographic gate is closed."
+  ],
+  "evidence": [
+    {
+      "path": "var/zoom-preview-20261023/build.log",
+      "sha256": "61a6ce53cd0e99db98839f999b02abe5a938752953216a0648de89545d25a071"
+    },
+    {
+      "path": "var/zoom-preview-20261023/clippy.log",
+      "sha256": "356474cee7bea26312564f62dc7345040e4399aaeb80c62796512e8863568ab9"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/develop-grid.png",
+      "sha256": "c849864b059f9b590bb01f8a2da4e4fb57334861fbaedd68601a69bd7940b2de"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/develop-progress.json",
+      "sha256": "19e87ea389213a29b7a8ed00194a528a8e6686d37fe8516cff5aabede895e95f"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/develop-ui.json",
+      "sha256": "d0f8f9b0aeddb5d0145ba3ceed970b26b4f203b4e7cbed252f55d6712ccc98be"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/develop-viewer.png",
+      "sha256": "e9999a43d553a2271193e87009b130c3076cb3cde57cd3b9151e518367c9db13"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-110.png",
+      "sha256": "7a774a9e85fec5e65a0150b44359eafae5baec237f632340c8bdefdfdd3cf48d"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-20.png",
+      "sha256": "1b106e21641145f15cdb49c87e3c5dfb69a4d80fae7a27ea37e644f72530d6ee"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-50.png",
+      "sha256": "cd57a8a364b6deba19f6dec1e789a81a1b6c53d0e302e29cca2e52c56945a22a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-80.png",
+      "sha256": "2c2174a1519950c7257ac9f70c7efdf2fed31f6ae2be2f5490b3b6f2526446e7"
+    },
+    {
+      "path": "var/zoom-preview-20261023/Experimental-fit-cold-aligned/reports/zoom-continuity.json",
+      "sha256": "d1877eae1b5ed4d75620f92d676da977847817ac45cc427d40eaf8e4fbc4dfaa"
+    },
+    {
+      "path": "var/zoom-preview-20261023/install.json",
+      "sha256": "d6ea85d7f143f1828b0c631f18c9ac37157febe11ea3a0f09a479a40f49221ce"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/develop-grid.png",
+      "sha256": "04d1d3642efad34945e1c5b2a58c681bc36d9baae72431f8ff204482e74b82fb"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/develop-progress.json",
+      "sha256": "e2b26e91122404283ba01dccf9eda0942fd6c686695b5f7f401e180b2f883cc0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/develop-ui.json",
+      "sha256": "5088529eee90425c2fb569edd937f7cbbda0aa1d2da4bd47873674a94d027742"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/develop-viewer.png",
+      "sha256": "9a0e24265bfd101b46fd37f1d1baf3d7592503b78849f60f3688ac8fe2257058"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-110.png",
+      "sha256": "1b9408f2b888a8005dd39d9aa535a53a3828007524f4e6deac8f2960415271ac"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-20.png",
+      "sha256": "dbea11d10ba6acae8ac7fa6830c7b46d9e360ad30109505099babce32dd67e70"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-50.png",
+      "sha256": "d0c66c9df5c65b7fd69b98f1ef565c27949ae816d28cb88d81a23c14f965efdc"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-80.png",
+      "sha256": "f9b4a5f674e6ced136ed1ca411c832d95b373890f4011f56a77614197cfcc5bd"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.0-aligned/reports/zoom-continuity.json",
+      "sha256": "f706b9cee8b2084cbc40feeb4a2a8cb7a924ab11fec4d8069239ce617c2c794c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/develop-grid.png",
+      "sha256": "f7a74b21df5f86aae9a2e285d0671f36f2c1515b647a93d4b7ce7726bbd0fd2e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/develop-progress.json",
+      "sha256": "31de16d6c4dc965b778108c372d69d7f6da5d5dc4eb056652061f50c8521a7ed"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/develop-ui.json",
+      "sha256": "1343f6c762665dd49d0b40f7aa17a131f1fe3194fa69a6c2dc954388797e9cc9"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/develop-viewer.png",
+      "sha256": "90037dbaaf5fff86e0c1d17f61481b6194167ac317f5a179a235e849064fcca8"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-30.png",
+      "sha256": "e49615b72ab77e63ff0742cdea4d6146622af9c48a3602817c12e1a66b2bc449"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-60.png",
+      "sha256": "95511cb45622a1181876906cb6f474b11a53e0f6e2cbf67d33d4382c63d8d2d2"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-90.png",
+      "sha256": "75ea1d4de9252cf20af6b4931676e76526b2a8f98e2126f5432d7ecc8bfbf570"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Automatic-1.37-regression/reports/pan-continuity.json",
+      "sha256": "bdc31428bef653b722f74849ad819db5f386a09469b5dfd791edf1a4cb81ada5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/develop-grid.png",
+      "sha256": "f7a74b21df5f86aae9a2e285d0671f36f2c1515b647a93d4b7ce7726bbd0fd2e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/develop-progress.json",
+      "sha256": "2c415ff750780e189786a97419f7066a025e9b6d88c8d65b1968ded49ce0c1f1"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/develop-ui.json",
+      "sha256": "dbb11a05a7d96171d48db92ad58dbf959c061b3c47fd86438c8a19ccd3c92683"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/develop-viewer.png",
+      "sha256": "1c23591ac1b39726b89220743c3b78beb5e49f37059b0f9b9a0dff4bbf87c668"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-110.png",
+      "sha256": "573fcc21b561cb8bfa0ad23cdfa013c04c5419710c661ac85b5265c5151064da"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-20.png",
+      "sha256": "df3a6845844da05c28351358617accd73bece7e7c7acc9bc93f292395cdfdb25"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-50.png",
+      "sha256": "18bd54d221c764147e0529cd4bdf48a8d8f0dea9f0406007e88aae9302ac0a9a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-80.png",
+      "sha256": "78ae057a153bd872c983761fce7ef96f2c4cf881ed12c881c294b2bafe357da6"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.0-aligned/reports/zoom-continuity.json",
+      "sha256": "4e89b9af0e8a7951aae48e61e31d42db40764b37b77735b4ca7c49760b9afcd8"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/develop-grid.png",
+      "sha256": "f7a74b21df5f86aae9a2e285d0671f36f2c1515b647a93d4b7ce7726bbd0fd2e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/develop-progress.json",
+      "sha256": "e60ce88bb240330fbe2c55e54e61d425e6de3f3285377c36b780e77b25bc995f"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/develop-ui.json",
+      "sha256": "dbb11a05a7d96171d48db92ad58dbf959c061b3c47fd86438c8a19ccd3c92683"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/develop-viewer.png",
+      "sha256": "c07a27c3f6e3bd0be0f692a54cfacc323cabe5c9fee536a1df09ec33533ca004"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-30.png",
+      "sha256": "4b2e60662c9263b5d1dfdafc3e0348f0a344081f6e581102cd711bcf0c6eaeef"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-60.png",
+      "sha256": "d6c814bf086b9d871c655aa9a7d2b2e9d5e11d44a8ebe2a4bb4e521be399211d"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-90.png",
+      "sha256": "315d5262dc1daaf0114a424acd750876f61c2e401c02e42dfc723a23be307833"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-Cpu-1.37-regression/reports/pan-continuity.json",
+      "sha256": "8c74e2bb9ce5e31b5b2e0e48764ba92cb05d36defc9a55026c65f6b97e7fb1f6"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/develop-grid.png",
+      "sha256": "f7a74b21df5f86aae9a2e285d0671f36f2c1515b647a93d4b7ce7726bbd0fd2e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/develop-progress.json",
+      "sha256": "f420d971f0119e0ccc979f6e1bdd0ba91524a70c26174d62b9d51f6591383699"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/develop-ui.json",
+      "sha256": "5088529eee90425c2fb569edd937f7cbbda0aa1d2da4bd47873674a94d027742"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/develop-viewer.png",
+      "sha256": "9a0e24265bfd101b46fd37f1d1baf3d7592503b78849f60f3688ac8fe2257058"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-110.png",
+      "sha256": "1b9408f2b888a8005dd39d9aa535a53a3828007524f4e6deac8f2960415271ac"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-20.png",
+      "sha256": "dbea11d10ba6acae8ac7fa6830c7b46d9e360ad30109505099babce32dd67e70"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-50.png",
+      "sha256": "d0c66c9df5c65b7fd69b98f1ef565c27949ae816d28cb88d81a23c14f965efdc"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-80.png",
+      "sha256": "f9b4a5f674e6ced136ed1ca411c832d95b373890f4011f56a77614197cfcc5bd"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-fit-cold-aligned/reports/zoom-continuity.json",
+      "sha256": "47846970a3bb82d38b8e52378f901b825f1de23c08621bbf7ca60f18fe1db4fd"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/develop-grid.png",
+      "sha256": "e3ef07629342208e858082b910acf01c913b26710e9466a9b99029f9d89af41a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/develop-progress.json",
+      "sha256": "0767bdf3f2f84d1332d06b8064e03dafcef987ac16b330148f928d91459101f9"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/develop-ui.json",
+      "sha256": "fc5dcaa57b2db58e1098e3352db58759f7545da008cd37288a648f18a5b7843e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/develop-viewer.png",
+      "sha256": "98904c3c3966dd08dbd20d17ad9033d945aea6462b7d8b300575d0b136c5a357"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/edit-continuity.json",
+      "sha256": "d04b734aa40df97c83f709cab366b3550163fc95c68eec22c46a9c96333b3ff4"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/live-edit-30.png",
+      "sha256": "409dd27c59821b9f219e2d4d855b31704fb0f0118bec3d6ad33b171141e947c0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/live-edit-60.png",
+      "sha256": "047fb3a09890b469d6bf3525ae7a9063fa687ae2533e5ea43539518a152640b5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/JPEG-zoom-regression/reports/live-edit-90.png",
+      "sha256": "d0351deb512ca7cda7b54f2778d345531915ea1f1509e2700ce784c5cdc2c859"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/develop-grid.png",
+      "sha256": "371204c2eb53772ba909c07888ff0701d16550c4e126319cfd1692aaaed7c9b2"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/develop-progress.json",
+      "sha256": "4f315795aee2cd24a76745e5c0065de4245ee206dde03aed2146d8dcfea5ad57"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/develop-ui.json",
+      "sha256": "5504f2a0e0146c7ea6e4806f353fa353ad6c9819024588f1656cc8464f42e187"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/develop-viewer.png",
+      "sha256": "39dab9f230f17cc30517a43927d892ce514fc6ccb31dfd941809778b1315569c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-30.png",
+      "sha256": "ca465082332f12a0ee3d6dfa291610a72057dbebcfc0e54ccd21a8b50cfaac8e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-60.png",
+      "sha256": "4a110f3f5d95c75dd535177ac48510cdd8f3ad815fff40ff3719247d33c5afb5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-90.png",
+      "sha256": "c3a1f3fab34a4fcf8b0bffd2c545587a0f52e50b0868fa9a0b03ea994fdd8ee8"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-1.37-regression/reports/pan-continuity.json",
+      "sha256": "de99723f597af3f3702e714d307c177fce2ffcd679c8acbfc859729a7c470eb5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/develop-grid.png",
+      "sha256": "371204c2eb53772ba909c07888ff0701d16550c4e126319cfd1692aaaed7c9b2"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/develop-progress.json",
+      "sha256": "7d727ea07216baacb8ecd5ec8ae061debdf0dfe8e235855d5f6185e1ae673851"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/develop-ui.json",
+      "sha256": "13b90d898928b584254c251a25494b62f85fb7b802cbd933060106fddce683f2"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/develop-viewer.png",
+      "sha256": "99d93da2a65bbb4d7c663db6214d97959e1994bb915f3e552222b4f04013bb6c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-110.png",
+      "sha256": "134372a222a057fe9f4132a70c859f5f0d595af71fae15de542fc74e4f81b560"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-20.png",
+      "sha256": "76b5febe67093d57467c986cb61431c771b9d1b5209556b4cf7fdd23a393a892"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-50.png",
+      "sha256": "9ca17e721c1a12a4aed1ef965ff73ce6462f3c09aa4069d8a007d548cdb3cb1b"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-80.png",
+      "sha256": "851eaff0c9db873a0cd74583b221c08dc58314c19bb4b22fc16aeeb14b7b4f3e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawAhd-qualified/reports/zoom-continuity.json",
+      "sha256": "7ebbc314da84aeca6af560be47112fee7a68413a9dc677aa91c9786208959838"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/develop-grid.png",
+      "sha256": "6059b2410f8b1fd34bfcf34e3c80c2498977c386360845baa37e79922dd94def"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/develop-progress.json",
+      "sha256": "5adcc571764bffb6088f876cf4ff9778d08c53fac302595d6dd1653e20148010"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/develop-ui.json",
+      "sha256": "22530e85a6ab95133137835738a56b1df9dade618b1b73df0b84ecc92aaf17cf"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/develop-viewer.png",
+      "sha256": "7d088edc415df10f830070c51f09a0fdb9998cb20b4cf4dfdc7aab89edf81768"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-30.png",
+      "sha256": "6989040d348e505b79e365a537e9471906d123792c8d7370cb12d325a50c0bd7"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-60.png",
+      "sha256": "386b5d3fa70f9d15333d4e57ea1143d32afa7a4514d157f48f4e30d9b770a961"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-90.png",
+      "sha256": "5ae0a6aa8d6659d24c542f586b43367b1dd94ebe4e7f5ae1f2962e983f8949ec"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-1.37-regression/reports/pan-continuity.json",
+      "sha256": "d10b7fdde5c1c8b6db4e785a2777d61fb7c8f1037b81a45ad877450f02ac568a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/develop-grid.png",
+      "sha256": "6059b2410f8b1fd34bfcf34e3c80c2498977c386360845baa37e79922dd94def"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/develop-progress.json",
+      "sha256": "cef226a9954169a48f3cd8671a3e74aa24aad31e718183d116deccc60fa78567"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/develop-ui.json",
+      "sha256": "08ceec68f88e80e74b090316fec599ee1001a948e73ff90ea19309db67f7ba89"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/develop-viewer.png",
+      "sha256": "e06b148da93cdd55a94b44976b271b329fa2699acfd5c2a0f07ebd928495ac4b"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-110.png",
+      "sha256": "71b5ef21e3dd7ce113b7bfbdf0252b22ad5dd35fe0b816095433cdd73cd59b3a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-20.png",
+      "sha256": "0c43d396f287aa40e68ff9ec94befd9b4e15a0174181f1c0ab0a27ec2a7e023d"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-50.png",
+      "sha256": "71cab67c3f3181e5da21db795b241091a9643f03e043d30141ba637143e5df17"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-80.png",
+      "sha256": "969c542c5c22752ec2e4312e30e825ee35ebe4a41826013a6afc7f134753e945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/LibRawBilinear-qualified/reports/zoom-continuity.json",
+      "sha256": "5dd721505467c21bbbb5c51a5e9510dbbad85a1614dcbb755480bff396255781"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/01-grid-sampling.json",
+      "sha256": "39ea8b614877aaaba529797f5c453ae78681453e11fa1f06936fe96c2e4cef8a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/01-grid.png",
+      "sha256": "f56e164e2f2d1fc8609a7124ded1cd2da2d5ebf5ccd5cb9703dc7ae9f3861fc7"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/02-preview-sampling.json",
+      "sha256": "860cbe89d84c452999caaa75563d56342227fca2d4c5b9b827f0916da2c55eb2"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/02-preview.png",
+      "sha256": "bf367f92fd3e3e77dcc9673211bba9940028f89b781594c2ba7da113402c3916"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/03-compare-sampling.json",
+      "sha256": "023b5c2870bd7730679b07ccfcef02c2f4a4d85276ea228e67bae884e40711d0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/03-compare.png",
+      "sha256": "62229107cc39b9da078959fd1318733e3e2e2118de5ee1f30dc236b7bfcaebb0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/04-radial-1to1-sampling.json",
+      "sha256": "7d07c4174266642c1f460449dc37456550af9b5131c106ab21e5c08ddd7fed72"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/04-radial-1to1.png",
+      "sha256": "33c2e9c6e6c83aab908f0275d6a27457604e073d4528a4d9bfd042bec227c9bc"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/05-radial-fit-sampling.json",
+      "sha256": "0e4f6c27ae9045e4349fd221ce5f9396afbbb34846c03d3a30b5dc4316d5bcbb"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/05-radial-fit.png",
+      "sha256": "320f829355d8b3bb91eb51ad02799b8f830531673a3a0dac8d38c524becc99c5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/06-radial-37percent-sampling.json",
+      "sha256": "b276d16ffd4eb0be620f2f17c0c857f33184fae26b7d0956e798b742e6cb56fc"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/06-radial-37percent.png",
+      "sha256": "bef2e492d940fc63be70129f0d035b120cd6a9871b95f88f8b8d8bae77da44c8"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/07-grid-small-sampling.json",
+      "sha256": "cce32e6d6495fb8924680978473afebc40eb0647037029ecbea4771d2e4b04d0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/07-grid-small.png",
+      "sha256": "2e5aad301e68ecabcebe7cc0eb83fce5575df0e659140be0200094ce97e9050c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/08-grid-large-sampling.json",
+      "sha256": "f31badfa26a2a816b443941b788a4082fab97904c59bf52c800a4c9f8890a98d"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/08-grid-large.png",
+      "sha256": "8c4291985d06d41347ccc85b584c3f26bedc34982bcd5a86d45b737b393755ea"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/resampling-windows.json",
+      "sha256": "a385e706e432ffe57d329267598f42443b42166af32531d12db289c9223c3a68"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/sampling-presentation-windows.json",
+      "sha256": "e5a5d2d32a65a55d298fd57092a81f6217939a29ff75e565719ee8fad94787ec"
+    },
+    {
+      "path": "var/zoom-preview-20261023/navigation-qualified/reports/smoke-windows.json",
+      "sha256": "13320fa91c0fab2faabbb48d53b9bb2465a9276b373fb9339ddb912c0472454c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/photo-hashes.json",
+      "sha256": "55620c94b6b66fb8cf8961a0e6e736db0ad88886361d5efa0014199c47ae9a97"
+    },
+    {
+      "path": "var/zoom-preview-20261023/render-tests.log",
+      "sha256": "52174f38790b9f26f4e6350f778a7383c48c54e9cd198ed4bfc852aea9397258"
+    },
+    {
+      "path": "var/zoom-preview-20261023/reproduction.log",
+      "sha256": "365835b13168777d1811c593bcca65a0c70dba192a7e4ae147fd77b9d2c313b4"
+    },
+    {
+      "path": "var/zoom-preview-20261023/source-snapshot-final.json",
+      "sha256": "f1fbfa2624d246f7764386416f5b7c6f4a46f9210af29b4810435941432ee1bb"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/develop-grid.png",
+      "sha256": "20eb1922fe6fc23c7891785f92c2a1803500262cdfd14b1f14184b607ff4229f"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/develop-progress.json",
+      "sha256": "185ef9f627d523ffafe0e863d0193f9bdd6227927e6b4f6286a783ea760e8140"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/develop-ui.json",
+      "sha256": "0d351c17b327bef52088a21283da494956a83aec3907da37e0fa27f93ee1330e"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/develop-viewer.png",
+      "sha256": "1d5dabd2051e0c4ec5b5d5f70a05b763c5aca2dede66945f6c3276b18e365983"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-30.png",
+      "sha256": "064d825d9687c9b7577e81174b1d94001c0d9b3f67326d8312f4a438643088cc"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-60.png",
+      "sha256": "8c75ca8bd596703dd00871137b90fe74c7de8199d39638bbb214cd8d97975b69"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-90.png",
+      "sha256": "fc3910134f0a0e7cfcb9e808d596ea2df2e027e306424035d8459c42c201e7ba"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-1.37-regression/reports/pan-continuity.json",
+      "sha256": "0244702d199416a1a2d707b33420a0a0588f3906f170b22f58e7d1a75ce7b03c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/develop-grid.png",
+      "sha256": "d64bbafdb3a7ab8cf3b29f6d562b44ac409571b492b398cae9bc24bcbb9b68c1"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/develop-progress.json",
+      "sha256": "dc03295219712d4f693c5eeb5aacc877f2986fc22abe8b638da8a3985b4e4383"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/develop-ui.json",
+      "sha256": "726417dce17ca019e72ec8c5b91b9a6af4bfc80fe5ec9dc2b67cfeb1a8d55634"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/develop-viewer.png",
+      "sha256": "8387faf54963ad4a8c803e154336c42f3ab345dd19689243be1983d92408ca15"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-110.png",
+      "sha256": "f691aa7a921a7853b0514f117d452e0773983ce64933a47ef160500d06acb53d"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-20.png",
+      "sha256": "8e69290580125c1aae4529a5f2091d39eaf6a688a17523401730903625b980a4"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-50.png",
+      "sha256": "bbcf44016afc5807e15ab3534f23daef01bcb388ef370acdbad25c64f7077963"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-80.png",
+      "sha256": "109999fe5311159160c0bbfec99d39cbaeeaefc9019f402e830186a9c2655d65"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRenderer-qualified/reports/zoom-continuity.json",
+      "sha256": "eb58759b0ef882491a1c0aff50dc2e23da9becba75e2b867770f1f81c1e58cab"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/develop-grid.png",
+      "sha256": "fbf3b103a212aa6979c8dfc8a9d968e5b86dd709b82b92b6a200f1a0d4a9b4a6"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/develop-progress.json",
+      "sha256": "d80f66e38d5519d506391f5d7577af8b1865429a6d46077b133852db5b328f88"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/develop-ui.json",
+      "sha256": "7cf39fa91750ed442671f30b044ac9782645d702a2a62267e844341b7969547c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/develop-viewer.png",
+      "sha256": "231bc02f098142e45c22969fb9a0dbff544d3ced583b1ea9d7507d75d4b15fad"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-30.png",
+      "sha256": "0e40b7246ce22bd797d3be95c9b72366898d89a98603a745736b288742f63ee7"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-60.png",
+      "sha256": "e3832e6980610024ca4a82d160e5860ea2e9a16c662f23fb53b701346848b8b0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-90.png",
+      "sha256": "31476107cde58b9747f054e49ecce28c3445073795a3fd7ca29040d2a37dbac5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-1.37-regression/reports/pan-continuity.json",
+      "sha256": "d04ae670eca9659617b6b495950c508e084f98a2be311fda6a086e8cab2a1763"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/develop-grid.png",
+      "sha256": "0f39a47f14a2fe77b2e6002f010f41523581b918e8633cbd89deb24f82cd7dd0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/develop-progress.json",
+      "sha256": "bb62074369c4df6e09fceb818b82443e2bce53bf172662a5b01536319389e359"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/develop-ui.json",
+      "sha256": "d0f8f9b0aeddb5d0145ba3ceed970b26b4f203b4e7cbed252f55d6712ccc98be"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/develop-viewer.png",
+      "sha256": "349e4a28b66ddfb3fce5594243c854f214cb2e44b6f39217ede30f0f01ffe1ac"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-110-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-110.png",
+      "sha256": "c8f53de5a00a930b67e2c728262ea358c3e647d2e82f4853550d63defac627f1"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-20-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-20.png",
+      "sha256": "41cf2840e849bc7ae389562b9c3bb32c539f0cc15e142666e5ca6c0b2a5a322f"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-50-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-50.png",
+      "sha256": "76e0403ee84d9a2fd2cad090bdf7ccf7e5e778f22215418941f39b91094525ed"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-80-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-80.png",
+      "sha256": "b8dde8d9bdf89878dd19bf991d247870d9b6136dae0446e26deaac6ed307d5e6"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-qualified/reports/zoom-continuity.json",
+      "sha256": "249174020c93e07621610f5b7e9d4f6530e4b40c76c88c2f253fadd4181ca47a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/develop-grid-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/develop-grid.png",
+      "sha256": "da28a6e8d9dd51ca78963aac2b7bbd447f23ae1e2343c788d580fa139fc481ed"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/develop-progress.json",
+      "sha256": "73c183eb3bec538785f6f061345814d3b03d81194a5c0c931f01bb119068f956"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/develop-ui.json",
+      "sha256": "d90c4affd8f5c950c8cf3e53932061a5139453de9746a4976584e98928c45ea3"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/develop-viewer-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/develop-viewer.png",
+      "sha256": "16bbd3ab21a5a20ab09898dfee74b406d6b72c829ec758c143391a29927d30c0"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/edit-continuity.json",
+      "sha256": "3eacec2ad1b738c49480243a6e20bba6824736a591861cbae17707520d1c4eed"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/live-edit-30-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/live-edit-30.png",
+      "sha256": "8dbb35ef4f06c4061463a3154bee3de6003d2b0f1be55dd5598a2d839cb884f5"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/live-edit-60-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/live-edit-60.png",
+      "sha256": "ad363d4b4c2edd296a712ab12b57280962db8afcbea2b0def6a45ec8e54aa81a"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/live-edit-90-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/zoom-preview-20261023/TrueRendererExperimental-RAW-zoom-regression/reports/live-edit-90.png",
+      "sha256": "3924c7d465b005a4e38e6d3f1d2807fb947aa043b2cb920ed3869e076f74744c"
+    },
+    {
+      "path": "var/zoom-preview-20261023/viewer-tests.log",
+      "sha256": "2a0db879938783b1371d7e7cfa50d6320553f407b992daa8794835be7b6aa164"
+    },
+    {
+      "path": "var/zoom-preview-20261023/workspace-tests-final.log",
+      "sha256": "a473a8bf45fad49731cc4713d3ccd109c163c56747297793376130831407574e"
+    }
+  ]
+}

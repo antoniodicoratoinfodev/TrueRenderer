@@ -3,6 +3,57 @@ use super::*;
 
 type PaintedText = (String, egui::Rect, egui::Rect);
 
+#[test]
+fn changing_a_recipe_does_not_resize_the_inspector() {
+    for lang in [Language::Italian, Language::English] {
+        let (_dir, ctx, mut app) = test_app();
+        settle(&mut app, &ctx, true);
+        app.cache_settings.language = lang;
+        app.state.view = ViewMode::Preview;
+        app.inspector_pages[1] = InspectorPage::Develop;
+        let item = app.state.current_item().unwrap().clone();
+        app.ensure_edit_loaded(&item);
+        wait_for_edit(&mut app, &ctx, &item.id);
+        let mut available = Vec::new();
+        for step in 0..60 {
+            if step >= 15 {
+                let mut recipe = app.editing.entries[&item.id].draft.clone().unwrap();
+                recipe.exposure_ev = 0.25 + (step % 12) as f32 * 0.1;
+                recipe.curve = vec![
+                    tr_core::editing::CurvePoint { x: 0., y: 0. },
+                    tr_core::editing::CurvePoint {
+                        x: 0.4,
+                        y: 0.25 + (step % 16) as f32 / 40.,
+                    },
+                    tr_core::editing::CurvePoint { x: 1., y: 1. },
+                ];
+                app.apply_edit_draft(&item.id, recipe);
+            }
+            let mut output = ctx.run_ui(
+                egui::RawInput {
+                    screen_rect: Some(egui::Rect::from_min_size(
+                        egui::Pos2::ZERO,
+                        egui::vec2(1440., 940.),
+                    )),
+                    time: Some(f64::from(step) / 60.),
+                    ..Default::default()
+                },
+                |ui| {
+                    app.inspector(ui);
+                    available.push(ui.available_width());
+                },
+            );
+            output.textures_delta.clear();
+        }
+        assert!(
+            available[14..]
+                .iter()
+                .all(|w| (*w - available[14]).abs() < 0.5),
+            "Inspector moved during editing, {lang:?}: {available:?}"
+        );
+    }
+}
+
 fn frame(
     app: &mut TrueRenderer,
     ctx: &egui::Context,

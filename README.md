@@ -51,6 +51,10 @@ Keep different creative decisions independently editable. Add an adjustment to a
 
 Colour guides appear directly in the slider tracks. The path bar has matching icons to show or hide the left and right panels. The filmstrip toggle is at the right of the bottom status bar. Keyboard shortcuts remain **Cmd/Ctrl+B** for the left panel, **I** for Develop / Information and **T** for the viewer filmstrip.
 
+Choose the RAW engine in **Settings → Previews and RAW**, then **Apply and save**. The top bar shows the applied default; **Photo:** identifies a different engine stored in the selected RAW photo’s recipe. Changing the default preserves existing edits and compatible previews, including decoded JPEGs in the current session.
+
+Exposure and tone-curve previews preserve the detail available in the viewer, including at 100%. Later clicks on the interface do not restart a reduced editing preview. Spatial filters and active layers still use provisional previews during adjustments.
+
 ## Give every frame the right composition
 
 Crop directly on the photograph with draggable edges, a rule-of-thirds grid and free, original, preset or custom aspect ratios. Lock the proportions, switch orientation, move the frame or move the photograph inside it. Keyboard controls help with fine adjustments.
@@ -143,6 +147,39 @@ Use the macOS app bundle for external photographs: it includes the isolated deco
 .\scripts\dev-windows.ps1 verify --gui
 .\target\debug\truerenderer.exe
 ```
+
+Alternatively, Rust's `x86_64-pc-windows-gnu` toolchain can use MinGW-w64/GCC
+with POSIX threads instead of Visual Studio. Add its `bin` directory to the build
+process's PATH. The worker links libstdc++ and winpthread statically so its LPAC
+copy does not need compiler runtime DLLs.
+
+**Windows with Smart App Control enabled.** Locally compiled executables may be
+blocked, including Cargo build scripts before the application is produced. Changing
+the compiler or using a self-signed certificate does not establish public trust.
+Build in an authorized development environment and sign the resulting application
+and worker with a certificate from a provider accepted by Smart App Control.
+SignTool is available separately in the Windows SDK; signing does not require
+Visual Studio.
+
+For a prebuilt staging directory containing `truerenderer.exe`, `tr-worker.exe`
+and its runtime DLLs, `scripts/sign-windows.ps1` signs every EXE/DLL recursively
+using a code-signing certificate in `CurrentUser\My` (including supported hardware
+or cloud providers). Supply the provider's HTTPS RFC 3161 timestamp endpoint:
+
+```powershell
+.\scripts\sign-windows.ps1 -BinaryDirectory .\dist\TrueRenderer-windows -CertificateThumbprint YOUR_CERTIFICATE_THUMBPRINT -TimestampUrl https://YOUR_PROVIDER_TIMESTAMP_ENDPOINT -SignTool C:\path\to\signtool.exe
+.\scripts\sign-windows.ps1 -BinaryDirectory .\dist\TrueRenderer-windows -VerifyOnly
+```
+
+The verifier requires embedded, timestamped Authenticode signatures on both
+executables and every DLL. It checks this computer's trust store; it cannot certify
+that a locally trusted CA belongs to Microsoft's public trust program. A native
+test of the app **and decoder** with Smart App Control enabled remains necessary.
+This script neither builds nor packages the application and does not fix blocked
+intermediate build tools. Keep the original build separately: signing modifies
+the staged binaries. Provider enrollment, public trust and native validation are
+prerequisites, not guarantees supplied by the script.
+See [Microsoft's signing requirements](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control).
 
 The [documentation index](docs/README.md) covers platform-specific formats, architecture and configuration.
 

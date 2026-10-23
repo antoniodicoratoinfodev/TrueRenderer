@@ -168,6 +168,30 @@ fn libraw() {
         .include(&shim)
         .warnings(false)
         .extra_warnings(false);
+    let windows_gnu = env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
+        && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("gnu");
+    if windows_gnu {
+        // LPAC receives only a private copy of the worker, without toolchain
+        // DLLs or the host PATH. Keep the MinGW C++ runtime in that executable.
+        build.cpp_link_stdlib_static(true);
+        // rustc must find these archives while creating the Rust staticlib;
+        // the GCC linker's implicit search directories are not enough.
+        for library in ["libstdc++.a", "libwinpthread.a"] {
+            let output = build
+                .get_compiler()
+                .to_command()
+                .arg(format!("-print-file-name={library}"))
+                .output()
+                .expect("query MinGW runtime archive");
+            assert!(output.status.success(), "MinGW runtime lookup failed");
+            let path = PathBuf::from(String::from_utf8(output.stdout).unwrap().trim());
+            assert!(path.is_file(), "Missing MinGW runtime archive: {library}");
+            println!(
+                "cargo:rustc-link-search=native={}",
+                path.parent().unwrap().display()
+            );
+        }
+    }
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("macos") {
         // Match the Objective-C adapter and bundle minimum, not the build SDK.
         build.flag("-mmacosx-version-min=13.0");
@@ -212,5 +236,8 @@ fn libraw() {
         println!("cargo:rustc-link-lib=static=tr_libraw_engines");
     } else {
         build.compile("tr_libraw");
+        if windows_gnu {
+            println!("cargo:rustc-link-lib=static=winpthread");
+        }
     }
 }

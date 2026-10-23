@@ -21,9 +21,7 @@ fn horizontal_pass(@builtin(global_invocation_id) id:vec3<u32>) {
     }
     horizontal[id.y*params.width+id.x]=sum;
 }
-@compute @workgroup_size(8,8)
-fn vertical_pass(@builtin(global_invocation_id) id:vec3<u32>) {
-    if id.x>=params.width || id.y>=params.height { return; }
+fn vertical_pixel(id:vec2<u32>)->vec4<f32> {
     let taps=y_ranges[id.y];
     var sum=vec4<f32>(0.0);
     for(var i=0u;i<taps.y;i+=1u) {
@@ -31,21 +29,36 @@ fn vertical_pass(@builtin(global_invocation_id) id:vec3<u32>) {
         sum+=horizontal[(tap.index-params.min_y)*params.width+id.x]*tap.weight;
     }
     if params.opaque != 0u { sum.a=1.0; }
-    output_pixels[id.y*params.width+id.x]=sum;
+    return sum;
+}
+@compute @workgroup_size(8,8)
+fn vertical_pass(@builtin(global_invocation_id) id:vec3<u32>) {
+    if id.x>=params.width || id.y>=params.height { return; }
+    output_pixels[id.y*params.width+id.x]=vertical_pixel(id.xy);
 }
 fn encode(v:f32)->f32 {
     if v<=0.0031308 { return 12.92*v; }
     return 1.055*pow(v,1.0/2.4)-0.055;
 }
-@compute @workgroup_size(8,8)
-fn display_pass(@builtin(global_invocation_id) id:vec3<u32>) {
-    if id.x>=params.width || id.y>=params.height { return; }
-    let p=output_pixels[id.y*params.width+id.x];
+fn display_pixel(p:vec4<f32>, position:vec2<u32>) {
     // Analytic conversion/composition matching color::display_pixel(119/255).
     let bg=pow((119.0/255.0+0.055)/1.055,2.4);
     let rgb=p.rgb+vec3<f32>(bg*(1.0-p.a));
     let r=1.660491*rgb.r-0.5876411*rgb.g-0.0728499*rgb.b;
     let g=-0.1245505*rgb.r+1.1328999*rgb.g-0.0083494*rgb.b;
     let b=-0.0181508*rgb.r-0.1005789*rgb.g+1.1187297*rgb.b;
-    textureStore(display,vec2<i32>(id.xy),vec4<f32>(clamp(vec3<f32>(encode(r),encode(g),encode(b)),vec3<f32>(0.0),vec3<f32>(1.0)),1.0));
+    textureStore(display,vec2<i32>(position),vec4<f32>(clamp(vec3<f32>(encode(r),encode(g),encode(b)),vec3<f32>(0.0),vec3<f32>(1.0)),1.0));
+}
+@compute @workgroup_size(8,8)
+fn display_pass(@builtin(global_invocation_id) id:vec3<u32>) {
+    if id.x>=params.width || id.y>=params.height { return; }
+    display_pixel(output_pixels[id.y*params.width+id.x], id.xy);
+}
+// Same fp32 vertical accumulation and display transform, without the full
+// intermediate write/read or an extra dispatch. The reference entries above
+// remain available for the numerical verifier.
+@compute @workgroup_size(8,8)
+fn vertical_display_pass(@builtin(global_invocation_id) id:vec3<u32>) {
+    if id.x>=params.width || id.y>=params.height { return; }
+    display_pixel(vertical_pixel(id.xy), id.xy);
 }

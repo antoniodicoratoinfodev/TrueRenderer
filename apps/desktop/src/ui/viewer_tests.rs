@@ -71,8 +71,15 @@ fn render(app: &mut TrueRenderer, ctx: &egui::Context, item: &Item, continuous: 
     loop {
         let (coverage, exact) = draw(app, ctx, item, "single");
         if continuous {
+            let held_visible = app.presenter.coverage()[0].held
+                && coverage > 0.
+                && app
+                    .presenter
+                    .captures()
+                    .iter()
+                    .any(|c| c.clip.contains_rect(c.rect));
             assert!(
-                coverage > 0.999,
+                coverage > 0.999 || held_visible,
                 "Refinement discarded the previous image frame"
             );
         }
@@ -95,8 +102,23 @@ fn viewer_keeps_image_visible_when_zoom_receives_native_detail() {
     let reduced = cached(&item, 1, [512, 256]);
     app.cache.insert(app.image_key(&item, 128), reduced);
     render(&mut app, &ctx, &item, false);
+    let fitted = app.presenter.coverage()[0].displayed_region;
     app.state.transform.set_zoom(3.);
-    render(&mut app, &ctx, &item, true);
+    // The native request has not completed: retain the fitted image at its
+    // own scale instead of enlarging its reduced mip to fill the zoomed view.
+    for _ in 0..3 {
+        let (coverage, exact) = draw(&mut app, &ctx, &item, "single");
+        assert!(coverage > 0. && !exact);
+        assert!(app.presenter.coverage()[0].held);
+        assert_eq!(app.presenter.coverage()[0].displayed_region, fitted);
+        assert!(
+            app.presenter
+                .captures()
+                .iter()
+                .any(|c| c.clip.contains_rect(c.rect))
+        );
+        assert!(app.presenter.is_idle());
+    }
 
     // The decoder/cache returns a new provider while the previous CPU mip is
     // evicted. Its displayed texture must cover the upload of native detail.

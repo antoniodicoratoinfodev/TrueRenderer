@@ -26,11 +26,46 @@ impl LiveEdit {
                 a.geometry.output_size(image.source_size())
             })
     }
-    pub fn working_bytes(&self, image: &ImageLevels) -> u64 {
+    pub fn working_bytes(&self, image: &ImageLevels, region: Region) -> u64 {
+        if self.gpu_supported()
+            && let Ok((level, scaled, _)) = image.render_input(region)
+        {
+            let (_, size) = crop_bounds(level, scaled);
+            return u64::from(size[0]) * u64::from(size[1]) * 32
+                + self.recipe.scratch_bytes(size[0], size[1])
+                + 4096;
+        }
         let level = &image.levels()[self.source_index(image)];
         level.pixels.len() as u64 * 32 + self.recipe.scratch_bytes(level.width, level.height) + 4096
     }
     pub fn render(&self, image: &ImageLevels, region: Region) -> anyhow::Result<LinearImage> {
+        if self.gpu_supported() {
+            // Point operations need only the visible samples and filter halo.
+            // Keep the normal viewer LOD, including native detail at 1:1.
+            let (level, mut region, opaque) = image.render_input(region)?;
+            let (origin, size) = crop_bounds(level, region);
+            let pixels = level
+                .pixels
+                .chunks_exact(level.width as usize)
+                .skip(origin[1] as usize)
+                .take(size[1] as usize)
+                .flat_map(|row| {
+                    row[origin[0] as usize..(origin[0] + size[0]) as usize]
+                        .iter()
+                        .copied()
+                })
+                .collect();
+            let mut raster = LinearImage::new(size[0], size[1], pixels)?;
+            for pixel in &mut raster.pixels {
+                for (c, gain) in pixel[..3].iter_mut().zip(self.input_gains) {
+                    *c *= gain;
+                }
+            }
+            self.recipe.apply(&mut raster)?;
+            region.origin[0] -= f64::from(origin[0]);
+            region.origin[1] -= f64::from(origin[1]);
+            return tr_core::resample::filter(&raster, region, opaque);
+        }
         let index = self.source_index(image);
         let mut raster = image.levels()[index].clone();
         if self.input_gains != [1.; 3] {
@@ -63,6 +98,26 @@ impl LiveEdit {
             })
     }
 }
+/// Include every Lanczos3/Mitchell/alpha tap, preserving the original border.
+/// This arithmetic-only bound can also be used for admission on the UI thread.
+pub(crate) fn crop_bounds(level: &LinearImage, region: Region) -> ([u32; 2], [u32; 2]) {
+    let dimensions = [level.width, level.height];
+    let origin = std::array::from_fn(|axis| {
+        let halo = 3. * region.step[axis].max(1.) + 2.;
+        (region.origin[axis] - halo)
+            .floor()
+            .clamp(0., f64::from(dimensions[axis] - 1)) as u32
+    });
+    let size = std::array::from_fn(|axis| {
+        let halo = 3. * region.step[axis].max(1.) + 2.;
+        let end = (region.origin[axis] + region.step[axis] * f64::from(region.size[axis]) + halo)
+            .ceil()
+            .clamp(f64::from(origin[axis] + 1), f64::from(dimensions[axis]))
+            as u32;
+        end - origin[axis]
+    });
+    (origin, size)
+}
 pub(crate) fn scaled_region(region: Region, raster: [u32; 2], native: [u32; 2]) -> Region {
     let ratio = [
         raster[0] as f64 / native[0] as f64,
@@ -77,6 +132,94 @@ pub(crate) fn scaled_region(region: Region, raster: [u32; 2], native: [u32; 2]) 
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    #[test]
+    fn live_point_edits_keep_native_detail_and_filter_halos_at_every_zoom() {
+        use tr_core::{decoder::RawEngine, editing::CurvePoint, preview::PreviewRequest};
+        for alpha in [false, true] {
+            // Odd dimensions and fine detail expose accidental mip selection.
+            let size = [513, 257];
+            let source = LinearImage::new(
+                size[0],
+                size[1],
+                (0..size[0] * size[1])
+                    .map(|i| {
+                        let a = if alpha {
+                            0.25 + (i % 4) as f32 * 0.25
+                        } else {
+                            1.
+                        };
+                        [
+                            if i % 2 == 0 { 0.1 * a } else { 0.9 * a },
+                            (i % 13) as f32 / 13. * a,
+                            0.3 * a,
+                            a,
+                        ]
+                    })
+                    .collect(),
+            )
+            .unwrap();
+            let image = ImageLevels::from_source(source, PreviewRequest::full()).unwrap();
+            for engine in [
+                RawEngine::Apple,
+                RawEngine::LibRawBilinear,
+                RawEngine::LibRawAhd,
+                RawEngine::TrueRenderer,
+                RawEngine::TrueRendererExperimental,
+            ] {
+                let mut recipe = EditRecipe::neutral(engine);
+                recipe.exposure_ev = 0.7;
+                recipe.curve = vec![
+                    CurvePoint { x: 0., y: 0. },
+                    CurvePoint { x: 0.4, y: 0.6 },
+                    CurvePoint { x: 1., y: 1. },
+                ];
+                let edit = LiveEdit {
+                    recipe,
+                    input_gains: [1.1, 1., 0.9],
+                    max_edge: 256,
+                    revision: 1,
+                };
+                for (origin, step) in [
+                    ([131., 67.], [1., 1.]),
+                    ([171., 73.], [1., 1.]),
+                    ([139.25, 71.5], [0.75, 0.85]),
+                    ([-1.25, -0.5], [1.98, 1.9]),
+                    ([499.25, 249.75], [1.1, 1.3]),
+                    ([0., 0.], [4.1, 4.2]),
+                ] {
+                    let region = Region {
+                        size: [67, 43],
+                        origin,
+                        step,
+                    };
+                    let actual = edit.render(&image, region).unwrap();
+                    let (level, scaled, opaque) = image.render_input(region).unwrap();
+                    let mut expected = level.clone();
+                    for pixel in &mut expected.pixels {
+                        for (c, gain) in pixel[..3].iter_mut().zip(edit.input_gains) {
+                            *c *= gain;
+                        }
+                    }
+                    edit.recipe.apply(&mut expected).unwrap();
+                    let expected = tr_core::resample::filter(&expected, scaled, opaque).unwrap();
+                    let maximum = actual
+                        .pixels
+                        .iter()
+                        .flatten()
+                        .zip(expected.pixels.iter().flatten())
+                        .map(|(a, b)| (a - b).abs())
+                        .fold(0_f32, f32::max);
+                    assert!(maximum < 1e-6, "{engine:?}, {alpha}, {region:?}: {maximum}");
+                    if step == [1., 1.] {
+                        assert!(edit.working_bytes(&image, region) < image.byte_len() as u64 / 4);
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn creative_grain_uses_cpu_until_disabled() {
         let mut recipe = tr_core::editing::EditRecipe::neutral(Default::default());

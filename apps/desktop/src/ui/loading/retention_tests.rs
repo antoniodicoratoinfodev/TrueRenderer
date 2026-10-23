@@ -61,6 +61,123 @@ fn cached(app: &TrueRenderer, width: u32) -> CachedImage {
 }
 
 #[test]
+fn switching_raw_engines_preserves_bitmaps_and_other_resident_variants() {
+    for format in ["JPEG", "PNG", "TIFF", "Jpeg", "Png", "Tiff"] {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let bitmap = app.state.items[0].clone();
+        let raw = app.state.items[1].clone();
+        neutral(&mut app, &bitmap);
+        neutral(&mut app, &raw);
+        let bitmap_request = app.preview_request(&bitmap, 0);
+        let mut bitmap_image = cached(&app, 128);
+        bitmap_image.info.format = format.into();
+        bitmap_image.digest.clone_from(&bitmap.digest);
+        app.remember_bitmap_input(&bitmap.id, bitmap_request, &bitmap_image.info);
+        app.cache
+            .insert((bitmap.id.clone(), bitmap_request), bitmap_image.clone());
+        let raw_request = app.preview_request(&raw, 0);
+        let mut raw_image = cached(&app, 128);
+        raw_image.info.format = "RAW".into();
+        app.remember_bitmap_input(&raw.id, raw_request, &raw_image.info);
+        app.cache
+            .insert((raw.id.clone(), raw_request), raw_image.clone());
+        app.rebuild.clear();
+        app.folder_load.finishing = false;
+        app.folder_load.foreground = false;
+        let generation = app.generation;
+        for engine in tr_core::decoder::RawEngine::choices() {
+            app.cache_settings.raw_engine = engine;
+            app.apply_settings();
+            assert_eq!(
+                app.generation, generation,
+                "Settings must not revoke unrelated work"
+            );
+            assert_eq!(app.preview_request(&bitmap, 0), bitmap_request);
+            assert_eq!(app.preview_request(&raw, 0).raw_engine, engine);
+            assert!(Arc::ptr_eq(
+                &app.cache[&(bitmap.id.clone(), bitmap_request)].pyramid,
+                &bitmap_image.pyramid
+            ));
+            assert!(Arc::ptr_eq(
+                &app.cache[&(raw.id.clone(), raw_request)].pyramid,
+                &raw_image.pyramid
+            ));
+            assert!(app.rebuild.iter().all(|item| item.id == raw.id));
+            assert!(!app.folder_loading_blocks());
+            // An automatic rescan must not re-enqueue the unchanged JPEG.
+            let queued: Vec<_> = app.rebuild.iter().map(|i| i.id.clone()).collect();
+            app.start_folder_preparation(false);
+            assert_eq!(
+                app.rebuild.iter().map(|i| i.id.clone()).collect::<Vec<_>>(),
+                queued
+            );
+        }
+        app.cache.clear(); // Eviction does not change the bitmap's input identity.
+        assert_eq!(app.preview_request(&bitmap, 0), bitmap_request);
+        // Native RAW WB never changes a decoded bitmap or its cache identity,
+        // including recipes copied from engines with incompatible WB models.
+        for engine in [
+            tr_core::decoder::RawEngine::Apple,
+            tr_core::decoder::RawEngine::TrueRendererExperimental,
+        ] {
+            let mut recipe = tr_core::editing::EditRecipe::neutral(engine);
+            if engine == tr_core::decoder::RawEngine::Apple {
+                recipe.raw_wb.apple_temperature = 4500;
+            } else {
+                recipe.raw_wb.micro_gains = Some([1_250_000, 1_100_000]);
+            }
+            recipe.exposure_ev = 0.7;
+            app.apply_edit_draft(&bitmap.id, recipe);
+            let request = app.preview_request(&bitmap, 0);
+            request.validate().unwrap();
+            assert_eq!(request, bitmap_request);
+            let live = app
+                .live_edit_for(
+                    &bitmap.id,
+                    &bitmap.digest,
+                    &bitmap_image.pyramid,
+                    request.raw_wb,
+                )
+                .unwrap();
+            assert_eq!(live.input_gains, [1.; 3]);
+        }
+        let mut changed = bitmap.clone();
+        changed.observation.push_str("-changed");
+        assert!(app.bitmap_input_engine(&changed).is_none());
+    }
+}
+
+#[test]
+fn saved_raw_recipe_and_preparation_survive_a_global_engine_change() {
+    let (_dir, ctx, mut app) = app();
+    settle(&mut app, &ctx, true);
+    let item = app.state.items[0].clone();
+    neutral(&mut app, &item);
+    let mut saved = app.editing.entries[&item.id].loaded.clone().unwrap();
+    saved.generation = 1;
+    saved.recipe.exposure_ev = 0.7;
+    if saved.recipe.raw_engine == tr_core::decoder::RawEngine::Apple {
+        saved.recipe.raw_wb.apple_temperature = 4500;
+    } else {
+        saved.recipe.raw_wb.red = 1250;
+    }
+    app.edit_result(item.id.clone(), Ok(saved.clone()));
+    let request = app.preview_request(&item, 0);
+    app.rebuild.clear();
+    for engine in tr_core::decoder::RawEngine::choices() {
+        app.cache_settings.raw_engine = engine;
+        app.apply_settings();
+        assert_eq!(app.preview_request(&item, 0), request);
+        assert_eq!(
+            app.editing.entries[&item.id].draft.as_ref(),
+            Some(&saved.recipe)
+        );
+        assert!(app.rebuild.iter().all(|queued| queued.id != item.id));
+    }
+}
+
+#[test]
 fn folder_detaches_viewers_before_completion_without_reopening_sources() {
     for enabled in [false, true] {
         for foreground in [false, true] {

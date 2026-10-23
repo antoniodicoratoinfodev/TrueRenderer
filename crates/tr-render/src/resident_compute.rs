@@ -2,7 +2,10 @@
 //! The final rgba8 texture is presented directly, with no per-frame readback.
 use anyhow::{Context, Result, ensure};
 use eframe::wgpu::{self, util::DeviceExt};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 use tr_core::{
     budget::{Lease, MemoryBudget},
     provider::ImageLevels,
@@ -13,6 +16,7 @@ struct Source {
     _memory: Lease,
     _gpu: Lease,
 }
+type SourceKey = (u64, [u32; 2], [u32; 2], [u32; 2]);
 pub struct GpuFrame {
     pub texture: wgpu::Texture,
     pub size: [u32; 2],
@@ -23,6 +27,7 @@ struct PendingSubmission {
     scratch: Lease,
     scratch_gpu: Lease,
     source: Arc<Source>,
+    timer: Option<crate::timings::GpuTimer>,
 }
 impl GpuFrame {
     /// The UI owns queue submission, serialized with eframe surface configure.
@@ -35,12 +40,20 @@ impl GpuFrame {
                 scratch,
                 scratch_gpu,
                 source,
+                timer,
             } = *pending;
+            let submission = crate::timings::CpuSpan::new("queue_submit_cpu");
             queue.submit([commands]);
+            drop(submission);
+            if let Some(timer) = timer {
+                timer.submitted(queue);
+            }
+            let completion = crate::timings::CpuSpan::new("submission_to_callback");
             queue.on_submitted_work_done(move || {
                 drop(scratch);
                 drop(scratch_gpu);
                 drop(source);
+                drop(completion);
             });
         }
     }
@@ -49,9 +62,13 @@ pub struct GpuFilter {
     format: wgpu::TextureFormat,
     device: wgpu::Device,
     layout: wgpu::BindGroupLayout,
-    pipelines: [wgpu::ComputePipeline; 3],
+    pipelines: [wgpu::ComputePipeline; 2],
     editing: crate::editing_compute::EditingCompute,
-    sources: HashMap<(u64, u32, u32), (Arc<Source>, u64)>,
+    sources: Mutex<SourceCache>,
+}
+#[derive(Default)]
+struct SourceCache {
+    entries: HashMap<SourceKey, (Arc<Source>, u64)>,
     clock: u64,
 }
 impl GpuFilter {
@@ -109,7 +126,7 @@ impl GpuFilter {
                 include_str!("preview_compute.wgsl").into()
             }),
         });
-        let pipelines = ["horizontal_pass", "vertical_pass", "display_pass"].map(|entry| {
+        let pipelines = ["horizontal_pass", "vertical_display_pass"].map(|entry| {
             device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
                 label: Some(entry),
                 layout: Some(&pipeline_layout),
@@ -126,15 +143,16 @@ impl GpuFilter {
             layout,
             pipelines,
             editing,
-            sources: HashMap::new(),
-            clock: 0,
+            sources: Mutex::new(SourceCache::default()),
         }
     }
-    pub fn clear(&mut self) {
-        self.sources.clear();
+    pub fn clear(&self) {
+        // Resource destruction can be expensive: release the cache lock first.
+        let old = std::mem::take(&mut self.sources.lock().unwrap().entries);
+        drop(old);
     }
     pub fn render(
-        &mut self,
+        &self,
         image: &ImageLevels,
         region: Region,
         memory: &MemoryBudget,
@@ -144,7 +162,7 @@ impl GpuFilter {
         self.render_edit(image, region, memory, gpu, working, None)
     }
     pub fn render_edit(
-        &mut self,
+        &self,
         image: &ImageLevels,
         region: Region,
         memory: &MemoryBudget,
@@ -152,29 +170,157 @@ impl GpuFilter {
         working: &mut Lease,
         edit: Option<&crate::live_edit::LiveEdit>,
     ) -> Result<GpuFrame> {
-        self.clock += 1;
-        let (level, region, opaque) = if let Some(edit) = edit {
-            ensure!(edit.gpu_supported(), "Nodo editing CPU");
-            let level = &image.levels()[edit.source_index(image)];
-            (
-                level,
-                crate::live_edit::scaled_region(
-                    region,
-                    [level.width, level.height],
-                    image.source_size(),
-                ),
-                level.pixels.iter().all(|p| p[3] == 1.),
-            )
+        self.render_input(
+            image,
+            region,
+            memory,
+            gpu,
+            working,
+            edit,
+            false,
+            edit.is_none(),
+        )
+    }
+    /// Prepare nearby source coverage on the worker without rendering invisible
+    /// display pixels. The UI can then resample adjacent scales immediately.
+    pub(crate) fn render_zoom(
+        &self,
+        image: &ImageLevels,
+        region: Region,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        working: &mut Lease,
+    ) -> Result<GpuFrame> {
+        self.render_input(image, region, memory, gpu, working, None, false, true)
+    }
+    /// No source scan, packing or upload: suitable for the current UI frame.
+    pub(crate) fn render_resident(
+        &self,
+        image: &ImageLevels,
+        region: Region,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        working: &mut Lease,
+    ) -> Result<GpuFrame> {
+        self.render_input(image, region, memory, gpu, working, None, true, false)
+    }
+    pub(crate) fn render_resident_edit(
+        &self,
+        image: &ImageLevels,
+        region: Region,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        working: &mut Lease,
+        edit: Option<&crate::live_edit::LiveEdit>,
+    ) -> Result<GpuFrame> {
+        self.render_input(image, region, memory, gpu, working, edit, true, false)
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn render_input(
+        &self,
+        image: &ImageLevels,
+        region: Region,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        working: &mut Lease,
+        edit: Option<&crate::live_edit::LiveEdit>,
+        resident_only: bool,
+        prepare_zoom: bool,
+    ) -> Result<GpuFrame> {
+        let _total = crate::timings::CpuSpan::new(if resident_only {
+            "resident_prepare_total"
         } else {
-            image.render_input(region)?
+            "worker_gpu_prepare_total"
+        });
+        let preparation = crate::timings::CpuSpan::new("cpu_region_coefficients");
+
+        if let Some(edit) = edit {
+            ensure!(edit.gpu_supported(), "Nodo editing CPU");
+        }
+        let (level, mut region, opaque) = image.render_input(region)?;
+        // The selected mip can be a full native RAW. Upload only the visible
+        // region plus filter support, including for settled frames during pan.
+        let (needed_origin, needed_size) = crate::live_edit::crop_bounds(level, region);
+        // Only immutable handles cross threads. Source validation, mapped
+        // allocation, copying and command encoding never hold this cache lock.
+        let resident = {
+            let wait = crate::timings::CpuSpan::new("source_cache_wait_cpu");
+            let mut cache = if resident_only {
+                self.sources
+                    .try_lock()
+                    .map_err(|_| anyhow::anyhow!("Cache sorgente GPU occupata"))?
+            } else {
+                self.sources.lock().unwrap()
+            };
+            drop(wait);
+            let _held = crate::timings::CpuSpan::new("source_cache_held_cpu");
+            cache.clock += 1;
+            let clock = cache.clock;
+            let key = cache
+                .entries
+                .keys()
+                .filter(|key| {
+                    key.0 == image.id()
+                        && key.1 == [level.width, level.height]
+                        && (edit.is_none() || (key.2 == needed_origin && key.3 == needed_size))
+                        && (0..2).all(|a| {
+                            key.2[a] <= needed_origin[a]
+                                && key.2[a] + key.3[a] >= needed_origin[a] + needed_size[a]
+                        })
+                })
+                .min_by_key(|key| u64::from(key.3[0]) * u64::from(key.3[1]))
+                .copied();
+            key.map(|key| {
+                let (source, touched) = cache.entries.get_mut(&key).unwrap();
+                *touched = clock;
+                (key, source.clone())
+            })
         };
-        let source_bytes = level.pixels.len() as u64 * 16;
+        ensure!(
+            !resident_only || resident.is_some(),
+            "Regione sorgente GPU non residente"
+        );
+        let (origin, source_size) = resident.as_ref().map_or_else(
+            || {
+                if prepare_zoom {
+                    let memory_free = memory.usage().limit.saturating_sub(memory.usage().reserved);
+                    let gpu_free = gpu.usage().limit.saturating_sub(gpu.usage().reserved);
+                    let maximum = self
+                        .device
+                        .limits()
+                        .max_storage_buffer_binding_size
+                        .min(memory_free / 3)
+                        .min(gpu_free.saturating_sub(working.bytes()));
+                    zoom_source_bounds(
+                        needed_origin,
+                        needed_size,
+                        [level.width, level.height],
+                        maximum,
+                    )
+                } else {
+                    (needed_origin, needed_size)
+                }
+            },
+            |(key, _)| (key.2, key.3),
+        );
+        region.origin[0] -= f64::from(origin[0]);
+        region.origin[1] -= f64::from(origin[1]);
+        let source_pixels = || {
+            level
+                .pixels
+                .chunks_exact(level.width as usize)
+                .skip(origin[1] as usize)
+                .take(source_size[1] as usize)
+                .flat_map(|row| {
+                    row[origin[0] as usize..(origin[0] + source_size[0]) as usize].iter()
+                })
+        };
+        let source_bytes = u64::from(source_size[0]) * u64::from(source_size[1]) * 16;
         ensure!(
             source_bytes <= self.device.limits().max_storage_buffer_binding_size,
             "Livello oltre capability GPU"
         );
-        let (xs, ys) =
-            tr_core::resample::coefficients([level.width, level.height], region, opaque)?;
+        let (xs, ys) = tr_core::resample::coefficients(source_size, region, opaque)?;
         let min_y = ys.iter().flatten().map(|(y, _)| *y).min().unwrap() as u32;
         let max_y = ys.iter().flatten().map(|(y, _)| *y).max().unwrap() as u32;
         let rows = max_y - min_y + 1;
@@ -192,7 +338,7 @@ impl GpuFilter {
         );
         let (xr, xt) = crate::preview_compute::taps(&xs);
         let (yr, yt) = crate::preview_compute::taps(&ys);
-        let scratch_bytes = output_bytes
+        let scratch_bytes = 16
             + horizontal_bytes
             + (xr.len() + xt.len() + yr.len() + yt.len()) as u64
             + 32
@@ -212,25 +358,40 @@ impl GpuFilter {
                         },
             "Compute oltre prenotazione"
         );
-        let key = (image.id(), level.width, level.height);
-        if !self.sources.contains_key(&key) {
+        drop(preparation);
+        let key = (image.id(), [level.width, level.height], origin, source_size);
+        let source = if let Some((_, source)) = resident {
+            source
+        } else {
+            let validation =
+                crate::timings::CpuSpan::new("source_validation_cpu").bytes(source_bytes);
             ensure!(
-                level
-                    .pixels
-                    .iter()
-                    .all(|p| p[..3].iter().all(|c| c.abs() <= 1000.)),
+                source_pixels().all(|p| p[..3].iter().all(|c| c.abs() <= 1000.)),
                 "Valori fuori dall'intervallo lineare qualificato GPU"
             );
-            // Release least recent inputs before admitting another upload.
-            while !self.sources.is_empty()
-                && (self.sources.len() >= 4
-                    || source_bytes * 3
-                        > memory.usage().limit.saturating_sub(memory.usage().reserved)
-                    || source_bytes + scratch_bytes
-                        > gpu.usage().limit.saturating_sub(gpu.usage().reserved))
-            {
-                let key = *self.sources.iter().min_by_key(|(_, (_, t))| *t).unwrap().0;
-                self.sources.remove(&key);
+            drop(validation);
+            // Evict under a short lock; destroy buffers outside it. Pending
+            // submissions retain their source and its leases independently.
+            loop {
+                let removed = {
+                    let mut cache = self.sources.lock().unwrap();
+                    if !cache.entries.is_empty()
+                        && (cache.entries.len() >= 4
+                            || source_bytes * 3
+                                > memory.usage().limit.saturating_sub(memory.usage().reserved)
+                            || source_bytes + scratch_bytes
+                                > gpu.usage().limit.saturating_sub(gpu.usage().reserved))
+                    {
+                        let key = *cache.entries.iter().min_by_key(|(_, (_, t))| *t).unwrap().0;
+                        cache.entries.remove(&key)
+                    } else {
+                        None
+                    }
+                };
+                if removed.is_none() {
+                    break;
+                }
+                drop(removed);
             }
             let source_memory = memory
                 .try_reserve(source_bytes)
@@ -239,38 +400,67 @@ impl GpuFilter {
                 .try_reserve(source_bytes)
                 .context("Quota sorgente GPU occupata")?;
             let upload = memory
-                .try_reserve(source_bytes * 2)
+                .try_reserve(source_bytes)
                 .context("Memoria upload GPU occupata")?;
-            let bytes: Vec<_> = level
-                .pixels
-                .iter()
-                .flatten()
-                .flat_map(|v| v.to_le_bytes())
-                .collect();
-            let buffer = self
-                .device
-                .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some("TR reusable linear source"),
-                    contents: &bytes,
-                    usage: wgpu::BufferUsages::STORAGE,
-                });
-            drop(bytes);
+            // Copy rows straight into the mapped allocation. Avoid a second
+            // source-sized Vec and per-channel packing on little-endian hosts.
+            let allocation =
+                crate::timings::CpuSpan::new("upload_allocate_cpu").bytes(source_bytes);
+            let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
+                label: Some("TR reusable linear source"),
+                size: source_bytes,
+                usage: wgpu::BufferUsages::STORAGE,
+                mapped_at_creation: true,
+            });
+            drop(allocation);
+            let copy = crate::timings::CpuSpan::new("upload_copy_cpu").bytes(source_bytes);
+            {
+                let mut mapped = buffer
+                    .get_mapped_range_mut(..)
+                    .context("Mapping sorgente GPU")?;
+                let row_bytes = source_size[0] as usize * 16;
+                for (index, row) in level
+                    .pixels
+                    .chunks_exact(level.width as usize)
+                    .skip(origin[1] as usize)
+                    .take(source_size[1] as usize)
+                    .enumerate()
+                {
+                    let row = &row[origin[0] as usize..(origin[0] + source_size[0]) as usize];
+                    let offset = index * row_bytes;
+                    #[cfg(target_endian = "little")]
+                    mapped
+                        .slice(offset..offset + row_bytes)
+                        .copy_from_slice(bytemuck::cast_slice(row));
+                    #[cfg(target_endian = "big")]
+                    for (i, channel) in row.iter().flatten().enumerate() {
+                        let start = offset + i * 4;
+                        mapped
+                            .slice(start..start + 4)
+                            .copy_from_slice(&channel.to_le_bytes());
+                    }
+                }
+            }
+            drop(copy);
+            let unmap = crate::timings::CpuSpan::new("upload_unmap_cpu").bytes(source_bytes);
+            buffer.unmap();
+            drop(unmap);
             drop(upload); // mapped-at-creation upload, no pending queue.write_buffer
-            self.sources.insert(
-                key,
-                (
-                    Arc::new(Source {
-                        buffer,
-                        _memory: source_memory,
-                        _gpu: source_gpu,
-                    }),
-                    self.clock,
-                ),
-            );
-        }
-        let (source, touched) = self.sources.get_mut(&key).unwrap();
-        *touched = self.clock;
-        let source = source.clone();
+            let source = Arc::new(Source {
+                buffer,
+                _memory: source_memory,
+                _gpu: source_gpu,
+            });
+            let replaced = {
+                let mut cache = self.sources.lock().unwrap();
+                cache.clock += 1;
+                let clock = cache.clock;
+                cache.entries.insert(key, (source.clone(), clock))
+            };
+            drop(replaced);
+            source
+        };
+        let resources = crate::timings::CpuSpan::new("gpu_resources_cpu");
         let scratch_gpu = gpu
             .try_reserve(scratch_bytes)
             .context("Scratch GPU oltre quota")?;
@@ -283,7 +473,7 @@ impl GpuFilter {
                 })
         };
         let params: Vec<_> = [
-            level.width,
+            source_size[0],
             region.size[0],
             region.size[1],
             min_y,
@@ -311,7 +501,8 @@ impl GpuFilter {
             })
         };
         let horizontal = buffer(horizontal_bytes);
-        let output = buffer(output_bytes);
+        // Binding retained for the separate numerical reference kernel only.
+        let output = buffer(16);
         let edited = edit.map(|_| buffer(source_bytes));
         let xr = storage(&xr);
         let xt = storage(&xt);
@@ -364,25 +555,45 @@ impl GpuFilter {
         let mut encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+        drop(resources);
+        let _encoding = crate::timings::CpuSpan::new("gpu_encode_cpu");
+        let mut timer = crate::timings::GpuTimer::new(&self.device, memory, gpu);
         if let Some(edit) = edit {
+            if let Some(timer) = &mut timer {
+                timer.begin(&mut encoder, "gpu_edit");
+            }
             self.editing.encode(
                 &self.device,
                 &mut encoder,
                 &source.buffer,
                 edited.as_ref().unwrap(),
                 edit,
-                level.pixels.len() as u32,
+                source_size[0] * source_size[1],
             );
+            if let Some(timer) = &timer {
+                timer.end(&mut encoder);
+            }
         }
-        for (pipeline, height) in self
+        for ((pipeline, height), phase) in self
             .pipelines
             .iter()
-            .zip([rows, region.size[1], region.size[1]])
+            .zip([rows, region.size[1]])
+            .zip(["gpu_horizontal", "gpu_vertical_display"])
         {
+            if let Some(timer) = &mut timer {
+                timer.begin(&mut encoder, phase);
+            }
             let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor::default());
             pass.set_pipeline(pipeline);
             pass.set_bind_group(0, &bind, &[]);
             pass.dispatch_workgroups(region.size[0].div_ceil(8), height.div_ceil(8), 1);
+            drop(pass);
+            if let Some(timer) = &timer {
+                timer.end(&mut encoder);
+            }
+        }
+        if let Some(timer) = &timer {
+            timer.resolve(&mut encoder);
         }
         let scratch = working.split(scratch_bytes).unwrap();
         Ok(GpuFrame {
@@ -393,7 +604,55 @@ impl GpuFilter {
                 scratch,
                 scratch_gpu,
                 source,
+                timer,
             })),
         })
+    }
+}
+
+/// Optional source padding is bounded independently of the display frame.
+/// Failure to admit padding never rejects a visible region that would fit.
+fn zoom_source_bounds(
+    origin: [u32; 2],
+    size: [u32; 2],
+    extent: [u32; 2],
+    maximum_bytes: u64,
+) -> ([u32; 2], [u32; 2]) {
+    for divisor in [2, 4, 8] {
+        let pad = size.map(|n| n.div_ceil(divisor).min(512));
+        let start = std::array::from_fn(|a| origin[a].saturating_sub(pad[a]));
+        let padded: [u32; 2] =
+            std::array::from_fn(|a| (origin[a] + size[a] + pad[a]).min(extent[a]) - start[a]);
+        if u64::from(padded[0]) * u64::from(padded[1]) * 16 <= maximum_bytes {
+            return (start, padded);
+        }
+    }
+    (origin, size)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn source_padding_obeys_edges_and_quota_without_reducing_visible_coverage() {
+        for (origin, size, extent) in [
+            ([0, 0], [90, 60], [1024, 768]),
+            ([930, 700], [94, 68], [1024, 768]),
+            ([700, 600], [400, 300], [2048, 1536]),
+        ] {
+            let visible = u64::from(size[0]) * u64::from(size[1]) * 16;
+            for maximum in [0, visible, visible * 2, visible * 4] {
+                let (start, padded) = zoom_source_bounds(origin, size, extent, maximum);
+                for a in 0..2 {
+                    assert!(start[a] <= origin[a]);
+                    assert!(start[a] + padded[a] >= origin[a] + size[a]);
+                    assert!(start[a] + padded[a] <= extent[a]);
+                }
+                if (start, padded) != (origin, size) {
+                    assert!(u64::from(padded[0]) * u64::from(padded[1]) * 16 <= maximum);
+                }
+            }
+        }
     }
 }

@@ -71,6 +71,9 @@ pub struct TrueRenderer {
     folder: PathBuf,
     generation: u64,
     cache: HashMap<(String, PreviewRequest), CachedImage>,
+    // A decoded bitmap is independent of the RAW preference. Keep its input
+    // identity for this observed revision, including after RAM eviction.
+    bitmap_inputs: HashMap<String, (String, tr_core::decoder::RawEngine)>,
     presenter: tr_render::presenter::Presenter,
     pending_images: HashSet<(String, PreviewRequest)>,
     quality_overrides: HashMap<String, PreviewQuality>,
@@ -265,6 +268,7 @@ impl TrueRenderer {
             folder: folder.clone(),
             generation: 0,
             cache: HashMap::new(),
+            bitmap_inputs: HashMap::new(),
             presenter,
             pending_images: HashSet::new(),
             quality_overrides: HashMap::new(),
@@ -473,6 +477,7 @@ impl TrueRenderer {
             .store(self.generation, Ordering::Relaxed);
         self.cache.clear();
         self.watched_sources.clear();
+        self.bitmap_inputs.clear();
         self.source_status.clear();
         self.source_monitor.watch(self.generation, vec![]);
         self.presenter.clear();
@@ -550,7 +555,7 @@ impl TrueRenderer {
     }
     fn preview_request_for_mode(&self, item: &Item, edge: u32, original: bool) -> PreviewRequest {
         PreviewRequest {
-            raw_wb: if original {
+            raw_wb: if original || self.bitmap_input_engine(item).is_some() {
                 Default::default()
             } else {
                 self.editing
@@ -573,15 +578,10 @@ impl TrueRenderer {
                         }
                     })
             },
-            raw_engine: self
-                .editing
-                .entries
-                .get(&item.id)
-                .and_then(|entry| entry.loaded.as_ref())
-                .filter(|saved| saved.generation > 0)
-                .map_or(self.service.cache.settings().raw_engine, |saved| {
-                    saved.recipe.raw_engine
-                }),
+            raw_engine: self.bitmap_input_engine(item).unwrap_or_else(|| {
+                self.photo_recipe_engine(item)
+                    .unwrap_or(self.service.cache.settings().raw_engine)
+            }),
             quality: self.quality(item),
             edge,
         }
@@ -1081,16 +1081,62 @@ impl TrueRenderer {
     }
     fn apply_settings(&mut self) {
         let old = self.service.cache.settings();
-        let restart = old.raw_engine != self.cache_settings.raw_engine
-            || old.quality != self.cache_settings.quality
+        let engine_changed = old.raw_engine != self.cache_settings.raw_engine;
+        let previous: HashMap<_, _> = if engine_changed {
+            self.state
+                .items
+                .iter()
+                .map(|item| {
+                    (
+                        item.id.clone(),
+                        self.preview_request_for_mode(item, 0, false),
+                    )
+                })
+                .collect()
+        } else {
+            HashMap::new()
+        };
+        let restart = old.quality != self.cache_settings.quality
             || old.folder_loading != self.cache_settings.folder_loading;
-        if self.cache_settings.raw_engine != self.service.cache.settings().raw_engine {
-            self.invalidate_previews();
-        }
         self.service.cache.configure(self.cache_settings.clone());
+        if engine_changed {
+            self.refresh_unsaved_edit_engines();
+        }
         if restart {
             self.begin_folder_loading();
             self.start_folder_preparation(true);
+        } else if engine_changed {
+            self.refresh_engine_preparation(&previous);
+        }
+    }
+    fn bitmap_input_engine(&self, item: &Item) -> Option<tr_core::decoder::RawEngine> {
+        self.bitmap_inputs
+            .get(&item.id)
+            .filter(|(observation, _)| observation == &item.observation)
+            .map(|(_, engine)| *engine)
+    }
+    fn photo_recipe_engine(&self, item: &Item) -> Option<tr_core::decoder::RawEngine> {
+        let entry = self.editing.entries.get(&item.id)?;
+        let saved = entry.loaded.as_ref()?;
+        (saved.generation > 0 || entry.dirty() || entry.pending)
+            .then(|| entry.draft.as_ref().unwrap_or(&saved.recipe).raw_engine)
+    }
+    fn remember_bitmap_input(&mut self, id: &str, request: PreviewRequest, info: &RasterInfo) {
+        // Use the decoder's format, never a filename or an embedded RAW JPEG.
+        if matches!(
+            info.format.to_ascii_uppercase().as_str(),
+            "JPEG" | "PNG" | "TIFF" | "FITS" | "HEIF" | "HEIC" | "AVIF" | "GIF" | "BMP"
+        ) && let Some(item) = self
+            .state
+            .items
+            .iter()
+            .chain(self.comparison.slots.iter().flatten())
+            .chain(self.photo_menu.extra.values())
+            .find(|item| item.id == id)
+            && self.bitmap_input_engine(item).is_none()
+        {
+            self.bitmap_inputs
+                .insert(id.into(), (item.observation.clone(), request.raw_engine));
         }
     }
     fn set_quality(&mut self, quality: PreviewQuality) {
@@ -1157,6 +1203,7 @@ impl TrueRenderer {
         self.promoted.clear();
         self.requested_at.clear();
         self.cache.retain(|(id, _), _| !changed.contains(id));
+        self.bitmap_inputs.retain(|id, _| !changed.contains(id));
         self.prefetched_this_view
             .retain(|(id, _)| !changed.contains(id));
         self.presenter.invalidate_sources(&sources);
@@ -1402,6 +1449,7 @@ impl TrueRenderer {
                     match *result {
                         Ok(decoded) => {
                             self.source_status.remove(&id);
+                            self.remember_bitmap_input(&id, request, &decoded.info);
                             self.cache.insert(
                                 (id, request),
                                 CachedImage {
@@ -1811,10 +1859,11 @@ impl TrueRenderer {
         let saved = self
             .state
             .current_item()
+            .filter(|item| self.bitmap_input_engine(item).is_none())
             .and_then(|item| self.editing.entries.get(&item.id))
             .and_then(|entry| entry.loaded.as_ref())
             .filter(|edit| edit.generation > 0);
-        let engine = saved.map_or(settings.raw_engine, |edit| edit.recipe.raw_engine);
+        let engine = settings.raw_engine;
         let name = match engine {
             tr_core::decoder::RawEngine::Apple => "Apple RAW",
             tr_core::decoder::RawEngine::LibRawBilinear => "LibRaw bilinear",
@@ -1834,12 +1883,14 @@ impl TrueRenderer {
                     ui.spacing_mut().item_spacing.x = 7.;
                     ui.label(RichText::new("RAW").size(11.).color(MUTED));
                     ui.label(RichText::new(name).size(13.).color(TEXT));
+                    if let Some(saved) = saved.filter(|edit| edit.recipe.raw_engine != engine) {
+                        ui.label(RichText::new(localized_format!(lang, "Foto: {}", "Photo: {}", lang.text(saved.recipe.raw_engine.label()))).size(11.).color(AMBER));
+                    }
                 });
             })
             .response
             .on_hover_text(format!("{}: {}\n{}", lang.text("Motore RAW"), lang.text(engine.label()),
-                if saved.is_some() {lang.text("Motore salvato nella ricetta della foto.")}
-                else {lang.text("Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni.")}));
+                lang.text("Motore selezionato e applicato. Il calcolo CPU/GPU del viewer si configura in Prestazioni.")));
     }
 
     fn search_box(&mut self, ui: &mut egui::Ui, width: f32) {
@@ -3279,6 +3330,7 @@ impl TrueRenderer {
                     provisional,
                     live_edit,
                     photographic: edited || proof,
+                    refining: completeness == tr_core::preview::Completeness::Refining,
                 },
             );
             if !image.scientific() && !self.editing.show_original {
@@ -5556,7 +5608,7 @@ mod settings_regressions {
             let generation = app.generation;
             app.start_cache_action(true); // exact action used by Applica e salva
             assert!(!app.scanning, "Saving preferences must not invent a scan");
-            assert_eq!(app.generation, generation + 1);
+            assert_eq!(app.generation, generation);
             settle(&mut app, &ctx, true);
             assert_eq!(app.state.current, current);
             assert_eq!(app.state.selected, selected);
@@ -5586,7 +5638,7 @@ mod settings_regressions {
             .find(|e| *e != app.cache_settings.raw_engine)
             .unwrap();
         app.start_cache_action(true);
-        assert_eq!(app.generation, generation + 1);
+        assert_eq!(app.generation, generation);
         settle(&mut app, &ctx, false); // consume maintenance only
         assert!(app.scanning, "A pending scan must await its own result");
         settle(&mut app, &ctx, true);

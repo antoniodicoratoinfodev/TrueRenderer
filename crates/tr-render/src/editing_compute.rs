@@ -216,7 +216,7 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
     )?;
     let memory = tr_core::budget::MemoryBudget::new(64 * 1024 * 1024);
     let gpu = tr_core::budget::MemoryBudget::new(64 * 1024 * 1024);
-    let mut renderer = crate::resident_compute::GpuFilter::new(device.clone());
+    let renderer = crate::resident_compute::GpuFilter::new(device.clone());
     for case in 0..16 {
         let mut recipe = EditRecipe::neutral(Default::default());
         recipe.process_version = 3;
@@ -344,8 +344,20 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
             },
         ] {
             let mut working = memory.try_reserve(8 * 1024 * 1024).unwrap();
-            let mut frame =
-                renderer.render_edit(&levels, region, &memory, &gpu, &mut working, Some(&edit))?;
+            let mut frame = if case == 0 {
+                renderer.render_edit(&levels, region, &memory, &gpu, &mut working, Some(&edit))?
+            } else {
+                // Subsequent drafts must use resident, unedited input. Missing
+                // input is an error here, never a hidden re-upload on the UI.
+                renderer.render_resident_edit(
+                    &levels,
+                    region,
+                    &memory,
+                    &gpu,
+                    &mut working,
+                    Some(&edit),
+                )?
+            };
             frame.submit(queue);
             let actual = crate::preview_compute::read_display(device, queue, &frame)?;
             let expected = edit.render(&levels, region)?.to_display();

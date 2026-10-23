@@ -141,7 +141,11 @@ fn adjustment_default<Num: egui::emath::Numeric>(
         let (number, slider) = ui
             .horizontal(|ui| {
                 let width = ui.available_width();
-                let number_width = if suffix == " K" { 72. } else { 64. };
+                let number_font = egui::TextStyle::Monospace.resolve(ui.style());
+                let digit_width = ui.fonts_mut(|fonts| fonts.glyph_width(&number_font, '0'));
+                let number_width = 64. + digit_width * suffix.chars().count() as f32;
+                let number_chars = ((64. - 2. * ui.spacing().button_padding.x - 2.) / digit_width)
+                    .floor() as usize;
                 // Round inward: fractional text layout must not widen a fixed inspector.
                 let label_width = (width * 0.36).clamp(72., 116.).floor();
                 let slider_width = (width - label_width - number_width - 16.).max(24.).floor();
@@ -199,6 +203,21 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                             egui::DragValue::new(value)
                                 .range(range.clone())
                                 .speed(speed)
+                                // DragValue's natural text width can exceed add_sized.
+                                // Bound display precision only; keep stored values,
+                                // drag precision and typed input unchanged.
+                                .custom_formatter(move |value, decimals| {
+                                    for maximum in (0..=*decimals.end()).rev() {
+                                        let text = egui::emath::format_with_decimals_in_range(
+                                            value,
+                                            (*decimals.start()).min(maximum)..=maximum,
+                                        );
+                                        if text.chars().count() <= number_chars || maximum == 0 {
+                                            return text;
+                                        }
+                                    }
+                                    unreachable!()
+                                })
                                 .suffix(suffix),
                         )
                         .labelled_by(label_id)
@@ -321,6 +340,8 @@ type ProofCapture = (Vec<u8>, [u32; 2], [f32; 4], &'static str);
 mod continuity_probe;
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod continuity_tests;
+mod pan_probe;
+mod zoom_probe;
 type ThumbnailOutcome = (
     u64,
     String,
@@ -348,6 +369,8 @@ pub(super) struct EditingUi {
     pub(super) layers: layers::Controls,
     pub(in crate::ui) looks: looks::Controls,
     continuity: continuity_probe::Probe,
+    pan: pan_probe::Probe,
+    zoom: zoom_probe::Probe,
     pub(in crate::ui) clipboard: transfer::Clipboard,
     pub(in crate::ui) crop: Option<crop::Session>,
     pub(in crate::ui) wb_pending: bool,
@@ -366,6 +389,7 @@ pub(super) struct EditingUi {
     refinement_cancel: Option<Arc<std::sync::atomic::AtomicBool>>,
     interactive_millis: Arc<std::sync::atomic::AtomicU64>,
     changed_at: HashMap<String, Instant>,
+    changed_gesture: HashMap<String, f64>,
     revision: u64,
     pub(super) raw_wb_anchor: HashMap<String, tr_core::decoder::RawWhiteBalance>,
     pub(super) display_wb: HashMap<String, tr_core::decoder::RawWhiteBalance>,
@@ -421,6 +445,8 @@ impl Default for EditingUi {
             layers: Default::default(),
             looks: Default::default(),
             continuity: Default::default(),
+            pan: Default::default(),
+            zoom: Default::default(),
             clipboard: transfer::Clipboard::default(),
             crop: None,
             wb_pending: false,
@@ -439,6 +465,7 @@ impl Default for EditingUi {
             refinement_cancel: None,
             interactive_millis: Arc::new(std::sync::atomic::AtomicU64::new(0)),
             changed_at: HashMap::new(),
+            changed_gesture: HashMap::new(),
             revision: 0,
             raw_wb_anchor: HashMap::new(),
             display_wb: HashMap::new(),
@@ -625,6 +652,12 @@ impl TrueRenderer {
         if self.editing.continuity.active() && !self.edit_continuity_tick(&item) {
             return;
         }
+        if self.editing.pan.active() && !self.pan_continuity_tick(&item) {
+            return;
+        }
+        if self.editing.zoom.active() && !self.zoom_continuity_tick(&item) {
+            return;
+        }
         match self.smoke_stage {
             0 if !self.scanning => {
                 self.editing.smoke_source_digest = tr_platform::snapshot(&item.path)
@@ -642,7 +675,13 @@ impl TrueRenderer {
                     extend: false,
                 });
                 if args.iter().any(|arg| arg == "--edit-zoom-smoke") {
-                    self.state.transform.set_zoom(1.);
+                    let zoom = args
+                        .iter()
+                        .position(|a| a == "--pan-zoom")
+                        .and_then(|i| args.get(i + 1))
+                        .and_then(|v| v.parse().ok())
+                        .unwrap_or(1.);
+                    self.state.transform.set_zoom(zoom);
                 }
                 self.smoke_stage = 1;
             }
@@ -713,6 +752,13 @@ impl TrueRenderer {
                     }
                     recipe.temperature = 25.;
                     recipe.tint = -8.;
+                    if args.iter().any(|a| a == "--edit-pixel-smoke") {
+                        recipe.curve = vec![
+                            CurvePoint { x: 0., y: 0. },
+                            CurvePoint { x: 0.4, y: 0.4 },
+                            CurvePoint { x: 1., y: 1. },
+                        ];
+                    }
                     if args.iter().any(|a| a == "--advanced-edit-smoke") {
                         recipe = crate::verify_advanced::recipe(recipe.raw_engine);
                     }
@@ -849,6 +895,20 @@ impl TrueRenderer {
                 }
                 let rendered = self.editing.previews.get(&item.id).is_some_and(|preview| {
                     (!proof_smoke || (preview.proof && preview.image.base_level() == 0))
+                        && (!args.iter().any(|a| a == "--edit-pixel-smoke") || {
+                            let edge = if self.state.transform.zoom.is_some() {
+                                0
+                            } else {
+                                self.viewer_prefetch_edge
+                            };
+                            self.cache
+                                .get(&self.image_key(&item, edge))
+                                .is_some_and(|input| {
+                                    preview.source == input.pyramid.id()
+                                        && (!args.iter().any(|a| a == "--edit-zoom-smoke")
+                                            || preview.image.base_level() == 0)
+                                })
+                        })
                         && self
                             .cache
                             .values()
@@ -867,13 +927,25 @@ impl TrueRenderer {
                         .is_some_and(|start| start.elapsed() > Duration::from_secs(1))
                     && self.presenter.is_idle()
                 {
+                    if args.iter().any(|a| a == "--zoom-continuity-smoke")
+                        && !self.editing.zoom.done()
+                    {
+                        self.zoom_continuity_tick(&item);
+                        return;
+                    }
+                    if args.iter().any(|a| a == "--pan-continuity-smoke")
+                        && !self.editing.pan.done()
+                    {
+                        self.pan_continuity_tick(&item);
+                        return;
+                    }
                     if args.iter().any(|a| a == "--edit-continuity-smoke")
                         && !self.editing.continuity.done()
                     {
                         self.edit_continuity_tick(&item);
                         return;
                     }
-                    if proof_smoke {
+                    if proof_smoke || args.iter().any(|a| a == "--edit-pixel-smoke") {
                         let image = &self.editing.previews[&item.id].image;
                         let Some(capture) = self
                             .presenter
@@ -1008,7 +1080,7 @@ impl TrueRenderer {
                 let report = serde_json::json!({
                     "application":"TrueRenderer",
                     "version":env!("CARGO_PKG_VERSION"),
-                    "passed":(!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!proof_smoke || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
+                    "passed":(!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!(proof_smoke || args.iter().any(|a|a=="--edit-pixel-smoke")) || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
                     "raw_wb_observed":wb_observed,
                     "native_wb_analysis":self.editing.wb_smoke_result,
                     "timeout_seconds":timeout.as_secs(),
@@ -1163,6 +1235,22 @@ impl TrueRenderer {
             self.editing.entries.entry(id).or_default().loading = true;
         }
     }
+    pub(super) fn refresh_unsaved_edit_engines(&mut self) {
+        let engine = self.service.cache.settings().raw_engine;
+        for entry in self.editing.entries.values_mut() {
+            // A durable revision deliberately pins its development engine.
+            // Only pristine recipes follow the applied default.
+            if !entry.pending
+                && !entry.dirty()
+                && let Some(saved) = &mut entry.loaded
+                && saved.generation == 0
+                && saved.recipe.is_neutral()
+            {
+                saved.recipe.raw_engine = engine;
+                entry.draft = Some(saved.recipe.clone());
+            }
+        }
+    }
     pub(super) fn edit_result(&mut self, id: String, result: Result<LoadedEdit, String>) {
         let previous = self.editing.entries.get(&id).and_then(|e| e.draft.clone());
         if self.sample_item_id.as_deref() == Some(id.as_str()) {
@@ -1175,7 +1263,10 @@ impl TrueRenderer {
         entry.loading = false;
         entry.pending = false;
         match result {
-            Ok(saved) => {
+            Ok(mut saved) => {
+                if saved.generation == 0 && saved.recipe.is_neutral() {
+                    saved.recipe.raw_engine = self.service.cache.settings().raw_engine;
+                }
                 if !entry.dirty() || entry.draft.is_none() {
                     entry.draft = Some(saved.recipe.clone());
                 }
@@ -1206,10 +1297,7 @@ impl TrueRenderer {
         let (Some(saved), Some(recipe)) = (&entry.loaded, &entry.draft) else {
             return;
         };
-        let (expected_generation, mut recipe) = (saved.generation, recipe.clone());
-        if expected_generation == 0 {
-            recipe.raw_engine = self.service.cache.settings().raw_engine;
-        }
+        let (expected_generation, recipe) = (saved.generation, recipe.clone());
         if let Err(error) = recipe.validate() {
             self.editing.entries.get_mut(id).unwrap().error = Some(format!("{error:#}"));
             return;
@@ -1318,6 +1406,11 @@ impl TrueRenderer {
         }
         self.editing.revision = self.editing.revision.wrapping_add(1);
         self.editing.changed_at.insert(id.into(), Instant::now());
+        if let Some(gesture) = self.context.input(|i| i.pointer.press_start_time()) {
+            self.editing.changed_gesture.insert(id.into(), gesture);
+        } else {
+            self.editing.changed_gesture.remove(id);
+        }
         self.editing.entries.get_mut(id).unwrap().draft = Some(draft);
         self.sample = None;
         self.sample_item_id = None;
@@ -1475,13 +1568,14 @@ impl TrueRenderer {
             let can_redo = saved.can_redo;
             let mut changed = false;
             let mut commit = false;
+            let input_request = self.preview_request(item, 0);
             let native_size = self
                 .cache
                 .iter()
                 .find(|((id, request), _)| {
                     id == &item.id
-                        && request.raw_engine == draft.raw_engine
-                        && request.raw_wb == draft.raw_wb
+                        && request.raw_engine == input_request.raw_engine
+                        && request.raw_wb == input_request.raw_wb
                 })
                 .map(|(_, cached)| cached.pyramid.source_size());
             let short = ui.ctx().content_rect().height() < 500.;
@@ -2321,7 +2415,12 @@ impl TrueRenderer {
     pub(super) fn edit_interactive(&self, id: &str) -> bool {
         let active = self.editing.changed_at.get(id).is_some_and(|changed| {
             changed.elapsed() < Duration::from_millis(120)
-                || self.context.input(|i| i.pointer.any_down())
+                || self.context.input(|i| {
+                    i.pointer.any_down()
+                        && i.pointer.press_start_time().is_some_and(|gesture| {
+                            self.editing.changed_gesture.get(id) == Some(&gesture)
+                        })
+                })
         });
         if active {
             self.context
@@ -2339,6 +2438,16 @@ impl TrueRenderer {
         let entry = self.editing.entries.get(id)?;
         let saved = entry.loaded.as_ref()?;
         let recipe = self.view_recipe(id)?;
+        let input_wb = if self
+            .known_items()
+            .find(|item| item.id == id)
+            .is_some_and(|item| self.bitmap_input_engine(item).is_some())
+        {
+            // RAW-only WB in a copied recipe does not reinterpret bitmap pixels.
+            recipe.raw_wb
+        } else {
+            input_wb
+        };
         if self.crop_active(id)
             || self.editing.show_original
             || self.output_proof_for(id)
@@ -2359,7 +2468,7 @@ impl TrueRenderer {
         edit.max_edge = self
             .presenter
             .interactive_edit_edge(&edit)
-            .min(self.viewer_prefetch_edge.clamp(512, 2048));
+            .min(self.viewer_prefetch_edge.saturating_mul(2).clamp(512, 2048));
         Some(edit)
     }
     // Only the display may consume an intermediate complete draft. Samplers,
@@ -2455,6 +2564,80 @@ mod smoke_deadline_tests {
 mod progressive_tests {
     use super::*;
     use crate::ui::settings_regressions::{app, settle};
+    #[test]
+    fn only_the_gesture_that_changed_the_recipe_keeps_the_draft_interactive() {
+        for engine in tr_core::decoder::RawEngine::choices() {
+            let (_dir, ctx, mut app) = app();
+            settle(&mut app, &ctx, true);
+            let item = app.state.items[0].clone();
+            let recipe = EditRecipe::neutral(engine);
+            app.edit_result(
+                item.id.clone(),
+                Ok(LoadedEdit {
+                    asset_id: item.id.clone(),
+                    source_digest: item.digest.clone(),
+                    generation: 1,
+                    revision: 1,
+                    recipe: recipe.clone(),
+                    can_undo: false,
+                    can_redo: false,
+                }),
+            );
+            let source = ImageLevels::from_source(
+                tr_core::color::LinearImage::new(64, 32, vec![[0.2, 0.3, 0.4, 1.]; 2048]).unwrap(),
+                PreviewRequest::full(),
+            )
+            .unwrap();
+            let pointer = |pressed| egui::Event::PointerButton {
+                pos: egui::pos2(10., 10.),
+                button: egui::PointerButton::Primary,
+                pressed,
+                modifiers: egui::Modifiers::NONE,
+            };
+            for (time, events, change, interactive) in [
+                (1., vec![pointer(true)], true, true),
+                (2., vec![], false, true), // pause while still dragging a slider
+                (3., vec![pointer(false)], false, false),
+                (4., vec![pointer(true)], false, false), // tab, panel, zoom or pan
+                (5., vec![], false, false),
+                (6., vec![pointer(false)], false, false),
+            ] {
+                let mut output = ctx.run_ui(
+                    egui::RawInput {
+                        time: Some(time),
+                        events,
+                        ..Default::default()
+                    },
+                    |_| {
+                        if change {
+                            let mut draft = recipe.clone();
+                            draft.exposure_ev = 0.7;
+                            draft.curve = vec![
+                                CurvePoint { x: 0., y: 0. },
+                                CurvePoint { x: 0.4, y: 0.6 },
+                                CurvePoint { x: 1., y: 1. },
+                            ];
+                            app.apply_edit_draft(&item.id, draft);
+                        }
+                        app.editing
+                            .changed_at
+                            .insert(item.id.clone(), Instant::now() - Duration::from_secs(1));
+                        assert_eq!(
+                            app.edit_interactive(&item.id),
+                            interactive,
+                            "{engine:?}, time={time}"
+                        );
+                        assert_eq!(
+                            app.live_edit_for(&item.id, &item.digest, &source, recipe.raw_wb)
+                                .is_some(),
+                            interactive
+                        );
+                    },
+                );
+                output.textures_delta.clear();
+            }
+        }
+    }
     #[test]
     fn raw_wb_gesture_coalesces_native_requests_and_keeps_saved_recipe_exact() {
         for engine in tr_core::decoder::RawEngine::choices() {
@@ -3076,6 +3259,38 @@ mod shortcut_tests {
                 .recipe
                 .raw_engine,
             active_engine
+        );
+    }
+
+    #[test]
+    fn changing_the_default_does_not_reinterpret_an_unsaved_raw_draft() {
+        let (_dir, ctx, mut app) = app();
+        settle(&mut app, &ctx, true);
+        let item = app.state.items[0].clone();
+        app.ensure_edit_loaded(&item);
+        settle_edits(&mut app, &ctx, &item.id);
+        let mut draft = app.editing.entries[&item.id].draft.clone().unwrap();
+        draft.exposure_ev = 0.5;
+        if draft.raw_engine == tr_core::decoder::RawEngine::Apple {
+            draft.raw_wb.apple_temperature = 4500;
+        } else {
+            draft.raw_wb.red = 1250;
+        }
+        app.apply_edit_draft(&item.id, draft.clone());
+        app.cache_settings.raw_engine = tr_core::decoder::RawEngine::choices()
+            .find(|engine| *engine != draft.raw_engine)
+            .unwrap();
+        app.apply_settings();
+        assert_eq!(app.preview_request(&item, 0).raw_engine, draft.raw_engine);
+        app.commit_edit(&item.id);
+        settle_edits(&mut app, &ctx, &item.id);
+        assert_eq!(
+            app.editing.entries[&item.id]
+                .loaded
+                .as_ref()
+                .unwrap()
+                .recipe,
+            draft
         );
     }
 

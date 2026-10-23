@@ -1,0 +1,151 @@
+{
+  "date": "2026-10-23",
+  "scope": "Local Windows GNU installation and startup; no release or R/SF gate qualification",
+  "toolchain": "Rust 1.98.1 x86_64-pc-windows-gnu; MinGW-w64 POSIX GCC 14.3.0",
+  "build": "workspace optimized dev build, then corrected GNU worker rebuilt",
+  "smart_app_control": "Disabled by user before installation; observed policy state 0; no security setting changed by agent",
+  "worker_runtime": "Static libstdc++ and winpthread; PE imports contain Windows system DLLs only",
+  "protocol_cases": 8,
+  "native_smoke": {
+    "adapter": "NVIDIA GeForce RTX 3060 Â· Vulkan",
+    "application": "TrueRenderer",
+    "compute": {
+      "cpu_edit_frames": 0,
+      "cpu_frames": 56,
+      "fallbacks": 0,
+      "gpu_edit_frames": 0,
+      "gpu_frames": 3,
+      "last_fallback": "",
+      "wide_frames": 1,
+      "wide_gpu_bytes": 1955104,
+      "wide_peak_frames": 1,
+      "wide_peak_gpu_bytes": 1955104,
+      "wide_peak_memory_bytes": 5865312,
+      "wide_reprojections": 0
+    },
+    "decode_errors": {},
+    "elapsed_seconds": 9.158721923828125,
+    "frames": 121,
+    "gpu": "GPU/CPU: 1593672 campioni Â· errore max 6.10e-5 Â· filtro e uscita verificati",
+    "images": 12,
+    "passed": true,
+    "pixels_per_point": 1.0,
+    "presentation_errors": false,
+    "sampling": "cpu-pyramid-lanczos3-guard10-mitchell-alpha-area-triangle-v1",
+    "scope": "native R0 corpus smoke; not color/display/sandbox qualification",
+    "screenshots": [
+      "04-radial-1to1",
+      "01-grid",
+      "07-grid-small",
+      "03-compare",
+      "02-preview",
+      "08-grid-large",
+      "05-radial-fit",
+      "06-radial-37percent"
+    ],
+    "sqlite": "3.53.2",
+    "status": "Cartella pronta Â· Anteprima",
+    "surface": "requested=None; effective=Bgra8Unorm; color_space=Srgb; SDR only; physical panel/link bits=not observed; supported=Some([SurfaceFormatCapabilities { format: Bgra8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgba8UnormSrgb, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Bgra8Unorm, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgba8Unorm, color_spaces: SurfaceColorSpaces(SRGB) }, SurfaceFormatCapabilities { format: Rgb10a2Unorm, color_spaces: SurfaceColorSpaces(SRGB) }])",
+    "version": "0.1.5",
+    "worker_pids": [],
+    "worker_transports": [
+      "Cache disco Â· fp32 Â· Anteprima",
+      "LPAC senza capacitÃ  + Job Object Â· pipe"
+    ]
+  },
+  "sampling_screenshots_passed": true,
+  "evidence": [
+    {
+      "path": "var/windows-startup-20261023-021458/reports/01-grid-sampling.json",
+      "sha256": "79feaabcc3130077e8617d4bde1312dd5471eb3540f00d5c99bbece68ccc4294"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/01-grid.png",
+      "sha256": "785a5aee024d38389db90a3fb9d45add03f7cc31614c22d7985730ac3a710da7"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/02-preview-sampling.json",
+      "sha256": "860cbe89d84c452999caaa75563d56342227fca2d4c5b9b827f0916da2c55eb2"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/02-preview.png",
+      "sha256": "a95d65f8e7b526e8118558009b396d79f57f98757310a8a096c928f375eddd83"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/03-compare-sampling.json",
+      "sha256": "023b5c2870bd7730679b07ccfcef02c2f4a4d85276ea228e67bae884e40711d0"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/03-compare.png",
+      "sha256": "8c941ae050de18f3f7a4c58addc117898f94350935bd373a8680db03028bbc18"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/04-radial-1to1-sampling.json",
+      "sha256": "7d07c4174266642c1f460449dc37456550af9b5131c106ab21e5c08ddd7fed72"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/04-radial-1to1.png",
+      "sha256": "7f7bbee7e20203375f8f60c1298761a6a7086f5f3d290dd6ff94cc2261d61966"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/05-radial-fit-sampling.json",
+      "sha256": "d3676d7057ff44aa90240a93c42df3af15ab563fe0413d59a5edadb90e129dff"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/05-radial-fit.png",
+      "sha256": "be058e8a0e799825efa1821a495df5c7b5d7ecc170c5fed957f56c4efd182efb"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/06-radial-37percent-sampling.json",
+      "sha256": "b276d16ffd4eb0be620f2f17c0c857f33184fae26b7d0956e798b742e6cb56fc"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/06-radial-37percent.png",
+      "sha256": "c9cfa028ede6413652f00fc1470c64aacd5e80d626d39c5132d49ea49f55d4f6"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/07-grid-small-sampling.json",
+      "sha256": "58b3cb1abe68e68de36bf39fec7204acb2d3cf385832870daa04f5faff628b18"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/07-grid-small.png",
+      "sha256": "a9348d6f45bbe0bb70ef25766993b8c21d208228cc5a300c30e39c2b55439db3"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/08-grid-large-sampling.json",
+      "sha256": "f31badfa26a2a816b443941b788a4082fab97904c59bf52c800a4c9f8890a98d"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/08-grid-large.png",
+      "sha256": "67edd36be6c9ab3c26730fc7f9551ec6999ce341abb5cb21bcb3eb402ba09a98"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/sampling-presentation-windows.json",
+      "sha256": "4b2be1cbdbf5954ed18c6f3f7c91a04fb69b122a4e6a780654ade4668e69bac2"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/smoke-windows.json",
+      "sha256": "2fcc61cfd182f2aef8d0868beefdc81596c800570fedffca13500caf6f720bc4"
+    },
+    {
+      "path": "var/windows-startup-20261023-021458/reports/worker-protocol.json",
+      "sha256": "992f6c683ee8d724162e586fa03c5cd467b3f366656a7342fcd9f1a2a8aa4fd4"
+    }
+  ],
+  "installation": [
+    {
+      "path": "dist/TrueRenderer-windows/truerenderer.exe",
+      "sha256": "36b0f32031c381edc8ae21fd12684a1e122515b1ab27a854dca899427920584a"
+    },
+    {
+      "path": "dist/TrueRenderer-windows/tr-worker.exe",
+      "sha256": "ae6c00560add0771d90eb3fd1e172e7bc8b250ac888e9efecaf2dfed5af6aa66"
+    }
+  ],
+  "limitations": [
+    "No public signing or SAC-enabled startup validation",
+    "No full verify.sh campaign",
+    "No macOS XPC integration on this Windows host; build change guarded to Windows GNU",
+    "No broad photographic, accessibility or performance qualification"
+  ]
+}
