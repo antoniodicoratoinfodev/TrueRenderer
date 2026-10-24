@@ -35,6 +35,10 @@ pub(super) struct Probe {
     cold_done: bool,
     cold_frames: Vec<serde_json::Value>,
     compute_before: Option<serde_json::Value>,
+    detail_dwell: Option<Instant>,
+    detail_before_zoom: Option<serde_json::Value>,
+    first_zoom_at: Option<Instant>,
+    first_zoom_ready_ms: Option<f64>,
 }
 impl Probe {
     pub(super) fn active(&self) -> bool {
@@ -67,6 +71,42 @@ impl TrueRenderer {
                 if !exact {
                     return false;
                 }
+                if std::env::args().any(|a| a == "--detail-prefetch-smoke") {
+                    let args: Vec<_> = std::env::args().collect();
+                    let dwell_ms = args
+                        .iter()
+                        .position(|a| a == "--detail-prefetch-dwell-ms")
+                        .and_then(|i| args.get(i + 1))
+                        .and_then(|s| s.parse::<u64>().ok())
+                        .unwrap_or(1500);
+                    let dwell = self
+                        .editing
+                        .zoom
+                        .detail_dwell
+                        .get_or_insert_with(Instant::now);
+                    // Same fixed observation interval in enabled/disabled runs.
+                    // Never wait for speculative completion to make it pass.
+                    if dwell.elapsed() < Duration::from_millis(dwell_ms) {
+                        self.context
+                            .request_repaint_after(Duration::from_millis(25));
+                        return false;
+                    }
+                    let native = self.cache.get(&self.image_key(item, 0));
+                    let prepared = self.editing.prepared.get(&item.id);
+                    self.editing.zoom.detail_before_zoom = Some(serde_json::json!({
+                        "native_ready":native.is_some(),
+                        "native_pending":self.pending_images.contains(&self.image_key(item, 0)),
+                        "edit_ready":native.zip(prepared).is_some_and(|(n, p)| p.source == n.pyramid.id()),
+                        "visible_fit_base":image.base_level(),
+                        "decode_jobs":self.service.cache.stats().decode_jobs,
+                        "reserved_bytes":self.service.cache.memory.usage().reserved,
+                        "memory_limit_bytes":self.service.cache.memory.usage().limit,
+                        "disabled":std::env::args().any(|a| a == "--detail-prefetch-off-smoke"),
+                        "fixed_fit_observation_ms":dwell_ms,
+                        "editing":self.edit_work_statistics(),
+                    }));
+                }
+                self.editing.zoom.first_zoom_at = Some(Instant::now());
                 self.editing.zoom.cold_started = true;
                 self.editing.zoom.cold_frames.push(serde_json::json!({"phase":"fit","base_level":image.base_level(),"exact":exact}));
                 self.state.transform.set_zoom(1.);
@@ -76,6 +116,11 @@ impl TrueRenderer {
             self.editing.zoom.cold_frames.push(serde_json::json!({"phase":"load","base_level":image.base_level(),"exact":exact,"held":held}));
             if exact && image.base_level() == 0 {
                 self.editing.zoom.cold_done = true;
+                self.editing.zoom.first_zoom_ready_ms = self
+                    .editing
+                    .zoom
+                    .first_zoom_at
+                    .map(|t| t.elapsed().as_secs_f64() * 1000.);
             } else if held {
                 return false;
             } else {
@@ -167,6 +212,9 @@ impl TrueRenderer {
             "passed":passed,"steps":self.editing.zoom.steps,"frames":self.editing.zoom.frames,
             "distinct_visible_scales":distinct,"surface_checks":self.editing.zoom.pixels,
             "cold_fit_transition":self.editing.zoom.cold_frames,
+            "detail_before_zoom":self.editing.zoom.detail_before_zoom,
+            "first_native_zoom_ms":self.editing.zoom.first_zoom_ready_ms,
+            "decode_jobs_after_gesture":self.service.cache.stats().decode_jobs,
             "compute":self.presenter.statistics(),
             "renderer_timings":tr_render::timings::samples_since(self.editing.zoom.timing_start),"source_size":image.source_size(),
             "compute_before":self.editing.zoom.compute_before,

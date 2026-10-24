@@ -121,7 +121,10 @@ fn run() -> Result<()> {
             "Develop smoke requires an isolated --root and --data"
         );
     }
-    if args.iter().any(|a| a == "--cache-reopen-smoke") {
+    if args
+        .iter()
+        .any(|a| a == "--cache-reopen-smoke" || a == "--folder-readiness-smoke")
+    {
         anyhow::ensure!(
             option("--root").is_some() && option("--data").is_some(),
             "Cache reopen probe requires isolated --root and --data"
@@ -133,6 +136,7 @@ fn run() -> Result<()> {
         )?;
     }
     let smoke = navigation
+        || args.iter().any(|a| a == "--folder-readiness-smoke")
         || args.iter().any(|a| a == "--cache-reopen-smoke")
         || args.iter().any(|a| a == "--folder-loading-smoke")
         || args.iter().any(|a| a == "--filesystem-smoke")

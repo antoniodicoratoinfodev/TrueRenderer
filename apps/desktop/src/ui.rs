@@ -17,6 +17,7 @@ use tr_core::{
 
 mod cache_actions;
 mod comparison;
+mod detail_prefetch;
 mod editing;
 mod explorer;
 mod export;
@@ -84,6 +85,7 @@ pub struct TrueRenderer {
     navigation_anchor: Option<usize>,
     navigation_direction: isize,
     prefetched_this_view: HashSet<(String, PreviewRequest)>,
+    detail_prefetch: detail_prefetch::DetailPrefetch,
     recently_viewed: VecDeque<String>,
     primary_demand: HashSet<String>,
     viewer_prefetch_edge: u32,
@@ -279,6 +281,7 @@ impl TrueRenderer {
             navigation_anchor: None,
             navigation_direction: 1,
             prefetched_this_view: HashSet::new(),
+            detail_prefetch: Default::default(),
             recently_viewed: VecDeque::new(),
             primary_demand: HashSet::new(),
             viewer_prefetch_edge: 2048,
@@ -656,6 +659,16 @@ impl TrueRenderer {
             c.touched = self.frame_number;
             return;
         }
+        if !self.rebuild.is_empty()
+            && self
+                .editing
+                .entries
+                .get(&item.id)
+                .is_none_or(|e| e.loaded.is_none() && e.error.is_none())
+        {
+            self.ensure_edit_loaded(item);
+            return;
+        }
         // Equivalent geometries share immediately. Smaller independent tails
         // are derived off the UI thread, with their own credits and histogram.
         let compatible = self
@@ -717,13 +730,23 @@ impl TrueRenderer {
     }
     fn background_demand(&mut self, ctx: &egui::Context) {
         if self.clearing_current_folder() {
+            self.reset_detail_prefetch();
             ctx.request_repaint_after(Duration::from_millis(50));
+            return;
+        }
+        if !self.folder_loading_blocks() && self.editing_has_priority() {
+            self.cancel_folder_edit();
+            self.reset_detail_prefetch();
+            ctx.request_repaint_after(Duration::from_millis(120));
             return;
         }
         // Neighbours must not wait for the entire folder. They share the same
         // scheduler and outrank its bulk preparation, while visible work wins.
         if !self.folder_loading_blocks() {
             self.neighbor_demand(ctx);
+            self.join_visible_folder_work();
+        } else {
+            self.reset_detail_prefetch();
         }
         self.folder_preparation_demand(ctx);
     }
@@ -734,6 +757,7 @@ impl TrueRenderer {
                 .as_ref()
                 .is_some_and(|p| !p.prefetch_enabled())
         {
+            self.reset_detail_prefetch();
             return;
         }
         if self.foreground_demand != self.demand {
@@ -758,6 +782,7 @@ impl TrueRenderer {
             self.foreground_demand.clone_from(&self.demand);
             self.navigation_changed = Instant::now();
         }
+        self.active_detail_demand(ctx);
         let delay = Duration::from_millis(tr_app::scheduler::prefetch_delay_ms(
             self.recent_latencies.make_contiguous(),
         ));
@@ -986,16 +1011,20 @@ impl TrueRenderer {
                 .values()
                 .filter(|c| !pinned.contains(&c.pyramid.id()) && counted.insert(c.pyramid.id()))
                 .map(|c| c.pyramid.byte_len())
-                .sum();
+                .sum::<usize>()
+                + self.optional_edit_bytes(&pinned);
             let memory = self.service.cache.memory.usage();
             if bytes <= limit
                 && (headroom == 0 || memory.reserved <= memory.limit.saturating_sub(headroom))
             {
                 break;
             }
+            if self.release_optional_edit(&pinned) {
+                continue;
+            }
             // Ranking the folder is only necessary when something must actually
             // be evicted, not on every idle/UI frame or successful admission.
-            let (viewers, distances) = retention.get_or_insert_with(|| {
+            let (viewers, distances, details) = retention.get_or_insert_with(|| {
                 let viewer_edge = self.prepared_viewer_edge();
                 let active_edge = self.viewer_prefetch_edge;
                 let viewers: HashSet<_> = self
@@ -1021,15 +1050,23 @@ impl TrueRenderer {
                         (self.state.items[*i].id.clone(), position.abs_diff(anchor))
                     })
                     .collect();
-                (viewers, distances)
+                let details: HashSet<_> = self
+                    .cache
+                    .iter()
+                    .filter(|(key, _)| self.detail_prefetch.contains(key))
+                    .map(|(_, cached)| cached.pyramid.id())
+                    .collect();
+                (viewers, distances, details)
             });
             let victim = self
                 .cache
                 .iter()
                 .filter(|(_, c)| !pinned.contains(&c.pyramid.id()))
-                .min_by_key(|((id, _), c)| {
+                .min_by_key(|(key, c)| {
+                    let id = &key.0;
                     let viewer = viewers.contains(&c.pyramid.id());
                     (
+                        details.contains(&c.pyramid.id()),
                         viewer,
                         viewer && self.recently_viewed.contains(id),
                         std::cmp::Reverse(if viewer {
@@ -1052,6 +1089,7 @@ impl TrueRenderer {
     }
     /// Revoke old work and presentation while preserving the catalogue and selection.
     fn invalidate_previews(&mut self) {
+        self.reset_detail_prefetch();
         self.generation += 1;
         self.service
             .generation
@@ -1465,7 +1503,14 @@ impl TrueRenderer {
                             self.trim_images(false);
                         }
                         Err(error) => {
-                            self.errors.insert(format!("{id}:{request:?}"), error);
+                            // Optional preparation must not poison a later
+                            // visible retry after resources become available.
+                            if !self.detail_prefetch.contains(&key)
+                                || self.rebuild.iter().any(|item| item.id == id)
+                                || self.promoted.get(&key).is_some_and(|p| p.visible())
+                            {
+                                self.errors.insert(format!("{id}:{request:?}"), error);
+                            }
                         }
                     }
                 }
@@ -3155,6 +3200,7 @@ impl TrueRenderer {
             0
         };
         let key = self.image_key(item, edge);
+        self.detail_prefetch.observe(item, key.1);
         if !self.cache.contains_key(&key) {
             // A prior zoom/quality must not pin an oversized fallback while the
             // replacement needs a full RAW working set. Smaller tails survive.
@@ -3846,6 +3892,10 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
     }
     fn smoke_tick(&mut self, ctx: &egui::Context) {
+        if std::env::args().any(|a| a == "--folder-readiness-smoke") {
+            self.folder_readiness_smoke(ctx);
+            return;
+        }
         if std::env::args().any(|a| a == "--cache-reopen-smoke") {
             self.cache_reopen_smoke(ctx);
             return;
@@ -4085,6 +4135,7 @@ impl eframe::App for TrueRenderer {
         self.watched_sources.clear();
         self.demand.clear();
         self.primary_demand.clear();
+        self.detail_prefetch.begin_frame();
         self.viewer_prefetch_edge = 0;
         self.demand_jobs.clear();
         self.navigation_receive(&ctx);

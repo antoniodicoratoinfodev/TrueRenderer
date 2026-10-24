@@ -63,6 +63,8 @@ def main():
     parser.add_argument("--photo", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--gesture", choices=["zoom", "pan", "edit"], required=True)
+    parser.add_argument("--edit-kind", choices=["point", "tools", "layers"], default="point")
+    parser.add_argument("--during-folder-loading", action="store_true")
     parser.add_argument("--engine", default="LibRawBilinear")
     parser.add_argument("--compute", choices=["Automatic", "Gpu", "Cpu"], default="Automatic")
     parser.add_argument("--repetitions", type=int, default=3)
@@ -73,6 +75,8 @@ def main():
     args = parser.parse_args()
     if args.repetitions < 1:
         parser.error("--repetitions must be positive")
+    if args.edit_kind != "point" and (args.gesture != "edit" or args.correctness):
+        parser.error("Tools/layers use edit performance mode; final canonical surface is checked separately")
     if args.expected_viewport and min(args.expected_viewport) < 1:
         parser.error("--expected-viewport dimensions must be positive")
     repo = Path(__file__).resolve().parents[1]
@@ -111,6 +115,10 @@ def main():
                    "--pan-zoom", "1.37" if args.gesture == "pan" else "1.0"]
         if not args.correctness:
             command += ["--interaction-performance-smoke", "--zoom-performance-smoke"]
+        if args.edit_kind != "point":
+            command.append("--advanced-edit-smoke" if args.edit_kind == "tools" else "--layers-edit-smoke")
+        if args.during_folder_loading:
+            command.append("--edit-during-folder-smoke")
         print("START", args.output.name, repeat, flush=True)
         with (root / "stdout.log").open("w") as out, (root / "stderr.log").open("w") as err:
             result = subprocess.run(command, env=env, stdout=out, stderr=err,
@@ -154,6 +162,8 @@ def main():
                "metrics": metrics(report, args.gesture) if report else None}
         results.append(row)
         manifest = {"gesture": args.gesture, "engine": args.engine, "compute": args.compute,
+                    "edit_kind": args.edit_kind,
+                    "during_folder_loading": args.during_folder_loading,
                     "profile": args.profile, "correctness": args.correctness, "visible": args.visible,
                     "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                     "photo_sha256": digest, "runs": results}

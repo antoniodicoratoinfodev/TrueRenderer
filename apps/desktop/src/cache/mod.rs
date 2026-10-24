@@ -1,6 +1,7 @@
 //! Disposable, lossless, bounded folder cache. It never contains annotations.
 mod artifact;
 mod directory;
+pub mod edited;
 mod registry;
 pub mod writer;
 pub use artifact::Lookup;

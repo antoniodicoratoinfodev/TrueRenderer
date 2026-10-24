@@ -412,7 +412,7 @@ fn recipe_change_and_cache_clear_revoke_the_refinement_phase() {
     assert!(
         app.demand_jobs
             .iter()
-            .any(|j| j.cache_only && j.request.edge == 64 && j.request.raw_wb.red == 1500)
+            .any(|j| !j.cache_only && j.request.edge == 0 && j.request.raw_wb.red == 1500)
     );
     let generation = app.generation;
     app.cancel_folder_preparation();
@@ -473,7 +473,8 @@ fn neighbors_refine_during_folder_loading_despite_a_ready_filmstrip() {
     app.pending_images.insert(next.clone());
     app.promoted
         .insert(next.clone(), PreviewPriority::NeighborPreview);
-    app.demand.remove(&next);
+    // The UI rebuilds visible demand before each background pass.
+    app.demand = app.foreground_demand.clone();
     app.demand_jobs.clear();
     let reserve = app
         .service
@@ -487,6 +488,37 @@ fn neighbors_refine_during_folder_loading_despite_a_ready_filmstrip() {
         "The pending neighbour owns credits and must not be cancelled for admission headroom"
     );
     drop(reserve);
+}
+
+#[test]
+fn source_change_during_refinement_requires_new_native_preparation() {
+    let (_dir, ctx, mut app) = app();
+    settle(&mut app, &ctx, true);
+    app.start_folder_preparation(true);
+    app.folder_load.viewer_edge = 64;
+    let item = app.rebuild[0].clone();
+    neutral(&mut app, &item);
+    let native = cached(&app, 512);
+    app.cache.insert(app.image_key(&item, 0), native);
+    app.folder_preparation_demand(&ctx);
+    assert!(app.folder_load.native_done.is_some());
+    app.apply_source_changes(vec![crate::source_monitor::Change {
+        id: item.id.clone(),
+        observation: format!("{}-changed", item.observation),
+        bytes: item.bytes,
+        available: true,
+    }]);
+    app.demand.clear();
+    app.demand_jobs.clear();
+    app.folder_preparation_demand(&ctx);
+    assert!(app.folder_load.native_done.is_none());
+    assert!(app.folder_load.refining.is_none());
+    assert_eq!(app.folder_progress().0, 0);
+    assert!(
+        app.demand_jobs
+            .iter()
+            .any(|job| job.item.id == item.id && job.request.edge == 0)
+    );
 }
 
 #[test]
@@ -724,7 +756,7 @@ fn preparation_recovers_after_a_large_request_or_pressure_reduces_the_budget() {
 }
 
 #[test]
-fn folder_probes_viewer_first_and_only_requests_native_after_a_miss() {
+fn fitted_cache_hit_does_not_complete_native_folder_preparation() {
     let (_dir, ctx, mut app) = app();
     settle(&mut app, &ctx, true);
     app.start_folder_preparation(true);
@@ -736,10 +768,10 @@ fn folder_probes_viewer_first_and_only_requests_native_after_a_miss() {
     app.folder_preparation_demand(&ctx);
     assert_eq!(app.demand_jobs.len(), 1);
     let probe = app.demand_jobs.pop().unwrap();
-    assert!(probe.cache_only);
-    assert_eq!(probe.request.edge, 64);
+    assert!(!probe.cache_only);
+    assert_eq!(probe.request.edge, 0);
     app.demand.clear();
-    app.folder_load.cache_miss = Some((item.id.clone(), probe.request));
+    app.folder_load.cache_miss = None;
     app.folder_preparation_demand(&ctx);
     assert_eq!(app.demand_jobs.len(), 1);
     assert!(!app.demand_jobs[0].cache_only);
@@ -747,9 +779,122 @@ fn folder_probes_viewer_first_and_only_requests_native_after_a_miss() {
     app.demand.clear();
     app.demand_jobs.clear();
     app.folder_load.cache_miss = None;
-    app.cache
-        .insert((item.id.clone(), probe.request), cached(&app, 64));
+    let mut fitted = cached(&app, 64);
+    let mut mip =
+        ImageLevels::from_reference_mip(fitted.pyramid.source().clone(), [512, 256], 3, true)
+            .unwrap();
+    mip.attach_lease(
+        app.service
+            .cache
+            .memory
+            .try_reserve(mip.byte_len() as u64)
+            .unwrap(),
+    );
+    fitted.pyramid = Arc::new(mip);
+    app.cache.insert(
+        (
+            item.id.clone(),
+            PreviewRequest {
+                edge: 64,
+                ..probe.request
+            },
+        ),
+        fitted,
+    );
     app.folder_preparation_demand(&ctx);
-    assert_eq!(app.folder_progress(), (1, 1, 1.));
+    assert_eq!(app.folder_progress(), (0, 1, 0.));
+    assert_eq!(app.demand_jobs.len(), 1);
+    assert_eq!(app.demand_jobs[0].request.edge, 0);
+}
+
+#[test]
+fn folder_prepares_saved_edits_for_native_fit_and_thumbnails_even_in_before_view() {
+    let (_dir, ctx, mut app) = app();
+    settle(&mut app, &ctx, true);
+    app.cache_settings.free_mib = 0;
+    app.cache_settings.disk_mib = 256;
+    app.service.cache.configure(app.cache_settings.clone());
+    let items = app.state.items.clone();
+    for item in &items {
+        neutral(&mut app, item);
+        let mut recipe = app.folder_edit_recipe(&item.id).unwrap();
+        recipe.exposure_ev = 0.7;
+        recipe.curve = vec![
+            tr_core::editing::CurvePoint { x: 0., y: 0. },
+            tr_core::editing::CurvePoint { x: 0.4, y: 0.65 },
+            tr_core::editing::CurvePoint { x: 1., y: 1. },
+        ];
+        app.apply_edit_draft(&item.id, recipe);
+        let mut source = cached(&app, 1024);
+        source.digest.clone_from(&item.digest);
+        app.cache.insert(app.image_key(item, 0), source);
+    }
+    app.editing.show_original = true;
+    app.start_folder_preparation(true);
+    app.folder_load.viewer_edge = 200;
+    app.folder_load.foreground = true;
+    let deadline = Instant::now() + Duration::from_secs(15);
+    while app.folder_load.finishing {
+        app.frame_number += 1;
+        app.poll(&ctx);
+        app.demand.clear();
+        app.demand_jobs.clear();
+        app.folder_preparation_demand(&ctx);
+        app.flush_demand();
+        assert!(
+            Instant::now() < deadline,
+            "{:?}; {}",
+            app.errors,
+            app.status
+        );
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert_eq!(app.folder_progress(), (2, 2, 1.));
+    assert_eq!(app.folder_load.errors, 0);
+    assert_eq!(app.service.cache.stats().decode_jobs, 0);
+    assert!(app.edit_work_statistics()["renders"].as_u64().unwrap() >= 6);
+    assert!(!app.service.cache.preview_writes_pending());
+    // Load every prepared input tier independently from disk and compare it
+    // with the canonical computation. Before is transient, not a saved recipe.
+    for item in &items {
+        let native = &app.cache[&app.image_key(item, 0)];
+        let recipe = app.folder_edit_recipe(&item.id).unwrap();
+        for index in 0..=2 {
+            let artifact = crate::cache::edited::Artifact::new(
+                app.service.cache.clone(),
+                item.path.parent().unwrap().into(),
+                &item.digest,
+                app.preview_request_for_mode(item, 0, false),
+                &native.pyramid,
+                index,
+                &recipe,
+            );
+            let ready = artifact
+                .load(&|| false)
+                .expect("Every input tier was persisted");
+            let mut expected = native.pyramid.levels()[index].clone();
+            recipe
+                .apply_preview(&mut expected, native.pyramid.source_size(), index as u32)
+                .unwrap();
+            assert_eq!(ready.source().pixels, expected.pixels);
+        }
+    }
+}
+
+#[test]
+fn background_folder_yields_to_slider_gestures_without_completing_or_scheduling() {
+    let (_dir, ctx, mut app) = app();
+    settle(&mut app, &ctx, true);
+    let item = app.state.items[0].clone();
+    neutral(&mut app, &item);
+    app.start_folder_preparation(true);
+    let mut recipe = app.folder_edit_recipe(&item.id).unwrap();
+    recipe.exposure_ev = 0.5;
+    app.apply_edit_draft(&item.id, recipe);
+    assert!(app.editing_has_priority());
+    app.folder_preparation_demand(&ctx);
+    app.join_visible_folder_work();
+    assert_eq!(app.folder_progress().0, 0);
     assert!(app.demand_jobs.is_empty());
+    assert!(app.demand.is_empty());
 }

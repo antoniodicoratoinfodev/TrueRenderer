@@ -81,6 +81,7 @@ impl Queues {
     }
 }
 pub struct DecodePool {
+    pub writer: Arc<Writer>,
     queues: Arc<(Mutex<Queues>, Condvar)>,
     stop: Arc<AtomicBool>,
     workers: Vec<JoinHandle<()>>,
@@ -1231,6 +1232,7 @@ impl DecodePool {
             }));
         }
         Self {
+            writer,
             queues,
             stop,
             workers,
@@ -1740,6 +1742,13 @@ mod tests {
         });
         checked_rx.recv_timeout(Duration::from_secs(3)).unwrap();
         let pool = DecodePool {
+            writer: Arc::new(Writer::start(
+                Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+                    enabled: false,
+                    ..Default::default()
+                })),
+                Arc::new(AtomicU64::new(0)),
+            )),
             queues: queues.clone(),
             stop: stop.clone(),
             workers: vec![worker],
@@ -2063,6 +2072,13 @@ mod tests {
     #[test]
     fn priority_order_is_fifo_and_inflight_lookup_keeps_promotion() {
         let pool = DecodePool {
+            writer: Arc::new(Writer::start(
+                Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+                    enabled: false,
+                    ..Default::default()
+                })),
+                Arc::new(AtomicU64::new(0)),
+            )),
             queues: Arc::new((Mutex::new(Queues::default()), Condvar::new())),
             stop: Arc::new(AtomicBool::new(false)),
             workers: Vec::new(),
@@ -2121,6 +2137,13 @@ mod tests {
     #[test]
     fn visible_work_promotes_deduplicates_and_displaces_queued_background() {
         let pool = DecodePool {
+            writer: Arc::new(Writer::start(
+                Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+                    enabled: false,
+                    ..Default::default()
+                })),
+                Arc::new(AtomicU64::new(0)),
+            )),
             queues: Arc::new((Mutex::new(Queues::default()), Condvar::new())),
             stop: Arc::new(AtomicBool::new(false)),
             workers: Vec::new(),

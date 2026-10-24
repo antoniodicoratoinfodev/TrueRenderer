@@ -23,6 +23,7 @@ pub struct WriteJob {
     pub preview: PreparedPreview,
     pub generation: u64,
     native_limited: bool,
+    compute_histogram: bool,
     _queue: Lease,
     _scratch: Lease,
     _pending: PendingWrite,
@@ -70,7 +71,7 @@ fn viewer_tail(
 impl Writer {
     pub fn start(cache: Arc<Manager>, generation: Arc<AtomicU64>) -> Self {
         let (tx, rx) = mpsc::sync_channel::<WriteJob>(16);
-        let bytes = MemoryBudget::new((cache.memory.usage().limit / 4).min(512 * 1024 * 1024));
+        let bytes = MemoryBudget::new((cache.memory.usage().limit / 4).min(2048 * 1024 * 1024));
         let stop = Arc::new(AtomicBool::new(false));
         let worker_cache = cache.clone();
         let worker_stop = stop.clone();
@@ -92,7 +93,7 @@ impl Writer {
                     }
                     last_cleanup = std::time::Instant::now();
                 }
-                let job = match rx.recv_timeout(std::time::Duration::from_secs(1)) {
+                let mut job = match rx.recv_timeout(std::time::Duration::from_secs(1)) {
                     Ok(job) => job,
                     Err(mpsc::RecvTimeoutError::Timeout) => continue,
                     Err(mpsc::RecvTimeoutError::Disconnected) => break,
@@ -104,6 +105,9 @@ impl Writer {
                 };
                 if cancelled() {
                     continue;
+                }
+                if job.compute_histogram {
+                    job.preview.histogram = job.preview.image.source().histogram();
                 }
                 if let Err(error) = worker_cache.store_preview(
                     &job.folder,
@@ -175,6 +179,41 @@ impl Writer {
         preview: PreparedPreview,
         generation: u64,
     ) {
+        self.submit_inner(folder, digest, request, info, (preview, false), generation);
+    }
+    pub fn submit_edited(
+        &self,
+        folder: PathBuf,
+        digest: String,
+        request: PreviewRequest,
+        info: RasterInfo,
+        image: Arc<tr_core::provider::ImageLevels>,
+        generation: u64,
+    ) {
+        self.submit_inner(
+            folder,
+            digest,
+            request,
+            info,
+            (
+                PreparedPreview {
+                    image,
+                    histogram: [[0; 256]; 3],
+                },
+                true,
+            ),
+            generation,
+        );
+    }
+    fn submit_inner(
+        &self,
+        folder: PathBuf,
+        digest: String,
+        request: PreviewRequest,
+        info: RasterInfo,
+        (preview, compute_histogram): (PreparedPreview, bool),
+        generation: u64,
+    ) {
         if !self.cache.settings().enabled || self.cache.under_pressure() {
             return;
         }
@@ -182,7 +221,7 @@ impl Writer {
         // Bound the entire queue by the live budget, while the images themselves
         // continue owning their global credits until the writer releases them.
         self.bytes
-            .configure((self.cache.memory.usage().limit / 4).min(512 * 1024 * 1024));
+            .configure((self.cache.memory.usage().limit / 4).min(2048 * 1024 * 1024));
         // A native pyramid larger than the queue must not prevent persistence
         // of its already computed viewer tail. This runs on the decode worker.
         let native_limited =
@@ -221,6 +260,7 @@ impl Writer {
                 preview,
                 generation,
                 native_limited,
+                compute_histogram,
                 _queue: queue,
                 _scratch: scratch,
                 _pending: PendingWrite(self.cache.preview_writes.clone()),

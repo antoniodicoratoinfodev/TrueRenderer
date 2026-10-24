@@ -340,7 +340,10 @@ type ProofCapture = (Vec<u8>, [u32; 2], [f32; 4], &'static str);
 mod continuity_probe;
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod continuity_tests;
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod detail_tests;
 mod pan_probe;
+mod preparation;
 mod zoom_probe;
 type ThumbnailOutcome = (
     u64,
@@ -383,6 +386,14 @@ pub(super) struct EditingUi {
     pub verify_final: Option<String>,
     pub output_proof: bool,
     previews: HashMap<String, EditPreview>,
+    // Native results prepared offscreen must not displace the fitted preview.
+    prepared: HashMap<String, EditPreview>,
+    preparation_failures: HashMap<String, (u64, EditRecipe)>,
+    preparing: bool,
+    folder_preparing: bool,
+    folder_completed: Option<(u64, EditRecipe)>,
+    batch_prepared: HashMap<(String, u64), EditPreview>,
+    work_stats: Arc<preparation::WorkStats>,
     inflight: Option<(String, u64, EditRecipe)>,
     preview_epoch: u64,
     inflight_epoch: u64,
@@ -459,6 +470,13 @@ impl Default for EditingUi {
             verify_final: None,
             output_proof: false,
             previews: HashMap::new(),
+            prepared: HashMap::new(),
+            preparation_failures: HashMap::new(),
+            preparing: false,
+            folder_preparing: false,
+            folder_completed: None,
+            batch_prepared: HashMap::new(),
+            work_stats: Arc::new(Default::default()),
             inflight: None,
             preview_epoch: 0,
             inflight_epoch: 0,
@@ -660,6 +678,10 @@ impl TrueRenderer {
         }
         match self.smoke_stage {
             0 if !self.scanning => {
+                if args.iter().any(|a| a == "--detail-prefetch-smoke") {
+                    // Isolate the active-photo policy from bulk folder warming.
+                    self.cancel_folder_preparation();
+                }
                 self.editing.smoke_source_digest = tr_platform::snapshot(&item.path)
                     .ok()
                     .map(|(_, digest)| digest);
@@ -1121,6 +1143,10 @@ impl TrueRenderer {
     }
     pub(super) fn clear_edit_preview(&mut self) {
         self.cancel_edit_refinement();
+        self.editing.batch_prepared.clear();
+        self.editing.folder_completed = None;
+        self.editing.prepared.clear();
+        self.editing.preparation_failures.clear();
         self.editing.raw_wb_anchor.clear();
         self.editing.display_wb.clear();
         self.editing.preview_epoch = self.editing.preview_epoch.wrapping_add(1);
@@ -1135,6 +1161,12 @@ impl TrueRenderer {
     }
     fn clear_edit_preview_for(&mut self, id: &str) {
         self.cancel_edit_refinement();
+        self.editing
+            .batch_prepared
+            .retain(|(photo, _), _| photo != id);
+        self.editing.folder_completed = None;
+        self.editing.prepared.remove(id);
+        self.editing.preparation_failures.remove(id);
         self.editing.preview_epoch = self.editing.preview_epoch.wrapping_add(1);
         if let Some(preview) = self.editing.previews.remove(id) {
             self.presenter
@@ -1144,6 +1176,12 @@ impl TrueRenderer {
     }
     fn supersede_edit_preview_for(&mut self, id: &str) {
         self.cancel_edit_refinement();
+        self.editing
+            .batch_prepared
+            .retain(|(photo, _), _| photo != id);
+        self.editing.folder_completed = None;
+        self.editing.prepared.remove(id);
+        self.editing.preparation_failures.remove(id);
         self.editing.preview_epoch = self.editing.preview_epoch.wrapping_add(1);
         if let Some(preview) = self.editing.previews.remove(id) {
             self.presenter
@@ -1186,6 +1224,24 @@ impl TrueRenderer {
     }
     pub(super) fn prune_edit_previews(&mut self, pressure: bool) {
         let live: HashSet<_> = self.cache.values().map(|c| c.pyramid.id()).collect();
+        self.editing
+            .batch_prepared
+            .retain(|_, p| !pressure && live.contains(&p.source));
+        self.editing
+            .prepared
+            .retain(|_, p| !pressure && live.contains(&p.source));
+        self.editing
+            .preparation_failures
+            .retain(|_, (source, _)| !pressure && live.contains(source));
+        if self.editing.preparing
+            && self
+                .editing
+                .inflight
+                .as_ref()
+                .is_some_and(|(_, source, _)| pressure || !live.contains(source))
+        {
+            self.cancel_edit_refinement();
+        }
         let stale: Vec<_> = self
             .editing
             .previews
@@ -2040,6 +2096,13 @@ impl TrueRenderer {
                     photo == &id && *input == source && *requested == recipe
                 });
             let revoked = active && self.editing.inflight_epoch != self.editing.preview_epoch;
+            let preparation = active && self.editing.preparing;
+            let folder_preparation = preparation && self.editing.folder_preparing;
+            let current_recipe = if folder_preparation {
+                self.folder_edit_recipe(&id)
+            } else {
+                self.view_recipe(&id)
+            };
             let cancelled = active
                 && self
                     .editing
@@ -2061,17 +2124,51 @@ impl TrueRenderer {
             if active {
                 self.editing.inflight = None;
                 self.editing.refinement_cancel = None;
+                self.editing.preparing = false;
+                self.editing.folder_preparing = false;
             }
             if cancelled
                 || revoked
                 || (!active && result.is_ok())
                 || generation != self.generation
-                || (!intermediate && self.view_recipe(&id).as_ref() != Some(&recipe))
-                || self.output_proof_for(&id) != proof
+                || (!intermediate && current_recipe.as_ref() != Some(&recipe))
+                || (!folder_preparation && self.output_proof_for(&id) != proof)
+                || (preparation && current_recipe.as_ref() != Some(&recipe))
             {
                 continue;
             }
             match result {
+                Ok(image) if folder_preparation => {
+                    self.editing.folder_completed = Some((source, recipe.clone()));
+                    self.editing.batch_prepared.insert(
+                        (id, source),
+                        EditPreview {
+                            source,
+                            proof,
+                            recipe,
+                            image,
+                            touched: self.frame_number,
+                        },
+                    );
+                    self.trim_batch_edits();
+                }
+                Ok(image) if preparation => {
+                    self.editing.prepared.insert(
+                        id,
+                        EditPreview {
+                            source,
+                            proof,
+                            recipe,
+                            image,
+                            touched: self.frame_number,
+                        },
+                    );
+                }
+                Err(_) if preparation => {
+                    self.editing
+                        .preparation_failures
+                        .insert(id, (source, recipe));
+                }
                 Ok(image) => {
                     self.editing.preview_errors.remove(&id);
                     if self.editing.previews.len() >= 2
@@ -2180,13 +2277,22 @@ impl TrueRenderer {
         digest: &str,
         neutral: Arc<ImageLevels>,
     ) -> Option<Arc<ImageLevels>> {
+        self.render_edit_thumbnail(id, digest, neutral, false)
+    }
+    fn render_edit_thumbnail(
+        &mut self,
+        id: &str,
+        digest: &str,
+        neutral: Arc<ImageLevels>,
+        folder: bool,
+    ) -> Option<Arc<ImageLevels>> {
         let entry = self.editing.entries.get(id)?;
         let saved = entry.loaded.as_ref()?;
         if !self.edit_source_matches(id, &saved.source_digest, digest, neutral.id()) {
             return None;
         }
         let recipe = entry.draft.as_ref().unwrap_or(&saved.recipe).clone();
-        if recipe.is_neutral() || self.editing.show_original {
+        if recipe.is_neutral() || (!folder && self.editing.show_original) {
             return Some(neutral);
         }
         let source = neutral.id();
@@ -2241,10 +2347,31 @@ impl TrueRenderer {
                 let size = neutral.source_size();
                 self.editing.thumbnail_inflight.insert(source);
                 let generation = self.generation;
+                let artifact = (folder || !self.edit_interactive(&id))
+                    .then(|| {
+                        self.edit_artifact(id.as_str(), digest.as_str(), &neutral, index, &recipe)
+                    })
+                    .flatten();
+                let writer = self.service.preview_writer.clone();
+                let epoch = self.service.generation.clone();
+                let stats = self.editing.work_stats.clone();
                 std::thread::spawn(move || {
                     let result = (|| -> anyhow::Result<_> {
+                        let cancelled = || epoch.load(Ordering::Acquire) != generation;
+                        if let Some(image) = artifact.as_ref().and_then(|a| a.load(&cancelled)) {
+                            stats.hits.fetch_add(1, Ordering::Relaxed);
+                            let histogram = image.source().histogram();
+                            return Ok((image, histogram));
+                        }
+                        stats.renders.fetch_add(1, Ordering::Relaxed);
+                        stats.renders_by_base[base as usize].fetch_add(1, Ordering::Relaxed);
                         let mut raster = neutral.levels()[index].clone();
-                        let size = recipe.apply_preview(&mut raster, size, base)?;
+                        let size = recipe.apply_preview_cancellable(
+                            &mut raster,
+                            size,
+                            base,
+                            &cancelled,
+                        )?;
                         let opaque = raster.pixels.iter().all(|p| p[3] == 1.);
                         let base = base.min(
                             31 - size[0].max(size[1]).leading_zeros()
@@ -2255,7 +2382,13 @@ impl TrueRenderer {
                         lease.shrink(image.byte_len() as u64);
                         image.attach_lease(lease);
                         let histogram = image.source().histogram();
-                        Ok((Arc::new(image), histogram))
+                        let image = Arc::new(image);
+                        if !cancelled()
+                            && let Some(artifact) = &artifact
+                        {
+                            artifact.store(&writer, image.clone(), generation);
+                        }
+                        Ok((image, histogram))
                     })()
                     .map_err(|e| format!("{e:#}"));
                     let _ = tx.send((generation, id, digest, source, recipe, result));
@@ -2283,22 +2416,69 @@ impl TrueRenderer {
         digest: &str,
         neutral: Arc<ImageLevels>,
     ) -> Option<Arc<ImageLevels>> {
+        self.render_edit_preview(id, digest, neutral, false, false)
+    }
+
+    pub(super) fn retain_prepared_edits(&mut self, sources: &HashSet<(String, u64)>) {
+        self.editing
+            .prepared
+            .retain(|id, p| sources.contains(&(id.clone(), p.source)));
+        self.editing
+            .preparation_failures
+            .retain(|id, (source, _)| sources.contains(&(id.clone(), *source)));
+        if self.editing.preparing
+            && !self.editing.folder_preparing
+            && self
+                .editing
+                .inflight
+                .as_ref()
+                .is_some_and(|(id, source, _)| !sources.contains(&(id.clone(), *source)))
+        {
+            self.cancel_edit_refinement();
+        }
+    }
+
+    pub(super) fn prefetch_edit_detail(
+        &mut self,
+        id: &str,
+        digest: &str,
+        source: Arc<ImageLevels>,
+    ) {
+        if !self.edit_interactive(id) && !source.scientific() && !self.output_proof_for(id) {
+            self.render_edit_preview(id, digest, source, true, false);
+        }
+    }
+
+    fn render_edit_preview(
+        &mut self,
+        id: &str,
+        digest: &str,
+        neutral: Arc<ImageLevels>,
+        preparation: bool,
+        folder: bool,
+    ) -> Option<Arc<ImageLevels>> {
         let entry = self.editing.entries.get(id)?;
         let saved = entry.loaded.as_ref()?;
         if !self.edit_source_matches(id, &saved.source_digest, digest, neutral.id()) {
             return None;
         }
-        let recipe = self.view_recipe(id)?;
-        let proof = self.output_proof_for(id);
-        if (recipe.is_neutral() && !proof) || self.editing.show_original {
+        let recipe = if folder {
+            self.folder_edit_recipe(id)?
+        } else {
+            self.view_recipe(id)?
+        };
+        let proof = !folder && self.output_proof_for(id);
+        if (recipe.is_neutral() && !proof) || (!folder && self.editing.show_original) {
             return Some(neutral);
         }
         if proof && neutral.base_level() != 0 {
             return None; // A reduced source cannot simulate output before filtering.
         }
         let source = neutral.id();
-        let interactive =
-            self.edit_interactive(id) && !proof && self.editing.verify_final.as_deref() != Some(id);
+        let interactive = !folder
+            && self.edit_interactive(id)
+            && !proof
+            && self.editing.verify_final.as_deref() != Some(id);
         let edge = if self.editing.interactive_millis.load(Ordering::Relaxed) > 24 {
             512
         } else {
@@ -2314,6 +2494,31 @@ impl TrueRenderer {
                 .unwrap_or(neutral.levels().len() - 1)
         };
         let base = neutral.base_level() + index as u32;
+        if let Some(ready) = self.editing.batch_prepared.get(&(id.into(), source))
+            && ready.proof == proof
+            && ready.recipe == recipe
+            && !interactive
+        {
+            let image = ready.image.clone();
+            if !preparation {
+                let ready = self
+                    .editing
+                    .batch_prepared
+                    .remove(&(id.into(), source))
+                    .unwrap();
+                self.editing.previews.insert(id.into(), ready);
+            }
+            return Some(image);
+        }
+        if self.editing.prepared.get(id).is_some_and(|ready| {
+            ready.source == source && ready.proof == proof && ready.recipe == recipe
+        }) {
+            if preparation {
+                return self.editing.prepared.get(id).map(|p| p.image.clone());
+            }
+            let ready = self.editing.prepared.remove(id).unwrap();
+            self.editing.previews.insert(id.into(), ready);
+        }
         if let Some(ready) = self.editing.previews.get_mut(id)
             && ready.source == source
             && ready.proof == proof
@@ -2340,16 +2545,47 @@ impl TrueRenderer {
         }) {
             return None;
         }
+        if preparation
+            && self
+                .editing
+                .preparation_failures
+                .get(id)
+                .is_some_and(|(s, r)| *s == source && *r == recipe)
+        {
+            return None;
+        }
+        // A new visible recipe/source preempts speculative editing, while the
+        // already-complete Fit hit above keeps that preparation undisturbed.
+        if !preparation
+            && self.editing.preparing
+            && self
+                .editing
+                .inflight
+                .as_ref()
+                .is_some_and(|(_, s, r)| *s != source || *r != recipe || proof || interactive)
+        {
+            self.cancel_edit_refinement();
+        }
         if self.editing.inflight.is_none() {
             let level = &neutral.levels()[index];
             let bytes = preview_working_bytes(level.width, level.height)
                 + recipe.scratch_bytes(level.width, level.height);
+            if preparation {
+                let memory = self.service.cache.memory.usage();
+                if bytes.saturating_add(self.service.cache.background_headroom())
+                    > memory.limit.saturating_sub(memory.reserved)
+                {
+                    return None;
+                }
+            }
             if let Some(mut lease) = self.service.cache.memory.try_reserve(bytes) {
                 let tx = self.editing.tx.clone();
                 let wake = self.service.wake.clone();
                 let id = id.to_owned();
                 let size = neutral.source_size();
                 self.editing.inflight = Some((id.clone(), source, recipe.clone()));
+                self.editing.preparing = preparation;
+                self.editing.folder_preparing = folder;
                 self.editing.inflight_epoch = self.editing.preview_epoch;
                 let cancel = Arc::new(std::sync::atomic::AtomicBool::new(false));
                 if !interactive && !proof {
@@ -2357,11 +2593,28 @@ impl TrueRenderer {
                 }
                 let timing = self.editing.interactive_millis.clone();
                 let generation = self.generation;
+                let artifact = (!interactive
+                    && !proof
+                    && (folder || self.folder_edit_recipe(&id).as_ref() == Some(&recipe)))
+                .then(|| self.edit_artifact(id.as_str(), digest, &neutral, index, &recipe))
+                .flatten();
+                let writer = self.service.preview_writer.clone();
+                let epoch = self.service.generation.clone();
+                let stats = self.editing.work_stats.clone();
                 std::thread::spawn(move || {
                     let started = Instant::now();
-                    let cancelled = || cancel.load(Ordering::Acquire);
+                    let cancelled = || {
+                        cancel.load(Ordering::Acquire)
+                            || epoch.load(Ordering::Acquire) != generation
+                    };
                     let result = (|| -> anyhow::Result<Arc<ImageLevels>> {
                         anyhow::ensure!(!cancelled(), "Editing annullato");
+                        if let Some(image) = artifact.as_ref().and_then(|a| a.load(&cancelled)) {
+                            stats.hits.fetch_add(1, Ordering::Relaxed);
+                            return Ok(image);
+                        }
+                        stats.renders.fetch_add(1, Ordering::Relaxed);
+                        stats.renders_by_base[base as usize].fetch_add(1, Ordering::Relaxed);
                         let mut raster = neutral.levels()[index].clone();
                         let size = recipe.apply_preview_cancellable(
                             &mut raster,
@@ -2383,16 +2636,25 @@ impl TrueRenderer {
                         // Filtering scratch is gone; only resident pixels remain.
                         lease.shrink(image.byte_len() as u64);
                         image.attach_lease(lease);
-                        Ok(Arc::new(image))
+                        let image = Arc::new(image);
+                        if !cancelled()
+                            && let Some(artifact) = &artifact
+                        {
+                            artifact.store(&writer, image.clone(), generation);
+                        }
+                        Ok(image)
                     })()
                     .map_err(|e| format!("{e:#}"));
                     if interactive && result.is_ok() {
                         timing.store(started.elapsed().as_millis() as u64, Ordering::Relaxed);
                     }
+                    if cancelled() {
+                        stats.cancelled.fetch_add(1, Ordering::Relaxed);
+                    }
                     let _ = tx.send((generation, id, source, base, proof, recipe, result));
                     wake.request_repaint();
                 });
-            } else {
+            } else if !preparation {
                 self.editing.preview_errors.insert(
                     id.into(),
                     PreviewFailure {

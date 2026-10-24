@@ -1,0 +1,2574 @@
+{
+  "date": "2026-10-24",
+  "application": "TrueRenderer",
+  "platform": "Windows",
+  "binary_sha256": "889e39d1c6214012e9d4f9201d30e7ad3b9ca043d8376a80fd91069429751c70",
+  "worker_sha256": "02af989d67b33a43b707ed4ef578bd91da40ff10a693dabe5913baaf2571d558",
+  "previous_installed_binary_sha256": "23181cc289a171f05043677e4bea3fa49f66c9ffd83deff5ac474510e3cb91e8",
+  "changes": [
+    "Folder completion includes selected-quality detail, canonical edits per input mip and edited thumbnails; compatible visible/native consumers share the decoder.",
+    "Settled edits reuse the existing lossless fp32 cache, complete recipe/source/input identity and common writer; bounded retry for disk contention.",
+    "Writer sublimit is min(global budget / 4, 2048 MiB), unchanged disk/temporary quotas. Optional native edits are retained within half the reusable quota, at most 16 results.",
+    "Sliders, tools, crop and layer gestures preempt optional folder work; obsolete recipes are cancelled and interactive drafts are not persisted.",
+    "Pause, cancellation, source changes, memory pressure and small/disabled cache preserve correct state and canonical pixels."
+  ],
+  "validation": {
+    "full_suite": {
+      "rust_passed": 693,
+      "rust_ignored": 41,
+      "optional_integrations_passed": 10,
+      "python_checks": 50,
+      "worker_checks": 8,
+      "numeric_cases": 24,
+      "native_surface": true,
+      "evidence": "var/folder-readiness-20261024/verify.log"
+    },
+    "desktop_after_retention_and_cache_retry": {
+      "passed": 289,
+      "ignored": 5,
+      "evidence": "var/folder-readiness-20261024/desktop-final4.log"
+    },
+    "pressure_regression": {
+      "passed": true,
+      "evidence": "var/folder-readiness-20261024/pressure-final.log"
+    },
+    "clippy_all_targets_warnings_denied": true,
+    "source_hashes_verified": 500,
+    "protected_hashes_verified": 653,
+    "folders": [
+      {
+        "name": "final-background",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "quality": "Full",
+        "loading": "Background",
+        "cache_enabled": true,
+        "disk_mib": 4096,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 3,
+                "cancelled": 0,
+                "renders": 13,
+                "renders_by_base": [
+                  3,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2916614240
+              },
+              "photos": 2,
+              "seconds": 55.1154386
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 35.1038
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 77.0017
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 144.9123
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 43.6635
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 70.40599999999999
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 112.792
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2102388263,
+              "coalesced_consumers": 3,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 4,
+              "memory_pressure": null,
+              "misses": 17,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 25
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3207598496
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 0,
+              "editing": {
+                "cache_hits": 17,
+                "cancelled": 0,
+                "renders": 0,
+                "renders_by_base": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2916614240
+              },
+              "photos": 2,
+              "seconds": 20.7434214
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 33.4886
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 76.474
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 136.9177
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 32.6524
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 71.1027
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 82.9867
+              }
+            ],
+            "cache": {
+              "busy": 1,
+              "bytes": 2102388263,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 0,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 23,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 4,
+              "writes": 4
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3143928000
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-background/results.json"
+      },
+      {
+        "name": "final-experimental",
+        "engine": "TrueRendererExperimental",
+        "compute": "Gpu",
+        "quality": "Full",
+        "loading": "Foreground",
+        "cache_enabled": true,
+        "disk_mib": 4096,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 2,
+                "cancelled": 0,
+                "renders": 12,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2925155600
+              },
+              "photos": 2,
+              "seconds": 55.4608535
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 30.8241
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 50.1674
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 190.3689
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 45.512299999999996
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 47.787000000000006
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 132.2209
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2094387063,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 4,
+              "memory_pressure": null,
+              "misses": 1,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 24
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3134818736
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 0,
+              "editing": {
+                "cache_hits": 14,
+                "cancelled": 0,
+                "renders": 0,
+                "renders_by_base": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2925155600
+              },
+              "photos": 2,
+              "seconds": 23.7151051
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.3906
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 68.2797
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 146.29049999999998
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 32.09010000000001
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 54.442
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 115.10130000000001
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2094387063,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 0,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 18,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 10
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3134818736
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-experimental/results.json"
+      },
+      {
+        "name": "final-ahd",
+        "engine": "LibRawAhd",
+        "compute": "Gpu",
+        "quality": "Full",
+        "loading": "Foreground",
+        "cache_enabled": true,
+        "disk_mib": 4096,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 2,
+                "cancelled": 0,
+                "renders": 12,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2934305056
+              },
+              "photos": 2,
+              "seconds": 52.4638838
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 34.3928
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 47.8134
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 198.3635
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 36.585699999999996
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 48.8413
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 115.1691
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2102384743,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 4,
+              "memory_pressure": null,
+              "misses": 1,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 24
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3187144640
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 0,
+              "editing": {
+                "cache_hits": 14,
+                "cancelled": 0,
+                "renders": 0,
+                "renders_by_base": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2934305056
+              },
+              "photos": 2,
+              "seconds": 23.8582242
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.4304
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 68.53099999999999
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 148.2857
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 26.3256
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 73.842
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 115.2033
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2102384743,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 0,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 18,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 10
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3143928000
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-ahd/results.json"
+      },
+      {
+        "name": "final-renderer-cpu",
+        "engine": "TrueRenderer",
+        "compute": "Cpu",
+        "quality": "Full",
+        "loading": "Foreground",
+        "cache_enabled": true,
+        "disk_mib": 4096,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 2,
+                "cancelled": 0,
+                "renders": 12,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2934025120
+              },
+              "photos": 2,
+              "seconds": 55.2893978
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.4645
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 87.3673
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 51.046
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 28.671599999999998
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 86.26060000000001
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 49.9979
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2102388899,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 4,
+              "memory_pressure": null,
+              "misses": 1,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 24
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 2874794688
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 0,
+              "editing": {
+                "cache_hits": 14,
+                "cancelled": 0,
+                "renders": 0,
+                "renders_by_base": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2934025120
+              },
+              "photos": 2,
+              "seconds": 23.8758389
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.1781
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 87.298
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 49.3534
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 30.584799999999998
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 86.1219
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 50.460499999999996
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 2102388899,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 0,
+              "entries": 676,
+              "evictions": 0,
+              "hits": 18,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 10
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 2874794688
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-renderer-cpu/results.json"
+      },
+      {
+        "name": "final-standard",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "quality": "Standard",
+        "loading": "Foreground",
+        "cache_enabled": true,
+        "disk_mib": 4096,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 2,
+                "cancelled": 0,
+                "renders": 8,
+                "renders_by_base": [
+                  0,
+                  0,
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 681653984
+              },
+              "photos": 2,
+              "seconds": 8.615943
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 30.9969
+              },
+              {
+                "action": "native",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 33.2815
+              },
+              {
+                "action": "pan",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 32.656
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 51.8424
+              },
+              {
+                "action": "native",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 31.6323
+              },
+              {
+                "action": "pan",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 33.4056
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 131215091,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 148,
+              "evictions": 0,
+              "hits": 4,
+              "memory_pressure": null,
+              "misses": 10,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 16
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 691909056
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 0,
+              "editing": {
+                "cache_hits": 10,
+                "cancelled": 0,
+                "renders": 0,
+                "renders_by_base": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 677234672
+              },
+              "photos": 2,
+              "seconds": 1.9273278999999999
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.2092
+              },
+              {
+                "action": "native",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 32.9514
+              },
+              {
+                "action": "pan",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 32.879
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 33.6465
+              },
+              {
+                "action": "native",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 33.281400000000005
+              },
+              {
+                "action": "pan",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 32.9684
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 131215091,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 0,
+              "entries": 148,
+              "evictions": 0,
+              "hits": 14,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 6
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 691909056
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-standard/results.json"
+      },
+      {
+        "name": "final-no-cache",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "quality": "Full",
+        "loading": "Foreground",
+        "cache_enabled": false,
+        "disk_mib": 4096,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 0,
+                "cancelled": 0,
+                "renders": 15,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  3,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2927322016
+              },
+              "photos": 2,
+              "seconds": 12.0092757
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 1,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.2321
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 50.5346
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 192.5983
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 51.5758
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 40.503499999999995
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 164.112
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 0,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 0,
+              "evictions": 0,
+              "hits": 0,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 0
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3143928000
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 0,
+                "cancelled": 0,
+                "renders": 15,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  3,
+                  4,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2927322016
+              },
+              "photos": 2,
+              "seconds": 10.0433644
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 1,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 31.872200000000003
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 48.4664
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 153.7712
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 44.8142
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 51.4797
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 117.299
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 0,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 0,
+              "evictions": 0,
+              "hits": 0,
+              "memory_pressure": null,
+              "misses": 0,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 0
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3187144640
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-no-cache/results.json"
+      },
+      {
+        "name": "final-small-cache",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "quality": "Full",
+        "loading": "Foreground",
+        "cache_enabled": true,
+        "disk_mib": 64,
+        "runs": [
+          {
+            "phase": "cold",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 2,
+                "cancelled": 0,
+                "renders": 12,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2934305056
+              },
+              "photos": 2,
+              "seconds": 16.536516
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 32.346199999999996
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 51.399300000000004
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 151.8574
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 27.691
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 55.1804
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 146.50189999999998
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 66220693,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 120,
+              "evictions": 30,
+              "hits": 4,
+              "memory_pressure": null,
+              "misses": 14,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 16
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3143928000
+            }
+          },
+          {
+            "phase": "warm",
+            "passed": true,
+            "sources_unchanged": true,
+            "preparation": {
+              "decode_jobs": 2,
+              "editing": {
+                "cache_hits": 6,
+                "cancelled": 0,
+                "renders": 8,
+                "renders_by_base": [
+                  2,
+                  2,
+                  2,
+                  2,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "memory": {
+                "limit": 6589934592,
+                "reserved": 2934305056
+              },
+              "photos": 2,
+              "seconds": 16.7094445
+            },
+            "new_decode_jobs_after_loading": 0,
+            "new_edit_renders_after_loading": 0,
+            "visits": [
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 32.4876
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 67.3288
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 0,
+                "ready_ms": 187.9816
+              },
+              {
+                "action": "fit",
+                "base": 2,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 45.955999999999996
+              },
+              {
+                "action": "native",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 82.5423
+              },
+              {
+                "action": "pan",
+                "base": 0,
+                "exact": true,
+                "photo": 1,
+                "ready_ms": 80.9561
+              }
+            ],
+            "cache": {
+              "busy": 0,
+              "bytes": 62446833,
+              "coalesced_consumers": 0,
+              "corrupt": 0,
+              "decode_jobs": 2,
+              "entries": 106,
+              "evictions": 81,
+              "hits": 8,
+              "memory_pressure": null,
+              "misses": 10,
+              "native_preview_fallbacks": 0,
+              "temporary_bytes": 0,
+              "worker_peak_footprint_bytes": 0,
+              "worker_peak_rss_bytes": 0,
+              "writer_yields": 0,
+              "writes": 12
+            },
+            "memory": {
+              "limit": 6589934592,
+              "reserved": 3143928000
+            }
+          }
+        ],
+        "evidence": "var/folder-readiness-20261024/final-small-cache/results.json"
+      }
+    ],
+    "editing": [
+      {
+        "name": "edit-point-gpu",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "edit_kind": "point",
+        "correctness": true,
+        "passed": true,
+        "metrics": {
+          "draws": 143,
+          "distinct_visible_updates": 120,
+          "draw_interval_ms": {
+            "count": 142,
+            "sum": 2461.4082,
+            "p50": 16.630800000000136,
+            "p95": 18.183600000000297,
+            "max": 99.01570000000004
+          },
+          "visible_interval_ms": {
+            "count": 119,
+            "sum": 2461.4082,
+            "p50": 16.761799999999766,
+            "p95": 33.81839999999988,
+            "max": 115.38390000000004
+          },
+          "event_to_first_draw_ms": {
+            "count": 119,
+            "sum": 2190.4436999999994,
+            "p50": 16.747499999999974,
+            "p95": 18.467499999999973,
+            "max": 99.01570000000004
+          },
+          "event_to_draw_ms": {
+            "count": 140,
+            "sum": 2710.0281999999997,
+            "p50": 16.81309999999985,
+            "p95": 32.09879999999998,
+            "max": 99.01570000000004
+          },
+          "phases_us": {},
+          "compute": {
+            "cpu_edit_frames": 0,
+            "cpu_frames": 0,
+            "fallbacks": 0,
+            "gpu_edit_frames": 121,
+            "gpu_frames": 126,
+            "last_fallback": "",
+            "resident_edit_encode_us": 55132,
+            "resident_edit_frames": 120,
+            "resident_zoom_busy": 0,
+            "resident_zoom_encode_us": 0,
+            "resident_zoom_frames": 0,
+            "resident_zoom_max_us": 1292,
+            "resident_zoom_misses": 2,
+            "resident_zoom_pixels": 61149600,
+            "wide_frames": 0,
+            "wide_gpu_bytes": 0,
+            "wide_peak_frames": 0,
+            "wide_peak_gpu_bytes": 0,
+            "wide_peak_memory_bytes": 0,
+            "wide_reprojections": 0,
+            "worker_pixels": 5115950,
+            "worker_render_max_us": 139109,
+            "worker_render_us": 231503
+          }
+        },
+        "distinct_frames_during_gesture": 120,
+        "folder_remaining_before": 1,
+        "folder_edit_frames_during_gesture": 0,
+        "live_surface_checks": [
+          {
+            "compute": "GPU",
+            "differing_channels": 40312,
+            "input_base_level": 0,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 30
+          },
+          {
+            "compute": "GPU",
+            "differing_channels": 47249,
+            "input_base_level": 0,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 60
+          },
+          {
+            "compute": "GPU",
+            "differing_channels": 43963,
+            "input_base_level": 0,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 90
+          }
+        ],
+        "final_surface": {
+          "compute": "GPU",
+          "differing_channels": 45814,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ]
+        },
+        "source_unchanged": true,
+        "evidence": "var/folder-readiness-20261024/edit-point-gpu/results.json"
+      },
+      {
+        "name": "edit-point-cpu",
+        "engine": "LibRawBilinear",
+        "compute": "Cpu",
+        "edit_kind": "point",
+        "correctness": true,
+        "passed": true,
+        "metrics": {
+          "draws": 162,
+          "distinct_visible_updates": 76,
+          "draw_interval_ms": {
+            "count": 161,
+            "sum": 2905.5486000000005,
+            "p50": 16.660299999999552,
+            "p95": 19.374000000000024,
+            "max": 150.6234999999997
+          },
+          "visible_interval_ms": {
+            "count": 75,
+            "sum": 2905.5486000000005,
+            "p50": 33.39960000000019,
+            "p95": 51.21699999999987,
+            "max": 150.6234999999997
+          },
+          "event_to_first_draw_ms": {
+            "count": 75,
+            "sum": 4132.866200000003,
+            "p50": 49.79900000000043,
+            "p95": 67.93550000000005,
+            "max": 150.6234999999997
+          },
+          "event_to_draw_ms": {
+            "count": 157,
+            "sum": 10565.130400000004,
+            "p50": 65.55570000000012,
+            "p95": 134.6683999999999,
+            "max": 168.36199999999985
+          },
+          "phases_us": {},
+          "compute": {
+            "cpu_edit_frames": 80,
+            "cpu_frames": 85,
+            "fallbacks": 0,
+            "gpu_edit_frames": 0,
+            "gpu_frames": 0,
+            "last_fallback": "",
+            "resident_edit_encode_us": 0,
+            "resident_edit_frames": 0,
+            "resident_zoom_busy": 0,
+            "resident_zoom_encode_us": 0,
+            "resident_zoom_frames": 0,
+            "resident_zoom_max_us": 0,
+            "resident_zoom_misses": 0,
+            "resident_zoom_pixels": 0,
+            "wide_frames": 0,
+            "wide_gpu_bytes": 0,
+            "wide_peak_frames": 0,
+            "wide_peak_gpu_bytes": 0,
+            "wide_peak_memory_bytes": 0,
+            "wide_reprojections": 0,
+            "worker_pixels": 45366848,
+            "worker_render_max_us": 45730,
+            "worker_render_us": 1910767
+          }
+        },
+        "distinct_frames_during_gesture": 76,
+        "folder_remaining_before": 1,
+        "folder_edit_frames_during_gesture": 0,
+        "live_surface_checks": [
+          {
+            "compute": "CPU",
+            "differing_channels": 0,
+            "input_base_level": 0,
+            "maximum_error_u8": 0,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 30
+          },
+          {
+            "compute": "CPU",
+            "differing_channels": 0,
+            "input_base_level": 0,
+            "maximum_error_u8": 0,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 60
+          },
+          {
+            "compute": "CPU",
+            "differing_channels": 0,
+            "input_base_level": 0,
+            "maximum_error_u8": 0,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 90
+          }
+        ],
+        "final_surface": {
+          "compute": "CPU",
+          "differing_channels": 0,
+          "maximum_error_u8": 0,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ]
+        },
+        "source_unchanged": true,
+        "evidence": "var/folder-readiness-20261024/edit-point-cpu/results.json"
+      },
+      {
+        "name": "edit-tools",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "edit_kind": "tools",
+        "correctness": false,
+        "passed": true,
+        "metrics": {
+          "draws": 169,
+          "distinct_visible_updates": 35,
+          "draw_interval_ms": {
+            "count": 168,
+            "sum": 2758.1273,
+            "p50": 16.478200000000015,
+            "p95": 19.75400000000002,
+            "max": 21.416099999999915
+          },
+          "visible_interval_ms": {
+            "count": 34,
+            "sum": 2706.9863000000005,
+            "p50": 82.2935,
+            "p95": 85.78819999999999,
+            "max": 100.85900000000015
+          },
+          "event_to_first_draw_ms": {
+            "count": 34,
+            "sum": 3502.0114,
+            "p50": 100.05409999999983,
+            "p95": 115.85379999999986,
+            "max": 132.97029999999995
+          },
+          "event_to_draw_ms": {
+            "count": 161,
+            "sum": 21606.7676,
+            "p50": 132.3168,
+            "p95": 179.11440000000005,
+            "max": 200.18169999999986
+          },
+          "phases_us": {},
+          "compute": {
+            "cpu_edit_frames": 36,
+            "cpu_frames": 36,
+            "fallbacks": 0,
+            "gpu_edit_frames": 0,
+            "gpu_frames": 5,
+            "last_fallback": "",
+            "resident_edit_encode_us": 0,
+            "resident_edit_frames": 0,
+            "resident_zoom_busy": 0,
+            "resident_zoom_encode_us": 0,
+            "resident_zoom_frames": 0,
+            "resident_zoom_max_us": 0,
+            "resident_zoom_misses": 0,
+            "resident_zoom_pixels": 0,
+            "wide_frames": 0,
+            "wide_gpu_bytes": 0,
+            "wide_peak_frames": 0,
+            "wide_peak_gpu_bytes": 0,
+            "wide_peak_memory_bytes": 0,
+            "wide_reprojections": 0,
+            "worker_pixels": 22939732,
+            "worker_render_max_us": 118287,
+            "worker_render_us": 2730796
+          }
+        },
+        "distinct_frames_during_gesture": 35,
+        "folder_remaining_before": 1,
+        "folder_edit_frames_during_gesture": 0,
+        "live_surface_checks": [],
+        "final_surface": {
+          "compute": "GPU",
+          "differing_channels": 42045,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ]
+        },
+        "source_unchanged": true,
+        "evidence": "var/folder-readiness-20261024/edit-tools/results.json"
+      },
+      {
+        "name": "edit-layers",
+        "engine": "LibRawBilinear",
+        "compute": "Gpu",
+        "edit_kind": "layers",
+        "correctness": false,
+        "passed": true,
+        "metrics": {
+          "draws": 162,
+          "distinct_visible_updates": 31,
+          "draw_interval_ms": {
+            "count": 161,
+            "sum": 2629.2927,
+            "p50": 16.427400000000034,
+            "p95": 19.457799999999907,
+            "max": 21.711900000000014
+          },
+          "visible_interval_ms": {
+            "count": 30,
+            "sum": 2598.1043,
+            "p50": 84.50289999999973,
+            "p95": 99.99170000000026,
+            "max": 101.95949999999999
+          },
+          "event_to_first_draw_ms": {
+            "count": 30,
+            "sum": 3218.671500000001,
+            "p50": 102.1522,
+            "p95": 118.6253999999999,
+            "max": 131.3111
+          },
+          "event_to_draw_ms": {
+            "count": 153,
+            "sum": 21703.501500000006,
+            "p50": 144.90620000000013,
+            "p95": 184.11990000000014,
+            "max": 201.7079
+          },
+          "phases_us": {},
+          "compute": {
+            "cpu_edit_frames": 32,
+            "cpu_frames": 32,
+            "fallbacks": 0,
+            "gpu_edit_frames": 0,
+            "gpu_frames": 5,
+            "last_fallback": "",
+            "resident_edit_encode_us": 0,
+            "resident_edit_frames": 0,
+            "resident_zoom_busy": 0,
+            "resident_zoom_encode_us": 0,
+            "resident_zoom_frames": 0,
+            "resident_zoom_max_us": 0,
+            "resident_zoom_misses": 0,
+            "resident_zoom_pixels": 0,
+            "wide_frames": 0,
+            "wide_gpu_bytes": 0,
+            "wide_peak_frames": 0,
+            "wide_peak_gpu_bytes": 0,
+            "wide_peak_memory_bytes": 0,
+            "wide_reprojections": 0,
+            "worker_pixels": 20901412,
+            "worker_render_max_us": 118865,
+            "worker_render_us": 2678106
+          }
+        },
+        "distinct_frames_during_gesture": 31,
+        "folder_remaining_before": 1,
+        "folder_edit_frames_during_gesture": 0,
+        "live_surface_checks": [],
+        "final_surface": {
+          "compute": "GPU",
+          "differing_channels": 41307,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ]
+        },
+        "source_unchanged": true,
+        "evidence": "var/folder-readiness-20261024/edit-layers/results.json"
+      },
+      {
+        "name": "edit-raw",
+        "engine": "TrueRendererExperimental",
+        "compute": "Gpu",
+        "edit_kind": "point",
+        "correctness": true,
+        "passed": true,
+        "metrics": {
+          "draws": 145,
+          "distinct_visible_updates": 120,
+          "draw_interval_ms": {
+            "count": 144,
+            "sum": 2506.8591,
+            "p50": 16.654200000000003,
+            "p95": 18.257799999999634,
+            "max": 103.41010000000006
+          },
+          "visible_interval_ms": {
+            "count": 119,
+            "sum": 2506.8591,
+            "p50": 16.72479999999996,
+            "p95": 35.05230000000006,
+            "max": 103.41010000000006
+          },
+          "event_to_first_draw_ms": {
+            "count": 119,
+            "sum": 2201.0514,
+            "p50": 16.720300000000407,
+            "p95": 18.282699999999977,
+            "max": 103.41010000000006
+          },
+          "event_to_draw_ms": {
+            "count": 142,
+            "sum": 2784.019499999999,
+            "p50": 16.7358999999999,
+            "p95": 31.879500000000007,
+            "max": 103.41010000000006
+          },
+          "phases_us": {},
+          "compute": {
+            "cpu_edit_frames": 0,
+            "cpu_frames": 0,
+            "fallbacks": 0,
+            "gpu_edit_frames": 120,
+            "gpu_frames": 125,
+            "last_fallback": "",
+            "resident_edit_encode_us": 51638,
+            "resident_edit_frames": 119,
+            "resident_zoom_busy": 0,
+            "resident_zoom_encode_us": 0,
+            "resident_zoom_frames": 0,
+            "resident_zoom_max_us": 1327,
+            "resident_zoom_misses": 2,
+            "resident_zoom_pixels": 60640020,
+            "wide_frames": 0,
+            "wide_gpu_bytes": 0,
+            "wide_peak_frames": 0,
+            "wide_peak_gpu_bytes": 0,
+            "wide_peak_memory_bytes": 0,
+            "wide_reprojections": 0,
+            "worker_pixels": 5110028,
+            "worker_render_max_us": 141773,
+            "worker_render_us": 230746
+          }
+        },
+        "distinct_frames_during_gesture": 120,
+        "folder_remaining_before": 1,
+        "folder_edit_frames_during_gesture": 0,
+        "live_surface_checks": [
+          {
+            "compute": "GPU",
+            "differing_channels": 43565,
+            "input_base_level": 0,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 30
+          },
+          {
+            "compute": "GPU",
+            "differing_channels": 45954,
+            "input_base_level": 0,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 60
+          },
+          {
+            "compute": "GPU",
+            "differing_channels": 44197,
+            "input_base_level": 0,
+            "maximum_error_u8": 1,
+            "passed": true,
+            "size": [
+              855,
+              596
+            ],
+            "step": 90
+          }
+        ],
+        "final_surface": {
+          "compute": "GPU",
+          "differing_channels": 46536,
+          "maximum_error_u8": 1,
+          "passed": true,
+          "size": [
+            855,
+            596
+          ]
+        },
+        "source_unchanged": true,
+        "evidence": "var/folder-readiness-20261024/edit-raw/results.json"
+      }
+    ],
+    "native_cache_clear": {
+      "passed": true,
+      "clears": [
+        {
+          "decode_jobs_before": 0,
+          "disk_empty_before_reload": true,
+          "foreground": true,
+          "fresh_images_after_reload": true,
+          "generation_before": 1,
+          "new_decode_jobs": 11,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 11,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "generation_before": 2,
+          "pending_images": 0,
+          "resident_images": 36,
+          "revoked_and_invalidated": true
+        },
+        {
+          "decode_jobs_before": 11,
+          "disk_empty_before_reload": true,
+          "foreground": false,
+          "fresh_images_after_reload": true,
+          "generation_before": 3,
+          "new_decode_jobs": 16,
+          "pending_images": 1,
+          "resident_images": 0,
+          "revoked_and_invalidated": true
+        }
+      ],
+      "evidence": "var/folder-readiness-20261024/folder-cancel-clear/reports/folder-loading.json"
+    }
+  },
+  "earlier_negative_runs": [
+    {
+      "path": "var/folder-readiness-20261024/native-experimental/results.json",
+      "cause": "Initial diagnostic seeded recipes while normal work had begun and used order-dependent exposure; excessive preparation and warm reuse failure. Also native edited results were retained too briefly. Diagnostic and retention corrected."
+    },
+    {
+      "path": "var/folder-readiness-20261024/native3-background/results.json",
+      "cause": "Warm background run recomputed one reduced edit during a short writer lock. Bounded cancellable retry added; final background case reuses every edit."
+    }
+  ],
+  "limits": [
+    "Two copied real inputs (JPEG and Nikon D750 NEF), not a thousand-photo or all-camera qualification.",
+    "Preparation shifts cost to opening and consumes lossless disk space. Quotas can evict data; 100% does not guarantee simultaneous residency of the entire catalogue.",
+    "Future edits require new computation; adaptive drafts converge to canonical quality after the gesture. Heavy tools/layers have separate measured cadence.",
+    "Readiness and gesture timings refer to native software draw commands, not physical monitor latency or guaranteed frame rate.",
+    "The first background preparation overlapped a Rust test compilation; its loading time is observational, not a controlled performance comparison.",
+    "No macOS/XPC/Apple RAW validation and no R0-R4 or SF gate closure in this Windows campaign."
+  ],
+  "installation": {
+    "completed": true,
+    "binary_sha256": "889e39d1c6214012e9d4f9201d30e7ad3b9ca043d8376a80fd91069429751c70",
+    "worker_unchanged": true,
+    "durable_files_preserved": 38,
+    "evidence": "var/folder-readiness-20261024/install.json",
+    "installed_readiness_passed": true,
+    "ordinary_app_reopened_and_responding": true
+  },
+  "commit_or_push": false,
+  "evidence_sha256": {
+    "var/folder-readiness-20261024/clippy.log": "c37ff1f4d47d44a89f2ae8a6cf9674595c797b1536d224c70eecf5f1ff2c74fd",
+    "var/folder-readiness-20261024/clippy2.log": "30901e42a56fb27180207bf125ba4a9bf4190d08999504636e94e17b9ba8b875",
+    "var/folder-readiness-20261024/clippy3.log": "07f702569b0517f038af8d25624555aa9727dc8ff382ad14dbc1cd6934b21085",
+    "var/folder-readiness-20261024/clippy4.log": "e4e684a2bc3044e8ee1fc1b2564839c9c5afb22b00d897444d5def72e7ca8375",
+    "var/folder-readiness-20261024/clippy5.log": "af548dde26fefd2ea4c30993eb134f65791d8625b16174daf06fc1cce0e31182",
+    "var/folder-readiness-20261024/clippy6.log": "74026baaf1320409ee1c0377e905501e986dd4d698777858ad7b4772e298b736",
+    "var/folder-readiness-20261024/clippy7.log": "fdbe004c1839520954680467268645893cff4c1c200dfd87142dd4a6f4a7fdac",
+    "var/folder-readiness-20261024/clippy8.log": "020c42aca1cc83553ef455ad663aa66ce778fb662973a7ae674d72539e7324f5",
+    "var/folder-readiness-20261024/desktop-final.log": "015674b143c0571b994e6c33848e47d213be145961441088f96ebe6e0b8bb699",
+    "var/folder-readiness-20261024/desktop-final4.log": "271d0405d5381f7d21870692c5cc5b6bc8d4a0d1b1d98a1b471ae71489b5b678",
+    "var/folder-readiness-20261024/desktop-fix.log": "7e884aceeb6c9b6039f1bc0fb443eb66188385829ccf371303ade45572159328",
+    "var/folder-readiness-20261024/desktop-fix2.log": "a09837a312edbdb2df3574b6c9779de127bc946e56981cebc13ebe6c48a2af20",
+    "var/folder-readiness-20261024/desktop-initial.log": "7a3145c68d7c523ba9ded0cb3702c2549102286f3acddcb8eca6f485bea847c5",
+    "var/folder-readiness-20261024/docs-check.json": "cc24cba1a4c9a72381eb6894d697892dba38ad09fbaa5d41b7258ea71eed6395",
+    "var/folder-readiness-20261024/edit-layers/results.json": "14173adba2bf43d334588c86eddb0b887d44544ddd5c7928228475fe19a4b16a",
+    "var/folder-readiness-20261024/edit-layers/run-1/reports/develop-grid.png": "3a5c6f4428c3e768dd9667e1117ebd761740fa952555b9736abc95e99ffce36f",
+    "var/folder-readiness-20261024/edit-layers/run-1/reports/develop-ui.json": "cd9cddbf11e0b058b7179f67f76aab2477c24d6425f9f1a5bc8694771d919ac3",
+    "var/folder-readiness-20261024/edit-layers/run-1/reports/develop-viewer.png": "016900c44bfea4cd94bc52df0b4eddf5779b924bb97e7ed0ab8f1d220311c21d",
+    "var/folder-readiness-20261024/edit-layers/run-1/reports/edit-continuity.json": "c4ebc3c7f7c4d31de27c2cddd0740f24e380abd93c289444f5f83343d6e2bc84",
+    "var/folder-readiness-20261024/edit-layers/run-1/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-layers/run-1/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-point-cpu/results.json": "44f52fbb641362697956c83d1f621ce60db38a6612f34a849f196fa66933d784",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/develop-grid.png": "d99b095368652de9347e02258d13f43e6fb81b7973c7cc6401ba49a387d7d4d9",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/develop-ui.json": "aea3caecc55be42acdf7b444ee0dc652e6f0d4c2bb16d39e45a000c16684fde4",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/develop-viewer.png": "2286255c97c3a2a4a56a205a0cf17615c7c38533867f4a3b7726696cb176ae38",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/edit-continuity.json": "fe7f18ad423fb21e0f4bd925cd335359afd72a0d7a8e2aed0f9454c0e0cbe0c0",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/live-edit-30.png": "195133439a3499c39e197b157bda861762d25acd19dbefd5aba5caa371b666b1",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/live-edit-60.png": "4a3f555c048ab6da7033a97c10e1bf59fda49c3dfc273e4793f8ede50e35d886",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/reports/live-edit-90.png": "b89a9483bf8554109486acf05605cca5e55c6b5017d7f5e4dcf7d2e0507f5823",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-point-cpu/run-1/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-point-gpu/results.json": "20a3ac4dd5c58ce443942c5edb73ec1b3e41ca2c204443befcb223e35e1f54d6",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/develop-grid.png": "816edc8368632b4666452e81d5913521fce825717928eb5f078343be37168d69",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/develop-ui.json": "fc5dcaa57b2db58e1098e3352db58759f7545da008cd37288a648f18a5b7843e",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/develop-viewer.png": "43f933cef28893cbe896183f9802c266997f4aaa008e1c85898e6abb99849ef5",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/edit-continuity.json": "b0ab4747027c7b40b33ec6592950a383d7d37c693fc7bb9cc12e9e16e82d1254",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/live-edit-30.png": "2f062f0500306e6a292b130c026427b3b193e7d451e45b10896f2f530961f837",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/live-edit-60.png": "5d5ac8d1143102d6f435d778564ec3300eac7a5eca6d60da6a3cfd064b1de3cf",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/reports/live-edit-90.png": "d1be0fb85b1cb4a50ea660c13b0eae9f6d17dcd63512bbf3f1ff4eb515211110",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-point-gpu/run-1/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-raw/results.json": "af13e992a4073949f25f10a01e3c5e437a5cfbef112b77c8e5322139f7a5380e",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/develop-grid.png": "4ca219f6aaf66f00b85b1eb63c82ecbda04663ea24a490c11c7ef5986bebc689",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/develop-ui.json": "d90c4affd8f5c950c8cf3e53932061a5139453de9746a4976584e98928c45ea3",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/develop-viewer.png": "c3c75d286178aec1ef1a645418be5dae3b3b02e45c0d533faa94763dda47cd41",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/edit-continuity.json": "439bc99578e054598f0253ecb5ac743a5c5f2bb82ace85076b3340892d2e3889",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/live-edit-30.png": "2417252d7bc2678a2f6bfdbcd6181649a04a887f9fbd286d56d34caabcb1638b",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/live-edit-60.png": "4b42264d007f39614f5ae02dee075f6a7fc412b99af44fa875743447dcb64572",
+    "var/folder-readiness-20261024/edit-raw/run-1/reports/live-edit-90.png": "82912ab344c9179586a26502379acde83c49a1d4b48bacb976edbb7b457fe84b",
+    "var/folder-readiness-20261024/edit-raw/run-1/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-raw/run-1/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-tools/results.json": "fff016778e9aac6815ad7dbf5bc35208f4b408981471f7c089ee9a91006179ed",
+    "var/folder-readiness-20261024/edit-tools/run-1/reports/develop-grid.png": "8d62ae4f2607973ef35d7eeb9bddf9f27a761ce60ab09530bc421188d1c9a99f",
+    "var/folder-readiness-20261024/edit-tools/run-1/reports/develop-ui.json": "e806ff61ff8d901bd5cfbf124e5a0471b3f50bf4d6db7e0ed43a496a78fb30a4",
+    "var/folder-readiness-20261024/edit-tools/run-1/reports/develop-viewer.png": "a401e22c2c5553cf5587b10bfc4be18eea6698a596f455f9dde54ff03953a33c",
+    "var/folder-readiness-20261024/edit-tools/run-1/reports/edit-continuity.json": "d778c1bc38ae8ee608b9fa31490299b67e598cd2bfe50bd10a14293f019c242d",
+    "var/folder-readiness-20261024/edit-tools/run-1/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/edit-tools/run-1/stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-ahd/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-ahd/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-ahd/reports/folder-readiness-cold.json": "8b6d9a07b8470e1f302c28485cfacddd9aaeb5db4a9424dcab1a05129d3c72f7",
+    "var/folder-readiness-20261024/final-ahd/reports/folder-readiness-warm.json": "1cf59eb2dc5efa4a72b27ec3a92dac900249a6039c9351927867f94fe56e4005",
+    "var/folder-readiness-20261024/final-ahd/results.json": "51222d1be00dd79b6aa2f5f13ab65629005af2fed32c3ac9e10ef02ba9fa7f71",
+    "var/folder-readiness-20261024/final-ahd/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-ahd/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-background/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-background/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-background/reports/folder-readiness-cold.json": "631f1bd8957911ad2b6edcb9c6c20a9125aeb03f36e237405c41762a10fb626a",
+    "var/folder-readiness-20261024/final-background/reports/folder-readiness-warm.json": "212a81e61956076ae4e9da57656e05b9bf044f53dce3d954f98a30e9504ba963",
+    "var/folder-readiness-20261024/final-background/results.json": "aad610923f8ce77562cf2ae81ec17e003a92174082810554797b1d39c7240d6f",
+    "var/folder-readiness-20261024/final-background/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-background/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-clippy.log": "0a29e2591cd5b2da0cdbcb60acdacbb7c9956d92d2b5ceae5856b74a23c74f3a",
+    "var/folder-readiness-20261024/final-experimental/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-experimental/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-experimental/reports/folder-readiness-cold.json": "b486701d2169a8ea6aa1353db7e76f27f134c758d49f336cc929c5b5c7503cba",
+    "var/folder-readiness-20261024/final-experimental/reports/folder-readiness-warm.json": "357927d07e6d9dfde5e7a2092276d8e6ad3ad69dfda91a06ecc0554034e432c6",
+    "var/folder-readiness-20261024/final-experimental/results.json": "3728700980fc5551fc652b73dd7c5d8afed6eb28ab1a80f4e1ec3eaa6e6ccb64",
+    "var/folder-readiness-20261024/final-experimental/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-experimental/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-no-cache/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-no-cache/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-no-cache/reports/folder-readiness-cold.json": "ef2f5c62d1b89dc763c885ae3cd2bc969aea8dad9934a900236712f83f1d33c2",
+    "var/folder-readiness-20261024/final-no-cache/reports/folder-readiness-warm.json": "1f9bee29f90a033c9c44968dccc252d45a152a48838b63d4dca8e3518fa7a04d",
+    "var/folder-readiness-20261024/final-no-cache/results.json": "92a7f0cbd12a8acd8d2bce8554c8452a57b7f71d6b1de0a2bee37f8ae3568615",
+    "var/folder-readiness-20261024/final-no-cache/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-no-cache/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-release.log": "b44634363d0534d59a3b5c3baa09c6eecebdc00b694cda21d8d4136da543159b",
+    "var/folder-readiness-20261024/final-renderer-cpu/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-renderer-cpu/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-renderer-cpu/reports/folder-readiness-cold.json": "6c01c0e465480f25db5d24d0daadc05d0084b5424a3f2586e92ea1fff826fc5d",
+    "var/folder-readiness-20261024/final-renderer-cpu/reports/folder-readiness-warm.json": "11463d117a4e7a17c466b02734a517d29395d2c6b589e3bd0ccb4cb0635a19ed",
+    "var/folder-readiness-20261024/final-renderer-cpu/results.json": "332ec79d1d0ec34236f21412b86276b6025ed1949d7862e86517a236bb1649b8",
+    "var/folder-readiness-20261024/final-renderer-cpu/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-renderer-cpu/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-small-cache/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-small-cache/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-small-cache/reports/folder-readiness-cold.json": "94bbbbafd48c9cf2f5560276efd6f0495f116e0b4e8f670426182e80969f0e4f",
+    "var/folder-readiness-20261024/final-small-cache/reports/folder-readiness-warm.json": "956425d63c5a9e5a30a1a7a6178d21ab9692919a6e45c0b6bd69559dc6610e9a",
+    "var/folder-readiness-20261024/final-small-cache/results.json": "080b9b89b118a6e3a9bcdd00edeb57c02ee1d079eb0a11313cc547eae85dfdfe",
+    "var/folder-readiness-20261024/final-small-cache/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-small-cache/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-standard/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-standard/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-standard/reports/folder-readiness-cold.json": "42cec5f7a58fa4b48726166896349835ec40dbb44b25ba77089e867d3e33ea62",
+    "var/folder-readiness-20261024/final-standard/reports/folder-readiness-warm.json": "d228fb35f34e89652548068668738c51587c2dfa2f98ce10a2e14e4fdf37a736",
+    "var/folder-readiness-20261024/final-standard/results.json": "bab00b0038f240f3ca9d4fa206d5112c3ebbc1af2d09dd267e5dcf199ab2730f",
+    "var/folder-readiness-20261024/final-standard/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/final-standard/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt-final.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt3.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt4.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt5.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt6.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt7.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/fmt8.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/focused.log": "ce546eb6d3356ea5bfeae16298d5cae53cae0f094505f5e9b6de053e3ee6a64c",
+    "var/folder-readiness-20261024/focused2.log": "78219edc459c1934087d05b520b69d511ef5f4cef157a15ce5be4405a5157753",
+    "var/folder-readiness-20261024/focused3.log": "2c946dc0a7e50bd605598201b7b94fc227b9e5be1f6ea67af002a15a89d2c58f",
+    "var/folder-readiness-20261024/folder-cancel-clear/native.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/folder-cancel-clear/reports/folder-loading-background.png": "a9d34b477d6fa09356f46e8c6227409ca55d88b8f210bb04d16c5ff441aa0a80",
+    "var/folder-readiness-20261024/folder-cancel-clear/reports/folder-loading-complete.png": "edaa4625442b09650224368336055358f72b35db28b93cece0a82e2355c180ca",
+    "var/folder-readiness-20261024/folder-cancel-clear/reports/folder-loading-foreground.png": "ecbe44242ed9457da74a787398f794219d14d22b1ed5b8d57b2a80da1175aff0",
+    "var/folder-readiness-20261024/folder-cancel-clear/reports/folder-loading.json": "97c2cc3779ce752d3cc8ab3f5f36231bb52f7afff8785e93d0905be77a1f2e63",
+    "var/folder-readiness-20261024/install.json": "ec94a3a60c23c17a08de6e38defdcbbdd3c3d533742992b396d8b3b56e4d3d06",
+    "var/folder-readiness-20261024/installed-readiness/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/installed-readiness/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/installed-readiness/reports/folder-readiness-cold.json": "0028ef5507c30fc7044defbfc17a36ac97f76ac9b2883393517bdcde1ce3f43c",
+    "var/folder-readiness-20261024/installed-readiness/reports/folder-readiness-warm.json": "7307b0dff4e35fb2a8240889711005362ea89bb6dcb208b93a13bc60932b5229",
+    "var/folder-readiness-20261024/installed-readiness/results.json": "cde035a2f03f4faa1ec7acdf3330c8bfbc462652e78f0c691ecb7fd6e8a14711",
+    "var/folder-readiness-20261024/installed-readiness/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/installed-readiness/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native-experimental/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native-experimental/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native-experimental/reports/folder-readiness-cold.json": "4dace5a2493dade9b64cc546db44131589d73c9a839cc88eea4259868336251b",
+    "var/folder-readiness-20261024/native-experimental/reports/folder-readiness-warm.json": "4161921a33e0b938a2ff0e0d33af78babcfa4a2d706e442e5f3ba9565898d496",
+    "var/folder-readiness-20261024/native-experimental/results.json": "463e77bb0c33b8d5ccb3a12ce9d54c0e30addbdcc796ea042d1a70a28b365e26",
+    "var/folder-readiness-20261024/native-experimental/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native-experimental/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-background/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-background/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-background/reports/folder-readiness-cold.json": "4fdfb2581373b73d1c66fc674909e80918497fec33c0a8d4bb07b4b4a74c380c",
+    "var/folder-readiness-20261024/native3-background/reports/folder-readiness-warm.json": "14f6130ac36c49cb9660cb8e62e0554da17f3f1f4270ab2dd128c81c90a6ed65",
+    "var/folder-readiness-20261024/native3-background/results.json": "90e0130bc36b21b4a73cbd8b95dac78365886db062b3de91b2f18cd751c0ca29",
+    "var/folder-readiness-20261024/native3-background/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-background/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-experimental/cold.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-experimental/cold.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-experimental/reports/folder-readiness-cold.json": "23651bfa97301ce3214806af4b5e0c6e850dcfc791d35e3b5298ac1015700c1d",
+    "var/folder-readiness-20261024/native3-experimental/reports/folder-readiness-warm.json": "3607541aa409b5b09bca526b4e88c49be9a84af7f810505263b19b27b57c2c80",
+    "var/folder-readiness-20261024/native3-experimental/results.json": "05d91a7955ad95d4bb84892fc1c3f4c6db0e26e84dd049d3c808e8aa168a9f96",
+    "var/folder-readiness-20261024/native3-experimental/warm.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/native3-experimental/warm.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/folder-readiness-20261024/ordinary-reopened.json": "472bb8aaf611b7047621970d29e35f9998212058e3da7dcecff903991714286c",
+    "var/folder-readiness-20261024/pressure-final.log": "eb7a7aaeff893a88a3d566fca7104d71935e4ddc93c29fc54564b14fbb759847",
+    "var/folder-readiness-20261024/qualified-sources5.json": "f74537ac8a6216cad87b0f2de4ce3cb7c429a0d1deb06f9b80692b3b5b3b9def",
+    "var/folder-readiness-20261024/release.log": "4e16255c16aec37060ed285a3efe04fdef6ed97fe2bfd266ef2a51370ac7626c",
+    "var/folder-readiness-20261024/release2.log": "78b7d85d4dbb64acf7bb99b36f6935b949b5be9303e6b95105a2ed370df7153f",
+    "var/folder-readiness-20261024/release3.log": "254af44ce2926c26a92258a6e5ccb7e1027175601fb3533b3a3a831d91f12d70",
+    "var/folder-readiness-20261024/release4.log": "f6cb7e49c0060eb7a2d883bb71c00acaee72d6403cfb1ac177dbe4acf1499ac8",
+    "var/folder-readiness-20261024/release5.log": "836da979ee25fb7cb195e46086602d4f3319bdef9269ba88477ef3b33353ce11",
+    "var/folder-readiness-20261024/verify.log": "23f003c0382019f3242a92731669fe63d106dffedf8a7193d260440bd7dcf698"
+  }
+}

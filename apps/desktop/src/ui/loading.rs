@@ -1,6 +1,7 @@
 //! Folder preparation is a bounded consumer of the normal preview scheduler.
 use super::*;
 use std::hash::{Hash, Hasher};
+mod readiness_probe;
 
 #[derive(Default)]
 pub(super) struct FolderLoad {
@@ -17,6 +18,12 @@ pub(super) struct FolderLoad {
     finishing: bool,
     viewer_edge: u32,
     refining: Option<(String, PreviewRequest)>,
+    native_done: Option<(String, PreviewRequest)>,
+    generation: u64,
+    prepared_recipe: Option<tr_core::editing::EditRecipe>,
+    edit_failed: bool,
+    joined_visible: HashSet<(String, PreviewRequest)>,
+    views: VecDeque<PreviewRequest>,
     pub(super) cache_miss: Option<(String, PreviewRequest)>,
 }
 
@@ -26,6 +33,7 @@ pub(super) struct Probe {
     stale_sources: HashSet<u64>,
     decodes_before: u64,
     failure: Option<String>,
+    readiness: readiness_probe::Probe,
 }
 
 impl TrueRenderer {
@@ -78,6 +86,10 @@ impl TrueRenderer {
         }
         self.rebuild_total = self.state.items.iter().filter(|item| item.approved).count();
         self.folder_load.refining = None;
+        self.folder_load.native_done = None;
+        self.folder_load.prepared_recipe = None;
+        self.folder_load.views.clear();
+        self.cancel_folder_edit();
         self.folder_load.cache_miss = None;
         self.folder_load.cancelled = false;
         self.folder_load.cancelled_remaining = 0;
@@ -120,12 +132,18 @@ impl TrueRenderer {
     }
 
     pub(super) fn start_folder_preparation(&mut self, force: bool) {
+        if std::env::args().any(|a| a == "--folder-readiness-smoke") && self.smoke_stage < 2 {
+            self.folder_load.finishing = true;
+            return;
+        }
         // Existing measurement probes deliberately control their own demand.
         if (self.smoke || self.navigation_probe.is_some())
             && !std::env::args().any(|a| {
                 a == "--folder-loading-smoke"
                     || a == "--navigation-prepared-folder"
                     || a == "--cache-reopen-smoke"
+                    || a == "--folder-readiness-smoke"
+                    || a == "--edit-during-folder-smoke"
             })
         {
             return;
@@ -165,7 +183,11 @@ impl TrueRenderer {
         self.folder_load.scan_failed = false;
         self.folder_load.finishing = true;
         self.folder_load.viewer_edge = 0;
+        self.folder_load.joined_visible.clear();
+        self.folder_load.views.clear();
         self.folder_load.refining = None;
+        self.folder_load.native_done = None;
+        self.folder_load.prepared_recipe = None;
         self.folder_load.cache_miss = None;
         if self.folder_load.foreground {
             self.preparation_paused = false;
@@ -188,19 +210,31 @@ impl TrueRenderer {
     }
 
     pub(super) fn cancel_folder_preparation(&mut self) {
+        self.cancel_folder_edit();
+        self.folder_load.views.clear();
         self.folder_load.cancelled_remaining = self.rebuild.len();
         self.rebuild.clear();
         self.folder_load.cancelled = true;
         self.folder_load.finishing = false;
         self.folder_load.foreground = false;
         self.folder_load.refining = None;
+        self.folder_load.native_done = None;
+        self.folder_load.prepared_recipe = None;
         // Next frame's ViewDemand cancels only this consumer, never saves/scans.
     }
 
     pub(super) fn folder_preparation_demand(&mut self, ctx: &egui::Context) -> bool {
+        if self.smoke_stage < 2 && std::env::args().any(|a| a == "--folder-readiness-smoke") {
+            return false; // The diagnostic seeds its isolated catalogue first.
+        }
         if self.clearing_current_folder() {
             ctx.request_repaint_after(Duration::from_millis(50));
             return true;
+        }
+        if !self.folder_loading_blocks() && self.editing_has_priority() {
+            self.cancel_folder_edit();
+            ctx.request_repaint_after(Duration::from_millis(120));
+            return !self.rebuild.is_empty() || self.folder_load.finishing;
         }
         // Persist the prepared viewer before advancing to another image. The
         // bounded writer runs independently; UI and visible cache reads proceed.
@@ -221,6 +255,14 @@ impl TrueRenderer {
                 if self.pending_images.contains(&key) || self.cache.contains_key(&key) {
                     self.demand.insert(key);
                 }
+                let native = (
+                    item.id.clone(),
+                    self.preview_request_for_mode(item, 0, false),
+                );
+                if let Some(cached) = self.cache.get_mut(&native) {
+                    cached.touched = self.frame_number;
+                    self.demand.insert(native);
+                }
             }
             ctx.request_repaint_after(Duration::from_millis(50));
             return true;
@@ -237,7 +279,8 @@ impl TrueRenderer {
         }
         ctx.request_repaint_after(Duration::from_millis(100));
         self.folder_load.waiting = false;
-        if self.scanning || self.preparation_paused {
+        if self.scanning || self.preparation_paused || self.service.cache.under_pressure() {
+            self.cancel_folder_edit();
             return true;
         }
         if self.folder_load.request.is_none() {
@@ -249,14 +292,12 @@ impl TrueRenderer {
             let size = ctx.content_rect().size() * ctx.pixels_per_point();
             self.folder_load.viewer_edge = size.x.max(size.y).ceil().clamp(1., 4096.) as u32;
         }
-        // Finish resident/failed entries without resubmitting an already known error.
+        // A photo is complete only after the selected-quality source, its
+        // canonical edits, the detached viewer and edited thumbnail are ready.
         for _ in 0..16 {
             let Some(item) = self.rebuild.front().cloned() else {
                 return true;
             };
-            // Saved engine/WB belong to the photo, not to the current global
-            // selection or the temporary Before view. Resolve them before any
-            // preparation request, including photos never visited in the UI.
             self.ensure_edit_loaded(&item);
             let entry = self.editing.entries.get(&item.id);
             if entry.is_some_and(|entry| entry.loaded.is_none() && entry.error.is_some()) {
@@ -269,104 +310,142 @@ impl TrueRenderer {
             }
             let request = self.preview_request_for_mode(&item, 0, false);
             let native_key = (item.id.clone(), request);
-            let viewer_key = (
-                item.id.clone(),
-                PreviewRequest {
-                    edge: self.folder_load.viewer_edge,
-                    ..request
-                },
-            );
-            if self
-                .folder_load
-                .refining
-                .as_ref()
-                .is_some_and(|key| key != &viewer_key)
-            {
-                self.folder_load.refining = None;
-            }
-            if self.cache.contains_key(&viewer_key)
+            let recipe = self.folder_edit_recipe(&item.id);
+            if self.folder_load.prepared_recipe != recipe
+                || self.folder_load.generation != self.generation
                 || self
-                    .errors
-                    .contains_key(&format!("{}:{:?}", viewer_key.0, viewer_key.1))
+                    .folder_load
+                    .native_done
+                    .as_ref()
+                    .is_some_and(|key| key != &native_key)
             {
-                self.folder_load.refining = Some(viewer_key.clone());
+                self.folder_load.native_done = None;
+                self.folder_load.generation = self.generation;
+                self.folder_load.refining = None;
+                self.folder_load.prepared_recipe = recipe;
+                self.folder_load.edit_failed = false;
+                self.folder_load.views.clear();
             }
-            if self.folder_load.refining.is_none()
-                && !self.cache.contains_key(&native_key)
-                && !self.pending_images.contains(&native_key)
-                && !self
+            if self.folder_load.native_done.as_ref() != Some(&native_key) {
+                if self
                     .errors
                     .contains_key(&format!("{}:{:?}", native_key.0, native_key.1))
-                && self.folder_load.cache_miss.as_ref() != Some(&viewer_key)
-            {
-                if !self.pending_images.contains(&viewer_key)
-                    && (self.service.cache.under_pressure()
-                        || self.demand.iter().any(|key| {
-                            !self.cache.contains_key(key)
-                                && !self.errors.contains_key(&format!("{}:{:?}", key.0, key.1))
-                        }))
                 {
-                    self.folder_load.waiting = true;
-                    return true;
+                    self.rebuild.pop_front();
+                    self.folder_load.errors += 1;
+                    self.folder_load.prepared_recipe = None;
+                    continue;
                 }
-                // A previous launch may have retained only the viewing tail.
-                // Validate it on the normal source/cache lane before requesting
-                // native detail. A miss resumes the original full preparation.
-                self.ensure_preview_lookup(
-                    &item,
-                    viewer_key.1,
-                    self.folder_preparation_priority(),
-                    true,
-                );
-                return true;
-            }
-            if self.folder_load.refining.is_none() && self.cache.contains_key(&native_key) {
-                self.folder_load.refining = Some(viewer_key.clone());
-            }
-            let key = self
-                .folder_load
-                .refining
-                .clone()
-                .unwrap_or(native_key.clone());
-            let failed = self.errors.contains_key(&format!("{}:{:?}", key.0, key.1));
-            if self.cache.contains_key(&key) || failed {
-                // Make an unused native ancestor reclaimable immediately, while
-                // preserving the independently owned viewing preview and aliases.
-                if let Some(native) = self.cache.get(&native_key) {
-                    let source = native.pyramid.id();
-                    if self
-                        .cache
-                        .get(&viewer_key)
-                        .is_some_and(|c| c.pyramid.id() != source)
-                        && !self
-                            .cache
-                            .iter()
-                            .any(|(k, c)| c.pyramid.id() == source && self.demand.contains(k))
-                    {
-                        for cached in self.cache.values_mut().filter(|c| c.pyramid.id() == source) {
-                            cached.touched = self.frame_number.saturating_sub(2);
+                let Some(native) = self.cache.get(&native_key).cloned() else {
+                    break;
+                };
+                self.cache.get_mut(&native_key).unwrap().touched = self.frame_number;
+                self.demand.insert(native_key.clone());
+                match self.prepare_folder_edit(&item, &native) {
+                    Ok(false) => {
+                        self.folder_load.waiting = true;
+                        return true;
+                    }
+                    Err(_) => {
+                        self.folder_load.edit_failed = true;
+                    }
+                    Ok(true) => {}
+                }
+                self.folder_load.native_done = Some(native_key.clone());
+                let viewer = PreviewRequest {
+                    edge: self.folder_load.viewer_edge,
+                    ..request
+                };
+                self.folder_load.views = VecDeque::from([viewer]);
+                if self
+                    .folder_edit_recipe(&item.id)
+                    .is_some_and(|r| !r.is_neutral())
+                {
+                    let mut bases = HashSet::from([0, native.pyramid.requested_base(viewer)]);
+                    for level in native.pyramid.levels() {
+                        let edge = level.width.max(level.height);
+                        let physical = tr_core::preview::thumbnail_edge(edge.div_ceil(2));
+                        let variant = PreviewRequest {
+                            edge: physical,
+                            ..request
+                        };
+                        let base = native.pyramid.requested_base(variant);
+                        if edge <= 8192 && bases.insert(base) {
+                            self.folder_load.views.push_back(variant);
+                        }
+                        if edge <= 256 {
+                            break;
                         }
                     }
                 }
+            }
+            let viewer_key = (item.id.clone(), *self.folder_load.views.front().unwrap());
+            self.folder_load.refining = Some(viewer_key.clone());
+            if let Some(native) = self.cache.get_mut(&native_key) {
+                native.touched = self.frame_number;
+                self.demand.insert(native_key.clone());
+            }
+            if let Some(viewer) = self.cache.get(&viewer_key).cloned() {
+                self.cache.get_mut(&viewer_key).unwrap().touched = self.frame_number;
+                self.demand.insert(viewer_key.clone());
+                match self.prepare_folder_edit(&item, &viewer) {
+                    Ok(false) => {
+                        self.folder_load.waiting = true;
+                        return true;
+                    }
+                    Err(_) => {
+                        self.folder_load.edit_failed = true;
+                    }
+                    Ok(true) => {}
+                }
+                if self.folder_load.views.len() == 1 {
+                    match self.prepare_folder_thumbnail(&item, &viewer) {
+                        Ok(false) => {
+                            self.folder_load.waiting = true;
+                            return true;
+                        }
+                        Err(_) => {
+                            self.folder_load.edit_failed = true;
+                        }
+                        Ok(true) => {}
+                    }
+                }
+                self.folder_load.views.pop_front();
+                if !self.folder_load.views.is_empty() {
+                    continue;
+                }
+                self.folder_load.errors += usize::from(self.folder_load.edit_failed);
                 self.rebuild.pop_front();
                 self.folder_load.refining = None;
+                self.folder_load.native_done = None;
+                self.folder_load.prepared_recipe = None;
+                self.folder_load.edit_failed = false;
                 self.folder_load.cache_miss = None;
-                self.folder_load.errors += usize::from(failed);
-            } else if self.folder_load.refining.is_some() {
-                // This phase also runs with persistence disabled or over quota.
-                // Keep the native parent alive until its detached tail is ready.
+            } else if self
+                .errors
+                .contains_key(&format!("{}:{:?}", viewer_key.0, viewer_key.1))
+            {
+                self.rebuild.pop_front();
+                self.folder_load.errors += 1;
+                self.folder_load.native_done = None;
+                self.folder_load.refining = None;
+                self.folder_load.prepared_recipe = None;
+            } else {
+                // The native parent already contains every neutral mip. Detach
+                // the viewer in the I/O lane; do not reopen/develop the original.
                 if let Some(native) = self.cache.get_mut(&native_key) {
                     native.touched = self.frame_number;
+                    self.demand.insert(native_key);
                 }
-                self.ensure_preview_request(&item, key.1, self.folder_preparation_priority());
-                if self.cache.contains_key(&key) {
-                    // Equivalent mip geometry aliases immediately. Do not add a
-                    // 100 ms repaint wait per photo in an already warm folder.
+                self.ensure_preview_request(
+                    &item,
+                    viewer_key.1,
+                    self.folder_preparation_priority(),
+                );
+                if self.cache.contains_key(&viewer_key) {
                     continue;
                 }
                 return true;
-            } else {
-                break;
             }
         }
         if let Some(item) = self.rebuild.front() {
@@ -409,6 +488,93 @@ impl TrueRenderer {
             self.ensure_preview_request(&item, request, self.folder_preparation_priority());
         }
         true
+    }
+
+    pub(super) fn join_visible_folder_work(&mut self) {
+        if self.rebuild.is_empty()
+            || self.scanning
+            || self.preparation_paused
+            || self.clearing_current_folder()
+            || self.folder_loading_blocks()
+            || self.editing_has_priority()
+        {
+            return;
+        }
+        let visible: HashSet<_> = self
+            .demand
+            .iter()
+            .filter(|(_, r)| r.edge > 0)
+            .map(|(id, _)| id.as_str())
+            .collect();
+        let pending: HashSet<_> = self
+            .pending_images
+            .iter()
+            .filter(|(_, r)| r.edge == 0)
+            .map(|(id, _)| id.as_str())
+            .collect();
+        let candidates: Vec<_> = self
+            .rebuild
+            .iter()
+            .filter(|item| {
+                (visible.contains(item.id.as_str()) || pending.contains(item.id.as_str()))
+                    && self
+                        .editing
+                        .entries
+                        .get(&item.id)
+                        .is_some_and(|e| e.loaded.is_some())
+            })
+            .map(|item| (item, self.preview_request_for_mode(item, 0, false)))
+            .filter(|(item, request)| {
+                let key = (item.id.clone(), *request);
+                self.pending_images.contains(&key)
+                    || (!self.folder_load.joined_visible.contains(&key)
+                        && !self.cache.contains_key(&key))
+            })
+            .map(|(item, request)| (item.clone(), request))
+            .collect();
+        let mut active = 0;
+        for (item, request) in &candidates {
+            let key = (item.id.clone(), *request);
+            if self.folder_load.joined_visible.contains(&key) && self.pending_images.contains(&key)
+            {
+                self.ensure_preview_request(item, *request, PreviewPriority::Background);
+                active += 1;
+            }
+        }
+        if self.service.cache.under_pressure() {
+            return;
+        }
+        let memory = self.service.cache.memory.usage();
+        if memory.reserved
+            > memory
+                .limit
+                .saturating_sub(self.service.cache.background_headroom())
+        {
+            return;
+        }
+        for (item, request) in candidates {
+            if active >= 2 {
+                break;
+            }
+            let key = (item.id.clone(), request);
+            if self.folder_load.joined_visible.contains(&key)
+                || self.cache.contains_key(&key)
+                || !self.demand.iter().any(|(id, r)| {
+                    id == &item.id
+                        && r.edge > 0
+                        && r.raw_engine == request.raw_engine
+                        && r.raw_wb == request.raw_wb
+                        && r.quality == request.quality
+                })
+            {
+                continue;
+            }
+            // Publish the native consumer in the same ViewDemand as its visible
+            // thumbnail/viewer. The existing decoder coalesces them before IPC.
+            self.ensure_preview_request(&item, request, PreviewPriority::Background);
+            self.folder_load.joined_visible.insert(key);
+            active += 1;
+        }
     }
 
     fn folder_preparation_priority(&self) -> PreviewPriority {
@@ -655,10 +821,11 @@ impl TrueRenderer {
                 "passed": complete && !failed, "processed": done, "total": total,
                 "errors": self.folder_load.errors, "decode_jobs": stats.decode_jobs,
                 "cache_hits": stats.hits, "writes": stats.writes,
+                "editing": self.edit_work_statistics(),
                 "elapsed_seconds": self.started.elapsed().as_secs_f64(),
                 "quality": self.service.cache.settings().quality,
                 "viewer_edge": self.folder_load.viewer_edge,
-                "scope": "Normal folder preparation in a separate process; original validation retained; no cache deletion."
+                "scope": "Normal selected-quality detail, canonical edits, fitted viewer and thumbnail preparation; original validation retained; persistence and residency remain subject to quotas."
             });
             let _ = std::fs::write(
                 self.root.join("reports/cache-reopen.json"),

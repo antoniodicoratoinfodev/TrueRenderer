@@ -155,6 +155,7 @@ pub struct Service {
     pub events: mpsc::Receiver<Event>,
     pub generation: Arc<AtomicU64>,
     pub cache: Arc<crate::cache::Manager>,
+    pub preview_writer: Arc<crate::cache::writer::Writer>,
     pub wake: crate::wake::Wake,
     pub filesystem: crate::filesystem_browser::Filesystem,
     worker: Option<thread::JoinHandle<()>>,
@@ -178,6 +179,14 @@ impl Service {
             crate::filesystem_browser::Filesystem::start(ctx.clone(), cache.memory.clone());
         let fs = filesystem.client.clone();
         let worker_generation = generation.clone();
+        let pool = DecodePool::start(
+            worker.clone(),
+            worker_generation.clone(),
+            events_tx.clone(),
+            ctx.clone(),
+            thread_cache.clone(),
+        );
+        let preview_writer = pool.writer.clone();
         let service_worker = thread::spawn(move || {
             let send = |event| {
                 let _ = events_tx.send(event);
@@ -191,13 +200,6 @@ impl Service {
                 }
             };
             let external = tr_platform::external_decoding_available(&worker);
-            let pool = DecodePool::start(
-                worker,
-                worker_generation.clone(),
-                events_tx.clone(),
-                ctx.clone(),
-                thread_cache.clone(),
-            );
             let corpus = root
                 .join("corpus")
                 .canonicalize()
@@ -542,6 +544,7 @@ impl Service {
             }
         });
         Self {
+            preview_writer,
             filesystem,
             cache,
             high,

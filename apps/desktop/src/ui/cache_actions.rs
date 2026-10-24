@@ -53,6 +53,8 @@ mod tests {
         settle(&mut app, &ctx, true);
         app.start_folder_preparation(true);
         let item = app.state.items[1].clone();
+        app.ensure_edit_loaded(&item);
+        settle(&mut app, &ctx, false);
         let request = app.folder_load.request.unwrap();
         let cached = resident(&mut app, &item, request);
         let preview = tr_render::PreparedPreview {

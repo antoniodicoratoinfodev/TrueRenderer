@@ -14,6 +14,7 @@ pub(super) struct Probe {
     pixel_capture: Option<(String, ProofCapture, u32)>,
     pixel_checks: Vec<serde_json::Value>,
     failed: bool,
+    folder_before: Option<serde_json::Value>,
 }
 impl Probe {
     pub(super) fn active(&self) -> bool {
@@ -127,6 +128,12 @@ impl TrueRenderer {
             self.editing.continuity.baseline = self.editing.entries[&item.id].draft.clone();
             self.editing.continuity.started = Some(Instant::now());
             self.editing.continuity.timing_start = tr_render::timings::mark();
+            if std::env::args().any(|a| a == "--edit-during-folder-smoke") {
+                self.editing.continuity.folder_before = Some(serde_json::json!({
+                    "remaining":self.state.items.len(),"editing":self.edit_work_statistics(),
+                    "decode_jobs":self.service.cache.stats().decode_jobs,
+                }));
+            }
         }
         let elapsed = self
             .editing
@@ -151,8 +158,13 @@ impl TrueRenderer {
             "elapsed_ms":elapsed,
             "age_ms":displayed.and_then(|c| c.displayed_revision).and_then(|revision| self.editing.continuity.events.iter().find(|(r,_)| *r==revision).map(|(_,time)| elapsed-time)),
             "original_returned":original_returned,
+            "folder_remaining":self.rebuild.len(),
+            "folder_edit_active":self.editing.folder_preparing,
         }));
         self.editing.continuity.failed |= covered < 0.999 || original_returned;
+        if self.editing.continuity.steps == 0 && self.editing.continuity.folder_before.is_some() {
+            self.start_folder_preparation(true);
+        }
         let failed = self.editing.continuity.failed;
         if failed && !self.screenshots.contains("edit-failure") {
             self.capture_screenshot(&self.context.clone(), "edit-failure");
@@ -175,6 +187,15 @@ impl TrueRenderer {
             let mut recipe = self.editing.continuity.baseline.as_ref().unwrap().clone();
             recipe.exposure_ev = 0.25 + (step % 12) as f32 * 0.1;
             recipe.brightness = (step % 16) as f32 * 2. - 12.;
+            if std::env::args().any(|a| a == "--layers-edit-smoke") {
+                if let Some(layer) = recipe.layers.as_mut().and_then(|s| s.layers.first_mut()) {
+                    layer.opacity = 0.25 + (step % 16) as f32 / 24.;
+                }
+            } else if std::env::args().any(|a| a == "--advanced-edit-smoke")
+                && let Some(advanced) = recipe.advanced.as_mut()
+            {
+                advanced.detail.texture = (step % 20) as f32 * 2. - 10.;
+            }
             if std::env::args().any(|arg| arg == "--edit-pixel-smoke") {
                 recipe.curve = vec![
                     CurvePoint { x: 0., y: 0. },
@@ -242,6 +263,10 @@ impl TrueRenderer {
             "distinct_frames_during_gesture":distinct,"events":self.editing.continuity.events,
             "quality":format!("{:?}",self.quality(item)),"engine":format!("{:?}",self.editing.continuity.baseline.as_ref().unwrap().raw_engine),
             "native_wb":std::env::args().any(|arg|arg=="--edit-wb-continuity-smoke"),
+            "layer_gesture":std::env::args().any(|arg|arg=="--layers-edit-smoke"),
+            "tool_gesture":std::env::args().any(|arg|arg=="--advanced-edit-smoke"),
+            "folder_before":self.editing.continuity.folder_before,
+            "folder_remaining":self.rebuild.len(),"editing_work":self.edit_work_statistics(),
             "zoom":self.state.transform.zoom,"source_size":self.cache.values().map(|c|c.pyramid.source_size()).max(),
             "proof":self.output_proof_for(&item.id),"frames":self.editing.continuity.frames,
             "compute":self.presenter.statistics(),
