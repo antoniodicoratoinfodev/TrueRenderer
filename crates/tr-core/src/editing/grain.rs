@@ -56,12 +56,28 @@ impl Grain {
         native: [u32; 2],
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<()> {
+        self.apply_region(
+            image,
+            native,
+            [0; 2],
+            [image.width, image.height],
+            cancelled,
+        )
+    }
+    pub(super) fn apply_region(
+        &self,
+        image: &mut LinearImage,
+        native: [u32; 2],
+        origin: [u32; 2],
+        dimensions: [u32; 2],
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<()> {
         if !self.active() {
             return Ok(());
         }
         let width = image.width as usize;
-        let sx = native[0] as f32 / image.width as f32;
-        let sy = native[1] as f32 / image.height as f32;
+        let sx = native[0] as f32 / dimensions[0] as f32;
+        let sy = native[1] as f32 / dimensions[1] as f32;
         // Approximate unresolved grain energy on provisional mips. The final
         // rendering always evaluates native pixels before the canonical resize.
         let attenuation = (self.size / (sx * sy).sqrt()).min(1.);
@@ -77,8 +93,11 @@ impl Grain {
                         if p[3] <= 0. {
                             continue;
                         }
-                        let x = (((i % width) as f32 + 0.5) * sx - 0.5) / self.size;
-                        let y = (((block * 16 + i / width) as f32 + 0.5) * sy - 0.5) / self.size;
+                        let x = (((origin[0] as usize + i % width) as f32 + 0.5) * sx - 0.5)
+                            / self.size;
+                        let y = (((origin[1] as usize + block * 16 + i / width) as f32 + 0.5) * sy
+                            - 0.5)
+                            / self.size;
                         let mono = self.sample(x, y, 0);
                         for c in 0..3 {
                             let noise = if self.monochrome || c == 0 {

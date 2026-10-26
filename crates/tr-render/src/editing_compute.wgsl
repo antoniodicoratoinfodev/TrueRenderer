@@ -75,13 +75,9 @@ fn advanced_color(input: vec3<f32>) -> vec3<f32> {
     }
     return rgb;
 }
-@compute @workgroup_size(256)
-fn edit(@builtin(global_invocation_id) id: vec3<u32>) {
-    let i = id.x;
-    if i >= arrayLength(&source) { return; }
-    let pixel = vec4(source[i].rgb * params.data[5].xyz, source[i].a);
+fn edit_pixel(pixel: vec4<f32>) -> vec4<f32> {
     let alpha = pixel.a;
-    if alpha == 0. { output[i] = pixel; return; }
+    if alpha == 0. { return pixel; }
     var rgb = pixel.rgb;
     let p = params.data[0];
     if params.data[3].w != 0. {
@@ -126,5 +122,11 @@ fn edit(@builtin(global_invocation_id) id: vec3<u32>) {
         rgb *= alpha;
     }
     if params.data[4].x != 0. { rgb = advanced_color(rgb / alpha) * alpha; }
-    output[i] = vec4(rgb, alpha);
+    return vec4(rgb, alpha);
+}
+@compute @workgroup_size(256)
+fn edit(@builtin(global_invocation_id) id: vec3<u32>) {
+    let i = id.x;
+    if i >= arrayLength(&source) { return; }
+    output[i] = edit_pixel(vec4(source[i].rgb * params.data[5].xyz, source[i].a));
 }

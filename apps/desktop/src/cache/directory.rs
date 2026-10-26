@@ -52,6 +52,25 @@ pub struct Directory {
     pub file: File,
 }
 impl Directory {
+    /// Windows directory enumeration already carries file attributes, length
+    /// and write time. Reuse that snapshot during a locked quota scan instead
+    /// of issuing one extra metadata syscall for every cache block.
+    pub fn entry_info(&self, entry: &std::fs::DirEntry) -> Result<(u64, std::time::SystemTime)> {
+        #[cfg(windows)]
+        {
+            let metadata = entry.metadata()?;
+            ensure!(
+                metadata.is_file()
+                    && metadata.file_attributes() & flags::ATTRIBUTE_REPARSE_POINT == 0,
+                "Cache: link o file speciale rifiutato"
+            );
+            Ok((metadata.len(), metadata.modified()?))
+        }
+        #[cfg(not(windows))]
+        {
+            self.file_info(&entry.file_name().to_string_lossy())
+        }
+    }
     /// Rejects a name that could escape the folder or address something other
     /// than a plain entry in it. Windows adds `:`, which would name an
     /// alternate data stream on an existing file.

@@ -81,6 +81,13 @@ pub struct LinearImage {
     pub height: u32,
     pub pixels: Vec<Pixel>,
 }
+fn all_pixels(pixels: &[Pixel], check: impl Fn(&Pixel) -> bool + Sync + Send) -> bool {
+    if pixels.len() >= 262144 {
+        crate::compute::install(|| pixels.par_iter().all(check))
+    } else {
+        pixels.iter().all(check)
+    }
+}
 impl LinearImage {
     pub fn new(width: u32, height: u32, pixels: Vec<Pixel>) -> Result<Self> {
         let count = (width as usize)
@@ -91,17 +98,27 @@ impl LinearImage {
             "Dimensioni fuori quota R0"
         );
         ensure!(count == pixels.len(), "Lunghezza raster incoerente");
-        ensure!(
-            pixels
-                .iter()
-                .all(|p| p.iter().all(|v| v.is_finite()) && (0.0..=1.0).contains(&p[3])),
-            "Raster non finito o alpha invalida"
-        );
+        let valid = all_pixels(&pixels, |p| {
+            p.iter().all(|v| v.is_finite()) && (0.0..=1.0).contains(&p[3])
+        });
+        ensure!(valid, "Raster non finito o alpha invalida");
         Ok(Self {
             width,
             height,
             pixels,
         })
+    }
+    /// Validate a mutated working raster without serializing the CPU pool.
+    pub fn samples_are_finite(&self) -> bool {
+        all_pixels(&self.pixels, |p| p.iter().all(|v| v.is_finite()))
+    }
+    /// Admission to a numerically qualified backend; no clamping or conversion.
+    pub fn samples_within(&self, maximum: f32) -> bool {
+        maximum.is_finite()
+            && maximum >= 0.
+            && all_pixels(&self.pixels, |p| {
+                p.iter().all(|v| v.is_finite() && v.abs() <= maximum)
+            })
     }
     pub fn to_display(&self) -> Vec<u8> {
         let mut output = vec![0; self.pixels.len() * 4];
@@ -245,6 +262,32 @@ mod tests {
         assert!(LinearImage::new(u32::MAX, u32::MAX, vec![]).is_err());
         assert!(LinearImage::new(1, 1, vec![[f32::NAN; 4]]).is_err());
         assert!(LinearImage::new(1, 1, vec![[0., 0., 0., 2.]]).is_err());
+    }
+    #[test]
+    fn parallel_admission_keeps_range_and_nonfinite_rejections() {
+        for count in [262143, 262144, 262145] {
+            let mut image =
+                LinearImage::new(count, 1, vec![[1000., -1000., -0., 1.]; count as usize]).unwrap();
+            assert!(image.samples_within(1000.));
+            assert!(image.samples_are_finite());
+            for index in [0, count as usize / 2, count as usize - 1] {
+                for value in [
+                    f32::from_bits(1000_f32.to_bits() + 1),
+                    f32::MAX,
+                    f32::INFINITY,
+                    f32::NEG_INFINITY,
+                    f32::NAN,
+                ] {
+                    image.pixels[index][2] = value;
+                    assert!(!image.samples_within(1000.));
+                    assert_eq!(image.samples_are_finite(), value.is_finite());
+                }
+                image.pixels[index][2] = -0.;
+            }
+            assert!(!image.samples_within(f32::INFINITY));
+            assert!(!image.samples_within(f32::NAN));
+            assert!(!image.samples_within(-1.));
+        }
     }
     #[test]
     fn parallel_display_keeps_scalar_bytes_for_alpha_and_extended_rgb() {

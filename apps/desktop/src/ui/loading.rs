@@ -268,6 +268,10 @@ impl TrueRenderer {
             return true;
         }
         if self.rebuild.is_empty() {
+            if self.folder_load.finishing && self.presenter.live_preparation_pending() {
+                ctx.request_repaint_after(Duration::from_millis(25));
+                return true;
+            }
             self.folder_load.finishing = false;
             if self.folder_load.foreground && !self.scanning {
                 self.folder_load.foreground = false;

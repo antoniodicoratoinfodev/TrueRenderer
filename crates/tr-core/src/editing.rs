@@ -20,6 +20,7 @@ pub mod looks;
 pub mod masks;
 #[cfg(test)]
 mod process3_tests;
+pub mod regional;
 #[cfg(test)]
 mod selective_tests;
 #[cfg(test)]
@@ -523,12 +524,30 @@ impl EditRecipe {
             };
             let spectral = a.detail.denoise != detail::Denoise::Legacy
                 && (a.detail.luminance_noise > 0. || a.detail.chroma_noise > 0.);
-            // The DCT model is bounded to 1024 patches; each parallel 64-row
-            // stripe uses a 64 KiB accumulator and fixed transform scratch.
+            // The DCT model is bounded to 1024 patches; 128x128 tasks own a
+            // 256 KiB accumulator and fixed transform scratch. Row-slice metadata
+            // is separate, with no second raster for the parallel tile layout.
             // V2's recursively halved chroma frames, output and merge scratch
             // stay below the two full frames already reserved above.
             let stripe_scratch = if spectral {
-                4 * 1024 * 1024 + u64::from(height.div_ceil(64).min(256)) * 96 * 1024
+                // Regional V2 can estimate/filter up to four scales together.
+                // Include every model and row table; the shared pool bounds
+                // simultaneously active tile accumulators to 256.
+                let levels = if a.detail.denoise == detail::Denoise::MultiscaleV2
+                    && a.detail.chroma_noise > 0.
+                {
+                    4
+                } else {
+                    1
+                };
+                let (mut tiles, mut rows) = (0, 0);
+                for level in 0..levels {
+                    let w = u64::from(width.div_ceil(1 << level));
+                    let h = u64::from(height.div_ceil(1 << level));
+                    tiles += w.div_ceil(128) * h.div_ceil(128);
+                    rows += h * w.div_ceil(128);
+                }
+                levels * 12 * 1024 * 1024 + rows * 24 + tiles * 64 + tiles.min(256) * 384 * 1024
             } else {
                 0
             };
@@ -666,6 +685,9 @@ impl EditRecipe {
     fn transform_pixel(&self, pixel: Pixel) -> Pixel {
         self.transform_prepared(pixel, &Parameters::new(self))
     }
+    // Keep the common exposure/transparent path small enough to inline in
+    // fused readers. The full tone/colour graph need not be called per sample.
+    #[inline]
     fn transform_prepared(&self, pixel: Pixel, parameters: &Parameters) -> Pixel {
         let alpha = pixel[3];
         if alpha == 0. {
@@ -680,6 +702,10 @@ impl EditRecipe {
                 alpha,
             ];
         }
+        self.transform_tone_color(pixel, parameters)
+    }
+    fn transform_tone_color(&self, pixel: Pixel, parameters: &Parameters) -> Pixel {
+        let alpha = pixel[3];
         let mut rgb = [pixel[0] / alpha, pixel[1] / alpha, pixel[2] / alpha];
         let ev = parameters.exposure;
         let gains = parameters.gains;

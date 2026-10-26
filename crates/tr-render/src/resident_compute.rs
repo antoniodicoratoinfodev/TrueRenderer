@@ -11,6 +11,7 @@ use tr_core::{
     provider::ImageLevels,
     resample::Region,
 };
+pub(crate) mod tail;
 struct Source {
     buffer: wgpu::Buffer,
     _memory: Lease,
@@ -26,7 +27,7 @@ struct PendingSubmission {
     commands: wgpu::CommandBuffer,
     scratch: Lease,
     scratch_gpu: Lease,
-    source: Arc<Source>,
+    source: Arc<dyn Send + Sync>,
     timer: Option<crate::timings::GpuTimer>,
 }
 impl GpuFrame {
@@ -63,8 +64,11 @@ pub struct GpuFilter {
     device: wgpu::Device,
     layout: wgpu::BindGroupLayout,
     pipelines: [wgpu::ComputePipeline; 2],
+    display_pipeline: wgpu::ComputePipeline,
     editing: crate::editing_compute::EditingCompute,
     sources: Mutex<SourceCache>,
+    layer_sources: Mutex<Option<Arc<tail::LayerSource>>>,
+    layer_compute: std::sync::OnceLock<crate::layer_compute::LayerCompute>,
 }
 #[derive(Default)]
 struct SourceCache {
@@ -137,19 +141,175 @@ impl GpuFilter {
             })
         });
         let editing = crate::editing_compute::EditingCompute::new(&device);
+        let display_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("TR edited viewport display"),
+            layout: Some(&pipeline_layout),
+            module: &shader,
+            entry_point: Some("direct_display_pass"),
+            compilation_options: Default::default(),
+            cache: None,
+        });
         Self {
             format,
             device,
             layout,
             pipelines,
+            display_pipeline,
             editing,
             sources: Mutex::new(SourceCache::default()),
+            layer_sources: Mutex::new(None),
+            layer_compute: Default::default(),
         }
     }
     pub fn clear(&self) {
         // Resource destruction can be expensive: release the cache lock first.
         let old = std::mem::take(&mut self.sources.lock().unwrap().entries);
         drop(old);
+        let layers = self.layer_sources.lock().unwrap().take();
+        drop(layers);
+    }
+    pub fn display_linear(
+        &self,
+        image: &tr_core::color::LinearImage,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        working: &mut Lease,
+    ) -> Result<GpuFrame> {
+        let _span = crate::timings::CpuSpan::new("cpu_edit_gpu_display");
+        let bytes = image.pixels.len() as u64 * 16;
+        ensure!(
+            bytes <= self.device.limits().max_storage_buffer_binding_size
+                && image.samples_within(1000.),
+            "Vista modificata oltre capacità GPU qualificata"
+        );
+        ensure!(
+            working.bytes() >= bytes + 256 + image.pixels.len() as u64 * 24,
+            "Display oltre prenotazione"
+        );
+        let gpu_source = gpu.try_reserve(bytes).context("Quota upload editing GPU")?;
+        #[cfg(target_endian = "little")]
+        let source_bytes = bytemuck::cast_slice(&image.pixels);
+        #[cfg(target_endian = "big")]
+        let packed: Vec<_> = image
+            .pixels
+            .iter()
+            .flatten()
+            .flat_map(|v| v.to_le_bytes())
+            .collect();
+        #[cfg(target_endian = "big")]
+        let source_bytes = packed.as_slice();
+        let buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("TR exact edited viewport"),
+                contents: source_bytes,
+                usage: wgpu::BufferUsages::STORAGE,
+            });
+        let params = [
+            image.width,
+            image.width,
+            image.height,
+            0,
+            image.height,
+            0,
+            0,
+            0,
+        ];
+        let params: Vec<_> = params.iter().flat_map(|v| v.to_le_bytes()).collect();
+        let uniform = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: &params,
+                usage: wgpu::BufferUsages::UNIFORM,
+            });
+        let dummy = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: 16,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+        let dummy_x = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: 16,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+        let dummy_y = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: 16,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+        let texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("TR edited display frame"),
+            size: wgpu::Extent3d {
+                width: image.width,
+                height: image.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: self.format,
+            usage: wgpu::TextureUsages::STORAGE_BINDING
+                | wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let view = texture.create_view(&Default::default());
+        let buffers = [
+            &uniform, &buffer, &dummy_x, &dummy_y, &dummy, &dummy, &dummy, &dummy,
+        ];
+        let mut entries: Vec<_> = buffers
+            .iter()
+            .enumerate()
+            .map(|(i, b)| wgpu::BindGroupEntry {
+                binding: i as u32,
+                resource: b.as_entire_binding(),
+            })
+            .collect();
+        entries.push(wgpu::BindGroupEntry {
+            binding: 8,
+            resource: wgpu::BindingResource::TextureView(&view),
+        });
+        let bind = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: None,
+            layout: &self.layout,
+            entries: &entries,
+        });
+        let mut encoder = self.device.create_command_encoder(&Default::default());
+        let mut timer = crate::timings::GpuTimer::new(&self.device, memory, gpu);
+        if let Some(t) = &mut timer {
+            t.begin(&mut encoder, "gpu_edited_display");
+        }
+        {
+            let mut pass = encoder.begin_compute_pass(&Default::default());
+            pass.set_pipeline(&self.display_pipeline);
+            pass.set_bind_group(0, &bind, &[]);
+            pass.dispatch_workgroups(image.width.div_ceil(8), image.height.div_ceil(8), 1);
+        }
+        if let Some(t) = &timer {
+            t.end(&mut encoder);
+            t.resolve(&mut encoder);
+        }
+        let source = Arc::new(Source {
+            buffer,
+            _memory: working.split(bytes).unwrap(),
+            _gpu: gpu_source,
+        });
+        let scratch_gpu = gpu.try_reserve(256).context("Quota parametri display")?;
+        Ok(GpuFrame {
+            texture,
+            size: [image.width, image.height],
+            pending: Some(Box::new(PendingSubmission {
+                commands: encoder.finish(),
+                scratch: working.split(256).unwrap(),
+                scratch_gpu,
+                source,
+                timer,
+            })),
+        })
     }
     pub fn render(
         &self,
@@ -235,7 +395,7 @@ impl GpuFilter {
         let preparation = crate::timings::CpuSpan::new("cpu_region_coefficients");
 
         if let Some(edit) = edit {
-            ensure!(edit.gpu_supported(), "Nodo editing CPU");
+            ensure!(edit.gpu_supported_for(image, region), "Nodo editing CPU");
         }
         let (level, mut region, opaque) = image.render_input(region)?;
         // The selected mip can be a full native RAW. Upload only the visible

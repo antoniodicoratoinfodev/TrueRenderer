@@ -110,6 +110,14 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
     let test = std::env::args()
         .any(|arg| arg == "--device-loss-smoke" || arg == "--device-loss-twice-smoke");
     let fail_twice = std::env::args().any(|arg| arg == "--device-loss-twice-smoke");
+    // Continuity measurements compare an identical physical viewport. These
+    // isolated diagnostics must not be resized/maximized during a gesture.
+    let fixed_probe = std::env::args().any(|arg| {
+        matches!(
+            arg.as_str(),
+            "--edit-continuity-smoke" | "--zoom-continuity-smoke" | "--pan-continuity-smoke"
+        )
+    });
     for attempt in 0..=1 {
         let lost = Arc::new(AtomicBool::new(false));
         let creator_lost = lost.clone();
@@ -126,6 +134,8 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
                 .with_title("TrueRenderer")
                 .with_app_id("it.truerenderer.prototype")
                 .with_inner_size([1440., 940.])
+                .with_resizable(!fixed_probe)
+                .with_maximize_button(!fixed_probe)
                 .with_min_inner_size([550., 360.]),
             renderer: eframe::Renderer::Wgpu,
             // Image textures already contain the final quantized sRGB8 raster.
@@ -172,6 +182,15 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
                             "Stato della sessione non disponibile per il recupero grafico".into(),
                         );
                     };
+                    if fixed_probe {
+                        // Automated image comparisons must not include a tooltip
+                        // opened by the unrelated physical pointer position.
+                        // Ordinary UI and explicit tooltip tests keep their style.
+                        cc.egui_ctx.all_styles_mut(|style| {
+                            style.interaction.tooltip_delay = 3600.;
+                            style.interaction.tooltip_grace_time = 0.;
+                        });
+                    }
                     let device = cc.wgpu_render_state.as_ref().map(|gpu| gpu.device.clone());
                     let lost_at_end = creator_lost.clone();
                     let injected_at_end = inject_loss.clone();

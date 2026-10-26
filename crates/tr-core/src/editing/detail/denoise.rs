@@ -3,11 +3,12 @@
 //! Yu & Sapiro, IPOL 2011 (doi:10.5201/ipol.2011.ys-dct); no reference code used.
 //! A robust frequency-dependent noise estimate accounts for demosaic correlation.
 //! Coefficients use linear, extended Rec.2020, never quantized display pixels.
+use super::input::{Input, extract};
 use crate::color::{LinearImage, Pixel};
 use anyhow::{Result, ensure};
 use rayon::prelude::*;
 
-const TILE: usize = 64;
+const TILE: usize = 128;
 const MODEL_SAMPLES: usize = 1024;
 
 fn reflect(x: isize, length: usize) -> usize {
@@ -191,17 +192,28 @@ impl<const N: usize> Transform<N> {
     /// Subtract a patch constant before transforming: flat fields stay bit exact.
     pub(super) fn block(
         &self,
-        image: &LinearImage,
+        image: &impl Input,
         x: isize,
         y: isize,
     ) -> Option<([[Pixel; N]; N], f32)> {
         let mut block = [[[0.; 4]; N]; N];
         let mut mean = [0_f64; 3];
+        let xs: [usize; N] = std::array::from_fn(|dx| {
+            if x >= 0 && x + N as isize <= image.width() as isize {
+                x as usize + dx
+            } else {
+                reflect(x + dx as isize, image.width() as usize)
+            }
+        });
         for (dy, row) in block.iter_mut().enumerate() {
-            let yy = reflect(y + dy as isize, image.height as usize);
+            let yy = if y >= 0 && y + N as isize <= image.height() as isize {
+                y as usize + dy
+            } else {
+                reflect(y + dy as isize, image.height() as usize)
+            };
             for (dx, target) in row.iter_mut().enumerate() {
-                let xx = reflect(x + dx as isize, image.width as usize);
-                let p = image.pixels[yy * image.width as usize + xx];
+                let xx = xs[dx];
+                let p = image.pixel(xx, yy);
                 if p[3] <= 0. {
                     return None;
                 }
@@ -236,44 +248,101 @@ fn quantile(values: &mut [f32], q: f32) -> f32 {
 }
 
 pub(super) fn model<const N: usize>(
-    image: &LinearImage,
+    image: &impl Input,
     transform: &Transform<N>,
     cancelled: &(impl Fn() -> bool + Sync),
 ) -> Result<[[Pixel; N]; N]> {
-    let mut samples = Vec::with_capacity(MODEL_SAMPLES);
-    let (w, h) = (image.width as usize, image.height as usize);
+    Ok(model_from_samples(&model_samples(
+        image, transform, cancelled,
+    )?))
+}
+pub(super) fn model_samples<const N: usize>(
+    image: &impl Input,
+    transform: &Transform<N>,
+    cancelled: &(impl Fn() -> bool + Sync),
+) -> Result<Vec<(f32, [[Pixel; N]; N])>> {
+    let (w, h) = (image.width() as usize, image.height() as usize);
     let nx = 32.min(w.div_ceil(N));
     let ny = 32.min(h.div_ceil(N));
-    for iy in 0..ny {
-        ensure!(!cancelled(), "Editing annullato");
-        for ix in 0..nx {
-            let x = ix * w.saturating_sub(N) / nx.saturating_sub(1).max(1);
-            let y = iy * h.saturating_sub(N) / ny.saturating_sub(1).max(1);
-            if let Some((mut b, scale)) = transform.block(image, x as isize, y as isize) {
-                for row in &mut b {
-                    for p in row {
-                        for v in p {
-                            *v = v.abs() / scale;
+    ensure!(nx * ny <= MODEL_SAMPLES, "Stima rumore oltre quota");
+    let samples: Result<Vec<_>> = crate::compute::install(|| {
+        (0..nx * ny)
+            .into_par_iter()
+            .map(|i| {
+                ensure!(!cancelled(), "Editing annullato");
+                let (ix, iy) = (i % nx, i / nx);
+                let x = ix * w.saturating_sub(N) / nx.saturating_sub(1).max(1);
+                let y = iy * h.saturating_sub(N) / ny.saturating_sub(1).max(1);
+                if let Some((mut b, scale)) = transform.block(image, x as isize, y as isize) {
+                    for row in &mut b {
+                        for p in row {
+                            for v in p {
+                                *v = v.abs() / scale;
+                            }
+                        }
+                    }
+                    Ok(Some((scale, b)))
+                } else {
+                    Ok(None)
+                }
+            })
+            .collect()
+    });
+    Ok(samples?.into_iter().flatten().collect())
+}
+pub(super) fn model_from_samples<const N: usize>(
+    samples: &[(f32, [[Pixel; N]; N])],
+) -> [[Pixel; N]; N] {
+    let mut result = sample_quantiles(&samples.iter().collect::<Vec<_>>());
+    let mut values = Vec::with_capacity(N * N);
+    cap_model(&mut result, &mut values);
+    result
+}
+
+pub(super) fn sample_quantiles<const N: usize>(
+    samples: &[&(f32, [[Pixel; N]; N])],
+) -> [[Pixel; N]; N] {
+    let mut result = [[[0.; 4]; N]; N];
+    if samples.is_empty() {
+        return result;
+    }
+    // The 30th percentile of |N(0,1)| is 0.38532. Using a lower quantile
+    // reduces contamination by sparse real edges and texture coefficients.
+    crate::compute::install(|| {
+        result.par_iter_mut().enumerate().for_each(|(y, row)| {
+            // Avoid repeatedly scanning coefficients at a 4096-byte stride.
+            // Small patch groups are transposed once into contiguous planes.
+            let count = samples.len();
+            let mut coefficients = vec![0.; count * N * 3];
+            for (group, samples) in samples.chunks(8).enumerate() {
+                let mut rows = [[[0.; 4]; N]; 8];
+                for (row, (_, sample)) in rows.iter_mut().zip(samples) {
+                    *row = sample[y];
+                }
+                for x in 0..N {
+                    for c in 0..3 {
+                        let begin = (x * 3 + c) * count + group * 8;
+                        for (out, row) in coefficients[begin..begin + samples.len()]
+                            .iter_mut()
+                            .zip(&rows)
+                        {
+                            *out = row[x][c];
                         }
                     }
                 }
-                samples.push(b);
             }
-        }
-    }
-    let mut result = [[[0.; 4]; N]; N];
-    // The 30th percentile of |N(0,1)| is 0.38532. Using a lower quantile
-    // reduces contamination by sparse real edges and texture coefficients.
-    let mut values = Vec::with_capacity(samples.len());
-    for (y, row) in result.iter_mut().enumerate() {
-        for (x, p) in row.iter_mut().enumerate() {
-            for c in 0..3 {
-                values.clear();
-                values.extend(samples.iter().map(|b| b[y][x][c]));
-                p[c] = quantile(&mut values, 0.3) / 0.385_32;
+            for (x, p) in row.iter_mut().enumerate() {
+                for (c, value) in p[..3].iter_mut().enumerate() {
+                    let begin = (x * 3 + c) * count;
+                    *value = quantile(&mut coefficients[begin..begin + count], 0.3) / 0.385_32;
+                }
             }
-        }
-    }
+        })
+    });
+    result
+}
+
+fn cap_model<const N: usize>(result: &mut [[Pixel; N]; N], values: &mut Vec<f32>) {
     // Bound low-frequency estimates by the mid/high-frequency floor. A clean
     // gradient or repeated pattern must not be interpreted as unlimited noise.
     let mut cap = [0.; 3];
@@ -286,9 +355,9 @@ pub(super) fn model<const N: usize>(
                 }
             }
         }
-        cap[c] = 8. * quantile(&mut values, 0.5);
+        cap[c] = 8. * quantile(values, 0.5);
     }
-    let original = result;
+    let original = *result;
     for y in 0..N {
         for x in 0..N {
             for (c, limit) in cap.iter().enumerate() {
@@ -297,7 +366,6 @@ pub(super) fn model<const N: usize>(
         }
     }
     result[0][0] = [0.; 4];
-    Ok(result)
 }
 
 fn run<const N: usize>(
@@ -334,64 +402,115 @@ pub(super) fn filter<const N: usize>(
     cancelled: &(impl Fn() -> bool + Sync),
     shrink: &(impl Fn(&mut [[Pixel; N]; N], f32) + Sync),
 ) -> Result<Vec<Pixel>> {
-    let (w, h) = (image.width as usize, image.height as usize);
-    let mut output = vec![[0.; 4]; image.pixels.len()];
+    filter_region(
+        image,
+        transform,
+        cancelled,
+        shrink,
+        super::super::regional::Rect::full([image.width, image.height]),
+    )
+}
+pub(super) fn filter_region<const N: usize>(
+    image: &impl Input,
+    transform: &Transform<N>,
+    cancelled: &(impl Fn() -> bool + Sync),
+    shrink: &(impl Fn(&mut [[Pixel; N]; N], f32) + Sync),
+    rect: super::super::regional::Rect,
+) -> Result<Vec<Pixel>> {
+    if image.cache_region() {
+        let support = rect.expand(N as u32, [image.width(), image.height()]);
+        let window = super::input::Window {
+            source: image,
+            rect: support,
+            image: extract(image, support)?,
+        };
+        filter_region_inner(&window, transform, cancelled, shrink, rect)
+    } else {
+        filter_region_inner(image, transform, cancelled, shrink, rect)
+    }
+}
+fn filter_region_inner<const N: usize>(
+    image: &impl Input,
+    transform: &Transform<N>,
+    cancelled: &(impl Fn() -> bool + Sync),
+    shrink: &(impl Fn(&mut [[Pixel; N]; N], f32) + Sync),
+    rect: super::super::regional::Rect,
+) -> Result<Vec<Pixel>> {
+    let (w, h) = (image.width() as usize, image.height() as usize);
+    let [rx, ry] = rect.origin.map(|v| v as usize);
+    let [rw, rh] = rect.size.map(|v| v as usize);
+    ensure!(
+        rx + rw <= w && ry + rh <= h && rw > 0 && rh > 0,
+        "Regione denoise non valida"
+    );
+    let mut output = vec![[0.; 4]; rw * rh];
+    // Disjoint mutable row slices allow independent 2D tiles without unsafe
+    // writes or a second output raster. Larger tiles avoid repeating boundary
+    // transforms; horizontal tasks keep all cores busy on short viewports.
+    let columns = rw.div_ceil(TILE);
+    let mut tiles: Vec<Vec<&mut [Pixel]>> = (0..columns * rh.div_ceil(TILE))
+        .map(|i| Vec::with_capacity((rh - (i / columns) * TILE).min(TILE)))
+        .collect();
+    for (y, row) in output.chunks_mut(rw).enumerate() {
+        for (x, chunk) in row.chunks_mut(TILE).enumerate() {
+            tiles[y / TILE * columns + x].push(chunk);
+        }
+    }
     crate::compute::install(|| {
-        output
-            .par_chunks_mut(w * TILE)
+        tiles
+            .into_par_iter()
             .enumerate()
-            .try_for_each(|(stripe, rows)| -> Result<()> {
-                let y0 = stripe * TILE;
-                let y1 = (y0 + TILE).min(h);
-                for x0 in (0..w).step_by(TILE) {
+            .try_for_each(|(tile, mut rows)| -> Result<()> {
+                let y0 = ry + (tile / columns) * TILE;
+                let y1 = (y0 + TILE).min(ry + rh);
+                let x0 = rx + (tile % columns) * TILE;
+                ensure!(!cancelled(), "Editing annullato");
+                let x1 = (x0 + TILE).min(rx + rw);
+                let mut sums = [[0_f32; 4]; TILE * TILE];
+                let step = (N / 4).max(1) as isize;
+                let first = |v: usize| ((v as isize - N as isize).div_euclid(step) + 1) * step;
+                for py in (first(y0)..y1 as isize).step_by(step as usize) {
                     ensure!(!cancelled(), "Editing annullato");
-                    let x1 = (x0 + TILE).min(w);
-                    let mut sums = [[0_f32; 4]; TILE * TILE];
-                    let step = (N / 4).max(1) as isize;
-                    let first = |v: usize| ((v as isize - N as isize).div_euclid(step) + 1) * step;
-                    for py in (first(y0)..y1 as isize).step_by(step as usize) {
-                        ensure!(!cancelled(), "Editing annullato");
-                        // Stagger consecutive patch rows: the checkerboard lattice
-                        // retains eight estimates per pixel at native scale and
-                        // 90-degree symmetry, with half the transform work.
-                        let start = first(x0);
-                        let start = start + (start / step + py / step).rem_euclid(2) * step;
-                        for px in (start..x1 as isize).step_by(2 * step as usize) {
-                            let Some((mut block, level)) = transform.block(image, px, py) else {
-                                continue;
-                            };
-                            shrink(&mut block, level);
-                            block[0][0] = [0.; 4];
-                            transform.inverse(&mut block);
-                            for yy in y0.max(py.max(0) as usize)
-                                ..y1.min((py + N as isize).max(0) as usize)
+                    // Stagger consecutive patch rows: the checkerboard lattice
+                    // retains eight estimates per pixel at native scale and
+                    // 90-degree symmetry, with half the transform work.
+                    let start = first(x0);
+                    let start = start + (start / step + py / step).rem_euclid(2) * step;
+                    for px in (start..x1 as isize).step_by(2 * step as usize) {
+                        let Some((mut block, level)) = transform.block(image, px, py) else {
+                            continue;
+                        };
+                        shrink(&mut block, level);
+                        block[0][0] = [0.; 4];
+                        transform.inverse(&mut block);
+                        for yy in
+                            y0.max(py.max(0) as usize)..y1.min((py + N as isize).max(0) as usize)
+                        {
+                            for xx in x0.max(px.max(0) as usize)
+                                ..x1.min((px + N as isize).max(0) as usize)
                             {
-                                for xx in x0.max(px.max(0) as usize)
-                                    ..x1.min((px + N as isize).max(0) as usize)
-                                {
-                                    let delta = block[(yy as isize - py) as usize]
-                                        [(xx as isize - px) as usize];
-                                    let acc = &mut sums[(yy - y0) * TILE + xx - x0];
-                                    for c in 0..3 {
-                                        acc[c] += delta[c];
-                                    }
-                                    acc[3] += 1.;
+                                let delta =
+                                    block[(yy as isize - py) as usize][(xx as isize - px) as usize];
+                                let acc = &mut sums[(yy - y0) * TILE + xx - x0];
+                                for c in 0..3 {
+                                    acc[c] += delta[c];
                                 }
+                                acc[3] += 1.;
                             }
                         }
                     }
-                    for yy in y0..y1 {
-                        for xx in x0..x1 {
-                            let p = image.pixels[yy * w + xx];
-                            let sum = sums[(yy - y0) * TILE + xx - x0];
-                            let target = &mut rows[(yy - y0) * w + xx];
-                            *target = p;
-                            if sum[3] > 0. {
-                                let [dy, dr, db] = [sum[0], sum[1], sum[2]].map(|v| v / sum[3]);
-                                target[0] -= (dy + dr) * p[3];
-                                target[1] -= (dy - (0.2627 * dr + 0.0593 * db) / 0.6780) * p[3];
-                                target[2] -= (dy + db) * p[3];
-                            }
+                }
+                for yy in y0..y1 {
+                    for xx in x0..x1 {
+                        let p = image.pixel(xx, yy);
+                        let sum = sums[(yy - y0) * TILE + xx - x0];
+                        let target = &mut rows[yy - y0][xx - x0];
+                        *target = p;
+                        if sum[3] > 0. {
+                            let [dy, dr, db] = [sum[0], sum[1], sum[2]].map(|v| v / sum[3]);
+                            target[0] -= (dy + dr) * p[3];
+                            target[1] -= (dy - (0.2627 * dr + 0.0593 * db) / 0.6780) * p[3];
+                            target[2] -= (dy + db) * p[3];
                         }
                     }
                 }
@@ -400,6 +519,62 @@ pub(super) fn filter<const N: usize>(
     })?;
     ensure!(!cancelled(), "Editing annullato");
     Ok(output)
+}
+
+pub(super) fn regional(
+    image: &impl Input,
+    scale: f32,
+    luminance: f32,
+    chroma: f32,
+    rect: super::super::regional::Rect,
+    timings: &mut [u64; 4],
+    cancelled: &(impl Fn() -> bool + Sync),
+) -> Result<LinearImage> {
+    fn run<const N: usize>(
+        image: &impl Input,
+        amounts: [f32; 3],
+        rect: super::super::regional::Rect,
+        timings: &mut [u64; 4],
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<LinearImage> {
+        let transform = Transform::<N>::new();
+        let started = std::time::Instant::now();
+        let noise = model(image, &transform, cancelled)?;
+        timings[0] += started.elapsed().as_micros() as u64;
+        if noise.iter().flatten().flatten().all(|v| *v <= 1e-8) {
+            return extract(image, rect);
+        }
+        let started = std::time::Instant::now();
+        let pixels = filter_region(
+            image,
+            &transform,
+            cancelled,
+            &|block, level| {
+                for y in 0..N {
+                    for x in 0..N {
+                        for (c, amount) in amounts.iter().enumerate() {
+                            let threshold = noise[y][x][c] * level * amount * 3.;
+                            let t = ((block[y][x][c].abs() / threshold.max(1e-12) - 0.75) / 0.75)
+                                .clamp(0., 1.);
+                            let keep = t * t * (3. - 2. * t);
+                            block[y][x][c] *= if *amount == 0. { 0. } else { 1. - keep };
+                        }
+                    }
+                }
+            },
+            rect,
+        )?;
+        timings[1] += started.elapsed().as_micros() as u64;
+        LinearImage::new(rect.size[0], rect.size[1], pixels)
+    }
+    let amounts = [luminance, chroma, chroma];
+    if scale <= 0.3 {
+        run::<4>(image, amounts, rect, timings, cancelled)
+    } else if scale <= 0.6 {
+        run::<8>(image, amounts, rect, timings, cancelled)
+    } else {
+        run::<16>(image, amounts, rect, timings, cancelled)
+    }
 }
 
 pub(super) fn apply(
@@ -423,6 +598,68 @@ pub(super) fn apply(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn parallel_model_samples_preserve_the_historical_grid_order_and_bits() {
+        let image = LinearImage::new(
+            533,
+            487,
+            (0..533 * 487)
+                .map(|i| {
+                    [
+                        (i % 113) as f32 / 113.,
+                        (i % 71) as f32 / 71.,
+                        (i % 47) as f32 / 47.,
+                        if i == 12345 { 0. } else { 1. },
+                    ]
+                })
+                .collect(),
+        )
+        .unwrap();
+        let transform = Transform::<16>::new();
+        let mut expected = Vec::new();
+        let (w, h) = (image.width as usize, image.height as usize);
+        let (nx, ny) = (32.min(w.div_ceil(16)), 32.min(h.div_ceil(16)));
+        for iy in 0..ny {
+            for ix in 0..nx {
+                let x = ix * w.saturating_sub(16) / nx.saturating_sub(1).max(1);
+                let y = iy * h.saturating_sub(16) / ny.saturating_sub(1).max(1);
+                if let Some((mut block, level)) = transform.block(&image, x as isize, y as isize) {
+                    for p in block.iter_mut().flatten() {
+                        for v in p {
+                            *v = v.abs() / level;
+                        }
+                    }
+                    expected.push((level, block));
+                }
+            }
+        }
+        let actual = model_samples(&image, &transform, &|| false).unwrap();
+        assert!(!actual.is_empty());
+        assert_eq!(actual.len(), expected.len());
+        for ((level, block), (reference_level, reference)) in actual.iter().zip(&expected) {
+            assert_eq!(level.to_bits(), reference_level.to_bits());
+            for (a, b) in block
+                .iter()
+                .flatten()
+                .flatten()
+                .zip(reference.iter().flatten().flatten())
+            {
+                assert_eq!(a.to_bits(), b.to_bits());
+            }
+        }
+        let sigma = sample_quantiles(&actual.iter().collect::<Vec<_>>());
+        for (y, row) in sigma.iter().enumerate() {
+            for (x, pixel) in row.iter().enumerate() {
+                for c in 0..3 {
+                    let mut values: Vec<_> =
+                        expected.iter().map(|(_, block)| block[y][x][c]).collect();
+                    values.sort_by(f32::total_cmp);
+                    let expected = values[((values.len() - 1) as f32 * 0.3) as usize] / 0.385_32;
+                    assert_eq!(pixel[c].to_bits(), expected.to_bits());
+                }
+            }
+        }
+    }
     #[test]
     fn symmetric_transform_roundtrips_and_matches_direct_cosines() {
         let transform = Transform::<16>::new();

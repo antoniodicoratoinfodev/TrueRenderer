@@ -64,7 +64,12 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--gesture", choices=["zoom", "pan", "edit"], required=True)
     parser.add_argument("--edit-kind", choices=["point", "tools", "layers"], default="point")
+    parser.add_argument("--edit-control", choices=["combined", "exposure", "texture", "opacity", "color", "levels"], default="combined")
+    parser.add_argument("--zero-crossing", action="store_true", help="Include zero and full opacity in the native layer gesture")
     parser.add_argument("--during-folder-loading", action="store_true")
+    parser.add_argument("--fit", action="store_true", help="Measure edits with the whole photograph fitted in the viewport")
+    parser.add_argument("--no-disk-cache", action="store_true", help="Keep gesture diagnostics independent of persistent cache writes")
+    parser.add_argument("--cpu-threads", type=int, default=0, help="0 uses the configured performance profile")
     parser.add_argument("--engine", default="LibRawBilinear")
     parser.add_argument("--compute", choices=["Automatic", "Gpu", "Cpu"], default="Automatic")
     parser.add_argument("--repetitions", type=int, default=3)
@@ -75,8 +80,20 @@ def main():
     args = parser.parse_args()
     if args.repetitions < 1:
         parser.error("--repetitions must be positive")
-    if args.edit_kind != "point" and (args.gesture != "edit" or args.correctness):
-        parser.error("Tools/layers use edit performance mode; final canonical surface is checked separately")
+    if not 0 <= args.cpu_threads <= 256:
+        parser.error("--cpu-threads must be in 0..256")
+    if args.edit_kind != "point" and args.gesture != "edit":
+        parser.error("Tools/layers require the edit gesture")
+    if args.edit_control != "combined" and args.gesture != "edit":
+        parser.error("--edit-control requires the edit gesture")
+    if args.edit_control in ["opacity", "color", "levels"] and args.edit_kind != "layers":
+        parser.error("Opacity/color controls require --edit-kind layers")
+    if args.edit_control == "texture" and args.edit_kind != "tools":
+        parser.error("Texture requires --edit-kind tools")
+    if args.fit and args.gesture != "edit":
+        parser.error("--fit requires the edit gesture")
+    if args.zero_crossing and args.edit_control != "opacity":
+        parser.error("--zero-crossing requires the opacity control")
     if args.expected_viewport and min(args.expected_viewport) < 1:
         parser.error("--expected-viewport dimensions must be positive")
     repo = Path(__file__).resolve().parents[1]
@@ -107,27 +124,39 @@ def main():
             (root / directory).mkdir()
         (root / "data/settings.json").write_text(json.dumps({
             "schema": 3, "raw_engine": args.engine, "quality": "Full",
-            "compute": args.compute, "language": "en", "folder_loading": "Background"
+            "compute": args.compute, "language": "en", "folder_loading": "Background",
+            "enabled": not args.no_disk_cache,
+            "cpu_threads": args.cpu_threads,
         }), encoding="utf-8")
         command = [str(binary), "--root", str(root), "--data", str(root / "data"),
                    "--open", str(photo.resolve()), "--develop-smoke", "--edit-pixel-smoke",
-                   "--edit-zoom-smoke", f"--{args.gesture}-continuity-smoke",
+                   f"--{args.gesture}-continuity-smoke",
                    "--pan-zoom", "1.37" if args.gesture == "pan" else "1.0"]
+        if not args.fit:
+            command.append("--edit-zoom-smoke")
         if not args.correctness:
             command += ["--interaction-performance-smoke", "--zoom-performance-smoke"]
         if args.edit_kind != "point":
             command.append("--advanced-edit-smoke" if args.edit_kind == "tools" else "--layers-edit-smoke")
+        if args.edit_control != "combined":
+            command.append(f"--edit-control-{args.edit_control}-smoke")
+        if args.zero_crossing:
+            command.append("--edit-opacity-zero-smoke")
+        if args.correctness:
+            command.append("--edit-native-reference-smoke")
         if args.during_folder_loading:
             command.append("--edit-during-folder-smoke")
         print("START", args.output.name, repeat, flush=True)
         with (root / "stdout.log").open("w") as out, (root / "stderr.log").open("w") as err:
             result = subprocess.run(command, env=env, stdout=out, stderr=err,
-                                    startupinfo=startup, timeout=180)
+                                    startupinfo=startup, timeout=600 if args.correctness else 180)
         report_path = root / f"reports/{args.gesture}-continuity.json"
         report = json.loads(report_path.read_text()) if report_path.exists() else {}
         development_path = root / "reports/develop-ui.json"
         development = json.loads(development_path.read_text()) if development_path.exists() else {}
         passed = result.returncode == 0 and report.get("passed") and development.get("passed")
+        if args.compute == "Gpu" and report.get("gpu_verified") is False:
+            passed = False
         geometry_errors = []
         if report:
             frames = report["frames"]
@@ -141,9 +170,11 @@ def main():
                     match = re.search(r"size: \[(\d+), (\d+)\].*step: \[([^,]+), ([^\]]+)\]", frame["region"])
                     assert match, "Missing edit geometry"
                     size = [int(match[1]), int(match[2])]
-                    if [float(match[3]), float(match[4])] != [1., 1.]:
+                    if not args.fit and [float(match[3]), float(match[4])] != [1., 1.]:
                         geometry_errors.append("Edit gesture no longer at native 1:1")
                 sizes.append(size)
+            if args.fit and report.get("zoom") is not None:
+                geometry_errors.append("Fit gesture changed to explicit zoom")
             # Physical edge snapping can change the visible crop by one pixel.
             if any(any(abs(a - b) > 1 for a, b in zip(size, sizes[0])) for size in sizes):
                 geometry_errors.append("Viewport changed during gesture")
@@ -163,7 +194,12 @@ def main():
         results.append(row)
         manifest = {"gesture": args.gesture, "engine": args.engine, "compute": args.compute,
                     "edit_kind": args.edit_kind,
+                    "edit_control": args.edit_control,
+                    "zero_crossing": args.zero_crossing,
+                    "fit": args.fit,
                     "during_folder_loading": args.during_folder_loading,
+                    "disk_cache": not args.no_disk_cache,
+                    "cpu_threads": args.cpu_threads,
                     "profile": args.profile, "correctness": args.correctness, "visible": args.visible,
                     "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                     "photo_sha256": digest, "runs": results}

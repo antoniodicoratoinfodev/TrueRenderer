@@ -145,6 +145,7 @@ pub struct TrueRenderer {
     gpu_rx: std::sync::mpsc::Receiver<Result<tr_render::preview_compute::ComputeCheck, String>>,
     gpu_status: String,
     gpu_passed: bool,
+    gpu_layers_passed: bool,
     image_focus_ids: HashSet<egui::Id>,
     grid_columns: i32,
     sample_source: String,
@@ -214,7 +215,7 @@ impl TrueRenderer {
                 if std::env::args().any(|a| a.ends_with("smoke")) {
                     let report = match &result {
                         Ok(check) => {
-                            serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":check.failures==0 && check.display_failures==0,"check":check,"linear_threshold":"1e-5 + 1e-4 * abs(cpu)","display_threshold_levels":1,"scope":"Separable WGSL with canonical coefficients and persistent display pipeline, odd sizes, alpha, boundaries, 1:1 and signed linear values up to 1000. GPU timing includes qualification compilation/upload/readback; not an interactive speed claim."})
+                            serde_json::json!({"application":"TrueRenderer","version":env!("CARGO_PKG_VERSION"),"passed":check.failures==0 && check.display_failures==0 && check.editing.layer_tail_passed(),"filter_passed":check.failures==0 && check.display_failures==0,"layers_passed":check.editing.layer_tail_passed(),"check":check,"linear_threshold":"1e-5 + 1e-4 * abs(cpu)","display_threshold_levels":1,"scope":"Separable WGSL and bounded photographic layers with independent CPU references, geometry, alpha, admitted source scales and resource lifetimes. Filter and layer gates are independent. GPU timing includes qualification compilation/upload/readback; not an interactive speed claim."})
                         }
                         Err(error) => serde_json::json!({"passed":false,"error":error}),
                     };
@@ -340,6 +341,7 @@ impl TrueRenderer {
             gpu_rx,
             gpu_status: "Diagnostica GPU in corso…".into(),
             gpu_passed: false,
+            gpu_layers_passed: false,
             image_focus_ids: HashSet::new(),
             grid_columns: 1,
             sample_source: String::new(),
@@ -389,6 +391,7 @@ impl TrueRenderer {
         // Old qualification messages must not qualify the newly created device.
         while self.gpu_rx.try_recv().is_ok() {}
         self.gpu_passed = false;
+        self.gpu_layers_passed = false;
         if let Some(gpu) = &cc.wgpu_render_state {
             self.adapter = format!(
                 "{} · {:?}",
@@ -405,6 +408,7 @@ impl TrueRenderer {
             match tr_render::preview_compute::check(&gpu.device, &gpu.queue) {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
+                    self.gpu_layers_passed = check.editing.layer_tail_passed();
                     self.gpu_status = if self.gpu_passed {
                         "GPU ricreata e riverificata".into()
                     } else {
@@ -418,6 +422,8 @@ impl TrueRenderer {
             self.gpu_passed,
             self.service.cache.settings().compute.code(),
         );
+        self.presenter
+            .configure_layer_compute(self.gpu_layers_passed);
         self.status = "Dispositivo grafico ripristinato · sessione e annotazioni conservate".into();
         cc.egui_ctx.request_repaint();
     }
@@ -445,7 +451,7 @@ impl TrueRenderer {
     pub fn graphics_test_state(&self) -> serde_json::Value {
         serde_json::json!({"current":self.state.current,"selected":self.state.selected,
             "rating":self.state.current_item().map(|item| item.annotation.rating),
-            "undo_available":self.undo_available,"gpu_verified":self.gpu_passed,
+            "undo_available":self.undo_available,"gpu_verified":self.gpu_passed,"gpu_layers_verified":self.gpu_layers_passed,
             "pending":self.state.pending.len()})
     }
     fn open_path(&mut self, path: PathBuf) {
@@ -1334,12 +1340,17 @@ impl TrueRenderer {
             match result {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
+                    self.gpu_layers_passed = check.editing.layer_tail_passed();
                     self.gpu_status = format!(
                         "GPU/CPU: {} campioni · errore max {:.2e} · {}",
                         check.samples,
                         check.max_error,
                         if self.gpu_passed {
-                            "filtro e uscita verificati"
+                            if self.gpu_layers_passed {
+                                "filtro, livelli e uscita verificati"
+                            } else {
+                                "filtro e uscita verificati · livelli CPU"
+                            }
                         } else {
                             "fuori soglia"
                         }
@@ -1350,6 +1361,8 @@ impl TrueRenderer {
         }
         self.presenter
             .configure_compute(self.gpu_passed, settings.compute.code());
+        self.presenter
+            .configure_layer_compute(self.gpu_layers_passed);
         while let Ok(event) = self.service.events.try_recv() {
             match event {
                 Event::ContextPhoto { token, result } => self.context_photo_result(token, result),
@@ -3355,7 +3368,26 @@ impl TrueRenderer {
                 && !self.crop_active(&item.id)
                 && image.is_some()
                 && !provisional;
-            let image = image.unwrap_or(source);
+            let image = image.unwrap_or_else(|| source.clone());
+            let warm_edit = if !provisional
+                && !pending
+                && edited
+                && !proof
+                && !self.editing.show_original
+                && !self.crop_active(&item.id)
+                && !self.edit_interactive(&item.id)
+            {
+                self.view_recipe(&item.id)
+                    .filter(|r| r.raw_wb == input_wb)
+                    .map(|recipe| tr_render::live_edit::LiveEdit {
+                        recipe,
+                        input_gains: [1.; 3],
+                        max_edge: u32::MAX,
+                        revision: 0,
+                    })
+            } else {
+                None
+            };
             let editing_gesture = !image.scientific()
                 && !self.editing.show_original
                 && self.photo_gesture_active(&item.id);
@@ -3379,6 +3411,9 @@ impl TrueRenderer {
                     refining: completeness == tr_core::preview::Completeness::Refining,
                 },
             );
+            if let Some(edit) = warm_edit {
+                self.presenter.prepare_live_edit(&lane, &source, edit);
+            }
             if !image.scientific() && !self.editing.show_original {
                 if self.wb_picker_active(&item.id) {
                     self.wb_picker_interaction(
@@ -5026,7 +5061,7 @@ mod settings_regressions {
         }
     }
     #[test]
-    fn edited_preview_marks_reduced_work_and_can_converge_from_native_source() {
+    fn edited_preview_keeps_native_detail_during_and_after_interaction() {
         let (_dir, ctx, mut app) = app();
         settle(&mut app, &ctx, true);
         let item = app.state.items[0].clone();
@@ -5079,11 +5114,12 @@ mod settings_regressions {
             app.editing.entries[&item.id].draft.clone().unwrap(),
         );
         let quick = wait(&mut app);
-        assert_eq!(quick.base_level(), 1);
+        assert_eq!(quick.base_level(), 0);
         assert_eq!(quick.source().pixels[0][0], 0.5);
         std::thread::sleep(Duration::from_millis(140));
         let final_image = wait(&mut app);
         assert_eq!(final_image.base_level(), 0);
+        assert_eq!(quick.id(), final_image.id());
         assert_eq!(final_image.source().pixels[0], [0.5, 0.25, 1., 1.]);
         // Request native verification while the quick result is still queued.
         app.editing.verify_final = None;

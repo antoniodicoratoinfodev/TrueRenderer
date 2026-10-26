@@ -610,7 +610,11 @@ impl TrueRenderer {
         ctx.request_repaint_after(Duration::from_millis(50));
         // Preserve the ordinary smoke budget for loading, saving and export,
         // in addition to the broker's complete native-analysis allowance.
-        let timeout = develop_smoke_timeout(args.iter().any(|a| a == "--native-wb-smoke"));
+        let timeout = if args.iter().any(|a| a == "--edit-native-reference-smoke") {
+            Duration::from_secs(540)
+        } else {
+            develop_smoke_timeout(args.iter().any(|a| a == "--native-wb-smoke"))
+        };
         let timed_out = self.started.elapsed() > timeout || self.fatal;
         let target = self
             .state
@@ -1099,10 +1103,14 @@ impl TrueRenderer {
                             && cached.info.input_color.contains("WB")
                     })
                 });
+                let continuity_ok = !args.iter().any(|a| a == "--edit-continuity-smoke")
+                    || self.editing.continuity.passed() == Some(true);
                 let report = serde_json::json!({
                     "application":"TrueRenderer",
                     "version":env!("CARGO_PKG_VERSION"),
-                    "passed":(!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!(proof_smoke || args.iter().any(|a|a=="--edit-pixel-smoke")) || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
+                    "passed":continuity_ok && (!args.iter().any(|a|a=="--raw-wb-smoke") || wb_observed) && edit.is_some_and(|saved| saved.generation > 0) && unchanged && !self.presenter.has_errors() && self.errors.is_empty() && !self.fatal && (!(proof_smoke || args.iter().any(|a|a=="--edit-pixel-smoke")) || self.editing.smoke_proof_result.as_ref().is_some_and(|r|r["passed"]==true)) && (!export_smoke || self.editing.smoke_export_result.as_ref().is_some_and(|r|r["passed"]==true)),
+                    "edit_continuity_passed":self.editing.continuity.passed(),
+                    "reason":(!continuity_ok).then_some("Edit continuity probe failed; final surface checked separately"),
                     "raw_wb_observed":wb_observed,
                     "native_wb_analysis":self.editing.wb_smoke_result,
                     "timeout_seconds":timeout.as_secs(),
@@ -2479,20 +2487,8 @@ impl TrueRenderer {
             && self.edit_interactive(id)
             && !proof
             && self.editing.verify_final.as_deref() != Some(id);
-        let edge = if self.editing.interactive_millis.load(Ordering::Relaxed) > 24 {
-            512
-        } else {
-            1024
-        };
-        let index = if !interactive {
-            0
-        } else {
-            neutral
-                .levels()
-                .iter()
-                .position(|l| l.width.max(l.height) <= edge)
-                .unwrap_or(neutral.levels().len() - 1)
-        };
+        // Interaction changes scheduling, never the admitted source detail.
+        let index = 0;
         let base = neutral.base_level() + index as u32;
         if let Some(ready) = self.editing.batch_prepared.get(&(id.into(), source))
             && ready.proof == proof

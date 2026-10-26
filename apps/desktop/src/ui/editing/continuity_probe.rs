@@ -11,6 +11,7 @@ pub(super) struct Probe {
     last_step: Option<Instant>,
     events: Vec<(u64, f64)>,
     done: bool,
+    passed: Option<bool>,
     pixel_capture: Option<(String, ProofCapture, u32)>,
     pixel_checks: Vec<serde_json::Value>,
     failed: bool,
@@ -22,6 +23,9 @@ impl Probe {
     }
     pub(super) fn done(&self) -> bool {
         self.done
+    }
+    pub(super) fn passed(&self) -> Option<bool> {
+        self.passed
     }
 }
 impl TrueRenderer {
@@ -88,7 +92,35 @@ impl TrueRenderer {
         else {
             return true;
         };
-        let Ok(expected) = live.render(&cached.pyramid, capture.region) else {
+        // Independent whole-frame canonical reference; never validate the
+        // regional evaluator against another invocation of the same evaluator.
+        let expected = (|| -> anyhow::Result<_> {
+            let level = cached.pyramid.source();
+            let bytes = preview_working_bytes(level.width, level.height)
+                + live.recipe.scratch_bytes(level.width, level.height);
+            let _lease = self
+                .service
+                .cache
+                .memory
+                .try_reserve(bytes)
+                .ok_or_else(|| anyhow::anyhow!("Reference memory unavailable"))?;
+            let mut raster = level.clone();
+            for p in &mut raster.pixels {
+                for (c, g) in p[..3].iter_mut().zip(live.input_gains) {
+                    *c *= g;
+                }
+            }
+            let size = live.recipe.apply_preview(
+                &mut raster,
+                cached.pyramid.source_size(),
+                cached.pyramid.base_level(),
+            )?;
+            let opaque = raster.pixels.iter().all(|p| p[3] == 1.);
+            let image =
+                ImageLevels::from_reference_mip(raster, size, cached.pyramid.base_level(), opaque)?;
+            image.render(capture.region)
+        })();
+        let Ok(expected) = expected else {
             return true;
         };
         let ppp = self.context.pixels_per_point();
@@ -108,6 +140,12 @@ impl TrueRenderer {
             ),
             cached.pyramid.base_level(),
         ));
+        // The independent CPU reference can take seconds. Keep this synthetic
+        // held gesture active after that pause, before background admission in
+        // the next UI frame; a real drag remains active via its pointer token.
+        self.editing
+            .changed_at
+            .insert(item.id.clone(), Instant::now());
         self.capture_screenshot(&self.context.clone(), &name);
         true
     }
@@ -185,34 +223,86 @@ impl TrueRenderer {
             self.editing.continuity.steps += 1;
             let step = self.editing.continuity.steps;
             let mut recipe = self.editing.continuity.baseline.as_ref().unwrap().clone();
-            recipe.exposure_ev = 0.25 + (step % 12) as f32 * 0.1;
-            recipe.brightness = (step % 16) as f32 * 2. - 12.;
-            if std::env::args().any(|a| a == "--layers-edit-smoke") {
-                if let Some(layer) = recipe.layers.as_mut().and_then(|s| s.layers.first_mut()) {
-                    layer.opacity = 0.25 + (step % 16) as f32 / 24.;
+            let control = ["exposure", "texture", "opacity", "color", "levels"]
+                .into_iter()
+                .find(|name| std::env::args().any(|a| a == format!("--edit-control-{name}-smoke")));
+            if let Some(control) = control {
+                match control {
+                    "exposure" => recipe.exposure_ev = 0.25 + (step % 12) as f32 * 0.1,
+                    "texture" => {
+                        if let Some(a) = recipe.advanced.as_mut() {
+                            a.detail.texture = (step % 20) as f32 * 2. - 10.;
+                        }
+                    }
+                    "opacity" => {
+                        if let Some(l) = recipe.layers.as_mut().and_then(|s| s.layers.first_mut()) {
+                            l.opacity = 0.25 + (step % 16) as f32 / 24.;
+                            if std::env::args().any(|a| a == "--edit-opacity-zero-smoke") {
+                                l.opacity = (step % 17) as f32 / 16.;
+                            }
+                        }
+                    }
+                    "color" => {
+                        if let Some(tr_core::editing::layers::Operator::SampleColor(c)) = recipe
+                            .layers
+                            .as_mut()
+                            .and_then(|s| s.layers.first_mut())
+                            .and_then(|l| l.operators.first_mut())
+                        {
+                            c.correction[0] = (step % 20) as f32 * 3. - 25.;
+                        }
+                    }
+                    "levels" => {
+                        use tr_core::editing::layers::{LevelAdjustments, Operator};
+                        if let Some(op) = recipe
+                            .layers
+                            .as_mut()
+                            .and_then(|s| s.layers.last_mut())
+                            .and_then(|l| l.operators.first_mut())
+                        {
+                            if let Operator::Levels(channels) = op {
+                                *op = Operator::TonalLevels(Box::new(LevelAdjustments {
+                                    channels: *channels,
+                                    ..Default::default()
+                                }));
+                            }
+                            if let Operator::TonalLevels(levels) = op {
+                                levels.channels[0].gamma = 0.7 + (step % 17) as f32 * 0.05;
+                            }
+                        }
+                    }
+                    _ => unreachable!(),
                 }
-            } else if std::env::args().any(|a| a == "--advanced-edit-smoke")
-                && let Some(advanced) = recipe.advanced.as_mut()
-            {
-                advanced.detail.texture = (step % 20) as f32 * 2. - 10.;
-            }
-            if std::env::args().any(|arg| arg == "--edit-pixel-smoke") {
-                recipe.curve = vec![
-                    CurvePoint { x: 0., y: 0. },
-                    CurvePoint {
-                        x: 0.4,
-                        y: 0.25 + (step % 16) as f32 / 40.,
-                    },
-                    CurvePoint { x: 1., y: 1. },
-                ];
-            }
-            if std::env::args().any(|arg| arg == "--edit-wb-continuity-smoke") {
-                if recipe.raw_engine == tr_core::decoder::RawEngine::Apple {
-                    recipe.raw_wb.apple_temperature = 4000 + (step % 40) as u16 * 100;
-                    recipe.raw_wb.apple_tint = (step % 30) as i16 - 15;
-                } else {
-                    recipe.raw_wb.red = 750 + (step % 40) as u16 * 20;
-                    recipe.raw_wb.blue = 1500 - (step % 40) as u16 * 15;
+            } else {
+                recipe.exposure_ev = 0.25 + (step % 12) as f32 * 0.1;
+                recipe.brightness = (step % 16) as f32 * 2. - 12.;
+                if std::env::args().any(|a| a == "--layers-edit-smoke") {
+                    if let Some(layer) = recipe.layers.as_mut().and_then(|s| s.layers.first_mut()) {
+                        layer.opacity = 0.25 + (step % 16) as f32 / 24.;
+                    }
+                } else if std::env::args().any(|a| a == "--advanced-edit-smoke")
+                    && let Some(advanced) = recipe.advanced.as_mut()
+                {
+                    advanced.detail.texture = (step % 20) as f32 * 2. - 10.;
+                }
+                if std::env::args().any(|arg| arg == "--edit-pixel-smoke") {
+                    recipe.curve = vec![
+                        CurvePoint { x: 0., y: 0. },
+                        CurvePoint {
+                            x: 0.4,
+                            y: 0.25 + (step % 16) as f32 / 40.,
+                        },
+                        CurvePoint { x: 1., y: 1. },
+                    ];
+                }
+                if std::env::args().any(|arg| arg == "--edit-wb-continuity-smoke") {
+                    if recipe.raw_engine == tr_core::decoder::RawEngine::Apple {
+                        recipe.raw_wb.apple_temperature = 4000 + (step % 40) as u16 * 100;
+                        recipe.raw_wb.apple_tint = (step % 30) as i16 - 15;
+                    } else {
+                        recipe.raw_wb.red = 750 + (step % 40) as u16 * 20;
+                        recipe.raw_wb.blue = 1500 - (step % 40) as u16 * 15;
+                    }
                 }
             }
             self.apply_edit_draft(&item.id, recipe);
@@ -262,6 +352,7 @@ impl TrueRenderer {
             "live_surface_checks":self.editing.continuity.pixel_checks,
             "distinct_frames_during_gesture":distinct,"events":self.editing.continuity.events,
             "quality":format!("{:?}",self.quality(item)),"engine":format!("{:?}",self.editing.continuity.baseline.as_ref().unwrap().raw_engine),
+            "gpu_verified":self.gpu_passed,"gpu_status":self.gpu_status,
             "native_wb":std::env::args().any(|arg|arg=="--edit-wb-continuity-smoke"),
             "layer_gesture":std::env::args().any(|arg|arg=="--layers-edit-smoke"),
             "tool_gesture":std::env::args().any(|arg|arg=="--advanced-edit-smoke"),
@@ -278,11 +369,15 @@ impl TrueRenderer {
             serde_json::to_vec_pretty(&report).unwrap(),
         );
         self.editing.continuity.done = true;
-        if failed || !fresh || !pixels_passed {
+        self.editing.continuity.passed = Some(!failed && current && fresh && pixels_passed);
+        if failed || !pixels_passed {
             self.status = "Edit continuity probe failed".into();
             self.fatal = true;
             return false;
         }
+        // A cadence failure remains a failed probe, but does not prevent the
+        // enclosing smoke from collecting its independent final pixel check.
+        // The final report includes this failure and the process still fails.
         self.commit_edit(&item.id);
         self.editing.smoke_ready_at = None;
         true

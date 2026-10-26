@@ -26,6 +26,9 @@ pub fn configure(threads: usize) -> anyhow::Result<()> {
     *pool().write().unwrap() = Arc::new(next);
     Ok(())
 }
+pub fn threads() -> usize {
+    pool().read().unwrap().current_num_threads()
+}
 pub fn install<T: Send>(work: impl FnOnce() -> T + Send) -> T {
     let pool = pool().read().unwrap().clone();
     pool.install(work)

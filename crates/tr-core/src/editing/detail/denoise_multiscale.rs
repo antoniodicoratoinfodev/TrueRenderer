@@ -1,10 +1,14 @@
 //! MultiscaleV2: brightness-conditioned spectral noise and a chroma pyramid.
 //! All operations use extended linear Rec.2020. The pyramid replaces only
 //! estimated low-frequency chroma; luminance detail never passes through it.
+use super::input::Input;
 use super::{denoise, luma, straight};
 use crate::color::{LinearImage, Pixel};
 use anyhow::{Result, ensure};
 use rayon::prelude::*;
+pub(crate) mod reference;
+mod regional;
+pub(super) use regional::apply as regional;
 
 struct Band<const N: usize> {
     level: f32,
@@ -21,30 +25,16 @@ fn quantile(values: &mut [f32], q: f32) -> f32 {
 
 impl<const N: usize> Model<N> {
     fn estimate(
-        image: &LinearImage,
+        image: &impl Input,
         transform: &denoise::Transform<N>,
         coarse: bool,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<Self> {
-        let global = denoise::model(image, transform, cancelled)?;
-        let (w, h) = (image.width as usize, image.height as usize);
-        let (nx, ny) = (32.min(w.div_ceil(N)), 32.min(h.div_ceil(N)));
-        let mut samples = Vec::with_capacity(nx * ny);
-        for iy in 0..ny {
-            ensure!(!cancelled(), "Editing annullato");
-            for ix in 0..nx {
-                let x = ix * w.saturating_sub(N) / nx.saturating_sub(1).max(1);
-                let y = iy * h.saturating_sub(N) / ny.saturating_sub(1).max(1);
-                if let Some((mut block, level)) = transform.block(image, x as isize, y as isize) {
-                    for p in block.iter_mut().flatten() {
-                        for v in p {
-                            *v = v.abs() / level;
-                        }
-                    }
-                    samples.push((level, block));
-                }
-            }
-        }
+        let samples = denoise::model_samples(image, transform, cancelled)?;
+        let global = denoise::model_from_samples(&samples);
+        // Sort references, not 4 KiB DCT blocks. Stable brightness order and
+        // every coefficient remain identical to the historical estimator.
+        let mut samples: Vec<_> = samples.iter().collect();
         samples.sort_by(|a, b| a.0.total_cmp(&b.0));
         let mut bands = Vec::new();
         // At least 64 samples per brightness band, at most four bands. This
@@ -58,17 +48,8 @@ impl<const N: usize> Model<N> {
             if samples.is_empty() {
                 continue;
             }
-            let mut sigma = [[[0.; 4]; N]; N];
+            let mut sigma = denoise::sample_quantiles(samples);
             let mut values = Vec::with_capacity(samples.len().max(N * N));
-            for (y, row) in sigma.iter_mut().enumerate() {
-                for (x, p) in row.iter_mut().enumerate() {
-                    for (c, v) in p[..3].iter_mut().enumerate() {
-                        values.clear();
-                        values.extend(samples.iter().map(|(_, b)| b[y][x][c]));
-                        *v = quantile(&mut values, 0.3) / 0.385_32;
-                    }
-                }
-            }
             let mut gain = [1.; 3];
             let mut cap = [0.; 3];
             // Keep the robust global spectral shape. Estimating each band's
@@ -163,8 +144,8 @@ impl<const N: usize> Model<N> {
     }
 }
 
-fn downsample(image: &LinearImage, cancelled: &(impl Fn() -> bool + Sync)) -> Result<LinearImage> {
-    let (w, h) = (image.width.div_ceil(2), image.height.div_ceil(2));
+fn downsample(image: &impl Input, cancelled: &(impl Fn() -> bool + Sync)) -> Result<LinearImage> {
+    let (w, h) = (image.width().div_ceil(2), image.height().div_ceil(2));
     let mut pixels = vec![[0.; 4]; w as usize * h as usize];
     crate::compute::install(|| {
         pixels
@@ -177,9 +158,9 @@ fn downsample(image: &LinearImage, cancelled: &(impl Fn() -> bool + Sync)) -> Re
                     let mut valid = true;
                     for dy in 0..2 {
                         for dx in 0..2 {
-                            let xx = (x * 2 + dx).min(image.width as usize - 1);
-                            let yy = (y * 2 + dy).min(image.height as usize - 1);
-                            let p = image.pixels[yy * image.width as usize + xx];
+                            let xx = (x * 2 + dx).min(image.width() as usize - 1);
+                            let yy = (y * 2 + dy).min(image.height() as usize - 1);
+                            let p = image.pixel(xx, yy);
                             valid &= p[3] > 0. && p.iter().all(|v| v.is_finite());
                             for c in 0..4 {
                                 sum[c] += f64::from(p[c]);

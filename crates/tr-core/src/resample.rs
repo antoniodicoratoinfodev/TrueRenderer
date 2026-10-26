@@ -254,11 +254,58 @@ fn axis(length: u32, count: u32, origin: f64, step: f64, opaque: bool) -> Vec<Ta
 
 /// Parallel reference filtering of an already selected linear mip.
 pub fn filter(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
-    filter_mode(source, region, opaque, true, usize::MAX)
+    filter_mode(
+        source,
+        region,
+        opaque,
+        true,
+        usize::MAX,
+        ([0; 2], [source.width, source.height]),
+    )
 }
 /// Scalar reference retained for equivalence and A/B measurements.
 pub fn filter_scalar(source: &LinearImage, region: Region, opaque: bool) -> Result<LinearImage> {
-    filter_mode(source, region, opaque, false, usize::MAX)
+    filter_mode(
+        source,
+        region,
+        opaque,
+        false,
+        usize::MAX,
+        ([0; 2], [source.width, source.height]),
+    )
+}
+/// Filter a complete footprint without changing the full image's coefficients,
+/// clamping, phase or accumulation order. Cropping never creates a new border.
+pub fn filter_tile(
+    source: &LinearImage,
+    origin: [u32; 2],
+    dimensions: [u32; 2],
+    region: Region,
+    opaque: bool,
+) -> Result<LinearImage> {
+    filter_mode(
+        source,
+        region,
+        opaque,
+        true,
+        usize::MAX,
+        (origin, dimensions),
+    )
+}
+
+/// Exact bounding rectangle of all canonical taps, including clamped borders.
+pub fn footprint(
+    dimensions: [u32; 2],
+    region: Region,
+    opaque: bool,
+) -> Result<([u32; 2], [u32; 2])> {
+    let (xs, ys) = coefficients(dimensions, region, opaque)?;
+    let bounds = [xs, ys].map(|taps| {
+        let lo = taps.iter().flatten().map(|(i, _)| *i as u32).min().unwrap();
+        let hi = taps.iter().flatten().map(|(i, _)| *i as u32).max().unwrap();
+        (lo, hi - lo + 1)
+    });
+    Ok(([bounds[0].0, bounds[1].0], [bounds[0].1, bounds[1].1]))
 }
 fn filter_mode(
     source: &LinearImage,
@@ -266,6 +313,7 @@ fn filter_mode(
     opaque: bool,
     parallel: bool,
     maximum_band_rows: usize,
+    (source_origin, source_dimensions): ([u32; 2], [u32; 2]),
 ) -> Result<LinearImage> {
     let [width, height] = region.size;
     let count = (width as usize).saturating_mul(height as usize);
@@ -285,19 +333,56 @@ fn filter_mode(
         "Geometria o rapporto del filtro fuori quota"
     );
     let xs = axis(
-        source.width,
+        source_dimensions[0],
         width,
         region.origin[0],
         region.step[0],
         opaque,
     );
     let ys = axis(
-        source.height,
+        source_dimensions[1],
         height,
         region.origin[1],
         region.step[1],
         opaque,
     );
+    ensure!(
+        [(&xs, 0), (&ys, 1)]
+            .iter()
+            .all(|(taps, axis)| taps.iter().flatten().all(|(i, _)| {
+                *i >= source_origin[*axis] as usize
+                    && *i < (source_origin[*axis] + [source.width, source.height][*axis]) as usize
+            })),
+        "Supporto del filtro incompleto"
+    );
+    // The canonical unit-scale kernel is a single exact tap. Avoid two full
+    // fp64 filter passes for native editing/viewports while preserving border
+    // clamping, opacity and the reference's signed-zero accumulation behavior.
+    if parallel && xs.iter().chain(&ys).all(|t| t.len() == 1 && t[0].1 == 1.) {
+        let mut pixels = vec![[0.; 4]; count];
+        let row = |(y, row): (usize, &mut [Pixel])| {
+            let sy = ys[y][0].0 - source_origin[1] as usize;
+            for (x, out) in row.iter_mut().enumerate() {
+                let sx = xs[x][0].0 - source_origin[0] as usize;
+                *out = source.pixels[sy * source.width as usize + sx]
+                    .map(|v| if v == 0. { 0. } else { v });
+                if opaque {
+                    out[3] = 1.;
+                }
+            }
+        };
+        if count >= 32768 {
+            crate::compute::install(|| {
+                pixels
+                    .par_chunks_mut(width as usize)
+                    .enumerate()
+                    .for_each(row)
+            });
+        } else {
+            pixels.chunks_mut(width as usize).enumerate().for_each(row);
+        }
+        return LinearImage::new(width, height, pixels);
+    }
     // Cap horizontal scratch near 8 MiB instead of half a full-frame raster.
     // At step <= 2 the opaque kernel needs fewer than 16 halo rows. Keep the
     // scalar reference unbanded; band boundaries never change summation order.
@@ -326,7 +411,9 @@ fn filter_mode(
             for (x, taps) in xs.iter().enumerate() {
                 let mut p = [0.0f64; 4];
                 for &(sx, weight) in taps {
-                    let pixel = source.pixels[y * source.width as usize + sx];
+                    let pixel =
+                        source.pixels[(y - source_origin[1] as usize) * source.width as usize + sx
+                            - source_origin[0] as usize];
                     if parallel {
                         crate::compute::accumulate(&mut p, pixel, weight);
                     } else {
@@ -464,7 +551,15 @@ mod tests {
                 // Exercise seams, clamped boundaries, fractional crops and
                 // alpha with the independent full-intermediate scalar result.
                 for rows in [1, 3, 17] {
-                    let banded = filter_mode(&source, region, opaque, true, rows).unwrap();
+                    let banded = filter_mode(
+                        &source,
+                        region,
+                        opaque,
+                        true,
+                        rows,
+                        ([0; 2], [source.width, source.height]),
+                    )
+                    .unwrap();
                     assert_eq!(scalar.pixels, banded.pixels, "band rows={rows}");
                 }
             }

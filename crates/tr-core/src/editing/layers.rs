@@ -15,6 +15,8 @@ use std::collections::{HashMap, HashSet};
 use uuid::Uuid;
 mod curves;
 mod levels;
+mod prepared;
+use prepared::{Operator as PreparedOperator, Range as PreparedRange};
 mod selective;
 pub use curves::{CurveSpace, LuminanceCurve, ParametricCurve};
 pub use levels::{
@@ -150,7 +152,7 @@ impl LayerStack {
                         MaskKind::Shape(m) => {
                             PreparedMask::Shape(super::masks::Prepared::new(m, aspect))
                         }
-                        MaskKind::Color(c) => PreparedMask::Color(c),
+                        MaskKind::Color(c) => PreparedMask::Color(PreparedRange::new(c)),
                         MaskKind::Constant(v) => PreparedMask::Constant(*v),
                         MaskKind::Add(a, b) => {
                             PreparedMask::Pair(Combine::Add, index(*a), index(*b))
@@ -166,7 +168,12 @@ impl LayerStack {
                     .collect();
                 PreparedLayer {
                     opacity: layer.opacity * layer.fill,
-                    operators: layer.operators.iter().filter(|o| !o.is_neutral()).collect(),
+                    operators: layer
+                        .operators
+                        .iter()
+                        .filter(|o| !o.is_neutral())
+                        .map(PreparedOperator::new)
+                        .collect(),
                     root: layer.mask.root.map(index),
                     nodes,
                 }
@@ -236,19 +243,28 @@ impl LayerStack {
 
 pub(super) struct PreparedLayer<'a> {
     opacity: f32,
-    operators: Vec<&'a Operator>,
+    operators: Vec<PreparedOperator<'a>>,
     root: Option<usize>,
     nodes: Vec<PreparedMask<'a>>,
 }
 enum PreparedMask<'a> {
     Shape(super::masks::Prepared<'a>),
-    Color(&'a ColorRange),
+    Color(PreparedRange<'a>),
     Constant(f32),
     Pair(Combine, usize, usize),
     Invert(usize),
 }
 impl PreparedLayer<'_> {
     pub fn apply(&self, rgb: [f32; 3], xy: [f32; 2]) -> [f32; 3] {
+        let delta = self.difference(rgb, xy);
+        if delta[3] == 0. {
+            return rgb;
+        }
+        std::array::from_fn(|c| rgb[c] + delta[3] * delta[c])
+    }
+    /// Straight RGB difference and effect weight. Retaining this bounded
+    /// branch lets opacity/fill change without reevaluating color operators.
+    pub(super) fn difference(&self, rgb: [f32; 3], xy: [f32; 2]) -> [f32; 4] {
         let mut values = [0.; MAX_MASK_NODES];
         for (i, node) in self.nodes.iter().enumerate() {
             values[i] = match node {
@@ -264,14 +280,24 @@ impl PreparedLayer<'_> {
             };
         }
         let w = self.opacity * self.root.map_or(1., |i| values[i]);
+        self.difference_with_weight(rgb, w)
+    }
+    /// The guide and mask are independent of this layer's operators. A caller
+    /// retaining the exact input/mask identity may reuse their existing weight.
+    pub(super) fn difference_with_weight(&self, rgb: [f32; 3], w: f32) -> [f32; 4] {
         if w == 0. {
-            return rgb;
+            return [0.; 4];
         }
         let mut edited = rgb;
         for o in &self.operators {
             edited = o.apply(edited, rgb);
         }
-        std::array::from_fn(|c| rgb[c] + w * (edited[c] - rgb[c]))
+        [
+            edited[0] - rgb[0],
+            edited[1] - rgb[1],
+            edited[2] - rgb[2],
+            w,
+        ]
     }
 }
 

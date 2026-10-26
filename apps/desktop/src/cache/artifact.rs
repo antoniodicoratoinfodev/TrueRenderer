@@ -242,12 +242,14 @@ impl Manager {
                         bytes.len() == ((count - pixels.len()) * 16).min(BLOCK),
                         "Lunghezza blocco incoerente"
                     );
-                    for p in bytes.as_chunks::<16>().0 {
-                        let pixel = std::array::from_fn(|c| {
-                            f32::from_le_bytes(p[c * 4..c * 4 + 4].try_into().unwrap())
-                        });
-                        pixels.push(pixel);
+                    #[cfg(target_endian = "little")]
+                    if let Ok(block) = bytemuck::try_cast_slice::<u8, [f32; 4]>(&bytes) {
+                        pixels.extend_from_slice(block);
+                    } else {
+                        unpack_pixels(&bytes, &mut pixels);
                     }
+                    #[cfg(target_endian = "big")]
+                    unpack_pixels(&bytes, &mut pixels);
                     let _ = Directory::touch(&file);
                 }
                 levels.push(LinearImage::new(*width, *height, pixels)?);
@@ -408,18 +410,22 @@ impl Manager {
                     !cancelled() && self.settings().enabled,
                     "Persistenza annullata"
                 );
-                let mut bytes = Vec::with_capacity(chunk.len() * 16);
-                for p in chunk {
-                    for c in p {
-                        bytes.extend_from_slice(&c.to_le_bytes());
-                    }
-                }
-                let name = format!("{:x}", Sha256::digest(&bytes));
+                #[cfg(target_endian = "little")]
+                let bytes = bytemuck::cast_slice::<[f32; 4], u8>(chunk);
+                #[cfg(target_endian = "big")]
+                let packed: Vec<u8> = chunk
+                    .iter()
+                    .flatten()
+                    .flat_map(|v| v.to_le_bytes())
+                    .collect();
+                #[cfg(target_endian = "big")]
+                let bytes = packed.as_slice();
+                let name = format!("{:x}", Sha256::digest(bytes));
                 self.append_record(
                     folder,
                     &mut batch,
                     &mut published,
-                    EncodedRecord::new(name.clone(), &bytes),
+                    EncodedRecord::new(name.clone(), bytes),
                     cancelled,
                 )?;
                 blocks.push(name);
@@ -447,7 +453,7 @@ impl Manager {
             folder,
             &mut batch,
             &mut published,
-            EncodedRecord::new(key, &bytes),
+            EncodedRecord::descriptor(key, &bytes),
             cancelled,
         )?;
         self.publish_records(folder, &batch, &published, cancelled)?;
@@ -495,10 +501,17 @@ impl Manager {
         // descriptor in this batch is published only after all preceding blocks.
         self.wait_for_readers(cancelled)?;
         let cache = Folder::open(folder, true, true)?;
-        for name in protected {
-            cache
-                .entries
-                .open_file(&format!("{name}.tvc"), false, false, false)?;
+        // Only a descriptor publishes references. Validate its complete set
+        // once, under the same exclusive lock as descriptor publication. Doing
+        // this for every payload makes a native pyramid perform O(n^2) opens.
+        // A clear/trim between batches can leave orphan payloads, but cannot
+        // publish a descriptor referencing a missing block.
+        if records.iter().any(|record| record.descriptor) {
+            for name in protected {
+                cache
+                    .entries
+                    .open_file(&format!("{name}.tvc"), false, false, false)?;
+            }
         }
         let mut entries = Folder::files(&cache.entries, ".tvc")?;
         let result = (|| -> Result<()> {
@@ -561,6 +574,14 @@ impl Manager {
 struct EncodedRecord {
     key: String,
     bytes: Vec<u8>,
+    descriptor: bool,
+}
+fn unpack_pixels(bytes: &[u8], pixels: &mut Vec<[f32; 4]>) {
+    for p in bytes.as_chunks::<16>().0 {
+        pixels.push(std::array::from_fn(|c| {
+            f32::from_le_bytes(p[c * 4..c * 4 + 4].try_into().unwrap())
+        }));
+    }
 }
 impl EncodedRecord {
     fn new(key: String, payload: &[u8]) -> Self {
@@ -570,7 +591,17 @@ impl EncodedRecord {
         bytes.extend_from_slice(payload);
         let digest = Sha256::digest(&bytes);
         bytes.extend_from_slice(&digest);
-        Self { key, bytes }
+        Self {
+            key,
+            bytes,
+            descriptor: false,
+        }
+    }
+    fn descriptor(key: String, payload: &[u8]) -> Self {
+        Self {
+            descriptor: true,
+            ..Self::new(key, payload)
+        }
     }
 }
 
@@ -746,6 +777,38 @@ mod tests {
             free_mib: 0,
             ..Settings::default()
         })
+    }
+    #[test]
+    fn descriptor_revalidates_all_preceding_blocks_after_interleaved_clear() {
+        let folder = tempfile::tempdir().unwrap();
+        let cache = manager();
+        let missing = "a".repeat(64);
+        let payload = EncodedRecord::new("b".repeat(64), b"payload");
+        cache
+            .publish_records(
+                folder.path(),
+                &[payload],
+                std::slice::from_ref(&missing),
+                &|| false,
+            )
+            .unwrap();
+        let descriptor = EncodedRecord::descriptor("c".repeat(64), b"descriptor");
+        assert!(
+            cache
+                .publish_records(folder.path(), &[descriptor], &[missing], &|| false)
+                .is_err()
+        );
+        let disk = Folder::open(folder.path(), false, false).unwrap();
+        assert!(
+            disk.entries
+                .open_file(&format!("{}.tvc", "b".repeat(64)), false, false, false)
+                .is_ok()
+        );
+        assert!(
+            disk.entries
+                .open_file(&format!("{}.tvc", "c".repeat(64)), false, false, false)
+                .is_err()
+        );
     }
     #[test]
     fn persisted_preview_survives_relaunch_but_not_a_different_app_version() {

@@ -83,7 +83,7 @@ impl EditingCompute {
         pass.dispatch_workgroups(count.div_ceil(256), 1, 1);
     }
 }
-fn parameters(edit: &LiveEdit) -> Vec<u8> {
+pub(crate) fn parameters(edit: &LiveEdit) -> Vec<u8> {
     let r = &edit.recipe;
     let mut p = [[0_f32; 4]; 52];
     let (t, tint) = (r.temperature / 100., r.tint / 100.);
@@ -145,6 +145,10 @@ fn parameters(edit: &LiveEdit) -> Vec<u8> {
 
 #[derive(Default, serde::Serialize)]
 pub struct EditingCheck {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub denoise_probe: Option<crate::denoise_probe::Check>,
+    pub layer_tail: crate::layer_compute::Check,
+    pub direct_display_cases: usize,
     pub cases: usize,
     pub samples: usize,
     pub failures: usize,
@@ -153,6 +157,11 @@ pub struct EditingCheck {
     pub display_failures: usize,
     pub display_max_error: u8,
 }
+impl EditingCheck {
+    pub fn layer_tail_passed(&self) -> bool {
+        self.layer_tail.passed()
+    }
+}
 pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Result<EditingCheck> {
     use std::time::Duration;
     use tr_core::{
@@ -160,7 +169,27 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
         editing::{Advanced, CurvePoint, EditRecipe},
         resample::Region,
     };
-    let mut result = EditingCheck::default();
+    // The optional tail has its own gate: a rejected tail must not disable
+    // independently qualified point editing, resampling or display conversion.
+    let mut result = EditingCheck {
+        denoise_probe: std::env::var("TR_DENOISE_GPU_PROBE")
+            .is_ok_and(|v| v == "1")
+            .then(|| {
+                crate::denoise_probe::check(device, queue).unwrap_or_else(|error| {
+                    crate::denoise_probe::Check {
+                        error: Some(format!("{error:#}")),
+                        ..Default::default()
+                    }
+                })
+            }),
+        layer_tail: crate::layer_compute::check(device, queue).unwrap_or_else(|error| {
+            crate::layer_compute::Check {
+                error: Some(format!("{error:#}")),
+                ..Default::default()
+            }
+        }),
+        ..Default::default()
+    };
     let pipeline = EditingCompute::new(device);
     let source = LinearImage::new(
         65,
@@ -360,7 +389,29 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
             };
             frame.submit(queue);
             let actual = crate::preview_compute::read_display(device, queue, &frame)?;
-            let expected = edit.render(&levels, region)?.to_display();
+            let linear = edit.render(&levels, region)?;
+            let expected = linear.to_display();
+            for (a, b) in actual.iter().zip(&expected) {
+                let error = a.abs_diff(*b);
+                result.display_max_error = result.display_max_error.max(error);
+                if error > 1 {
+                    result.display_failures += 1;
+                }
+            }
+            // Span the admitted direct-display range; stronger edits retain
+            // the explicit CPU fallback instead of bypassing qualification.
+            let mut linear = linear;
+            for p in &mut linear.pixels {
+                for v in &mut p[..3] {
+                    *v = v.clamp(-1000., 1000.);
+                }
+            }
+            let expected = linear.to_display();
+            let mut working = memory.try_reserve(8 * 1024 * 1024).unwrap();
+            let mut frame = renderer.display_linear(&linear, &memory, &gpu, &mut working)?;
+            frame.submit(queue);
+            let actual = crate::preview_compute::read_display(device, queue, &frame)?;
+            result.direct_display_cases += 1;
             for (a, b) in actual.iter().zip(expected) {
                 let error = a.abs_diff(b);
                 result.display_max_error = result.display_max_error.max(error);

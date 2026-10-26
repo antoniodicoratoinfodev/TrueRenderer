@@ -54,6 +54,13 @@ fn display_pass(@builtin(global_invocation_id) id:vec3<u32>) {
     if id.x>=params.width || id.y>=params.height { return; }
     display_pixel(output_pixels[id.y*params.width+id.x], id.xy);
 }
+// Canonically filtered CPU edits can use the same qualified display transform
+// directly. No additional resample, pyramid, CPU quantization or GPU readback.
+@compute @workgroup_size(8,8)
+fn direct_display_pass(@builtin(global_invocation_id) id:vec3<u32>) {
+    if id.x>=params.width || id.y>=params.height { return; }
+    display_pixel(source[id.y*params.width+id.x], id.xy);
+}
 // Same fp32 vertical accumulation and display transform, without the full
 // intermediate write/read or an extra dispatch. The reference entries above
 // remain available for the numerical verifier.

@@ -109,7 +109,7 @@ impl Geometry {
     pub fn source_point(&self, p: [f64; 2], source: [u32; 2]) -> Option<[f64; 2]> {
         self.source_point_with_rotation(p, source, (self.angle as f64).to_radians().sin_cos())
     }
-    fn source_point_with_rotation(
+    pub(super) fn source_point_with_rotation(
         &self,
         p: [f64; 2],
         source: [u32; 2],
@@ -218,11 +218,14 @@ impl Geometry {
         if p[3] <= 0. {
             return;
         }
-        let r2 = (x - 0.5).powi(2) + (y - 0.5).powi(2);
-        let gain = (self.vignette / 100. * r2 * 4.).exp2();
+        let gain = self.optical_gain(x, y);
         for v in &mut p[..3] {
             *v *= gain;
         }
+    }
+    pub(super) fn optical_gain(&self, x: f32, y: f32) -> f32 {
+        let r2 = (x - 0.5).powi(2) + (y - 0.5).powi(2);
+        (self.vignette / 100. * r2 * 4.).exp2()
     }
 }
 

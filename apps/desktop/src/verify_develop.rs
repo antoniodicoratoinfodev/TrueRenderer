@@ -52,6 +52,7 @@ mod tests {
             b"truncated".as_slice(),
             br#"{}"#,
             br#"{"passed":"true"}"#,
+            br#"{"passed":false,"edit_continuity_passed":false,"output_proof_surface":{"passed":true}}"#,
             br#"{"passed":false,"reason":"WB failed"}"#,
         ] {
             std::fs::write(&report, bytes).unwrap();

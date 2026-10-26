@@ -70,9 +70,20 @@ impl MemoryBudget {
         std::mem::take(&mut self.0.lock().unwrap().reclaim_bytes)
     }
     pub fn try_reserve(&self, bytes: u64) -> Option<Lease> {
+        self.reserve(bytes, true)
+    }
+    /// Optional caches may use existing headroom, never grow an automatic budget
+    /// or request reclamation of visible work when they cannot fit.
+    pub fn try_reserve_within_limit(&self, bytes: u64) -> Option<Lease> {
+        self.reserve(bytes, false)
+    }
+    fn reserve(&self, bytes: u64, allow_growth: bool) -> Option<Lease> {
         let mut usage = self.0.lock().unwrap();
         let required = usage.reserved.checked_add(bytes)?;
-        if usage.automatic && !usage.pressure && required > usage.limit {
+        if !allow_growth && required > usage.limit {
+            return None;
+        }
+        if allow_growth && usage.automatic && !usage.pressure && required > usage.limit {
             let expanded = required.saturating_add(Self::margin(required));
             // Expand and admit under the same lock. A second queue sees the
             // first reservation, including every still-live lease.
@@ -124,6 +135,20 @@ impl Drop for Lease {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn optional_cache_admission_never_grows_or_reclaims_the_visible_budget() {
+        let budget = MemoryBudget::automatic(100, 1_000_000_000);
+        let visible = budget.try_reserve(80).unwrap();
+        assert!(budget.try_reserve_within_limit(30).is_none());
+        assert_eq!(budget.usage().limit, 100);
+        assert_eq!(budget.usage().growths, 0);
+        assert_eq!(budget.usage().rejected, 0);
+        assert_eq!(budget.take_reclaim_request(), 0);
+        let cache = budget.try_reserve_within_limit(20).unwrap();
+        assert_eq!(budget.usage().reserved, 100);
+        drop((visible, cache));
+        assert_eq!(budget.usage().reserved, 0);
+    }
     #[test]
     fn automatic_budget_accepts_reported_work_and_grows_with_live_leases() {
         let budget = MemoryBudget::automatic(8_000_000_000, 14_000_000_000);

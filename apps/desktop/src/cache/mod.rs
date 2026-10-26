@@ -535,7 +535,7 @@ impl Folder {
             if !managed(&name, suffix) {
                 continue;
             }
-            if let Ok((bytes, modified)) = dir.file_info(&name) {
+            if let Ok((bytes, modified)) = dir.entry_info(&entry) {
                 entries.push(Entry {
                     name,
                     bytes,

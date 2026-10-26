@@ -12,11 +12,8 @@ pub struct LiveEdit {
 }
 impl LiveEdit {
     pub fn source_index(&self, image: &ImageLevels) -> usize {
-        image
-            .levels()
-            .iter()
-            .position(|l| l.width.max(l.height) <= self.max_edge.clamp(256, 2048))
-            .unwrap_or(image.levels().len() - 1)
+        let _ = image;
+        0
     }
     pub fn source_size(&self, image: &ImageLevels) -> [u32; 2] {
         self.recipe
@@ -27,7 +24,7 @@ impl LiveEdit {
             })
     }
     pub fn working_bytes(&self, image: &ImageLevels, region: Region) -> u64 {
-        if self.gpu_supported()
+        if self.gpu_supported_for(image, region)
             && let Ok((level, scaled, _)) = image.render_input(region)
         {
             let (_, size) = crop_bounds(level, scaled);
@@ -35,11 +32,47 @@ impl LiveEdit {
                 + self.recipe.scratch_bytes(size[0], size[1])
                 + 4096;
         }
-        let level = &image.levels()[self.source_index(image)];
-        level.pixels.len() as u64 * 32 + self.recipe.scratch_bytes(level.width, level.height) + 4096
+        let level = image.source();
+        let native = self.source_size(image);
+        let full = native.map(|v| v.div_ceil(1 << image.base_level()));
+        let needed: [u64; 2] = std::array::from_fn(|a| {
+            ((f64::from(region.size[a]) * region.step[a] * f64::from(full[a])
+                / f64::from(native[a])
+                + 64.)
+                .ceil() as u64)
+                .min(u64::from(full[a]))
+        });
+        // Full-input scratch is a conservative admission for arbitrary inverse
+        // geometry/global filters; the evaluator actually visits only support.
+        level.pixels.len() as u64 * 32
+            + self.recipe.scratch_bytes(level.width, level.height)
+            + needed[0] * needed[1] * 112
+            + 8 * 1024 * 1024
     }
     pub fn render(&self, image: &ImageLevels, region: Region) -> anyhow::Result<LinearImage> {
-        if self.gpu_supported() {
+        self.render_cached(
+            image,
+            region,
+            &mut tr_core::editing::regional::Processor::new(tr_core::budget::MemoryBudget::new(0)),
+        )
+    }
+    pub fn render_cached(
+        &self,
+        image: &ImageLevels,
+        region: Region,
+        cache: &mut tr_core::editing::regional::Processor,
+    ) -> anyhow::Result<LinearImage> {
+        self.render_cached_cancellable(image, region, cache, &|| false)
+    }
+    pub fn render_cached_cancellable(
+        &self,
+        image: &ImageLevels,
+        region: Region,
+        cache: &mut tr_core::editing::regional::Processor,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> anyhow::Result<LinearImage> {
+        anyhow::ensure!(!cancelled(), "Editing annullato");
+        if self.gpu_supported_for(image, region) {
             // Point operations need only the visible samples and filter halo.
             // Keep the normal viewer LOD, including native detail at 1:1.
             let (level, mut region, opaque) = image.render_input(region)?;
@@ -62,27 +95,18 @@ impl LiveEdit {
                 }
             }
             self.recipe.apply(&mut raster)?;
+            anyhow::ensure!(!cancelled(), "Editing annullato");
             region.origin[0] -= f64::from(origin[0]);
             region.origin[1] -= f64::from(origin[1]);
             return tr_core::resample::filter(&raster, region, opaque);
         }
-        let index = self.source_index(image);
-        let mut raster = image.levels()[index].clone();
-        if self.input_gains != [1.; 3] {
-            for p in &mut raster.pixels {
-                for (c, gain) in p[..3].iter_mut().zip(self.input_gains) {
-                    *c *= gain;
-                }
-            }
-        }
-        let native = self.recipe.apply_preview(
-            &mut raster,
-            image.source_size(),
-            image.base_level() + index as u32,
-        )?;
-        let region = scaled_region(region, [raster.width, raster.height], native);
-        let opaque = raster.pixels.iter().all(|p| p[3] == 1.);
-        tr_core::resample::filter(&raster, region, opaque)
+        cache.render_cancellable(image, &self.recipe, self.input_gains, region, cancelled)
+    }
+    pub fn gpu_supported_for(&self, image: &ImageLevels, region: Region) -> bool {
+        self.gpu_supported()
+            && image
+                .render_input(region)
+                .is_ok_and(|(level, _, _)| std::ptr::eq(level, image.source()))
     }
     pub fn gpu_supported(&self) -> bool {
         self.recipe.validate().is_ok()
@@ -117,17 +141,6 @@ pub(crate) fn crop_bounds(level: &LinearImage, region: Region) -> ([u32; 2], [u3
         end - origin[axis]
     });
     (origin, size)
-}
-pub(crate) fn scaled_region(region: Region, raster: [u32; 2], native: [u32; 2]) -> Region {
-    let ratio = [
-        raster[0] as f64 / native[0] as f64,
-        raster[1] as f64 / native[1] as f64,
-    ];
-    Region {
-        size: region.size,
-        origin: [region.origin[0] * ratio[0], region.origin[1] * ratio[1]],
-        step: [region.step[0] * ratio[0], region.step[1] * ratio[1]],
-    }
 }
 
 #[cfg(test)]
@@ -195,15 +208,17 @@ mod tests {
                         step,
                     };
                     let actual = edit.render(&image, region).unwrap();
-                    let (level, scaled, opaque) = image.render_input(region).unwrap();
-                    let mut expected = level.clone();
+                    let mut expected = image.source().clone();
                     for pixel in &mut expected.pixels {
                         for (c, gain) in pixel[..3].iter_mut().zip(edit.input_gains) {
                             *c *= gain;
                         }
                     }
                     edit.recipe.apply(&mut expected).unwrap();
-                    let expected = tr_core::resample::filter(&expected, scaled, opaque).unwrap();
+                    let expected = ImageLevels::from_source(expected, PreviewRequest::full())
+                        .unwrap()
+                        .render(region)
+                        .unwrap();
                     let maximum = actual
                         .pixels
                         .iter()

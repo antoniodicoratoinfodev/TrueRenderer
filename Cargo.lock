@@ -3236,6 +3236,7 @@ name = "truerenderer"
 version = "0.1.5"
 dependencies = [
  "anyhow",
+ "bytemuck",
  "eframe",
  "fs2",
  "image",

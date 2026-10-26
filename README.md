@@ -110,7 +110,7 @@ Supported Bayer and X-Trans **DNG files** can also use the independent engine. C
 
 ## Stay in the photographic flow
 
-GPU acceleration for light and colour adjustments works alongside parallel CPU processing. Adaptive previews respond during slider gestures and refine after you stop. Folder loading prepares detail, saved adjustments and thumbnails together, and reuses completed results from the disk cache. Choose foreground loading to finish preparation before browsing, or keep working while it runs in the background. Editing gestures take priority over background preparation. Cache and memory limits still apply.
+GPU acceleration for light and colour adjustments works alongside parallel CPU processing. Supported layer stacks reuse the prepared image for sampled colour, light, tonal levels and opacity changes, both at native zoom and in Fit view. Editing keeps the detail of the loaded preview throughout slider, tool and layer gestures; the last complete image stays visible while an update is calculated. Complex combinations, especially exposure with noise reduction, can still update slowly. Folder loading prepares detail, saved adjustments and thumbnails together, and reuses completed results from the disk cache. Choose foreground loading to finish preparation before browsing, or keep working while it runs in the background. Editing gestures take priority over background preparation. Cache and memory limits still apply.
 
 Choose **Standard or Full preview quality**, globally or for an individual photograph. Set CPU, GPU and memory preferences to suit your machine, switch between Fit and physical 1:1, and choose an English or Italian interface with 100%, 150% or 200% UI scaling.
 
