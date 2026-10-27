@@ -30,7 +30,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
         }
         pixel[3] = alpha;
     }
-    let pipeline = multiscale::Multiscale::new(device);
+    let pipeline = multiscale::Multiscale::new(device)?;
     let input = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: None,
         contents: bytemuck::cast_slice(&source.pixels),

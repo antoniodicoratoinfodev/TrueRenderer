@@ -1,13 +1,20 @@
-//! Opt-in qualification of the complete GPU multiscale filter, not an editing backend.
+//! Opt-in qualification of the GPU graph and its experimental editing integration.
 use anyhow::{Result, ensure};
 use eframe::wgpu::{self, util::DeviceExt};
 use tr_core::color::{LinearImage, Pixel};
 mod admission;
+pub(crate) use admission::Completion;
+pub(crate) use admission::Upload as GraphUpload;
+mod chain;
+pub(crate) use chain::Chain;
 mod admission_check;
 mod benchmark;
 mod chain_benchmark;
 mod checkpoint;
 mod checkpoint_check;
+mod device_check;
+mod display_check;
+pub(crate) use device_check::{Check as DeviceCheck, check as check_device, guarded};
 mod filter;
 mod input;
 mod layers;
@@ -18,6 +25,7 @@ mod multiscale;
 #[cfg(test)]
 mod native;
 mod point;
+pub(crate) use point::Optics as GraphOptics;
 mod point_check;
 mod post;
 mod post_check;
@@ -25,6 +33,7 @@ mod reconstruction;
 mod spatial;
 mod spatial_check;
 mod tiling;
+mod transform;
 
 fn basis(n: usize) -> Vec<[f32; 4]> {
     let values: Vec<_> = (0..n * n)
@@ -56,10 +65,59 @@ pub struct Check {
     pub post: post_check::Check,
     pub layers: layers_check::Check,
     pub checkpoint: checkpoint_check::Check,
+    pub presentation: display_check::Check,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub benchmark: Option<benchmark::Check>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chain_benchmark: Option<chain_benchmark::Check>,
+}
+impl Check {
+    pub(crate) fn passed(&self) -> bool {
+        self.error.is_none()
+            && self.cases == 72
+            && self.failures == 0
+            && self.reconstruction.cases > 0
+            && self.reconstruction.failures == 0
+            && self.reconstruction.maximum_display_error <= 1
+            && self.reconstruction.model_failures == 0
+            && self.reconstruction.model_band_mismatches == 0
+            && self.multiscale.cases > 0
+            && self.multiscale.failures == 0
+            && self.multiscale.maximum_display_error <= 1
+            && self.tiling.cases > 0
+            && self.tiling.failures == 0
+            && self.tiling.maximum_display_error <= 1
+            && self.admission.lifecycle_cases == 16
+            && self.admission.failures == 0
+            && self.admission.maximum_display_error <= 1
+            && self.admission.final_memory_reserved == 0
+            && self.admission.final_gpu_reserved == 0
+            && self.point.cases > 0
+            && self.point.failures == 0
+            && self.point.maximum_display_error <= 1
+            && self.spatial.cases > 0
+            && self.spatial.failures == 0
+            && self.spatial.maximum_display_error <= 1
+            && self.post.cases > 0
+            && self.post.failures == 0
+            && self.post.maximum_display_error <= 1
+            && self.layers.cases > 0
+            && self.layers.failures == 0
+            && self.layers.maximum_display_error <= 1
+            && self.checkpoint.numerical.cases == 46
+            && self.checkpoint.numerical.failures == 0
+            && self.checkpoint.numerical.maximum_display_error <= 1
+            && self.checkpoint.lifecycle_cases == 10
+            && self.checkpoint.final_memory_reserved == 0
+            && self.checkpoint.final_gpu_reserved == 0
+            && self.presentation.cases == 192
+            && self.presentation.preparation_cases == 16
+            && self.presentation.backpressure_cases == 3
+            && self.presentation.display_failures == 0
+            && self.presentation.maximum_display_error <= 1
+            && self.presentation.final_memory_reserved == 0
+            && self.presentation.final_gpu_reserved == 0
+    }
 }
 
 #[allow(clippy::needless_range_loop)]
@@ -158,7 +216,7 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
     });
     let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("TR spectral block probe"),
-        source: wgpu::ShaderSource::Wgsl(include_str!("denoise_probe.wgsl").into()),
+        source: wgpu::ShaderSource::Wgsl(transform::shader().into()),
     });
     let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
         label: None,
@@ -309,6 +367,7 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
     result.post = post_check::check(device, queue)?;
     result.layers = layers_check::check(device, queue)?;
     result.checkpoint = checkpoint_check::check(device, queue)?;
+    result.presentation = display_check::check(device, queue)?;
     if std::env::var("TR_DENOISE_GPU_BENCH").is_ok_and(|v| v == "1") {
         result.benchmark = Some(benchmark::check(device, queue)?);
     }
@@ -323,9 +382,9 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
 mod tests {
     #[test]
     fn spectral_block_shader_validates_offline() {
-        for kind in [0, 1] {
+        for kind in [0, 1, 2] {
             let module = eframe::wgpu::naga::front::wgsl::parse_str(&super::input::shader(
-                include_str!("denoise_probe.wgsl"),
+                &super::transform::shader(),
                 "source",
                 "params[0].x",
                 kind,

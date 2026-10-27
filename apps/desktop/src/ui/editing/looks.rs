@@ -193,7 +193,16 @@ impl Controls {
                     }
                 }
             }
-            ui.add(egui::Slider::new(&mut self.amount, 0. ..=1.).text(lang.text("Intensità look")));
+            adjustment_default(
+                ui,
+                lang,
+                "Intensità look",
+                &mut self.amount,
+                0. ..=1.,
+                "",
+                None,
+                1.,
+            );
             ui.checkbox(&mut self.masks, lang.text("Usa maschere salvate"));
             ui.small(lang.text(
                 "Le maschere usano coordinate relative alla sorgente; i valori Auto restano fissi.",

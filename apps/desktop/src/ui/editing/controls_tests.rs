@@ -1013,11 +1013,16 @@ fn collect(shape: &egui::Shape, out: &mut Shapes) {
         _ => {}
     }
 }
-fn frame(
+fn frame(ctx: &egui::Context, events: Vec<egui::Event>, draw: impl FnMut(&mut egui::Ui)) -> Shapes {
+    frame_with_modifiers(ctx, events, egui::Modifiers::NONE, draw)
+}
+fn frame_with_modifiers(
     ctx: &egui::Context,
-    events: Vec<egui::Event>,
+    mut events: Vec<egui::Event>,
+    modifiers: egui::Modifiers,
     mut draw: impl FnMut(&mut egui::Ui),
 ) -> Shapes {
+    events.insert(0, egui::Event::ModifiersChanged(modifiers));
     for theme in [egui::Theme::Dark, egui::Theme::Light] {
         ctx.style_mut_of(theme, |style| style.animation_time = 0.);
     }
@@ -1125,6 +1130,112 @@ fn adjustment_drag_survives_changing_sample_labels_before_the_control() {
         "The whole drag, not just its initial press, must be applied"
     );
     assert_eq!(commits, 1);
+}
+
+#[test]
+fn photographic_slider_track_is_continuous_with_legacy_steps() {
+    for step in [0.05, 1.] {
+        let ctx = egui::Context::default();
+        let mut value = 0_f64;
+        let mut draw = |ui: &mut egui::Ui| {
+            adjustment(
+                ui,
+                Language::English,
+                "Exposure",
+                &mut value,
+                -1. ..=1.,
+                " EV",
+                Some(step),
+            );
+        };
+        let start = frame(&ctx, vec![], &mut draw).knobs[0];
+        frame(&ctx, click(start, true), &mut draw);
+        let end = start + egui::vec2(0.5, 0.);
+        frame(&ctx, vec![egui::Event::PointerMoved(end)], &mut draw);
+        frame(&ctx, click(end, false), &mut draw);
+        assert!(value > 0. && value < 0.05, "value={value} step={step}");
+        assert!((value / step - (value / step).round()).abs() > 0.001);
+    }
+}
+
+#[test]
+fn photographic_slider_fine_drag_and_keyboard_leave_other_controls_unchanged() {
+    let ctx = egui::Context::default();
+    let mut values = [0.123456_f64, 0.7654321];
+    let mut integer = 6500;
+    let mut commits = 0;
+    let mut draw = |ui: &mut egui::Ui| {
+        let r = adjustment(
+            ui,
+            Language::English,
+            "Exposure",
+            &mut values[0],
+            -10. ..=10.,
+            " EV",
+            Some(0.05),
+        );
+        commits += usize::from(r.drag_stopped() || (r.changed() && !r.dragged()));
+        adjustment(
+            ui,
+            Language::English,
+            "Texture",
+            &mut values[1],
+            -100. ..=100.,
+            "",
+            Some(1.),
+        );
+        adjustment(
+            ui,
+            Language::English,
+            "Temperature",
+            &mut integer,
+            2000..=50000,
+            " K",
+            Some(1.),
+        );
+    };
+    let start = frame(&ctx, vec![], &mut draw).knobs[0];
+    let mut press = click(start, true);
+    if let egui::Event::PointerButton { modifiers, .. } = &mut press[1] {
+        *modifiers = egui::Modifiers::SHIFT;
+    }
+    frame_with_modifiers(&ctx, press, egui::Modifiers::SHIFT, &mut draw);
+    let end = start + egui::vec2(1., 0.);
+    frame_with_modifiers(
+        &ctx,
+        vec![egui::Event::PointerMoved(end)],
+        egui::Modifiers::SHIFT,
+        &mut draw,
+    );
+    // A second frame with the stationary pointer must not repeat the delta.
+    frame_with_modifiers(&ctx, vec![], egui::Modifiers::SHIFT, &mut draw);
+    // Releasing Shift with the mouse must not jump to the absolute track position.
+    frame(&ctx, click(end, false), &mut draw);
+    for (key, modifiers) in [
+        (egui::Key::ArrowRight, egui::Modifiers::NONE),
+        (egui::Key::ArrowLeft, egui::Modifiers::SHIFT),
+    ] {
+        frame_with_modifiers(
+            &ctx,
+            vec![egui::Event::Key {
+                key,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers,
+            }],
+            modifiers,
+            &mut draw,
+        );
+    }
+    assert!(
+        (values[0] - (0.123456 + 0.01 + 0.01 - 0.001)).abs() < 1e-8,
+        "fine drag/keyboard value={}",
+        values[0]
+    );
+    assert_eq!(values[1], 0.7654321);
+    assert_eq!(integer, 6500);
+    assert_eq!(commits, 3, "One drag and two keyboard edits");
 }
 #[test]
 fn advanced_panels_open_without_mutating_recipe_and_mask_add_commits_once() {
@@ -2225,7 +2336,7 @@ fn layer_percentage_entry_changes_only_on_input_and_commits_once() {
                     repeat: false,
                     modifiers: egui::Modifiers::COMMAND,
                 },
-                egui::Event::Text("42.5".into()),
+                egui::Event::Text("42.5137".into()),
                 egui::Event::Key {
                     key: egui::Key::Enter,
                     physical_key: None,
@@ -2236,7 +2347,7 @@ fn layer_percentage_entry_changes_only_on_input_and_commits_once() {
             ],
             &mut draw,
         );
-        assert_eq!(value, 0.425);
+        assert!((value - 0.425137).abs() < 1e-7);
         assert_eq!(commits, 1);
     }
 }

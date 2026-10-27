@@ -1,15 +1,38 @@
 //! Resident point/vignette input to the spectral filter. The tone shader is
 //! shared with qualified point editing; advanced color follows spatial detail.
 use super::*;
+use std::sync::{Arc, Mutex};
 use tr_core::{budget::MemoryBudget, editing::geometry::Geometry};
 
-pub(super) struct Optics {
-    buffer: wgpu::Buffer,
+pub(crate) struct Optics {
+    pub(super) buffer: wgpu::Buffer,
     amount: f32,
     size: [u32; 2],
     _credits: admission::Credits,
+    staging: Mutex<Option<admission::Credits>>,
 }
 impl Optics {
+    pub(crate) fn ready(&self) -> bool {
+        self.staging.lock().unwrap().is_none()
+    }
+    pub(crate) fn completed(&self) {
+        let staging = self.staging.lock().unwrap().take();
+        drop(staging);
+    }
+    pub(crate) fn submit_background(
+        self: Arc<Self>,
+        queue: &wgpu::Queue,
+        done: impl FnOnce() + Send + 'static,
+    ) {
+        // Flush mapped-at-creation initialization before admitting graph scratch.
+        // The UI owns this submission, including the empty command list.
+        queue.submit([]);
+        queue.on_submitted_work_done(move || {
+            self.completed();
+            drop(self);
+            done();
+        });
+    }
     pub fn matches(&self, size: [u32; 2], amount: f32) -> bool {
         self.size == size && self.amount == amount
     }
@@ -36,7 +59,8 @@ impl Optics {
                         .min(device.limits().max_buffer_size),
             "Optical map exceeds device limits"
         );
-        let credits = admission::Credits::new(memory, gpu, bytes * 2 + 65536)?;
+        let credits = admission::Credits::new(memory, gpu, bytes + 65536)?;
+        let staging = admission::Credits::new(memory, gpu, bytes)?;
         let geometry = Geometry {
             vignette: amount,
             ..Default::default()
@@ -69,6 +93,7 @@ impl Optics {
             amount,
             size,
             _credits: credits,
+            staging: Mutex::new(Some(staging)),
         })
     }
 }
@@ -87,6 +112,69 @@ pub(super) fn parameters(edit: &crate::live_edit::LiveEdit) -> Vec<u8> {
     params[6 * 16..6 * 16 + 4].copy_from_slice(&(u32::from(vignette != 0.) as f32).to_le_bytes());
     params
 }
+
+pub(super) fn source_parameters(edit: &crate::live_edit::LiveEdit, packed: bool) -> Vec<u8> {
+    let mut params = parameters(edit);
+    // Word 6.y remains zero: it is the precision barrier, not layout metadata.
+    params[6 * 16 + 8..6 * 16 + 12].copy_from_slice(&(u32::from(packed) as f32).to_le_bytes());
+    params
+}
+
+/// Reuse the same point arithmetic at each denoiser source read. Keeping the
+/// prefix in registers avoids a full-size developed RGBA32F texture. Rename
+/// identifiers, not substrings, so spectral and point functions stay separate.
+pub(super) fn input_shader() -> String {
+    let (functions, _) = include_str!("../editing_compute.wgsl")
+        .split_once("@compute")
+        .unwrap();
+    let names: std::collections::HashSet<_> = functions
+        .lines()
+        .filter_map(|line| {
+            line.strip_prefix("fn ")
+                .and_then(|s| s.split_once('('))
+                .map(|v| v.0)
+        })
+        .chain(["params", "Parameters"])
+        .collect();
+    let functions = functions
+        .lines()
+        .filter(|line| !line.starts_with("@group"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let mut renamed = String::new();
+    let mut token = String::new();
+    let flush = |token: &mut String, output: &mut String| {
+        if names.contains(token.as_str()) {
+            output.push_str("point_");
+        }
+        output.push_str(token);
+        token.clear();
+    };
+    for c in functions.chars() {
+        if c.is_ascii_alphanumeric() || c == '_' {
+            token.push(c);
+        } else {
+            flush(&mut token, &mut renamed);
+            renamed.push(c);
+        }
+    }
+    flush(&mut token, &mut renamed);
+    format!(
+        "\n{renamed}\n{}\n{}",
+        input::SOURCE_SHADER,
+        r#"
+@group(0) @binding(5) var<uniform> point_params: point_Parameters;
+@group(0) @binding(6) var<storage, read> point_optical: array<f32>;
+fn point_input(input: vec4<f32>, index: u32) -> vec4<f32> {
+    var pixel = vec4(input.rgb * point_params.data[5].xyz, input.a);
+    if pixel.a > 0. && point_params.data[6].x != 0. {
+        pixel = vec4(pixel.rgb * point_optical[index], pixel.a);
+    }
+    return point_edit_prefix(pixel);
+}
+"#
+    )
+}
 fn shader() -> String {
     let source = include_str!("../editing_compute.wgsl");
     let (functions, _) = source.split_once("@compute").expect("point shader entry");
@@ -95,11 +183,16 @@ fn shader() -> String {
         "@group(0) @binding(1) var source: texture_2d<f32>;")
         .replace("@group(0) @binding(2) var<storage, read_write> output: array<vec4<f32>>;",
         "@group(0) @binding(2) var output: texture_storage_2d<rgba32float, write>;\n@group(0) @binding(3) var<storage, read> optical: array<f32>;");
-    format!("{functions}\n{}", include_str!("point.wgsl"))
+    format!(
+        "{functions}\n{}\n{}",
+        input::SOURCE_SHADER,
+        include_str!("point.wgsl")
+    )
 }
 pub(super) struct Point {
     layout: wgpu::BindGroupLayout,
     pipeline: wgpu::ComputePipeline,
+    pub(super) fused: bool,
 }
 impl Point {
     pub fn new(device: &wgpu::Device) -> Self {
@@ -152,7 +245,13 @@ impl Point {
             compilation_options: Default::default(),
             cache: None,
         });
-        Self { layout, pipeline }
+        Self {
+            layout,
+            pipeline,
+            // Diagnostic A/B switch; ordinary editing still requires the
+            // independent device check for the complete graph.
+            fused: !std::env::var("TR_DENOISE_GPU_MATERIALIZED").is_ok_and(|v| v == "1"),
+        }
     }
     #[allow(clippy::too_many_arguments)]
     pub fn encode(
@@ -161,6 +260,7 @@ impl Point {
         encoder: &mut wgpu::CommandEncoder,
         source: &wgpu::TextureView,
         size: [u32; 2],
+        packed: bool,
         optics: &Optics,
         edit: &crate::live_edit::LiveEdit,
         cancelled: &(impl Fn() -> bool + Sync),
@@ -208,7 +308,7 @@ impl Point {
             view_formats: &[],
         });
         let view = output.create_view(&Default::default());
-        let params = parameters(edit);
+        let params = source_parameters(edit, packed);
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
             contents: &params,

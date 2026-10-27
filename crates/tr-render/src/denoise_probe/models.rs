@@ -2,8 +2,8 @@
 use super::*;
 
 pub(super) struct Models {
-    block_layout: [wgpu::BindGroupLayout; 2],
-    blocks: [wgpu::ComputePipeline; 2],
+    block_layout: [wgpu::BindGroupLayout; 3],
+    blocks: [wgpu::ComputePipeline; 3],
     layout: wgpu::BindGroupLayout,
     pipelines: [wgpu::ComputePipeline; 5],
 }
@@ -15,11 +15,11 @@ pub(super) fn output_bytes(n: usize) -> u64 {
 impl Models {
     pub fn new(device: &wgpu::Device) -> Self {
         let layout = |count, write: fn(u32) -> bool, kind| {
-            let entries: Vec<_> = (0..count)
+            let mut entries: Vec<_> = (0..count)
                 .map(|binding| wgpu::BindGroupLayoutEntry {
                     binding,
                     visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: if binding == 1 && kind == 1 {
+                    ty: if binding == 1 && kind != 0 {
                         input::binding_type(kind)
                     } else {
                         wgpu::BindingType::Buffer {
@@ -33,12 +33,13 @@ impl Models {
                     count: None,
                 })
                 .collect();
+            input::extend_layout(kind, &mut entries);
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries: &entries,
             })
         };
-        let block_layout = [0, 1].map(|kind| layout(3, |b| b == 2, kind));
+        let block_layout = [0, 1, 2].map(|kind| layout(3, |b| b == 2, kind));
         let layout = layout(5, |b| b >= 2, 0);
         let pipelines = |layout: &wgpu::BindGroupLayout, text: &str, names: &[&str]| {
             let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -64,15 +65,10 @@ impl Models {
                 })
                 .collect::<Vec<_>>()
         };
-        let blocks = [0, 1].map(|kind| {
+        let blocks = [0, 1, 2].map(|kind| {
             pipelines(
                 &block_layout[kind],
-                &input::shader(
-                    include_str!("../denoise_probe.wgsl"),
-                    "source",
-                    "params[0].x",
-                    kind,
-                ),
+                &input::shader(&transform::shader(), "source", "params[0].x", kind),
                 &["blocks"],
             )
             .remove(0)
@@ -157,20 +153,21 @@ impl Models {
                 entries: &entries,
             })
         };
+        let mut entries = vec![
+            wgpu::BindGroupEntry {
+                binding: 0,
+                resource: params.as_entire_binding(),
+            },
+            wgpu::BindGroupEntry {
+                binding: 2,
+                resource: samples.as_entire_binding(),
+            },
+        ];
+        source.extend(&mut entries);
         let block_bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &self.block_layout[source.kind()],
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: params.as_entire_binding(),
-                },
-                source.entry(),
-                wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: samples.as_entire_binding(),
-                },
-            ],
+            entries: &entries,
         });
         {
             let mut pass = encoder.begin_compute_pass(&Default::default());

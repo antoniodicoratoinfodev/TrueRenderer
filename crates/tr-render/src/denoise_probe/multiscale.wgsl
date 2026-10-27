@@ -6,19 +6,38 @@
 @group(0) @binding(4) var<storage, read_write> output: array<vec4<f32>>;
 fn fine_pixel(index: u32) -> vec4<f32> { return fine[index]; }
 
-fn luma(rgb: vec3<f32>) -> f32 { return 0.2627 * rgb.x + 0.6780 * rgb.y + 0.0593 * rgb.z; }
+fn rounded4(value: vec4<f32>) -> vec4<f32> {
+    return bitcast<vec4<f32>>(bitcast<vec4<u32>>(value) ^ vec4(params[4].x));
+}
+fn sum_error(a: vec4<f32>, b: vec4<f32>, sum: vec4<f32>) -> vec4<f32> {
+    let virtual_b = rounded4(sum - a);
+    return rounded4(a - rounded4(sum - virtual_b)) + rounded4(b - virtual_b);
+}
+fn luma(rgb: vec3<f32>) -> f32 {
+    let terms = rounded4(vec4(rgb, 0.) * vec4(0.2627, 0.6780, 0.0593, 0.));
+    return rounded4(vec4(terms.x + terms.y)).x + terms.z;
+}
 fn downsample_at(x: u32, y: u32, size: vec2<u32>) -> vec4<f32> {
-    var samples: array<vec4<f32>, 4>;
-    for (var dy = 0u; dy < 2u; dy += 1u) {
-        for (var dx = 0u; dx < 2u; dx += 1u) {
-            let xx = min(x * 2u + dx, size.x - 1u);
-            let yy = min(y * 2u + dy, size.y - 1u);
-            let p = fine_pixel(yy * size.x + xx);
-            if p.w <= 0. { return vec4<f32>(0.); }
-            samples[dy * 2u + dx] = p;
-        }
-    }
-    return ((samples[0] + samples[1]) + (samples[2] + samples[3])) * 0.25;
+    // Explicit loads avoid FXC's forced unrolling of a dynamically indexed
+    // local array around the fused point shader. Preserve order and rounding.
+    let x0 = min(x * 2u, size.x - 1u);
+    let x1 = min(x * 2u + 1u, size.x - 1u);
+    let y0 = min(y * 2u, size.y - 1u);
+    let y1 = min(y * 2u + 1u, size.y - 1u);
+    let p0 = fine_pixel(y0 * size.x + x0);
+    if p0.w <= 0. { return vec4<f32>(0.); }
+    let p1 = fine_pixel(y0 * size.x + x1);
+    if p1.w <= 0. { return vec4<f32>(0.); }
+    let p2 = fine_pixel(y1 * size.x + x0);
+    if p2.w <= 0. { return vec4<f32>(0.); }
+    let p3 = fine_pixel(y1 * size.x + x1);
+    if p3.w <= 0. { return vec4<f32>(0.); }
+    let a = rounded4(p0 + p1);
+    let b = rounded4(p2 + p3);
+    let total = rounded4(a + b);
+    let error = sum_error(p0, p1, a)
+        + sum_error(p2, p3, b) + sum_error(a, b, total);
+    return (total + error) * 0.25;
 }
 
 @compute @workgroup_size(256)

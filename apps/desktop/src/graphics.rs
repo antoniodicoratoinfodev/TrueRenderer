@@ -118,6 +118,17 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
             "--edit-continuity-smoke" | "--zoom-continuity-smoke" | "--pan-continuity-smoke"
         )
     });
+    let mut window_size = [1440., 940.];
+    if fixed_probe && let Ok(value) = std::env::var("TR_PROBE_WINDOW_SIZE") {
+        let (width, height) = value
+            .split_once('x')
+            .ok_or_else(|| anyhow::anyhow!("Expected diagnostic window WIDTHxHEIGHT"))?;
+        window_size = [width.parse::<f32>()?, height.parse::<f32>()?];
+        anyhow::ensure!(
+            (550. ..=3840.).contains(&window_size[0]) && (360. ..=2160.).contains(&window_size[1]),
+            "Diagnostic window size outside supported range"
+        );
+    }
     for attempt in 0..=1 {
         let lost = Arc::new(AtomicBool::new(false));
         let creator_lost = lost.clone();
@@ -133,7 +144,7 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
             viewport: egui::ViewportBuilder::default()
                 .with_title("TrueRenderer")
                 .with_app_id("it.truerenderer.prototype")
-                .with_inner_size([1440., 940.])
+                .with_inner_size(window_size)
                 .with_resizable(!fixed_probe)
                 .with_maximize_button(!fixed_probe)
                 .with_min_inner_size([550., 360.]),

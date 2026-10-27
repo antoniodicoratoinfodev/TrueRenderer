@@ -92,9 +92,12 @@ fn layers(@builtin(global_invocation_id) id: vec3<u32>) {
                     edited = vec3(y) + (v - vec3(y)) * parameters[at + 2u].x;
                 }
                 case 3u: {
-                    for (var c = 0u; c < 3u; c += 1u) {
-                        edited[c] = tonal_level(tonal_level(edited[c], at + 1u), at + 3u + c * 2u);
-                    }
+                    // Dynamic vector stores force FXC to unroll the enclosing
+                    // variable-length operator/layer loops. Channels are fixed.
+                    edited = vec3(
+                        tonal_level(tonal_level(edited.x, at + 1u), at + 3u),
+                        tonal_level(tonal_level(edited.y, at + 1u), at + 5u),
+                        tonal_level(tonal_level(edited.z, at + 1u), at + 7u));
                 }
                 default: {}
             } }

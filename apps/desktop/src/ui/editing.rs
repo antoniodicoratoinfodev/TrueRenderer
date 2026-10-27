@@ -131,13 +131,11 @@ fn adjustment_default<Num: egui::emath::Numeric>(
         ui.spacing_mut().item_spacing = egui::vec2(8., 4.);
         ui.spacing_mut().interact_size.y = 24.;
         ui.spacing_mut().button_padding = egui::vec2(4., 3.);
-        let speed = step.unwrap_or_else(|| {
-            if Num::INTEGRAL {
-                1.
-            } else {
-                (range.end().to_f64() - range.start().to_f64()) / 1000.
-            }
-        });
+        let speed = if Num::INTEGRAL {
+            step.unwrap_or(1.)
+        } else {
+            step.unwrap_or(0.01).min(0.01)
+        };
         let (number, slider) = ui
             .horizontal(|ui| {
                 let width = ui.available_width();
@@ -177,15 +175,83 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                         widgets.inactive.fg_stroke = egui::Stroke::new(1., Color32::from_gray(176));
                         widgets.hovered.bg_fill = Color32::from_gray(112);
                         widgets.active.bg_fill = Color32::from_gray(152);
-                        let mut slider = egui::Slider::new(value, range.clone())
-                            .show_value(false)
-                            .trailing_fill(false)
-                            .handle_shape(egui::style::HandleShape::Circle)
-                            .logarithmic(suffix == " K");
-                        if let Some(step) = step {
+                        let initial = value.to_f64();
+                        let drag_id = control_id.with("continuous_drag");
+                        let mut previous = ui.data(|data| {
+                            data.get_temp::<(f64, egui::Pos2)>(drag_id)
+                        });
+                        let (pointer, fine, key_delta) = ui.input(|input| {
+                            let keys = input.num_presses(egui::Key::ArrowRight) as f64
+                                - input.num_presses(egui::Key::ArrowLeft) as f64;
+                            (
+                                (input.pointer.primary_down() || input.pointer.primary_released())
+                                    .then(|| input.pointer.interact_pos())
+                                    .flatten(),
+                                input.modifiers.shift,
+                                keys * speed * if input.modifiers.shift { 0.1 } else { 1. },
+                            )
+                        });
+                        let mut slider = if Num::INTEGRAL {
+                            egui::Slider::new(value, range.clone())
+                        } else {
+                            egui::Slider::from_get_set(
+                                range.start().to_f64()..=range.end().to_f64(),
+                                |change| {
+                                    if let Some(change) = change {
+                                        let next = if let Some(position) = pointer {
+                                            let next = match previous {
+                                                Some((_, at)) if fine => {
+                                                    initial + f64::from(position.x - at.x) * speed
+                                                }
+                                                Some((last, _)) => initial + (change - last),
+                                                None if fine => initial,
+                                                None => change,
+                                            };
+                                            previous = Some((change, position));
+                                            next
+                                        } else if key_delta != 0. {
+                                            initial + key_delta
+                                        } else {
+                                            change
+                                        };
+                                        *value =
+                                            Num::from_f64(next.clamp(
+                                                range.start().to_f64(),
+                                                range.end().to_f64(),
+                                            ));
+                                    }
+                                    value.to_f64()
+                                },
+                            )
+                            .smart_aim(false)
+                            // The setter implements interactions. egui's default
+                            // Always clamping calls it even on idle controls.
+                            .clamping(egui::SliderClamping::Edits)
+                        }
+                        .show_value(false)
+                        .trailing_fill(false)
+                        .handle_shape(egui::style::HandleShape::Circle)
+                        .logarithmic(suffix == " K");
+                        if let Some(step) = step.filter(|_| Num::INTEGRAL) {
                             slider = slider.step_by(step);
                         }
-                        let response = ui.add(slider).labelled_by(label_id);
+                        let mut response = ui.add(slider).labelled_by(label_id);
+                        if response.drag_started() {
+                            response.request_focus();
+                        }
+                        if !Num::INTEGRAL {
+                            response = response.on_hover_text(match lang {
+                                Language::Italian => "Maiusc + trascina per regolare finemente. Frecce: 0,01 o meno; Maiusc + frecce: dieci volte più fine. Il valore numerico accetta altri decimali.",
+                                Language::English => "Shift + drag for fine adjustment. Arrows: 0.01 or less; Shift + arrows: ten times finer. The numeric field accepts additional decimals.",
+                            });
+                        }
+                        ui.data_mut(|data| {
+                            if pointer.is_some() && let Some(previous) = previous {
+                                data.insert_temp(drag_id, previous);
+                            } else {
+                                data.remove::<(f64, egui::Pos2)>(drag_id);
+                            }
+                        });
                         if let (Some(colors), Some(track)) = (colors, track) {
                             ui.painter()
                                 .set(track, palette::slider_track(ui, response.rect, &colors));

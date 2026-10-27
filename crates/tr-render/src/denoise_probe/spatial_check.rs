@@ -146,6 +146,8 @@ fn direct(
             advanced.geometry.defringe,
             native,
             size,
+            false,
+            &mut Vec::new(),
             &|| false,
         )?;
         queue.submit([encoder.finish()]);
@@ -188,7 +190,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
     }
     direct(device, queue, &spatial, [1297, 865], 4, 0, 7, &mut result)?;
     let point = point::Point::new(device);
-    let denoise = multiscale::Multiscale::new(device);
+    let denoise = multiscale::Multiscale::new(device)?;
     let memory = MemoryBudget::new(512 * 1024 * 1024);
     let gpu = MemoryBudget::new(512 * 1024 * 1024);
     let size = [517, 269];

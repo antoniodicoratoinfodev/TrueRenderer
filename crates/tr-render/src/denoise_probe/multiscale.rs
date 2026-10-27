@@ -4,8 +4,8 @@ use std::time::Duration;
 
 pub(super) struct Multiscale {
     filter: filter::Filter,
-    layout: [wgpu::BindGroupLayout; 2],
-    pipelines: [[wgpu::ComputePipeline; 3]; 2],
+    layout: [wgpu::BindGroupLayout; 3],
+    pipelines: [[wgpu::ComputePipeline; 3]; 3],
 }
 
 struct Footprint {
@@ -63,8 +63,41 @@ pub(super) fn working_bytes(
     origin: [u32; 2],
     dimensions: [u32; 2],
 ) -> Result<u64> {
+    let (bytes, patches) = working_parts(limits, size, n, chroma, levels, origin, dimensions)?;
+    Ok(bytes + patches)
+}
+/// Top-level fine/guide buffers are dead after the merge. They remain charged
+/// to upstream scratch and can serve the following spatial passes in order.
+pub(super) fn spatial_reuse_count(
+    size: [u32; 2],
+    origin: [u32; 2],
+    dimensions: [u32; 2],
+    chroma: f32,
+    levels: u32,
+) -> u64 {
     let footprint = Footprint::new(size, origin, dimensions, chroma, levels);
-    let mut bytes = filter::working_bytes(footprint.origin, footprint.size, n, limits)?;
+    if !footprint.use_coarse {
+        return 0;
+    }
+    let pixels = u64::from(dimensions[0]) * u64::from(dimensions[1]);
+    [footprint.size, footprint.coarse_full]
+        .into_iter()
+        .filter(|s| u64::from(s[0]) * u64::from(s[1]) >= pixels)
+        .count() as u64
+}
+#[allow(clippy::too_many_arguments)]
+fn working_parts(
+    limits: &wgpu::Limits,
+    size: [u32; 2],
+    n: usize,
+    chroma: f32,
+    levels: u32,
+    origin: [u32; 2],
+    dimensions: [u32; 2],
+) -> Result<(u64, u64)> {
+    let footprint = Footprint::new(size, origin, dimensions, chroma, levels);
+    let mut patches = filter::patch_bytes(footprint.origin, footprint.size, n, limits)?;
+    let mut bytes = filter::working_bytes(footprint.origin, footprint.size, n, limits)? - patches;
     if footprint.use_coarse {
         for shape in [footprint.coarse_full, footprint.coarse_size, dimensions] {
             let pixels = u64::from(shape[0]) * u64::from(shape[1]);
@@ -82,27 +115,29 @@ pub(super) fn working_bytes(
                 .checked_add(allocation + 65536)
                 .ok_or_else(|| anyhow::anyhow!("Multiscale allocation overflow"))?;
         }
+        let (coarse, coarse_patches) = working_parts(
+            limits,
+            footprint.coarse_full,
+            n,
+            chroma,
+            levels - 1,
+            footprint.coarse_origin,
+            footprint.coarse_size,
+        )?;
+        patches = patches.max(coarse_patches);
         bytes = bytes
-            .checked_add(
-                65536
-                    + working_bytes(
-                        limits,
-                        footprint.coarse_full,
-                        n,
-                        chroma,
-                        levels - 1,
-                        footprint.coarse_origin,
-                        footprint.coarse_size,
-                    )?,
-            )
+            .checked_add(65536 + coarse)
             .ok_or_else(|| anyhow::anyhow!("Multiscale allocation overflow"))?;
     }
-    Ok(bytes)
+    Ok((bytes, patches))
 }
 impl Multiscale {
-    pub(super) fn new(device: &wgpu::Device) -> Self {
-        let [buffer, texture] = [0, 1].map(|kind| {
-            let entries: Vec<_> = (0..5)
+    pub(super) fn new(device: &wgpu::Device) -> Result<Self> {
+        super::guarded(device, || Ok(Self::compile(device)))
+    }
+    fn compile(device: &wgpu::Device) -> Self {
+        let [buffer, texture, point] = [0, 1, 2].map(|kind| {
+            let mut entries: Vec<_> = (0..5)
                 .map(|binding| wgpu::BindGroupLayoutEntry {
                     binding,
                     visibility: wgpu::ShaderStages::COMPUTE,
@@ -120,6 +155,7 @@ impl Multiscale {
                     count: None,
                 })
                 .collect();
+            input::extend_layout(kind, &mut entries);
             let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries: &entries,
@@ -150,8 +186,8 @@ impl Multiscale {
         });
         Self {
             filter: filter::Filter::new(device),
-            layout: [buffer.0, texture.0],
-            pipelines: [buffer.1, texture.1],
+            layout: [buffer.0, texture.0, point.0],
+            pipelines: [buffer.1, texture.1, point.1],
         }
     }
     #[allow(clippy::too_many_arguments)]
@@ -180,7 +216,7 @@ impl Multiscale {
                 resource: b.as_entire_binding(),
             })
             .collect();
-        entries.push(input.entry());
+        input.extend(&mut entries);
         let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &self.layout[input.kind()],
@@ -220,6 +256,7 @@ impl Multiscale {
             coarse_level,
             origin,
             dimensions,
+            &mut Vec::new(),
             &|| false,
         )
     }
@@ -238,6 +275,59 @@ impl Multiscale {
         coarse_level: bool,
         origin: [u32; 2],
         dimensions: [u32; 2],
+        reusable: &mut Vec<wgpu::Buffer>,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<wgpu::Buffer> {
+        ensure!(!cancelled(), "Editing annullato");
+        let (_, bytes) = working_parts(
+            &device.limits(),
+            size,
+            n,
+            amounts[1],
+            levels,
+            origin,
+            dimensions,
+        )?;
+        let scratch = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("TR shared multiscale spectral scratch"),
+            size: bytes,
+            usage: wgpu::BufferUsages::STORAGE,
+            mapped_at_creation: false,
+        });
+        self.encode_shared(
+            device,
+            encoder,
+            input,
+            size,
+            n,
+            amounts,
+            threshold,
+            levels,
+            coarse_level,
+            origin,
+            dimensions,
+            &scratch,
+            reusable,
+            cancelled,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn encode_shared(
+        &self,
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+        input: input::Input<'_>,
+        size: [u32; 2],
+        n: usize,
+        amounts: [f32; 2],
+        threshold: f32,
+        levels: u32,
+        coarse_level: bool,
+        origin: [u32; 2],
+        dimensions: [u32; 2],
+        scratch: &wgpu::Buffer,
+        reusable: &mut Vec<wgpu::Buffer>,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<wgpu::Buffer> {
         ensure!(!cancelled(), "Editing annullato");
@@ -249,7 +339,7 @@ impl Multiscale {
             origin: footprint_origin,
             size: footprint_size,
         } = Footprint::new(size, origin, dimensions, amounts[1], levels);
-        let (fine, _) = self.filter.encode_cancellable(
+        let (fine, _) = self.filter.encode_with_scratch(
             device,
             encoder,
             input,
@@ -260,6 +350,7 @@ impl Multiscale {
             coarse_level,
             footprint_origin,
             footprint_size,
+            Some(scratch),
             cancelled,
         )?;
         if !use_coarse {
@@ -285,6 +376,7 @@ impl Multiscale {
                 coarse_full[0],
                 coarse_full[1],
             ],
+            [0; 4], // Rounding barrier's runtime zero, shared by all passes.
         ];
         let params = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -314,7 +406,7 @@ impl Multiscale {
             [&params, &dummy, &dummy, &guide],
             coarse_full[0] * coarse_full[1],
         )?;
-        let coarse = self.encode_cancellable(
+        let coarse = self.encode_shared(
             device,
             encoder,
             input::Input::Buffer(&guide),
@@ -326,6 +418,8 @@ impl Multiscale {
             true,
             coarse_origin,
             coarse_size,
+            scratch,
+            &mut Vec::new(),
             cancelled,
         )?;
         ensure!(!cancelled(), "Editing annullato");
@@ -347,6 +441,8 @@ impl Multiscale {
             [&params, &delta, &guide, &output],
             dimensions[0] * dimensions[1],
         )?;
+        let bytes = u64::from(dimensions[0]) * u64::from(dimensions[1]) * 16;
+        reusable.extend([fine, guide].into_iter().filter(|b| b.size() >= bytes));
         Ok(output)
     }
 }
@@ -368,7 +464,7 @@ pub struct Check {
 }
 
 pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check> {
-    let pipeline = Multiscale::new(device);
+    let pipeline = Multiscale::new(device)?;
     let mut result = Check::default();
     for n in [4_usize, 8, 16] {
         for size in [[17, 13], [65, 33], [133, 131], [517, 269]] {

@@ -70,6 +70,7 @@ def main():
     parser.add_argument("--fit", action="store_true", help="Measure edits with the whole photograph fitted in the viewport")
     parser.add_argument("--no-disk-cache", action="store_true", help="Keep gesture diagnostics independent of persistent cache writes")
     parser.add_argument("--cpu-threads", type=int, default=0, help="0 uses the configured performance profile")
+    parser.add_argument("--gpu-mib", type=int, default=0, help="Explicit GPU quota; 0 keeps the application's automatic policy")
     parser.add_argument("--engine", default="LibRawBilinear")
     parser.add_argument("--compute", choices=["Automatic", "Gpu", "Cpu"], default="Automatic")
     parser.add_argument("--repetitions", type=int, default=3)
@@ -77,11 +78,15 @@ def main():
     parser.add_argument("--correctness", action="store_true")
     parser.add_argument("--visible", action="store_true", help="Show the native test window; avoids hidden-window throttling")
     parser.add_argument("--expected-viewport", type=int, nargs=2, metavar=("WIDTH", "HEIGHT"))
+    parser.add_argument("--window-size", type=int, nargs=2, metavar=("WIDTH", "HEIGHT"),
+                        help="Initial diagnostic window in logical pixels; locked during gestures")
     args = parser.parse_args()
     if args.repetitions < 1:
         parser.error("--repetitions must be positive")
     if not 0 <= args.cpu_threads <= 256:
         parser.error("--cpu-threads must be in 0..256")
+    if not 0 <= args.gpu_mib <= 65536:
+        parser.error("--gpu-mib must be in 0..65536")
     if args.edit_kind != "point" and args.gesture != "edit":
         parser.error("Tools/layers require the edit gesture")
     if args.edit_control != "combined" and args.gesture != "edit":
@@ -96,6 +101,8 @@ def main():
         parser.error("--zero-crossing requires the opacity control")
     if args.expected_viewport and min(args.expected_viewport) < 1:
         parser.error("--expected-viewport dimensions must be positive")
+    if args.window_size and not (550 <= args.window_size[0] <= 3840 and 360 <= args.window_size[1] <= 2160):
+        parser.error("--window-size must be within 550x360 and 3840x2160")
     repo = Path(__file__).resolve().parents[1]
     args.output.mkdir(parents=True, exist_ok=False)
     binary = args.binary.resolve()
@@ -105,6 +112,9 @@ def main():
     env = os.environ.copy()
     env["TR_WORKER_BINARY"] = str(args.worker.resolve())
     env["TR_RENDER_TIMINGS"] = "1" if args.profile else "0"
+    env.pop("TR_PROBE_WINDOW_SIZE", None)
+    if args.window_size:
+        env["TR_PROBE_WINDOW_SIZE"] = "x".join(map(str, args.window_size))
     startup = None
     if os.name == "nt":
         startup = subprocess.STARTUPINFO()
@@ -127,6 +137,7 @@ def main():
             "compute": args.compute, "language": "en", "folder_loading": "Background",
             "enabled": not args.no_disk_cache,
             "cpu_threads": args.cpu_threads,
+            "gpu_mib": args.gpu_mib,
         }), encoding="utf-8")
         command = [str(binary), "--root", str(root), "--data", str(root / "data"),
                    "--open", str(photo.resolve()), "--develop-smoke", "--edit-pixel-smoke",
@@ -200,6 +211,8 @@ def main():
                     "during_folder_loading": args.during_folder_loading,
                     "disk_cache": not args.no_disk_cache,
                     "cpu_threads": args.cpu_threads,
+                    "gpu_mib": args.gpu_mib,
+                    "window_size": args.window_size,
                     "profile": args.profile, "correctness": args.correctness, "visible": args.visible,
                     "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                     "photo_sha256": digest, "runs": results}

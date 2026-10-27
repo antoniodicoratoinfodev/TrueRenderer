@@ -3,7 +3,20 @@ struct Parameters { data: array<vec4<f32>, 52> }
 @group(0) @binding(0) var<uniform> params: Parameters;
 @group(0) @binding(1) var<storage, read> source: array<vec4<f32>>;
 @group(0) @binding(2) var<storage, read_write> output: array<vec4<f32>>;
-fn luma(rgb: vec3<f32>) -> f32 { return rgb.r * 0.2627 + rgb.g * 0.6780 + rgb.b * 0.0593; }
+// Word 6.y is reserved and zero in both point parameter packers. Preserve the
+// CPU's intermediate f32 rounding instead of contracting products into FMA.
+fn rounded(value: f32) -> f32 {
+    return bitcast<f32>(bitcast<u32>(value) ^ bitcast<u32>(params.data[6].y));
+}
+// Correct the reciprocal-based quotient using its fused residual. Tone curves
+// followed by hue-dependent luminance need more than the default WGSL divide.
+fn quotient(a: f32, b: f32) -> f32 {
+    let q = rounded(a / b);
+    return rounded(q + fma(-q, b, a) / b);
+}
+fn luma(rgb: vec3<f32>) -> f32 {
+    return rounded(rounded(rgb.r * 0.2627) + rounded(rgb.g * 0.6780)) + rounded(rgb.b * 0.0593);
+}
 fn square(x: f32) -> f32 { return x * x; }
 fn rem(x: f32, n: f32) -> f32 { return x - floor(x / n) * n; }
 fn hue(rgb: vec3<f32>, high: f32, chroma: f32) -> f32 {
@@ -37,7 +50,7 @@ fn curve(x: f32) -> f32 {
     while right + 1u < count && params.data[8u + right].x < x { right += 1u; }
     let a = params.data[7u + right];
     let b = params.data[8u + right];
-    return a.y + (x - a.x) * (b.y - a.y) / (b.x - a.x);
+    return a.y + quotient(rounded((x - a.x) * (b.y - a.y)), b.x - a.x);
 }
 fn tone(y: f32, amount: f32, weight: f32) -> f32 { return y + amount * y * (1. - y) * weight; }
 fn advanced_color(input: vec3<f32>) -> vec3<f32> {
@@ -75,7 +88,9 @@ fn advanced_color(input: vec3<f32>) -> vec3<f32> {
     }
     return rgb;
 }
-fn edit_pixel(pixel: vec4<f32>) -> vec4<f32> {
+// Shared arithmetic before spatial detail. Keeping the advanced color call in
+// a separate entry lets fused denoiser readers compile only this prefix.
+fn edit_prefix(pixel: vec4<f32>) -> vec4<f32> {
     let alpha = pixel.a;
     if alpha == 0. { return pixel; }
     var rgb = pixel.rgb;
@@ -94,12 +109,14 @@ fn edit_pixel(pixel: vec4<f32>) -> vec4<f32> {
                 y = tone(y, params.data[1].w, square(square(1. - y)));
                 y = tone(y, params.data[2].x, square(square(y)));
             }
-            y = 0.18 * pow(y / 0.18, params.data[2].y);
+            var contrast = quotient(y, 0.18);
+            if params.data[2].y != 1. { contrast = pow(contrast, params.data[2].y); }
+            y = 0.18 * contrast;
             if params.data[3].x != 0. { y = curve(y); }
             if params.data[5].w != 0. {
                 let black = params.data[8].y;
-                rgb = rgb * ((y - black) / old_y) + vec3(black);
-            } else { rgb *= y / old_y; }
+                rgb = rgb * quotient(y - black, old_y) + vec3(black);
+            } else { rgb *= quotient(y, old_y); }
         } else if params.data[5].w != 0. {
             rgb += vec3(curve(old_y) - old_y);
         }
@@ -121,8 +138,12 @@ fn edit_pixel(pixel: vec4<f32>) -> vec4<f32> {
         }
         rgb *= alpha;
     }
-    if params.data[4].x != 0. { rgb = advanced_color(rgb / alpha) * alpha; }
     return vec4(rgb, alpha);
+}
+fn edit_pixel(pixel: vec4<f32>) -> vec4<f32> {
+    let value = edit_prefix(pixel);
+    if value.a == 0. || params.data[4].x == 0. { return value; }
+    return vec4(advanced_color(value.rgb / value.a) * value.a, value.a);
 }
 @compute @workgroup_size(256)
 fn edit(@builtin(global_invocation_id) id: vec3<u32>) {

@@ -34,7 +34,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
         origin: [119, 35],
         size: [257, 193],
     };
-    let pipeline = multiscale::Multiscale::new(device);
+    let pipeline = multiscale::Multiscale::new(device)?;
     let mut result = Check::default();
     let unchanged = |bytes: u64| -> Result<()> {
         ensure!(

@@ -11,6 +11,8 @@ use tr_core::{
     provider::ImageLevels,
     resample::Region,
 };
+mod chain;
+pub(crate) use chain::Preparation as GraphPreparation;
 pub(crate) mod tail;
 struct Source {
     buffer: wgpu::Buffer,
@@ -24,38 +26,59 @@ pub struct GpuFrame {
     pending: Option<Box<PendingSubmission>>,
 }
 struct PendingSubmission {
-    commands: wgpu::CommandBuffer,
+    commands: Vec<wgpu::CommandBuffer>,
     scratch: Lease,
     scratch_gpu: Lease,
     source: Arc<dyn Send + Sync>,
     timer: Option<crate::timings::GpuTimer>,
+    // Completion wakes blocked encoders; drop it after the other scratch even
+    // when an encoded frame is discarded without ever reaching the UI queue.
+    chain: Option<Arc<crate::denoise_probe::Completion>>,
 }
 impl GpuFrame {
     /// The UI owns queue submission, serialized with eframe surface configure.
     /// Encoding and allocation remain on the worker. Dropping an unsubmitted
     /// frame releases its credits immediately; submitted work keeps them alive.
     pub fn submit(&mut self, queue: &wgpu::Queue) {
+        self.submit_and_then(queue, || {});
+    }
+    pub(crate) fn submit_and_then(
+        &mut self,
+        queue: &wgpu::Queue,
+        done: impl FnOnce() + Send + 'static,
+    ) {
         if let Some(pending) = self.pending.take() {
             let PendingSubmission {
                 commands,
+                chain,
                 scratch,
                 scratch_gpu,
                 source,
                 timer,
             } = *pending;
             let submission = crate::timings::CpuSpan::new("queue_submit_cpu");
-            queue.submit([commands]);
+            queue.submit(commands);
+            if let Some(chain) = &chain {
+                chain.submitted(queue);
+            }
             drop(submission);
             if let Some(timer) = timer {
                 timer.submitted(queue);
             }
             let completion = crate::timings::CpuSpan::new("submission_to_callback");
             queue.on_submitted_work_done(move || {
+                if let Some(chain) = &chain {
+                    chain.completed();
+                }
                 drop(scratch);
                 drop(scratch_gpu);
                 drop(source);
+                drop(chain);
                 drop(completion);
+                done();
             });
+        } else {
+            done();
         }
     }
 }
@@ -69,6 +92,8 @@ pub struct GpuFilter {
     sources: Mutex<SourceCache>,
     layer_sources: Mutex<Option<Arc<tail::LayerSource>>>,
     layer_compute: std::sync::OnceLock<crate::layer_compute::LayerCompute>,
+    chain: std::sync::OnceLock<std::result::Result<crate::denoise_probe::Chain, String>>,
+    chain_display: Mutex<Option<Arc<chain::DisplayPlan>>>,
 }
 #[derive(Default)]
 struct SourceCache {
@@ -158,10 +183,17 @@ impl GpuFilter {
             editing,
             sources: Mutex::new(SourceCache::default()),
             layer_sources: Mutex::new(None),
+            chain: std::sync::OnceLock::new(),
+            chain_display: Mutex::new(None),
             layer_compute: Default::default(),
         }
     }
     pub fn clear(&self) {
+        if let Some(Ok(chain)) = self.chain.get() {
+            chain.clear();
+        }
+        let display = self.chain_display.lock().unwrap().take();
+        drop(display);
         // Resource destruction can be expensive: release the cache lock first.
         let old = std::mem::take(&mut self.sources.lock().unwrap().entries);
         drop(old);
@@ -303,7 +335,8 @@ impl GpuFilter {
             texture,
             size: [image.width, image.height],
             pending: Some(Box::new(PendingSubmission {
-                commands: encoder.finish(),
+                commands: vec![encoder.finish()],
+                chain: None,
                 scratch: working.split(256).unwrap(),
                 scratch_gpu,
                 source,
@@ -760,7 +793,8 @@ impl GpuFilter {
             texture,
             size: region.size,
             pending: Some(Box::new(PendingSubmission {
-                commands: encoder.finish(),
+                commands: vec![encoder.finish()],
+                chain: None,
                 scratch,
                 scratch_gpu,
                 source,

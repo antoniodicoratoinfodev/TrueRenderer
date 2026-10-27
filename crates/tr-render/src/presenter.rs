@@ -52,16 +52,41 @@ struct Completed {
     lease: Arc<Lease>,
     gpu_lease: Arc<Lease>,
 }
+struct PreparedGraph {
+    job: Job,
+    work: crate::resident_compute::GraphPreparation,
+}
 #[derive(Default)]
 struct Shared {
     warming_edit: Option<Preparation>,
     prepared_edit: Option<Key>,
     jobs: VecDeque<Job>,
     completed: VecDeque<Completed>,
+    prepared_graphs: VecDeque<PreparedGraph>,
     stop: bool,
     statistics: ComputeStatistics,
 }
 impl Shared {
+    fn finish_graph_stage(&mut self, job: Job, complete: bool, optics: bool) -> bool {
+        self.statistics.gpu_graph_preparations += u64::from(complete);
+        self.statistics.gpu_source_preparations += u64::from(!complete && !optics);
+        self.statistics.gpu_optics_preparations += u64::from(optics);
+        if !complete
+            && !self.stop
+            && !job.cancel.load(Ordering::Acquire)
+            && self
+                .warming_edit
+                .as_ref()
+                .is_some_and(|p| Arc::ptr_eq(&p.cancel, &job.cancel))
+        {
+            // Keep the same preparation pending between upload and compute.
+            self.jobs.push_back(job);
+            true
+        } else {
+            self.finish_preparation(&job.key, &job.cancel, complete);
+            false
+        }
+    }
     fn discard_jobs(&mut self, discard: impl Fn(&str, &Key, bool) -> bool) {
         // The worker may already have popped the optional job. Its cancellation
         // token remains here until completion, so visible work can preempt it.
@@ -78,6 +103,8 @@ impl Shared {
         }
         self.jobs
             .retain(|job| !discard(&job.lane, &job.key, job.warm));
+        self.prepared_graphs
+            .retain(|prepared| !discard(&prepared.job.lane, &prepared.job.key, true));
     }
     fn finish_preparation(&mut self, key: &Key, cancel: &Arc<AtomicBool>, succeeded: bool) {
         // A replacement can have the same key. Never clear or certify that new
@@ -161,6 +188,13 @@ impl Drop for FrameTexture {
 }
 #[derive(Default, Clone, serde::Serialize)]
 pub struct ComputeStatistics {
+    pub gpu_graph_frames: u64,
+    pub gpu_graph_preparations: u64,
+    pub gpu_source_preparations: u64,
+    pub gpu_optics_preparations: u64,
+    pub gpu_budget_bytes: u64,
+    pub gpu_reserved_bytes: u64,
+    pub gpu_peak_bytes: u64,
     pub gpu_layer_frames: u64,
     pub resident_layer_frames: u64,
     pub hybrid_edit_frames: u64,
@@ -234,9 +268,11 @@ pub struct Presenter {
     pressure: Arc<AtomicBool>,
     compute_verified: Arc<AtomicBool>,
     layer_compute_verified: Arc<AtomicBool>,
+    graph_compute_verified: Arc<AtomicBool>,
     compute_mode: Arc<AtomicU8>,
     filter: Arc<Mutex<Option<Arc<crate::resident_compute::GpuFilter>>>>,
     clear_filter: Arc<AtomicBool>,
+    stopped: Arc<AtomicBool>,
 }
 impl Presenter {
     pub fn new(
@@ -250,11 +286,13 @@ impl Presenter {
         let gpu_memory = MemoryBudget::new(256 * 1024 * 1024);
         let compute_verified = Arc::new(AtomicBool::new(false));
         let layer_compute_verified = Arc::new(AtomicBool::new(false));
+        let graph_compute_verified = Arc::new(AtomicBool::new(false));
         let compute_mode = Arc::new(AtomicU8::new(0));
         let pressure = Arc::new(AtomicBool::new(false));
         let worker_pressure = pressure.clone();
         let verified = compute_verified.clone();
         let layers_verified = layer_compute_verified.clone();
+        let graph_verified = graph_compute_verified.clone();
         let mode = compute_mode.clone();
         let worker_gpu = render_state.clone();
         let worker_memory = memory.clone();
@@ -263,6 +301,8 @@ impl Presenter {
         let worker_filter = filter.clone();
         let clear_filter = Arc::new(AtomicBool::new(false));
         let worker_clear_filter = clear_filter.clone();
+        let stopped = Arc::new(AtomicBool::new(false));
+        let worker_stopped = stopped.clone();
         let high_precision = render_state.as_ref().is_some_and(|s| {
             matches!(
                 s.target_format,
@@ -335,7 +375,67 @@ impl Presenter {
                 let mut gpu = None;
                 let mut layers_prepared = false;
                 let mut layer_frame = false;
+                let mut graph_frame = false;
+                let mut graph_preparation = None;
+                if graph_verified.load(Ordering::Acquire)
+                    && verified.load(Ordering::Acquire)
+                    && choice != 1
+                    && let Some(edit) = &job.key.edit
+                    && edit.recipe.advanced.is_some()
+                    // Point-only recipes already have a regional GPU path.
+                    // Do not upload a full source or prepare noise statistics
+                    // when the same edit needs neither spatial work nor layers.
+                    && !edit.gpu_supported_for(&job.image, job.key.region)
+                    && let Some(filter) = &filter
+                {
+                    let _span = crate::timings::CpuSpan::new("gpu_graph_prepare_cpu");
+                    let result = if job.warm {
+                        filter.prepare_chain(
+                            &job.image,
+                            edit,
+                            job.key.region,
+                            &worker_memory,
+                            &worker_gpu_memory,
+                            &mut job.lease,
+                            &|| {
+                                job.cancel.load(Ordering::Acquire)
+                                    || worker_stopped.load(Ordering::Acquire)
+                                    || worker_pressure.load(Ordering::Acquire)
+                                    || worker_clear_filter.load(Ordering::Acquire)
+                            },
+                        )
+                    } else {
+                        filter
+                            .render_chain(
+                                &job.image,
+                                edit,
+                                job.key.region,
+                                &worker_memory,
+                                &worker_gpu_memory,
+                                &mut job.lease,
+                                &|| {
+                                    job.cancel.load(Ordering::Acquire)
+                                        || worker_stopped.load(Ordering::Acquire)
+                                },
+                            )
+                            .map(crate::resident_compute::GraphPreparation::Frame)
+                    };
+                    match result {
+                        Ok(crate::resident_compute::GraphPreparation::Frame(frame))
+                            if !job.warm =>
+                        {
+                            gpu = Some(frame);
+                            graph_frame = true;
+                        }
+                        Ok(preparation) => graph_preparation = Some(preparation),
+                        Err(e) => fallback = Some(format!("{e:#}")),
+                    }
+                }
+                if worker_stopped.load(Ordering::Acquire) {
+                    break;
+                }
                 if gpu.is_none()
+                    && graph_preparation.is_none()
                     && layers_verified.load(Ordering::Acquire)
                     && verified.load(Ordering::Acquire)
                     && !job.image.scientific()
@@ -420,7 +520,7 @@ impl Presenter {
                 let mut hybrid = false;
                 let result = if let Some(frame) = gpu {
                     Ok(Rendered::Gpu(frame))
-                } else if layers_prepared {
+                } else if layers_prepared || graph_preparation.is_some() {
                     Ok(Rendered::Cpu(Vec::new()))
                 } else {
                     let _cpu = crate::timings::CpuSpan::new("cpu_filter_and_display");
@@ -478,11 +578,21 @@ impl Presenter {
                         })
                         .map_err(|e| format!("{e:#}"))
                 };
-                job.lease.shrink(if result.is_ok() {
-                    pixels * if high_precision { 24 } else { 12 }
-                } else {
-                    0
-                });
+                // An upload continues as the same optional job after the UI
+                // callback. Keep its working reservation for the compute phase.
+                if !matches!(
+                    graph_preparation,
+                    Some(
+                        crate::resident_compute::GraphPreparation::Upload(_)
+                            | crate::resident_compute::GraphPreparation::Optics(_)
+                    )
+                ) {
+                    job.lease.shrink(if result.is_ok() {
+                        pixels * if high_precision { 24 } else { 12 }
+                    } else {
+                        0
+                    });
+                }
                 let lease = Arc::new(job.lease);
                 let gpu_lease = Arc::new(job.gpu_lease);
                 let mut state = worker_shared.0.lock().unwrap();
@@ -496,7 +606,25 @@ impl Presenter {
                     break;
                 }
                 if job.warm {
-                    state.finish_preparation(&job.key, &job.cancel, result.is_ok());
+                    if let Some(work) = graph_preparation {
+                        state.prepared_graphs.clear();
+                        state.prepared_graphs.push_back(PreparedGraph {
+                            job: Job {
+                                key: job.key,
+                                lane: job.lane,
+                                cancel: job.cancel,
+                                placement: job.placement,
+                                image: job.image,
+                                warm: true,
+                                zooming: false,
+                                lease: Arc::try_unwrap(lease).ok().unwrap(),
+                                gpu_lease: Arc::try_unwrap(gpu_lease).ok().unwrap(),
+                            },
+                            work,
+                        });
+                    } else {
+                        state.finish_preparation(&job.key, &job.cancel, result.is_ok());
+                    }
                     drop(state);
                     ctx.request_repaint();
                     continue;
@@ -504,6 +632,7 @@ impl Presenter {
                 if job.key.edit.is_some() {
                     state.statistics.hybrid_edit_frames += u64::from(hybrid);
                     state.statistics.gpu_layer_frames += u64::from(layer_frame);
+                    state.statistics.gpu_graph_frames += u64::from(graph_frame);
                     state.prepared_edit = None;
                 }
                 if !is_gpu {
@@ -560,13 +689,19 @@ impl Presenter {
             pressure,
             compute_verified,
             layer_compute_verified,
+            graph_compute_verified,
             compute_mode,
             filter,
             clear_filter,
+            stopped,
         }
     }
     pub fn statistics(&self) -> ComputeStatistics {
         let mut stats = self.shared.0.lock().unwrap().statistics.clone();
+        let gpu = self.gpu_memory.usage();
+        stats.gpu_budget_bytes = gpu.limit;
+        stats.gpu_reserved_bytes = gpu.reserved;
+        stats.gpu_peak_bytes = gpu.peak;
         stats.wide_frames = self.wide.len();
         stats.wide_gpu_bytes = self.wide.values().map(|e| e.gpu_lease.bytes()).sum();
         stats.wide_reprojections = self.wide_reprojections;
@@ -630,6 +765,14 @@ impl Presenter {
         let Some(lease) = self.memory.try_reserve(bytes) else {
             return;
         };
+        let gpu_bytes = if self.graph_compute_verified.load(Ordering::Acquire) {
+            pixels * if self.high_precision { 8 } else { 4 }
+        } else {
+            0
+        };
+        let Some(gpu_lease) = self.gpu_memory.try_reserve(gpu_bytes) else {
+            return;
+        };
         let cancel = Arc::new(AtomicBool::new(false));
         shared.warming_edit = Some(Preparation {
             key: key.clone(),
@@ -644,7 +787,7 @@ impl Presenter {
             placement: entry.placement,
             image: image.clone(),
             lease,
-            gpu_lease: self.gpu_memory.try_reserve(0).unwrap(),
+            gpu_lease,
             zooming: false,
         });
         self.shared.1.notify_one();
@@ -774,6 +917,53 @@ impl Presenter {
         std::mem::swap(&mut retired, &mut self.retired);
         if let Some(queue) = &self.queue {
             queue.on_submitted_work_done(move || drop(retired));
+        }
+        let prepared: Vec<_> = self
+            .shared
+            .0
+            .lock()
+            .unwrap()
+            .prepared_graphs
+            .drain(..)
+            .collect();
+        for PreparedGraph { job, work } in prepared {
+            let valid = !self.pressure.load(Ordering::Acquire)
+                && !job.cancel.load(Ordering::Acquire)
+                && self
+                    .shared
+                    .0
+                    .lock()
+                    .unwrap()
+                    .warming_edit
+                    .as_ref()
+                    .is_some_and(|p| Arc::ptr_eq(&p.cancel, &job.cancel));
+            if !valid {
+                self.shared
+                    .0
+                    .lock()
+                    .unwrap()
+                    .finish_preparation(&job.key, &job.cancel, false);
+                continue;
+            }
+            if let Some(queue) = &self.queue {
+                let shared = self.shared.clone();
+                let ctx = ctx.clone();
+                let optics = matches!(work, crate::resident_compute::GraphPreparation::Optics(_));
+                work.submit(queue, move |complete| {
+                    let mut state = shared.0.lock().unwrap();
+                    if state.finish_graph_stage(job, complete, optics) {
+                        shared.1.notify_one();
+                    }
+                    drop(state);
+                    ctx.request_repaint();
+                });
+            } else {
+                self.shared
+                    .0
+                    .lock()
+                    .unwrap()
+                    .finish_preparation(&job.key, &job.cancel, false);
+            }
         }
         let completed: Vec<_> = self.shared.0.lock().unwrap().completed.drain(..).collect();
         for finished in completed {
@@ -994,6 +1184,14 @@ impl Presenter {
     }
     pub fn configure_layer_compute(&mut self, verified: bool) {
         if self.layer_compute_verified.swap(verified, Ordering::AcqRel) != verified {
+            self.clear();
+        }
+    }
+    pub fn configure_graph_compute(&mut self, verified: bool) {
+        // Default to the independently checked graph. Keep a diagnostic off
+        // switch for comparisons; it cannot bypass a failed device gate.
+        let enabled = verified && !std::env::var("TR_DENOISE_GPU_EDIT").is_ok_and(|v| v == "0");
+        if self.graph_compute_verified.swap(enabled, Ordering::AcqRel) != enabled {
             self.clear();
         }
     }
@@ -1749,6 +1947,7 @@ fn source_area(region: Region) -> f64 {
 
 impl Drop for Presenter {
     fn drop(&mut self) {
+        self.stopped.store(true, Ordering::Release);
         {
             let mut state = self.shared.0.lock().unwrap();
             state.stop = true;
@@ -1822,7 +2021,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn visible_work_revokes_inflight_preparation_and_rejects_late_same_key_completion() {
+    fn visible_work_revokes_staged_preparation_and_rejects_late_same_key_completion() {
         let image = Arc::new(
             ImageLevels::from_source(
                 tr_core::color::LinearImage::new(2, 2, vec![[0.3, 0.4, 0.5, 1.]; 4]).unwrap(),
@@ -1864,6 +2063,14 @@ mod tests {
             zooming: false,
         });
         let running = shared.jobs.pop_front().unwrap();
+        assert!(shared.finish_graph_stage(running, false, false));
+        let running = shared.jobs.pop_front().unwrap();
+        assert!(shared.finish_graph_stage(running, false, true));
+        assert!(shared.warming_edit.is_some());
+        assert!(shared.prepared_edit.is_none());
+        assert_eq!(shared.statistics.prepared_edit_frames, 0);
+        assert_eq!(memory.usage().reserved, 512);
+        let running = shared.jobs.pop_front().unwrap();
         shared.discard_jobs(|lane, _, _| lane == "unrelated");
         assert!(!cancel.load(Ordering::Acquire));
         shared.discard_jobs(|_, _, warm| warm);
@@ -1881,7 +2088,9 @@ mod tests {
         assert!(shared.warming_edit.is_some());
         assert!(shared.prepared_edit.is_none());
         assert_eq!(shared.statistics.prepared_edit_frames, 0);
-        drop(running);
+        assert!(!shared.finish_graph_stage(running, false, true));
+        assert!(shared.jobs.is_empty());
+        assert!(shared.warming_edit.is_some());
         assert_eq!(memory.usage().reserved, 0);
         shared.finish_preparation(&key, &replacement, true);
         assert!(shared.warming_edit.is_none());

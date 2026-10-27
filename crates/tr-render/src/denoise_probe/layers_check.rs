@@ -146,7 +146,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
         }
     }
     let point = point::Point::new(device);
-    let denoise = multiscale::Multiscale::new(device);
+    let denoise = multiscale::Multiscale::new(device)?;
     let spatial = spatial::Spatial::new(device);
     let post = post::Post::new(device);
     let memory = MemoryBudget::new(512 * 1024 * 1024);

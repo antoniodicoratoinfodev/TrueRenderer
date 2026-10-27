@@ -62,6 +62,23 @@ fn stripes(origin: [u32; 2], size: [u32; 2], n: usize, limit: u64) -> Result<Vec
     Ok(stripes)
 }
 
+pub(super) fn patch_bytes(
+    origin: [u32; 2],
+    size: [u32; 2],
+    n: usize,
+    limits: &wgpu::Limits,
+) -> Result<u64> {
+    let limit = limits
+        .max_storage_buffer_binding_size
+        .min(limits.max_buffer_size)
+        .min(PATCH_LIMIT);
+    Ok(stripes(origin, size, n, limit)?
+        .iter()
+        .map(|s| s.bytes(n))
+        .max()
+        .unwrap())
+}
+
 pub(super) fn working_bytes(
     origin: [u32; 2],
     size: [u32; 2],
@@ -99,13 +116,13 @@ pub(super) fn working_bytes(
 
 pub(super) struct Filter {
     models: models::Models,
-    layout: [wgpu::BindGroupLayout; 2],
-    pipelines: [[wgpu::ComputePipeline; 2]; 2],
+    layout: [wgpu::BindGroupLayout; 3],
+    pipelines: [[wgpu::ComputePipeline; 2]; 3],
 }
 impl Filter {
     pub fn new(device: &wgpu::Device) -> Self {
-        let [buffer, texture] = [0, 1].map(|kind| {
-            let entries: Vec<_> = (0..5)
+        let prepared = [0, 1, 2].map(|kind| {
+            let mut entries: Vec<_> = (0..5)
                 .map(|binding| wgpu::BindGroupLayoutEntry {
                     binding,
                     visibility: wgpu::ShaderStages::COMPUTE,
@@ -123,6 +140,7 @@ impl Filter {
                     count: None,
                 })
                 .collect();
+            input::extend_layout(kind, &mut entries);
             let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: None,
                 entries: &entries,
@@ -135,13 +153,7 @@ impl Filter {
             let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: None,
                 source: wgpu::ShaderSource::Wgsl(
-                    input::shader(
-                        include_str!("../denoise_probe.wgsl"),
-                        "source",
-                        "params[0].x",
-                        kind,
-                    )
-                    .into(),
+                    input::shader(&transform::shader(), "source", "params[0].x", kind).into(),
                 ),
             });
             let pipelines = ["reconstruct", "gather"].map(|entry| {
@@ -156,10 +168,11 @@ impl Filter {
             });
             (layout, pipelines)
         });
+        let [buffer, texture, point] = prepared;
         Self {
             models: models::Models::new(device),
-            layout: [buffer.0, texture.0],
-            pipelines: [buffer.1, texture.1],
+            layout: [buffer.0, texture.0, point.0],
+            pipelines: [buffer.1, texture.1, point.1],
         }
     }
 
@@ -207,6 +220,28 @@ impl Filter {
         dimensions: [u32; 2],
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<(wgpu::Buffer, wgpu::Buffer)> {
+        self.encode_with_scratch(
+            device, encoder, input, size, n, amounts, threshold, coarse, origin, dimensions, None,
+            cancelled,
+        )
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub(super) fn encode_with_scratch(
+        &self,
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+        input: input::Input<'_>,
+        size: [u32; 2],
+        n: usize,
+        amounts: [f32; 2],
+        threshold: f32,
+        coarse: bool,
+        origin: [u32; 2],
+        dimensions: [u32; 2],
+        shared: Option<&wgpu::Buffer>,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<(wgpu::Buffer, wgpu::Buffer)> {
         ensure!(!cancelled(), "Editing annullato");
         ensure!(
             [4, 8, 16].contains(&n)
@@ -235,7 +270,14 @@ impl Filter {
                 mapped_at_creation: false,
             })
         };
-        let patches = buffer(patch_bytes, wgpu::BufferUsages::STORAGE);
+        let owned = shared
+            .is_none()
+            .then(|| buffer(patch_bytes, wgpu::BufferUsages::STORAGE));
+        let patches = shared.unwrap_or_else(|| owned.as_ref().unwrap());
+        ensure!(
+            patches.size() >= patch_bytes && patches.size() <= binding_limit,
+            "Shared spectral scratch outside bounds"
+        );
         let output = buffer(
             output_bytes,
             wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
@@ -284,14 +326,14 @@ impl Filter {
                 contents: bytemuck::cast_slice(&params),
                 usage: wgpu::BufferUsages::STORAGE,
             });
-            let mut entries: Vec<_> = [(0, &params), (2, &patches), (3, &model), (4, &output)]
+            let mut entries: Vec<_> = [(0, &params), (2, patches), (3, &model), (4, &output)]
                 .into_iter()
                 .map(|(binding, b)| wgpu::BindGroupEntry {
                     binding,
                     resource: b.as_entire_binding(),
                 })
                 .collect();
-            entries.push(input.entry());
+            input.extend(&mut entries);
             let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: None,
                 layout: &self.layout[input.kind()],

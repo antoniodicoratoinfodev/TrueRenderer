@@ -23,14 +23,16 @@ struct Pipelines {
     layers: layers::Layers,
 }
 impl Pipelines {
-    fn new(device: &wgpu::Device) -> Self {
-        Self {
-            point: point::Point::new(device),
-            noise: multiscale::Multiscale::new(device),
-            spatial: spatial::Spatial::new(device),
-            post: post::Post::new(device),
-            layers: layers::Layers::new(device),
-        }
+    fn new(device: &wgpu::Device) -> Result<Self> {
+        super::guarded(device, || {
+            Ok(Self {
+                point: point::Point::new(device),
+                noise: multiscale::Multiscale::new(device)?,
+                spatial: spatial::Spatial::new(device),
+                post: post::Post::new(device),
+                layers: layers::Layers::new(device),
+            })
+        })
     }
     #[allow(clippy::too_many_arguments)]
     fn prepare(
@@ -92,7 +94,7 @@ fn compare(
     )
 }
 pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check> {
-    let pipelines = Pipelines::new(device);
+    let pipelines = Pipelines::new(device)?;
     let mut result = Check::default();
     let size = [517, 269];
     for pattern in [4, 8] {
@@ -216,7 +218,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
             if result.numerical.failures > failures_before
                 && std::env::var("TR_GPU_COMPARE_TRACE").is_ok_and(|v| v == "1")
             {
-                for stage in 0..7 {
+                for stage in 0..8 {
                     let mut inspected = edit.clone();
                     let mut requested = request;
                     if stage >= 1 {
@@ -240,14 +242,66 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
                         advanced.detail.chroma_noise = 0.;
                         requested.amounts = [0.; 2];
                     }
+                    let reference = inspected.clone();
+                    let (inspected_source, inspected_optics) = if stage == 7 {
+                        // Hold the point/vignette prefix bit-exact to the CPU,
+                        // then run the unchanged GPU noise/spatial/color path.
+                        // This distinguishes propagated input error from noise
+                        // reconstruction error without relaxing either gate.
+                        let mut prefix = inspected.recipe.clone();
+                        if let Some(stack) = &mut prefix.layers {
+                            stack.layers.clear();
+                        }
+                        let a = prefix.advanced.as_mut().unwrap();
+                        a.detail = Default::default();
+                        a.color = Default::default();
+                        a.masks.clear();
+                        a.geometry.defringe = 0.;
+                        let mut canonical = source.clone();
+                        for pixel in &mut canonical.pixels {
+                            for (value, gain) in pixel[..3].iter_mut().zip(inspected.input_gains) {
+                                *value *= gain;
+                            }
+                        }
+                        prefix.apply(&mut canonical)?;
+                        let input =
+                            admission::Upload::prepare(device, &canonical, &memory, &gpu, &|| {
+                                false
+                            })?
+                            .submit(queue, &|| false)?;
+                        let optics = Arc::new(point::Optics::prepare(
+                            device,
+                            size,
+                            0.,
+                            &memory,
+                            &gpu,
+                            &|| false,
+                        )?);
+                        let advanced = inspected.recipe.advanced.take();
+                        inspected.recipe =
+                            tr_core::editing::EditRecipe::neutral(inspected.recipe.raw_engine);
+                        inspected.recipe.require_process(3);
+                        inspected.recipe.advanced = advanced;
+                        inspected
+                            .recipe
+                            .advanced
+                            .as_mut()
+                            .unwrap()
+                            .geometry
+                            .vignette = 0.;
+                        inspected.input_gains = [1.; 3];
+                        (input, optics)
+                    } else {
+                        (uploaded.clone(), optics.clone())
+                    };
                     let actual = admission::Pending::prepare_inner(
                         device,
                         &pipelines.noise,
-                        uploaded.clone(),
+                        inspected_source,
                         requested,
                         &memory,
                         &gpu,
-                        Some((&pipelines.point, optics.clone(), &inspected)),
+                        Some((&pipelines.point, inspected_optics, &inspected)),
                         Some((&pipelines.spatial, size)),
                         Some((&pipelines.post, size)),
                         (stage == 0).then_some((&pipelines.layers, size)),
@@ -259,7 +313,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
                         device,
                         queue,
                         &source,
-                        &inspected,
+                        &reference,
                         requested,
                         &actual,
                         format!("uncached change={case} stage={stage}"),

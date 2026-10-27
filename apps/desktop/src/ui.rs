@@ -146,6 +146,7 @@ pub struct TrueRenderer {
     gpu_status: String,
     gpu_passed: bool,
     gpu_layers_passed: bool,
+    gpu_chain_passed: bool,
     image_focus_ids: HashSet<egui::Id>,
     grid_columns: i32,
     sample_source: String,
@@ -342,6 +343,7 @@ impl TrueRenderer {
             gpu_status: "Diagnostica GPU in corso…".into(),
             gpu_passed: false,
             gpu_layers_passed: false,
+            gpu_chain_passed: false,
             image_focus_ids: HashSet::new(),
             grid_columns: 1,
             sample_source: String::new(),
@@ -392,6 +394,7 @@ impl TrueRenderer {
         while self.gpu_rx.try_recv().is_ok() {}
         self.gpu_passed = false;
         self.gpu_layers_passed = false;
+        self.gpu_chain_passed = false;
         if let Some(gpu) = &cc.wgpu_render_state {
             self.adapter = format!(
                 "{} · {:?}",
@@ -409,6 +412,7 @@ impl TrueRenderer {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
                     self.gpu_layers_passed = check.editing.layer_tail_passed();
+                    self.gpu_chain_passed = check.editing.graph_passed();
                     self.gpu_status = if self.gpu_passed {
                         "GPU ricreata e riverificata".into()
                     } else {
@@ -424,6 +428,8 @@ impl TrueRenderer {
         );
         self.presenter
             .configure_layer_compute(self.gpu_layers_passed);
+        self.presenter
+            .configure_graph_compute(self.gpu_chain_passed);
         self.status = "Dispositivo grafico ripristinato · sessione e annotazioni conservate".into();
         cc.egui_ctx.request_repaint();
     }
@@ -451,7 +457,7 @@ impl TrueRenderer {
     pub fn graphics_test_state(&self) -> serde_json::Value {
         serde_json::json!({"current":self.state.current,"selected":self.state.selected,
             "rating":self.state.current_item().map(|item| item.annotation.rating),
-            "undo_available":self.undo_available,"gpu_verified":self.gpu_passed,"gpu_layers_verified":self.gpu_layers_passed,
+            "undo_available":self.undo_available,"gpu_verified":self.gpu_passed,"gpu_layers_verified":self.gpu_layers_passed,"gpu_chain_verified":self.gpu_chain_passed,
             "pending":self.state.pending.len()})
     }
     fn open_path(&mut self, path: PathBuf) {
@@ -1341,6 +1347,7 @@ impl TrueRenderer {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
                     self.gpu_layers_passed = check.editing.layer_tail_passed();
+                    self.gpu_chain_passed = check.editing.graph_passed();
                     self.gpu_status = format!(
                         "GPU/CPU: {} campioni · errore max {:.2e} · {}",
                         check.samples,
@@ -1363,6 +1370,8 @@ impl TrueRenderer {
             .configure_compute(self.gpu_passed, settings.compute.code());
         self.presenter
             .configure_layer_compute(self.gpu_layers_passed);
+        self.presenter
+            .configure_graph_compute(self.gpu_chain_passed);
         while let Ok(event) = self.service.events.try_recv() {
             match event {
                 Event::ContextPhoto { token, result } => self.context_photo_result(token, result),

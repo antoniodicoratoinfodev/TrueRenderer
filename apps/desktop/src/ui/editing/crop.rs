@@ -664,11 +664,11 @@ impl TrueRenderer {
                             ui.horizontal(|ui| {
                                 ui.label(lang.text("Rapporto"));
                                 let width = ui.add(egui::DragValue::new(&mut s.custom[0])
-                                    .range(0.1..=100.).speed(0.1))
+                                    .range(0.1..=100.).speed(0.01))
                                     .on_hover_text(lang.text("Larghezza del rapporto"));
                                 ui.label(":");
                                 let height = ui.add(egui::DragValue::new(&mut s.custom[1])
-                                    .range(0.1..=100.).speed(0.1))
+                                    .range(0.1..=100.).speed(0.01))
                                     .on_hover_text(lang.text("Altezza del rapporto"));
                                 if width.changed() || height.changed() {
                                     s.aspect(s.custom[0] / s.custom[1], size);

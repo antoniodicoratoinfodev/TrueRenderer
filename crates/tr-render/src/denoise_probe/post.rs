@@ -129,7 +129,17 @@ impl Post {
             .enumerate()
             .map(|(binding, buffer)| wgpu::BindGroupEntry {
                 binding: binding as u32,
-                resource: buffer.as_entire_binding(),
+                // Spatial scratch can exceed the logical cropped raster. Bind
+                // only its initialized prefix, including the partial last group.
+                resource: if binding == 1 {
+                    wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                        buffer,
+                        offset: 0,
+                        size: std::num::NonZeroU64::new(pixels * 16),
+                    })
+                } else {
+                    buffer.as_entire_binding()
+                },
             })
             .collect();
         let bind = device.create_bind_group(&wgpu::BindGroupDescriptor {

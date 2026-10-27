@@ -25,6 +25,24 @@ impl LayerInputPlan {
         region: Region,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<Self> {
+        ensure!(
+            recipe.layers.as_ref().is_some_and(|stack| stack
+                .layers
+                .iter()
+                .any(|l| l.enabled && !l.operators.is_empty())),
+            "No enabled layer slots"
+        );
+        Self::for_graph(image, recipe, region, cancelled)
+    }
+
+    /// Geometry/filter continuation also serves a complete GPU base graph with
+    /// no photographic layers. It does not choose a lower source resolution.
+    pub fn for_graph(
+        image: &ImageLevels,
+        recipe: &EditRecipe,
+        region: Region,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<Self> {
         ensure!(!cancelled(), "Editing annullato");
         recipe.validate()?;
         ensure!(!image.scientific(), "Layer tail needs photographic input");
@@ -34,17 +52,6 @@ impl LayerInputPlan {
                 .as_ref()
                 .is_none_or(|a| !a.detail.grain.active()),
             "Grain remains on CPU"
-        );
-        let stack = recipe
-            .layers
-            .as_ref()
-            .ok_or_else(|| anyhow::anyhow!("No layer stack"))?;
-        ensure!(
-            stack
-                .layers
-                .iter()
-                .any(|l| l.enabled && !l.operators.is_empty()),
-            "No enabled layer slots"
         );
         let native = image.source_size();
         let source_full = [image.source().width, image.source().height];
@@ -90,7 +97,9 @@ impl LayerInputPlan {
         let input = mapping.as_ref().map_or(output, |m| m.source);
         let mut prefix = recipe.clone();
         // Retain the process/schema pair and the historical base evaluator.
-        prefix.layers.as_mut().unwrap().layers.clear();
+        if let Some(stack) = &mut prefix.layers {
+            stack.layers.clear();
+        }
         if let Some(a) = prefix.advanced.as_mut() {
             a.geometry = Geometry {
                 vignette: geometry.vignette,

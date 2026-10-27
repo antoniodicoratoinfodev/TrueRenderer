@@ -156,6 +156,8 @@ impl Spatial {
         defringe: f32,
         native: [u32; 2],
         full: [u32; 2],
+        recycle_crop: bool,
+        reusable: &mut Vec<wgpu::Buffer>,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<wgpu::Buffer> {
         ensure!(!cancelled(), "Editing annullato");
@@ -182,9 +184,18 @@ impl Spatial {
                 mapped_at_creation: false,
             })
         };
-        let tmp = buffer(pixels * 16);
-        let low = buffer(pixels * 16);
-        let ping = [buffer(pixels * 16), buffer(pixels * 16)];
+        ensure!(
+            reusable.len() <= 2 && reusable.iter().all(|b| b.size() >= pixels * 16),
+            "Invalid recycled spatial scratch"
+        );
+        // The preceding merge has finished reading these buffers before this
+        // pass starts. Queue ordering supplies the dependency; their credits
+        // stay in the same completion until every downstream pass is finished.
+        let low = reusable.pop().unwrap_or_else(|| buffer(pixels * 16));
+        let ping = [
+            reusable.pop().unwrap_or_else(|| buffer(pixels * 16)),
+            buffer(pixels * 16),
+        ];
         let storage = |bytes: &[u8]| {
             device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
@@ -195,6 +206,9 @@ impl Spatial {
         let mut current = input;
         for (index, node) in nodes.iter().enumerate() {
             ensure!(!cancelled(), "Editing annullato");
+            // Horizontal scratch is dead after the vertical pass. Reuse it for
+            // this node's output, keeping the previous node immutable throughout.
+            let next = &ping[index % 2];
             let words = [
                 [size[0], size[1], u32::from(node.gaussian), node.radius],
                 [
@@ -211,26 +225,33 @@ impl Spatial {
                 device,
                 encoder,
                 0,
-                [&params, current, current, &weights, &tmp],
+                [&params, current, current, &weights, next],
                 pixels as u32,
             );
             self.pass(
                 device,
                 encoder,
                 1,
-                [&params, &tmp, current, &weights, &low],
+                [&params, next, current, &weights, &low],
                 pixels as u32,
             );
             self.pass(
                 device,
                 encoder,
                 if node.defringe { 3 } else { 2 },
-                [&params, current, &low, &weights, &ping[index % 2]],
+                [&params, current, &low, &weights, next],
                 pixels as u32,
             );
-            current = &ping[index % 2];
+            current = next;
         }
-        let output = buffer(u64::from(crop[2]) * u64::from(crop[3]) * 16);
+        // The low-pass buffer is dead after the final node. A downstream
+        // color pass can consume its cropped prefix without another allocation.
+        // Standalone output retains an exactly sized, independently owned buffer.
+        let output = if recycle_crop {
+            low
+        } else {
+            buffer(u64::from(crop[2]) * u64::from(crop[3]) * 16)
+        };
         let params = storage(bytemuck::cast_slice(&[
             [size[0], size[1], 0, 0],
             [0; 4],

@@ -439,7 +439,8 @@ impl GpuFilter {
             texture,
             size: region.size,
             pending: Some(Box::new(PendingSubmission {
-                commands: encoder.finish(),
+                commands: vec![encoder.finish()],
+                chain: None,
                 scratch: working.split(scratch_bytes).unwrap(),
                 scratch_gpu,
                 source,

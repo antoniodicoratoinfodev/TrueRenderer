@@ -15,11 +15,15 @@ fn settings() -> vec4<f32> {
     return params[1u + n * n / 4u + u32(params[0].w)];
 }
 fn sort_values(local: u32, length: u32) {
-    for (var k = 2u; k <= length; k *= 2u) {
+    // Keep every barrier independent of storage-buffer values. FXC cannot
+    // prove that a count produced by an earlier dispatch is workgroup-uniform.
+    // Only the compare/swap work depends on length; the sorting network and
+    // arithmetic for active elements remain identical.
+    for (var k = 2u; k <= 1024u; k *= 2u) {
         for (var j = k / 2u; j > 0u; j /= 2u) {
             for (var i = local; i < length; i += 256u) {
                 let other = i ^ j;
-                if other > i {
+                if k <= length && other > i {
                     let a = values[i];
                     let b = values[other];
                     if (a > b) == ((i & k) == 0u) {
@@ -83,12 +87,12 @@ fn sort_samples(@builtin(local_invocation_index) local: u32) {
 fn quantiles(@builtin(local_invocation_index) local: u32, @builtin(workgroup_id) group: vec3<u32>) {
     let n = u32(params[0].z);
     let band = group.z;
-    if band > order[1] { return; }
+    let enabled_band = band <= order[1];
     var start = 0u;
-    var end = order[0];
-    if band > 0u {
-        start = (band - 1u) * order[0] / order[1];
-        end = band * order[0] / order[1];
+    var end = select(0u, order[0], enabled_band);
+    if band > 0u && enabled_band {
+        start = (band - 1u) * order[0] / max(order[1], 1u);
+        end = band * order[0] / max(order[1], 1u);
     }
     let count = end - start;
     var length = 1u;
@@ -104,7 +108,7 @@ fn quantiles(@builtin(local_invocation_index) local: u32, @builtin(workgroup_id)
     }
     workgroupBarrier();
     sort_values(local, length);
-    if local == 0u {
+    if local == 0u && enabled_band {
         var value = 0.;
         if count > 0u { value = values[u32(f32(count - 1u) * 0.3)] / 0.38532; }
         raw[(band * n * n + group.x) * 3u + group.y] = value;
@@ -134,7 +138,7 @@ fn cap_global(@builtin(local_invocation_index) local: u32, @builtin(workgroup_id
 
 @compute @workgroup_size(256)
 fn band_statistics(@builtin(local_invocation_index) local: u32, @builtin(workgroup_id) group: vec3<u32>) {
-    if group.x >= order[1] { return; }
+    let enabled_band = group.x < order[1];
     let n = u32(params[0].z);
     let global = 5u * n * n * 3u;
     let stats = 6u * n * n * 3u + (group.x * 3u + group.y) * 2u;
@@ -152,7 +156,7 @@ fn band_statistics(@builtin(local_invocation_index) local: u32, @builtin(workgro
     }
     workgroupBarrier();
     sort_values(local, n * n);
-    if local == 0u {
+    if local == 0u && enabled_band {
         var gain = 1.;
         if selected_count > 0u { gain = clamp(values[(selected_count - 1u) / 2u], 0.25, 4.); }
         raw[stats] = gain;
@@ -165,7 +169,7 @@ fn band_statistics(@builtin(local_invocation_index) local: u32, @builtin(workgro
     }
     workgroupBarrier();
     sort_values(local, n * n);
-    if local == 0u { raw[stats + 1u] = select(8., 1.5, settings().x != 0.) * values[(selected_count - 1u) / 2u]; }
+    if local == 0u && enabled_band { raw[stats + 1u] = select(8., 1.5, settings().x != 0.) * values[(selected_count - 1u) / 2u]; }
 }
 
 @compute @workgroup_size(256)

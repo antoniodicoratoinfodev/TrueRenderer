@@ -6,8 +6,17 @@
 @group(0) @binding(4) var<storage, read_write> filtered: array<vec4<f32>>;
 var<workgroup> first: array<vec4<f32>, 256>;
 var<workgroup> second: array<vec4<f32>, 256>;
+var<workgroup> low: array<vec3<f32>, 256>;
 var<workgroup> centre: vec4<f32>;
 fn source_pixel(index: u32) -> vec4<f32> { return source[index]; }
+
+// The packed origin's unused z word is zero. Crossing the integer operation
+// makes the intermediate f32 rounding observable, including on FMA hardware.
+fn rounded3(value: vec3<f32>) -> vec3<f32> {
+    let n = u32(params[0].z);
+    let zero = bitcast<u32>(params[1u + n * n / 4u].z);
+    return bitcast<vec3<f32>>(bitcast<vec3<u32>>(value) ^ vec3(zero));
+}
 
 fn reflect(v: i32, size: i32) -> i32 {
     if size <= 1 { return 0; }
@@ -31,34 +40,35 @@ fn prepare(local: vec3<u32>, group: vec3<u32>) -> vec3<f32> {
         let p = source_pixel(u32(y) * u32(params[0].x) + u32(x));
         if p.w > 0. {
             let rgb = p.xyz / p.w;
-            let luma = 0.2627 * rgb.x + 0.6780 * rgb.y + 0.0593 * rgb.z;
+            let terms = rounded3(rgb * vec3(0.2627, 0.6780, 0.0593));
+            let luma = rounded3(vec3(terms.x + terms.y)).x + terms.z;
             value = vec4<f32>(luma, rgb.x - luma, rgb.z - luma, 1.);
         }
     }
     first[slot] = value;
     second[slot] = value;
+    low[slot] = vec3(0.);
     workgroupBarrier();
     for (var stride = 128u; stride > 0u; stride = stride / 2u) {
-        if slot < stride { first[slot] += first[slot + stride]; }
+        if slot < stride {
+            let a = first[slot];
+            let b = first[slot + stride];
+            let sum = rounded3(a.xyz + b.xyz);
+            let virtual_b = rounded3(sum - a.xyz);
+            let error = rounded3(a.xyz - rounded3(sum - virtual_b))
+                + rounded3(b.xyz - virtual_b);
+            low[slot] += low[slot + stride] + error;
+            first[slot] = vec4(sum, a.w + b.w);
+        }
         workgroupBarrier();
     }
-    if slot == 0u { centre = first[0] / f32(n * n); }
+    if slot == 0u { centre = vec4(first[0].xyz + low[0], first[0].w) / f32(n * n); }
     workgroupBarrier();
-    var row = vec3<f32>(0.);
-    if inside {
-        for (var j = 0u; j < n; j += 1u) {
-            row += (second[local.y * 16u + j].xyz - centre.xyz) * basis(local.x, j, n);
-        }
-    }
-    first[slot] = vec4<f32>(row, 0.);
+    first[slot] = vec4(second[slot].xyz - centre.xyz, 0.);
     workgroupBarrier();
-    var column = vec3<f32>(0.);
-    if inside {
-        for (var j = 0u; j < n; j += 1u) {
-            column += first[j * 16u + local.x].xyz * basis(local.y, j, n);
-        }
-    }
-    return column;
+    forward_row(local, n);
+    forward_column(local, n);
+    return first[slot].xyz;
 }
 @compute @workgroup_size(16, 16)
 fn blocks(@builtin(local_invocation_id) local: vec3<u32>,
@@ -119,22 +129,10 @@ fn reconstruct(@builtin(local_invocation_id) local: vec3<u32>,
     workgroupBarrier();
     first[slot] = vec4<f32>(residual, 0.);
     workgroupBarrier();
-    var row = vec3<f32>(0.);
+    inverse_row(local, n);
+    inverse_column(local, n);
     if inside {
-        for (var k = 0u; k < n; k += 1u) {
-            row += first[local.y * 16u + k].xyz * basis(k, local.x, n);
-        }
-    }
-    second[slot] = vec4<f32>(row, 0.);
-    workgroupBarrier();
-    var column = vec3<f32>(0.);
-    if inside {
-        for (var k = 0u; k < n; k += 1u) {
-            column += second[k * 16u + local.x].xyz * basis(k, local.y, n);
-        }
-    }
-    if inside {
-        output[block * n * n + local.y * n + local.x] = select(vec4<f32>(0.), vec4<f32>(column, 1.), centre.w == 1.);
+        output[block * n * n + local.y * n + local.x] = select(vec4<f32>(0.), vec4<f32>(first[slot].xyz, 1.), centre.w == 1.);
     }
 }
 

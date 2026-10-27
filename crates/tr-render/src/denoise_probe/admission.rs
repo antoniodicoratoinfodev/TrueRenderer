@@ -2,7 +2,37 @@
 //! pending scratch have independent owners and retain credits through completion.
 use super::*;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use tr_core::budget::{Lease, MemoryBudget};
+
+#[derive(Debug)]
+pub(super) struct Quota {
+    resource: &'static str,
+    requested: u64,
+    reserved: u64,
+    limit: u64,
+}
+impl Quota {
+    pub(super) fn new(resource: &'static str, budget: &MemoryBudget, requested: u64) -> Self {
+        let usage = budget.usage();
+        Self {
+            resource,
+            requested,
+            reserved: usage.reserved,
+            limit: usage.limit,
+        }
+    }
+}
+impl std::fmt::Display for Quota {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Quota {} denoiser: richiesti {}, occupati {}, limite {}",
+            self.resource, self.requested, self.reserved, self.limit
+        )
+    }
+}
+impl std::error::Error for Quota {}
 
 pub(super) struct Credits {
     _memory: Lease,
@@ -20,10 +50,10 @@ impl Credits {
     pub fn new(memory: &MemoryBudget, gpu: &MemoryBudget, bytes: u64) -> Result<Self> {
         let memory = memory
             .try_reserve(bytes)
-            .ok_or_else(|| anyhow::anyhow!("Quota RAM denoiser"))?;
+            .ok_or_else(|| Quota::new("RAM", memory, bytes))?;
         let gpu = gpu
             .try_reserve(bytes)
-            .ok_or_else(|| anyhow::anyhow!("Quota GPU denoiser"))?;
+            .ok_or_else(|| Quota::new("GPU", gpu, bytes))?;
         Ok(Self {
             _memory: memory,
             _gpu: gpu,
@@ -35,19 +65,51 @@ pub(super) struct Source {
     _texture: wgpu::Texture,
     pub view: wgpu::TextureView,
     pub size: [u32; 2],
+    pub packed: bool,
+    pub submitted: AtomicBool,
     _credits: Credits,
 }
-pub(super) struct Upload {
+pub(crate) struct Upload {
     source: Arc<Source>,
     commands: wgpu::CommandBuffer,
     staging: Credits,
 }
 impl Upload {
-    pub fn prepare(
+    pub(super) fn source(&self) -> Arc<Source> {
+        self.source.clone()
+    }
+    pub(super) fn prepare(
         device: &wgpu::Device,
         source: &LinearImage,
         memory: &MemoryBudget,
         gpu: &MemoryBudget,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<Self> {
+        Self::prepare_inner(device, source, memory, gpu, false, cancelled)
+    }
+    pub(super) fn prepare_point(
+        device: &wgpu::Device,
+        source: &LinearImage,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<Self> {
+        let mut packed = true;
+        for pixels in source.pixels.chunks(2048) {
+            ensure!(!cancelled(), "Editing annullato");
+            if pixels.iter().any(|p| p[3] != 1.) {
+                packed = false;
+                break;
+            }
+        }
+        Self::prepare_inner(device, source, memory, gpu, packed, cancelled)
+    }
+    fn prepare_inner(
+        device: &wgpu::Device,
+        source: &LinearImage,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        packed: bool,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<Self> {
         ensure!(!cancelled(), "Editing annullato");
@@ -58,7 +120,8 @@ impl Upload {
             "Native spectral texture exceeds device limits"
         );
         let pitch = (u64::from(source.width) * 16).div_ceil(256) * 256;
-        let bytes = pitch * u64::from(source.height) + 65536;
+        let height = u64::from(input::texture_height(size, packed));
+        let bytes = pitch * height + 65536;
         let credits = Credits::new(memory, gpu, bytes)?;
         // All staged stripes are retained by one unsubmitted command buffer.
         // A 128-row chunk bounds each allocation, not the total upload memory.
@@ -67,10 +130,10 @@ impl Upload {
         let staging = Credits::new(
             memory,
             gpu,
-            bytes + pitch * rows + u64::from(source.height).div_ceil(rows) * 65536,
+            bytes + pitch * rows + height.div_ceil(rows) * 65536,
         )?;
         let mut encoder = device.create_command_encoder(&Default::default());
-        let texture = input::upload_cancellable(device, &mut encoder, source, cancelled)?;
+        let texture = input::upload_point(device, &mut encoder, source, packed, cancelled)?;
         let view = texture.create_view(&Default::default());
         ensure!(!cancelled(), "Editing annullato");
         Ok(Self {
@@ -78,13 +141,19 @@ impl Upload {
                 _texture: texture,
                 view,
                 size,
+                packed,
+                submitted: AtomicBool::new(false),
                 _credits: credits,
             }),
             commands: encoder.finish(),
             staging,
         })
     }
-    pub fn submit(self, queue: &wgpu::Queue, cancelled: &impl Fn() -> bool) -> Result<Arc<Source>> {
+    pub(super) fn submit(
+        self,
+        queue: &wgpu::Queue,
+        cancelled: &impl Fn() -> bool,
+    ) -> Result<Arc<Source>> {
         ensure!(!cancelled(), "Editing annullato");
         let Self {
             source,
@@ -93,8 +162,31 @@ impl Upload {
         } = self;
         let retained = source.clone();
         queue.submit([commands]);
+        source.submitted.store(true, Ordering::Release);
         queue.on_submitted_work_done(move || drop((retained, staging)));
         Ok(source)
+    }
+    pub(super) fn into_parts(self) -> (Arc<Source>, wgpu::CommandBuffer, Credits) {
+        (self.source, self.commands, self.staging)
+    }
+    pub(crate) fn submit_background(
+        self,
+        queue: &wgpu::Queue,
+        done: impl FnOnce() + Send + 'static,
+    ) {
+        // The caller checked cancellation before entering the UI submission.
+        // Notify preparation only after staging has been released on completion.
+        let Self {
+            source,
+            commands,
+            staging,
+        } = self;
+        queue.submit([commands]);
+        source.submitted.store(true, Ordering::Release);
+        queue.on_submitted_work_done(move || {
+            drop((source, staging));
+            done();
+        });
     }
 }
 
@@ -135,6 +227,43 @@ pub(super) struct Pending {
     scratch: Credits,
     optics: Option<Arc<point::Optics>>,
     upstream: Option<Arc<checkpoint::Entry>>,
+    timer: Option<crate::timings::GpuTimer>,
+}
+/// A UI submission owns all upstream resources until its completion callback.
+/// Merely encoding or dropping a frame cannot make an upload/checkpoint ready.
+pub(crate) struct Completion {
+    source: Arc<Source>,
+    output: Arc<Output>,
+    _scratch: Credits,
+    _optics: Option<Arc<point::Optics>>,
+    upstream: Option<Arc<checkpoint::Entry>>,
+    pub(super) upload: Option<Credits>,
+    timer: std::sync::Mutex<Option<crate::timings::GpuTimer>>,
+    // Last field: wake waiting encoders after the job credits above are freed.
+    pub(super) flight: Option<chain::Flight>,
+}
+impl Completion {
+    pub(crate) fn completed(&self) {
+        if let Some(optics) = &self._optics {
+            optics.completed();
+        }
+    }
+    pub(crate) fn submitted(&self, queue: &wgpu::Queue) {
+        self.source.submitted.store(true, Ordering::Release);
+        if let Some(upstream) = &self.upstream {
+            upstream.submitted();
+        }
+        if let Some(flight) = &self.flight {
+            flight.submitted();
+        }
+        let timer = self.timer.lock().unwrap().take();
+        if let Some(timer) = timer {
+            timer.submitted(queue);
+        }
+    }
+    pub(crate) fn buffer(&self) -> &wgpu::Buffer {
+        &self.output.buffer
+    }
 }
 impl Pending {
     #[allow(clippy::too_many_arguments)]
@@ -197,6 +326,10 @@ impl Pending {
     ) -> Result<Self> {
         ensure!(!cancelled(), "Editing annullato");
         request.validate(source.size)?;
+        ensure!(
+            !source.packed || point.is_some(),
+            "Packed source needs point reader"
+        );
         ensure!(
             checkpoint.is_none() || (point.is_some() && spatial.is_some()),
             "Checkpoint needs point and spatial continuation"
@@ -270,14 +403,29 @@ impl Pending {
         };
         let publish_checkpoint = checkpoint_credits.is_some();
         let output_credits = Credits::new(memory, gpu, output_bytes + 65536)?;
-        let point_bytes = if point.is_some() {
-            (u64::from(source.size[0]) * 16).div_ceil(256) * 256 * u64::from(source.size[1])
-                + 2 * 65536
+        let point_bytes = point.as_ref().map_or(0, |(pipeline, _, _)| {
+            2 * 65536
+                + if pipeline.fused {
+                    0
+                } else {
+                    (u64::from(source.size[0]) * 16).div_ceil(256) * 256 * u64::from(source.size[1])
+                }
+        });
+        let reused_spatial = if cached.is_none() && spatial.is_some() {
+            multiscale::spatial_reuse_count(
+                source.size,
+                work_origin,
+                work_size,
+                request.amounts[1],
+                request.levels,
+            )
         } else {
             0
         };
         let spatial_bytes = if spatial.is_some() {
-            u64::from(work_size[0]) * u64::from(work_size[1]) * 64 + output_bytes + 6 * 65536
+            u64::from(work_size[0]) * u64::from(work_size[1]) * 16 * (3 - reused_spatial)
+                + if post.is_some() { 0 } else { output_bytes }
+                + 6 * 65536
         } else {
             0
         };
@@ -289,7 +437,7 @@ impl Pending {
         let upstream_bytes = if cached.is_some() {
             0
         } else {
-            (bytes - output_bytes + point_bytes)
+            (bytes + point_bytes)
                 .checked_sub(if publish_checkpoint {
                     checkpoint_bytes
                 } else {
@@ -297,43 +445,71 @@ impl Pending {
                 })
                 .ok_or_else(|| anyhow::anyhow!("Checkpoint estimate underflow"))?
         };
-        let scratch = Credits::new(
-            memory,
-            gpu,
-            upstream_bytes
-                + 65536
-                + spatial_bytes
-                + layer_bytes
-                + if post.is_some() {
-                    output_bytes + 65536
-                } else {
-                    0
-                },
-        )?;
+        let scratch_bytes = (upstream_bytes
+            + 65536
+            + spatial_bytes
+            + layer_bytes
+            + if post.is_some() {
+                output_bytes + 65536
+            } else {
+                0
+            })
+        // The final buffer has its own lease even when the upstream is
+        // cached. Account for it once in both paths.
+        .checked_sub(output_bytes)
+        .ok_or_else(|| anyhow::anyhow!("Output estimate underflow"))?;
+        let scratch = Credits::new(memory, gpu, scratch_bytes)?;
+        let _encoding = crate::timings::CpuSpan::new("graph_encode_cpu")
+            .bytes(u64::from(work_size[0]) * u64::from(work_size[1]) * 16);
         let mut encoder = device.create_command_encoder(&Default::default());
+        let mut timer = crate::timings::GpuTimer::new(device, memory, gpu);
+        if let Some(t) = &mut timer {
+            t.begin(&mut encoder, "gpu_graph_upstream");
+        }
         let developed = point
             .as_ref()
-            .filter(|_| cached.is_none())
+            .filter(|(pipeline, _, _)| cached.is_none() && !pipeline.fused)
             .map(|(pipeline, optics, edit)| {
                 pipeline.encode(
                     device,
                     &mut encoder,
                     &source.view,
                     source.size,
+                    source.packed,
                     optics,
                     edit,
                     cancelled,
                 )
             })
             .transpose()?;
-        let view = developed
+        let developed_view = developed
             .as_ref()
-            .map(|texture| texture.create_view(&Default::default()));
+            .map(|t| t.create_view(&Default::default()));
+        let point_parameters = point
+            .as_ref()
+            .filter(|(pipeline, _, _)| cached.is_none() && pipeline.fused)
+            .map(|(_, _, edit)| {
+                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                    label: Some("TR fused point source parameters"),
+                    contents: &point::source_parameters(edit, source.packed),
+                    usage: wgpu::BufferUsages::UNIFORM,
+                })
+            });
+        let input = if let Some(parameters) = &point_parameters {
+            input::Input::Point {
+                source: &source.view,
+                parameters,
+                optics: &point.as_ref().unwrap().1.buffer,
+            }
+        } else {
+            input::Input::Texture(developed_view.as_ref().unwrap_or(&source.view))
+        };
+        let mut reusable = Vec::new();
         let mut uncached = if cached.is_none() {
             Some(pipeline.encode_cancellable(
                 device,
                 &mut encoder,
-                input::Input::Texture(view.as_ref().unwrap_or(&source.view)),
+                input,
                 source.size,
                 request.n,
                 request.amounts,
@@ -342,6 +518,7 @@ impl Pending {
                 false,
                 work_origin,
                 work_size,
+                &mut reusable,
                 cancelled,
             )?)
         } else {
@@ -357,7 +534,15 @@ impl Pending {
         } else {
             cached
         };
+        if let Some(t) = &mut timer {
+            t.end(&mut encoder);
+            t.begin(&mut encoder, "gpu_graph_detail");
+        }
         let buffer = if let Some((spatial, native)) = spatial {
+            ensure!(
+                reusable.len() as u64 == reused_spatial,
+                "Spatial reuse differs from admitted scratch"
+            );
             let advanced = point.as_ref().unwrap().2.recipe.advanced.as_ref().unwrap();
             spatial.encode(
                 device,
@@ -376,11 +561,17 @@ impl Pending {
                 advanced.geometry.defringe,
                 native,
                 source.size,
+                post.is_some(),
+                &mut reusable,
                 cancelled,
             )?
         } else {
             uncached.take().unwrap()
         };
+        if let Some(t) = &mut timer {
+            t.end(&mut encoder);
+            t.begin(&mut encoder, "gpu_graph_color");
+        }
         let buffer = if let Some((post, native)) = post {
             let edit = point
                 .as_ref()
@@ -400,6 +591,10 @@ impl Pending {
         } else {
             buffer
         };
+        if let Some(t) = &mut timer {
+            t.end(&mut encoder);
+            t.begin(&mut encoder, "gpu_graph_layers");
+        }
         let buffer = if let Some((layers, native)) = layers {
             let edit = point
                 .as_ref()
@@ -425,6 +620,10 @@ impl Pending {
             buffer
         };
         ensure!(!cancelled(), "Editing annullato");
+        if let Some(t) = &timer {
+            t.end(&mut encoder);
+            t.resolve(&mut encoder);
+        }
         if publish_checkpoint {
             checkpoint
                 .unwrap()
@@ -440,10 +639,22 @@ impl Pending {
             scratch,
             optics: point.map(|(_, optics, _)| optics),
             upstream,
+            timer,
         })
     }
     pub fn submit(self, queue: &wgpu::Queue, cancelled: &impl Fn() -> bool) -> Result<Arc<Output>> {
         ensure!(!cancelled(), "Editing annullato");
+        let (commands, completion) = self.into_parts();
+        let output = completion.output.clone();
+        queue.submit([commands]);
+        completion.submitted(queue);
+        queue.on_submitted_work_done(move || {
+            completion.completed();
+            drop(completion);
+        });
+        Ok(output)
+    }
+    pub fn into_parts(self) -> (wgpu::CommandBuffer, Completion) {
         let Self {
             commands,
             source,
@@ -451,14 +662,21 @@ impl Pending {
             scratch,
             optics,
             upstream,
+            timer,
         } = self;
-        let retained = output.clone();
-        queue.submit([commands]);
-        if let Some(upstream) = &upstream {
-            upstream.submitted();
-        }
-        queue.on_submitted_work_done(move || drop((source, retained, scratch, optics, upstream)));
-        Ok(output)
+        (
+            commands,
+            Completion {
+                source,
+                output,
+                _scratch: scratch,
+                _optics: optics,
+                upstream,
+                upload: None,
+                timer: std::sync::Mutex::new(timer),
+                flight: None,
+            },
+        )
     }
 }
 

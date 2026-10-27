@@ -167,7 +167,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
     let origin = [1601, 1203];
     let viewport = [855, 596];
     let source = reconstruction::source(size, 8)?;
-    let pipeline = multiscale::Multiscale::new(device);
+    let pipeline = multiscale::Multiscale::new(device)?;
     let mut upload = device.create_command_encoder(&Default::default());
     let texture = input::upload(device, &mut upload, &source)?;
     let submission = queue.submit([upload.finish()]);

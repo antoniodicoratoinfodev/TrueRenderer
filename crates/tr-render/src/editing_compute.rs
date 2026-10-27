@@ -147,6 +147,8 @@ pub(crate) fn parameters(edit: &LiveEdit) -> Vec<u8> {
 pub struct EditingCheck {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub denoise_probe: Option<crate::denoise_probe::Check>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub graph_device: Option<crate::denoise_probe::DeviceCheck>,
     pub layer_tail: crate::layer_compute::Check,
     pub direct_display_cases: usize,
     pub cases: usize,
@@ -160,6 +162,14 @@ pub struct EditingCheck {
 impl EditingCheck {
     pub fn layer_tail_passed(&self) -> bool {
         self.layer_tail.passed()
+    }
+    pub fn graph_passed(&self) -> bool {
+        self.denoise_probe.as_ref().map_or_else(
+            || self.graph_device.as_ref().is_some_and(|p| p.passed()),
+            |p| p.passed(),
+        ) && self.layer_tail_passed()
+            && self.failures == 0
+            && self.display_failures == 0
     }
 }
 pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Result<EditingCheck> {
@@ -175,18 +185,40 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
         denoise_probe: std::env::var("TR_DENOISE_GPU_PROBE")
             .is_ok_and(|v| v == "1")
             .then(|| {
-                crate::denoise_probe::check(device, queue).unwrap_or_else(|error| {
-                    crate::denoise_probe::Check {
+                crate::denoise_probe::guarded(device, || crate::denoise_probe::check(device, queue))
+                    .unwrap_or_else(|error| crate::denoise_probe::Check {
                         error: Some(format!("{error:#}")),
                         ..Default::default()
-                    }
-                })
+                    })
             }),
-        layer_tail: crate::layer_compute::check(device, queue).unwrap_or_else(|error| {
-            crate::layer_compute::Check {
-                error: Some(format!("{error:#}")),
-                ..Default::default()
+        graph_device: (!std::env::var("TR_DENOISE_GPU_EDIT").is_ok_and(|v| v == "0")
+            && !std::env::var("TR_DENOISE_GPU_PROBE").is_ok_and(|v| v == "1"))
+        .then(|| {
+            // FXC's optimized release compilation stalls on the fused graph.
+            // Debug shader checks disable that optimization and are insufficient
+            // to admit the release path. Keep existing point/layer acceleration;
+            // explicit diagnostics may still investigate the complete graph.
+            if device.adapter_info().backend == wgpu::Backend::Dx12
+                && !std::env::var("TR_DENOISE_GPU_EDIT").is_ok_and(|v| v == "1")
+            {
+                return crate::denoise_probe::DeviceCheck {
+                    error: Some("Direct3D 12 graph pending release compiler qualification".into()),
+                    ..Default::default()
+                };
             }
+            crate::denoise_probe::check_device(device, queue).unwrap_or_else(|error| {
+                crate::denoise_probe::DeviceCheck {
+                    error: Some(format!("{error:#}")),
+                    ..Default::default()
+                }
+            })
+        }),
+        layer_tail: crate::denoise_probe::guarded(device, || {
+            crate::layer_compute::check(device, queue)
+        })
+        .unwrap_or_else(|error| crate::layer_compute::Check {
+            error: Some(format!("{error:#}")),
+            ..Default::default()
         }),
         ..Default::default()
     };

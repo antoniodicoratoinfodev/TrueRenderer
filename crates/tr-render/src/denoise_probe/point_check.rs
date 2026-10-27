@@ -22,7 +22,7 @@ pub struct Check {
 
 pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check> {
     let point = point::Point::new(device);
-    let denoise = multiscale::Multiscale::new(device);
+    let denoise = multiscale::Multiscale::new(device)?;
     let memory = MemoryBudget::new(1024 * 1024 * 1024);
     let gpu = MemoryBudget::new(1024 * 1024 * 1024);
     let mut result = Check::default();
@@ -34,8 +34,12 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
     ] {
         let large = size[0] > 1000;
         let source = reconstruction::source(size, pattern)?;
-        let uploaded = admission::Upload::prepare(device, &source, &memory, &gpu, &|| false)?
+        let uploaded = admission::Upload::prepare_point(device, &source, &memory, &gpu, &|| false)?
             .submit(queue, &|| false)?;
+        ensure!(
+            uploaded.packed == source.pixels.iter().all(|p| p[3] == 1.),
+            "Point packing eligibility"
+        );
         for variant in 0..if large { 1 } else { 6 } {
             let mut recipe = EditRecipe::neutral(RawEngine::LibRawBilinear);
             recipe.require_process(3);
