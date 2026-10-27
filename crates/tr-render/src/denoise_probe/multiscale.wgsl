@@ -9,11 +9,6 @@ fn fine_pixel(index: u32) -> vec4<f32> { return fine[index]; }
 fn rounded4(value: vec4<f32>) -> vec4<f32> {
     return bitcast<vec4<f32>>(bitcast<vec4<u32>>(value) ^ vec4(params[4].x));
 }
-fn rounded1(value: f32) -> f32 { return rounded4(vec4(value)).x; }
-fn divided(a: f32, b: f32) -> f32 {
-    let q = rounded1(a / b);
-    return rounded1(q + fma(-q, b, a) / b);
-}
 fn sum_error(a: vec4<f32>, b: vec4<f32>, sum: vec4<f32>) -> vec4<f32> {
     let virtual_b = rounded4(sum - a);
     return rounded4(a - rounded4(sum - virtual_b)) + rounded4(b - virtual_b);
@@ -40,6 +35,8 @@ fn downsample_at(x: u32, y: u32, size: vec2<u32>) -> vec4<f32> {
     let a = rounded4(p0 + p1);
     let b = rounded4(p2 + p3);
     let total = rounded4(a + b);
+    // DXC must observe the rounding of the corrected sum before scaling.
+    // Reassociation loses low chroma bits that later hue edits can amplify.
     let error = rounded4(rounded4(sum_error(p0, p1, a)
         + sum_error(p2, p3, b)) + sum_error(a, b, total));
     return rounded4(total + error) * 0.25;
@@ -63,8 +60,7 @@ fn chroma_delta(@builtin(global_invocation_id) id: vec3<u32>) {
         let a = p.xyz / p.w;
         let b = q.xyz / q.w;
         let dy = luma(b) - luma(a);
-        let difference = rounded4(vec4(b - a, 0.));
-        delta = vec4<f32>(difference.x - dy, 0., difference.z - dy, 1.);
+        delta = vec4<f32>(b.x - a.x - dy, 0., b.z - a.z - dy, 1.);
     }
     output[id.x] = delta;
 }
@@ -94,27 +90,25 @@ fn merge_chroma(@builtin(global_invocation_id) id: vec3<u32>) {
             if d.w <= 0. || g.w <= 0. { continue; }
             let straight = g.xyz / g.w;
             let gy = luma(straight);
-            let range_y = rounded1(0.02 + rounded1(0.2 * abs(y0)));
-            let range_c = rounded1(0.015 + rounded1(0.08 * sqrt(abs(y0) + 0.003)));
-            let dy0 = divided(rounded1(y0 - gy), range_y);
-            let dr = divided(rounded1(rounded1(rounded1(rgb.x - y0) - straight.x) + gy), range_c);
-            let db = divided(rounded1(rounded1(rounded1(rgb.z - y0) - straight.z) + gy), range_c);
-            let distance = rounded1(rounded1(rounded1(dy0 * dy0) + rounded1(dr * dr)) + rounded1(db * db));
-            let denominator = rounded1(1. + distance);
-            let weight = divided(rounded1(wx * wy), rounded1(denominator * denominator));
-            sum.x = rounded1(sum.x + rounded1(weight * d.x));
-            sum.y = rounded1(sum.y + rounded1(weight * d.z));
-            sum.z = rounded1(sum.z + weight);
+            let range_y = 0.02 + 0.2 * abs(y0);
+            let range_c = 0.015 + 0.08 * sqrt(abs(y0) + 0.003);
+            let dy0 = (y0 - gy) / range_y;
+            let dr = (rgb.x - y0 - straight.x + gy) / range_c;
+            let db = (rgb.z - y0 - straight.z + gy) / range_c;
+            let distance = dy0 * dy0 + dr * dr + db * db;
+            let weight = wx * wy / ((1. + distance) * (1. + distance));
+            sum.x += weight * d.x;
+            sum.y += weight * d.z;
+            sum.z += weight;
         }
     }
     if sum.z > 1e-12 {
         let confidence = min(sum.z * 2., 1.);
-        let dr = rounded1(divided(sum.x, sum.z) * confidence);
-        let db = rounded1(divided(sum.y, sum.z) * confidence);
-        let terms = rounded4(vec4(0.2627 * dr, 0.0593 * db, 0., 0.));
-        let green = divided(rounded1(terms.x + terms.y), 0.678);
-        let delta = rounded4(rounded4(vec4(dr, -green, db, 0.)) * p.w);
-        p += delta;
+        let dr = sum.x / sum.z * confidence;
+        let db = sum.y / sum.z * confidence;
+        p.x += dr * p.w;
+        p.y -= (0.2627 * dr + 0.0593 * db) / 0.678 * p.w;
+        p.z += db * p.w;
     }
     output[id.x] = p;
 }

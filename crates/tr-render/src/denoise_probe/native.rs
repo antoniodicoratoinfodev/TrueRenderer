@@ -64,6 +64,7 @@ fn experimental_chain() {
         "dx12_compiler={:?}",
         descriptor.backend_options.dx12.shader_compiler
     );
+    let compiler_policy = crate::device_config::CompilerPolicy::from_descriptor(&descriptor);
     let instance = wgpu::Instance::new(descriptor);
     let adapter = wait(instance.request_adapter(&wgpu::RequestAdapterOptions {
         power_preference: wgpu::PowerPreference::HighPerformance,
@@ -126,7 +127,7 @@ fn experimental_chain() {
             p.final_memory_reserved,
             p.final_gpu_reserved
         );
-        assert_eq!(p.cases, 192);
+        assert_eq!(p.cases, 384);
         assert_eq!(p.preparation_cases, 16);
         assert_eq!(p.backpressure_cases, 3);
         println!("background_preparation cases={}", p.preparation_cases);
@@ -137,7 +138,7 @@ fn experimental_chain() {
         return;
     }
     if phase == "full" {
-        let result = crate::editing_compute::check(&device, &queue).unwrap();
+        let result = crate::editing_compute::check(&device, &queue, compiler_policy).unwrap();
         println!(
             "point_editing cases={} failures={} max_linear={} max_display={} display_failures={} layers_passed={}",
             result.cases,
@@ -247,7 +248,7 @@ fn experimental_chain() {
             p.presentation.maximum_display_error,
             p.presentation.lifecycle_cases
         );
-        assert_eq!(p.presentation.cases, 192);
+        assert_eq!(p.presentation.cases, 384);
         assert_eq!(p.presentation.display_failures, 0);
         assert!(p.presentation.maximum_display_error <= 1);
         assert_eq!(p.presentation.final_memory_reserved, 0);

@@ -155,8 +155,11 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
             run_and_return: true,
             ..Default::default()
         };
+        let mut compiler_policy = tr_render::device_config::CompilerPolicy::default();
         if let eframe::egui_wgpu::WgpuSetup::CreateNew(setup) = &mut options.wgpu_options.wgpu_setup
         {
+            compiler_policy =
+                tr_render::device_config::configure_instance(&mut setup.instance_descriptor);
             let descriptor = setup.device_descriptor.clone();
             setup.device_descriptor = Arc::new(move |adapter| {
                 let mut desc = descriptor(adapter);
@@ -189,10 +192,17 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
                 options,
                 Box::new(move |cc| {
                     let app = if let Some(mut app) = retained_app.borrow_mut().take() {
-                        app.rebind_graphics(cc);
+                        app.rebind_graphics(cc, compiler_policy);
                         app
                     } else if let Some(initial) = initial {
-                        TrueRenderer::new(cc, app_root.clone(), app_data, app_worker, initial)
+                        TrueRenderer::new_with_compiler(
+                            cc,
+                            app_root.clone(),
+                            app_data,
+                            app_worker,
+                            initial,
+                            compiler_policy,
+                        )
                     } else {
                         return Err(
                             "Stato della sessione non disponibile per il recupero grafico".into(),

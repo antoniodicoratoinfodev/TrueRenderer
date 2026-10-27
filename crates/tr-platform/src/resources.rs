@@ -6,6 +6,8 @@ pub enum MemoryPressure {
     Warning = 1,
     Critical = 2,
 }
+#[cfg(windows)]
+pub(crate) mod windows;
 pub fn memory_pressure() -> Option<MemoryPressure> {
     #[cfg(target_os = "macos")]
     {
@@ -19,7 +21,11 @@ pub fn memory_pressure() -> Option<MemoryPressure> {
             _ => None,
         }
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(windows)]
+    {
+        windows::pressure()
+    }
+    #[cfg(not(any(target_os = "macos", windows)))]
     {
         None
     }

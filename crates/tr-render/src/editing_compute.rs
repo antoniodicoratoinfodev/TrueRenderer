@@ -172,7 +172,11 @@ impl EditingCheck {
             && self.display_failures == 0
     }
 }
-pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Result<EditingCheck> {
+pub(crate) fn check(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    compiler: crate::device_config::CompilerPolicy,
+) -> anyhow::Result<EditingCheck> {
     use std::time::Duration;
     use tr_core::{
         color::LinearImage,
@@ -194,15 +198,14 @@ pub(crate) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> anyhow::Resul
         graph_device: (!std::env::var("TR_DENOISE_GPU_EDIT").is_ok_and(|v| v == "0")
             && !std::env::var("TR_DENOISE_GPU_PROBE").is_ok_and(|v| v == "1"))
         .then(|| {
-            // FXC's optimized release compilation stalls on the fused graph.
-            // Debug shader checks disable that optimization and are insufficient
-            // to admit the release path. Keep existing point/layer acceleration;
-            // explicit diagnostics may still investigate the complete graph.
-            if device.adapter_info().backend == wgpu::Backend::Dx12
+            // Only an explicitly configured DXC instance may attempt the full
+            // ordinary graph. Auto can fall back to the slow FXC compiler.
+            // Numerical qualification remains mandatory for every new device.
+            if !compiler.permits_graph(device.adapter_info().backend)
                 && !std::env::var("TR_DENOISE_GPU_EDIT").is_ok_and(|v| v == "1")
             {
                 return crate::denoise_probe::DeviceCheck {
-                    error: Some("Direct3D 12 graph pending release compiler qualification".into()),
+                    error: Some("Direct3D 12 graph requires the packaged DXC compiler".into()),
                     ..Default::default()
                 };
             }

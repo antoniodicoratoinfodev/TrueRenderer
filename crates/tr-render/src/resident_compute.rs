@@ -87,6 +87,7 @@ pub struct GpuFilter {
     device: wgpu::Device,
     layout: wgpu::BindGroupLayout,
     pipelines: [wgpu::ComputePipeline; 2],
+    linear_pipeline: wgpu::ComputePipeline,
     display_pipeline: wgpu::ComputePipeline,
     editing: crate::editing_compute::EditingCompute,
     sources: Mutex<SourceCache>,
@@ -166,6 +167,14 @@ impl GpuFilter {
             })
         });
         let editing = crate::editing_compute::EditingCompute::new(&device);
+        let linear_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            label: Some("TR canonical edited mip"),
+            layout: Some(&pipeline_layout),
+            module: &shader,
+            entry_point: Some("vertical_pass"),
+            compilation_options: Default::default(),
+            cache: None,
+        });
         let display_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("TR edited viewport display"),
             layout: Some(&pipeline_layout),
@@ -179,6 +188,7 @@ impl GpuFilter {
             device,
             layout,
             pipelines,
+            linear_pipeline,
             display_pipeline,
             editing,
             sources: Mutex::new(SourceCache::default()),

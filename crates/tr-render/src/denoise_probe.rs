@@ -125,7 +125,7 @@ impl Check {
             && self.checkpoint.lifecycle_cases == 10
             && self.checkpoint.final_memory_reserved == 0
             && self.checkpoint.final_gpu_reserved == 0
-            && self.presentation.cases == 192
+            && self.presentation.cases == 384
             && self.presentation.preparation_cases == 16
             && self.presentation.backpressure_cases == 3
             && self.presentation.display_failures == 0

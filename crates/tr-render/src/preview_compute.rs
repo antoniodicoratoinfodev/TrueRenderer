@@ -205,6 +205,13 @@ fn compute(
     Ok(values)
 }
 pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck> {
+    check_with_compiler(device, queue, Default::default())
+}
+pub fn check_with_compiler(
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    compiler: crate::device_config::CompilerPolicy,
+) -> Result<ComputeCheck> {
     ensure!(
         device.limits().max_storage_buffers_per_shader_stage >= 7,
         "Device lacks filter bindings"
@@ -388,7 +395,7 @@ pub fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<ComputeCheck>
         memory.usage().reserved == 0 && gpu.usage().reserved == 0,
         "GPU credits leaked after completion"
     );
-    result.editing = crate::editing_compute::check(device, queue)?;
+    result.editing = crate::editing_compute::check(device, queue, compiler)?;
     result.concurrent_source_cases = check_concurrent_sources(device, queue)?;
     result.failures += result.editing.failures;
     result.display_failures += result.editing.display_failures;

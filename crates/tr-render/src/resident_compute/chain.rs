@@ -33,9 +33,36 @@ pub(super) struct DisplayPlan {
     mapped_size: [u32; 2],
     geometry: Option<(wgpu::Buffer, wgpu::Buffer)>,
     coefficients: [wgpu::Buffer; 5],
+    mips: Vec<MipFilter>,
     rows: u32,
     _memory: Lease,
     _gpu: Lease,
+}
+struct MipFilter {
+    size: [u32; 2],
+    rows: u32,
+    coefficients: [wgpu::Buffer; 5],
+}
+struct MipData {
+    input: [u32; 2],
+    size: [u32; 2],
+    ranges: [Vec<u8>; 4],
+    rows: u32,
+    min_y: u32,
+}
+fn mip_sizes(native: [u32; 2], mut size: [u32; 2], region: Region) -> Result<Vec<[u32; 2]>> {
+    ensure!(
+        region.step.iter().all(|s| s.is_finite() && *s > 0.),
+        "Invalid graph scale"
+    );
+    let mut sizes = Vec::new();
+    while size != [1, 1]
+        && (0..2).any(|a| region.step[a] * f64::from(size[a]) / f64::from(native[a]) > 2.)
+    {
+        size = size.map(|v| v.div_ceil(2));
+        sizes.push(size);
+    }
+    Ok(sizes)
 }
 impl GpuFilter {
     fn graph(&self) -> Result<&crate::denoise_probe::Chain> {
@@ -70,7 +97,7 @@ impl GpuFilter {
         // Validate before uploading, but defer GPU geometry coefficients until
         // staging is released. A large viewport must not block a cold upload
         // with a display plan that cannot yet consume that source.
-        LayerInputPlan::for_graph(image, &edit.recipe, region, cancelled)?;
+        Self::graph_plan(image, edit, region, memory, gpu, &self.device, cancelled)?;
         self.device.poll(wgpu::PollType::Poll)?;
         self.release_other_inputs();
         let chain = self.graph()?;
@@ -87,6 +114,38 @@ impl GpuFilter {
         }
         self.render_chain(image, edit, region, memory, gpu, working, cancelled)
             .map(Preparation::Frame)
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn graph_plan(
+        image: &ImageLevels,
+        edit: &crate::live_edit::LiveEdit,
+        region: Region,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        device: &wgpu::Device,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<(LayerInputPlan, Vec<[u32; 2]>)> {
+        let native = edit.source_size(image);
+        let full = native.map(|v| v.div_ceil(1 << image.base_level()));
+        let mips = mip_sizes(native, full, region)?;
+        let graph_region = if mips.is_empty() {
+            region
+        } else {
+            // Rebuild edited mips after the complete graph and geometry, never
+            // apply nonlinear edits to a smaller unedited input. Bound the full
+            // geometry map before allocating its CPU coordinates.
+            let bytes = u64::from(full[0]) * u64::from(full[1]) * 48 + 128 * 1024;
+            ensure!(
+                bytes <= (memory.usage().limit / 8).min(gpu.usage().limit / 8)
+                    && bytes <= device.limits().max_storage_buffer_binding_size,
+                "Edited mip geometry exceeds admitted metadata quota"
+            );
+            Region::fitted(native, full)
+        };
+        Ok((
+            LayerInputPlan::for_graph(image, &edit.recipe, graph_region, cancelled)?,
+            mips,
+        ))
     }
     #[allow(clippy::too_many_arguments)]
     fn chain_plan(
@@ -124,14 +183,58 @@ impl GpuFilter {
         }
         let old = self.chain_display.lock().unwrap().take();
         drop(old);
-        let plan = LayerInputPlan::for_graph(image, &edit.recipe, region, cancelled)?;
+        let (plan, mip_sizes) =
+            Self::graph_plan(image, edit, region, memory, gpu, &self.device, cancelled)?;
         let coordinates = plan.geometry_samples();
+        let mut mip_data = Vec::new();
+        let mut final_size = plan.output_full;
+        for size in mip_sizes {
+            ensure!(!cancelled(), "Editing annullato");
+            let (xs, ys) = tr_core::resample::coefficients(
+                final_size,
+                Region::fitted(final_size, size),
+                plan.opaque,
+            )?;
+            let min_y = ys
+                .iter()
+                .flatten()
+                .map(|(y, _)| *y)
+                .min()
+                .context("Empty mip rows")? as u32;
+            let max_y = ys.iter().flatten().map(|(y, _)| *y).max().unwrap() as u32;
+            let (xr, xt) = crate::preview_compute::taps(&xs);
+            let (yr, yt) = crate::preview_compute::taps(&ys);
+            mip_data.push(MipData {
+                input: final_size,
+                size,
+                ranges: [xr, xt, yr, yt],
+                rows: max_y - min_y + 1,
+                min_y,
+            });
+            final_size = size;
+        }
+        let display_region = if mip_data.is_empty() {
+            plan.display_region
+        } else {
+            let native = edit.source_size(image);
+            Region {
+                size: region.size,
+                origin: std::array::from_fn(|a| {
+                    region.origin[a] * f64::from(final_size[a]) / f64::from(native[a])
+                }),
+                step: std::array::from_fn(|a| {
+                    region.step[a] * f64::from(final_size[a]) / f64::from(native[a])
+                }),
+            }
+        };
         let (mut xs, mut ys) =
-            tr_core::resample::coefficients(plan.output_full, plan.display_region, plan.opaque)?;
-        for (taps, origin) in [
-            (&mut xs, plan.mapped_origin[0]),
-            (&mut ys, plan.mapped_origin[1]),
-        ] {
+            tr_core::resample::coefficients(final_size, display_region, plan.opaque)?;
+        let final_origin = if mip_data.is_empty() {
+            plan.mapped_origin
+        } else {
+            [0, 0]
+        };
+        for (taps, origin) in [(&mut xs, final_origin[0]), (&mut ys, final_origin[1])] {
             for (index, _) in taps.iter_mut().flatten() {
                 *index -= origin as usize;
             }
@@ -147,7 +250,11 @@ impl GpuFilter {
         let (xr, xt) = crate::preview_compute::taps(&xs);
         let (yr, yt) = crate::preview_compute::taps(&ys);
         let bytes = (coordinates.len() * 16 + xr.len() + xt.len() + yr.len() + yt.len()) as u64
-            + 128 * 1024;
+            + 128 * 1024
+            + mip_data
+                .iter()
+                .map(|m| m.ranges.iter().map(|r| r.len() as u64).sum::<u64>() + 5 * 65536)
+                .sum::<u64>();
         ensure!(
             bytes <= (memory.usage().limit / 8).min(gpu.usage().limit / 8),
             "GPU display plan exceeds cache quota"
@@ -163,6 +270,13 @@ impl GpuFilter {
             .iter()
             .all(|b| *b <= self.device.limits().max_storage_buffer_binding_size),
             "Display metadata exceeds binding"
+        );
+        ensure!(
+            mip_data
+                .iter()
+                .flat_map(|m| &m.ranges)
+                .all(|r| r.len() as u64 <= self.device.limits().max_storage_buffer_binding_size),
+            "Mip metadata exceeds binding"
         );
         let source_memory = memory
             .try_reserve_within_limit(bytes)
@@ -197,7 +311,11 @@ impl GpuFilter {
             ))
         };
         let params = [
-            plan.mapped_size[0],
+            if mip_data.is_empty() {
+                plan.mapped_size[0]
+            } else {
+                final_size[0]
+            },
             region.size[0],
             region.size[1],
             min_y,
@@ -213,6 +331,39 @@ impl GpuFilter {
                 contents: bytemuck::cast_slice(&params),
                 usage: wgpu::BufferUsages::UNIFORM,
             });
+        let mips = mip_data
+            .into_iter()
+            .map(|m| {
+                let params = [
+                    m.input[0],
+                    m.size[0],
+                    m.size[1],
+                    m.min_y,
+                    m.rows,
+                    u32::from(plan.opaque),
+                    0,
+                    0,
+                ];
+                let uniform = self
+                    .device
+                    .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                        label: Some("TR edited mip parameters"),
+                        contents: bytemuck::cast_slice(&params),
+                        usage: wgpu::BufferUsages::UNIFORM,
+                    });
+                MipFilter {
+                    size: m.size,
+                    rows: m.rows,
+                    coefficients: [
+                        uniform,
+                        storage(&m.ranges[0]),
+                        storage(&m.ranges[1]),
+                        storage(&m.ranges[2]),
+                        storage(&m.ranges[3]),
+                    ],
+                }
+            })
+            .collect();
         let prepared = Arc::new(DisplayPlan {
             image: image.id(),
             geometry_key,
@@ -228,6 +379,7 @@ impl GpuFilter {
                 storage(&yr),
                 storage(&yt),
             ],
+            mips,
             rows,
             _memory: source_memory,
             _gpu: source_gpu,
@@ -260,8 +412,24 @@ impl GpuFilter {
         } else {
             0
         };
-        let horizontal_bytes = u64::from(region.size[0]) * u64::from(source.rows) * 16;
-        let scratch_bytes = mapped_bytes + horizontal_bytes + 65536;
+        let horizontal_bytes = source
+            .mips
+            .iter()
+            .map(|m| u64::from(m.size[0]) * u64::from(m.rows) * 16)
+            .chain(std::iter::once(
+                u64::from(region.size[0]) * u64::from(source.rows) * 16,
+            ))
+            .max()
+            .unwrap();
+        let mip_bytes: Vec<_> = source
+            .mips
+            .iter()
+            .map(|m| u64::from(m.size[0]) * u64::from(m.size[1]) * 16)
+            .collect();
+        let scratch_bytes = mapped_bytes
+            + horizontal_bytes
+            + 65536
+            + mip_bytes.iter().map(|b| b + 65536).sum::<u64>();
         let display_bytes = u64::from(region.size[0])
             * u64::from(region.size[1])
             * if self.format == wgpu::TextureFormat::Rgba16Float {
@@ -276,6 +444,7 @@ impl GpuFilter {
         ensure!(
             [mapped_bytes, horizontal_bytes]
                 .iter()
+                .chain(&mip_bytes)
                 .all(|v| *v <= self.device.limits().max_storage_buffer_binding_size)
                 && region
                     .size
@@ -305,6 +474,7 @@ impl GpuFilter {
             })
         };
         let mapped = (mapped_bytes != 0).then(|| buffer(mapped_bytes));
+        let mip_outputs: Vec<_> = mip_bytes.iter().map(|b| buffer(*b)).collect();
         let horizontal = buffer(horizontal_bytes);
         let dummy = buffer(16);
         let texture = self.device.create_texture(&wgpu::TextureDescriptor {
@@ -326,7 +496,9 @@ impl GpuFilter {
         let view = texture.create_view(&Default::default());
         let buffers = [
             &source.coefficients[0],
-            mapped.as_ref().unwrap_or(completion.buffer()),
+            mip_outputs
+                .last()
+                .unwrap_or_else(|| mapped.as_ref().unwrap_or(completion.buffer())),
             &horizontal,
             &dummy,
             &source.coefficients[1],
@@ -369,6 +541,58 @@ impl GpuFilter {
         if let Some(t) = &timer {
             t.end(&mut encoder);
         }
+        if !source.mips.is_empty() {
+            if let Some(t) = &mut timer {
+                t.begin(&mut encoder, "gpu_graph_edited_mips");
+            }
+            for (index, mip) in source.mips.iter().enumerate() {
+                ensure!(!cancelled(), "Editing annullato");
+                let input = if index == 0 {
+                    mapped.as_ref().unwrap_or(completion.buffer())
+                } else {
+                    &mip_outputs[index - 1]
+                };
+                let buffers = [
+                    &mip.coefficients[0],
+                    input,
+                    &horizontal,
+                    &mip_outputs[index],
+                    &mip.coefficients[1],
+                    &mip.coefficients[2],
+                    &mip.coefficients[3],
+                    &mip.coefficients[4],
+                ];
+                let mut entries: Vec<_> = buffers
+                    .iter()
+                    .enumerate()
+                    .map(|(i, b)| wgpu::BindGroupEntry {
+                        binding: i as u32,
+                        resource: b.as_entire_binding(),
+                    })
+                    .collect();
+                entries.push(wgpu::BindGroupEntry {
+                    binding: 8,
+                    resource: wgpu::BindingResource::TextureView(&view),
+                });
+                let bind = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                    label: Some("TR edited mip"),
+                    layout: &self.layout,
+                    entries: &entries,
+                });
+                for (pipeline, height) in [
+                    (&self.pipelines[0], mip.rows),
+                    (&self.linear_pipeline, mip.size[1]),
+                ] {
+                    let mut pass = encoder.begin_compute_pass(&Default::default());
+                    pass.set_pipeline(pipeline);
+                    pass.set_bind_group(0, &bind, &[]);
+                    pass.dispatch_workgroups(mip.size[0].div_ceil(8), height.div_ceil(8), 1);
+                }
+            }
+            if let Some(t) = &timer {
+                t.end(&mut encoder);
+            }
+        }
         for ((pipeline, height), phase) in self
             .pipelines
             .iter()
@@ -404,5 +628,39 @@ impl GpuFilter {
                 timer,
             })),
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn edited_mip_selection_matches_the_canonical_pyramid_at_odd_edges_and_thresholds() {
+        for full in [[265, 199], [1, 257], [513, 1]] {
+            for base in [0, 2] {
+                let native = full.map(|v| (v - 1) * (1 << base) + 1);
+                let pixels = vec![[0.2, 0.3, 0.4, 1.]; (full[0] * full[1]) as usize];
+                let image = ImageLevels::from_reference_mip(
+                    tr_core::color::LinearImage::new(full[0], full[1], pixels).unwrap(),
+                    native,
+                    base,
+                    true,
+                )
+                .unwrap();
+                for step in [0.75, 1.99999, 2., 2.00001, 4.1, 8.2, 2048.] {
+                    let region = Region {
+                        origin: [-1.25, 3.7],
+                        size: [7, 5],
+                        step: [step * f64::from(1 << base); 2],
+                    };
+                    let sizes = mip_sizes(native, full, region).unwrap();
+                    let selected = image.render_input(region).unwrap().0;
+                    assert_eq!(
+                        sizes.last().copied().unwrap_or(full),
+                        [selected.width, selected.height]
+                    );
+                }
+            }
+        }
     }
 }

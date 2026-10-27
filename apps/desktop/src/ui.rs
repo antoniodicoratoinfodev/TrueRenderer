@@ -163,6 +163,16 @@ impl TrueRenderer {
         worker: PathBuf,
         startup: Startup,
     ) -> Self {
+        Self::new_with_compiler(cc, root, data, worker, startup, Default::default())
+    }
+    pub fn new_with_compiler(
+        cc: &eframe::CreationContext<'_>,
+        root: PathBuf,
+        data: PathBuf,
+        worker: PathBuf,
+        startup: Startup,
+        compiler: tr_render::device_config::CompilerPolicy,
+    ) -> Self {
         let root = root.canonicalize().unwrap_or(root);
         let Startup {
             navigation,
@@ -211,8 +221,9 @@ impl TrueRenderer {
             // Run this one-time qualification before entering the event loop;
             // a concurrent submission can make wgpu surface configure abort.
             {
-                let result = tr_render::preview_compute::check(&device, &queue)
-                    .map_err(|e| format!("{e:#}"));
+                let result =
+                    tr_render::preview_compute::check_with_compiler(&device, &queue, compiler)
+                        .map_err(|e| format!("{e:#}"));
                 if std::env::args().any(|a| a.ends_with("smoke")) {
                     let report = match &result {
                         Ok(check) => {
@@ -379,7 +390,11 @@ impl TrueRenderer {
             None,
         );
     }
-    pub fn rebind_graphics(&mut self, cc: &eframe::CreationContext<'_>) {
+    pub fn rebind_graphics(
+        &mut self,
+        cc: &eframe::CreationContext<'_>,
+        compiler: tr_render::device_config::CompilerPolicy,
+    ) {
         cc.egui_ctx.set_theme(egui::Theme::Dark);
         cc.egui_ctx
             .set_style_of(egui::Theme::Dark, self.context.style_of(egui::Theme::Dark));
@@ -408,7 +423,8 @@ impl TrueRenderer {
                 .preferred_format
                 .map(preferences::presentation_precision)
                 .unwrap_or_default();
-            match tr_render::preview_compute::check(&gpu.device, &gpu.queue) {
+            match tr_render::preview_compute::check_with_compiler(&gpu.device, &gpu.queue, compiler)
+            {
                 Ok(check) => {
                     self.gpu_passed = check.failures == 0 && check.display_failures == 0;
                     self.gpu_layers_passed = check.editing.layer_tail_passed();
@@ -1008,7 +1024,11 @@ impl TrueRenderer {
         } else {
             self.service.cache.reusable_bytes() as usize
         };
-        self.prune_edit_previews(pressure || headroom > 0);
+        // A background reservation must not evict edits of pinned sources:
+        // the visible frame would immediately compute them again, starving
+        // both the viewer and folder preparation. Reclaim their derivatives
+        // with the source below; explicit pressure still clears optional data.
+        self.prune_edit_previews(pressure);
         let mut retention = None;
         loop {
             let pinned: HashSet<_> = self
@@ -1094,6 +1114,7 @@ impl TrueRenderer {
                 // Aliases own one allocation. Removing only one key can leave
                 // every byte alive and evict useful independent previews instead.
                 self.cache.retain(|_, c| c.pyramid.id() != victim);
+                self.prune_edit_previews(false);
             } else {
                 break;
             }
@@ -1318,14 +1339,13 @@ impl TrueRenderer {
             self.apply_source_changes(changes);
         }
         let settings = self.service.cache.settings();
-        let gpu_mib = if settings.gpu_mib == 0 {
-            (self.service.cache.memory.usage().limit / 8 / (1024 * 1024)).clamp(256, 2048)
+        if settings.gpu_mib == 0 {
+            self.presenter.configure_gpu_automatic();
         } else {
-            settings.gpu_mib
-        };
-        self.presenter.configure_gpu_limit(
-            (gpu_mib * 1024 * 1024).min(self.service.cache.memory.usage().limit / 2),
-        );
+            self.presenter.configure_gpu_limit(
+                (settings.gpu_mib * 1024 * 1024).min(self.service.cache.memory.usage().limit / 2),
+            );
+        }
         self.presenter.poll(ctx);
         self.presenter
             .set_pressure(self.service.cache.under_pressure());

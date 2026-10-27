@@ -193,6 +193,9 @@ pub struct ComputeStatistics {
     pub gpu_source_preparations: u64,
     pub gpu_optics_preparations: u64,
     pub gpu_budget_bytes: u64,
+    pub gpu_budget_base_bytes: u64,
+    pub gpu_budget_ceiling_bytes: u64,
+    pub gpu_budget_growths: u64,
     pub gpu_reserved_bytes: u64,
     pub gpu_peak_bytes: u64,
     pub gpu_layer_frames: u64,
@@ -700,6 +703,9 @@ impl Presenter {
         let mut stats = self.shared.0.lock().unwrap().statistics.clone();
         let gpu = self.gpu_memory.usage();
         stats.gpu_budget_bytes = gpu.limit;
+        stats.gpu_budget_base_bytes = gpu.base;
+        stats.gpu_budget_ceiling_bytes = gpu.ceiling;
+        stats.gpu_budget_growths = gpu.growths;
         stats.gpu_reserved_bytes = gpu.reserved;
         stats.gpu_peak_bytes = gpu.peak;
         stats.wide_frames = self.wide.len();
@@ -1147,6 +1153,11 @@ impl Presenter {
         // before submission. In-flight GPU work keeps its completion leases.
     }
     pub fn set_pressure(&mut self, active: bool) {
+        let previous = self.gpu_memory.usage().limit;
+        self.gpu_memory.set_pressure(active);
+        if self.gpu_memory.usage().limit != previous {
+            self.gpu_budget_changed(previous);
+        }
         if self.pressure.swap(active, Ordering::AcqRel) == active {
             return;
         }
@@ -1196,14 +1207,33 @@ impl Presenter {
         }
     }
     pub fn configure_gpu_limit(&mut self, bytes: u64) {
-        if self.gpu_memory.usage().limit != bytes {
+        let previous = self.gpu_memory.usage().limit;
+        self.gpu_memory.configure(bytes);
+        self.gpu_budget_changed(previous);
+    }
+    pub fn configure_gpu_automatic(&mut self) {
+        let mib = 1024 * 1024;
+        let global = self.memory.usage().limit;
+        let ceiling = (global / 4).min(2048 * mib);
+        let base = ((global / 8 / mib).clamp(256, 2048) * mib).min(ceiling);
+        let previous = self.gpu_memory.usage().limit;
+        // Visible work can grow on demand. Optional caches and upload staging
+        // still use existing headroom, and every allocation also owns global
+        // credits. Neither configuration nor growth preallocates GPU memory.
+        self.gpu_memory.configure_automatic(base, ceiling);
+        self.gpu_memory
+            .set_pressure(self.pressure.load(Ordering::Acquire));
+        self.gpu_budget_changed(previous);
+    }
+    fn gpu_budget_changed(&mut self, previous: u64) {
+        let limit = self.gpu_memory.usage().limit;
+        if previous != limit {
             self.errors.clear();
-            if bytes < self.gpu_memory.usage().limit {
+            if limit < previous {
                 self.clear_filter.store(true, Ordering::Release);
                 self.shared.1.notify_all();
             }
         }
-        self.gpu_memory.configure(bytes);
         self.trim_wide();
     }
     /// A lane identifies the asset/source epoch, RAW recipe, display mode and
@@ -2760,6 +2790,44 @@ mod tests {
         p.poll(&ctx); // No GPU queue in this fixture; native path uses its callback.
         assert_eq!(memory.usage().reserved, 0);
         assert_eq!(p.gpu_memory.usage().reserved, 0);
+    }
+    #[test]
+    fn automatic_gpu_admission_grows_for_work_but_respects_pressure_and_manual_limits() {
+        let mib = 1024 * 1024;
+        let memory = MemoryBudget::new(6144 * mib);
+        let mut p = Presenter::new(egui::Context::default(), memory.clone(), None);
+        p.configure_gpu_automatic();
+        assert_eq!(p.gpu_memory.usage().limit, 768 * mib);
+        assert_eq!(p.gpu_memory.usage().ceiling, 1536 * mib);
+        let source = p.gpu_memory.try_reserve(700 * mib).unwrap();
+        assert!(p.gpu_memory.try_reserve_within_limit(100 * mib).is_none());
+        assert_eq!(p.gpu_memory.usage().growths, 0);
+        let work = p.gpu_memory.try_reserve(300 * mib).unwrap();
+        let grown = p.gpu_memory.usage();
+        assert_eq!(grown.growths, 1);
+        assert!(grown.limit > grown.base && grown.limit <= grown.ceiling);
+        p.configure_gpu_automatic();
+        assert_eq!(p.gpu_memory.usage().limit, grown.limit);
+        p.set_pressure(true);
+        p.configure_gpu_automatic();
+        assert_eq!(p.gpu_memory.usage().limit, 768 * mib);
+        assert_eq!(p.gpu_memory.usage().reserved, 1000 * mib);
+        assert!(p.gpu_memory.try_reserve(1).is_none());
+        p.set_pressure(false);
+        // A smaller global budget cannot revoke leases already in flight.
+        memory.configure(1024 * mib);
+        p.configure_gpu_automatic();
+        assert_eq!(p.gpu_memory.usage().limit, 256 * mib);
+        assert_eq!(p.gpu_memory.usage().reserved, 1000 * mib);
+        assert!(p.gpu_memory.try_reserve(1).is_none());
+        drop((source, work));
+        assert_eq!(p.gpu_memory.usage().reserved, 0);
+        memory.configure(16 * 1024 * mib);
+        p.configure_gpu_automatic();
+        assert_eq!(p.gpu_memory.usage().ceiling, 2048 * mib);
+        p.configure_gpu_limit(256 * mib);
+        assert!(!p.gpu_memory.usage().automatic);
+        assert!(p.gpu_memory.try_reserve(257 * mib).is_none());
     }
     #[test]
     fn wider_frames_obey_identity_slots_pressure_and_lowered_quota() {

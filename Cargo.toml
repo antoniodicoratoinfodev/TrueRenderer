@@ -28,7 +28,7 @@ rusqlite = { version = "=0.40.2", features = ["bundled", "backup"] }
 tempfile = "3"
 # Già nel grafo tramite wgpu e winit. Diretto per i Job Object, cioè limiti
 # di memoria applicati dal kernel e non dall'applicazione.
-windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Isolation", "Win32_Storage_FileSystem", "Win32_System_JobObjects", "Win32_System_Pipes", "Win32_System_Threading", "Win32_System_Environment", "Win32_Networking_WinSock", "Wdk_Storage_FileSystem"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_Security_Authorization", "Win32_Security_Isolation", "Win32_Storage_FileSystem", "Win32_System_JobObjects", "Win32_System_Pipes", "Win32_System_Threading", "Win32_System_Environment", "Win32_System_SystemInformation", "Win32_System_Memory", "Win32_Networking_WinSock", "Wdk_Storage_FileSystem"] }
 
 [profile.release]
 opt-level = 3

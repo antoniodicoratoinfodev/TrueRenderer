@@ -11,6 +11,42 @@ fn finish(app: &mut TrueRenderer) {
 }
 
 #[test]
+fn background_headroom_keeps_visible_edits_and_releases_them_after_navigation() {
+    let (_dir, _ctx, mut app, item, _native) = fixture();
+    // Isolate renderer ownership: an asynchronous disk writer legitimately
+    // retains its own lease until persistence finishes.
+    let mut settings = app.service.cache.settings();
+    settings.enabled = false;
+    app.service.cache.configure(settings);
+    let mut recipe = EditRecipe::neutral(app.cache_settings.raw_engine);
+    recipe.exposure_ev = 0.75;
+    app.editing.entries.get_mut(&item.id).unwrap().draft = Some(recipe);
+    let fit = app.cache[&app.image_key(&item, 16)].pyramid.clone();
+    app.edited_preview(&item.id, &item.digest, fit.clone());
+    finish(&mut app);
+    let visible = Arc::downgrade(&app.editing.previews[&item.id].image);
+    let renders = app.editing.work_stats.renders.load(Ordering::Relaxed);
+    // Even an impossible background request must not discard the visible
+    // result and make the next frame compute it again indefinitely.
+    app.trim_images_for_headroom(u64::MAX);
+    assert!(app.editing.previews.contains_key(&item.id));
+    let reused = app.edited_preview(&item.id, &item.digest, fit).unwrap();
+    assert!(Arc::ptr_eq(&reused, &visible.upgrade().unwrap()));
+    assert!(app.editing.inflight.is_none());
+    assert_eq!(
+        app.editing.work_stats.renders.load(Ordering::Relaxed),
+        renders
+    );
+    drop(reused);
+    // Once no current frame needs the source, reclaim its edit in the same
+    // pass so its memory is available to the waiting admission.
+    app.frame_number += 3;
+    app.trim_images_for_headroom(u64::MAX);
+    assert!(!app.editing.previews.contains_key(&item.id));
+    assert!(visible.upgrade().is_none());
+}
+
+#[test]
 fn folder_edit_is_revoked_by_tool_and_layer_changes_and_only_the_latest_recipe_is_used() {
     for layered in [false, true] {
         let (_dir, ctx, mut app, item, native) = fixture();

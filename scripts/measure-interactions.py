@@ -69,12 +69,15 @@ def main():
     parser.add_argument("--masked-stack", action="store_true", help="Exercise successive color, luminance and brush masks")
     parser.add_argument("--layer-index", type=int, default=0, help="Layer edited by opacity/color gestures")
     parser.add_argument("--backend", choices=["vulkan", "dx12"], help="Explicit native backend for this isolated run")
+    parser.add_argument("--require-gpu-graph", action="store_true", help="Fail if the complete editing graph falls back to CPU")
     parser.add_argument("--during-folder-loading", action="store_true")
     parser.add_argument("--fit", action="store_true", help="Measure edits with the whole photograph fitted in the viewport")
     parser.add_argument("--no-disk-cache", action="store_true", help="Keep gesture diagnostics independent of persistent cache writes")
     parser.add_argument("--cpu-threads", type=int, default=0, help="0 uses the configured performance profile")
     parser.add_argument("--gpu-mib", type=int, default=0, help="Explicit GPU quota; 0 keeps the application's automatic policy")
-    parser.add_argument("--engine", default="LibRawBilinear")
+    parser.add_argument("--engine", choices=["Apple", "LibRawBilinear", "LibRawAhd",
+                                           "TrueRenderer", "TrueRendererExperimental"],
+                        default="LibRawBilinear")
     parser.add_argument("--compute", choices=["Automatic", "Gpu", "Cpu"], default="Automatic")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profile", action="store_true")
@@ -108,6 +111,8 @@ def main():
         parser.error("--layer-index is outside the diagnostic layer stack")
     if args.edit_control == "color" and args.layer_index not in ([0, 2] if args.masked_stack else [0]):
         parser.error("The selected diagnostic layer has no sample color tool")
+    if args.require_gpu_graph and (args.compute != "Gpu" or args.gesture != "edit" or args.edit_kind == "point"):
+        parser.error("--require-gpu-graph requires a GPU tools/layers edit gesture")
     if args.expected_viewport and min(args.expected_viewport) < 1:
         parser.error("--expected-viewport dimensions must be positive")
     if args.window_size and not (550 <= args.window_size[0] <= 3840 and 360 <= args.window_size[1] <= 2160):
@@ -180,8 +185,20 @@ def main():
         development_path = root / "reports/develop-ui.json"
         development = json.loads(development_path.read_text()) if development_path.exists() else {}
         passed = result.returncode == 0 and report.get("passed") and development.get("passed")
+        configuration_errors = []
+        if report and args.gesture == "edit" and report.get("engine") != args.engine:
+            configuration_errors.append(f"Engine {report.get('engine')} differs from requested {args.engine}")
+        passed = passed and not configuration_errors
         if args.compute == "Gpu" and report.get("gpu_verified") is False:
             passed = False
+        compute_errors = []
+        if args.require_gpu_graph:
+            compute = report.get("compute", {})
+            if not compute.get("gpu_graph_frames"):
+                compute_errors.append("No complete GPU editing graph frames")
+            if any(compute.get(key, 0) for key in ["cpu_edit_frames", "hybrid_edit_frames", "fallbacks"]):
+                compute_errors.append("The editing graph used CPU or a fallback")
+            passed = passed and not compute_errors
         geometry_errors = []
         if report:
             frames = report["frames"]
@@ -213,6 +230,8 @@ def main():
             assert not report.get("surface_checks") and not report.get("live_surface_checks")
         row = {"repeat": repeat, "passed": bool(passed), "exit_code": result.returncode,
                "geometry_errors": sorted(set(geometry_errors)),
+               "compute_errors": compute_errors,
+               "configuration_errors": configuration_errors,
                "viewport_sizes": sorted({tuple(size) for size in sizes}) if report else [],
                "geometry_tolerance_pixels": 1,
                "metrics": metrics(report, args.gesture) if report else None}
@@ -222,6 +241,7 @@ def main():
                     "edit_control": args.edit_control,
                     "masked_stack": args.masked_stack, "layer_index": args.layer_index,
                     "requested_backend": args.backend,
+                    "require_gpu_graph": args.require_gpu_graph,
                     "zero_crossing": args.zero_crossing,
                     "fit": args.fit,
                     "during_folder_loading": args.during_folder_loading,

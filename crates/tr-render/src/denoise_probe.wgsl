@@ -17,29 +17,6 @@ fn rounded3(value: vec3<f32>) -> vec3<f32> {
     let zero = bitcast<u32>(params[1u + n * n / 4u].z);
     return bitcast<vec3<f32>>(bitcast<vec3<u32>>(value) ^ vec3(zero));
 }
-fn rounded1(value: f32) -> f32 { return rounded3(vec3(value)).x; }
-fn product_error(a: f32, b: f32, product: f32) -> f32 {
-    let ah = bitcast<f32>(bitcast<u32>(a) & 0xfffff000u);
-    let bh = bitcast<f32>(bitcast<u32>(b) & 0xfffff000u);
-    let al = rounded1(a - ah);
-    let bl = rounded1(b - bh);
-    let first = rounded1(rounded1(ah * bh) - product);
-    let second = rounded1(first + rounded1(ah * bl));
-    return rounded1(rounded1(second + rounded1(al * bh)) + rounded1(al * bl));
-}
-fn divided(a: f32, b: f32) -> f32 {
-    let q = rounded1(a / b);
-    let product = rounded1(q * b);
-    let residual = rounded1(rounded1(a - product) - product_error(q, b, product));
-    return rounded1(q + residual / b);
-}
-fn square_root(value: f32) -> f32 {
-    let root = rounded1(sqrt(value));
-    if root == 0. { return root; }
-    let product = rounded1(root * root);
-    let residual = rounded1(rounded1(value - product) - product_error(root, root, product));
-    return rounded1(root + residual / (2. * root));
-}
 
 fn reflect(v: i32, size: i32) -> i32 {
     if size <= 1 { return 0; }
@@ -102,13 +79,13 @@ fn blocks(@builtin(local_invocation_id) local: vec3<u32>,
     output[group.x * 257u + slot] = select(vec4<f32>(0.), vec4<f32>(column, 0.), valid);
     if slot == 0u {
         output[group.x * 257u + 256u] = select(vec4<f32>(0.),
-            vec4<f32>(centre.x, square_root(abs(centre.x) + 0.003), 1., 0.), valid);
+            vec4<f32>(centre.x, sqrt(abs(centre.x) + 0.003), 1., 0.), valid);
     }
 }
 
 fn removed(ratio: f32) -> f32 {
-    let t = clamp(divided(rounded1(ratio - 0.75), 0.75), 0., 1.);
-    return 1. - rounded1(rounded1(t * t) * (3. - 2. * t));
+    let t = clamp((ratio - 0.75) / 0.75, 0., 1.);
+    return 1. - t * t * (3. - 2. * t);
 }
 fn shrink(value: vec3<f32>, index: u32, n: u32, level: f32) -> vec3<f32> {
     let count = u32(model[0].x);
@@ -119,18 +96,15 @@ fn shrink(value: vec3<f32>, index: u32, n: u32, level: f32) -> vec3<f32> {
     let lo = u32(max(i32(hi) - 1, 0));
     let a = model[1u + lo].x;
     let b = model[1u + hi].x;
-    let blend = clamp(divided(rounded1(level - a), max(b - a, 1e-8)), 0., 1.);
+    let blend = clamp((level - a) / max(b - a, 1e-8), 0., 1.);
     let sa = model[1u + count + lo * n * n + index].xyz;
     let sb = model[1u + count + hi * n * n + index].xyz;
-    let mixed = rounded3(rounded3(sa * (1. - blend)) + rounded3(sb * blend));
-    let sigma = rounded3(rounded3(mixed * level) * (1. + model[0].w));
+    let sigma = (sa * (1. - blend) + sb * blend) * level * (1. + model[0].w);
     var result = value;
-    result.x *= select(removed(divided(abs(value.x), max(rounded1(sigma.x * model[0].y) * 3., 1e-12))), 0., model[0].y == 0.);
+    result.x *= select(removed(abs(value.x) / max(sigma.x * model[0].y * 3., 1e-12)), 0., model[0].y == 0.);
     let strength = model[0].z * 3.25;
-    let power = rounded1(rounded1(value.y * value.y) + rounded1(value.z * value.z));
-    let noise = rounded1(rounded1(sigma.y * sigma.y) + rounded1(sigma.z * sigma.z));
-    let ratio = square_root(divided(power,
-        max(rounded1(rounded1(noise * strength) * strength), 1e-24)));
+    let ratio = sqrt((value.y * value.y + value.z * value.z) /
+        max((sigma.y * sigma.y + sigma.z * sigma.z) * strength * strength, 1e-24));
     result.y *= select(removed(ratio), 0., model[0].z == 0.);
     result.z *= select(removed(ratio), 0., model[0].z == 0.);
     return result;
@@ -148,7 +122,7 @@ fn reconstruct(@builtin(local_invocation_id) local: vec3<u32>,
     let inside = local.x < n && local.y < n;
     var residual = vec3<f32>(0.);
     if inside && centre.w == 1. {
-        residual = shrink(value, local.y * n + local.x, n, square_root(abs(centre.x) + 0.003));
+        residual = shrink(value, local.y * n + local.x, n, sqrt(abs(centre.x) + 0.003));
     }
     // prepare() finishes by reading first[]; all invocations must finish those
     // reads before the inverse transform overwrites the shared coefficients.
@@ -193,10 +167,9 @@ fn gather(@builtin(global_invocation_id) id: vec3<u32>) {
     var p = source_pixel(u32(y) * u32(params[0].x) + u32(x));
     if sum.w > 0. {
         let d = sum.xyz / sum.w;
-        let terms = rounded3(vec3(0.2627 * d.y, 0.0593 * d.z, 0.));
-        let green = d.x - divided(rounded1(terms.x + terms.y), 0.6780);
-        let delta = rounded3(rounded3(vec3(d.x + d.y, green, d.x + d.z)) * p.w);
-        p = vec4(p.xyz - delta, p.w);
+        p.x -= (d.x + d.y) * p.w;
+        p.y -= (d.x - (0.2627 * d.y + 0.0593 * d.z) / 0.6780) * p.w;
+        p.z -= (d.x + d.z) * p.w;
     }
     filtered[u32(params[end + 2u].x) + id.x] = p;
 }

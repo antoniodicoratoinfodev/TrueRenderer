@@ -22,8 +22,13 @@ use std::{
 pub use tr_core::corpus::CorpusPolicy;
 /// Maximum duration of one native RAW white-balance analysis.
 pub const RAW_WB_TIMEOUT: Duration = Duration::from_secs(120);
-/// Read once at service startup; other resource adapters remain unqualified.
+/// Read physical capacity once at service startup. Failure keeps the conservative
+/// fallback; availability/pressure is queried separately while the app runs.
 pub fn physical_memory_mib() -> u64 {
+    #[cfg(windows)]
+    if let Some(mib) = resources::windows::physical_memory_mib() {
+        return mib;
+    }
     #[cfg(target_os = "macos")]
     if let Ok(output) = Command::new("/usr/sbin/sysctl")
         .args(["-n", "hw.memsize"])

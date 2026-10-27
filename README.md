@@ -149,6 +149,7 @@ Use the macOS app bundle for external photographs: it includes the isolated deco
 ```powershell
 .\scripts\dev-windows.ps1 fetch --locked
 .\scripts\dev-windows.ps1 verify --gui
+python scripts/prepare-dxc.py --output target/debug/runtime/dxc
 .\target\debug\truerenderer.exe
 ```
 
@@ -156,6 +157,14 @@ Alternatively, Rust's `x86_64-pc-windows-gnu` toolchain can use MinGW-w64/GCC
 with POSIX threads instead of Visual Studio. Add its `bin` directory to the build
 process's PATH. The worker links libstdc++ and winpthread statically so its LPAC
 copy does not need compiler runtime DLLs.
+
+The complete Direct3D 12 editing graph uses the pinned Microsoft DXC package in
+`runtime/dxc` beside the application. For a release build, run the same preparation
+script with `--output target/release/runtime/dxc`, then keep that directory with
+the executable when packaging. The script verifies the upstream archive and
+includes its license notices; `--archive` supports an offline copy of the same
+archive. GPU numerical checks still run at startup. Without the package, Windows
+keeps the existing point/layer paths and the canonical CPU fallback.
 
 **Windows with Smart App Control enabled.** Locally compiled executables may be
 blocked, including Cargo build scripts before the application is produced. Changing

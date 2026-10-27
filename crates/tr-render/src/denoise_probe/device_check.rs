@@ -21,8 +21,8 @@ impl Check {
             && self.checkpoint.lifecycle_cases == 10
             && self.checkpoint.final_memory_reserved == 0
             && self.checkpoint.final_gpu_reserved == 0
-            && self.presentation.cases == 18
-            && self.presentation.lifecycle_cases == 18
+            && self.presentation.cases == 36
+            && self.presentation.lifecycle_cases == 24
             && self.presentation.display_failures == 0
             && self.presentation.maximum_display_error <= 1
             && self.presentation.final_memory_reserved == 0

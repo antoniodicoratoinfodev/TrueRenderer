@@ -73,7 +73,11 @@ fn run(device: &wgpu::Device, queue: &wgpu::Queue, brief: bool) -> Result<Check>
                         max_edge: 0,
                         revision: 1,
                     };
-                    for &step in if brief { &[0.75][..] } else { &[0.75, 1.91] } {
+                    for &step in if brief {
+                        &[0.75, 2.01][..]
+                    } else {
+                        &[0.75, 1.91, 2.01, 4.1]
+                    } {
                         let region = Region {
                             size: [67, 43],
                             origin: [-1.25, 17.3].map(|v| v * f64::from(1 << base)),
@@ -124,15 +128,25 @@ fn run(device: &wgpu::Device, queue: &wgpu::Queue, brief: bool) -> Result<Check>
                                 let upload_limit = gpu.usage().reserved;
                                 drop(upload);
                                 ensure!(gpu.usage().reserved == 0, "Upload retained credits");
-                                for (stage, completed) in
-                                    [false, false, true].into_iter().enumerate()
-                                {
+                                let mut stage = 0;
+                                let mut batches = 0;
+                                while stage < 3 {
+                                    let completed = stage == 2;
                                     gpu.configure(if stage == 0 {
                                         upload_limit
                                     } else {
                                         512 * 1024 * 1024
                                     });
                                     let pending = prepare(&mut working)?;
+                                    let uploaded_source = match &pending {
+                                        GraphPreparation::Upload(upload) => Some(upload.source()),
+                                        _ => None,
+                                    };
+                                    let uploading = uploaded_source.is_some();
+                                    ensure!(
+                                        uploading == (stage == 0),
+                                        "Unexpected source preparation stage"
+                                    );
                                     ensure!(
                                         matches!(pending, GraphPreparation::Optics(_))
                                             == (stage == 1),
@@ -162,7 +176,27 @@ fn run(device: &wgpu::Device, queue: &wgpu::Queue, brief: bool) -> Result<Check>
                                             "Optical staging was not released before graph admission"
                                         );
                                     }
-                                    result.preparation_cases += 1;
+                                    if uploading {
+                                        batches += 1;
+                                        ensure!(
+                                            batches < 100,
+                                            "Source preparation made no progress"
+                                        );
+                                        // Staging may need several bounded transfers under
+                                        // this deliberately narrow quota. The display phase
+                                        // starts only after the final source callback.
+                                        let resident = uploaded_source
+                                            .unwrap()
+                                            .submitted
+                                            .load(std::sync::atomic::Ordering::Acquire);
+                                        if resident {
+                                            stage += 1;
+                                            result.preparation_cases += 1;
+                                        }
+                                    } else {
+                                        stage += 1;
+                                        result.preparation_cases += 1;
+                                    }
                                 }
                             }
                             let mut frame = renderer.render_chain(
