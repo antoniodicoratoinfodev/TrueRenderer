@@ -97,6 +97,9 @@ pub(super) fn shader() -> String {
             writeln!(code, "fn {direction}_{axis}(local: vec3<u32>, n: u32) {{\nswitch n {{\ncase 4u: {{ {direction}_{axis}4(local); }}\ncase 8u: {{ {direction}_{axis}8(local); }}\ndefault: {{ {direction}_{axis}16(local); }}\n}}\n}}").unwrap();
         }
     }
-    code.push_str(include_str!("../denoise_probe.wgsl"));
+    code.push_str(&super::shader_text(
+        "../denoise_probe.wgsl",
+        include_str!("../denoise_probe.wgsl"),
+    ));
     code
 }

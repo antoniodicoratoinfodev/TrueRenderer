@@ -21,7 +21,8 @@ fn coverage(@builtin(global_invocation_id) id: vec3<u32>) {
     if id.x >= size.x * size.y { return; }
     let pixel = source[id.x];
     if pixel.a <= 0. { output[id.x] = 0.; return; }
-    let guide = pixel.rgb / pixel.a;
+    var guide = pixel.rgb;
+    if masks[2].z == 0. { guide /= pixel.a; }
     let xy = (masks[0].xy + vec2(f32(id.x % size.x), f32(id.x / size.x)) + vec2(0.5)) / masks[0].zw;
     if graph[0].y == 0. { output[id.x] = 1.; return; }
     var values: array<f32, 64>;

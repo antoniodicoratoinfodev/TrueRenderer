@@ -59,7 +59,7 @@ impl Masks {
         Self { layout, pipeline }
     }
     #[allow(clippy::too_many_arguments)]
-    pub fn encode(
+    pub fn encode_into(
         &self,
         device: &wgpu::Device,
         encoder: &mut wgpu::CommandEncoder,
@@ -69,8 +69,10 @@ impl Masks {
         full: [u32; 2],
         native: [u32; 2],
         graph: &MaskGraph,
+        output: &wgpu::Buffer,
+        straight_input: bool,
         cancelled: &(impl Fn() -> bool + Sync),
-    ) -> Result<wgpu::Buffer> {
+    ) -> Result<()> {
         ensure!(!cancelled(), "Editing annullato");
         graph.validate()?;
         ensure!(
@@ -108,7 +110,12 @@ impl Masks {
                 full[1] as f32,
             ],
             [aspect, 0., 0., 0.],
-            [size[0] as f32, size[1] as f32, 0., 0.],
+            [
+                size[0] as f32,
+                size[1] as f32,
+                u32::from(straight_input) as f32,
+                0.,
+            ],
         ];
         let mut segments = Vec::new();
         let index = |id| graph.nodes.iter().position(|node| node.id == id).unwrap() as f32;
@@ -181,13 +188,8 @@ impl Masks {
         let masks = storage(bytemuck::cast_slice(&masks), wgpu::BufferUsages::STORAGE);
         let segments = storage(bytemuck::cast_slice(&segments), wgpu::BufferUsages::STORAGE);
         let graph = storage(bytemuck::cast_slice(&words), wgpu::BufferUsages::STORAGE);
-        let output = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: pixels * 4,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-            mapped_at_creation: false,
-        });
-        let entries: Vec<_> = [&params, input, &output, &masks, &segments, &graph]
+        ensure!(output.size() >= pixels * 4, "Layer mask output too small");
+        let entries: Vec<_> = [&params, input, output, &masks, &segments, &graph]
             .into_iter()
             .enumerate()
             .map(|(binding, buffer)| wgpu::BindGroupEntry {
@@ -205,7 +207,7 @@ impl Masks {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &bind, &[]);
         pass.dispatch_workgroups((pixels as u32).div_ceil(256), 1, 1);
-        Ok(output)
+        Ok(())
     }
 }
 #[cfg(test)]

@@ -85,6 +85,70 @@ pub fn layered_recipe(engine: RawEngine) -> EditRecipe {
     r
 }
 
+pub fn masked_layered_recipe(engine: RawEngine) -> EditRecipe {
+    use tr_core::editing::layers::{ColorRange, Combine, Layer, MaskKind, Operator, SampleColor};
+    let mut recipe = layered_recipe(engine);
+    let stack = recipe.layer_stack();
+    stack.layers[1].mask.append(
+        MaskKind::Shape(Mask {
+            shape: Shape::Luminance,
+            interval: [0.15, 0.85],
+            feather: 0.65,
+            ..Default::default()
+        }),
+        Combine::Add,
+    );
+    let mut color = Layer::new(
+        "Second sampled color",
+        Operator::SampleColor(SampleColor {
+            correction: [-12., 18., 5.],
+            uniformity: [15., 10., 0.],
+            ..Default::default()
+        }),
+    );
+    color.opacity = 0.65;
+    color.mask.append(
+        MaskKind::Color(ColorRange {
+            reference: [0.32, 0.43, 0.57],
+            width: [120., 2., 2.],
+            softness: 0.7,
+        }),
+        Combine::Add,
+    );
+    color.mask.append(
+        MaskKind::Shape(Mask {
+            shape: Shape::Hue,
+            interval: [0.15, 0.85],
+            feather: 0.6,
+            ..Default::default()
+        }),
+        Combine::Intersect,
+    );
+    stack.layers.push(color);
+    let mut finish = Layer::new(
+        "Brush light",
+        Operator::Light {
+            exposure: 0.15,
+            temperature: -4.,
+            tint: 2.,
+            saturation: 3.,
+        },
+    );
+    finish.mask.append(
+        MaskKind::Shape(Mask {
+            shape: Shape::Brush,
+            radius: 0.18,
+            feather: 0.6,
+            points: vec![[0.25, 0.3], [0.45, 0.45], [0.7, 0.55], [0.8, 0.8]],
+            breaks: vec![2],
+            ..Default::default()
+        }),
+        Combine::Add,
+    );
+    stack.layers.push(finish);
+    recipe
+}
+
 pub fn toning_recipe(engine: RawEngine) -> EditRecipe {
     use tr_core::editing::layers::{
         BlackAndWhite, ColorFilter, Combine, GradientMap, GradientStop, Grading, GradingZone,

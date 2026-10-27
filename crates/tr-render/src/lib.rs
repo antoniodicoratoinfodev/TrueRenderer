@@ -1,5 +1,6 @@
 //! Linear-light CPU filtering at the exact backing resolution; the GPU presents 1:1.
 mod denoise_probe;
+pub mod device_config;
 pub mod diagnostic;
 mod editing_compute;
 mod layer_compute;

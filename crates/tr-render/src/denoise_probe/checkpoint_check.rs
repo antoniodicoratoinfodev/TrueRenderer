@@ -215,23 +215,26 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
                 format!("checkpoint pattern={pattern} change={case}"),
                 &mut result,
             )?;
-            if result.numerical.failures > failures_before
+            if (result.numerical.failures > failures_before
+                || (pattern == 8
+                    && case == 13
+                    && std::env::var("TR_GPU_COMPARE_INSPECT").is_ok_and(|v| v == "1")))
                 && std::env::var("TR_GPU_COMPARE_TRACE").is_ok_and(|v| v == "1")
             {
-                for stage in 0..8 {
+                for stage in 0..10 {
                     let mut inspected = edit.clone();
                     let mut requested = request;
                     if stage >= 1 {
                         inspected.recipe.layers.as_mut().unwrap().layers.clear();
                     }
                     let advanced = inspected.recipe.advanced.as_mut().unwrap();
-                    if (2..=4).contains(&stage) || stage == 6 {
+                    if (2..=4).contains(&stage) || stage == 6 || stage >= 8 {
                         advanced.color = Default::default();
                     }
-                    if (2..=5).contains(&stage) {
+                    if (2..=5).contains(&stage) || stage >= 8 {
                         advanced.masks.clear();
                     }
-                    if (3..=4).contains(&stage) {
+                    if (3..=4).contains(&stage) || stage >= 8 {
                         advanced.detail.texture = 0.;
                         advanced.detail.clarity = 0.;
                         advanced.detail.sharpen = 0.;
@@ -241,6 +244,14 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
                         advanced.detail.luminance_noise = 0.;
                         advanced.detail.chroma_noise = 0.;
                         requested.amounts = [0.; 2];
+                    }
+                    if stage == 8 {
+                        advanced.detail.chroma_noise = 0.;
+                        requested.amounts[1] = 0.;
+                    }
+                    if stage == 9 {
+                        advanced.detail.luminance_noise = 0.;
+                        requested.amounts[0] = 0.;
                     }
                     let reference = inspected.clone();
                     let (inspected_source, inspected_optics) = if stage == 7 {

@@ -155,14 +155,19 @@ pub fn run(root: PathBuf, data: PathBuf, worker: PathBuf, startup: Startup) -> a
             run_and_return: true,
             ..Default::default()
         };
-        if tr_render::timings::enabled()
-            && let eframe::egui_wgpu::WgpuSetup::CreateNew(setup) =
-                &mut options.wgpu_options.wgpu_setup
+        if let eframe::egui_wgpu::WgpuSetup::CreateNew(setup) = &mut options.wgpu_options.wgpu_setup
         {
             let descriptor = setup.device_descriptor.clone();
             setup.device_descriptor = Arc::new(move |adapter| {
                 let mut desc = descriptor(adapter);
-                desc.required_features |= tr_render::timings::device_features(adapter.features());
+                desc.required_limits = tr_render::device_config::photographic_limits(
+                    &adapter.limits(),
+                    desc.required_limits,
+                );
+                if tr_render::timings::enabled() {
+                    desc.required_features |=
+                        tr_render::timings::device_features(adapter.features());
+                }
                 desc
             });
         }

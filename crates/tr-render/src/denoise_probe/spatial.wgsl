@@ -3,7 +3,15 @@
 @group(0) @binding(2) var<storage, read> low: array<vec4<f32>>;
 @group(0) @binding(3) var<storage, read> weights: array<f32>;
 @group(0) @binding(4) var<storage, read_write> output: array<vec4<f32>>;
-fn luma(rgb: vec3<f32>) -> f32 { return rgb.r * 0.2627 + rgb.g * 0.6780 + rgb.b * 0.0593; }
+// The unused parameter word is zero. Keep compensated additions observable to
+// optimizing HLSL compilers, which may otherwise cancel the residual algebra.
+fn rounded4(value: vec4<f32>) -> vec4<f32> {
+    return bitcast<vec4<f32>>(bitcast<vec4<u32>>(value) ^ vec4(params[1].w));
+}
+fn luma(rgb: vec3<f32>) -> f32 {
+    let terms = rounded4(vec4(rgb, 0.) * vec4(0.2627, 0.6780, 0.0593, 0.));
+    return rounded4(vec4(terms.x + terms.y)).x + terms.z;
+}
 fn filtered(index: u32, vertical: bool) -> vec4<f32> {
     let size = vec2<i32>(params[0].xy);
     let xy = vec2<i32>(i32(index % params[0].x), i32(index / params[0].x));
@@ -15,10 +23,10 @@ fn filtered(index: u32, vertical: bool) -> vec4<f32> {
         if vertical { sample_xy.y = clamp(xy.y + k, 0, size.y - 1); }
         else { sample_xy.x = clamp(xy.x + k, 0, size.x - 1); }
         var value = source[u32(sample_xy.y * size.x + sample_xy.x)];
-        if params[0].z == 1u { value *= weights[u32(k + radius)]; }
-        let adjusted = value - residual;
-        let next = sum + adjusted;
-        residual = (next - sum) - adjusted;
+        if params[0].z == 1u { value = rounded4(value * weights[u32(k + radius)]); }
+        let adjusted = rounded4(value - residual);
+        let next = rounded4(sum + adjusted);
+        residual = rounded4(rounded4(next - sum) - adjusted);
         sum = next;
     }
     if params[0].z == 0u { sum /= f32(2 * radius + 1); }

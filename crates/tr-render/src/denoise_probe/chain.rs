@@ -148,7 +148,24 @@ impl Chain {
         if let Some(source) = cached {
             return Ok((source, None));
         }
+        ensure!(
+            !self
+                .source
+                .lock()
+                .unwrap()
+                .as_ref()
+                .is_some_and(|(id, source)| *id == image.id() && source.streamed),
+            "GPU source preparation is still in progress"
+        );
         self.clear();
+        Self::validate_source(image, cancelled)?;
+        let upload =
+            admission::Upload::prepare_point(device, image.source(), memory, gpu, cancelled)?;
+        let source = upload.source();
+        *self.source.lock().unwrap() = Some((image.id(), source.clone()));
+        Ok((source, Some(upload)))
+    }
+    fn validate_source(image: &ImageLevels, cancelled: &(impl Fn() -> bool + Sync)) -> Result<()> {
         ensure!(!image.scientific(), "Invalid GPU graph source");
         for pixels in image.source().pixels.chunks(2048) {
             ensure!(!cancelled(), "Editing annullato");
@@ -161,11 +178,7 @@ impl Chain {
                 "Graph source outside qualified linear domain"
             );
         }
-        let upload =
-            admission::Upload::prepare_point(device, image.source(), memory, gpu, cancelled)?;
-        let source = upload.source();
-        *self.source.lock().unwrap() = Some((image.id(), source.clone()));
-        Ok((source, Some(upload)))
+        Ok(())
     }
     pub(crate) fn preload(
         &self,
@@ -175,8 +188,37 @@ impl Chain {
         gpu: &MemoryBudget,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<Option<admission::Upload>> {
-        self.source(device, image, memory, gpu, cancelled)
-            .map(|(_, upload)| upload)
+        let retained = self
+            .source
+            .lock()
+            .unwrap()
+            .as_ref()
+            .filter(|(id, source)| {
+                *id == image.id() && (source.streamed || source.submitted.load(Ordering::Acquire))
+            })
+            .map(|(_, source)| source.clone());
+        if retained
+            .as_ref()
+            .is_some_and(|source| source.submitted.load(Ordering::Acquire))
+        {
+            return Ok(None);
+        }
+        if retained.is_none() {
+            let old = self.source.lock().unwrap().take();
+            self.checkpoint.clear();
+            drop(old);
+            Self::validate_source(image, cancelled)?;
+        }
+        let upload = admission::Upload::prepare_streamed(
+            device,
+            image.source(),
+            retained,
+            memory,
+            gpu,
+            cancelled,
+        )?;
+        *self.source.lock().unwrap() = Some((image.id(), upload.source()));
+        Ok(Some(upload))
     }
     pub(crate) fn optics(
         &self,

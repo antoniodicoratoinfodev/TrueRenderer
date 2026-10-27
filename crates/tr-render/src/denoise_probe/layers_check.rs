@@ -66,6 +66,32 @@ fn mask(variant: usize) -> MaskGraph {
     graph
 }
 pub(super) fn add_layers(recipe: &mut EditRecipe, variant: usize) {
+    if variant >= 10 {
+        add_layers(recipe, variant - 10);
+        let stack = recipe.layer_stack();
+        stack.layers[1].mask = mask(variant - 10);
+        stack.layers[1].opacity = [0., 0.37, 1.][variant % 3];
+        for index in 2..if variant == 19 { 16 } else { 4 } {
+            let mut layer = Layer::new(
+                "successive mask",
+                Operator::Light {
+                    exposure: 0.03,
+                    temperature: -3.,
+                    tint: 1.,
+                    saturation: 2.,
+                },
+            );
+            layer.mask = mask((variant + index) % 9);
+            layer.opacity = 0.63;
+            layer.fill = if index == 2 && variant == 12 { 0. } else { 0.7 };
+            layer.enabled = !(index == 2 && variant == 13);
+            if index == 2 && variant == 14 {
+                layer.operators = vec![Operator::Levels([TonalLevel::default(); 4])];
+            }
+            stack.layers.push(layer);
+        }
+        return;
+    }
     let sample = Operator::SampleColor(SampleColor {
         range: ColorRange {
             width: [120., 2., 2.],
@@ -103,7 +129,7 @@ pub(super) fn check(device: &wgpu::Device, queue: &wgpu::Queue) -> Result<Check>
         let source = reconstruction::source(full, pattern)?;
         for base in [0, 2] {
             let native = full.map(|v| v * (1 << base) - ((1 << base) - 1));
-            for variant in 0..10 {
+            for variant in 0..20 {
                 let mut recipe = EditRecipe::neutral(Default::default());
                 recipe.require_process(3);
                 recipe.advanced = Some(Box::new(Advanced::default()));

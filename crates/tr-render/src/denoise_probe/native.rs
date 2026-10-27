@@ -49,24 +49,44 @@ fn experimental_chain() {
         wgpu::InstanceFlags::VALIDATION_INDIRECT_CALL
     };
     println!("instance_flags={flags:?}");
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+    let mut descriptor = wgpu::InstanceDescriptor {
         backends: backend,
         flags,
         ..wgpu::InstanceDescriptor::new_without_display_handle()
-    });
+    };
+    if let Ok(path) = std::env::var("TR_GPU_NATIVE_DXC") {
+        assert!(std::path::Path::new(&path).is_absolute());
+        assert!(std::path::Path::new(&path).is_file());
+        descriptor.backend_options.dx12.shader_compiler =
+            wgpu::Dx12Compiler::DynamicDxc { dxc_path: path };
+    }
+    println!(
+        "dx12_compiler={:?}",
+        descriptor.backend_options.dx12.shader_compiler
+    );
+    let instance = wgpu::Instance::new(descriptor);
     let adapter = wait(instance.request_adapter(&wgpu::RequestAdapterOptions {
         power_preference: wgpu::PowerPreference::HighPerformance,
         ..Default::default()
     }))
     .unwrap();
     println!("adapter={:?}", adapter.get_info());
+    println!("adapter_limits={:?}", adapter.limits());
     let (device, queue) = wait(adapter.request_device(&wgpu::DeviceDescriptor {
         label: Some("TR experimental chain native test"),
         required_features: crate::timings::device_features(adapter.features()),
+        required_limits: crate::device_config::photographic_limits(
+            &adapter.limits(),
+            wgpu::Limits::default(),
+        ),
         ..Default::default()
     }))
     .unwrap();
     let phase = std::env::var("TR_GPU_NATIVE_PHASE").unwrap_or_else(|_| "layers".into());
+    if phase == "upload" {
+        upload_check::check(&device, &queue).unwrap();
+        return;
+    }
     if phase == "device" {
         // A compilation failure must be a rejected optional capability, not an
         // uncaptured panic or a qualification inherited by the next check.
@@ -317,7 +337,7 @@ fn experimental_chain() {
         result.maximum_display_error,
         result.failed_cases
     );
-    assert_eq!(result.cases, if phase == "post" { 170 } else { 126 });
+    assert_eq!(result.cases, if phase == "post" { 170 } else { 246 });
     assert_eq!(result.chain_cases, 6);
     assert_eq!(result.failures, 0);
     assert!(result.maximum_display_error <= 1 && result.failed_cases.is_empty());

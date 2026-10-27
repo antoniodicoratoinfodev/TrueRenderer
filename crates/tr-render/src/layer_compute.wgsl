@@ -71,9 +71,11 @@ fn layers(@builtin(global_invocation_id) id: vec3<u32>) {
     let i = id.x;
     if i >= arrayLength(&source) { return; }
     let p = source[i];
-    if p.a <= 0. || parameters[0].y == 0. { output[i] = p; return; }
+    if p.a <= 0. || (parameters[0].y == 0. && parameters[0].z == parameters[0].w) {
+        output[i] = p; return;
+    }
     var rgb = p.rgb;
-    if p.a != 1. { rgb /= p.a; }
+    if p.a != 1. && parameters[0].z == 0. { rgb /= p.a; }
     var at = 1u;
     for (var layer = 0u; layer < u32(parameters[0].x); layer += 1u) {
         let header = parameters[at];
@@ -107,5 +109,8 @@ fn layers(@builtin(global_invocation_id) id: vec3<u32>) {
         if header.z != 0. { weight *= mask[i]; }
         if weight != 0. { rgb = guide + weight * (edited - guide); }
     }
-    output[i] = vec4(rgb * p.a, p.a);
+    // Successive masked groups keep straight RGB between passes. Premultiply
+    // only at the final group, just as the canonical full stack does.
+    if parameters[0].w == 0. { rgb *= p.a; }
+    output[i] = vec4(rgb, p.a);
 }

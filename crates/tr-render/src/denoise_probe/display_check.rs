@@ -65,7 +65,7 @@ fn run(device: &wgpu::Device, queue: &wgpu::Queue, brief: bool) -> Result<Check>
                         a.geometry.angle = -17.;
                     }
                     if with_layers {
-                        layers_check::add_layers(&mut recipe, 5);
+                        layers_check::add_layers(&mut recipe, if pattern == 8 { 15 } else { 5 });
                     }
                     let mut edit = crate::live_edit::LiveEdit {
                         recipe,

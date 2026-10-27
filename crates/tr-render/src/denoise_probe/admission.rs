@@ -2,7 +2,7 @@
 //! pending scratch have independent owners and retain credits through completion.
 use super::*;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use tr_core::budget::{Lease, MemoryBudget};
 
 #[derive(Debug)]
@@ -66,13 +66,24 @@ pub(super) struct Source {
     pub view: wgpu::TextureView,
     pub size: [u32; 2],
     pub packed: bool,
+    pub streamed: bool,
     pub submitted: AtomicBool,
+    completed_rows: AtomicU32,
+    uploading: AtomicBool,
     _credits: Credits,
+}
+struct UploadBatch(Arc<Source>);
+impl Drop for UploadBatch {
+    fn drop(&mut self) {
+        self.0.uploading.store(false, Ordering::Release);
+    }
 }
 pub(crate) struct Upload {
     source: Arc<Source>,
     commands: wgpu::CommandBuffer,
     staging: Credits,
+    end_row: u32,
+    batch: Option<UploadBatch>,
 }
 impl Upload {
     pub(super) fn source(&self) -> Arc<Source> {
@@ -94,6 +105,10 @@ impl Upload {
         gpu: &MemoryBudget,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<Self> {
+        let packed = Self::opaque(source, cancelled)?;
+        Self::prepare_inner(device, source, memory, gpu, packed, cancelled)
+    }
+    fn opaque(source: &LinearImage, cancelled: &(impl Fn() -> bool + Sync)) -> Result<bool> {
         let mut packed = true;
         for pixels in source.pixels.chunks(2048) {
             ensure!(!cancelled(), "Editing annullato");
@@ -102,7 +117,100 @@ impl Upload {
                 break;
             }
         }
-        Self::prepare_inner(device, source, memory, gpu, packed, cancelled)
+        Ok(packed)
+    }
+    /// Only one bounded batch is encoded. Its completion releases staging and
+    /// publishes the next row before the background scheduler requests another.
+    pub(super) fn prepare_streamed(
+        device: &wgpu::Device,
+        image: &LinearImage,
+        retained: Option<Arc<Source>>,
+        memory: &MemoryBudget,
+        gpu: &MemoryBudget,
+        cancelled: &(impl Fn() -> bool + Sync),
+    ) -> Result<Self> {
+        ensure!(!cancelled(), "Editing annullato");
+        let size = [image.width, image.height];
+        let pitch = (u64::from(image.width) * 16).div_ceil(256) * 256;
+        let source = if let Some(source) = retained {
+            ensure!(
+                source.size == size && source.streamed && !source.submitted.load(Ordering::Acquire),
+                "Invalid continuing source upload"
+            );
+            source
+        } else {
+            let packed = Self::opaque(image, cancelled)?;
+            let credits = Credits::new(
+                memory,
+                gpu,
+                pitch * u64::from(input::texture_height(size, packed)) + 65536,
+            )?;
+            let texture = input::point_texture(device, image, packed)?;
+            let view = texture.create_view(&Default::default());
+            Arc::new(Source {
+                _texture: texture,
+                view,
+                size,
+                packed,
+                streamed: true,
+                submitted: AtomicBool::new(false),
+                completed_rows: AtomicU32::new(0),
+                uploading: AtomicBool::new(false),
+                _credits: credits,
+            })
+        };
+        ensure!(
+            source
+                .uploading
+                .compare_exchange(false, true, Ordering::AcqRel, Ordering::Acquire)
+                .is_ok(),
+            "A source upload batch is already pending"
+        );
+        let batch = UploadBatch(source.clone());
+        let available = [memory.usage(), gpu.usage()]
+            .into_iter()
+            .map(|u| u.limit.saturating_sub(u.reserved))
+            .min()
+            .unwrap();
+        // Reserve both mapped staging and the temporary CPU packing memory.
+        // The batch uses existing headroom and never grows the quota itself.
+        // Include per-stripe allocation metadata even for narrow images, where
+        // rounding to the driver's allocation granularity dominates pixel bytes.
+        let rows = (available.saturating_sub(65536) / (2 * pitch + 512))
+            .min(32 * 1024 * 1024 / pitch)
+            .min(device.limits().max_buffer_size / pitch);
+        ensure!(
+            rows > 0,
+            "Source upload cannot admit one row and its staging"
+        );
+        let first = source.completed_rows.load(Ordering::Acquire);
+        let end_row = u64::from(input::texture_height(size, source.packed))
+            .min(u64::from(first) + rows) as u32;
+        let batch_rows = u64::from(end_row - first);
+        let stripe_rows = (device.limits().max_buffer_size / pitch).min(128);
+        let staging_bytes = pitch * (batch_rows + batch_rows.min(stripe_rows))
+            + batch_rows.div_ceil(stripe_rows) * 65536;
+        let staging = Credits::within(memory, gpu, staging_bytes)
+            .ok_or_else(|| anyhow::anyhow!("Source upload staging quota changed"))?;
+        let mut encoder = device.create_command_encoder(&Default::default());
+        input::upload_point_rows(
+            device,
+            &mut encoder,
+            image,
+            source.packed,
+            &source._texture,
+            first,
+            end_row,
+            cancelled,
+        )?;
+        ensure!(!cancelled(), "Editing annullato");
+        Ok(Self {
+            source,
+            commands: encoder.finish(),
+            staging,
+            end_row,
+            batch: Some(batch),
+        })
     }
     fn prepare_inner(
         device: &wgpu::Device,
@@ -142,11 +250,16 @@ impl Upload {
                 view,
                 size,
                 packed,
+                streamed: false,
                 submitted: AtomicBool::new(false),
+                completed_rows: AtomicU32::new(0),
+                uploading: AtomicBool::new(false),
                 _credits: credits,
             }),
             commands: encoder.finish(),
             staging,
+            end_row: height as u32,
+            batch: None,
         })
     }
     pub(super) fn submit(
@@ -155,18 +268,34 @@ impl Upload {
         cancelled: &impl Fn() -> bool,
     ) -> Result<Arc<Source>> {
         ensure!(!cancelled(), "Editing annullato");
+        if self.source.streamed {
+            let source = self.source.clone();
+            self.submit_background(queue, || {});
+            return Ok(source);
+        }
         let Self {
             source,
             commands,
             staging,
+            end_row,
+            batch,
         } = self;
         let retained = source.clone();
         queue.submit([commands]);
-        source.submitted.store(true, Ordering::Release);
-        queue.on_submitted_work_done(move || drop((retained, staging)));
+        source.completed_rows.store(end_row, Ordering::Release);
+        source.submitted.store(
+            end_row == input::texture_height(source.size, source.packed),
+            Ordering::Release,
+        );
+        queue.on_submitted_work_done(move || drop((retained, staging, batch)));
         Ok(source)
     }
     pub(super) fn into_parts(self) -> (Arc<Source>, wgpu::CommandBuffer, Credits) {
+        assert!(self.batch.is_none());
+        assert_eq!(
+            self.end_row,
+            input::texture_height(self.source.size, self.source.packed)
+        );
         (self.source, self.commands, self.staging)
     }
     pub(crate) fn submit_background(
@@ -180,11 +309,19 @@ impl Upload {
             source,
             commands,
             staging,
+            end_row,
+            batch,
         } = self;
         queue.submit([commands]);
-        source.submitted.store(true, Ordering::Release);
         queue.on_submitted_work_done(move || {
-            drop((source, staging));
+            drop(staging);
+            source.completed_rows.store(end_row, Ordering::Release);
+            source.submitted.store(
+                end_row == input::texture_height(source.size, source.packed),
+                Ordering::Release,
+            );
+            drop(batch);
+            drop(source);
             done();
         });
     }
@@ -430,7 +567,11 @@ impl Pending {
             0
         };
         let layer_bytes = if layers.is_some() {
-            output_bytes + output_bytes / 4 + 65536
+            let stack = point
+                .as_ref()
+                .and_then(|(_, _, edit)| edit.recipe.layers.as_ref())
+                .ok_or_else(|| anyhow::anyhow!("Layer continuation needs stack"))?;
+            layers::working_bytes(stack, request.size)?
         } else {
             0
         };

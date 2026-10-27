@@ -173,6 +173,25 @@ pub(super) fn upload_point(
     cancelled: &(impl Fn() -> bool + Sync),
 ) -> Result<wgpu::Texture> {
     ensure!(!cancelled(), "Editing annullato");
+    let texture = point_texture(device, image, packed)?;
+    upload_point_rows(
+        device,
+        encoder,
+        image,
+        packed,
+        &texture,
+        0,
+        texture_height([image.width, image.height], packed),
+        cancelled,
+    )?;
+    Ok(texture)
+}
+
+pub(super) fn point_texture(
+    device: &wgpu::Device,
+    image: &LinearImage,
+    packed: bool,
+) -> Result<wgpu::Texture> {
     let texture_height = texture_height([image.width, image.height], packed);
     let format = wgpu::TextureFormat::Rgba32Float;
     let usage = wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING;
@@ -185,7 +204,7 @@ pub(super) fn upload_point(
             && image.height <= device.limits().max_texture_dimension_2d,
         "Native spectral texture unsupported"
     );
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
+    Ok(device.create_texture(&wgpu::TextureDescriptor {
         label: Some("TR experimental native spectral source"),
         size: wgpu::Extent3d {
             width: image.width,
@@ -198,14 +217,31 @@ pub(super) fn upload_point(
         format,
         usage,
         view_formats: &[],
-    });
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+pub(super) fn upload_point_rows(
+    device: &wgpu::Device,
+    encoder: &mut wgpu::CommandEncoder,
+    image: &LinearImage,
+    packed: bool,
+    texture: &wgpu::Texture,
+    first_row: u32,
+    end_row: u32,
+    cancelled: &(impl Fn() -> bool + Sync),
+) -> Result<()> {
+    ensure!(
+        first_row < end_row && end_row <= texture_height([image.width, image.height], packed),
+        "Invalid source upload rows"
+    );
     let pitch = (image.width * 16).div_ceil(256) * 256;
     // Bounded staging allocations also support sources larger than max_buffer_size.
     let rows = (device.limits().max_buffer_size / u64::from(pitch)).min(128) as u32;
     ensure!(rows > 0, "Native spectral upload row exceeds device limit");
-    for first in (0..texture_height).step_by(rows as usize) {
+    for first in (first_row..end_row).step_by(rows as usize) {
         ensure!(!cancelled(), "Editing annullato");
-        let height = rows.min(texture_height - first);
+        let height = rows.min(end_row - first);
         let mut bytes = vec![0_u8; pitch as usize * height as usize];
         for y in 0..height {
             let offset = y as usize * pitch as usize;
@@ -237,7 +273,7 @@ pub(super) fn upload_point(
                 },
             },
             wgpu::TexelCopyTextureInfo {
-                texture: &texture,
+                texture,
                 mip_level: 0,
                 origin: wgpu::Origin3d {
                     x: 0,
@@ -253,7 +289,7 @@ pub(super) fn upload_point(
             },
         );
     }
-    Ok(texture)
+    Ok(())
 }
 
 #[cfg(test)]

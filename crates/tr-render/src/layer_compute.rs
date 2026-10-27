@@ -76,6 +76,20 @@ impl LayerCompute {
         count: u32,
     ) -> Result<()> {
         let words = parameters(stack)?;
+        self.encode_words(device, encoder, source, output, mask, &words, count);
+        Ok(())
+    }
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn encode_words(
+        &self,
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+        source: &wgpu::Buffer,
+        output: &wgpu::Buffer,
+        mask: &wgpu::Buffer,
+        words: &[[f32; 4]],
+        count: u32,
+    ) {
         let bytes: Vec<_> = words
             .iter()
             .flatten()
@@ -104,7 +118,6 @@ impl LayerCompute {
         pass.set_pipeline(&self.pipeline);
         pass.set_bind_group(0, &bind, &[]);
         pass.dispatch_workgroups(count.div_ceil(256), 1, 1);
-        Ok(())
     }
     #[allow(clippy::too_many_arguments)]
     pub fn geometry(

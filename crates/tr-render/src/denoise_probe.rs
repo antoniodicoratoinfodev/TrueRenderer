@@ -25,6 +25,8 @@ mod multiscale;
 #[cfg(test)]
 mod native;
 mod point;
+#[cfg(test)]
+mod upload_check;
 pub(crate) use point::Optics as GraphOptics;
 mod point_check;
 mod post;
@@ -34,6 +36,19 @@ mod spatial;
 mod spatial_check;
 mod tiling;
 mod transform;
+
+/// Native tests can inspect shader arithmetic without rebuilding the Rust
+/// harness. Production always uses the embedded, qualified sources.
+fn shader_text<'a>(name: &str, embedded: &'a str) -> std::borrow::Cow<'a, str> {
+    #[cfg(test)]
+    if let Some(root) = std::env::var_os("TR_GPU_NATIVE_SHADER_ROOT") {
+        return std::fs::read_to_string(std::path::Path::new(&root).join(name))
+            .expect("Diagnostic shader source is required")
+            .into();
+    }
+    let _ = name;
+    embedded.into()
+}
 
 fn basis(n: usize) -> Vec<[f32; 4]> {
     let values: Vec<_> = (0..n * n)

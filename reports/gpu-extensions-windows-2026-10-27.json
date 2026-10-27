@@ -1,0 +1,413 @@
+{
+  "schema": 1,
+  "application": "TrueRenderer",
+  "date": "2026-10-27",
+  "candidate": 81,
+  "status": "development checkpoint; not a qualified installed release",
+  "installed_candidate": 71,
+  "installed_sha256": "7b8571c768027ed3e2ef83d9a950d69ae8fe51ef0377a995aec1590e735f6bd5",
+  "scope": "Windows RTX 3060; optimized shader compilation; synthetic numerical and lifecycle tests. Other devices deferred to the owner.",
+  "device": {
+    "gpu": "NVIDIA GeForce RTX 3060",
+    "driver": "32.0.16.2101",
+    "backends": [
+      "Direct3D 12",
+      "Vulkan"
+    ],
+    "dxc_version": "1.8.2505.1",
+    "shader_debug_flags": false
+  },
+  "thresholds": {
+    "linear": "1e-5 + 1e-4 * abs(cpu)",
+    "display_levels_u8": 1
+  },
+  "source_manifest": {
+    "path": "var/gpu-extended-20261027/sources81.json",
+    "sha256": "93f8bde9ba49b4eac6191269cd6fc76184080c03ec4f7a334eaf6cdfd8651fbc",
+    "bytes": 35403,
+    "files": 317
+  },
+  "results": {
+    "renderer81": {
+      "exit_code": 0,
+      "seconds": 116.05122369999981,
+      "log": {
+        "path": "var/gpu-extended-20261027/renderer81.log",
+        "sha256": "d11811672b9f2ad58daa1b900d63983ca0a0fdf456387a60a853c28662ec5ccb",
+        "bytes": 3421
+      }
+    },
+    "clippy81": {
+      "exit_code": 0,
+      "seconds": 16.452420500000244,
+      "log": {
+        "path": "var/gpu-extended-20261027/clippy81.log",
+        "sha256": "bce400de6f0c7d6e1b5b6b1d4ceebad8271104bb125cab14c69624f4a1e43328",
+        "bytes": 228
+      }
+    },
+    "dx12-checkpoint81": {
+      "exit_code": 0,
+      "seconds": 24.59807560000013,
+      "log": {
+        "path": "var/gpu-extended-20261027/dx12-checkpoint81.log",
+        "sha256": "46126f2fa636eb198e7f68a4dff5cb659ca342f709db4da7c5ef1a094a52dcf7",
+        "bytes": 18049
+      }
+    },
+    "vulkan-checkpoint81": {
+      "exit_code": 0,
+      "seconds": 9.013082000000168,
+      "log": {
+        "path": "var/gpu-extended-20261027/vulkan-checkpoint81.log",
+        "sha256": "4e3275b839d107078d7bfa156c69f3ed520c22a79cfbd866165ef5e4e23ce6b3",
+        "bytes": 18091
+      }
+    },
+    "dx12-full81": {
+      "exit_code": 101,
+      "seconds": 86.51819859999978,
+      "log": {
+        "path": "var/gpu-extended-20261027/dx12-full81.log",
+        "sha256": "eb26bba39cd5401d3f8c172074e08ae76e81a674a3341e54f8dbe3514b215ddf",
+        "bytes": 3348
+      }
+    },
+    "vulkan-full81": {
+      "exit_code": 101,
+      "seconds": 67.96007499999996,
+      "log": {
+        "path": "var/gpu-extended-20261027/vulkan-full81.log",
+        "sha256": "a0bc118a23ff5205dff8b8a3f78feae8f13fe195ccac9ac86288ca7b85f370da",
+        "bytes": 3373
+      }
+    },
+    "dx12-upload81": {
+      "exit_code": 0,
+      "seconds": 4.333717800000159,
+      "log": {
+        "path": "var/gpu-extended-20261027/dx12-upload81.log",
+        "sha256": "a0280f24489efde856ddffdc807376edc99dc85525acacf03e74f909d45562fc",
+        "bytes": 3126
+      }
+    },
+    "vulkan-upload81": {
+      "exit_code": 0,
+      "seconds": 0.34250639999982013,
+      "log": {
+        "path": "var/gpu-extended-20261027/vulkan-upload81.log",
+        "sha256": "c6bcb86f964d7709837d34578ed00004a98404fb86933e3a95cbd74e0669bd01",
+        "bytes": 3152
+      }
+    },
+    "dx12-device81": {
+      "exit_code": 0,
+      "seconds": 24.04021019999982,
+      "log": {
+        "path": "var/gpu-extended-20261027/dx12-device81.log",
+        "sha256": "8c319ffd86ab4163b6809a06405cd592aa24f7e11ea023e43f7f214675f94ab7",
+        "bytes": 3074
+      }
+    }
+  },
+  "checkpoint": {
+    "cases_per_backend": 46,
+    "lifecycle_per_backend": 10,
+    "failures": 0,
+    "max_linear_dx12": 1.770258e-05,
+    "max_linear_vulkan": 2.3424625e-05,
+    "max_display_u8": 1
+  },
+  "masked_layers_intermediate_candidate73": {
+    "cases": 246,
+    "complete_chains": 6,
+    "samples": 120015864,
+    "failures": 0,
+    "max_linear": 1.41859055e-05,
+    "max_display_u8": 1,
+    "later_full_campaign_not_passed": true
+  },
+  "streamed_upload": {
+    "batches_rgba": 25,
+    "batches_packed_rgb": 19,
+    "byte_exact": true,
+    "duplicate_cancellation_eviction_checks": true,
+    "rgba_quota_bytes": 2600192,
+    "rgba_peak_bytes": 2589440,
+    "rgb_quota_bytes": 2034176,
+    "rgb_peak_bytes": 2023424,
+    "final_ram_reserved": 0,
+    "final_gpu_reserved": 0
+  },
+  "full_campaign_failure": "Both backends stop at Unexpected optical preparation stage: the prior display preparation test assumes one upload; the bounded upload can require several batches. Overall full qualification remains negative.",
+  "pending": [
+    "Update display preparation regression for multiple upload batches and repeat the exhaustive matrix",
+    "Minimize arithmetic guards and measure optimized shader costs",
+    "Package and explicitly select DXC, then qualify the release window before ordinary Direct3D graph enablement",
+    "Run correctness and cadence gestures for successive masked layers and middle-layer edits",
+    "Run 45 MP synthetic full-resolution editing with automatic quota and constrained-memory diagnostics"
+  ],
+  "limits": [
+    "No current 45 MP editing qualification; the generated PNG is not a 45 MP RAW decode test",
+    "No physical event-to-monitor latency or universal 60 fps claim",
+    "GPU operators remain SampleColor, Light, Levels, TonalLevels; other layer operators retain CPU fallback",
+    "Admission credits are not a driver RSS guarantee",
+    "All R0-R4/SF gates remain open"
+  ],
+  "protected_files": {
+    "count": 76,
+    "unchanged": true,
+    "verification": {
+      "path": "var/gpu-extended-20261027/publication81-checks.json",
+      "sha256": "0563d34510f5f3ec66d5e02fb09ee8aba73642443ebc878aaf0612ba3f2c029d",
+      "bytes": 515
+    }
+  },
+  "dxc_package_negative_test": {
+    "path": "var/gpu-extended-20261027/dxc-package-rejection.json",
+    "sha256": "9a48c48f6447cdbb15e5d14cd97d677eedf5cc186e7611388ed68dc6d4e8ca2c",
+    "bytes": 681
+  },
+  "evidence": [
+    {
+      "path": "var/gpu-extended-20261027/clippy81.log",
+      "sha256": "bce400de6f0c7d6e1b5b6b1d4ceebad8271104bb125cab14c69624f4a1e43328",
+      "bytes": 228
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-checkpoint76-repeat.log",
+      "sha256": "573bc42c94857f869edd5139e95cdec707fb4f3d6a0fb759b71ff669d03f3ac1",
+      "bytes": 13460
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-checkpoint76.log",
+      "sha256": "d1604981eea45997f5bf3fc5cbbac8eae41aeda7a48fe0047b18e6639d713bb7",
+      "bytes": 554
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-checkpoint78.log",
+      "sha256": "270c19c002bd43d93ea2a80727fe59636091373cc70cfb69bd525de44c547ad2",
+      "bytes": 13460
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-checkpoint79.log",
+      "sha256": "a60ab73cba65714fe93af86131bf56002c3e1305754149bbf2a06bcafc4c46cb",
+      "bytes": 32188
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-checkpoint80.log",
+      "sha256": "b412df0af85eedc5933829a03c8900e533d2b2cb69bb12f3f9ff25ea267f4d51",
+      "bytes": 38716
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-checkpoint81.log",
+      "sha256": "46126f2fa636eb198e7f68a4dff5cb659ca342f709db4da7c5ef1a094a52dcf7",
+      "bytes": 18049
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-device81.log",
+      "sha256": "8c319ffd86ab4163b6809a06405cd592aa24f7e11ea023e43f7f214675f94ab7",
+      "bytes": 3074
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-full81.log",
+      "sha256": "eb26bba39cd5401d3f8c172074e08ae76e81a674a3341e54f8dbe3514b215ddf",
+      "bytes": 3348
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-pixels75.log",
+      "sha256": "8f347febbaf70103f965c2882f574b0a9c016550026f894fc1f3ae66bcdef0e1",
+      "bytes": 52654
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-upload78.log",
+      "sha256": "6414904c20cc7fef3e848454789c99aa0ed417fe5253ffc4590d57e3cc4d2aac",
+      "bytes": 3126
+    },
+    {
+      "path": "var/gpu-extended-20261027/dx12-upload81.log",
+      "sha256": "a0280f24489efde856ddffdc807376edc99dc85525acacf03e74f909d45562fc",
+      "bytes": 3126
+    },
+    {
+      "path": "var/gpu-extended-20261027/dxc-checkpoint73.log",
+      "sha256": "1a246d31f5e705cc4d34f2e13826a6152b899b39a88a04d3323b2bb18687fb33",
+      "bytes": 12324
+    },
+    {
+      "path": "var/gpu-extended-20261027/dxc-checkpoint74.log",
+      "sha256": "96aba459f51d983cd6d7ff12fbb17f0d145e17497014fa8c9156d781e38c689d",
+      "bytes": 1899
+    },
+    {
+      "path": "var/gpu-extended-20261027/dxc-checkpoint75.log",
+      "sha256": "e22989c0585649131d27a6bb03cb0b3ea630ffb646b79770cefeb9969ef73a57",
+      "bytes": 12238
+    },
+    {
+      "path": "var/gpu-extended-20261027/dxc-device72.log",
+      "sha256": "26949068a998978bbcc8a4a89d937b7397013dc5e371da8c00f71ea89e630747",
+      "bytes": 3544
+    },
+    {
+      "path": "var/gpu-extended-20261027/dxc-full72.log",
+      "sha256": "cf94811c5441982e4e340478620ce740c9f2a9a13dba4bfb706d40884338b647",
+      "bytes": 12389
+    },
+    {
+      "path": "var/gpu-extended-20261027/dxc-layers73.log",
+      "sha256": "79f6ea3134248852ea4424dc780a88e0b921147993c152c6444c5acdc5dbe139",
+      "bytes": 766
+    },
+    {
+      "path": "var/gpu-extended-20261027/fmt76.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "var/gpu-extended-20261027/fmt77.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "var/gpu-extended-20261027/fmt78.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "var/gpu-extended-20261027/fmt79.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "var/gpu-extended-20261027/fmt80.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "var/gpu-extended-20261027/fmt81.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer75.log",
+      "sha256": "c95ce0199a93c4bb3721ff60f2ce60c825cb6e7894998b9436dda50e869069c0",
+      "bytes": 3313
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer76.log",
+      "sha256": "a65f4e3178b5b9d6ea9faeac0e60ee2f15c6023c221c1e4ac02b74e8dfcf5228",
+      "bytes": 3421
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer77.log",
+      "sha256": "991aaf868e7790c4cea98275abb6a480bcb86360cb0e7129c9e892c000ad48f3",
+      "bytes": 2479
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer78.log",
+      "sha256": "a5570ef8c4f0bb0c043bbdafb07c3d4b518a66287c5dd0249c53acdad6e852c6",
+      "bytes": 3421
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer79.log",
+      "sha256": "63860a4375d3b42183bf2b9153a6e894703c6fb0d70b0999c83387d4d60aa72f",
+      "bytes": 3421
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer80.log",
+      "sha256": "2cad6f133871c4dd701540fe136ba7378ea8f1fee9090bf0b93065283f0c70f0",
+      "bytes": 3421
+    },
+    {
+      "path": "var/gpu-extended-20261027/renderer81.log",
+      "sha256": "d11811672b9f2ad58daa1b900d63983ca0a0fdf456387a60a853c28662ec5ccb",
+      "bytes": 3421
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-checkpoint79.log",
+      "sha256": "1da862174edd28b489b5d6f1696ee24c03f6e1bb52202faeabc885e49ada1ffd",
+      "bytes": 17491
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-checkpoint80.log",
+      "sha256": "cc6d9720fe1705a23b734f473388b46bfa8ed1f37d0bd187147d7e697ce5db6b",
+      "bytes": 18092
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-checkpoint81.log",
+      "sha256": "4e3275b839d107078d7bfa156c69f3ed520c22a79cfbd866165ef5e4e23ce6b3",
+      "bytes": 18091
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-full81.log",
+      "sha256": "a0bc118a23ff5205dff8b8a3f78feae8f13fe195ccac9ac86288ca7b85f370da",
+      "bytes": 3373
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-pixels75.log",
+      "sha256": "c09347d3989ad89d10af2c3f122fedb86076d444dfdccdebe6a16c52aafda49f",
+      "bytes": 22678
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-upload78.log",
+      "sha256": "924ddc0deb7a1d0ddedb5560b3883ef9e7e79f25b3343f1d396354ef0d7190d2",
+      "bytes": 3152
+    },
+    {
+      "path": "var/gpu-extended-20261027/vulkan-upload81.log",
+      "sha256": "c6bcb86f964d7709837d34578ed00004a98404fb86933e3a95cbd74e0669bd01",
+      "bytes": 3152
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources72.json",
+      "sha256": "845b0e077cb4ebffdd5f5ea8b9769a4d63672d51d64a96394312a3816c973a25",
+      "bytes": 45084
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources73.json",
+      "sha256": "68b49b57f0495fa84d95df368c18b0e9b8ec10a3d607d50b53b4ab68a1e3b8ec",
+      "bytes": 45084
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources74.json",
+      "sha256": "a9fe25789f735abe6e51bb0cf5e7f0e342c4eaf99d9a4c1ac5292d44c326f019",
+      "bytes": 45084
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources75.json",
+      "sha256": "27acaae04d0c10110138b586afa23b61b1026da29ba6eb91f5caef446d0158d8",
+      "bytes": 45084
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources76.json",
+      "sha256": "6de23f4069c3c6be53ec920d2a75bd4c831bfe73fc44d4aafabb30078dc41df6",
+      "bytes": 33090
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources77.json",
+      "sha256": "6309ea0a264a1ca801b70918aece1b748b3eddee6726771a5318ed5bbaef007f",
+      "bytes": 35403
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources78.json",
+      "sha256": "f5872c0b7a68db881985e7d3d3ea0748f84d7ebd525c2daf851d08f2cbf24de4",
+      "bytes": 35403
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources79.json",
+      "sha256": "5946fac70f225b8775554329df741d81ebb98267c99fe1180addab1251ebaf83",
+      "bytes": 35403
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources80.json",
+      "sha256": "11f92ec7b241855c8f7693162ca745b6a7f426ef2fd3a85dc93fcfc697b93842",
+      "bytes": 35403
+    },
+    {
+      "path": "var/gpu-extended-20261027/sources81.json",
+      "sha256": "93f8bde9ba49b4eac6191269cd6fc76184080c03ec4f7a334eaf6cdfd8651fbc",
+      "bytes": 35403
+    }
+  ]
+}

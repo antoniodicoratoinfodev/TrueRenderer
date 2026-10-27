@@ -223,6 +223,11 @@ impl TrueRenderer {
             self.editing.continuity.steps += 1;
             let step = self.editing.continuity.steps;
             let mut recipe = self.editing.continuity.baseline.as_ref().unwrap().clone();
+            let layer_index = std::env::args()
+                .skip_while(|a| a != "--edit-layer-index")
+                .nth(1)
+                .and_then(|v| v.parse::<usize>().ok())
+                .unwrap_or(0);
             let control = ["exposure", "texture", "opacity", "color", "levels"]
                 .into_iter()
                 .find(|name| std::env::args().any(|a| a == format!("--edit-control-{name}-smoke")));
@@ -235,7 +240,11 @@ impl TrueRenderer {
                         }
                     }
                     "opacity" => {
-                        if let Some(l) = recipe.layers.as_mut().and_then(|s| s.layers.first_mut()) {
+                        if let Some(l) = recipe
+                            .layers
+                            .as_mut()
+                            .and_then(|s| s.layers.get_mut(layer_index))
+                        {
                             l.opacity = 0.25 + (step % 16) as f32 / 24.;
                             if std::env::args().any(|a| a == "--edit-opacity-zero-smoke") {
                                 l.opacity = (step % 17) as f32 / 16.;
@@ -246,7 +255,7 @@ impl TrueRenderer {
                         if let Some(tr_core::editing::layers::Operator::SampleColor(c)) = recipe
                             .layers
                             .as_mut()
-                            .and_then(|s| s.layers.first_mut())
+                            .and_then(|s| s.layers.get_mut(layer_index))
                             .and_then(|l| l.operators.first_mut())
                         {
                             c.correction[0] = (step % 20) as f32 * 3. - 25.;
@@ -257,7 +266,13 @@ impl TrueRenderer {
                         if let Some(op) = recipe
                             .layers
                             .as_mut()
-                            .and_then(|s| s.layers.last_mut())
+                            .and_then(|s| {
+                                s.layers.iter_mut().rev().find(|l| {
+                                    l.operators.iter().any(|op| {
+                                        matches!(op, Operator::Levels(_) | Operator::TonalLevels(_))
+                                    })
+                                })
+                            })
                             .and_then(|l| l.operators.first_mut())
                         {
                             if let Operator::Levels(channels) = op {

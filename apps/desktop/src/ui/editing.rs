@@ -879,6 +879,8 @@ impl TrueRenderer {
                             crate::verify_advanced::selective_recipe(recipe.raw_engine, false)
                         } else if args.iter().any(|a| a == "--toning-edit-smoke") {
                             crate::verify_advanced::toning_recipe(recipe.raw_engine)
+                        } else if args.iter().any(|a| a == "--masked-stack-edit-smoke") {
+                            crate::verify_advanced::masked_layered_recipe(recipe.raw_engine)
                         } else {
                             crate::verify_advanced::layered_recipe(recipe.raw_engine)
                         };

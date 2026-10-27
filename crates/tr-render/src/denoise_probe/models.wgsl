@@ -9,6 +9,12 @@ var<workgroup> keys: array<vec2<u32>, 1024>;
 var<workgroup> values: array<f32, 1024>;
 var<workgroup> selected_count: u32;
 const SENTINEL: f32 = 3.402823466e38;
+fn divided(a: f32, b: f32) -> f32 {
+    let n = u32(params[0].z);
+    let zero = bitcast<u32>(params[1u + n * n / 4u].z);
+    let q = bitcast<f32>(bitcast<u32>(a / b) ^ zero);
+    return bitcast<f32>(bitcast<u32>(q + fma(-q, b, a) / b) ^ zero);
+}
 
 fn settings() -> vec4<f32> {
     let n = u32(params[0].z);
@@ -102,7 +108,7 @@ fn quantiles(@builtin(local_invocation_index) local: u32, @builtin(workgroup_id)
         if i < count {
             let sample_id = order[2u + start + i];
             let coefficient = samples[sample_id * 257u + (group.x / n) * 16u + group.x % n][group.y];
-            value = abs(coefficient) / samples[sample_id * 257u + 256u].y;
+            value = divided(abs(coefficient), samples[sample_id * 257u + 256u].y);
         }
         values[i] = value;
     }
@@ -110,7 +116,7 @@ fn quantiles(@builtin(local_invocation_index) local: u32, @builtin(workgroup_id)
     sort_values(local, length);
     if local == 0u && enabled_band {
         var value = 0.;
-        if count > 0u { value = values[u32(f32(count - 1u) * 0.3)] / 0.38532; }
+        if count > 0u { value = divided(values[u32(f32(count - 1u) * 0.3)], 0.38532); }
         raw[(band * n * n + group.x) * 3u + group.y] = value;
     }
 }
@@ -145,7 +151,7 @@ fn band_statistics(@builtin(local_invocation_index) local: u32, @builtin(workgro
     if local < n * n {
         let g = raw[global + local * 3u + group.y];
         var value = SENTINEL;
-        if high_frequency(local, n) && g > 1e-8 { value = raw[((group.x + 1u) * n * n + local) * 3u + group.y] / g; }
+        if high_frequency(local, n) && g > 1e-8 { value = divided(raw[((group.x + 1u) * n * n + local) * 3u + group.y], g); }
         values[local] = value;
     }
     if local == 0u {

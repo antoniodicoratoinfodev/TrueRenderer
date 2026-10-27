@@ -168,8 +168,13 @@ impl Multiscale {
             let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
                 label: None,
                 source: wgpu::ShaderSource::Wgsl(
-                    input::shader(include_str!("multiscale.wgsl"), "fine", "params[0].x", kind)
-                        .into(),
+                    input::shader(
+                        &super::shader_text("multiscale.wgsl", include_str!("multiscale.wgsl")),
+                        "fine",
+                        "params[0].x",
+                        kind,
+                    )
+                    .into(),
                 ),
             });
             let pipelines = ["downsample", "chroma_delta", "merge_chroma"].map(|entry| {
@@ -707,7 +712,7 @@ mod tests {
     fn multiscale_shader_validates_offline() {
         for kind in [0, 1] {
             let module = wgpu::naga::front::wgsl::parse_str(&input::shader(
-                include_str!("multiscale.wgsl"),
+                &super::shader_text("multiscale.wgsl", include_str!("multiscale.wgsl")),
                 "fine",
                 "params[0].x",
                 kind,

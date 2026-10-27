@@ -66,6 +66,9 @@ def main():
     parser.add_argument("--edit-kind", choices=["point", "tools", "layers"], default="point")
     parser.add_argument("--edit-control", choices=["combined", "exposure", "texture", "opacity", "color", "levels"], default="combined")
     parser.add_argument("--zero-crossing", action="store_true", help="Include zero and full opacity in the native layer gesture")
+    parser.add_argument("--masked-stack", action="store_true", help="Exercise successive color, luminance and brush masks")
+    parser.add_argument("--layer-index", type=int, default=0, help="Layer edited by opacity/color gestures")
+    parser.add_argument("--backend", choices=["vulkan", "dx12"], help="Explicit native backend for this isolated run")
     parser.add_argument("--during-folder-loading", action="store_true")
     parser.add_argument("--fit", action="store_true", help="Measure edits with the whole photograph fitted in the viewport")
     parser.add_argument("--no-disk-cache", action="store_true", help="Keep gesture diagnostics independent of persistent cache writes")
@@ -99,6 +102,12 @@ def main():
         parser.error("--fit requires the edit gesture")
     if args.zero_crossing and args.edit_control != "opacity":
         parser.error("--zero-crossing requires the opacity control")
+    if args.masked_stack and args.edit_kind != "layers":
+        parser.error("--masked-stack requires --edit-kind layers")
+    if not 0 <= args.layer_index < (4 if args.masked_stack else 2):
+        parser.error("--layer-index is outside the diagnostic layer stack")
+    if args.edit_control == "color" and args.layer_index not in ([0, 2] if args.masked_stack else [0]):
+        parser.error("The selected diagnostic layer has no sample color tool")
     if args.expected_viewport and min(args.expected_viewport) < 1:
         parser.error("--expected-viewport dimensions must be positive")
     if args.window_size and not (550 <= args.window_size[0] <= 3840 and 360 <= args.window_size[1] <= 2160):
@@ -110,6 +119,8 @@ def main():
     assert packaged_worker.is_file(), "Worker must be beside the application"
     assert hashlib.sha256(packaged_worker.read_bytes()).digest() == hashlib.sha256(args.worker.read_bytes()).digest(), "Packaged worker differs from --worker"
     env = os.environ.copy()
+    if args.backend:
+        env["WGPU_BACKEND"] = args.backend
     env["TR_WORKER_BINARY"] = str(args.worker.resolve())
     env["TR_RENDER_TIMINGS"] = "1" if args.profile else "0"
     env.pop("TR_PROBE_WINDOW_SIZE", None)
@@ -149,6 +160,9 @@ def main():
             command += ["--interaction-performance-smoke", "--zoom-performance-smoke"]
         if args.edit_kind != "point":
             command.append("--advanced-edit-smoke" if args.edit_kind == "tools" else "--layers-edit-smoke")
+        if args.masked_stack:
+            command.append("--masked-stack-edit-smoke")
+        command += ["--edit-layer-index", str(args.layer_index)]
         if args.edit_control != "combined":
             command.append(f"--edit-control-{args.edit_control}-smoke")
         if args.zero_crossing:
@@ -206,6 +220,8 @@ def main():
         manifest = {"gesture": args.gesture, "engine": args.engine, "compute": args.compute,
                     "edit_kind": args.edit_kind,
                     "edit_control": args.edit_control,
+                    "masked_stack": args.masked_stack, "layer_index": args.layer_index,
+                    "requested_backend": args.backend,
                     "zero_crossing": args.zero_crossing,
                     "fit": args.fit,
                     "during_folder_loading": args.during_folder_loading,

@@ -75,7 +75,7 @@ impl Models {
         });
         let pipelines = pipelines(
             &layout,
-            include_str!("models.wgsl"),
+            &super::shader_text("models.wgsl", include_str!("models.wgsl")),
             &[
                 "sort_samples",
                 "quantiles",
@@ -197,7 +197,11 @@ impl Models {
 mod tests {
     #[test]
     fn spectral_model_shader_validates_offline() {
-        let module = wgpu::naga::front::wgsl::parse_str(include_str!("models.wgsl")).unwrap();
+        let module = wgpu::naga::front::wgsl::parse_str(&super::shader_text(
+            "models.wgsl",
+            include_str!("models.wgsl"),
+        ))
+        .unwrap();
         wgpu::naga::valid::Validator::new(
             wgpu::naga::valid::ValidationFlags::all(),
             wgpu::naga::valid::Capabilities::all(),
