@@ -1121,6 +1121,10 @@ Su richiesta del titolare, rimossi dal README trattini e simboli decorativi, all
 
 - [ ] **Finestra del terminale all'avvio:** il titolare segnala che aprendo TrueRenderer su Windows compare una finestra del terminale di TrueRenderer oltre alla UI. Individuare e correggere la causa affinché l'avvio ordinario mostri soltanto la finestra dell'applicazione, mantenendo disponibili i log diagnostici. Verificare sia l'apertura dal collegamento sul Desktop sia quella diretta dell'eseguibile.
 
+### Indicatore e attivazione degli strumenti Sviluppo — richiesta del 28 ottobre 2026
+
+- [ ] **Puntino più visibile e cliccabile:** nel pannello Sviluppo è già presente un piccolo indicatore che si illumina quando uno strumento viene usato. Ingrandirlo e renderlo un controllo per spegnere/riaccendere il relativo strumento con un clic. La disattivazione deve escluderne temporaneamente l'effetto conservando tutti i valori impostati; la riattivazione deve ripristinare quelle regolazioni. Distinguere chiaramente gli stati acceso/spento, prevedere un'area di clic comoda e un aiuto esplicito, e verificare il comportamento con undo/redo, salvataggio/riapertura, vista ed export.
+
 <a id="livelli-raster-ritocco-formato-progetto"></a>
 ### Prossimi incrementi — livelli raster, ritocco e formato di progetto
 
