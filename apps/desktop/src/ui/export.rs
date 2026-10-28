@@ -62,7 +62,7 @@ impl TrueRenderer {
             destination: state.destination.clone().unwrap(),
             cancel: state.cancel.clone(),
         };
-        if !self.request(Request::ExportPhoto(job)) {
+        if !self.request(Request::ExportPhoto(Box::new(job))) {
             self.photo_export.active = false;
             self.photo_export.remaining.clear();
             self.photo_export

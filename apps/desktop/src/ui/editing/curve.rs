@@ -318,7 +318,7 @@ fn graph(
     (rect, commit)
 }
 
-pub(super) fn controls(
+pub(in crate::ui) fn controls(
     ui: &mut egui::Ui,
     lang: Language,
     curve: &mut Vec<CurvePoint>,

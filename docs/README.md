@@ -9,6 +9,7 @@ Indice delle specifiche, delle decisioni e delle evidenze. Stato corrente e atti
 | [README del progetto](../README.md) | Funzioni, piattaforme, build e limiti |
 | [Stato e piano](../STATO.md) | Punto di ripresa, attività, gate, matrice e registro degli incrementi |
 | [Architettura](TrueRenderer-Architettura.md) | Specifica; distinguere proposta e stato implementato |
+| [Documenti raster](documenti-raster.md) | Modello del documento, formato `.truerenderer`, editing, quote e salvataggio sicuro |
 | [Anteprime, cache e prestazioni](progetto-anteprime-cache-prestazioni.md) | Fonte della specifica integrata, con requisiti ancora da qualificare |
 | [Motori RAW](progetto-motori-raw.md) | Contratto, ricette e limiti sperimentali |
 | [Esportazione, precisione SDR e FITS](esportazione-precisione-fits.md) | ADR 0010: formati di uscita, DNG distinti, superficie e dati scientifici |

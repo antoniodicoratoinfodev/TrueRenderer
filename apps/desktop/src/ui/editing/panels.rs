@@ -179,6 +179,7 @@ pub(super) struct Section<'a> {
     icon: Option<&'a str>,
     modified: bool,
     default_open: bool,
+    switches: Option<&'a mut std::collections::BTreeSet<String>>,
 }
 
 impl<'a> Section<'a> {
@@ -190,6 +191,7 @@ impl<'a> Section<'a> {
             icon: None,
             modified: false,
             default_open: true,
+            switches: None,
         }
     }
     pub fn icon(mut self, icon: &'a str) -> Self {
@@ -204,8 +206,12 @@ impl<'a> Section<'a> {
         self.modified = modified;
         self
     }
+    pub fn switches(mut self, switches: &'a mut std::collections::BTreeSet<String>) -> Self {
+        self.switches = Some(switches);
+        self
+    }
     pub fn show<R>(
-        self,
+        mut self,
         ui: &mut egui::Ui,
         body: impl FnOnce(&mut egui::Ui) -> R,
     ) -> egui::Response {
@@ -228,7 +234,7 @@ impl<'a> Section<'a> {
                     if let Some(icon) = self.icon.filter(|_| !compact) {
                         palette::icon(ui, self.lang, icon);
                     }
-                    let reserve = 12.;
+                    let reserve = 40.;
                     let response = ui.add_sized(
                         [(ui.available_width() - reserve).max(0.), 24.],
                         egui::Button::new(())
@@ -238,7 +244,35 @@ impl<'a> Section<'a> {
                     );
                     clicked = response.clicked();
                     help::attach(ui, response, self.lang, self.title);
-                    if self.modified {
+                    if let Some(switches) = self.switches.as_deref_mut() {
+                        let enabled = !switches.contains(self.id);
+                        let label = match (self.lang, enabled) {
+                            (Language::English, true) => "Disable tool (keep values)",
+                            (Language::English, false) => "Enable tool (restore values)",
+                            (_, true) => "Disattiva strumento conservando i valori",
+                            (_, false) => "Riattiva strumento con i valori conservati",
+                        };
+                        let response = ui.add_sized(
+                            [28., 28.],
+                            egui::Button::new(if enabled { "●" } else { "○" })
+                                .selected(enabled && self.modified),
+                        );
+                        response.widget_info(|| {
+                            egui::WidgetInfo::selected(
+                                egui::WidgetType::Button,
+                                ui.is_enabled(),
+                                enabled,
+                                label,
+                            )
+                        });
+                        if response.on_hover_text(label).clicked() {
+                            if enabled {
+                                switches.insert(self.id.into());
+                            } else {
+                                switches.remove(self.id);
+                            }
+                        }
+                    } else if self.modified {
                         let (rect, response) =
                             ui.allocate_exact_size(egui::vec2(8., 16.), egui::Sense::hover());
                         ui.painter().circle_filled(rect.center(), 2.5, style::MUTED);
@@ -253,8 +287,11 @@ impl<'a> Section<'a> {
                     ui.add_space(2.);
                     // A modified badge appears on the first slider movement.
                     // Keep every body widget ID stable across that transition.
-                    ui.scope_builder(egui::UiBuilder::new().id(id.with("body")), body)
-                        .inner
+                    let enabled = self.switches.as_ref().is_none_or(|s| !s.contains(self.id));
+                    ui.scope_builder(egui::UiBuilder::new().id(id.with("body")), |ui| {
+                        ui.add_enabled_ui(enabled, body).inner
+                    })
+                    .inner
                 });
                 heading.response
             })

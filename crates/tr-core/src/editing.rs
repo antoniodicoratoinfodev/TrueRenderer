@@ -23,6 +23,7 @@ mod process3_tests;
 pub mod regional;
 #[cfg(test)]
 mod selective_tests;
+pub mod switches;
 #[cfg(test)]
 mod toning_tests;
 
@@ -208,6 +209,9 @@ pub struct CurvePoint {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditRecipe {
+    /// Parameters parked by section switches; render fields remain neutral.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub suspended: std::collections::BTreeMap<String, serde_json::Value>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub layers: Option<Box<layers::LayerStack>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -241,6 +245,7 @@ pub struct EditRecipe {
 impl EditRecipe {
     pub fn neutral(raw_engine: RawEngine) -> Self {
         Self {
+            suspended: Default::default(),
             layers: None,
             advanced: None,
             raw_wb: Default::default(),
@@ -266,6 +271,7 @@ impl EditRecipe {
     pub fn is_neutral(&self) -> bool {
         let mut neutral = Self::neutral(self.raw_engine);
         neutral.schema_version = self.schema_version;
+        neutral.suspended = self.suspended.clone();
         neutral.layers = self.layers.clone();
         neutral.curve = self.curve.clone();
         neutral.process_version = self.process_version;
@@ -306,6 +312,7 @@ impl EditRecipe {
     }
 
     pub fn validate(&self) -> Result<()> {
+        self.validate_switches()?;
         self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
             ((self.schema_version == SCHEMA_VERSION

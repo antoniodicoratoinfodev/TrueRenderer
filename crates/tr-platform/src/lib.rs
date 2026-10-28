@@ -1,5 +1,6 @@
 //! R0 private-pipe protocol, with native XPC leases in a macOS app bundle.
 //! Pipe workers retain the corpus gate; external previews require the macOS XPC bundle.
+pub mod document_events;
 pub mod isolation;
 mod resources;
 #[cfg(target_os = "macos")]

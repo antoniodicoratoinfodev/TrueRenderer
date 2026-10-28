@@ -1,0 +1,115 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-28",
+  "platform": "windows-x86_64-gnu",
+  "source_base": "9016b4a11aac150733d143899abe849016d0b388",
+  "source_files_sha256": {
+    "Cargo.lock": "09ac8652f7f5516a7c8c11beb21b3015969a27d18196fe097c7766760d5b40b2",
+    "apps/desktop/Cargo.toml": "d952a55e880c736d018c9c14f119349bd1c25c0c46cb44403f9f171d9948091d",
+    "apps/desktop/src/decode_pool.rs": "dcbb28b786bc34558f34e087f4880cae33f58176a08214b5c3b5e16fba5f6bed",
+    "apps/desktop/src/document_open.rs": "d22cca5d34418d68ad2ba3326e1ef6947d33a46b9ef4f1a71d3ba1387e5ffef7",
+    "apps/desktop/src/main.rs": "20eb7c339d87290eaf215e9e6ddec3e58b7cc56a80bae018aa2d086f7676b9f3",
+    "apps/desktop/src/service.rs": "6b874c7b5bcd24cfee2a32a57275e7e5392faa20afb66a1f33a9f4b350117629",
+    "apps/desktop/src/ui.rs": "1d6d42ab7a541e43b6ba9dd887b046e33251d31228979879d0daba11e1e9f674",
+    "apps/desktop/src/ui/document.rs": "f62e413ed5d3dce32863e71080ec793277b1025abb09a4edbce7670023f6ad8b",
+    "apps/desktop/src/ui/editing.rs": "735ded7f3fc2f783b43c5a4423e000bc72833d2dedb660eb0cf010d9f4fa2554",
+    "apps/desktop/src/ui/editing/advanced.rs": "60bd9db164c576573086e035386c8e2f95048bddcd6d704585bf4c971e174ae3",
+    "apps/desktop/src/ui/editing/advanced/document.rs": "7c5e19ec13699cd3bb40ae2cea82c83eeba1e4257417d25c0ed4bb94f7d3cca9",
+    "apps/desktop/src/ui/editing/curve.rs": "83ce82e6f00f0e9eb5ac774040ee5374c003f0c17cd6423bcbde0561156bdb07",
+    "apps/desktop/src/ui/editing/layers.rs": "0cd361a26e92c74b32cbfa03dcaf4223157460b018d4095b52704529eaec91af",
+    "apps/desktop/src/ui/editing/layers/document.rs": "acb70cd48c1fee59bd0e9d1b6b7c93b2bf2bb648ec5019b442132898ca2123de",
+    "apps/desktop/src/ui/editing/layers/panel.rs": "a31e3d7c1d802eb8af4b0f69fadc0c4f112e606b1493392b3344de59fc994177",
+    "apps/desktop/src/ui/editing/panels.rs": "9140b0b67feddfa9276c5b6b1b9b1ac5eeefa89402ee2779dbadece8cb315d23",
+    "apps/desktop/src/ui/export.rs": "eb207f75b3206f00ecdeaf30d90ca11621b53f1fb6d643652420ec8c6db424dc",
+    "crates/tr-core/src/document.rs": "f2a3b9ac1299e1e1ea10d4e12276990fea24df48ee6714789c40a19d718138d5",
+    "crates/tr-core/src/editing.rs": "4c4da979804459cfa11ef51d3f8b2190141baf760531142c0e2f16634c523080",
+    "crates/tr-core/src/editing/geometry.rs": "c992514b4f1731a3e5badcdcf8a232a6fd2cbe8d15a7f7be8ed572b1cf4ade14",
+    "crates/tr-core/src/editing/layers.rs": "fdc756062721233bbdcd557efb7302c234ac8705459abfb6838fd34582c1c0c9",
+    "crates/tr-core/src/editing/looks.rs": "41a51658e3c5a5c0b3ce345b365edf525f6e2018124c0e65eb565245d4a0aa7f",
+    "crates/tr-core/src/editing/switches.rs": "cb71bb27613d9b554a4d4ed8b806f4b4940383c4575e297da02ce18532f4b61b",
+    "crates/tr-core/src/lib.rs": "2e6e9c875ca6ffd86e324d9a6ee624ad50b1e9beb96eab20c1d512e98f19f16a",
+    "crates/tr-platform/build.rs": "2a29ec3b71cd8df39ded2bfeb9646f841aedc89c7e946d58bc774e4f7e773cc1",
+    "crates/tr-platform/src/document_events.rs": "83fb8a0f7d336a34a53c6a66adb8958bc6ff86d7c9cf5b179ca5be8c2b4a5996",
+    "crates/tr-platform/src/lib.rs": "8570d960301a14d56f907a23f186567e176f25ae1245eae1f414be3cb1e17799",
+    "crates/tr-store/Cargo.toml": "b04d9d18ccee031c28d165db0cdce70a4e3b6ef59b873deb35cd3a222a17f37a",
+    "crates/tr-store/src/document.rs": "bbfcd044606f40de91faf9ad67cc41832347cd21355b358d4982826d1014464c",
+    "crates/tr-store/src/lib.rs": "b1b762c1b5e7c03701c7f86efd2d1c5bf4eee98289422b7227058e6665a64aaa",
+    "native/macos/document_events.m": "f1b1639d07e8aa07a466e66580ecd62917922489491fab851c6a27ec3b1b506e",
+    "scripts/Info.plist": "928a9987964c6c6e98d78a1eaa616d02e8ad83a3088dcbfed32e6aa8c3793340",
+    "scripts/generate-document-fixture.py": "d15155bb2b8446f85793cb7cfd42b650440131e526f45593f8d25d4de5d4d9fe",
+    "scripts/register-document-windows.ps1": "78bb309ca682bcfcb8d2e7fbd2720bfe84a9836def703ae30f53d18ff4489cf5"
+  },
+  "working_tree_changes_committed": false,
+  "verification": {
+    "command": "scripts/dev-windows.ps1 verify --gui",
+    "exit_code": 0,
+    "rust_passed": 760,
+    "rust_failed": 0,
+    "python_passed": 50,
+    "worker_protocol_checks": 8,
+    "sampling_signal_cases": 24,
+    "private_camera_tests": "Skipped because TR_RAW_SAMPLE was unset; research campaigns excluded",
+    "artifacts": "var/verify-uQ6HLcPG",
+    "native_surface_error_threshold_u8": 1,
+    "native_surface_max_error_u8": 1
+  },
+  "release": {
+    "package": "dist/TrueRenderer-windows",
+    "build_exit_code": 0,
+    "binary_sha256": {
+      "truerenderer.exe": "dc57a66dbc6be532ac7610ebfeeacf51eb90fc1da7aa2325451ccb8caa7ce957",
+      "tr-worker.exe": "2e850c1d89be2754f17cc095498be002778d6943a2ecfb3a4132eae89f7aab07"
+    },
+    "subsystem": "IMAGE_SUBSYSTEM_WINDOWS_GUI",
+    "previous_package": "var/backups/windows-before-raster-20261028"
+  },
+  "document_probes": {
+    "release-native": {
+      "bytes": 2457600,
+      "error": "",
+      "layers": 2,
+      "passed": true,
+      "scope": "Native document open and presentation; not retouch quality or cross-platform qualification"
+    },
+    "release-shortcut": {
+      "bytes": 2457600,
+      "error": "",
+      "layers": 2,
+      "passed": true,
+      "scope": "Native document open and presentation; not retouch quality or cross-platform qualification"
+    }
+  },
+  "shortcut_probe": "Same installed target, working directory and WindowStyle as Desktop shortcut; isolated diagnostic arguments; original shortcut unchanged",
+  "native_association": {
+    "extension": ".truerenderer",
+    "scope": "HKCU",
+    "progid": "TrueRenderer.Document",
+    "registered": true,
+    "command_verified": true,
+    "actual_shell_double_click": "Not automated"
+  },
+  "fixture": {
+    "producer": "scripts/generate-document-fixture.py (Python standard library)",
+    "sha256": "1194580df9f8cf15526f4889f8443fc9c2c66431ea30d0256b3403eb009910a5",
+    "native_layers": 2
+  },
+  "limits": {
+    "canvas_or_layer_pixels": 16777216,
+    "raster_and_masks_bytes": 268435456,
+    "preview_max_edge": 2048,
+    "undo_max_revisions": 32,
+    "undo_budget_bytes": 268435456,
+    "sample_source": "selected raster layer",
+    "native_assets": "embedded linear Rec2020 fp32 rasters; RAW sensor development baked",
+    "retouch_persistence": "editable raster pixels; completed stroke parameters and session history not serialized"
+  },
+  "pending": [
+    "macOS compilation and Finder events",
+    "Packaged macOS validation on both XPC services",
+    "Windows-macOS-Windows and reverse editable round trips",
+    "Photographic quality campaign for healing tools",
+    "English document workspace and dedicated document icon",
+    "Tiled large projects and independent RAW sensor redevelopment"
+  ],
+  "scope": "Functional Windows implementation and native smoke qualification within declared limits; not a cross-platform release gate or healing-quality certification."
+}

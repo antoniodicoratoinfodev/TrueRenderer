@@ -159,3 +159,4 @@ mod tests {
         assert!(a.validate().is_err());
     }
 }
+pub mod document;

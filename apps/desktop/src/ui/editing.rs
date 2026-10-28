@@ -1,13 +1,13 @@
 use super::*;
 use tr_core::editing::{CurvePoint, EditRecipe, sample_rgb_area};
 use tr_store::LoadedEdit;
-mod advanced;
+pub(in crate::ui) mod advanced;
 #[cfg(test)]
 mod controls_tests;
 mod crop;
-mod curve;
+pub(in crate::ui) mod curve;
 mod help;
-mod layers;
+pub(in crate::ui) mod layers;
 mod looks;
 mod mask_overlay;
 mod palette;
@@ -39,8 +39,6 @@ impl ResetGroup {
             }
             Self::Curve => recipe.curve.clear(),
             Self::Color => {
-                recipe.temperature = 0.;
-                recipe.tint = 0.;
                 recipe.saturation = 0.;
                 recipe.vibrance = 0.;
                 recipe.protect_warm = false;
@@ -1146,7 +1144,7 @@ impl TrueRenderer {
                             destination,
                             cancel: Arc::new(std::sync::atomic::AtomicBool::new(false)),
                         };
-                        if !self.request(Request::ExportPhoto(job)) {
+                        if !self.request(Request::ExportPhoto(Box::new(job))) {
                             return;
                         }
                     }
@@ -1837,6 +1835,16 @@ impl TrueRenderer {
                     }
                 }
             }
+            let folded_before = draft.clone();
+            let (expanded, mut switches) = match draft.expanded_sections() {
+                Ok(value) => value,
+                Err(error) => {
+                    ui.colored_label(AMBER, error.to_string());
+                    return;
+                }
+            };
+            draft = expanded;
+            let previous_switches = switches.clone();
             ui.add_enabled_ui(!pending, |ui| {
                 if !short {
                     let page = if self.editing.layers.view_tools {
@@ -1880,6 +1888,7 @@ impl TrueRenderer {
                 });
                 if is_raw {
                     panels::Section::new(lang, "raw-wb-panel", "Bilanciamento del bianco RAW")
+                        .switches(&mut switches)
                         .modified(!draft.raw_wb.is_as_shot())
                         .show(ui, |ui| {
                             if let Some((_, error)) = self
@@ -1909,8 +1918,10 @@ impl TrueRenderer {
                                 }
                             }
                         });
-                } else {
+                }
+                {
                     panels::Section::new(lang, "rgb-wb-panel", "Bilanciamento del bianco")
+                        .switches(&mut switches)
                         .default_open(!short)
                         .modified(draft.temperature != 0. || draft.tint != 0.)
                         .show(ui, |ui| {
@@ -1925,11 +1936,18 @@ impl TrueRenderer {
                                 commit |= response.drag_stopped()
                                     || (response.changed() && !response.dragged());
                             }
+                            if help::button(ui, lang, "Azzera correzione RGB").clicked() {
+                                draft.temperature = 0.;
+                                draft.tint = 0.;
+                                changed = true;
+                                commit = true;
+                            }
                         });
                 }
                 let mut reset = draft.clone();
                 ResetGroup::Light.apply(&mut reset);
                 panels::Section::new(lang, "light-panel", "Luce")
+                    .switches(&mut switches)
                     .icon("tonal")
                     .modified(draft != reset)
                     .show(ui, |ui| {
@@ -2022,6 +2040,7 @@ impl TrueRenderer {
                 let mut reset = draft.clone();
                 ResetGroup::Curve.apply(&mut reset);
                 panels::Section::new(lang, "curve-panel", "Curva tonale")
+                    .switches(&mut switches)
                     .icon("curves")
                     .modified(draft != reset)
                     .show(ui, |ui| {
@@ -2053,17 +2072,12 @@ impl TrueRenderer {
                 let mut reset = draft.clone();
                 ResetGroup::Color.apply(&mut reset);
                 panels::Section::new(lang, "color-panel", "Colore RGB")
+                    .switches(&mut switches)
                     .icon("mixer")
                     .modified(draft != reset)
                     .show(ui, |ui| {
-                        for (label, value) in [
-                            ("Temperatura RGB", &mut draft.temperature),
-                            ("Tinta RGB", &mut draft.tint),
-                            ("Saturazione", &mut draft.saturation),
-                        ] {
-                            if !is_raw && label != "Saturazione" {
-                                continue;
-                            }
+                        {
+                            let (label, value) = ("Saturazione", &mut draft.saturation);
                             let response = adjustment(
                                 ui,
                                 lang,
@@ -2109,12 +2123,6 @@ impl TrueRenderer {
                             .small()
                             .color(MUTED),
                         );
-                        if help::button(ui, lang, "Azzera correzione RGB").clicked() {
-                            draft.temperature = 0.;
-                            draft.tint = 0.;
-                            changed = true;
-                            commit = true;
-                        }
                         if let Some((_, error)) = self
                             .editing
                             .picker_error
@@ -2133,13 +2141,27 @@ impl TrueRenderer {
                             commit = true;
                         }
                     });
-                let (advanced_changed, advanced_commit) =
-                    self.editing
-                        .advanced
-                        .show(ui, lang, &mut draft, native_size);
+                let (advanced_changed, advanced_commit) = self.editing.advanced.show_with_switches(
+                    ui,
+                    lang,
+                    &mut draft,
+                    native_size,
+                    &mut switches,
+                );
                 changed |= advanced_changed;
                 commit |= advanced_commit;
             });
+            for id in &switches {
+                if let Err(error) = draft.set_section_enabled(id, false) {
+                    ui.colored_label(AMBER, error.to_string());
+                    return;
+                }
+            }
+            if switches != previous_switches {
+                changed = true;
+                commit = true;
+            }
+            changed &= draft != folded_before;
             if changed {
                 self.apply_edit_draft(&item.id, draft);
             }
@@ -3191,13 +3213,7 @@ mod reset_tests {
                     "blacks",
                 ],
                 ResetGroup::Curve => &["curve"],
-                ResetGroup::Color => &[
-                    "temperature",
-                    "tint",
-                    "saturation",
-                    "vibrance",
-                    "protect_warm",
-                ],
+                ResetGroup::Color => &["saturation", "vibrance", "protect_warm"],
             };
             for (key, value) in before.as_object().unwrap() {
                 if !keys.contains(&key.as_str()) {

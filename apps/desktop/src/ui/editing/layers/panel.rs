@@ -339,11 +339,25 @@ impl Controls {
                         }
                         for (i, op) in layer.operators.iter_mut().enumerate() {
                             ui.push_id((layer.id, "operator", i), |ui| {
-                                let tool = op.tool();
+                                let was_disabled = layer.suspended_operators.contains_key(&i);
+                                let mut displayed = layer.suspended_operators.get(&i).unwrap_or(op).clone();
+                                let tool = displayed.tool();
+                                let mut switches = std::collections::BTreeSet::new();
+                                if was_disabled { switches.insert("operator-panel".into()); }
                                 let heading = panels::Section::new(lang, "operator-panel", tool.name)
-                                    .icon(tool.id).modified(!op.is_neutral()).show(ui, |ui| {
-                                        help::scope(ui, tool.id, |ui| self.operator(ui, lang, op, i, &mut commit));
+                                    .switches(&mut switches)
+                                    .icon(tool.id).modified(!displayed.is_neutral()).show(ui, |ui| {
+                                        help::scope(ui, tool.id, |ui| self.operator(ui, lang, &mut displayed, i, &mut commit));
                                     });
+                                let disabled = !switches.is_empty();
+                                if disabled {
+                                    *op = tool.operator();
+                                    layer.suspended_operators.insert(i, displayed);
+                                } else {
+                                    *op = displayed;
+                                    layer.suspended_operators.remove(&i);
+                                }
+                                commit |= disabled != was_disabled;
                                 if i == 0 && std::env::args().any(|a| a == "--color-controls-ui-smoke") {
                                     heading.scroll_to_me(Some(egui::Align::Min));
                                 }

@@ -3998,6 +3998,33 @@ scope e gate misurabili, non da percentuali di mercato non citate.
 | **progetto separato** | Android arm64 | discovery, UX e distribuzione proprie |
 | **nessun impegno** | Linux arm64, macOS x86-64 | rivalutare con telemetria opt-in/richieste verificabili |
 
+### 17.0.1 Compatibilità dei documenti e degli strumenti Windows/macOS
+
+Le funzionalità di sviluppo, editing raster, ritocco, selezione, composizione e trasformazione,
+la creazione di documenti e i flussi Apri/Salva/Salva con nome/export devono offrire la stessa
+semantica su Windows e macOS. Le integrazioni native (dialoghi, associazioni, scorciatoie e
+avvio senza console) possono adattarsi al sistema mantenendo equivalenti le operazioni.
+
+Il formato nativo deve avere un unico contratto versionato e la stessa estensione sui due
+sistemi, indipendente da backend grafico, percorsi assoluti, separatori e rappresentazioni
+native in memoria. Deve conservare contenuti e modificabilità di livelli raster, regolazioni
+e relativi stati di attivazione, maschere, ritocchi e trasformazioni, oltre a dimensioni,
+unità, PPI, spazio colore e alpha. Il trasferimento non deve richiedere appiattimento o
+conversione in un formato specifico della piattaforma. Gli asset incorporati devono essere
+autosufficienti; quelli collegati richiedono riferimenti portabili e un flusso esplicito di
+ricollegamento quando mancanti. Cache e identificatori locali non sono dati indispensabili
+alla riapertura. Il [contratto iniziale del documento raster](documenti-raster.md)
+definisce `.truerenderer`, contenitore, quote, editing e salvataggio; non introduce
+una garanzia di qualifica fra piattaforme prima delle prove richieste.
+
+L'accettazione richiede cicli Windows → macOS → Windows e macOS → Windows → macOS,
+con modifica e salvataggio a ogni passaggio, verifica della struttura modificabile e
+confronto della resa entro tolleranze numeriche dichiarate. La resa va confrontata in uno
+spazio colore comune, separatamente dalla presentazione sui diversi monitor. Apertura dal
+sistema operativo, gestione delle risorse, versioni incompatibili, scritture sicure e
+recupero da interruzione devono essere verificati su entrambi i sistemi; nessuna perdita
+silenziosa delle proprietà del documento è accettabile.
+
 ### 17.1 Windows x86-64
 
 Questa è una piattaforma v1. Le differenze dell'eventuale build ARM sono raccolte in §17.2.

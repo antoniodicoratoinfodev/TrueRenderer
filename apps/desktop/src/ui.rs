@@ -18,6 +18,7 @@ use tr_core::{
 mod cache_actions;
 mod comparison;
 mod detail_prefetch;
+mod document;
 mod editing;
 mod explorer;
 mod export;
@@ -59,6 +60,8 @@ pub struct Startup {
     pub open: Option<PathBuf>,
 }
 pub struct TrueRenderer {
+    document: document::Editor,
+    document_open_poll: Instant,
     comparison: comparison::Comparison,
     photo_menu: photo_menu::PhotoMenu,
     editing: editing::EditingUi,
@@ -199,7 +202,8 @@ impl TrueRenderer {
                 )
             })
             .unwrap_or(("GPU non disponibile".into(), "sconosciuta".into()));
-        let service = Service::start(root.clone(), data.clone(), worker, ctx.clone());
+        let service = Service::start(root.clone(), data.clone(), worker.clone(), ctx.clone());
+        let document = document::Editor::new(service.high.clone(), service.cache.memory.clone());
         if smoke && std::env::args().any(|a| a == "--raw-engine-ui-only-experimental") {
             let mut settings = service.cache.settings();
             settings.raw_engine = tr_core::decoder::RawEngine::TrueRendererExperimental;
@@ -264,6 +268,8 @@ impl TrueRenderer {
         let folder = root.join("corpus");
         let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
+            document,
+            document_open_poll: Instant::now(),
             editing: Default::default(),
             science: Default::default(),
             photo_export: export::ExportUi::default(),
@@ -477,6 +483,13 @@ impl TrueRenderer {
             "pending":self.state.pending.len()})
     }
     fn open_path(&mut self, path: PathBuf) {
+        if path
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("truerenderer"))
+        {
+            self.document.open(path);
+            return;
+        }
         self.navigate(path, Some(ViewMode::Preview));
     }
     fn request(&mut self, request: Request) -> bool {
@@ -1830,6 +1843,22 @@ impl TrueRenderer {
                     ui.label(RichText::new("TrueRenderer").size(14.).strong());
                     ui.add_space(4.);
                     ui.menu_button(lang.text("Apri"), |ui| {
+                    if ui.button("Spazio documento…").clicked() {
+                        self.commit_all_edits();
+                        self.document.active = true;
+                    }
+                    if ui.button("Copia foto in documento").clicked() && let Some(item)=self.state.current_item().cloned() {
+                            let request=self.preview_request(&item,0);
+                            let recipe=self.view_recipe(&item.id).unwrap_or_else(||tr_core::editing::EditRecipe::neutral(request.raw_engine));
+                            let source=self.cache.iter().find(|((id,r),c)| id==&item.id && r.raw_engine==request.raw_engine && r.raw_wb==request.raw_wb && c.pyramid.base_level()==0);
+                            if let Some((_,source))=source {
+                                if let Err(error)=self.document.capture_photo(item.name.clone(),source.pyramid.source(),recipe) {self.status=error.to_string();}
+                            } else {
+                                self.request_final_preview(&item.id,false);
+                                self.status="Caricamento nativo richiesto: ripetere Copia foto in documento al termine.".into();
+                            }
+                    }
+                        ui.separator();
                         if ui.button(lang.text("Apri cartella…")).clicked() {
                             ui.close();
                             if let Some(path) = rfd::FileDialog::new()
@@ -4186,6 +4215,58 @@ impl TrueRenderer {
 }
 impl eframe::App for TrueRenderer {
     fn ui(&mut self, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+        if self.document_open_poll.elapsed() >= Duration::from_millis(500) {
+            self.document_open_poll = Instant::now();
+            let queued = tr_platform::document_events::next().or_else(|| {
+                match crate::document_open::next(&self.settings_data) {
+                    Ok(path) => path,
+                    Err(error) => {
+                        self.status = error.to_string();
+                        None
+                    }
+                }
+            });
+            if let Some(path) = queued {
+                self.open_path(path);
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Focus);
+            }
+        }
+        ui.ctx().request_repaint_after(Duration::from_millis(500));
+        if ui.input(|i| i.viewport().close_requested()) && !self.document.allow_close() {
+            ui.ctx()
+                .send_viewport_cmd(egui::ViewportCommand::CancelClose);
+        }
+        if self.document.active {
+            if self.smoke
+                && let Some(gpu) = frame.wgpu_render_state()
+            {
+                let _ = gpu.device.poll(eframe::wgpu::PollType::Poll);
+            }
+            self.poll(&ui.ctx().clone());
+            self.document.show(ui);
+            if std::env::args().any(|a| a == "--document-smoke") {
+                self.frame_number += 1;
+                ui.ctx().request_repaint_after(Duration::from_millis(30));
+                if self.frame_number >= 8 && self.smoke_stage == 0 {
+                    self.capture_screenshot(ui.ctx(), "document");
+                    self.smoke_stage = 1;
+                }
+                if self.screenshots.contains("document")
+                    || self.started.elapsed() > Duration::from_secs(30)
+                {
+                    let mut report = self.document.diagnostic();
+                    report["passed"] = serde_json::json!(
+                        report["passed"] == true && self.screenshots.contains("document")
+                    );
+                    let _ = std::fs::write(
+                        self.root.join("reports/document-ui.json"),
+                        serde_json::to_vec_pretty(&report).unwrap(),
+                    );
+                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                }
+            }
+            return;
+        }
         let lang = self.cache_settings.language;
         let ctx = ui.ctx().clone();
         // A paused loading modal has no image compute to drive readback

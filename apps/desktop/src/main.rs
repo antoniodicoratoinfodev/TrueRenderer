@@ -1,8 +1,11 @@
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 mod browser_session;
 mod cache;
 mod compare_raw_color;
 mod compare_renderers;
 mod decode_pool;
+mod document_open;
 mod filesystem_browser;
 mod graphics;
 mod i18n;
@@ -33,6 +36,7 @@ use anyhow::{Context, Result};
 use std::{fs::OpenOptions, path::PathBuf};
 
 fn run() -> Result<()> {
+    tr_platform::document_events::install();
     let args: Vec<String> = std::env::args().collect();
     let option = |name: &str| {
         args.iter()
@@ -135,7 +139,20 @@ fn run() -> Result<()> {
             br#"{"passed":false,"complete":false}"#,
         )?;
     }
-    let smoke = navigation
+    let document_smoke = args.iter().any(|a| a == "--document-smoke");
+    if document_smoke {
+        anyhow::ensure!(
+            option("--root").is_some() && option("--data").is_some() && option("--open").is_some(),
+            "Document probe requires isolated --root, --data and --open"
+        );
+        std::fs::create_dir_all(root.join("reports"))?;
+        std::fs::write(
+            root.join("reports/document-ui.json"),
+            br#"{"passed":false,"reason":"incomplete"}"#,
+        )?;
+    }
+    let smoke = document_smoke
+        || navigation
         || args.iter().any(|a| a == "--folder-readiness-smoke")
         || args.iter().any(|a| a == "--cache-reopen-smoke")
         || args.iter().any(|a| a == "--folder-loading-smoke")
@@ -169,8 +186,13 @@ fn run() -> Result<()> {
             br#"{"passed":false,"reason":"probe incomplete"}"#,
         )?;
     }
-    let mut initial_open =
-        option("--open").or_else(|| external_smoke.then(|| root.join("var/format-fixtures")));
+    let mut initial_open = option("--open")
+        .or_else(|| {
+            args.get(1)
+                .filter(|a| !a.starts_with('-'))
+                .map(PathBuf::from)
+        })
+        .or_else(|| external_smoke.then(|| root.join("var/format-fixtures")));
     if source_smoke {
         let folder = root.join("var/source-change-fixture");
         std::fs::create_dir_all(&folder)?;
@@ -335,8 +357,16 @@ fn run() -> Result<()> {
         .read(true)
         .write(true)
         .open(data.join("instance.lock"))?;
-    fs2::FileExt::try_lock_exclusive(&lock)
-        .context("TrueRenderer è già aperto con questa libreria")?;
+    if let Err(error) = fs2::FileExt::try_lock_exclusive(&lock) {
+        if let Some(path) = initial_open.as_ref().filter(|p| {
+            p.extension()
+                .is_some_and(|e| e.eq_ignore_ascii_case("truerenderer"))
+        }) {
+            document_open::enqueue(&data, path)?;
+            return Ok(());
+        }
+        return Err(error).context("TrueRenderer è già aperto con questa libreria");
+    }
     anyhow::ensure!(
         worker.is_file(),
         "Manca tr-worker accanto all'applicazione. Eseguire scripts/build-macos.sh."
@@ -372,6 +402,27 @@ fn run() -> Result<()> {
     Ok(())
 }
 fn main() {
+    // GUI launches never allocate a console. Preserve redirected diagnostics and
+    // attach to an existing terminal for command-line verification only.
+    #[cfg(windows)]
+    {
+        #[link(name = "kernel32")]
+        unsafe extern "system" {
+            fn AttachConsole(process_id: u32) -> i32;
+            fn GetStdHandle(kind: u32) -> *mut std::ffi::c_void;
+            fn SetStdHandle(kind: u32, handle: *mut std::ffi::c_void) -> i32;
+        }
+        unsafe {
+            let kinds = [-10_i32 as u32, -11_i32 as u32, -12_i32 as u32];
+            let handles = kinds.map(|kind| GetStdHandle(kind));
+            AttachConsole(u32::MAX);
+            for (kind, handle) in kinds.into_iter().zip(handles) {
+                if !handle.is_null() && handle as isize != -1 {
+                    SetStdHandle(kind, handle);
+                }
+            }
+        }
+    }
     if let Err(error) = run() {
         eprintln!("TrueRenderer: {error:#}");
         if std::env::args().any(|a| {

@@ -10,6 +10,7 @@ use tr_core::decoder::RawEngine;
 use tr_core::editing::EditRecipe;
 use tr_core::location::{Favorite, Location};
 use uuid::Uuid;
+pub mod document;
 mod looks;
 pub use looks::{LookEdit, SavedLook};
 

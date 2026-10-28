@@ -49,8 +49,15 @@ struct Ready {
     _snapshot_slot: Lease,
 }
 const MAX_SOURCE_SNAPSHOTS: u64 = 2;
+pub struct DocumentImport {
+    pub path: PathBuf,
+    pub result: mpsc::Sender<anyhow::Result<tr_core::document::RasterLayer>>,
+    pub memory: Lease,
+    pub document: Arc<Lease>,
+}
 #[derive(Default)]
 struct Queues {
+    document: Option<DocumentImport>,
     sample: Option<crate::photo_export::ScientificJob>,
     wb: Option<Box<crate::photo_export::WbJob>>,
     export: Option<crate::photo_export::Job>,
@@ -619,6 +626,68 @@ impl DecodePool {
                 loop {
                     if stop.load(Ordering::Acquire) {
                         break;
+                    }
+                    let document = if slot == 0 {
+                        queues.0.lock().unwrap().document.take()
+                    } else {
+                        None
+                    };
+                    if let Some(job) = document {
+                        let cancelled = || stop.load(Ordering::Acquire);
+                        let result = (|| -> anyhow::Result<tr_core::document::RasterLayer> {
+                            // Reuse this lane's broker. A third connection to an
+                            // occupied macOS XPC service would be rejected.
+                            let _slot = snapshot_slots.try_reserve(1).ok_or_else(|| {
+                                anyhow::anyhow!(
+                                    "Anteprime in lettura: attendere e riprovare l'importazione"
+                                )
+                            })?;
+                            let _permit = decode_admission.try_lock().map_err(|_| {
+                                anyhow::anyhow!("Decoder occupato: riprovare l'importazione")
+                            })?;
+                            let (_, digest) = tr_platform::snapshot(&job.path)?;
+                            let source = broker.prepare_snapshot(&job.path, &digest, cancelled)?;
+                            broker.set_raw_engine(Default::default());
+                            broker.set_raw_white_balance(Default::default());
+                            broker.set_admitted_memory(
+                                job.memory.bytes() + cache.baseline_bytes,
+                                cache.memory.usage().limit,
+                            );
+                            let info = broker.probe_snapshot(&source, cancelled)?;
+                            anyhow::ensure!(
+                                u64::from(info.width) * u64::from(info.height)
+                                    <= tr_core::document::MAX_CANVAS_PIXELS as u64,
+                                "Immagine oltre il limite del documento (16 MP)"
+                            );
+                            anyhow::ensure!(
+                                decode_working_bytes(info.width, info.height)?
+                                    + source.byte_len() * 2
+                                    <= job.memory.bytes(),
+                                "Importazione oltre l'ammissione memoria"
+                            );
+                            let decoded = broker.decode_snapshot_bounded(
+                                source,
+                                0,
+                                tr_core::document::MAX_DOCUMENT_BYTES as u64,
+                                cancelled,
+                            )?;
+                            Ok(tr_core::document::RasterLayer::new(
+                                job.path
+                                    .file_name()
+                                    .unwrap_or_default()
+                                    .to_string_lossy()
+                                    .into_owned(),
+                                decoded.raster,
+                            ))
+                        })();
+                        // Native processing and transfer have finished. The small
+                        // incoming raster is now covered by the workspace envelope;
+                        // release decoder credits before publishing readiness.
+                        drop(job.memory);
+                        let _ = job.result.send(result);
+                        ctx.request_repaint();
+                        drop(job.document);
+                        continue;
                     }
                     let wb = if slot == 0 {
                         queues.0.lock().unwrap().wb.take()
@@ -1304,6 +1373,17 @@ impl DecodePool {
         self.queues.1.notify_all();
         true
     }
+    pub fn submit_document(&self, job: DocumentImport) {
+        let mut q = self.queues.0.lock().unwrap();
+        if q.document.is_some() || self.stop.load(Ordering::Acquire) {
+            let _ = job
+                .result
+                .send(Err(anyhow::anyhow!("Coda importazione occupata")));
+        } else {
+            q.document = Some(job);
+            self.queues.1.notify_all();
+        }
+    }
     pub fn submit_wb(&self, job: Box<crate::photo_export::WbJob>) -> bool {
         let mut q = self.queues.0.lock().unwrap();
         if q.wb.is_some() || self.stop.load(Ordering::Acquire) {
@@ -1419,6 +1499,45 @@ mod tests {
             priority: PreviewPriority::Background,
             generation: 1,
         }
+    }
+    #[test]
+    #[ignore = "requires TR_WORKER_BINARY and native process isolation"]
+    fn document_import_reuses_decoder_lane_and_releases_admissions() {
+        let cache = Arc::new(crate::cache::Manager::new(crate::cache::Settings {
+            enabled: false,
+            memory_mib: 8192,
+            diagnostic_fixed_memory: true,
+            ..Default::default()
+        }));
+        let (events, _rx) = mpsc::sync_channel(16);
+        let pool = DecodePool::start(
+            std::env::var_os("TR_WORKER_BINARY")
+                .expect("TR_WORKER_BINARY")
+                .into(),
+            Arc::new(AtomicU64::new(1)),
+            events,
+            egui::Context::default(),
+            cache.clone(),
+        );
+        let path = navigation_job("document").item.path;
+        let document = Arc::new(cache.memory.try_reserve(3 * 1024 * 1024 * 1024).unwrap());
+        let mut imported = vec![];
+        for _ in 0..2 {
+            let (tx, rx) = mpsc::channel();
+            pool.submit_document(DocumentImport {
+                path: path.clone(),
+                result: tx,
+                memory: cache.memory.try_reserve(3 * 1024 * 1024 * 1024).unwrap(),
+                document: document.clone(),
+            });
+            imported.push(rx.recv_timeout(Duration::from_secs(45)).unwrap().unwrap());
+        }
+        assert_eq!(imported[0].pixels, imported[1].pixels);
+        imported[0].pixels[0] = [0.; 4];
+        assert_ne!(imported[0].pixels, imported[1].pixels);
+        drop(pool);
+        drop(document);
+        assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
     }
     #[test]
     fn cache_only_miss_never_starts_a_worker_and_normal_demand_can_retry() {

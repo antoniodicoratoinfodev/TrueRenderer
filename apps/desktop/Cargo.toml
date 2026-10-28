@@ -21,6 +21,7 @@ tempfile.workspace = true
 rfd = "=0.17.2"
 fs2 = "0.4"
 image.workspace = true
+png.workspace = true
 
 [target.'cfg(windows)'.dependencies]
 windows-sys.workspace = true

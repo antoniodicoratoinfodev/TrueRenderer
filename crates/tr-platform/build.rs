@@ -13,7 +13,12 @@ fn main() {
     let root = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").unwrap()).join("../../native/macos");
     let out = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let mut objects = vec![];
-    for source in ["signing.m", "xpc_bridge.m", "resources.m"] {
+    for source in [
+        "signing.m",
+        "xpc_bridge.m",
+        "resources.m",
+        "document_events.m",
+    ] {
         let input = root.join(source);
         println!("cargo:rerun-if-changed={}", input.display());
         let object = out.join(format!("{source}.o"));
@@ -48,5 +53,6 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", out.display());
     println!("cargo:rustc-link-lib=static=tr_xpc");
     println!("cargo:rustc-link-lib=framework=Foundation");
+    println!("cargo:rustc-link-lib=framework=AppKit");
     println!("cargo:rustc-link-lib=framework=Security");
 }

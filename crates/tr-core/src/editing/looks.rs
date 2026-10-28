@@ -45,7 +45,11 @@ impl Look {
                 if !masks {
                     copy.mask = Default::default();
                 }
-                for op in &mut copy.operators {
+                for op in copy
+                    .operators
+                    .iter_mut()
+                    .chain(copy.suspended_operators.values_mut())
+                {
                     if let Operator::TonalLevels(levels) = op {
                         levels.analysis = None;
                     }
@@ -69,9 +73,12 @@ impl Look {
         recipe.layer_stack().layers.clone_from(&self.layers);
         recipe.validate()?;
         ensure!(
-            self.layers.iter().flat_map(|l| &l.operators).all(|op| {
-                !matches!(op, Operator::TonalLevels(levels) if levels.analysis.is_some())
-            }),
+            self.layers
+                .iter()
+                .flat_map(|l| l.operators.iter().chain(l.suspended_operators.values()))
+                .all(|op| {
+                    !matches!(op, Operator::TonalLevels(levels) if levels.analysis.is_some())
+                }),
             "Il look contiene riferimenti a una foto"
         );
         Ok(())

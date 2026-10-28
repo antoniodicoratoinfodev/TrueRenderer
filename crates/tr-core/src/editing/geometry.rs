@@ -109,6 +109,63 @@ impl Geometry {
     pub fn source_point(&self, p: [f64; 2], source: [u32; 2]) -> Option<[f64; 2]> {
         self.source_point_with_rotation(p, source, (self.angle as f64).to_radians().sin_cos())
     }
+    /// Forward map for editing source pixels through the displayed geometry.
+    /// Inverts the monotone radial correction before the projective transform.
+    pub fn output_point(&self, p: [f64; 2], source: [u32; 2]) -> Option<[f64; 2]> {
+        let unit = f64::from(source[0].max(source[1])) / 2.;
+        let target = [
+            (p[0] - 0.5) * source[0] as f64 / unit,
+            (p[1] - 0.5) * source[1] as f64 / unit,
+        ];
+        let radius = target[0].hypot(target[1]);
+        let mut factor = 1.;
+        if radius > 0. && (self.distortion != 0. || self.moustache != 0.) {
+            let (mut lo, mut hi) = (0., radius / 0.55);
+            for _ in 0..40 {
+                let r = (lo + hi) * 0.5;
+                let r2 = r * r;
+                let f = 1.
+                    + self.distortion as f64 * 0.003 * r2 / (1. + r2)
+                    + self.moustache as f64 * 0.0015 * r2 * r2 / (1. + r2 * r2);
+                if r * f < radius {
+                    lo = r;
+                } else {
+                    hi = r;
+                }
+            }
+            factor = (lo + hi) * 0.5 / radius;
+        }
+        let mut u = 0.5 + target[0] * factor * unit / source[0] as f64;
+        let mut v = 0.5 + target[1] * factor * unit / source[1] as f64;
+        if self.flip_horizontal {
+            u = 1. - u;
+        }
+        if self.flip_vertical {
+            v = 1. - v;
+        }
+        (u, v) = match self.quarter_turns {
+            1 => (1. - v, u),
+            2 => (1. - u, 1. - v),
+            3 => (v, 1. - u),
+            _ => (u, v),
+        };
+        let [w, h] = self.rotated_size(source).map(f64::from);
+        let mut x = (u - 0.5) * w / unit;
+        let mut y = (v - 0.5) * h / unit;
+        let (sin, cos) = (self.angle as f64).to_radians().sin_cos();
+        (x, y) = (cos * x - sin * y, sin * x + cos * y);
+        let divisor =
+            1. - self.perspective[0] as f64 * 0.003 * x - self.perspective[1] as f64 * 0.003 * y;
+        if divisor <= 0. || !divisor.is_finite() {
+            return None;
+        }
+        x = x / divisor * self.scale as f64;
+        y = y / divisor * self.scale as f64;
+        Some([
+            (x * unit / w + 0.5 - self.crop[0] as f64) / (self.crop[2] - self.crop[0]) as f64,
+            (y * unit / h + 0.5 - self.crop[1] as f64) / (self.crop[3] - self.crop[1]) as f64,
+        ])
+    }
     pub(super) fn source_point_with_rotation(
         &self,
         p: [f64; 2],

@@ -38,7 +38,37 @@ For a vintage texture, use **Creative grain** in **Presence and detail**. Enable
 
 ## Build the look, layer by layer
 
+The larger dot in a Develop section or layer effect switches that tool off and on.
+Disabled tools retain their values, including after saving and reopening the edit.
+An illuminated dot identifies an enabled tool with adjustments.
+
 Keep different creative decisions independently editable. Add an adjustment to a new photographic layer or to the selected layer, then control where it acts and how strongly it contributes.
+
+For raster editing in development builds, use **Open → Spazio documento…** or
+**Copia foto in documento**. The document workspace provides independent raster
+copies, transparent layers, image insertion, move/scale/rotation, selections,
+erasing and the **Clona**, **Ripara** and **Ripara rapido** brushes. Alt-click
+samples the selected layer for Clone/Heal. Double-click closes a polygonal selection.
+Use **Nuovo** for dimensions, units, PPI, background and output colour space;
+**Salva** writes an editable `.truerenderer` document, **Export documento** writes
+a separate copy, and **Export PNG16** renders the finished image. Previous saves
+remain in uniquely named `*.previous-*.truerenderer` files beside the document.
+Use **Ctrl/Cmd+N**, **O**, **S** and **Shift+S** for New, Open, Save and Save As in
+the document workspace. Double-click ends a polygon selection; Alt-click chooses
+the source for Clone or sampled Repair. Photographic curves and masks remain
+editable on each raster layer. Select a raster tool to finish mask drawing.
+
+On Windows, `scripts/register-document-windows.ps1 -Executable PATH` registers a
+verified executable for `.truerenderer` files for the current user, preserving an
+existing application choice. The macOS bundle declares the same extension for
+Finder. Neither path changes the document's portable representation.
+
+The initial document limits are 16 MP per canvas/image and 256 MiB of raster assets
+and masks, with a 2048 px fitted preview. RAW development is embedded as raster
+pixels; sensor decoding and completed brush-stroke parameters cannot be changed
+after reopening. See the [document contract](docs/documenti-raster.md) and
+[qualification status](STATO.md#livelli-raster-ritocco-formato-progetto) before using
+the development build for production work.
 
 - **A clear layer stack:** name, duplicate, reorder, hide or lock layers, with separate Opacity and Fill controls.
 - **Local adjustments:** combine brush, linear and radial gradients, luminance and hue masks. Add, subtract or intersect components, soften edges and invert coverage.

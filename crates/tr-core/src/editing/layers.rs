@@ -59,6 +59,8 @@ pub struct Layer {
     pub fill: f32,
     pub mask: MaskGraph,
     pub operators: Vec<Operator>,
+    #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+    pub suspended_operators: std::collections::BTreeMap<usize, Operator>,
 }
 impl Layer {
     pub fn new(name: impl Into<String>, operator: Operator) -> Self {
@@ -76,6 +78,7 @@ impl Layer {
             fill: 1.,
             mask: MaskGraph::default(),
             operators: Vec::new(),
+            suspended_operators: Default::default(),
         }
     }
     pub fn duplicate(&self) -> Self {
@@ -124,6 +127,9 @@ impl LayerStack {
             self.layers.truncate(i + 1);
             let layer = &mut self.layers[i];
             layer.operators.truncate(operator);
+            layer
+                .suspended_operators
+                .retain(|index, _| *index < operator);
             layer.mask = Default::default();
             layer.opacity = 1.;
             layer.fill = 1.;
@@ -213,6 +219,15 @@ impl LayerStack {
             );
             for operator in &layer.operators {
                 operator.validate()?;
+            }
+            for (index, operator) in &layer.suspended_operators {
+                operator.validate()?;
+                ensure!(
+                    layer.operators.get(*index).is_some_and(
+                        |active| active.is_neutral() && active.tool().id == operator.tool().id
+                    ),
+                    "Operatore sospeso incoerente"
+                );
             }
             layer.mask.validate()?;
             for node in &layer.mask.nodes {

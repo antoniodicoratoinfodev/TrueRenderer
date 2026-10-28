@@ -62,7 +62,8 @@ pub enum Request {
     Undo,
     Backup,
     Export(PathBuf),
-    ExportPhoto(crate::photo_export::Job),
+    ExportPhoto(Box<crate::photo_export::Job>),
+    ImportDocument(crate::decode_pool::DocumentImport),
     ScientificSample(crate::photo_export::ScientificJob),
     RawWhiteBalance(Box<crate::photo_export::WbJob>),
     Shutdown,
@@ -512,10 +513,11 @@ impl Service {
                         Err(e) => send(Event::Status(format!("Export non riuscito: {e:#}"))),
                     },
                     Request::ExportPhoto(job) => {
-                        if !pool.submit_export(job) {
+                        if !pool.submit_export(*job) {
                             send(Event::PhotoExport(Err("Coda export occupata".into())));
                         }
                     }
+                    Request::ImportDocument(job) => pool.submit_document(job),
                     Request::RawWhiteBalance(job) => {
                         if !pool.submit_wb(job.clone()) {
                             send(Event::RawWhiteBalance {

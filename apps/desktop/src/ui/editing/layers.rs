@@ -7,6 +7,7 @@ use tr_core::editing::{
     masks::{Mask, Shape},
 };
 mod curves;
+mod document;
 mod mask_panel;
 mod panel;
 mod selective;
@@ -45,6 +46,7 @@ pub(in crate::ui) struct Controls {
     gesture_start: Option<EditRecipe>,
     anchor: Option<[f32; 2]>,
     error: Option<String>,
+    document_input: Option<(String, tr_core::provider::ImageLevels)>,
 }
 
 pub(super) fn color_wheel(

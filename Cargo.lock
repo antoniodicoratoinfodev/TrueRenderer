@@ -3174,8 +3174,11 @@ name = "tr-store"
 version = "0.1.5"
 dependencies = [
  "anyhow",
+ "bytemuck",
  "rusqlite",
+ "serde",
  "serde_json",
+ "sha2",
  "tempfile",
  "tr-core",
  "uuid",
@@ -3241,6 +3244,7 @@ dependencies = [
  "fs2",
  "image",
  "libc",
+ "png",
  "rfd",
  "serde",
  "serde_json",

@@ -3,6 +3,7 @@ use super::{help, panels};
 use crate::i18n::Language;
 use eframe::egui;
 use tr_core::editing::masks::{Mask, Shape};
+mod document;
 
 #[derive(Default)]
 pub(in crate::ui) struct Controls {
@@ -45,6 +46,7 @@ fn reset<T: Default + PartialEq>(
 }
 
 impl Controls {
+    #[cfg(test)]
     pub fn show(
         &mut self,
         ui: &mut egui::Ui,
@@ -52,11 +54,32 @@ impl Controls {
         recipe: &mut EditRecipe,
         native: Option<[u32; 2]>,
     ) -> (bool, bool) {
+        let mut switches = Default::default();
+        self.show_with_switches(ui, lang, recipe, native, &mut switches)
+    }
+    pub fn show_with_switches(
+        &mut self,
+        ui: &mut egui::Ui,
+        lang: Language,
+        recipe: &mut EditRecipe,
+        native: Option<[u32; 2]>,
+        switches: &mut std::collections::BTreeSet<String>,
+    ) -> (bool, bool) {
         let mut a = recipe.advanced.clone().unwrap_or_default();
         let before = a.clone();
         let mut commit = false;
         ui.separator();
         panels::Section::new(lang, "geometry", "Ritaglio e geometria")
+            .switches(switches)
+            .modified(
+                a.geometry.crop != [0., 0., 1., 1.]
+                    || a.geometry.angle != 0.
+                    || a.geometry.quarter_turns != 0
+                    || a.geometry.flip_horizontal
+                    || a.geometry.flip_vertical
+                    || a.geometry.perspective != [0.; 2]
+                    || a.geometry.scale != 1.,
+            )
             .default_open(false)
             .show(ui, |ui| {
                 let g = &mut a.geometry;
@@ -234,6 +257,14 @@ impl Controls {
                 }
             });
         panels::Section::new(lang, "optics", "Ottica manuale")
+            .switches(switches)
+            .modified(
+                a.geometry.distortion != 0.
+                    || a.geometry.moustache != 0.
+                    || a.geometry.vignette != 0.
+                    || a.geometry.ca != [0.; 2]
+                    || a.geometry.defringe != 0.,
+            )
             .default_open(false)
             .show(ui, |ui| {
                 ui.small(lang.text(
@@ -279,6 +310,8 @@ impl Controls {
                 }
             });
         panels::Section::new(lang, "detail", "Presenza e dettaglio")
+            .switches(switches)
+            .modified(a.detail.active())
             .default_open(false)
             .show(ui, |ui| {
                 let previous_noise = (
@@ -333,6 +366,8 @@ impl Controls {
                 reset(ui, lang, &mut a.detail, &mut commit);
             });
         panels::Section::new(lang, "advanced-color", "Colore avanzato")
+            .switches(switches)
+            .modified(a.color != Default::default())
             .default_open(false)
             .show(ui, |ui| {
                 commit |=
@@ -407,6 +442,8 @@ impl Controls {
                 reset(ui, lang, &mut a.color, &mut commit);
             });
         panels::Section::new(lang, "local-masks", "Maschere locali")
+            .switches(switches)
+            .modified(!a.masks.is_empty())
             .default_open(false)
             .show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
