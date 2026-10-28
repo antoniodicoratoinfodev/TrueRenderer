@@ -542,6 +542,7 @@ mod tests {
                 CachedImage {
                     digest: "comparison".into(),
                     info: RasterInfo {
+                        resolution: None,
                         shooting: None,
                         scientific: None,
                         reference_mip: None,

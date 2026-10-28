@@ -5,6 +5,7 @@ mod cache;
 mod compare_raw_color;
 mod compare_renderers;
 mod decode_pool;
+mod document_memory;
 mod document_open;
 mod filesystem_browser;
 mod graphics;
@@ -139,7 +140,9 @@ fn run() -> Result<()> {
             br#"{"passed":false,"complete":false}"#,
         )?;
     }
-    let document_smoke = args.iter().any(|a| a == "--document-smoke");
+    let document_smoke = args.iter().any(|a| {
+        a == "--document-smoke" || a == "--composition-smoke" || a == "--native-document-smoke"
+    });
     if document_smoke {
         anyhow::ensure!(
             option("--root").is_some() && option("--data").is_some() && option("--open").is_some(),

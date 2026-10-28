@@ -3117,6 +3117,7 @@ dependencies = [
  "anyhow",
  "bytemuck",
  "libc",
+ "moxcms",
  "rayon",
  "serde",
  "serde_json",

@@ -55,6 +55,9 @@ pub struct DecodeRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct RasterInfo {
+    /// Physical pixel density, after applying the source orientation. Absent stays unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<Resolution>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub shooting: Option<Box<ShootingInfo>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -71,6 +74,25 @@ pub struct RasterInfo {
     pub input_color: String,
     pub filter: String,
     pub orientation: String,
+}
+
+/// Pixels per inch on each axis; independent from the raster's pixel dimensions.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Resolution {
+    pub x: f64,
+    pub y: f64,
+}
+impl Resolution {
+    pub fn validate(self) -> Result<()> {
+        ensure!(
+            [self.x, self.y]
+                .into_iter()
+                .all(|v| v.is_finite() && (1. ..=9600.).contains(&v)),
+            "Risoluzione fisica non valida"
+        );
+        Ok(())
+    }
 }
 
 /// Read-only presentation of primary-image EXIF. Missing or invalid tags stay absent.
@@ -169,6 +191,9 @@ pub fn parse<T: DeserializeOwned>(data: &[u8]) -> Result<T> {
     Ok(serde_json::from_slice(data)?)
 }
 pub fn validate_info(info: &RasterInfo) -> Result<usize> {
+    if let Some(resolution) = info.resolution {
+        resolution.validate()?;
+    }
     if let Some(shooting) = &info.shooting {
         shooting.validate()?;
     }
@@ -263,6 +288,7 @@ mod tests {
     use super::*;
     fn info(width: u32, height: u32) -> RasterInfo {
         RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

@@ -716,10 +716,32 @@ mod tests {
     #[test]
     #[ignore = "requires built worker; scripts/verify.sh runs this explicitly"]
     fn asynchronous_scan_save_undo_and_invalid_mutation() {
-        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        let repository = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("../..")
             .canonicalize()
             .unwrap();
+        // User projects can now live beside the corpus photos. Freeze just the
+        // controlled inputs for this service test; never scan durable user work.
+        let fixture = tempfile::tempdir().unwrap();
+        let root = fixture.path().canonicalize().unwrap();
+        std::fs::create_dir(root.join("corpus")).unwrap();
+        let manifest: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(repository.join("corpus/manifest.json")).unwrap(),
+        )
+        .unwrap();
+        std::fs::copy(
+            repository.join("corpus/manifest.json"),
+            root.join("corpus/manifest.json"),
+        )
+        .unwrap();
+        for image in manifest["images"].as_array().unwrap() {
+            let name = image["file"].as_str().unwrap();
+            std::fs::copy(
+                repository.join("corpus").join(name),
+                root.join("corpus").join(name),
+            )
+            .unwrap();
+        }
         let data = tempfile::tempdir().unwrap();
         let worker = std::env::var_os("TR_WORKER_BINARY")
             .map(PathBuf::from)

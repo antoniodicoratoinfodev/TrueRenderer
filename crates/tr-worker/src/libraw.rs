@@ -106,6 +106,7 @@ fn describe(bytes: &[u8], engine: RawEngine) -> Result<Info> {
 
 fn provenance(info: &Info, filter: &str, engine: RawEngine) -> RasterInfo {
     RasterInfo {
+        resolution: None,
         shooting: None,
         scientific: None,
         reference_mip: None,

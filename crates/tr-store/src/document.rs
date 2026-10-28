@@ -1,4 +1,4 @@
-//! Version 1: bounded JSON manifest, little-endian fp32 assets, SHA-256 footer.
+//! Versions 1/2: bounded JSON manifest, little-endian fp32 assets, SHA-256 footer.
 use anyhow::{Context, Result, ensure};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -8,7 +8,8 @@ use std::{
     path::Path,
 };
 use tr_core::document::{Document, MAX_CANVAS_PIXELS, MAX_DOCUMENT_BYTES, MAX_LAYERS};
-const MAGIC: &[u8; 8] = b"TRDOC\0\x01\0";
+const MAGIC_V1: &[u8; 8] = b"TRDOC\0\x01\0";
+const MAGIC_V2: &[u8; 8] = b"TRDOC\0\x02\0";
 const MAX_MANIFEST: usize = 1024 * 1024;
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -39,7 +40,11 @@ pub fn write(writer: &mut impl Write, document: &Document) -> Result<()> {
         hash.update(bytes);
         Ok(())
     };
-    block(MAGIC)?;
+    block(if document.version == 1 {
+        MAGIC_V1
+    } else {
+        MAGIC_V2
+    })?;
     block(&(manifest.len() as u32).to_le_bytes())?;
     block(&manifest)?;
     let mut buffer = Vec::with_capacity(64 * 1024);
@@ -62,6 +67,9 @@ pub fn write(writer: &mut impl Write, document: &Document) -> Result<()> {
 }
 
 pub fn read(reader: &mut impl Read) -> Result<Document> {
+    read_admitted(reader, u64::MAX)
+}
+fn read_admitted(reader: &mut impl Read, maximum: u64) -> Result<Document> {
     let mut hash = Sha256::new();
     let mut block = |bytes: &mut [u8]| -> Result<()> {
         reader.read_exact(bytes)?;
@@ -71,7 +79,7 @@ pub fn read(reader: &mut impl Read) -> Result<Document> {
     let mut magic = [0; 8];
     block(&mut magic)?;
     ensure!(
-        &magic == MAGIC,
+        &magic == MAGIC_V1 || &magic == MAGIC_V2,
         "Non è un documento TrueRenderer supportato"
     );
     let mut size = [0; 4];
@@ -86,7 +94,7 @@ pub fn read(reader: &mut impl Read) -> Result<Document> {
         masks,
     } = serde_json::from_slice::<Manifest>(&bytes)?;
     ensure!(
-        document.version == 1
+        document.version == magic[6] as u32
             && document.layers.len() <= MAX_LAYERS
             && masks.len() == document.layers.len(),
         "Versione/livelli non validi"
@@ -112,6 +120,16 @@ pub fn read(reader: &mut impl Read) -> Result<Document> {
             .map(|(n, m)| n * (16 + if *m { 4 } else { 0 }))
             .sum::<usize>();
     ensure!(total <= MAX_DOCUMENT_BYTES, "Documento fuori quota memoria");
+    let largest = counts
+        .iter()
+        .copied()
+        .chain(std::iter::once(n))
+        .max()
+        .unwrap_or(n);
+    ensure!(
+        tr_core::document::admission_bytes(total as u64, largest as u64) <= maximum,
+        "Documento cambiato o oltre la memoria ammessa"
+    );
     let mut floats = |n: usize| -> Result<Vec<f32>> {
         let mut values = Vec::new();
         values.try_reserve_exact(n)?;
@@ -162,11 +180,65 @@ pub fn read(reader: &mut impl Read) -> Result<Document> {
     document.validate()?;
     Ok(document)
 }
+/// Validate the bounded manifest before the host admits raster allocations.
+pub fn allocation(path: &Path) -> Result<(u64, u64)> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut magic = [0; 8];
+    reader.read_exact(&mut magic)?;
+    ensure!(
+        &magic == MAGIC_V1 || &magic == MAGIC_V2,
+        "Versione documento non supportata"
+    );
+    let mut size = [0; 4];
+    reader.read_exact(&mut size)?;
+    let size = u32::from_le_bytes(size) as usize;
+    ensure!(size <= MAX_MANIFEST, "Manifest fuori quota");
+    let mut bytes = vec![0; size];
+    reader.read_exact(&mut bytes)?;
+    let manifest: Manifest = serde_json::from_slice(&bytes)?;
+    let d = &manifest.document;
+    ensure!(
+        d.version == magic[6] as u32
+            && d.layers.len() <= MAX_LAYERS
+            && manifest.masks.len() == d.layers.len(),
+        "Manifest documento non valido"
+    );
+    let area = |w: u32, h: u32| -> Result<u64> {
+        let n = u64::from(w) * u64::from(h);
+        ensure!(
+            w > 0 && h > 0 && n <= MAX_CANVAS_PIXELS as u64,
+            "Dimensioni fuori quota"
+        );
+        Ok(n)
+    };
+    let mut largest = area(d.width, d.height)?;
+    let mut storage = if manifest.selection { largest * 4 } else { 0 };
+    for (layer, mask) in d.layers.iter().zip(manifest.masks) {
+        let n = area(layer.width, layer.height)?;
+        largest = largest.max(n);
+        storage += n * if mask { 20 } else { 16 };
+    }
+    ensure!(
+        storage <= MAX_DOCUMENT_BYTES as u64,
+        "Documento fuori quota memoria"
+    );
+    Ok((storage, largest))
+}
 pub fn open(path: &Path) -> Result<Document> {
-    read(&mut BufReader::new(File::open(path)?))
+    open_admitted(path, u64::MAX)
+}
+pub fn open_admitted(path: &Path, maximum: u64) -> Result<Document> {
+    read_admitted(&mut BufReader::new(File::open(path)?), maximum)
 }
 
 pub fn save(path: &Path, document: &Document) -> Result<()> {
+    save_mode(path, document, false)
+}
+/// Publish a new project atomically without replacing any existing file.
+pub fn create(path: &Path, document: &Document) -> Result<()> {
+    save_mode(path, document, true)
+}
+fn save_mode(path: &Path, document: &Document, create: bool) -> Result<()> {
     ensure!(
         path.extension()
             .is_some_and(|e| e.eq_ignore_ascii_case("truerenderer")),
@@ -185,7 +257,7 @@ pub fn save(path: &Path, document: &Document) -> Result<()> {
         writer.flush()?;
     }
     temp.as_file().sync_all()?;
-    if path.exists() {
+    if !create && path.exists() {
         // Never replace a photograph or unrelated file, even with a misleading extension.
         open(path).context("Il documento esistente non è valido: scegliere Salva con nome")?;
         let backup = path.with_file_name(format!(
@@ -200,7 +272,11 @@ pub fn save(path: &Path, document: &Document) -> Result<()> {
         previous.as_file().sync_all()?;
         previous.persist_noclobber(&backup).map_err(|e| e.error)?;
     }
-    temp.persist(path).map_err(|e| e.error)?;
+    if create {
+        temp.persist_noclobber(path).map_err(|e| e.error)?;
+    } else {
+        temp.persist(path).map_err(|e| e.error)?;
+    }
     #[cfg(unix)]
     File::open(parent)?.sync_all()?;
     Ok(())
@@ -209,6 +285,39 @@ pub fn save(path: &Path, document: &Document) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn legacy_v1_and_native_v2_density_roundtrip_with_admission() {
+        let mut doc = Document::new(8, 6, 240., [0.; 4]).unwrap();
+        doc.version = 1;
+        doc.resolution = None;
+        let mut bytes = vec![];
+        write(&mut bytes, &doc).unwrap();
+        assert_eq!(&bytes[..8], MAGIC_V1);
+        let legacy = read(&mut bytes.as_slice()).unwrap();
+        assert_eq!(
+            legacy.physical_resolution(),
+            Some(tr_core::protocol::Resolution { x: 240., y: 240. })
+        );
+        for resolution in [
+            None,
+            Some(tr_core::protocol::Resolution { x: 240., y: 150. }),
+        ] {
+            doc.version = 2;
+            doc.resolution = resolution;
+            let mut bytes = vec![];
+            write(&mut bytes, &doc).unwrap();
+            assert_eq!(&bytes[..8], MAGIC_V2);
+            assert_eq!(read(&mut bytes.as_slice()).unwrap(), doc);
+            assert!(read_admitted(&mut bytes.as_slice(), 1024).is_err());
+            let dir = tempfile::tempdir().unwrap();
+            let path = dir.path().join("native.truerenderer");
+            save(&path, &doc).unwrap();
+            let (storage, pixels) = allocation(&path).unwrap();
+            assert_eq!((storage, pixels), (8 * 6 * 16, 8 * 6));
+            let admitted = tr_core::document::admission_bytes(storage, pixels);
+            assert_eq!(open_admitted(&path, admitted).unwrap(), doc);
+        }
+    }
     #[test]
     fn portable_roundtrip_and_corruption() {
         let mut doc = Document::new(3, 2, 300., [0.2, 0.1, 0., 0.5]).unwrap();
@@ -224,7 +333,7 @@ mod tests {
         doc.layers[0].mask = vec![0.75; 6];
         let mut bytes = vec![];
         write(&mut bytes, &doc).unwrap();
-        assert_eq!(&bytes[..8], MAGIC);
+        assert_eq!(&bytes[..8], MAGIC_V2);
         assert_eq!(read(&mut bytes.as_slice()).unwrap(), doc);
         assert_eq!(
             read(&mut bytes.as_slice())

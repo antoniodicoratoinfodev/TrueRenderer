@@ -9,7 +9,7 @@ use tiff::{
 };
 use tr_core::{
     color::{self, LinearImage},
-    export::{Compression, Format, Info, MAX_ENCODED, Options},
+    export::{Compression, Format, Info, MAX_ENCODED, Options, profile},
 };
 
 struct Bounded {
@@ -58,89 +58,6 @@ fn srational(v: f32) -> SRational {
 }
 fn tag(n: u16) -> Tag {
     Tag::from_u16_exhaustive(n)
-}
-fn profile(linear: bool) -> Result<Vec<u8>> {
-    let mut profile = if linear {
-        moxcms::ColorProfile::new_bt2020()
-    } else {
-        moxcms::ColorProfile::new_srgb()
-    };
-    profile.cicp = None; // Matrix/TRC RGB profile, not a video range/matrix declaration.
-    profile.rendering_intent = moxcms::RenderingIntent::RelativeColorimetric;
-    profile.white_point = moxcms::Xyzd {
-        x: 0.9642,
-        y: 1.,
-        z: 0.8249,
-    };
-    profile.media_white_point = Some(profile.white_point);
-    if linear {
-        profile.red_trc = Some(moxcms::ToneReprCurve::Parametric(vec![1.]));
-        profile.green_trc = profile.red_trc.clone();
-        profile.blue_trc = profile.red_trc.clone();
-        // Derive both colorants and chad from the same BT.2020 D65 white.
-        // The profile describes linear working samples, not the BT.2020 OETF.
-        let white = moxcms::XyY {
-            x: 0.3127,
-            y: 0.3290,
-            yb: 1.,
-        }
-        .to_xyzd();
-        let primaries = moxcms::ColorPrimaries::BT_2020;
-        let [r, g, b] = [primaries.red, primaries.green, primaries.blue].map(|p| p.to_xyzd());
-        let native = moxcms::ColorProfile::rgb_to_xyz_d(
-            moxcms::Matrix3d {
-                v: [[r.x, g.x, b.x], [r.y, g.y, b.y], [r.z, g.z, b.z]],
-            },
-            white,
-        );
-        let chad = moxcms::adaption_matrix_d(white.to_xyz(), profile.white_point.to_xyz());
-        let pcs = chad.mat_mul_const(native).v;
-        [
-            profile.red_colorant,
-            profile.green_colorant,
-            profile.blue_colorant,
-        ] = [0, 1, 2].map(|c| moxcms::Xyzd {
-            x: pcs[0][c],
-            y: pcs[1][c],
-            z: pcs[2][c],
-        });
-        profile.chromatic_adaptation = Some(chad);
-        profile.description = Some(moxcms::ProfileText::Localizable(vec![
-            moxcms::LocalizableString::new(
-                "en".into(),
-                "US".into(),
-                "TrueRenderer Linear Rec.2020 D65".into(),
-            ),
-        ]));
-    } else {
-        // ICC sRGB.pdf §B.2: PCS D50 colorants and D65 -> D50 adaptation.
-        // moxcms 0.8.1 defaults use a temperature-derived white and put the
-        // Bradford cone matrix itself in chad, which is not this adaptation.
-        // Keep the analytic sRGB TRC and the encoded image samples unchanged.
-        profile.red_colorant = moxcms::Xyzd {
-            x: 0.436030342570117,
-            y: 0.222438466210245,
-            z: 0.013897440074263,
-        };
-        profile.green_colorant = moxcms::Xyzd {
-            x: 0.385101860087134,
-            y: 0.716942745571917,
-            z: 0.097076381494207,
-        };
-        profile.blue_colorant = moxcms::Xyzd {
-            x: 0.143067806654203,
-            y: 0.060618777416563,
-            z: 0.713926257896652,
-        };
-        profile.chromatic_adaptation = Some(moxcms::Matrix3d {
-            v: [
-                [1.047844353856414, 0.022898981050086, -0.050206647741605],
-                [0.029549007606644, 0.990508028941971, -0.017074711360960],
-                [-0.009250984365223, 0.015072338237051, 0.751717835079977],
-            ],
-        });
-    }
-    Ok(profile.encode()?)
 }
 
 fn dng_tags<W: Write + Seek>(

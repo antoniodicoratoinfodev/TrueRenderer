@@ -749,6 +749,7 @@ mod tests {
         let image = ImageLevels::from_pyramid(pyramid, request).unwrap();
         let histogram = image.source().histogram();
         let info = RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

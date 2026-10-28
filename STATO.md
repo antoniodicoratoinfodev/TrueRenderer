@@ -42,6 +42,49 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 
 **Pubblicazione richiesta il 27 ottobre:** preparati per commit e push i sorgenti, le regressioni, le specifiche e il rapporto dell'incremento GPU e degli slider continui installato come candidato 71. Ricontrollati i 404 sorgenti congelati, i 652 riferimenti con hash delle prove e 76 file protetti; nel rapporto i percorsi delle cartelle di prova sono relativi al progetto. Le diciture «nessun commit/push» sottostanti registrano la chiusura delle campagne, precedente a questa pubblicazione. Fotografie, cataloghi, backup, cache, binari e toolchain rimangono locali.
 
+### Composito alle dimensioni della foto e revisione per pubblicazione — 28 ottobre
+
+**Richiesta:** conservare pixel nativi e DPI/PPI dichiarati dalla sorgente RAW/JPEG/TIFF; le scelte di dimensione e risoluzione fisica appartengono a nuovo documento ed export. Revisionare tutte le modifiche pendenti, verificare, committare e pubblicare.
+
+- [x] Trasferire la risoluzione fisica attraverso il decoder isolato, distinguendo metadati assenti da valori dichiarati.
+- [x] Estendere il documento al limite nativo dei decoder con ammissione memoria preventiva; nessun ridimensionamento silenzioso.
+- [x] Separare impostazioni della copia esportata dalle dimensioni e dalla risoluzione del progetto.
+- [x] Verificati 761 test Rust ordinari (317 desktop), 15 integrazioni native applicabili, 50 controlli Python e otto del protocollo; fmt e Clippy workspace/all-targets passati. Il test temporizzato fotografico, sensibile alle compilazioni concorrenti, è passato separatamente senza abbassare la soglia. Core Image verificato fuori dal sandbox. Il probe sperimentale Vulkan, le campagne di ricerca e i campioni privati restano esclusi: non si dichiara passato integralmente `verify.sh`.
+- [x] JPEG/TIFF/RAW DNG sintetici da 6000×4000, JPEG orientato da 4000×6000 e PNG senza densità: pixel/DPI conservati, salvataggio→riapertura bit esatto ed export PNG16 nativo. Verifica indipendente di manifest, checksum e metadati. Viewer nativo oltre 2048 verificato a 1:1 nel test; 24 casi di ricampionamento, smoke Metal e confronto superfici passati.
+- [x] Corretta l'importazione delle foto esterne: identità del catalogo verificata dal broker, senza confrontare un token filesystem con SHA-256. Ammissione memoria prima del caricamento e dei gesti; nuova versione v2 per densità assente/asimmetrica, lettura v1 conservata. Il test di servizio usa un corpus isolato, senza includere i progetti dell'utente.
+- [x] Installato e verificato `dist/TrueRenderer.app`, firma e due XPC passati nella posizione definitiva; precedente in `var/backups/before-native-composite-20261028/`. Probe di composizione installato passato, nuovo documento creato manualmente nella cartella corrente, livello vuoto aggiunto e salvato con backup e undo conservati. Riavviata l'app sul progetto locale esistente.
+- [x] Revisione per la pubblicazione richiesta: ricontrollati 438 sorgenti congelati, 176 riferimenti alle evidenze e 15 file protetti; verificati anche i 39 hash delle due campagne precedenti. Sorgenti, regressioni, guida, specifiche, stato e tre rapporti preparati per commit/push su `origin/main`. Fotografie, progetti, cataloghi, backup, bundle e toolchain restano locali.
+
+Limiti correnti: 67.108.864 pixel per tela/asset, 64 livelli e 2 GiB di pixel/maschere, subordinati all'ammissione memoria. Il composito viene ancora rivalutato per intero; nessuna qualifica generale di latenza o tiling. Densità letta da TIFF/EXIF, JFIF e PNG pHYs, assente per metadati non dichiarati o non supportati. Qualifica Windows/macOS e associazioni OS aperta; nessun gate R/SF concluso. [Rapporto e prove](reports/normal-documents-native-size-macos-2026-10-28.json), evidenze locali in `var/native-documents-20261028/`.
+
+### Documenti nella cartella e nel viewer ordinario — 28 ottobre
+
+**Correzione richiesta:** il passaggio a un editor separato descritto nella precedente campagna non soddisfa il flusso richiesto. Foto e `.truerenderer` devono condividere navigatore, griglia, filmstrip, viewer e pannello esistente; nuovo documento crea un file nella cartella corrente.
+
+- [x] Inserire i progetti nell'inventario filesystem e generare miniature senza inviarli ai decoder fotografici.
+- [x] Eliminare il layout separato; collegare editing, creazione e salvataggio alla selezione ordinaria, conservando le modifiche durante la navigazione.
+- [x] Verificati cartella mista, creazione nella posizione corrente, riapertura, salvataggio, cambio selezione e quattro pannelli nella UI ordinaria. Probe v1 e v2, nuova creazione manuale e composizione da foto passati; bundle aggiornato installato. Prove incluse nella campagna del composito nativo sopra.
+
+### Editing unificato, livello 0 e scheda Export — 28 ottobre
+
+**Richiesta e piano:** integrare composizione e documento nel flusso fotografico. La foto è il livello 0; copie, immagini e porzioni selezionate si aggiungono sopra. Le schede Sviluppo, Livelli, Tools ed Export condividono selezione, canvas e cronologia. Tools contiene spostamento, trasformazioni, selezione e ritocco; Export distingue immagine finita e progetto `.truerenderer` portabile.
+
+- [x] Integrare ingresso dalla foto con raster nativo, ricetta corrente e caricamento automatico; conservare documenti già aperti e gestire modifiche pendenti.
+- [x] Rendere esplicito e stabile il livello 0, aggiungere copia della selezione e controlli di composizione nelle schede.
+- [x] Riordinare Tools e aggiungere Export con salvataggio/riapertura del progetto e immagini finite.
+- [x] Verificate regressioni, salvataggio→riapertura e UI nativa: 748 test Rust ordinari (307 desktop), 15 integrazioni native applicabili, 50 controlli Python, otto controlli del protocollo; fmt/Clippy passati. Nuovo probe da foto del corpus: livello 0 conservato, copia/spostamento e undo/redo, selezione su nuovo livello, progetto salvato/riaperto bit esatto e PNG/JPEG esportati. Quattro schede catturate e ispezionate; 24 prove di ricampionamento, smoke Metal e confronto superfici entro un livello u8 passati.
+- [x] Bundle release installato in `dist/TrueRenderer.app`, firma e due XPC verificati sul candidato e nella posizione definitiva; versione precedente in `var/backups/before-unified-editing-20261028-1635/`. Avviata con libreria locale; verificato nella finestra installata il passaggio Sviluppo → Livelli con foto al livello 0 e le quattro schede visibili. Guida e contratto aggiornati, formato v1 invariato. [Rapporto e limiti](reports/unified-editing-macos-2026-10-28.json); evidenze isolate in `var/unified-editing-20261028/`.
+- [ ] Qualifica incrociata Windows/macOS e associazioni OS; localizzazione inglese completa. In questa prima campagna restavano i limiti iniziali di 16 MP per tela/asset, 256 MiB di pixel/maschere, anteprima Adatta 2048 px e RAW incorporati come sviluppo raster. Nessuna nuova qualifica di grandi progetti o prestazioni; nessun gate R/SF concluso.
+- Nota verifiche: i due test Core Image non eseguibili nel sandbox sono passati nella sessione nativa; corretti il layout compatto, l'allineamento dei valori numerici e la doppia finalizzazione del probe. Il probe sperimentale del denoiser Vulkan non può girare nella build Metal; escluso dalle integrazioni applicabili, senza dichiarare passato integralmente `verify.sh`.
+
+### Build e avvio macOS dal remoto — 28 ottobre
+
+- [x] Secondo aggiornamento al commit `8ea57e8`: release workspace compilata con toolchain locale e dipendenze locked/offline, bundle installato in `dist/TrueRenderer.app`, firma e integrazione XPC passate. Evidenze in `var/macos-update-8ea57e8/reports/`; bundle precedente conservato in `var/backups/before-update-8ea57e8-20261028-154144/`. Richiesto avvio tramite LaunchServices con libreria locale; nessuna qualifica completa dei nuovi documenti raster o dei gate R/SF.
+
+- [x] Compilata la release workspace del commit `9016b4a` con `scripts/build-macos.sh` e toolchain locale, dipendenze bloccate/offline; installata in `dist/TrueRenderer.app`. Distribuzione precedente conservata e verificata in `var/backups/before-remote-sync-20261028-125351/dist/TrueRenderer.app`.
+- [x] Firma verificata e integrazione dei due XPC passata sia sul candidato sia nella posizione definitiva. Smoke nativo su corpus/catalogo isolati passato su Apple M4/Metal, 12 immagini e nessun errore di presentazione; confronto delle superfici passato entro un livello u8. Ispezionata una schermata del viewer.
+- [x] Avviata la nuova app con libreria locale esistente; finestra osservata con cartella pronta. [Rapporto di build e verifiche](reports/build-macos-2026-10-28.json), evidenze locali in `var/macos-remote-build-20261028/`. Nessuna modifica ai sorgenti applicativi; suite Rust completa non rieseguita, nessuna qualifica estesa del nuovo editing GPU su macOS e nessun gate R/SF concluso.
+
 ### Nitidezza continua durante lo sviluppo — ripresa, 24–26 ottobre
 
 - [x] Individuato il cambio a ingressi da 512–1024 px per grafi complessi durante i gesti; conservati binario installato, hash dei file iniziali ed evidenze in `var/sharp-editing-20261024/`.

@@ -4016,6 +4016,16 @@ ricollegamento quando mancanti. Cache e identificatori locali non sono dati indi
 alla riapertura. Il [contratto iniziale del documento raster](documenti-raster.md)
 definisce `.truerenderer`, contenitore, quote, editing e salvataggio; non introduce
 una garanzia di qualifica fra piattaforme prima delle prove richieste.
+Nuovi documenti e file `.truerenderer` appartengono alla normale cartella, griglia,
+filmstrip e selezione. La UI mantiene viewer e pannello laterale ordinari e integra
+il progetto nelle schede Sviluppo, Livelli, Tools ed Export: foto come
+livello 0 fisso alla base, contenuti raster sopra, trasformazioni del livello selezionato
+e copia indipendente delle selezioni. Il contratto dettagliato del flusso e della
+pila è nel documento raster citato. Da una foto la tela conserva i pixel nativi e
+la risoluzione fisica dichiarata sui due assi; metadati assenti restano assenti.
+Dimensioni e DPI/PPI si scelgono alla creazione di un documento nuovo oppure per
+la sola copia esportata. Il formato v2 rappresenta densità assente/asimmetrica e
+mantiene la lettura dei v1; contratto e semantica restano unici su Windows/macOS.
 
 L'accettazione richiede cicli Windows → macOS → Windows e macOS → Windows → macOS,
 con modifica e salvataggio a ogni passaggio, verifica della struttura modificabile e

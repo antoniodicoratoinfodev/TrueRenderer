@@ -120,6 +120,7 @@ impl Artifact {
         }
         let source = image.source();
         let info = RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: Some(ReferenceMip {

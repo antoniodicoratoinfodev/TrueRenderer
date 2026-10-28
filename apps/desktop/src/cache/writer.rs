@@ -315,6 +315,7 @@ mod tests {
             image.attach_lease(cache.memory.try_reserve(image.byte_len() as u64).unwrap());
             let image = Arc::new(image);
             let info = RasterInfo {
+                resolution: None,
                 shooting: None,
                 scientific: None,
                 reference_mip: None,
@@ -405,6 +406,7 @@ mod tests {
             image.attach_lease(cache.memory.try_reserve(bytes).unwrap());
             let image = Arc::new(image);
             let info = RasterInfo {
+                resolution: None,
                 shooting: None,
                 scientific: None,
                 reference_mip: None,
@@ -487,6 +489,7 @@ mod tests {
             .unwrap(),
         );
         let info = RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

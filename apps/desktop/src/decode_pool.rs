@@ -49,11 +49,20 @@ struct Ready {
     _snapshot_slot: Lease,
 }
 const MAX_SOURCE_SNAPSHOTS: u64 = 2;
+pub struct ImportedDocumentImage {
+    pub layer: tr_core::document::RasterLayer,
+    pub resolution: Option<tr_core::protocol::Resolution>,
+}
 pub struct DocumentImport {
+    pub recipe: tr_core::editing::EditRecipe,
+    pub expected_digest: Option<String>,
     pub path: PathBuf,
-    pub result: mpsc::Sender<anyhow::Result<tr_core::document::RasterLayer>>,
+    pub result: mpsc::Sender<anyhow::Result<ImportedDocumentImage>>,
     pub memory: Lease,
-    pub document: Arc<Lease>,
+    pub document: Arc<crate::document_memory::Admission>,
+    pub append: bool,
+    pub existing_storage: u64,
+    pub existing_pixels: u64,
 }
 #[derive(Default)]
 struct Queues {
@@ -634,21 +643,30 @@ impl DecodePool {
                     };
                     if let Some(job) = document {
                         let cancelled = || stop.load(Ordering::Acquire);
-                        let result = (|| -> anyhow::Result<tr_core::document::RasterLayer> {
+                        let result = (|| -> anyhow::Result<ImportedDocumentImage> {
                             // Reuse this lane's broker. A third connection to an
                             // occupied macOS XPC service would be rejected.
-                            let _slot = snapshot_slots.try_reserve(1).ok_or_else(|| {
-                                anyhow::anyhow!(
-                                    "Anteprime in lettura: attendere e riprovare l'importazione"
-                                )
-                            })?;
-                            let _permit = decode_admission.try_lock().map_err(|_| {
-                                anyhow::anyhow!("Decoder occupato: riprovare l'importazione")
-                            })?;
-                            let (_, digest) = tr_platform::snapshot(&job.path)?;
-                            let source = broker.prepare_snapshot(&job.path, &digest, cancelled)?;
-                            broker.set_raw_engine(Default::default());
-                            broker.set_raw_white_balance(Default::default());
+                            let deadline = Instant::now() + Duration::from_secs(30);
+                            let (_slot, _permit) = loop {
+                                anyhow::ensure!(!cancelled(), "Importazione annullata");
+                                if let Some(slot) = snapshot_slots.try_reserve(1)
+                                    && let Ok(permit) = decode_admission.try_lock() {
+                                    break (slot, permit);
+                                }
+                                anyhow::ensure!(Instant::now() < deadline, "Decoder occupato: riprovare l'importazione");
+                                thread::sleep(Duration::from_millis(10));
+                            };
+                            // External catalog entries initially use a filesystem
+                            // observation token, not a SHA-256. The broker must
+                            // validate that exact identity against its private bytes.
+                            let identity = match &job.expected_digest {
+                                Some(expected) => expected.clone(),
+                                None => tr_platform::snapshot(&job.path)?.1,
+                            };
+                            let source = broker.prepare_snapshot(&job.path, &identity, cancelled)?;
+                            anyhow::ensure!(source.matches_recipe_source(&identity), "La foto sorgente è cambiata: ricaricarla prima di comporre i livelli");
+                            broker.set_raw_engine(job.recipe.raw_engine);
+                            broker.set_raw_white_balance(job.recipe.raw_wb);
                             broker.set_admitted_memory(
                                 job.memory.bytes() + cache.baseline_bytes,
                                 cache.memory.usage().limit,
@@ -657,28 +675,34 @@ impl DecodePool {
                             anyhow::ensure!(
                                 u64::from(info.width) * u64::from(info.height)
                                     <= tr_core::document::MAX_CANVAS_PIXELS as u64,
-                                "Immagine oltre il limite del documento (16 MP)"
+                                "Immagine oltre il limite nativo del decoder (64 Mi pixel)"
                             );
-                            anyhow::ensure!(
-                                decode_working_bytes(info.width, info.height)?
-                                    + source.byte_len() * 2
-                                    <= job.memory.bytes(),
-                                "Importazione oltre l'ammissione memoria"
-                            );
+                            let pixels = u64::from(info.width) * u64::from(info.height);
+                            let storage = job.existing_storage + pixels * 16;
+                            anyhow::ensure!(!job.append || storage <= tr_core::document::MAX_DOCUMENT_BYTES as u64, "Memoria livelli esaurita");
+                            anyhow::ensure!(job.document.ensure(tr_core::document::admission_bytes(storage, pixels.max(job.existing_pixels))), "Memoria insufficiente per il documento nativo; liberare memoria e riprovare");
+                            let needed = decode_working_bytes(info.width, info.height)? + source.byte_len() * 2;
+                            let _extra = if needed > job.memory.bytes() {
+                                Some(cache.memory.try_reserve(needed - job.memory.bytes()).ok_or_else(|| anyhow::anyhow!("Memoria insufficiente per importare tutti i pixel"))?)
+                            } else { None };
+                            broker.set_admitted_memory(needed.max(job.memory.bytes()) + cache.baseline_bytes, cache.memory.usage().limit);
                             let decoded = broker.decode_snapshot_bounded(
                                 source,
                                 0,
                                 tr_core::document::MAX_DOCUMENT_BYTES as u64,
                                 cancelled,
                             )?;
-                            Ok(tr_core::document::RasterLayer::new(
+                            let mut layer = tr_core::document::RasterLayer::new(
                                 job.path
                                     .file_name()
                                     .unwrap_or_default()
                                     .to_string_lossy()
                                     .into_owned(),
                                 decoded.raster,
-                            ))
+                            );
+                            anyhow::ensure!([decoded.info.source_width, decoded.info.source_height] == [layer.width, layer.height], "Il decoder non ha restituito tutti i pixel nativi");
+                            layer.recipe = job.recipe.clone();
+                            Ok(ImportedDocumentImage { layer, resolution: decoded.info.resolution })
                         })();
                         // Native processing and transfer have finished. The small
                         // incoming raster is now covered by the workspace envelope;
@@ -1520,21 +1544,27 @@ mod tests {
             cache.clone(),
         );
         let path = navigation_job("document").item.path;
-        let document = Arc::new(cache.memory.try_reserve(3 * 1024 * 1024 * 1024).unwrap());
+        let document = Arc::new(crate::document_memory::Admission::new(cache.memory.clone()));
+        assert!(document.ensure(3 * 1024 * 1024 * 1024));
         let mut imported = vec![];
         for _ in 0..2 {
             let (tx, rx) = mpsc::channel();
             pool.submit_document(DocumentImport {
+                recipe: tr_core::editing::EditRecipe::neutral(Default::default()),
+                expected_digest: None,
                 path: path.clone(),
                 result: tx,
                 memory: cache.memory.try_reserve(3 * 1024 * 1024 * 1024).unwrap(),
                 document: document.clone(),
+                append: false,
+                existing_storage: 0,
+                existing_pixels: 0,
             });
             imported.push(rx.recv_timeout(Duration::from_secs(45)).unwrap().unwrap());
         }
-        assert_eq!(imported[0].pixels, imported[1].pixels);
-        imported[0].pixels[0] = [0.; 4];
-        assert_ne!(imported[0].pixels, imported[1].pixels);
+        assert_eq!(imported[0].layer.pixels, imported[1].layer.pixels);
+        imported[0].layer.pixels[0] = [0.; 4];
+        assert_ne!(imported[0].layer.pixels, imported[1].layer.pixels);
         drop(pool);
         drop(document);
         assert_eq!(cache.memory.usage().reserved, cache.baseline_bytes);
@@ -1619,6 +1649,7 @@ mod tests {
         )
         .unwrap();
         let info = tr_core::protocol::RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,
@@ -1734,6 +1765,7 @@ mod tests {
         job.resident = Some(PreviewDecoded {
             digest: "resident-digest".into(),
             info: tr_core::protocol::RasterInfo {
+                resolution: None,
                 shooting: None,
                 scientific: None,
                 reference_mip: None,

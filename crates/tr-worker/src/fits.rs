@@ -267,6 +267,7 @@ fn normalize(v: f64, min: f64, max: f64) -> f64 {
 }
 fn info(plane: &Plane<'_>, meta: Metadata) -> RasterInfo {
     RasterInfo {
+        resolution: None,
         shooting: None,
         scientific: Some(Box::new(meta)),
         reference_mip: None,

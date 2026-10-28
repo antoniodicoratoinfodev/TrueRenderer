@@ -85,6 +85,7 @@ fn provenance(info: &Info) -> (RasterInfo, ColorSource) {
     ));
     (
         RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

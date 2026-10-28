@@ -38,6 +38,7 @@ fn cached(app: &TrueRenderer, width: u32) -> CachedImage {
     CachedImage {
         digest: "a".repeat(64),
         info: RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

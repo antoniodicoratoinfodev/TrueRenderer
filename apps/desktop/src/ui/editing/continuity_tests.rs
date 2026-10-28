@@ -85,6 +85,7 @@ fn editing_keeps_the_last_frame_through_rapid_drafts_and_presentation() {
             .unwrap(),
         );
         let info = RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

@@ -171,7 +171,9 @@ impl Filesystem {
                                     let observation =
                                         tr_platform::observation_token(&path, &metadata);
                                     let (digest, approved) =
-                                        if path.parent() == Some(corpus.as_path()) {
+                                        if tr_core::document::is_document_path(&path) {
+                                            (observation.clone(), true)
+                                        } else if path.parent() == Some(corpus.as_path()) {
                                             let (_, hash) = tr_platform::snapshot(&path)
                                                 .map_err(|e| e.to_string())?;
                                             let approved = tr_platform::CorpusPolicy::default()
@@ -290,20 +292,23 @@ impl Filesystem {
                                     let metadata = entry.metadata().map_err(|e| e.to_string())?;
                                     let observation =
                                         tr_platform::observation_token(&path, &metadata);
-                                    let (digest, approved) = if controlled {
-                                        let (_, hash) = tr_platform::snapshot(&path)
-                                            .map_err(|e| e.to_string())?;
-                                        let approved =
-                                            tr_platform::CorpusPolicy::default().approves(&hash);
-                                        (hash, approved)
-                                    } else {
-                                        (
-                                            observation.clone(),
-                                            external
-                                                && metadata.len()
-                                                    <= tr_core::protocol::MAX_SOURCE as u64,
-                                        )
-                                    };
+                                    let (digest, approved) =
+                                        if tr_core::document::is_document_path(&path) {
+                                            (observation.clone(), true)
+                                        } else if controlled {
+                                            let (_, hash) = tr_platform::snapshot(&path)
+                                                .map_err(|e| e.to_string())?;
+                                            let approved = tr_platform::CorpusPolicy::default()
+                                                .approves(&hash);
+                                            (hash, approved)
+                                        } else {
+                                            (
+                                                observation.clone(),
+                                                external
+                                                    && metadata.len()
+                                                        <= tr_core::protocol::MAX_SOURCE as u64,
+                                            )
+                                        };
                                     bytes += path.as_os_str().len() * 2 + 512;
                                     observations.push(Observation {
                                         path,
@@ -408,6 +413,9 @@ fn send<T>(
         }
     }
 }
+fn browsable(path: &std::path::Path) -> bool {
+    tr_platform::supported_extension(path) || tr_core::document::is_document_path(path)
+}
 fn resolve(path: &std::path::Path) -> Result<(PathBuf, Option<PathBuf>), String> {
     if path.as_os_str().len() > MAX_PATH {
         return Err("Location length limit".into());
@@ -420,7 +428,7 @@ fn resolve(path: &std::path::Path) -> Result<(PathBuf, Option<PathBuf>), String>
         }
         (resolved, None)
     } else if metadata.is_file()
-        && tr_platform::supported_extension(&resolved)
+        && browsable(&resolved)
         && !tr_platform::filesystem::opaque(&resolved, &metadata)
     {
         (
@@ -491,7 +499,7 @@ fn enumerate(
                 Kind::Directory
             } else if !metadata.is_file() {
                 Kind::Special
-            } else if tr_platform::supported_extension(&entry.path()) {
+            } else if browsable(&entry.path()) {
                 Kind::Image
             } else {
                 Kind::File

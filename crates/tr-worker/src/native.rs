@@ -64,6 +64,7 @@ pub fn probe(bytes: &[u8]) -> Result<RasterInfo> {
     };
     ensure!(status == 0, "{}", text(&error));
     let result = RasterInfo {
+        resolution: None,
         shooting: None,
         scientific: None,
         reference_mip: None,
@@ -168,6 +169,7 @@ fn decode_with_wb_backend(
     color.truncate(color.floor_char_boundary(256));
     Ok((
         RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

@@ -279,7 +279,11 @@ impl TrueRenderer {
                 targets.photos.len()
             ));
         }
-        if !ready {
+        let project_export = targets.photos.len() == 1
+            && targets.clicked.as_ref().is_some_and(|p| {
+                tr_core::document::is_document_path(&p.path) || self.document.matches(&p.path)
+            });
+        if !ready && !project_export {
             ui.small(lang.text(if busy {
                 "Operazione in corso"
             } else if self.editing.crop.is_some() {
@@ -412,7 +416,10 @@ impl TrueRenderer {
                 lang.text("Esporta foto…").into()
             };
             if ui
-                .add_enabled(ready && !self.photo_export.open, egui::Button::new(export))
+                .add_enabled(
+                    (ready || project_export) && !self.photo_export.open,
+                    egui::Button::new(export),
+                )
                 .clicked()
             {
                 action = Some(Action::Export);
@@ -487,6 +494,15 @@ impl TrueRenderer {
             return;
         }
         if matches!(action, Action::Export) {
+            if let Some(item) = targets.photos.first()
+                && targets.photos.len() == 1
+                && (tr_core::document::is_document_path(&item.path)
+                    || self.document.matches(&item.path))
+            {
+                self.document.requested_tab = Some(document::Tab::Export);
+                self.open_path(item.path.clone());
+                return;
+            }
             self.photo_export.targets = Some(targets.photos);
             self.photo_export.open = true;
             return;

@@ -2448,7 +2448,10 @@ fn adjustment_rows_align_labels_sliders_and_values_without_wrapping() {
                     "{width}: {:?}",
                     responses[i]
                 );
-                assert!((responses[i].right() - responses[0].right()).abs() < 0.5);
+                assert!(
+                    (responses[i].right() - responses[0].right()).abs() < 0.5,
+                    "{lang:?} width={width}: {responses:?}"
+                );
                 assert!(responses[i].height() <= 28.);
             }
         }

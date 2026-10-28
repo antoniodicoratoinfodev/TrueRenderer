@@ -6,9 +6,24 @@ use crate::{
 use anyhow::{Result, ensure};
 use serde::{Deserialize, Serialize};
 
-pub const MAX_DOCUMENT_BYTES: usize = 256 * 1024 * 1024;
-pub const MAX_CANVAS_PIXELS: usize = 16 * 1024 * 1024;
+pub const MAX_DOCUMENT_BYTES: usize = 2 * 1024 * 1024 * 1024;
+pub const MAX_CANVAS_PIXELS: usize = crate::color::MAX_PIXELS;
 pub const MAX_LAYERS: usize = 64;
+
+/// Conservative host envelope: current assets, undo/redo and a transaction,
+/// native render/filter scratch, plus display and bounded metadata IO.
+/// This admits allocations; it is not a physical RSS guarantee.
+pub fn admission_bytes(storage: u64, largest_pixels: u64) -> u64 {
+    let history = storage.max(256 * 1024 * 1024);
+    (storage * 3 + history * 2 + largest_pixels * 96 + 128 * 1024 * 1024)
+        .max(3 * 1024 * 1024 * 1024)
+}
+
+/// Native projects are browser assets, never inputs to photographic decoders.
+pub fn is_document_path(path: &std::path::Path) -> bool {
+    path.extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("truerenderer"))
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Unit {
@@ -175,6 +190,10 @@ pub struct Document {
     pub width: u32,
     pub height: u32,
     pub ppi: f64,
+    /// v2: missing means the source did not declare a physical density.
+    /// v1 has only the legacy square `ppi` value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<crate::protocol::Resolution>,
     pub unit: Unit,
     pub color_space: ColorSpace,
     pub layers: Vec<RasterLayer>,
@@ -202,7 +221,7 @@ fn area(width: u32, height: u32) -> Result<usize> {
     let count = u64::from(width) * u64::from(height);
     ensure!(
         width > 0 && height > 0 && count <= MAX_CANVAS_PIXELS as u64,
-        "Tela/raster fuori quota (16 megapixel)"
+        "Tela/raster fuori quota (64 Mi pixel)"
     );
     Ok(count as usize)
 }
@@ -211,10 +230,11 @@ impl Document {
         let n = area(width, height)?;
         let image = LinearImage::new(width, height, vec![background; n])?;
         let document = Self {
-            version: 1,
+            version: 2,
             width,
             height,
             ppi,
+            resolution: Some(crate::protocol::Resolution { x: ppi, y: ppi }),
             unit: Unit::Pixels,
             color_space: ColorSpace::Srgb,
             layers: vec![RasterLayer::new("Sfondo".into(), image)],
@@ -222,6 +242,26 @@ impl Document {
         };
         document.validate()?;
         Ok(document)
+    }
+    pub fn largest_pixels(&self) -> u64 {
+        self.layers
+            .iter()
+            .map(|l| u64::from(l.width) * u64::from(l.height))
+            .chain(std::iter::once(
+                u64::from(self.width) * u64::from(self.height),
+            ))
+            .max()
+            .unwrap_or(0)
+    }
+    pub fn physical_resolution(&self) -> Option<crate::protocol::Resolution> {
+        if self.version == 1 {
+            Some(crate::protocol::Resolution {
+                x: self.ppi,
+                y: self.ppi,
+            })
+        } else {
+            self.resolution
+        }
     }
     pub fn storage_bytes(&self) -> usize {
         self.selection.len() * 4
@@ -232,7 +272,17 @@ impl Document {
                 .sum::<usize>()
     }
     pub fn validate(&self) -> Result<()> {
-        ensure!(self.version == 1, "Versione documento non supportata");
+        ensure!(
+            [1, 2].contains(&self.version),
+            "Versione documento non supportata"
+        );
+        if let Some(r) = self.resolution {
+            ensure!(
+                self.version == 2 && self.ppi == r.x,
+                "Risoluzione/versione documento incoerente"
+            );
+            r.validate()?;
+        }
         let n = area(self.width, self.height)?;
         ensure!(
             self.ppi.is_finite() && (1. ..=9600.).contains(&self.ppi),
@@ -298,7 +348,82 @@ impl Document {
         let mut copy = layer.clone();
         copy.name.push_str(" · copia");
         copy.locked = false;
-        self.insert(copy)
+        self.insert(copy)?;
+        let copy = self.layers.pop().unwrap();
+        self.layers.insert(index + 1, copy);
+        Ok(())
+    }
+    /// Copy selected source pixels without flattening the photographic recipe.
+    /// Selection is in canvas coordinates; its coverage is baked into a private
+    /// layer-local mask so the new piece can subsequently move independently.
+    pub fn copy_selection(&mut self, index: usize) -> Result<()> {
+        self.validate()?;
+        ensure!(
+            self.selection.iter().any(|v| *v > 0.),
+            "Selezionare una parte dell'immagine"
+        );
+        let layer = self
+            .layers
+            .get(index)
+            .ok_or_else(|| anyhow::anyhow!("Livello mancante"))?;
+        ensure!(
+            self.layers.len() < MAX_LAYERS
+                && self.storage_bytes() + layer.pixels.len() * 20 <= MAX_DOCUMENT_BYTES,
+            "Memoria copia esaurita"
+        );
+        let mut copy = layer.clone();
+        copy.name.push_str(" · selezione");
+        copy.locked = false;
+        copy.mask = (0..layer.pixels.len())
+            .map(|i| {
+                let coverage = layer
+                    .canvas_point([
+                        (i % layer.width as usize) as f32 + 0.5,
+                        (i / layer.width as usize) as f32 + 0.5,
+                    ])
+                    .map_or(0., |p| {
+                        let x = p[0].floor() as i64;
+                        let y = p[1].floor() as i64;
+                        if x < 0 || y < 0 || x >= self.width as i64 || y >= self.height as i64 {
+                            0.
+                        } else {
+                            self.selection[y as usize * self.width as usize + x as usize]
+                        }
+                    });
+                coverage * layer.mask.get(i).copied().unwrap_or(1.)
+            })
+            .collect();
+        ensure!(
+            copy.mask.iter().any(|v| *v > 0.),
+            "La selezione non interseca il livello"
+        );
+        self.insert(copy)?;
+        let copy = self.layers.pop().unwrap();
+        self.layers.insert(index + 1, copy);
+        self.selection.clear();
+        Ok(())
+    }
+    pub fn remove_layer(&mut self, index: usize) -> Result<()> {
+        ensure!(index > 0, "Il livello 0 resta alla base della composizione");
+        ensure!(
+            self.layers.get(index).is_some_and(|l| !l.locked),
+            "Livello assente o bloccato"
+        );
+        self.layers.remove(index);
+        Ok(())
+    }
+    pub fn move_layer(&mut self, from: usize, to: usize) -> Result<()> {
+        ensure!(
+            from > 0 && to > 0,
+            "Il livello 0 resta alla base della composizione"
+        );
+        ensure!(
+            to < self.layers.len() && self.layers.get(from).is_some_and(|l| !l.locked),
+            "Livello assente o bloccato"
+        );
+        let layer = self.layers.remove(from);
+        self.layers.insert(to, layer);
+        Ok(())
     }
     pub fn render(&self) -> Result<LinearImage> {
         self.validate()?;
@@ -765,6 +890,34 @@ mod tests {
         d.dab(0, canvas, 0.5, 1., 1., Brush::Erase, None).unwrap();
         assert_eq!(d.layers[0].pixels[11 * 32 + 15], [0.; 4]);
         assert_eq!(d.layers[0].pixels[0], [0.2, 0.3, 0.4, 1.]);
+    }
+    #[test]
+    fn base_is_fixed_and_selection_copy_follows_transformed_source() {
+        let mut d = Document::new(8, 6, 300., [0.2, 0.1, 0., 1.]).unwrap();
+        d.layers[0].transform.x = 2.;
+        d.layers[0].mask = vec![0.5; 48];
+        d.select_polygon(
+            &[[3., 1.], [5., 1.], [5., 3.], [3., 3.]],
+            SelectionMode::Replace,
+            0.,
+        )
+        .unwrap();
+        let base = d.layers[0].clone();
+        d.copy_selection(0).unwrap();
+        assert_eq!(d.layers[1].mask.iter().sum::<f32>(), 2.);
+        assert_eq!(d.layers[1].mask[9], 0.5);
+        assert_eq!(d.layers[1].mask[8], 0.);
+        assert_eq!(d.layers[0], base);
+        assert!(d.selection.is_empty());
+        d.duplicate(0).unwrap();
+        assert_eq!(d.layers.len(), 3);
+        assert!(d.remove_layer(0).is_err());
+        assert!(d.move_layer(0, 1).is_err());
+        assert!(d.move_layer(1, 0).is_err());
+        d.move_layer(1, 2).unwrap();
+        assert_eq!(d.layers[0], base);
+        d.layers[1].pixels[0] = [0.; 4];
+        assert_eq!(d.layers[0], base);
     }
     #[test]
     fn physical_units_and_invalid_metadata() {

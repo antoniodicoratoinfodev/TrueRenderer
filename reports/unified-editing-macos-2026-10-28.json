@@ -1,0 +1,118 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-28",
+  "platform": "macos-arm64",
+  "source_base": "8ea57e8cc56da9ea173b4f8f4d500134bd647507",
+  "scope": "Unified development, raster layers, tools and project/image export; not a Windows/macOS interchange qualification",
+  "source_sha256": {
+    "Cargo.lock": "a8c868588cf8b72bbae9356d7938f305828b1ac56ce01adbc85e0a9e0f468828",
+    "apps/desktop/src/decode_pool.rs": "393b1e9d48175e0ed07df4787216e2b5339d1e99bd43fa58b83218c377aba24c",
+    "apps/desktop/src/main.rs": "565bd327e8c54992a4314adbfaeff5982bd96bd793ab01e3de14398fc6b52cf1",
+    "apps/desktop/src/ui.rs": "8f979fe7e556ddb33f30b7d23ca89274b0f52bb8d9316784e09fe397c4cba25d",
+    "apps/desktop/src/ui/document.rs": "20dd9dc926fb5884381893cdc0e8e5c797c98a62f9fc788a9e8ffa8fa3369dd5",
+    "apps/desktop/src/ui/editing.rs": "cfff9e8354fbb411ef0b321ba931b64e90317bb685253600098564e1f92c97d4",
+    "apps/desktop/src/ui/editing/controls_tests.rs": "74eda6dbac8758d65630f87c34002c641505ea18a6112bb2e22fe48a1a3d568c",
+    "apps/desktop/src/ui/editing/panels.rs": "18f923e3edd856f162135ee5c4f42082fd2090d3ceb73b52a6aa72c984393215",
+    "crates/tr-core/Cargo.toml": "bd8b38f9d72b039225da3b590b7861f78c21a2e7ae7299bbef6cd4401a04ec61",
+    "crates/tr-core/src/document.rs": "3dc2cf3c3b0040e97f95a4dfe186b7e5c5858bf1bc6878b0bbaad49a28e6cace",
+    "crates/tr-core/src/export.rs": "301153826b4311c4392cf13fd385873a578e05a7ee358e4355eaa926995e3bb4",
+    "crates/tr-worker/src/export.rs": "f675633c96a578939fe877a876fddac2792720a719dcbffdf3d3576f1576a27b",
+    "apps/desktop/src/ui/composition.rs": "58752863db6bc5e54e6a1a0ef3292c2891b9b7565040f247dc72edf152e0feab",
+    "apps/desktop/src/ui/document/develop.rs": "dc6bc50017df62a1b06ea0a9152bff6f3f4ae52307313db178c5a06c468d06aa",
+    "apps/desktop/src/ui/document/export.rs": "d090fc7f461d1565e38c1405812ef30c8939d3b305d12e3ee7f538b4c36dc5a8",
+    "apps/desktop/src/ui/document/panels.rs": "1d7e43dda5f29de96254c70c3f315238cadd2bbb49f8dab66a56dcd8b9f69a91",
+    "apps/desktop/src/ui/document/probe.rs": "d4672cad057d01288f9d29cf840b4a6657854752ddd9122661983b71bc92bb88",
+    "apps/desktop/src/ui/document/tools.rs": "efc530d44e5d5b26b57359857bce9b9ef7f6ad1ae61af604ca59798da1941c6c",
+    "apps/desktop/src/ui/document/workflow_tests.rs": "94411905471995d08bb7eb672bdb6a5cec77b0ec552b1e4c173ff17408580173"
+  },
+  "installation": {
+    "backup": "var/backups/before-unified-editing-20261028-1635",
+    "bundle": "dist/TrueRenderer.app",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "beb68c7ddb8b6b65b078dccf8e92604189fe2de1a761d16f1767c88fa339f959",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "ee78a089c2c32133f3bea33e29aa8d6327d3113f6ff9f1dcf9cc09bfe0de1d3b",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "22bc894d21c03461a9f1e1f01f61016cd4dc6186b279319c73f8e4c02b4048f7"
+    },
+    "launch": "Opened with existing local library; native accessibility verified Develop \u2192 Layers, photo as level 0, empty/import/copy controls, Move and four tabs visible."
+  },
+  "checks": {
+    "ordinary_rust_tests_passed": 748,
+    "desktop_tests_passed": 307,
+    "optional_native_integrations_passed": 15,
+    "python_checks_passed": 50,
+    "worker_protocol_checks_passed": 8,
+    "fmt_and_clippy_passed": true,
+    "native_composition": {
+      "bytes": 15360000,
+      "error": "",
+      "layers": 1,
+      "passed": true,
+      "scope": "Native document open and presentation; not retouch quality or cross-platform qualification",
+      "screenshots": [
+        "document-develop",
+        "document-tools",
+        "document-export",
+        "document-layers"
+      ],
+      "workflow": {
+        "base_preserved": true,
+        "layers": 3,
+        "move_undo_redo": true,
+        "passed": true,
+        "png_jpeg_export": true,
+        "roundtrip_exact": true,
+        "selection_copy": true
+      }
+    },
+    "native_smoke_passed": true,
+    "native_surface_sampling_passed": true,
+    "max_surface_error_u8": 1,
+    "resampling_cases": 24,
+    "xpc_passed_before_install": true,
+    "xpc_passed_after_install": true
+  },
+  "limits": [
+    "Windows execution and Windows/macOS transfer cycles not performed in this campaign.",
+    "Existing document limits retained: 16 MP per canvas/asset, 256 MiB pixel/mask storage, fit preview up to 2048 px; no new large-project or latency qualification.",
+    "RAW sensor development is embedded in raster pixels; RGB recipes, masks and transforms remain editable.",
+    "Experimental Vulkan denoiser probe cannot execute on this Metal-only macOS build; excluded from the applicable integrations. The complete verify.sh command therefore was not reported as passed.",
+    "English UI completion and OS file association qualification remain open; no R/SF gates closed."
+  ],
+  "resolved_failures": [
+    "Two Core Image tests failed in the terminal sandbox and passed in the native session.",
+    "Compact inspector exposure visibility and fractional numeric control alignment fixed; all 307 desktop tests passed afterward.",
+    "Native composition probe executed twice during window close; probe now finalizes once and final native run passed."
+  ],
+  "evidence_sha256": {
+    "var/unified-verify-native.log": "95e4a5bf378f1c3ae23c2c794f221fe878c0623a3761408db36e0580f3613383",
+    "var/unified-desktop-tests.log": "e55fc9d64ec919f67843b3ac58200d516e5b3a30f4cf627a0501e0067082b4cc",
+    "var/unified-clippy-final2.log": "6fbe890b02c72c57712225acd06d7041076380f73319070a64db0727b73a8002",
+    "var/unified-editing-20261028/integrations.log": "869bf0e522c070872712b663e7a20f46f2570917db98d4847349e83f058b0fb0",
+    "var/unified-editing-20261028/integrations-rest.log": "278a3491caf5166ba48818a3829022396a7f5081675bbd994aa0a61be2c1dc4e",
+    "var/unified-editing-20261028/native-final2.log": "9d61b17c0b892a4a73e06004ba0b2a04dd6547cecee22e3e56667022c06b64d6",
+    "var/unified-editing-20261028/build-final2.log": "f17e6d4f7cfb6c34f29e7992c554b766705f6cf05bde3cf1211bb26941eddb4d",
+    "var/unified-editing-20261028/reports/03-compare-sampling.json": "f45601fb13acecbba6e2eb843439a00216ced40266f8f0c726415e96fc4d606b",
+    "var/unified-editing-20261028/reports/document-tools-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/unified-editing-20261028/reports/worker-protocol.json": "f3a5e325a3831adfb01d4843bc08679b40b400e2e7dc5a65ee2332619a532ba0",
+    "var/unified-editing-20261028/reports/04-radial-1to1-sampling.json": "2f5641118f844997765ef8a3d8844bfd45f6bf22e189dcdb1445988c17e73e2c",
+    "var/unified-editing-20261028/reports/smoke-macos.json": "413c5076ff8729645bfa495cdb596b771831deb10086433ef946880b30a13735",
+    "var/unified-editing-20261028/reports/document-ui-probe-repeated.json": "153f82948afa195bfc08b10de3ad02c227f155aafb7c649cc2226548f76a853f",
+    "var/unified-editing-20261028/reports/06-radial-37percent-sampling.json": "20bd4d540a7fa133bedd894c32e1a47e6b4d32bd8646c05f27810c52c1c99a45",
+    "var/unified-editing-20261028/reports/document-export-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/unified-editing-20261028/reports/05-radial-fit-sampling.json": "5e53a30b8727d6defdab9cbbdd42906d91e89ed950ff6e10a803b282e6902b6d",
+    "var/unified-editing-20261028/reports/document-develop-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/unified-editing-20261028/reports/xpc-qualification-macos.json": "5d3e99c1a4b219bcf745821f6b29be4d24f16f93a7853631a017ca6f59779dd2",
+    "var/unified-editing-20261028/reports/preview-quality-gpu-macos.json": "374464af1dea094dc8b41a10dc4c3f27f9dd095afe0abb90ca73ee9af51ce066",
+    "var/unified-editing-20261028/reports/document-ui.json": "519fb816a03e81ba197b3de32c506a084b3a062ff5094b6a07f68b17f59feb9c",
+    "var/unified-editing-20261028/reports/sampling-presentation-macos.json": "beec5c7536bd599af251318835fd16f91fda5ef649890bec7a364d31dbbfae09",
+    "var/unified-editing-20261028/reports/08-grid-large-sampling.json": "399b596d3f581030bae6e58cf6dd89fe892099a906b15792b8da43b18f806c4f",
+    "var/unified-editing-20261028/reports/02-preview-sampling.json": "375f41c093bda32d2e9b22dbdbe1358d02909e599e693c4d5c20a083d8f006aa",
+    "var/unified-editing-20261028/reports/resampling-macos.json": "490230c46d6af24492902a961c3c8112cb419f19889884a68079c3526b9254c1",
+    "var/unified-editing-20261028/reports/document-layers-sampling.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "var/unified-editing-20261028/reports/xpc-integration-macos.json": "8ed899c16594b86f25ae376c184d9068cc028bc2a6a8ce778d76a0bbcf96cd5d",
+    "var/unified-editing-20261028/reports/preview-native-compute-macos.json": "54fe7077002480a34ef03b52aeef8233aad54a540939669f43465a7e16011a33",
+    "var/unified-editing-20261028/reports/01-grid-sampling.json": "ff927aae231998b53853f5afd0248c0d0c903d5e223eefaa610ff6d46ab78201",
+    "var/unified-editing-20261028/reports/07-grid-small-sampling.json": "7b65cf1d8d5b10ac6f5bbbc445d4714af38762f889a0abedcf5102d2cf6d6340",
+    "var/unified-editing-20261028/xpc-installed.log": "5d3e99c1a4b219bcf745821f6b29be4d24f16f93a7853631a017ca6f59779dd2"
+  }
+}

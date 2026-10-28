@@ -57,3 +57,6 @@ __pycache__/
 
 .truerenderer-cache/
 cache-folders.json
+
+# Local editable projects embed images and are durable user data.
+*.[tT][rR][uU][eE][rR][eE][nN][dD][eE][rR][eE][rR]

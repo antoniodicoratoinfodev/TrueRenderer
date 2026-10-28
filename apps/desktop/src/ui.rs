@@ -17,6 +17,7 @@ use tr_core::{
 
 mod cache_actions;
 mod comparison;
+mod composition;
 mod detail_prefetch;
 mod document;
 mod editing;
@@ -483,13 +484,6 @@ impl TrueRenderer {
             "pending":self.state.pending.len()})
     }
     fn open_path(&mut self, path: PathBuf) {
-        if path
-            .extension()
-            .is_some_and(|e| e.eq_ignore_ascii_case("truerenderer"))
-        {
-            self.document.open(path);
-            return;
-        }
         self.navigate(path, Some(ViewMode::Preview));
     }
     fn request(&mut self, request: Request) -> bool {
@@ -681,7 +675,7 @@ impl TrueRenderer {
         priority: PreviewPriority,
         cache_only: bool,
     ) {
-        if self.clearing_current_folder() {
+        if self.clearing_current_folder() || tr_core::document::is_document_path(&item.path) {
             return;
         }
         self.watched_sources.insert(item.id.clone());
@@ -923,6 +917,7 @@ impl TrueRenderer {
             // Failed/excluded photos cannot use an admission slot. Otherwise
             // two broken neighbours prevent every later candidate from warming.
             if !item.approved
+                || tr_core::document::is_document_path(&item.path)
                 || self
                     .editing
                     .entries
@@ -1704,7 +1699,7 @@ impl TrueRenderer {
         if !photo_context {
             return;
         }
-        if self.editing_keyboard(ctx) {
+        if !self.current_document() && self.editing_keyboard(ctx) {
             return;
         }
         let command = ctx.input(|i| i.modifiers.command);
@@ -1843,21 +1838,22 @@ impl TrueRenderer {
                     ui.label(RichText::new("TrueRenderer").size(14.).strong());
                     ui.add_space(4.);
                     ui.menu_button(lang.text("Apri"), |ui| {
-                    if ui.button("Spazio documento…").clicked() {
-                        self.commit_all_edits();
-                        self.document.active = true;
-                    }
-                    if ui.button("Copia foto in documento").clicked() && let Some(item)=self.state.current_item().cloned() {
-                            let request=self.preview_request(&item,0);
-                            let recipe=self.view_recipe(&item.id).unwrap_or_else(||tr_core::editing::EditRecipe::neutral(request.raw_engine));
-                            let source=self.cache.iter().find(|((id,r),c)| id==&item.id && r.raw_engine==request.raw_engine && r.raw_wb==request.raw_wb && c.pyramid.base_level()==0);
-                            if let Some((_,source))=source {
-                                if let Err(error)=self.document.capture_photo(item.name.clone(),source.pyramid.source(),recipe) {self.status=error.to_string();}
-                            } else {
-                                self.request_final_preview(&item.id,false);
-                                self.status="Caricamento nativo richiesto: ripetere Copia foto in documento al termine.".into();
-                            }
-                    }
+                        if ui.button("Nuovo documento…").clicked() {
+                            self.commit_all_edits();
+                            self.document.new_document();
+                            ui.close();
+                        }
+                        if let Some(path) = self.document.location()
+                            && !self.state.current_item().is_some_and(|i| i.path == path)
+                            && ui.button("Riprendi progetto in corso").clicked()
+                        {
+                            self.open_path(path);
+                            ui.close();
+                        }
+                        if ui.button("Modifica livelli della foto").clicked() {
+                            self.begin_composition(document::Tab::Layers);
+                            ui.close();
+                        }
                         ui.separator();
                         if ui.button(lang.text("Apri cartella…")).clicked() {
                             ui.close();
@@ -2077,7 +2073,16 @@ impl TrueRenderer {
     fn library_actions(&mut self, ui: &mut egui::Ui) {
         let lang = self.cache_settings.language;
         if ui.button(lang.text("Esporta fotografie…")).clicked() {
-            self.photo_export.open = true;
+            if self.current_document()
+                || self
+                    .state
+                    .current_item()
+                    .is_some_and(|i| tr_core::document::is_document_path(&i.path))
+            {
+                self.begin_composition(document::Tab::Export);
+            } else {
+                self.photo_export.open = true;
+            }
             ui.close();
         }
         ui.separator();
@@ -2402,6 +2407,21 @@ impl TrueRenderer {
             .id_salt(("inspector-scroll", context, page))
             .auto_shrink([false, false])
             .show(ui, |ui| {
+                if self.document.matches(&item.path) {
+                    if page == InspectorPage::Information {
+                        self.document.information(ui);
+                    } else {
+                        self.document.information(ui);
+                        self.document.inspector_contents(ui);
+                    }
+                    return;
+                }
+                if tr_core::document::is_document_path(&item.path)
+                    || self.document.loading(&item.path)
+                {
+                    self.document.unavailable(ui);
+                    return;
+                }
                 if let Some(error) = self.errors.get(&format!("{}:{:?}", item.id, key.1)) {
                     ui.colored_label(AMBER, error);
                 }
@@ -2860,7 +2880,9 @@ impl TrueRenderer {
             egui::pos2(rect.right() - 10., rect.bottom() - bottom),
         );
         let mut edit_error = None;
-        if let Some((source, digest)) = self
+        if tr_core::document::is_document_path(&item.path) || self.document.matches(&item.path) {
+            self.document.thumbnail(ui, item, area);
+        } else if let Some((source, digest)) = self
             .cache
             .get(&key)
             .map(|cache| (cache.pyramid.clone(), cache.digest.clone()))
@@ -3254,6 +3276,14 @@ impl TrueRenderer {
         }
     }
     fn paint_view(&mut self, ui: &mut egui::Ui, item: &Item, id: &str) {
+        if self.document.matches(&item.path) {
+            self.document.canvas(ui, &mut self.state.transform);
+            return;
+        }
+        if self.document.loading(&item.path) || tr_core::document::is_document_path(&item.path) {
+            self.document.unavailable(ui);
+            return;
+        }
         let lang = self.cache_settings.language;
         if let Some(status) = self.source_status.get(&item.id) {
             ui.colored_label(AMBER, lang.message(status));
@@ -4236,37 +4266,6 @@ impl eframe::App for TrueRenderer {
             ui.ctx()
                 .send_viewport_cmd(egui::ViewportCommand::CancelClose);
         }
-        if self.document.active {
-            if self.smoke
-                && let Some(gpu) = frame.wgpu_render_state()
-            {
-                let _ = gpu.device.poll(eframe::wgpu::PollType::Poll);
-            }
-            self.poll(&ui.ctx().clone());
-            self.document.show(ui);
-            if std::env::args().any(|a| a == "--document-smoke") {
-                self.frame_number += 1;
-                ui.ctx().request_repaint_after(Duration::from_millis(30));
-                if self.frame_number >= 8 && self.smoke_stage == 0 {
-                    self.capture_screenshot(ui.ctx(), "document");
-                    self.smoke_stage = 1;
-                }
-                if self.screenshots.contains("document")
-                    || self.started.elapsed() > Duration::from_secs(30)
-                {
-                    let mut report = self.document.diagnostic();
-                    report["passed"] = serde_json::json!(
-                        report["passed"] == true && self.screenshots.contains("document")
-                    );
-                    let _ = std::fs::write(
-                        self.root.join("reports/document-ui.json"),
-                        serde_json::to_vec_pretty(&report).unwrap(),
-                    );
-                    ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-                }
-            }
-            return;
-        }
         let lang = self.cache_settings.language;
         let ctx = ui.ctx().clone();
         // A paused loading modal has no image compute to drive readback
@@ -4288,8 +4287,26 @@ impl eframe::App for TrueRenderer {
         if !self.navigation_begin(&ctx) {
             return;
         }
+        self.sync_document(&ctx);
+        if std::env::args().any(|a| a == "--composition-smoke" || a == "--native-document-smoke")
+            && !self.document.has_document()
+            && !self.document.import_failed()
+            && !self.folder_loading_blocks()
+            && !self.scanning
+        {
+            self.begin_composition(document::Tab::Layers);
+        }
         if !self.folder_loading_blocks() {
-            self.keyboard(&ctx);
+            if self.current_document() {
+                self.document.keyboard(&ctx);
+            }
+            if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::S)) {
+                self.begin_composition(document::Tab::Export);
+            } else if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::N)) {
+                self.document.new_document();
+            } else {
+                self.keyboard(&ctx);
+            }
         }
         self.image_focus_ids.clear();
         if ctx.input(|i| i.viewport().close_requested())
@@ -4370,13 +4387,20 @@ impl eframe::App for TrueRenderer {
             });
         self.help(&ctx);
         self.temporary_panel(&ctx);
+        self.document.new_dialog(&ctx);
         self.settings_window(&ctx);
         self.export_window(&ctx);
         self.crop_window(&ctx);
         self.process_comparison_action();
         self.process_photo_actions(&ctx);
         self.trim_images(false);
-        self.smoke_tick(&ctx);
+        if std::env::args().any(|a| {
+            a == "--document-smoke" || a == "--composition-smoke" || a == "--native-document-smoke"
+        }) {
+            self.document_smoke(&ctx);
+        } else {
+            self.smoke_tick(&ctx);
+        }
         self.background_demand(&ctx);
         self.flush_demand();
         self.folder_loading_popup(&ctx);
@@ -4596,6 +4620,7 @@ mod settings_regressions {
             CachedImage {
                 digest: digest.clone(),
                 info: RasterInfo {
+                    resolution: None,
                     shooting: None,
                     scientific: None,
                     reference_mip: None,
@@ -5062,6 +5087,7 @@ mod settings_regressions {
         let cached = CachedImage {
             digest: item.digest.clone(),
             info: RasterInfo {
+                resolution: None,
                 shooting: None,
                 scientific: None,
                 reference_mip: None,
@@ -5390,6 +5416,7 @@ mod settings_regressions {
             CachedImage {
                 digest: "test".into(),
                 info: RasterInfo {
+                    resolution: None,
                     shooting: None,
                     scientific: None,
                     reference_mip: None,

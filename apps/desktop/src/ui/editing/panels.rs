@@ -308,9 +308,9 @@ pub(super) fn tabs(ui: &mut egui::Ui, lang: Language, current: usize) -> Option<
         .show(ui, |ui| {
             ui.spacing_mut().item_spacing.x = 2.;
             ui.spacing_mut().button_padding.x = 2.;
-            let width = ((ui.available_width() - 4.) / 3.).max(0.);
+            let width = ((ui.available_width() - 6.) / 4.).max(0.);
             ui.horizontal(|ui| {
-                for (i, title) in ["Regolazioni", "Livelli", "Strumenti"]
+                for (i, title) in ["Sviluppo", "Livelli", "Tools", "Export"]
                     .into_iter()
                     .enumerate()
                 {

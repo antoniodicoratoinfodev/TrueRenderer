@@ -44,6 +44,7 @@ fn describe(raw: tr_raw::RawInfo) -> Result<(RasterInfo, ColorSource)> {
     let mut camera = raw.camera;
     camera.truncate(camera.floor_char_boundary(75));
     let info = RasterInfo {
+        resolution: None,
         shooting: None,
         scientific: None,
         reference_mip: None,

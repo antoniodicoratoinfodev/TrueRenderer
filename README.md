@@ -44,27 +44,49 @@ An illuminated dot identifies an enabled tool with adjustments.
 
 Keep different creative decisions independently editable. Add an adjustment to a new photographic layer or to the selected layer, then control where it acts and how strongly it contributes.
 
-For raster editing in development builds, use **Open → Spazio documento…** or
-**Copia foto in documento**. The document workspace provides independent raster
-copies, transparent layers, image insertion, move/scale/rotation, selections,
-erasing and the **Clona**, **Ripara** and **Ripara rapido** brushes. Alt-click
-samples the selected layer for Clone/Heal. Double-click closes a polygonal selection.
-Use **Nuovo** for dimensions, units, PPI, background and output colour space;
-**Salva** writes an editable `.truerenderer` document, **Export documento** writes
-a separate copy, and **Export PNG16** renders the finished image. Previous saves
-remain in uniquely named `*.previous-*.truerenderer` files beside the document.
-Use **Ctrl/Cmd+N**, **O**, **S** and **Shift+S** for New, Open, Save and Save As in
-the document workspace. Double-click ends a polygon selection; Alt-click chooses
-the source for Clone or sampled Repair. Photographic curves and masks remain
-editable on each raster layer. Select a raster tool to finish mask drawing.
+Editing uses **Sviluppo (Develop)**, **Livelli (Layers)**, **Tools** and **Export**.
+Select Layers or Tools while viewing a photo to prepare its native pixels and
+current adjustments automatically. The photo becomes **layer 0**, fixed at the
+bottom of the stack. Add an empty layer or another image above it, duplicate a
+layer, or use **Selezione → nuovo livello** to copy a selected piece independently.
+The original photograph remains read-only.
+
+**Sposta** is available in Develop, Layers and Tools: drag the selected image or
+piece over the canvas, or enter its position, scale and rotation. Tools also holds
+free/polygonal/rectangular selections, painting, erasing, **Clona**, **Ripara** and
+**Ripara rapido**. Alt-click samples the selected layer for Clone/Heal;
+double-click closes a polygon. Adjustments and masks remain editable per layer.
+
+Use **Apri → Nuovo documento…** to name and create a blank canvas in the current
+folder, choosing dimensions, units, PPI and background. Projects appear alongside
+photos in the same grid and filmstrip. **Apri → Apri file…**, drag-and-drop and OS
+opening select the project in its folder, using the normal viewer and inspector. In **Export**, **Salva progetto** and **Salva con nome…** write an
+editable `.truerenderer` file with embedded images for transfer between Windows
+and Mac. **Esporta copia del progetto…** leaves the current save location unchanged.
+**Esporta immagine…** renders the visible composition to PNG16, PNG8 or JPEG, with
+optional size reduction, output PPI and JPEG quality. These choices affect only
+the exported copy. A composition started from a photo keeps its native pixel
+dimensions and declared X/Y PPI; missing density remains unspecified. Previous project saves remain in
+uniquely named `*.previous-*.truerenderer` files beside the document.
+
+Select another photo to browse; the current project and its undo history remain
+in memory. Select its thumbnail again, or use **Apri → Riprendi progetto in corso**,
+to return. Opening another project asks what to do with unsaved changes.
+Saving a project selects the saved file in the normal browser. Catalog edits made
+after capture do not replace the retained project. Use **Ctrl/Cmd+S** and **Shift+S** to save/save as in
+the composition, and **Ctrl/Cmd+Z / Shift+Z** to undo/redo.
 
 On Windows, `scripts/register-document-windows.ps1 -Executable PATH` registers a
 verified executable for `.truerenderer` files for the current user, preserving an
 existing application choice. The macOS bundle declares the same extension for
 Finder. Neither path changes the document's portable representation.
 
-The initial document limits are 16 MP per canvas/image and 256 MiB of raster assets
-and masks, with a 2048 px fitted preview. RAW development is embedded as raster
+Documents admit up to 67,108,864 pixels per canvas/image and 2 GiB of raster assets
+and masks, subject to available memory. Larger inputs are rejected explicitly,
+without silently resizing them. The viewer uses the native composite at 1:1;
+the normal zoom controls and Space-drag pan remain available. New projects use
+format v2, which preserves unknown or different X/Y density values. Version 1
+projects remain readable; older applications need updating to open v2. RAW development is embedded as raster
 pixels; sensor decoding and completed brush-stroke parameters cannot be changed
 after reopening. See the [document contract](docs/documenti-raster.md) and
 [qualification status](STATO.md#livelli-raster-ritocco-formato-progetto) before using

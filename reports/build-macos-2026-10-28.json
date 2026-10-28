@@ -1,0 +1,43 @@
+{
+  "application": "TrueRenderer",
+  "date": "2026-10-28",
+  "source_commit": "9016b4a11aac150733d143899abe849016d0b388",
+  "build_command": "scripts/build-macos.sh var/macos-remote-build-20261028/TrueRenderer.app",
+  "installed_bundle": "dist/TrueRenderer.app",
+  "previous_distribution": "var/backups/before-remote-sync-20261028-125351/dist/TrueRenderer.app",
+  "release_build_passed": true,
+  "codesign_verification_passed": true,
+  "xpc_before_and_after_install_passed": true,
+  "native_smoke": {
+    "passed": true,
+    "adapter": "Apple M4 \u00b7 Metal",
+    "images": 12,
+    "presentation_errors": false
+  },
+  "surface_sampling": {
+    "passed": true,
+    "checks": 11,
+    "max_channel_error_u8": 1
+  },
+  "launch": "Opened installed bundle with project root and existing local library; native window observed ready.",
+  "binary_sha256": {
+    "Contents/MacOS/TrueRenderer": "48208310733ca4fea42bb090f3759c49cd6afe45b5366ad1c73e57807432a2fd",
+    "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "23b8e61fa26ba240aef0fe36ae5838fede50a469028a20134897cad51cc6228c",
+    "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "c71a8aed8f267bfc5b0bd8859e97d59428c2319f0fa095f2c68547954558ee41"
+  },
+  "evidence_sha256": {
+    "var/macos-remote-build-20261028/build.log": "f848cae7f78392f3fa7f7e1840cbf9694beaca48a99cd8c02b196d906d5a42c1",
+    "var/macos-remote-build-20261028/xpc.log": "9bed9dec1cb6dd7b4e16845aea3f74e0d9673eda5436339f402804704b38200a",
+    "var/macos-remote-build-20261028/xpc-installed.log": "392668baaa8e868dde7d0c78c3fd974bc6640ab7fadcc4ad3aa2d11f1782986f",
+    "var/macos-remote-build-20261028/native-smoke.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "var/macos-remote-build-20261028/sampling-check.log": "63838e7f9975b7f5b8e8a067a67003872a7a399119ee91d6f9ba7192a82a98cc",
+    "var/macos-remote-build-20261028/qualification/reports/smoke-macos.json": "5b81ce22e28f420ca1b495870fef7cb84fca150140a72ff79780fc601289ec2e",
+    "var/macos-remote-build-20261028/qualification/reports/sampling-presentation-macos.json": "76999d85ea77ae232647a6baced9b91005319d08120fedc2f5a4edf934a8099d",
+    "var/macos-remote-build-20261028/qualification/reports/xpc-qualification-macos.json": "392668baaa8e868dde7d0c78c3fd974bc6640ab7fadcc4ad3aa2d11f1782986f",
+    "var/macos-remote-build-20261028/qualification/reports/xpc-integration-macos.json": "ed6080d70a916d5e53d2d1adccfe544648143bbed7eec072fcb8736514c076be"
+  },
+  "limits": [
+    "Build, XPC integration and native corpus smoke only; full Rust suite not rerun.",
+    "Not a full qualification of new GPU editing on macOS or R/SF gates."
+  ]
+}

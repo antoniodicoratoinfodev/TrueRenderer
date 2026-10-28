@@ -68,6 +68,7 @@ impl TrueRenderer {
             .iter()
             .filter(|item| {
                 item.approved
+                    && !tr_core::document::is_document_path(&item.path)
                     && previous
                         .get(&item.id)
                         .is_some_and(|old| *old != self.preview_request_for_mode(item, 0, false))
@@ -84,7 +85,12 @@ impl TrueRenderer {
                 self.rebuild.push_back(item);
             }
         }
-        self.rebuild_total = self.state.items.iter().filter(|item| item.approved).count();
+        self.rebuild_total = self
+            .state
+            .items
+            .iter()
+            .filter(|item| item.approved && !tr_core::document::is_document_path(&item.path))
+            .count();
         self.folder_load.refining = None;
         self.folder_load.native_done = None;
         self.folder_load.prepared_recipe = None;
@@ -170,13 +176,13 @@ impl TrueRenderer {
             .state
             .items
             .iter()
-            .filter(|i| i.approved)
+            .filter(|i| i.approved && !tr_core::document::is_document_path(&i.path))
             .cloned()
             .collect();
         self.rebuild_total = self.rebuild.len();
         self.folder_load.signature = Some(signature);
         self.folder_load.request = Some(request);
-        self.folder_load.skipped = self.state.items.len() - self.rebuild_total;
+        self.folder_load.skipped = self.state.items.iter().filter(|i| !i.approved).count();
         self.folder_load.errors = 0;
         self.folder_load.cancelled = false;
         self.folder_load.cancelled_remaining = 0;
@@ -1107,6 +1113,7 @@ mod tests {
             .unwrap(),
         );
         let info = RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

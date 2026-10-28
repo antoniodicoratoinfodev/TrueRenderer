@@ -1,4 +1,4 @@
-//! Raster document workspace, sharing the application's isolated decoder.
+//! Raster editing within the normal browser and viewer, sharing the application's isolated decoder.
 use anyhow::{Result, ensure};
 use eframe::egui::{self, Color32};
 use std::{collections::VecDeque, path::PathBuf, sync::mpsc};
@@ -20,7 +20,36 @@ enum Tool {
     Rectangle,
 }
 
-type Imported = Result<RasterLayer>;
+mod develop;
+mod export;
+mod lifecycle;
+mod panels;
+mod presentation;
+mod probe;
+mod thumbnails;
+mod tools;
+#[cfg(test)]
+mod workflow_tests;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(super) enum Tab {
+    #[default]
+    Develop,
+    Layers,
+    Tools,
+    Export,
+}
+impl Tab {
+    pub fn from_index(index: usize) -> Self {
+        match index {
+            1 => Self::Layers,
+            2 => Self::Tools,
+            3 => Self::Export,
+            _ => Self::Develop,
+        }
+    }
+}
+type Imported = Result<crate::decode_pool::ImportedDocumentImage>;
 pub(in crate::ui) struct CanvasCoordinates<'a> {
     pub layer: &'a RasterLayer,
     pub rect: egui::Rect,
@@ -56,7 +85,24 @@ impl CanvasCoordinates<'_> {
     }
 }
 pub(super) struct Editor {
-    pub active: bool,
+    pub tab: Tab,
+    pub source_id: Option<String>,
+    import_photo: Option<String>,
+    source_path: Option<PathBuf>,
+    import_path: Option<PathBuf>,
+    pub directory: PathBuf,
+    name: String,
+    pub published: VecDeque<PathBuf>,
+    pub reveal: Option<PathBuf>,
+    pub requested_tab: Option<Tab>,
+    attempted: Option<PathBuf>,
+    previews: thumbnails::Previews,
+    export_format: export::ImageFormat,
+    export_quality: u8,
+    export_edge: u32,
+    export_resolution: Option<tr_core::protocol::Resolution>,
+    export_space: Option<ColorSpace>,
+    notice: String,
     doc: Option<Document>,
     path: Option<PathBuf>,
     dirty: bool,
@@ -76,11 +122,14 @@ pub(super) struct Editor {
     last_point: Option<[f32; 2]>,
     stroke_origin: Option<[f32; 2]>,
     texture: Option<egui::TextureHandle>,
+    composite: Option<tr_core::resample::Pyramid>,
+    view_texture: Option<egui::TextureHandle>,
+    view_region: Option<tr_core::resample::Region>,
     needs_render: bool,
     error: String,
     service: mpsc::SyncSender<crate::service::Request>,
     memory: tr_core::budget::MemoryBudget,
-    admission: Option<std::sync::Arc<tr_core::budget::Lease>>,
+    admission: Option<std::sync::Arc<crate::document_memory::Admission>>,
     import: Option<mpsc::Receiver<Imported>>,
     new_dialog: bool,
     width: f64,
@@ -103,7 +152,24 @@ impl Editor {
         memory: tr_core::budget::MemoryBudget,
     ) -> Self {
         Self {
-            active: false,
+            tab: Tab::Develop,
+            source_id: None,
+            import_photo: None,
+            source_path: None,
+            import_path: None,
+            directory: PathBuf::new(),
+            name: "Documento".into(),
+            published: VecDeque::new(),
+            reveal: None,
+            requested_tab: None,
+            attempted: None,
+            previews: thumbnails::Previews::new(memory.clone()),
+            export_format: export::ImageFormat::Png16,
+            export_quality: 95,
+            export_edge: 0,
+            export_resolution: None,
+            export_space: None,
+            notice: String::new(),
             doc: None,
             path: None,
             dirty: false,
@@ -123,6 +189,9 @@ impl Editor {
             last_point: None,
             stroke_origin: None,
             texture: None,
+            composite: None,
+            view_texture: None,
+            view_region: None,
             needs_render: false,
             error: String::new(),
             service,
@@ -140,69 +209,157 @@ impl Editor {
             effects: Default::default(),
         }
     }
-    fn discard_allowed(&self) -> bool {
+    pub fn new_document(&mut self) {
+        self.name = "Documento".into();
+        let mut suffix = 2;
+        while self
+            .directory
+            .join(format!("{}.truerenderer", self.name))
+            .exists()
+        {
+            self.name = format!("Documento {suffix}");
+            suffix += 1;
+        }
+        self.error.clear();
+        self.new_dialog = true;
+    }
+    pub fn has_document(&self) -> bool {
+        self.doc.is_some()
+    }
+    pub fn import_failed(&self) -> bool {
+        self.import.is_none() && !self.error.is_empty()
+    }
+    pub fn select_tab(&mut self, tab: Tab) {
+        self.end_stroke();
+        self.points.clear();
+        self.effects.stop_document_gesture();
+        self.adjustments.paint = false;
+        self.adjustments.horizon = false;
+        self.adjustments.overlay = false;
+        self.tab = tab;
+        self.tool = Tool::Move;
+    }
+    pub fn begin_photo(
+        &mut self,
+        id: String,
+        path: PathBuf,
+        recipe: tr_core::editing::EditRecipe,
+        expected_digest: String,
+        tab: Tab,
+    ) {
+        if self.source_id.as_ref() == Some(&id) && self.doc.is_some() {
+            self.select_tab(tab);
+            return;
+        }
+        if self.import.is_some() || !self.replace_allowed() {
+            return;
+        }
+        self.select_tab(tab);
+        if self.queue_import(path.clone(), recipe, Some(expected_digest)) {
+            self.import_photo = Some(id);
+            self.import_path = Some(path);
+        }
+    }
+    fn replace_allowed(&mut self) -> bool {
         if self.import.is_some() {
             return false;
         }
-        !self.dirty
-            || rfd::MessageDialog::new()
-                .set_title("TrueRenderer")
-                .set_description("Scartare le modifiche non salvate al documento?")
-                .set_buttons(rfd::MessageButtons::YesNo)
-                .show()
-                == rfd::MessageDialogResult::Yes
+        if !self.dirty {
+            return true;
+        }
+        match rfd::MessageDialog::new().set_title("TrueRenderer")
+            .set_description("Salvare il progetto corrente prima di aprire un altro lavoro? Sì: salva. No: sostituisci. Annulla: resta qui.")
+            .set_buttons(rfd::MessageButtons::YesNoCancel).show() {
+            rfd::MessageDialogResult::Yes => { self.save(false); self.reveal = None; !self.dirty },
+            rfd::MessageDialogResult::No => true,
+            _ => false,
+        }
     }
     pub fn allow_close(&mut self) -> bool {
+        if self.import.is_some() {
+            self.error = "Attendere il caricamento prima di chiudere".into();
+            return false;
+        }
         if !self.dirty {
             return true;
         }
         match rfd::MessageDialog::new().set_title("TrueRenderer")
             .set_description("Salvare le modifiche al documento prima di chiudere? Sì: salva. No: scarta. Annulla: torna al documento.")
             .set_buttons(rfd::MessageButtons::YesNoCancel).show() {
-            rfd::MessageDialogResult::Yes => { self.save(false); !self.dirty },
+            rfd::MessageDialogResult::Yes => { self.save(false); self.reveal = None; !self.dirty },
             rfd::MessageDialogResult::No => { self.dirty=false; true },
             _ => false,
         }
     }
-    pub fn open(&mut self, path: PathBuf) {
+    pub fn open(&mut self, path: PathBuf) -> bool {
+        self.attempted = Some(path.clone());
+        if !self.replace_allowed() {
+            self.reveal = self.location();
+            return false;
+        }
         if !self.admit() {
-            return;
+            return false;
         }
-        if !self.discard_allowed() {
-            return;
+        let required = tr_store::document::allocation(&path)
+            .map(|(storage, pixels)| tr_core::document::admission_bytes(storage, pixels));
+        match required {
+            Ok(bytes) if self.admit_bytes(bytes) => {}
+            Ok(_) => return false,
+            Err(e) => {
+                self.error = e.to_string();
+                return false;
+            }
         }
-        match tr_store::document::open(&path) {
+        match tr_store::document::open_admitted(&path, self.admission.as_ref().unwrap().bytes()) {
             Ok(doc) => {
                 self.replace(doc);
                 self.path = Some(path);
                 self.dirty = false;
+                self.select_tab(Tab::Layers);
+                true
             }
             Err(e) => {
                 self.error = e.to_string();
-                self.active = true;
+                false
             }
         }
     }
     fn admit(&mut self) -> bool {
-        if self.admission.is_none() {
-            // Conservative envelope: durable raster, two history branches,
-            // pre-stroke snapshot, render/filter scratch, display and file IO.
-            self.admission = self
-                .memory
-                .try_reserve(3 * 1024 * 1024 * 1024)
-                .map(std::sync::Arc::new);
-        }
-        if self.admission.is_none() {
-            self.error = "Memoria insufficiente per aprire lo spazio documento; liberare le anteprime e riprovare.".into();
-            self.active = true;
+        self.admit_bytes(3 * 1024 * 1024 * 1024)
+    }
+    fn admit_bytes(&mut self, bytes: u64) -> bool {
+        let admission = self.admission.get_or_insert_with(|| {
+            std::sync::Arc::new(crate::document_memory::Admission::new(self.memory.clone()))
+        });
+        if !admission.ensure(bytes) {
+            self.error = format!(
+                "Memoria insufficiente per lavorare a risoluzione nativa (richiesti {:.1} GiB). Liberare memoria e riprovare.",
+                bytes as f64 / 1073741824.
+            );
             false
         } else {
             true
         }
     }
+    fn admit_edit(&mut self, growth: u64) -> bool {
+        let Some(doc) = &self.doc else {
+            return false;
+        };
+        let storage =
+            (doc.storage_bytes() as u64 + growth).min(tr_core::document::MAX_DOCUMENT_BYTES as u64);
+        self.admit_bytes(tr_core::document::admission_bytes(
+            storage,
+            doc.largest_pixels(),
+        ))
+    }
     fn replace(&mut self, doc: Document) {
         self.doc = Some(doc);
+        self.export_resolution = None;
+        self.export_space = None;
+        self.export_edge = 0;
         self.path = None;
+        self.source_id = None;
+        self.source_path = None;
         self.dirty = true;
         self.undo.clear();
         self.redo.clear();
@@ -211,54 +368,47 @@ impl Editor {
         self.source = None;
         self.stroke = None;
         self.texture = None;
+        self.composite = None;
+        self.view_texture = None;
+        self.view_region = None;
         self.needs_render = true;
-        self.active = true;
         self.error.clear();
+        self.notice.clear();
         self.adjustments = Default::default();
         self.effects = Default::default();
+        if let Some(admission) = &self.admission
+            && std::sync::Arc::strong_count(admission) == 1
+        {
+            let doc = self.doc.as_ref().unwrap();
+            admission.shrink(tr_core::document::admission_bytes(
+                doc.storage_bytes() as u64,
+                doc.largest_pixels(),
+            ));
+        }
     }
-    pub fn capture_photo(
-        &mut self,
-        name: String,
-        image: &LinearImage,
-        recipe: tr_core::editing::EditRecipe,
-    ) -> Result<()> {
-        ensure!(self.discard_allowed(), "Creazione documento annullata");
-        ensure!(self.admit(), "Memoria documento non disponibile");
-        ensure!(
-            image.pixels.len() <= tr_core::document::MAX_CANVAS_PIXELS,
-            "Foto oltre il limite iniziale di 16 MP"
-        );
-        let mut layer = RasterLayer::new(name, image.clone());
-        layer.recipe = recipe;
-        let document = Document {
-            version: 1,
-            width: image.width,
-            height: image.height,
-            ppi: 300.,
-            unit: Unit::Pixels,
-            color_space: ColorSpace::Srgb,
-            layers: vec![layer],
-            selection: vec![],
-        };
-        document.validate()?;
-        self.replace(document);
-        Ok(())
-    }
-
     fn remember(&mut self, old: Document) {
-        const HISTORY_BYTES: usize = 256 * 1024 * 1024;
+        let history_bytes = self
+            .doc
+            .as_ref()
+            .map_or(0, Document::storage_bytes)
+            .max(old.storage_bytes())
+            .max(256 * 1024 * 1024);
         self.redo.clear();
         self.undo.push_back(old);
         while self.undo.len() > 32
-            || self.undo.iter().map(Document::storage_bytes).sum::<usize>() > HISTORY_BYTES
+            || self.undo.iter().map(Document::storage_bytes).sum::<usize>() > history_bytes
         {
             self.undo.pop_front();
         }
         self.dirty = true;
+        self.notice.clear();
         self.needs_render = true;
     }
     fn edit(&mut self, action: impl FnOnce(&mut Document, usize) -> Result<()>) {
+        // Include a new selection/mask; raster insertion additionally reserves its growth.
+        if !self.admit_edit(self.doc.as_ref().map_or(0, |d| d.largest_pixels() * 8)) {
+            return;
+        }
         let Some(doc) = &mut self.doc else {
             return;
         };
@@ -276,14 +426,16 @@ impl Editor {
             }
         }
     }
-    fn save(&mut self, copy: bool) {
+    pub fn save(&mut self, copy: bool) {
+        self.end_stroke();
         let Some(doc) = &self.doc else {
             return;
         };
         let path = if copy || self.path.is_none() {
             rfd::FileDialog::new()
                 .add_filter("TrueRenderer", &["truerenderer"])
-                .set_file_name("Documento.truerenderer")
+                .set_directory(&self.directory)
+                .set_file_name(self.suggested_name())
                 .save_file()
         } else {
             self.path.clone()
@@ -292,106 +444,64 @@ impl Editor {
             if path.extension().is_none() {
                 path.set_extension("truerenderer");
             }
-            match tr_store::document::save(&path, doc) {
-                Ok(()) => {
-                    self.path = Some(path);
-                    self.dirty = false;
-                    self.error.clear();
-                }
-                Err(e) => self.error = e.to_string(),
-            }
+            let result = tr_store::document::save(&path, doc);
+            self.saved(path, result, true);
         }
     }
     fn import_image(&mut self, _ctx: &egui::Context) {
-        if !self.admit() {
-            return;
+        if let Some(path) = rfd::FileDialog::new()
+            .set_directory(&self.directory)
+            .pick_file()
+        {
+            self.queue_import(
+                path,
+                tr_core::editing::EditRecipe::neutral(Default::default()),
+                None,
+            );
         }
-        if self.import.is_some() {
-            return;
+    }
+    fn queue_import(
+        &mut self,
+        path: PathBuf,
+        recipe: tr_core::editing::EditRecipe,
+        expected_digest: Option<String>,
+    ) -> bool {
+        if self.import.is_some() || !self.admit() {
+            return false;
         }
-        let Some(path) = rfd::FileDialog::new().pick_file() else {
-            return;
-        };
         let Some(import_admission) = self.memory.try_reserve(3 * 1024 * 1024 * 1024) else {
             self.error = "Memoria insufficiente per decoder e snapshot di importazione.".into();
-            return;
+            return false;
         };
         let (tx, rx) = mpsc::channel();
+        let append = expected_digest.is_none() && self.doc.is_some();
         let job = crate::decode_pool::DocumentImport {
             path,
+            recipe,
+            expected_digest,
             result: tx,
             memory: import_admission,
             document: self.admission.as_ref().unwrap().clone(),
+            append,
+            existing_storage: self.doc.as_ref().map_or(0, |d| d.storage_bytes() as u64),
+            existing_pixels: self.doc.as_ref().map_or(0, Document::largest_pixels),
         };
         match self
             .service
             .try_send(crate::service::Request::ImportDocument(job))
         {
-            Ok(()) => self.import = Some(rx),
-            Err(_) => self.error = "Servizio occupato: riprovare l'importazione".into(),
+            Ok(()) => {
+                self.import = Some(rx);
+                self.error.clear();
+                true
+            }
+            Err(_) => {
+                self.error = "Servizio occupato: riprovare l'importazione".into();
+                false
+            }
         }
     }
-    fn export_png(&mut self) {
-        let Some(doc) = &self.doc else {
-            return;
-        };
-        let Some(path) = rfd::FileDialog::new()
-            .add_filter("PNG 16 bit", &["png"])
-            .save_file()
-        else {
-            return;
-        };
-        let result = (|| -> Result<()> {
-            ensure!(
-                !path.exists(),
-                "Per preservare gli originali scegliere un nuovo nome per l'export"
-            );
-            let parent = path.parent().unwrap_or(std::path::Path::new("."));
-            let mut temp = tempfile::NamedTempFile::new_in(parent)?;
-            encode_png(doc, temp.as_file_mut())?;
-            temp.as_file().sync_all()?;
-            temp.persist_noclobber(path).map_err(|e| e.error)?;
-            Ok(())
-        })();
-        if let Err(e) = result {
-            self.error = e.to_string();
-        }
-    }
-    fn export_native(&mut self) {
-        let Some(doc) = &self.doc else {
-            return;
-        };
-        if let Some(path) = rfd::FileDialog::new()
-            .add_filter("TrueRenderer", &["truerenderer"])
-            .set_file_name("Copia.truerenderer")
-            .save_file()
-            && let Err(error) = tr_store::document::save(&path, doc)
-        {
-            self.error = error.to_string();
-        }
-    }
-    pub fn show(&mut self, ui: &mut egui::Ui) {
-        let ctx = ui.ctx().clone();
-        if ui.input_mut(|i| {
-            i.consume_key(
-                egui::Modifiers::COMMAND | egui::Modifiers::SHIFT,
-                egui::Key::S,
-            )
-        }) {
-            self.save(true);
-        } else if ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::S)) {
-            self.save(false);
-        }
-        if ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::N)) {
-            self.new_dialog = true;
-        }
-        if ui.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::O))
-            && let Some(p) = rfd::FileDialog::new()
-                .add_filter("TrueRenderer", &["truerenderer"])
-                .pick_file()
-        {
-            self.open(p);
-        }
+    pub fn poll(&mut self) {
         let imported = self.import.as_ref().and_then(|rx| match rx.try_recv() {
             Ok(result) => Some(result),
             Err(mpsc::TryRecvError::Empty) => None,
@@ -402,536 +512,139 @@ impl Editor {
         if let Some(result) = imported {
             self.import = None;
             match result {
-                Ok(layer) => {
-                    if self.doc.is_none() {
-                        match Document::new(layer.width, layer.height, 300., [0.; 4]) {
-                            Ok(mut d) => {
-                                d.layers.clear();
-                                self.replace(d);
+                Ok(imported) => {
+                    let layer = imported.layer;
+                    let photo = self.import_photo.take();
+                    if photo.is_some() || self.doc.is_none() {
+                        let size = [layer.width, layer.height];
+                        let doc = Document {
+                            version: 2,
+                            width: size[0],
+                            height: size[1],
+                            ppi: imported.resolution.map_or(300., |r| r.x),
+                            resolution: imported.resolution,
+                            unit: Unit::Pixels,
+                            color_space: ColorSpace::Srgb,
+                            layers: vec![layer],
+                            selection: vec![],
+                        };
+                        match doc.validate() {
+                            Ok(()) => {
+                                self.replace(doc);
+                                self.source_id = photo;
+                                self.source_path = self.import_path.take();
                             }
                             Err(e) => self.error = e.to_string(),
                         }
-                    }
-                    self.edit(|d, _| d.insert(layer));
-                    if let Some(doc) = &self.doc {
-                        self.selected = doc.layers.len().saturating_sub(1);
-                    }
-                }
-                Err(e) => self.error = e.to_string(),
-            }
-        }
-        egui::Panel::top("document-actions").show(ui, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.strong("TrueRenderer · Documento");
-                if ui.button("Fotografie").clicked() {
-                    self.active = false;
-                }
-                if ui.button("Chiudi documento").clicked() && self.discard_allowed() {
-                    self.doc = None;
-                    self.path = None;
-                    self.dirty = false;
-                    self.undo.clear();
-                    self.redo.clear();
-                    self.stroke = None;
-                    self.texture = None;
-                    self.admission = None;
-                    self.active = false;
-                }
-                if ui.button("Nuovo…").clicked() {
-                    self.new_dialog = true;
-                }
-                if ui.button("Apri…").clicked()
-                    && let Some(p) = rfd::FileDialog::new()
-                        .add_filter("TrueRenderer", &["truerenderer"])
-                        .pick_file()
-                {
-                    self.open(p);
-                }
-                if ui.button("Salva").clicked() {
-                    self.save(false);
-                }
-                if ui.button("Salva con nome…").clicked() {
-                    self.save(true);
-                }
-                if ui.button("Export PNG16…").clicked() {
-                    self.export_png();
-                }
-                if ui.button("Export documento…").clicked() {
-                    self.export_native();
-                }
-                if ui
-                    .add_enabled(
-                        self.import.is_none(),
-                        egui::Button::new("Inserisci immagine…"),
-                    )
-                    .clicked()
-                {
-                    self.import_image(&ctx);
-                }
-                if ui
-                    .add_enabled(!self.undo.is_empty(), egui::Button::new("Annulla"))
-                    .clicked()
-                    && let Some(old) = self.undo.pop_back()
-                {
-                    if let Some(doc) = self.doc.replace(old) {
-                        self.redo.push_back(doc);
-                    }
-                    self.dirty = true;
-                    self.needs_render = true;
-                }
-                if ui
-                    .add_enabled(!self.redo.is_empty(), egui::Button::new("Ripeti"))
-                    .clicked()
-                    && let Some(next) = self.redo.pop_back()
-                {
-                    if let Some(doc) = self.doc.replace(next) {
-                        self.undo.push_back(doc);
-                    }
-                    self.dirty = true;
-                    self.needs_render = true;
-                }
-                ui.label(if self.dirty {
-                    "Modifiche non salvate"
-                } else {
-                    "Salvato"
-                });
-            });
-            if !self.error.is_empty() {
-                ui.colored_label(Color32::YELLOW, &self.error);
-            }
-            if self.import.is_some() {
-                ui.spinner();
-                ui.label("Decodifica immagine…");
-            }
-        });
-        if self.new_dialog {
-            egui::Window::new("Nuovo documento").collapsible(false).show(&ctx,|ui|{
-                ui.horizontal(|ui|{ui.label("Larghezza");ui.add(egui::DragValue::new(&mut self.width).range(0.01..=65536.));});
-                ui.horizontal(|ui|{ui.label("Altezza");ui.add(egui::DragValue::new(&mut self.height).range(0.01..=65536.));});
-                ui.horizontal(|ui|{for (unit,label) in [(Unit::Pixels,"px"),(Unit::Centimeters,"cm"),(Unit::Millimeters,"mm"),(Unit::Inches,"pollici")]{ui.selectable_value(&mut self.unit,unit,label);}});
-                ui.horizontal(|ui|{ui.label("PPI");ui.add(egui::DragValue::new(&mut self.ppi).range(1. ..=9600.));});
-                if ui.button("Scambia orientamento").clicked(){std::mem::swap(&mut self.width,&mut self.height);}
-                ui.checkbox(&mut self.transparent,"Sfondo trasparente");
-                if !self.transparent {ui.color_edit_button_rgba_unmultiplied(&mut self.color);}
-                ui.horizontal(|ui|{ui.label("Spazio di uscita");ui.selectable_value(&mut self.space,ColorSpace::Srgb,"sRGB");ui.selectable_value(&mut self.space,ColorSpace::LinearRec2020,"Rec.2020 lineare");});
-                ui.small("Calcolo interno Rec.2020 lineare. Limite iniziale: 16 MP per tela, 256 MiB di pixel e maschere.");
-                ui.horizontal(|ui|{
-                    if ui.button("Crea").clicked() && self.discard_allowed() && self.admit(){
-                        let result=(||->Result<Document>{let w=self.unit.pixels(self.width,self.ppi)?;let h=self.unit.pixels(self.height,self.ppi)?;
-                            let mut d=Document::new(w,h,self.ppi,if self.transparent{[0.;4]}else{tr_core::color::from_encoded_srgb(self.color)})?;
-                            d.unit=self.unit;d.color_space=self.space;Ok(d)})();
-                        match result{Ok(d)=>{self.replace(d);self.new_dialog=false;},Err(e)=>self.error=e.to_string()}
-                    }
-                    if ui.button("Annulla").clicked(){self.new_dialog=false;}
-                });
-            });
-        }
-        let Some(doc) = &self.doc else {
-            egui::CentralPanel::default().show(ui, |ui| {
-                ui.label("Crea un documento o inserisci un'immagine.");
-            });
-            return;
-        };
-        self.selected = self.selected.min(doc.layers.len().saturating_sub(1));
-        egui::Panel::right("document-layers")
-            .default_size(280.)
-            .show(ui, |ui| {
-                egui::ScrollArea::vertical().show(ui, |ui| {
-                    ui.heading("Livelli");
-                    let layers = self
-                        .doc
-                        .as_ref()
-                        .unwrap()
-                        .layers
-                        .iter()
-                        .map(|l| (l.name.clone(), l.visible))
-                        .collect::<Vec<_>>();
-                    for (i, (name, mut visible)) in layers.into_iter().enumerate().rev() {
-                        ui.horizontal(|ui| {
-                            if ui.checkbox(&mut visible, "").changed() {
-                                self.edit(|d, _| {
-                                    d.layers[i].visible = visible;
-                                    Ok(())
-                                });
-                            }
-                            if ui.selectable_label(self.selected == i, name).clicked() {
-                                self.selected = i;
-                                self.source = None;
-                                self.adjustments = Default::default();
-                                self.effects = Default::default();
-                            }
-                        });
-                    }
-                    ui.horizontal_wrapped(|ui| {
-                        if ui.button("Vuoto").clicked() {
-                            self.edit(|d, _| {
-                                let image = LinearImage::new(
-                                    d.width,
-                                    d.height,
-                                    vec![[0.; 4]; d.width as usize * d.height as usize],
-                                )?;
-                                d.insert(RasterLayer::new("Livello vuoto".into(), image))
-                            });
-                            self.selected =
-                                self.doc.as_ref().unwrap().layers.len().saturating_sub(1);
-                        }
-                        if ui.button("Copia livello").clicked() {
-                            self.edit(|d, i| d.duplicate(i));
-                            self.selected =
-                                self.doc.as_ref().unwrap().layers.len().saturating_sub(1);
-                        }
-                        if ui.button("Copia visibile").clicked() {
-                            self.edit(|d, _| {
-                                let image = d.render()?;
-                                d.insert(RasterLayer::new("Copia visibile".into(), image))
-                            });
-                            self.selected =
-                                self.doc.as_ref().unwrap().layers.len().saturating_sub(1);
-                        }
-                        if ui.button("Elimina").clicked() {
-                            self.edit(|d, i| {
-                                if i < d.layers.len() {
-                                    ensure!(!d.layers[i].locked, "Livello bloccato");
-                                    d.layers.remove(i);
-                                }
-                                Ok(())
-                            });
-                        }
-                        if ui.button("Su").clicked() {
-                            let target = (self.selected + 1)
-                                .min(self.doc.as_ref().unwrap().layers.len().saturating_sub(1));
-                            self.edit(|d, i| {
-                                ensure!(
-                                    d.layers.get(i).is_some_and(|l| !l.locked),
-                                    "Livello assente o bloccato"
-                                );
-                                d.layers.swap(i, target);
-                                Ok(())
-                            });
-                            if self.error.is_empty() {
-                                self.selected = target;
-                            }
-                        }
-                        if ui.button("Giù").clicked() {
-                            let target = self.selected.saturating_sub(1);
-                            self.edit(|d, i| {
-                                ensure!(
-                                    d.layers.get(i).is_some_and(|l| !l.locked),
-                                    "Livello assente o bloccato"
-                                );
-                                d.layers.swap(i, target);
-                                Ok(())
-                            });
-                            if self.error.is_empty() {
-                                self.selected = target;
-                            }
-                        }
-                    });
-                    if let Some(layer) = self.doc.as_ref().unwrap().layers.get(self.selected) {
-                        let mut name = layer.name.clone();
-                        let mut locked = layer.locked;
-                        let mut opacity = layer.opacity;
-                        let mut blend = layer.blend;
-                        let mut transform = layer.transform;
-                        let mut exposure = layer.recipe.exposure_ev;
-                        let mut changed = ui.text_edit_singleline(&mut name).changed();
-                        changed |= ui.checkbox(&mut locked, "Blocca").changed();
-                        ui.add_enabled_ui(!locked, |ui| {
-                            changed |= ui
-                                .add(egui::Slider::new(&mut opacity, 0. ..=1.).text("Opacità"))
-                                .changed();
-                            ui.horizontal(|ui| {
-                                for (b, label) in [
-                                    (Blend::Normal, "Normale"),
-                                    (Blend::Multiply, "Moltiplica"),
-                                    (Blend::Screen, "Scolora"),
-                                ] {
-                                    changed |= ui.selectable_value(&mut blend, b, label).changed();
-                                }
-                            });
-                            for (label, v) in [
-                                ("X", &mut transform.x),
-                                ("Y", &mut transform.y),
-                                ("Scala", &mut transform.scale),
-                                ("Rotazione °", &mut transform.angle),
-                            ] {
-                                ui.horizontal(|ui| {
-                                    ui.label(label);
-                                    changed |= ui.add(egui::DragValue::new(v).speed(0.1)).changed();
-                                });
-                            }
-                            changed |= ui
-                                .add_enabled(
-                                    !layer.recipe.suspended.contains_key("light-panel"),
-                                    egui::Slider::new(&mut exposure, -10. ..=10.)
-                                        .text("Esposizione EV"),
-                                )
-                                .changed();
-                        });
-                        if changed {
-                            self.edit(|d, i| {
-                                let l = &mut d.layers[i];
-                                l.name = name;
-                                l.locked = locked;
-                                l.opacity = opacity;
-                                l.blend = blend;
-                                l.transform = transform;
-                                l.recipe.exposure_ev = exposure;
-                                Ok(())
-                            });
+                    } else {
+                        self.edit(|d, _| d.insert(layer));
+                        if self.error.is_empty() {
+                            self.select_layer(self.doc.as_ref().unwrap().layers.len() - 1);
                         }
                     }
-                    if let Some(layer) = self.doc.as_ref().unwrap().layers.get(self.selected) {
-                        let locked = layer.locked;
-                        let original = layer.recipe.clone();
-                        let (mut recipe, mut switches) = match original.expanded_sections() {
-                            Ok(v) => v,
-                            Err(e) => {
-                                self.error = e.to_string();
-                                return;
-                            }
-                        };
-                        ui.add_enabled_ui(!locked, |ui| {
-                            ui.collapsing("Sviluppo del livello raster", |ui| {
-                                ui.horizontal_wrapped(|ui| {
-                                    for (id, name) in [
-                                        ("light-panel", "Luce"),
-                                        ("rgb-wb-panel", "WB RGB"),
-                                        ("curve-panel", "Curva"),
-                                        ("color-panel", "Colore"),
-                                    ] {
-                                        let mut enabled = !switches.contains(id);
-                                        if ui.toggle_value(&mut enabled, name).changed() {
-                                            if enabled {
-                                                switches.remove(id);
-                                            } else {
-                                                switches.insert(id.into());
-                                            }
-                                        }
-                                    }
-                                });
-                                for (name, value) in [
-                                    ("Luminosità", &mut recipe.brightness),
-                                    ("Contrasto", &mut recipe.contrast),
-                                    ("Alte luci", &mut recipe.highlights),
-                                    ("Ombre", &mut recipe.shadows),
-                                    ("Bianchi", &mut recipe.whites),
-                                    ("Neri", &mut recipe.blacks),
-                                    ("Temperatura RGB", &mut recipe.temperature),
-                                    ("Tinta RGB", &mut recipe.tint),
-                                    ("Saturazione", &mut recipe.saturation),
-                                ] {
-                                    let group = match name {
-                                        "Temperatura RGB" | "Tinta RGB" => "rgb-wb-panel",
-                                        "Saturazione" => "color-panel",
-                                        _ => "light-panel",
-                                    };
-                                    ui.add_enabled(
-                                        !switches.contains(group),
-                                        egui::Slider::new(value, -100. ..=100.).text(name),
-                                    );
-                                }
-                                ui.add_enabled_ui(!switches.contains("curve-panel"), |ui| {
-                                    let (changed, _) = super::editing::curve::controls(
-                                        ui,
-                                        crate::i18n::Language::Italian,
-                                        &mut recipe.curve,
-                                    );
-                                    if changed {
-                                        recipe.require_process(4);
-                                    }
-                                });
-                                self.adjustments.show_with_switches(
-                                    ui,
-                                    crate::i18n::Language::Italian,
-                                    &mut recipe,
-                                    None,
-                                    &mut switches,
-                                );
-                            });
-                            ui.collapsing("Regolazioni e maschere fotografiche", |ui| {
-                                self.effects.bind(&format!("document:{}", self.selected));
-                                if self.effects.view_tools {
-                                    self.effects.show_tools(
-                                        ui,
-                                        crate::i18n::Language::Italian,
-                                        &mut recipe,
-                                    );
-                                } else {
-                                    self.effects.view_layers = true;
-                                    self.effects.show(
-                                        ui,
-                                        crate::i18n::Language::Italian,
-                                        &mut recipe,
-                                    );
-                                }
-                            });
-                        });
-                        for id in switches {
-                            if let Err(e) = recipe.set_section_enabled(&id, false) {
-                                self.error = e.to_string();
-                                return;
-                            }
-                        }
-                        if recipe != original {
-                            self.edit(|d, i| {
-                                d.layers[i].recipe = recipe;
-                                Ok(())
-                            });
-                        }
-                    }
-                    ui.separator();
-                    ui.heading("Strumenti");
-                    ui.horizontal_wrapped(|ui| {
-                        for (tool, name) in [
-                            (Tool::Move, "Sposta"),
-                            (Tool::Paint, "Pennello"),
-                            (Tool::Erase, "Cancella"),
-                            (Tool::Clone, "Clona"),
-                            (Tool::Heal, "Ripara"),
-                            (Tool::AutoHeal, "Ripara rapido"),
-                            (Tool::Free, "Libera"),
-                            (Tool::Polygon, "Poligonale"),
-                            (Tool::Rectangle, "Rettangolo"),
-                        ] {
-                            if ui.selectable_value(&mut self.tool, tool, name).clicked() {
-                                self.points.clear();
-                                self.effects.stop_document_gesture();
-                                self.adjustments.paint = false;
-                                self.adjustments.horizon = false;
-                                self.adjustments.overlay = false;
-                            }
-                        }
-                    });
-                    ui.add(egui::Slider::new(&mut self.radius, 0.5..=512.).text("Raggio px"));
-                    ui.add(egui::Slider::new(&mut self.hardness, 0. ..=1.).text("Durezza"));
-                    ui.add(egui::Slider::new(&mut self.strength, 0. ..=1.).text("Intensità"));
-                    ui.color_edit_button_rgba_unmultiplied(&mut self.color);
-                    ui.small(
-                        "Clona/Ripara: Alt+clic campiona dal livello selezionato prima del tratto.",
-                    );
-                    ui.horizontal_wrapped(|ui| {
-                        for (mode, label) in [
-                            (SelectionMode::Replace, "Sostituisci"),
-                            (SelectionMode::Add, "Aggiungi"),
-                            (SelectionMode::Subtract, "Sottrai"),
-                            (SelectionMode::Intersect, "Interseca"),
-                        ] {
-                            ui.selectable_value(&mut self.selection_mode, mode, label);
-                        }
-                    });
-                    ui.add(egui::Slider::new(&mut self.feather, 0. ..=100.).text("Sfumatura px"));
-                    if ui.button("Deseleziona").clicked() {
-                        self.edit(|d, _| {
-                            d.selection.clear();
-                            Ok(())
-                        });
-                    }
-                    if ui.button("Selezione → maschera livello").clicked() {
-                        self.edit(|d, i| {
-                            let l = d
-                                .layers
-                                .get_mut(i)
-                                .ok_or_else(|| anyhow::anyhow!("Livello mancante"))?;
-                            ensure!(!l.locked, "Livello bloccato");
-                            l.mask = if d.selection.is_empty() {
-                                vec![]
-                            } else {
-                                (0..l.pixels.len())
-                                    .map(|i| {
-                                        let Some(p) = l.canvas_point([
-                                            (i % l.width as usize) as f32 + 0.5,
-                                            (i / l.width as usize) as f32 + 0.5,
-                                        ]) else {
-                                            return 0.;
-                                        };
-                                        let x = p[0].floor() as i64;
-                                        let y = p[1].floor() as i64;
-                                        if x < 0
-                                            || y < 0
-                                            || x >= d.width as i64
-                                            || y >= d.height as i64
-                                        {
-                                            0.
-                                        } else {
-                                            d.selection[y as usize * d.width as usize + x as usize]
-                                        }
-                                    })
-                                    .collect()
-                            };
-                            Ok(())
-                        });
-                    }
-                });
-            });
-        self.canvas(ui);
-    }
-    fn canvas(&mut self, ui: &mut egui::Ui) {
-        if self.needs_render {
-            self.effects.invalidate_document_input();
-            match self.doc.as_ref().unwrap().render() {
-                Ok(image) => {
-                    let image = image.reduced(2048);
-                    let size = [image.width as usize, image.height as usize];
-                    let doc = self.doc.as_ref().unwrap();
-                    let mut bytes = Vec::with_capacity(image.pixels.len() * 4);
-                    for (i, pixel) in image.pixels.iter().enumerate() {
-                        let x = i % size[0];
-                        let y = i / size[0];
-                        let background = if ((x / 12) + (y / 12)).is_multiple_of(2) {
-                            0.16
-                        } else {
-                            0.24
-                        };
-                        let mut rgba = tr_core::color::display_pixel(*pixel, background);
-                        if !doc.selection.is_empty() {
-                            let sx = x * doc.width as usize / size[0];
-                            let sy = y * doc.height as usize / size[1];
-                            let index = sy * doc.width as usize + sx;
-                            let selected = doc.selection[index] >= 0.5;
-                            let left = sx.saturating_sub(1);
-                            let above = sy.saturating_sub(1);
-                            if selected
-                                && (sx == 0
-                                    || sy == 0
-                                    || doc.selection[sy * doc.width as usize + left] < 0.5
-                                    || doc.selection[above * doc.width as usize + sx] < 0.5)
-                                || !selected
-                                    && (doc.selection[sy * doc.width as usize + left] >= 0.5
-                                        || doc.selection[above * doc.width as usize + sx] >= 0.5)
-                            {
-                                rgba = [255, 210, 0, 255];
-                            }
-                        }
-                        bytes.extend_from_slice(&rgba);
-                    }
-                    self.texture = Some(ui.ctx().load_texture(
-                        "document",
-                        egui::ColorImage::from_rgba_unmultiplied(size, &bytes),
-                        egui::TextureOptions::LINEAR,
-                    ));
-                    self.needs_render = false;
                 }
                 Err(e) => {
+                    self.import_photo = None;
+                    self.import_path = None;
                     self.error = e.to_string();
-                    self.needs_render = false;
                 }
             }
         }
-        egui::CentralPanel::default().show(ui, |ui| {
-            let Some(texture) = &self.texture else {
+    }
+    pub fn canvas(&mut self, ui: &mut egui::Ui, transform: &mut tr_core::ViewTransform) {
+        if self.doc.is_none() {
+            self.unavailable(ui);
+            return;
+        }
+        self.render_texture(ui.ctx());
+        ui.scope(|ui| {
+            let viewport = ui.available_rect_before_wrap();
+            ui.set_clip_rect(viewport.intersect(ui.clip_rect()));
+            if self.composite.is_none() {
                 return;
-            };
+            }
             let doc = self.doc.as_ref().unwrap();
             let dimensions = egui::vec2(doc.width as f32, doc.height as f32);
-            let scale = (ui.available_width() / dimensions.x)
-                .min(ui.available_height() / dimensions.y)
+            let scale = transform
+                .scale(
+                    [dimensions.x, dimensions.y],
+                    [viewport.width(), viewport.height()],
+                    ui.ctx().pixels_per_point(),
+                )
                 .max(0.001);
-            let response = ui.add(
-                egui::Image::new(texture)
-                    .fit_to_exact_size(dimensions * scale)
-                    .sense(egui::Sense::click_and_drag()),
+            let image_size = dimensions * scale;
+            let rect = egui::Rect::from_min_size(
+                viewport.center()
+                    - egui::vec2(
+                        transform.center[0] * image_size.x,
+                        transform.center[1] * image_size.y,
+                    ),
+                image_size,
             );
+            let rect = if transform.zoom == Some(1.) {
+                let ppp = ui.ctx().pixels_per_point();
+                egui::Rect::from_min_size((rect.min * ppp).round() / ppp, rect.size())
+            } else {
+                rect
+            };
+            let response = ui.interact(
+                viewport,
+                ui.id().with("document-canvas"),
+                egui::Sense::click_and_drag(),
+            );
+            self.paint_composite(ui, rect, viewport, scale);
+            let mut response = response;
+            response.rect = rect;
+            let pan = ui.input(|i| i.key_down(egui::Key::Space) || i.pointer.middle_down());
+            if response.hovered() {
+                let zoom = ui.input(|i| i.zoom_delta());
+                if zoom != 1. {
+                    transform.set_zoom(scale * ui.ctx().pixels_per_point() * zoom);
+                }
+            }
+            if pan {
+                if response.dragged() {
+                    let delta = ui.input(|i| i.pointer.delta());
+                    transform.center[0] -= delta.x / image_size.x;
+                    transform.center[1] -= delta.y / image_size.y;
+                }
+                ui.ctx().set_cursor_icon(egui::CursorIcon::Grab);
+                self.end_stroke();
+                return;
+            }
+            if self.import.is_some() || self.tab == Tab::Export {
+                return;
+            }
+            let doc = self.doc.as_ref().unwrap();
+            if self.tool == Tool::Move
+                && let Some(layer) = doc.layers.get(self.selected)
+            {
+                let size = layer
+                    .recipe
+                    .advanced
+                    .as_ref()
+                    .map_or([layer.width, layer.height], |a| {
+                        a.geometry.output_size([layer.width, layer.height])
+                    });
+                let corners = [
+                    [0., 0.],
+                    [size[0] as f32, 0.],
+                    [size[0] as f32, size[1] as f32],
+                    [0., size[1] as f32],
+                ]
+                .map(|p| {
+                    let p = layer.transform.forward(p);
+                    response.rect.min + egui::vec2(p[0], p[1]) * scale
+                });
+                let painter = ui.painter().with_clip_rect(response.rect);
+                for i in 0..4 {
+                    painter.line_segment(
+                        [corners[i], corners[(i + 1) % 4]],
+                        egui::Stroke::new(1., Color32::from_rgb(80, 190, 240)),
+                    );
+                }
+            }
+
             if self.photographic_interaction(ui, &response) {
                 return;
             }
@@ -976,14 +689,17 @@ impl Editor {
                     if response.double_clicked() && self.points.len() >= 3 {
                         self.finish_selection();
                     }
-                } else if !matches!(self.tool, Tool::Free | Tool::Rectangle | Tool::Move) {
-                    self.begin_stroke();
+                } else if !matches!(self.tool, Tool::Free | Tool::Rectangle | Tool::Move)
+                    && self.begin_stroke()
+                {
                     self.paint_at(p);
                     self.end_stroke();
                 }
             }
             if response.drag_started() {
-                self.begin_stroke();
+                if !self.begin_stroke() {
+                    return;
+                }
                 self.last_point = ui
                     .input(|i| i.pointer.press_origin())
                     .map(|p| {
@@ -1003,6 +719,7 @@ impl Editor {
                 }
             }
             if response.dragged()
+                && self.stroke.is_some()
                 && let Some(p) = point
             {
                 if self.tool == Tool::Move {
@@ -1059,9 +776,13 @@ impl Editor {
             }
         });
     }
-    fn begin_stroke(&mut self) {
+    fn begin_stroke(&mut self) -> bool {
+        if !self.admit_edit(0) {
+            return false;
+        }
         self.stroke = self.doc.clone();
         self.stroke_origin = None;
+        self.stroke.is_some()
     }
     fn end_stroke(&mut self) {
         if let Some(old) = self.stroke.take()
@@ -1087,6 +808,9 @@ impl Editor {
         self.edit(|d, _| d.select_polygon(&points, mode, feather));
     }
     fn paint_at(&mut self, p: [f32; 2]) {
+        if self.stroke.is_none() {
+            return;
+        }
         let brush = match self.tool {
             Tool::Paint => Brush::Paint(tr_core::color::from_encoded_srgb(self.color)),
             Tool::Erase => Brush::Erase,
@@ -1187,11 +911,21 @@ impl Editor {
     }
 }
 
+#[cfg(test)]
 fn encode_png(doc: &Document, output: &mut impl std::io::Write) -> Result<()> {
-    let image = doc.render()?;
+    export::encode_image(doc, export::ImageFormat::Png16, 95, 0, output)
+}
+fn encode_png_image(
+    image: &LinearImage,
+    space: ColorSpace,
+    resolution: Option<tr_core::protocol::Resolution>,
+    eight_bit: bool,
+    output: &mut impl std::io::Write,
+) -> Result<()> {
+    let space = if eight_bit { ColorSpace::Srgb } else { space };
     let mut pixels = Vec::with_capacity(image.pixels.len() * 8);
     for p in &image.pixels {
-        let encoded = match doc.color_space {
+        let encoded = match space {
             ColorSpace::Srgb => tr_core::export::srgb16(*p).0,
             ColorSpace::LinearRec2020 => {
                 let alpha = p[3];
@@ -1205,14 +939,22 @@ fn encode_png(doc: &Document, output: &mut impl std::io::Write) -> Result<()> {
             }
         };
         for channel in encoded {
-            pixels.extend_from_slice(&channel.to_be_bytes());
+            if eight_bit {
+                pixels.push(((channel as u32 + 128) / 257) as u8);
+            } else {
+                pixels.extend_from_slice(&channel.to_be_bytes());
+            }
         }
     }
     {
         let mut encoder = png::Encoder::new(output, image.width, image.height);
         encoder.set_color(png::ColorType::Rgba);
-        encoder.set_depth(png::BitDepth::Sixteen);
-        match doc.color_space {
+        encoder.set_depth(if eight_bit {
+            png::BitDepth::Eight
+        } else {
+            png::BitDepth::Sixteen
+        });
+        match space {
             ColorSpace::Srgb => {
                 encoder.set_source_srgb(png::SrgbRenderingIntent::RelativeColorimetric)
             }
@@ -1226,12 +968,13 @@ fn encode_png(doc: &Document, output: &mut impl std::io::Write) -> Result<()> {
                 ));
             }
         }
-        let ppm = (doc.ppi / 0.0254).round() as u32;
-        encoder.set_pixel_dims(Some(png::PixelDimensions {
-            xppu: ppm,
-            yppu: ppm,
-            unit: png::Unit::Meter,
-        }));
+        if let Some(r) = resolution {
+            encoder.set_pixel_dims(Some(png::PixelDimensions {
+                xppu: (r.x / 0.0254).round() as u32,
+                yppu: (r.y / 0.0254).round() as u32,
+                unit: png::Unit::Meter,
+            }));
+        }
         let mut writer = encoder.write_header()?;
         writer.write_image_data(&pixels)?;
         writer.finish()?;
@@ -1342,7 +1085,7 @@ mod tests {
         }
     }
     #[test]
-    fn opening_workspace_preserves_document_and_stroke_is_one_undo() {
+    fn ordinary_canvas_preserves_document_and_stroke_is_one_undo() {
         let ctx = egui::Context::default();
         let mut editor = Editor::new(
             mpsc::sync_channel(1).0,
@@ -1359,7 +1102,13 @@ mod tests {
                     )),
                     ..Default::default()
                 },
-                |ui| editor.show(ui),
+                |ui| {
+                    editor.poll();
+                    egui::Panel::right("test-inspector")
+                        .show(ui, |ui| editor.inspector_contents(ui));
+                    egui::CentralPanel::default()
+                        .show(ui, |ui| editor.canvas(ui, &mut Default::default()));
+                },
             );
             output.textures_delta.clear();
         }

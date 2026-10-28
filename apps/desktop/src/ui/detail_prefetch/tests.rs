@@ -68,6 +68,7 @@ pub(in crate::ui) fn fixture() -> (
         transport: "test",
         worker_pid: None,
         info: RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,

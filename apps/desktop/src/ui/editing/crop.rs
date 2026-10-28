@@ -1343,6 +1343,7 @@ mod tests {
             CachedImage {
                 digest: item.digest.clone(),
                 info: RasterInfo {
+                    resolution: None,
                     shooting: None,
                     scientific: None,
                     reference_mip: None,

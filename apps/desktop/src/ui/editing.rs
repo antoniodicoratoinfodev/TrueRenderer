@@ -139,7 +139,7 @@ fn adjustment_default<Num: egui::emath::Numeric>(
                 let width = ui.available_width();
                 let number_font = egui::TextStyle::Monospace.resolve(ui.style());
                 let digit_width = ui.fonts_mut(|fonts| fonts.glyph_width(&number_font, '0'));
-                let number_width = 64. + digit_width * suffix.chars().count() as f32;
+                let number_width = (64. + digit_width * suffix.chars().count() as f32).ceil();
                 let number_chars = ((64. - 2. * ui.spacing().button_padding.x - 2.) / digit_width)
                     .floor() as usize;
                 // Round inward: fractional text layout must not widen a fixed inspector.
@@ -1348,6 +1348,7 @@ impl TrueRenderer {
     }
     pub(super) fn ensure_edit_loaded(&mut self, item: &Item) {
         if !item.approved
+            || tr_core::document::is_document_path(&item.path)
             || self
                 .editing
                 .entries
@@ -1710,6 +1711,7 @@ impl TrueRenderer {
                 .map(|(_, cached)| cached.pyramid.source_size());
             let short = ui.ctx().content_rect().height() < 500.;
             let mut pasted = false;
+            let mut composition_tab = None;
             ui.horizontal(|ui| {
                 ui.spacing_mut().button_padding.x = 6.;
                 if panels::icon_button(
@@ -1792,15 +1794,24 @@ impl TrueRenderer {
                         } else if self.editing.layers.view_layers {
                             "Livelli"
                         } else {
-                            "Regolazioni"
+                            "Sviluppo"
                         };
                         ui.add_enabled_ui(!pending, |ui| {
                             ui.menu_button(lang.text(page), |ui| {
-                                for title in ["Regolazioni", "Livelli", "Strumenti"] {
+                                for title in
+                                    ["Sviluppo", "Livelli", "Tools", "Export", "Sposta livello 0"]
+                                {
                                     if ui
                                         .selectable_label(page == title, lang.text(title))
                                         .clicked()
                                     {
+                                        composition_tab = match title {
+                                            "Livelli" => Some(document::Tab::Layers),
+                                            "Tools" => Some(document::Tab::Tools),
+                                            "Export" => Some(document::Tab::Export),
+                                            "Sposta livello 0" => Some(document::Tab::Develop),
+                                            _ => None,
+                                        };
                                         self.cancel_wb_picker();
                                         self.editing.layers.open_tools(false);
                                         self.editing.layers.view_tools = title == "Strumenti";
@@ -1853,6 +1864,10 @@ impl TrueRenderer {
                         usize::from(self.editing.layers.view_layers)
                     };
                     if let Some(page) = panels::tabs(ui, lang, page) {
+                        if page > 0 {
+                            composition_tab = Some(document::Tab::from_index(page));
+                            return;
+                        }
                         self.cancel_wb_picker();
                         self.editing.layers.open_tools(false);
                         self.editing.layers.view_tools = page == 2;
@@ -1860,6 +1875,14 @@ impl TrueRenderer {
                         self.editing.advanced.paint = false;
                         self.editing.advanced.horizon = false;
                     }
+                }
+                if !short {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.small(format!("Livello 0 · {}", item.name));
+                        if ui.button("Sposta / trasforma").clicked() {
+                            composition_tab = Some(document::Tab::Develop);
+                        }
+                    });
                 }
                 if self.editing.layers.view_tools {
                     let applied = self.editing.layers.show_tools(ui, lang, &mut draft);
@@ -2167,6 +2190,9 @@ impl TrueRenderer {
             }
             if commit {
                 self.commit_edit(&item.id);
+            }
+            if let Some(tab) = composition_tab {
+                self.begin_composition(tab);
             }
             ui.label(
                 RichText::new(lang.text(if self.output_proof_for(&item.id) {

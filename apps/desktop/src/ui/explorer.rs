@@ -424,6 +424,9 @@ impl TrueRenderer {
                                     && !self.select_path(photo.clone(), self.browser.pending_view)
                                 {
                                     self.pending_selection = Some(photo);
+                                    if !self.browser.scan_running {
+                                        self.refresh_folder();
+                                    }
                                 }
                                 continue;
                             }

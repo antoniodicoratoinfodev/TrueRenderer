@@ -205,6 +205,7 @@ fn short_inspector_exposes_metadata_and_edit_actions_without_scrolling() {
             CachedImage {
                 digest: item.digest.clone(),
                 info: RasterInfo {
+                    resolution: None,
                     shooting: None,
                     scientific: None,
                     reference_mip: None,

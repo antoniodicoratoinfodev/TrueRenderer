@@ -20,6 +20,7 @@ fn cached(item: &Item, base: u32, source_size: [u32; 2]) -> CachedImage {
     CachedImage {
         digest: item.digest.clone(),
         info: RasterInfo {
+            resolution: None,
             shooting: None,
             scientific: None,
             reference_mip: None,
