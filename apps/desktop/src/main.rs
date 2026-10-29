@@ -10,6 +10,8 @@ mod document_open;
 mod filesystem_browser;
 mod graphics;
 mod i18n;
+#[cfg(any(windows, test))]
+mod install_paths;
 mod photo_export;
 mod sample_photos;
 mod service;
@@ -47,7 +49,12 @@ fn run() -> Result<()> {
             .map(PathBuf::from)
     };
     let executable = std::env::current_exe()?;
+    #[cfg(windows)]
+    let installed_root = install_paths::installed_root(&executable);
+    #[cfg(not(windows))]
+    let installed_root: Option<PathBuf> = None;
     let root = option("--root")
+        .or_else(|| installed_root.clone())
         .or_else(|| {
             executable
                 .ancestors()
@@ -353,7 +360,22 @@ fn run() -> Result<()> {
     if args.iter().any(|a| a == "--verify-xpc-growth") {
         return verify_xpc::run_growth(&root, &worker);
     }
-    let data = option("--data").unwrap_or_else(|| {
+    #[cfg(windows)]
+    let installed_data =
+        if installed_root.is_some() && option("--root").is_none() && option("--data").is_none() {
+            let base =
+                install_paths::user_data(std::env::var_os("LOCALAPPDATA").map(PathBuf::from))?;
+            Some(if smoke || graphics_smoke {
+                base.join("smoke")
+            } else {
+                base
+            })
+        } else {
+            None
+        };
+    #[cfg(not(windows))]
+    let installed_data: Option<PathBuf> = None;
+    let data = option("--data").or(installed_data).unwrap_or_else(|| {
         root.join(if smoke || graphics_smoke {
             "var/smoke"
         } else {

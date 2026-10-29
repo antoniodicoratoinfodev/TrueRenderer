@@ -211,7 +211,33 @@ open dist/TrueRenderer.app --args --open "/path/to/photos"
 
 Use the macOS app bundle for external photographs: it includes the isolated decoder services.
 
-**Windows.** Install Rust 1.98.1 with rustfmt and Clippy, Visual Studio Build Tools with the Desktop development with C++ workload and Windows SDK, Python 3, and Git for Windows. In PowerShell:
+**Windows installer (users).** Open `TrueRenderer-0.1.5-Setup-x64.exe` and follow
+the installation wizard. The single offline package includes the application,
+isolated decoder, DXC graphics runtime, synthetic examples and third-party notices.
+Rust, Python, Git and Visual Studio are not required on the destination computer.
+Requires x64 Windows 10/11 and a compatible graphics device/driver; ARM64 is not
+qualified by this package. Installation is per user, without an administrator
+prompt, under `%LOCALAPPDATA%\Programs\TrueRenderer`. The wizard offers a Desktop
+shortcut and optional registration in Open With for `.truerenderer` documents.
+User data is stored separately in `%LOCALAPPDATA%\TrueRenderer\var`; updates and
+uninstallation retain it. The development checkout's catalog is not migrated or
+bundled automatically. Re-run the installer to update an installation.
+
+Build the installer after compiling both release binaries with the local toolchain:
+
+```powershell
+python scripts/dependency-inventory.py --target x86_64-pc-windows-gnu --stem dependency-inventory-windows-installer
+python scripts/prepare-dxc.py --output target/release/runtime/dxc
+python scripts/package-windows.py --dxc target/release/runtime/dxc --iscc C:\path\to\ISCC.exe --objdump C:\path\to\objdump.exe
+```
+
+The packager uses Inno Setup (tested with 6.4.3), checks runtime imports and input
+hashes, and writes the EXE, SHA-256 and file manifest to `dist/installers/`.
+Only the explicitly selected payload is included, never the development toolchain,
+personal photographs, catalogs or backups. Local installers are unsigned; the
+Windows signing requirements below still apply to public distribution.
+
+**Windows development.** Install Rust 1.98.1 with rustfmt and Clippy, Visual Studio Build Tools with the Desktop development with C++ workload and Windows SDK, Python 3, and Git for Windows. In PowerShell:
 
 ```powershell
 .\scripts\dev-windows.ps1 fetch --locked

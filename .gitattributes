@@ -5,6 +5,8 @@
 /reports/*.png -text
 /reports/dependency-notices/** -text
 /reports/dependency-inventory-windows-notices/** -text
+/reports/dependency-inventory-windows-installer-notices/** -text
+/reports/windows-runtime-notices/** -text
 /reports/dependency-inventory-windows.csv -text
 /third_party/libraw/** -text
 /reports/dependency-inventory.csv -text

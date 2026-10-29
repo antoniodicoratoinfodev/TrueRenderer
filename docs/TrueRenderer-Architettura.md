@@ -4628,6 +4628,21 @@ manifest di distribuzione.
 
 ### 21.4 Distribuzione e aggiornamenti
 
+**Pacchetto locale Windows del prototipo.** Installer EXE offline Inno Setup per
+Windows x64, per utente e senza elevazione: programma in
+`%LOCALAPPDATA%\Programs\TrueRenderer`, dati durevoli in
+`%LOCALAPPDATA%\TrueRenderer\var`. Il marker `truerenderer-installed.txt` accanto
+all'eseguibile seleziona risorse installate e dati del profilo anche senza argomenti
+o directory di lavoro prestabilita; `--root`/`--data` espliciti conservano i percorsi
+di sviluppo e verifica. Le prove smoke usano una sottocartella separata.
+Il payload contiene host, worker, runtime DXC, corpus sintetico e avvisi/sorgenti
+coperti delle dipendenze. Nessuna toolchain o fotografia/catalogo personale viene
+incluso. Aggiornamento manuale tramite installer; disinstallazione dei soli file
+installati, senza cancellare cataloghi e backup. La registrazione Open With è
+facoltativa e non sostituisce UserChoice. Questo pacchetto locale non costituisce
+il canale firmato della v1 né chiude i gate di installazione su macchine pulite,
+firma, SBOM o rollback delle migrazioni descritti sotto.
+
 | Piattaforma | Canale primario | Canale secondario |
 |---|---|---|
 | Windows v1 | un canale firmato scelto in R0 | secondo canale post-v1 |

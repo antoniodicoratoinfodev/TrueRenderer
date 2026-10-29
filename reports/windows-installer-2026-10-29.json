@@ -1,0 +1,132 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "date": "2026-10-29",
+  "passed": true,
+  "platform": "Windows x64, existing development host",
+  "installer": "dist/installers/TrueRenderer-0.1.5-Setup-x64.exe",
+  "installer_sha256": "a25cd6217b1161b879addd08e991ce78fd5d95b4d568e8a201120e940a22af9e",
+  "installer_bytes": 21716485,
+  "compiler": "Inno Setup 6.4.3; Rust 1.98.1 Windows GNU; GCC 14.3.0 / MinGW-w64 12.0.0",
+  "checks": {
+    "installed_payload_hashes": 393,
+    "ordinary_launch_visible_without_development_path": true,
+    "reinstall_preserves_data": true,
+    "uninstall_preserves_data_and_untracked_files": true
+  },
+  "smoke": {
+    "passed": true,
+    "images": 12,
+    "frames": 186,
+    "presentation_errors": false,
+    "decode_errors": {},
+    "worker_transports": [
+      "Cache disco \u00c2\u00b7 fp32 \u00c2\u00b7 Anteprima",
+      "LPAC senza capacit\u00c3\u00a0 + Job Object \u00c2\u00b7 pipe"
+    ],
+    "scope": "native R0 corpus smoke; not color/display/sandbox qualification"
+  },
+  "source_checks": {
+    "installed_path_unit_tests": 2,
+    "rustfmt": true,
+    "release_build": true,
+    "python_syntax": true,
+    "git_diff_check": true
+  },
+  "binary_imports": {
+    "tr-worker.exe": [
+      "KERNEL32.dll",
+      "advapi32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll",
+      "api-ms-win-crt-convert-l1-1-0.dll",
+      "api-ms-win-crt-environment-l1-1-0.dll",
+      "api-ms-win-crt-filesystem-l1-1-0.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-locale-l1-1-0.dll",
+      "api-ms-win-crt-math-l1-1-0.dll",
+      "api-ms-win-crt-private-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "api-ms-win-crt-stdio-l1-1-0.dll",
+      "api-ms-win-crt-string-l1-1-0.dll",
+      "api-ms-win-crt-time-l1-1-0.dll",
+      "api-ms-win-crt-utility-l1-1-0.dll",
+      "bcryptprimitives.dll",
+      "kernel32.dll",
+      "ntdll.dll",
+      "ws2_32.dll"
+    ],
+    "truerenderer.exe": [
+      "KERNEL32.dll",
+      "USER32.dll",
+      "advapi32.dll",
+      "api-ms-win-core-synch-l1-2-0.dll",
+      "api-ms-win-crt-environment-l1-1-0.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-math-l1-1-0.dll",
+      "api-ms-win-crt-private-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "api-ms-win-crt-stdio-l1-1-0.dll",
+      "api-ms-win-crt-string-l1-1-0.dll",
+      "api-ms-win-crt-time-l1-1-0.dll",
+      "api-ms-win-crt-utility-l1-1-0.dll",
+      "bcryptprimitives.dll",
+      "combase.dll",
+      "dwmapi.dll",
+      "dxgi.dll",
+      "gdi32.dll",
+      "imm32.dll",
+      "kernel32.dll",
+      "ntdll.dll",
+      "ole32.dll",
+      "oleaut32.dll",
+      "opengl32.dll",
+      "setupapi.dll",
+      "shell32.dll",
+      "uiautomationcore.dll",
+      "user32.dll",
+      "userenv.dll",
+      "uxtheme.dll"
+    ],
+    "runtime/dxc/dxcompiler.dll": [
+      "ADVAPI32.dll",
+      "KERNEL32.dll",
+      "OLEAUT32.dll",
+      "api-ms-win-crt-convert-l1-1-0.dll",
+      "api-ms-win-crt-environment-l1-1-0.dll",
+      "api-ms-win-crt-filesystem-l1-1-0.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-locale-l1-1-0.dll",
+      "api-ms-win-crt-math-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "api-ms-win-crt-stdio-l1-1-0.dll",
+      "api-ms-win-crt-string-l1-1-0.dll",
+      "api-ms-win-crt-time-l1-1-0.dll",
+      "api-ms-win-crt-utility-l1-1-0.dll",
+      "ole32.dll"
+    ],
+    "runtime/dxc/dxil.dll": [
+      "ADVAPI32.dll",
+      "KERNEL32.dll",
+      "api-ms-win-crt-convert-l1-1-0.dll",
+      "api-ms-win-crt-heap-l1-1-0.dll",
+      "api-ms-win-crt-math-l1-1-0.dll",
+      "api-ms-win-crt-runtime-l1-1-0.dll",
+      "api-ms-win-crt-stdio-l1-1-0.dll",
+      "api-ms-win-crt-string-l1-1-0.dll",
+      "api-ms-win-crt-utility-l1-1-0.dll",
+      "ole32.dll"
+    ]
+  },
+  "evidence": {
+    "path": "var/installer-test-5f9xr6ro/result.json",
+    "sha256": "04278de368d432c053a53506955d68e547da8e0e6bf8b3fe105d67c37ef3d63c"
+  },
+  "limits": [
+    "Unsigned local installer; no public publication or release qualification.",
+    "Fresh profile and system-only PATH on an existing development host, not a clean VM or a second PC.",
+    "No real Windows reboot, older-version migration, rollback or ARM64 qualification.",
+    "Optional file association and interactive wizard choices were not exercised by the silent lifecycle test.",
+    "First lifecycle attempt timed out closing a startup window; test corrected to match the main window title and allow startup to finish. Normal close succeeded; no forced termination.",
+    "No macOS package changes; XPC integration cannot execute on this Windows host."
+  ]
+}
