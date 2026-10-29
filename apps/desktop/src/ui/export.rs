@@ -83,6 +83,28 @@ impl TrueRenderer {
                 .cloned()
                 .collect()
         });
+        let mut open = true;
+        egui::Window::new(lang.text("Esporta fotografie"))
+            .id(egui::Id::new("photo-export"))
+            .open(&mut open)
+            .default_width(540.)
+            .max_width((ctx.content_rect().width() - 64.).max(280.))
+            .default_pos(egui::pos2(
+                ((ctx.content_rect().width() - 572.) / 2.).max(16.),
+                96.,
+            ))
+            .collapsible(false)
+            .resizable(false)
+            .vscroll(true)
+            .max_height((ctx.content_rect().height() - 70.).max(180.))
+            .show(ctx, |ui| self.photo_export_controls(ui, selected));
+        self.photo_export.open = open;
+        if !open {
+            self.photo_export.targets = None;
+        }
+    }
+    pub(super) fn photo_export_controls(&mut self, ui: &mut egui::Ui, selected: Vec<Item>) {
+        let lang = self.cache_settings.language;
         for item in &selected {
             self.ensure_edit_loaded(item);
         }
@@ -119,15 +141,15 @@ impl TrueRenderer {
             VecDeque::new()
         };
         let state = &mut self.photo_export;
-        let mut open = true;
         let mut start = false;
-        egui::Window::new(lang.text("Esporta fotografie")).id(egui::Id::new("photo-export")).open(&mut open)
-            .default_width(540.).max_width((ctx.content_rect().width() - 64.).max(280.))
-            .default_pos(egui::pos2(((ctx.content_rect().width() - 572.) / 2.).max(16.), 96.))
-            .collapsible(false).resizable(false).vscroll(true)
-            .max_height((ctx.content_rect().height() - 70.).max(180.)).show(ctx, |ui| {
-                ui.label(RichText::new(lang.text("Nuovi file: nessun originale o export esistente viene sostituito.")).small().color(MUTED));
-                ui.add_enabled_ui(!state.active && state.remaining.is_empty(), |ui| {
+        ui.label(
+            RichText::new(
+                lang.text("Nuovi file: nessun originale o export esistente viene sostituito."),
+            )
+            .small()
+            .color(MUTED),
+        );
+        ui.add_enabled_ui(!state.active && state.remaining.is_empty(), |ui| {
                     egui::Frame::new().fill(style::SURFACE).corner_radius(5).inner_margin(10).show(ui, |ui| {
                         ui.set_min_width(ui.available_width());
                         let selection = if selected.len() == 1 {
@@ -178,6 +200,13 @@ impl TrueRenderer {
                         });
                         ui.label(RichText::new(lang.text("Motore salvato per foto · clamp nei formati interi, nessun dither")).small().color(MUTED));
                     }
+                    if state.options.format != Format::DngRaw {
+                        let mut custom=state.options.resolution.is_some();
+                        if ui.checkbox(&mut custom,"Scegli DPI/PPI per la copia esportata").changed() {state.options.resolution=custom.then_some(tr_core::protocol::Resolution{x:300.,y:300.});}
+                        if let Some(r)=&mut state.options.resolution {
+                            ui.horizontal(|ui| {ui.label("PPI X / Y");ui.add(egui::DragValue::new(&mut r.x).range(1. ..=9600.));ui.add(egui::DragValue::new(&mut r.y).range(1. ..=9600.));});
+                        } else {ui.small("DPI/PPI della sorgente, quando dichiarati. La foto e la ricetta restano invariate.");}
+                    }
                     ui.separator();
                     ui.horizontal(|ui| {
                         if ui.button(lang.text("Cartella destinazione…")).clicked() && let Some(folder) = rfd::FileDialog::new().pick_folder() { state.destination = Some(folder); }
@@ -191,20 +220,37 @@ impl TrueRenderer {
                             egui::Button::new(lang.text("Esporta selezione")).fill(style::SELECTED)).clicked();
                     });
                 });
-                if state.total > 0 {
-                    ui.separator();
-                    ui.add(egui::ProgressBar::new(state.completed as f32 / state.total as f32)
-                        .text(localized_format!(lang, "{} / {} completati · {} salvati", "{} / {} completed · {} saved", state.completed, state.total, state.succeeded)));
-                    if state.active {
-                        ui.label(&state.current);
-                        if ui.button(lang.text("Annulla export")).clicked() { state.cancel.store(true, Ordering::Release); state.remaining.clear(); }
-                    } else if state.cancel.load(Ordering::Acquire) { ui.label(lang.text("Annullato. I file già salvati restano nella destinazione.")); }
-                    egui::ScrollArea::vertical().max_height(180.).show(ui, |ui| { for message in &state.messages { ui.label(message); ui.separator(); } });
+        if state.total > 0 {
+            ui.separator();
+            ui.add(
+                egui::ProgressBar::new(state.completed as f32 / state.total as f32).text(
+                    localized_format!(
+                        lang,
+                        "{} / {} completati · {} salvati",
+                        "{} / {} completed · {} saved",
+                        state.completed,
+                        state.total,
+                        state.succeeded
+                    ),
+                ),
+            );
+            if state.active {
+                ui.label(&state.current);
+                if ui.button(lang.text("Annulla export")).clicked() {
+                    state.cancel.store(true, Ordering::Release);
+                    state.remaining.clear();
                 }
-            });
-        state.open = open;
-        if !open {
-            state.targets = None;
+            } else if state.cancel.load(Ordering::Acquire) {
+                ui.label(lang.text("Annullato. I file già salvati restano nella destinazione."));
+            }
+            egui::ScrollArea::vertical()
+                .max_height(180.)
+                .show(ui, |ui| {
+                    for message in &state.messages {
+                        ui.label(message);
+                        ui.separator();
+                    }
+                });
         }
         if start {
             state.remaining = frozen;

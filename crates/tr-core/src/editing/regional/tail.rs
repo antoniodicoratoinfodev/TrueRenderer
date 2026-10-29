@@ -45,6 +45,17 @@ impl LayerInputPlan {
     ) -> Result<Self> {
         ensure!(!cancelled(), "Editing annullato");
         recipe.validate()?;
+        ensure!(
+            !recipe.has_retouch(),
+            "Ritocco reversibile: valutazione CPU nativa"
+        );
+        ensure!(
+            recipe.advanced.as_ref().is_none_or(|a| a
+                .masks
+                .iter()
+                .all(|m| !m.active() || m.shape != super::masks::Shape::Polygon)),
+            "Maschera poligonale: valutazione CPU"
+        );
         ensure!(!image.scientific(), "Layer tail needs photographic input");
         ensure!(
             recipe

@@ -18,6 +18,7 @@ pub(in crate::ui) struct Controls {
     pub photo: String,
     pub view_layers: bool,
     pub view_tools: bool,
+    pub view_export: bool,
     pub(super) mask_view: bool,
     scroll_to_layer: bool,
     apply_selected: bool,
@@ -239,6 +240,7 @@ impl Controls {
                 photo: photo.into(),
                 view_layers: self.view_layers,
                 view_tools: self.view_tools,
+                view_export: self.view_export,
                 ..Default::default()
             };
         }
@@ -311,6 +313,7 @@ impl Controls {
         self.cancel_analysis();
         self.view_layers = false;
         self.view_tools = true;
+        self.view_export = false;
         self.apply_selected = selected;
         self.paint = false;
         self.pick = false;
@@ -834,11 +837,12 @@ impl super::TrueRenderer {
             );
         let top = egui::pos2((top.x * ppp).round() / ppp, (top.y * ppp).round() / ppp);
         let rect = egui::Rect::from_min_size(top, physical);
+        let coordinate_recipe = recipe.clone();
         let map = |p: egui::Pos2| {
             if !rect.contains(p) || !response.rect.contains(p) {
                 return None;
             }
-            geometry
+            coordinate_recipe
                 .source_point(
                     [
                         ((p.x - top.x) / physical.x) as f64,
@@ -850,6 +854,7 @@ impl super::TrueRenderer {
                 .map(|p| p.map(|v| v as f32))
         };
         let before = recipe.clone();
+        let coordinate_recipe = before.clone();
         let Some(layer) = recipe.layers.as_mut().and_then(|s| {
             s.layers
                 .iter_mut()
@@ -862,7 +867,7 @@ impl super::TrueRenderer {
         {
             let raster = image.source();
             super::mask_overlay::paint(ui, rect, response.rect, [40, 180, 240], 85, |uv| {
-                let Some(xy) = geometry.source_point(uv, native) else {
+                let Some(xy) = coordinate_recipe.source_point(uv, native) else {
                     return 0.;
                 };
                 let px = ((uv[0] * raster.width as f64) as usize).min(raster.width as usize - 1);

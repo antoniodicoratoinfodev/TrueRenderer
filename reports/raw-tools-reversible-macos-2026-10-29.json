@@ -1,0 +1,276 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign_date": "2026-10-29",
+  "platform": "macOS arm64",
+  "passed": true,
+  "scope": "Reversible tools on ordinary RAW/photo editing, explicit raster-content conversion, native export and installed macOS bundle. Limited to the checks listed here.",
+  "behavior": {
+    "photo_tabs": [
+      "Develop",
+      "Layers",
+      "Tools",
+      "Export"
+    ],
+    "base_photo_layer": 0,
+    "photographic_adjustment_tools": 16,
+    "photo_tools_without_project": [
+      "Paint",
+      "Erase",
+      "Clone",
+      "Heal",
+      "AutoHeal",
+      "Move",
+      "Scale",
+      "Rotate",
+      "Selection to adjustment"
+    ],
+    "project_requires_confirmation_for": [
+      "Independent image copy",
+      "Empty raster layer",
+      "External image",
+      "Selection to independent image"
+    ],
+    "original_read_only": true,
+    "recipe_schema_for_retouch": 3,
+    "retouch_schema": 1,
+    "existing_recipes_not_migrated_on_open": true,
+    "recipe_assets": "Parameters and normalized vectors only; no raster sidecar.",
+    "dimensions_and_density": "Source native pixels and declared density retained; output override belongs to export."
+  },
+  "automated": {
+    "rust_workspace_release": {
+      "passed": 774,
+      "failed": 0,
+      "ignored": 47
+    },
+    "native_integrations_release": {
+      "passed": 14,
+      "failed": 0,
+      "ignored": 0
+    },
+    "last_ui_regressions": {
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "python": {
+      "scripts": 5,
+      "passed": 50
+    },
+    "worker_protocol_cases": 8,
+    "clippy_workspace_all_targets_warnings_denied": true,
+    "cargo_fmt_all_check": true,
+    "git_diff_check": true,
+    "verification": "Commands completed with exit code 0 after final source review.",
+    "final_source_delta_after_workspace_suite": [
+      "apps/desktop/src/ui/composition.rs"
+    ],
+    "final_delta_scope": "Hide stale document saved notice when returning to RAW; targeted UI tests, Clippy, bundle and native checks repeated.",
+    "not_run": "Complete verify.sh campaign, experimental Vulkan denoiser probe, private RAW research campaigns and 100k-file filesystem test."
+  },
+  "native_raw_export": {
+    "source_class": "One NEF Nikon D750; private input retained locally",
+    "source_unchanged": true,
+    "comparison": "Every PNG16 channel against canonical CPU replay of all five strokes, transform and photographic adjustment layer.",
+    "engines": [
+      {
+        "adjustment_layer_preserved": true,
+        "all_five_strokes_and_transform": true,
+        "different_channels": 0,
+        "engine": "TrueRendererExperimental",
+        "maximum_error_u16": 0,
+        "native_export_exact": true,
+        "native_pixels": [
+          6016,
+          4016
+        ],
+        "physical_density_preserved": true,
+        "recipe_roundtrip": true,
+        "source_resolution": {
+          "x": 300.0,
+          "y": 300.0
+        }
+      },
+      {
+        "adjustment_layer_preserved": true,
+        "all_five_strokes_and_transform": true,
+        "different_channels": 0,
+        "engine": "LibRawBilinear",
+        "maximum_error_u16": 0,
+        "native_export_exact": true,
+        "native_pixels": [
+          6032,
+          4032
+        ],
+        "physical_density_preserved": true,
+        "recipe_roundtrip": true,
+        "source_resolution": {
+          "x": 300.0,
+          "y": 300.0
+        }
+      }
+    ]
+  },
+  "native_ui": {
+    "passed": true,
+    "ui_observed": [
+      "Tools available on original NEF with all 16 adjustment choices",
+      "Paint gesture saved without project",
+      "Undo and redo restore stroke on NEF",
+      "Sampled color creates photographic adjustment layer without project",
+      "Move from Layers changes RAW recipe transform",
+      "Export tab stays in ordinary photo UI",
+      "Conversion dialog cancellation creates no project",
+      "Confirmed image copy creates separate project in same folder with base 0 and copy 1",
+      "Return to RAW retains independent stroke and transform",
+      "Final bundle reopens saved photo recipe and displays native 1:1"
+    ],
+    "stroke_count": 1,
+    "adjustment_layers": 1,
+    "project_native_pixels": [
+      6016,
+      4016
+    ],
+    "project_resolution": {
+      "x": 300.0,
+      "y": 300.0
+    },
+    "project_layers": 2,
+    "project_recipes_match_captured_photo_revision": true,
+    "current_photo_retains_same_retouch": true,
+    "independent_raster_assets_bit_identical": true,
+    "container_checksum_valid": true,
+    "scope": "Manual native UI observations with independent read-only catalog/container validation. Isolated data and photo copy; no user original modifications.",
+    "photo_recipe_schema_version": 3,
+    "photo_recipe_generation": 8
+  },
+  "installed_bundle": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/backups/before-raw-tools-20261029-175103",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "8ea0fe690a936c44c3d5290bbb53a7043331aa250a144f2d96ffa0749ea2cb12",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "eab6368e5861c7b11e0fbe7623325140f0a8ee7ec3535f15b3b58ff793b95c36",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "b212c7d01166512f7aa6fb2630f740bda899bafb2f754e510e891352ebab99bc"
+    },
+    "protected_files_unchanged": 47,
+    "passed": true
+  },
+  "xpc": {
+    "passed": true,
+    "corpus_images_checked": 12,
+    "edited_export_checked_slots": 2,
+    "edited_export_native_match_slots": 2,
+    "edited_export_source_unchanged": true,
+    "two_distinct_processes": true,
+    "other_isolate_survived": true,
+    "same_pixels": true,
+    "full_sandbox_gate_passed": false,
+    "memory_limit_is_hard_kernel_cap": false
+  },
+  "production_rejects_fault_injection": true,
+  "integrity": {
+    "installed-source-sha256.json": {
+      "files_checked": 580,
+      "unchanged": true
+    },
+    "protected-before.json": {
+      "files_checked": 47,
+      "unchanged": true
+    },
+    "installed_binary_hashes_match": true,
+    "source_delta_after_full_suite": [
+      "apps/desktop/src/ui/composition.rs"
+    ]
+  },
+  "handoff": {
+    "installed_app_open": true,
+    "ordinary_photo_selected": true,
+    "tools_tab_visible": true,
+    "original_nef_preserved": true
+  },
+  "limits": {
+    "retouch_uses_cpu_replay": true,
+    "regional_retouch_replays_full_resident_frame": true,
+    "max_strokes": 128,
+    "max_total_path_and_selection_points": 1024,
+    "max_selection_components": 16,
+    "max_recipe_bytes": 49152,
+    "automatic_analysis": "Existing advanced-tool restrictions also apply to active retouch; no implicit project conversion.",
+    "camera_wide_or_latency_qualification": false,
+    "windows_cross_platform_qualification": false,
+    "full_sandbox_release_gate_passed": false,
+    "new_R0_R4_or_SF0_SF10_gate_closed": false
+  },
+  "privacy": "Only aggregate report, code, tests and documentation are published. Private inputs, projects, catalog, backups, bundles and local evidence stay local.",
+  "evidence": [
+    {
+      "path": "var/raw-tools-20261029/workspace-verified.log",
+      "sha256": "60e74d6cf203414dfa9e647056e4d54894dbf90264c72b046ccec54a5518afb2"
+    },
+    {
+      "path": "var/raw-tools-20261029/native-integrations.log",
+      "sha256": "92c1d4a9236ea83b3d5b282a5b56e30054e2540f85d0c014b3ed1bb9e5c7b7d9"
+    },
+    {
+      "path": "var/raw-tools-20261029/final-ui-regressions.log",
+      "sha256": "f73e849ab7dab6998e655bb9592958a6463b9640c71a72127b7e122d795f213c"
+    },
+    {
+      "path": "var/raw-tools-20261029/installed-clippy.log",
+      "sha256": "36169ac4cacadbe871ed35bf7c1df2562cd46799f9e748c2cde7bc1b2b01ac96"
+    },
+    {
+      "path": "var/raw-tools-20261029/installed-build.log",
+      "sha256": "4d6b7e84941cfec20193068050e6ff0ce05cf70550af1de0da383b9371969dd9"
+    },
+    {
+      "path": "var/raw-tools-20261029/final-static-checks.json",
+      "sha256": "fed27df4d4ac4010b181c522076ed1fa089bd271218f8fe9a298032ec4d11008"
+    },
+    {
+      "path": "var/raw-tools-20261029/python-checks.json",
+      "sha256": "a1c434da2c021274a372a62bbd37c3a01a896f97b016a91ee90093e7aa056581"
+    },
+    {
+      "path": "var/raw-tools-20261029/installed-check/reports/worker-protocol.json",
+      "sha256": "f3a5e325a3831adfb01d4843bc08679b40b400e2e7dc5a65ee2332619a532ba0"
+    },
+    {
+      "path": "var/raw-tools-20261029/installed-check/reports/raw-tools-native.json",
+      "sha256": "ac0d11905ec19be09960588745744d8d0515acdfca3a79a7ca7c9fba7aeb0a95"
+    },
+    {
+      "path": "var/raw-tools-20261029/dist-xpc.log",
+      "sha256": "b4fb727a5f22cf98946693ec9f0256a4ebf8fef6e2f237d7a5d49adcf6f3c6e9"
+    },
+    {
+      "path": "var/raw-tools-20261029/dist-check/reports/xpc-integration-macos.json",
+      "sha256": "a98e3e1579ea1b59484e9f24dc23db65a3413d9b62b50d282f0eb5f28727a3a0"
+    },
+    {
+      "path": "var/raw-tools-20261029/dist-check/reports/xpc-qualification-macos.json",
+      "sha256": "b4fb727a5f22cf98946693ec9f0256a4ebf8fef6e2f237d7a5d49adcf6f3c6e9"
+    },
+    {
+      "path": "var/raw-tools-20261029/ui-workflow-checks.json",
+      "sha256": "e615476ad4338b9368345b4e615d2a6e682a98bfcb3944a929fbef5369d8d43e"
+    },
+    {
+      "path": "var/raw-tools-20261029/installation.json",
+      "sha256": "ea81e7a66e3ab4aa0a74b5c896f8f5859adf4ad456b15be15ba57d03caf59b9a"
+    },
+    {
+      "path": "var/raw-tools-20261029/installed-source-sha256.json",
+      "sha256": "cfbf033f31a5f68fd70d210841e6e48f7cde1af3d4ac8ef3b3015885789a5fb2"
+    },
+    {
+      "path": "var/raw-tools-20261029/protected-before.json",
+      "sha256": "27896b1e45933db2117c81cb44ba34dcb36ec5e81f0a3adc27fa986f35260c2a"
+    },
+    {
+      "path": "var/raw-tools-20261029/final-integrity.json",
+      "sha256": "141e9aad28a91ccce5f905377f6317c45a80d7a44020e7fe4be308df80523639"
+    }
+  ]
+}

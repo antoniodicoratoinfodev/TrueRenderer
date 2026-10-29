@@ -29,6 +29,7 @@ mod verify_photo_export;
 mod verify_precision;
 mod verify_previews;
 mod verify_raw_engines;
+mod verify_raw_tools;
 mod verify_resampling;
 mod verify_wb_camera;
 mod verify_xpc;
@@ -312,6 +313,13 @@ fn run() -> Result<()> {
     }
     if args.iter().any(|a| a == "--verify-exports") {
         return verify_exports::run(&root, &worker, option("--export-source").as_deref());
+    }
+    if let Some(source) = option("--verify-raw-tools") {
+        anyhow::ensure!(
+            option("--root").is_some(),
+            "RAW tools probe requires isolated --root"
+        );
+        return verify_raw_tools::run(&root, &worker, &source);
     }
     if let Some(source) = option("--verify-photo-export-parity") {
         anyhow::ensure!(

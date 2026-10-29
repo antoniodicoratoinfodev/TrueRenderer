@@ -45,17 +45,28 @@ An illuminated dot identifies an enabled tool with adjustments.
 Keep different creative decisions independently editable. Add an adjustment to a new photographic layer or to the selected layer, then control where it acts and how strongly it contributes.
 
 Editing uses **Sviluppo (Develop)**, **Livelli (Layers)**, **Tools** and **Export**.
-Select Layers or Tools while viewing a photo to prepare its native pixels and
-current adjustments automatically. The photo becomes **layer 0**, fixed at the
-bottom of the stack. Add an empty layer or another image above it, duplicate a
-layer, or use **Selezione → nuovo livello** to copy a selected piece independently.
-The original photograph remains read-only.
+All four tabs work directly on the original photograph. **Layer 0** is the photo;
+photographic adjustment layers remain part of its reversible editing recipe.
+The original file stays read-only, including when using Paint, Erase, Clone,
+Heal, Auto Heal or Move. Finished photo strokes keep their editable parameters,
+visibility and undo history in the catalog; no `.truerenderer` file is created.
+
+Adding an independent image, empty raster layer, image copy or selected piece
+asks for confirmation first. Accepting creates a new `.truerenderer` project
+beside the photo, with the current development at layer 0 and the new content
+above it. Cancelling keeps the photo workflow. The original and its catalog
+adjustments remain available.
 
 **Sposta** is available in Develop, Layers and Tools: drag the selected image or
 piece over the canvas, or enter its position, scale and rotation. Tools also holds
 free/polygonal/rectangular selections, painting, erasing, **Clona**, **Ripara** and
 **Ripara rapido**. Alt-click samples the selected layer for Clone/Heal;
-double-click closes a polygon. Adjustments and masks remain editable per layer.
+double-click or Enter closes a polygon. On photos, **Selezione → regolazione**
+creates an adjustment mask without a project; **Selezione → copia immagine…**
+opens the project confirmation. Applied photo strokes can be disabled, edited
+or deleted individually. Adjustments and masks remain editable per layer.
+Photo export retains the seven existing formats and inherits native dimensions
+and declared density unless an output override is chosen.
 
 Use **Apri → Nuovo documento…** to name and create a blank canvas in the current
 folder, choosing dimensions, units, PPI and background. Projects appear alongside
@@ -86,9 +97,13 @@ and masks, subject to available memory. Larger inputs are rejected explicitly,
 without silently resizing them. The viewer uses the native composite at 1:1;
 the normal zoom controls and Space-drag pan remain available. New projects use
 format v2, which preserves unknown or different X/Y density values. Version 1
-projects remain readable; older applications need updating to open v2. RAW development is embedded as raster
-pixels; sensor decoding and completed brush-stroke parameters cannot be changed
-after reopening. See the [document contract](docs/documenti-raster.md) and
+projects remain readable; older applications need updating to open v2.
+Within projects, sensor development is embedded as raster pixels; change the RAW
+engine or sensor WB by returning to the original photograph. Photo recipe v3
+retouch parameters survive conversion; additional raster strokes made inside a
+project are stored as pixels. Photo retouch currently uses CPU replay and can
+be slower on large images; its bounded recipe admits 128 strokes and 1024 total
+path/selection points, within the existing 48 KiB recipe limit. See the [document contract](docs/documenti-raster.md) and
 [qualification status](STATO.md#livelli-raster-ritocco-formato-progetto) before using
 the development build for production work.
 

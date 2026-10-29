@@ -297,13 +297,20 @@ fn export_overrides_density_and_dimensions_without_mutating_project() {
         assert_eq!(jpeg.dimensions(), if custom { (10, 6) } else { (20, 12) });
         let exif = jpeg.exif_metadata().unwrap().unwrap();
         assert_eq!(&exif[..4], b"II\x2a\0");
-        let rational = |offset| {
+        let rational = |tag: u16| {
+            let count = u16::from_le_bytes(exif[8..10].try_into().unwrap()) as usize;
+            let entry = (0..count)
+                .map(|i| 10 + i * 12)
+                .find(|i| u16::from_le_bytes(exif[*i..*i + 2].try_into().unwrap()) == tag)
+                .unwrap();
+            let offset =
+                u32::from_le_bytes(exif[entry + 8..entry + 12].try_into().unwrap()) as usize;
             let n = u32::from_le_bytes(exif[offset..offset + 4].try_into().unwrap());
             let d = u32::from_le_bytes(exif[offset + 4..offset + 8].try_into().unwrap());
             n as f64 / d as f64
         };
-        assert_eq!(rational(50), density.x);
-        assert_eq!(rational(58), density.y);
+        assert_eq!(rational(282), density.x);
+        assert_eq!(rational(283), density.y);
         assert_eq!(doc, original);
     }
     doc.resolution = None;

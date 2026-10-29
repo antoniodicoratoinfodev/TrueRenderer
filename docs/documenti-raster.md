@@ -4,7 +4,7 @@
 
 La vista fotografica e il progetto usano le schede **Sviluppo**, **Livelli**, **Tools**
 e **Export**. Non è necessario entrare in uno «Spazio documento» separato. Alla
-prima richiesta di composizione dalla foto, il pool acquisisce automaticamente il
+richiesta confermata di composizione dalla foto, il pool acquisisce il
 raster nativo con motore e WB della ricetta corrente; conserva le regolazioni RGB
 come parametri del livello. La tela conserva le dimensioni native della foto: il
 ritaglio resta una regolazione del livello e non ridimensiona il documento. Un caricamento
@@ -63,6 +63,62 @@ assenti: non vengono sostituiti con 72/300 PPI né con i valori di una miniatura
 PNG dichiara pHYs solo quando noto; JPEG usa EXIF razionale e JFIF intero.
 Le altre famiglie RAW non hanno ancora un lettore di densità specifico.
 Nessuna dipendenza da percorsi locali, backend grafico o piattaforma è aggiunta.
+
+## Foto originali e ritocco reversibile
+
+Aprire Sviluppo, Livelli, Tools o Export non crea un documento. La foto resta il
+livello 0; i 16 strumenti fotografici, le loro regolazioni e maschere continuano a
+usare la ricetta nel catalogo. Pennello, gomma, clona, ripara, ripara rapido e
+spostamento lavorano anch'essi sulla foto originale, senza cambiare estensione.
+Il file originale rimane in sola lettura. Non viene creato un asset raster laterale.
+
+La ricetta schema v3 aggiunge `retouch` opzionale, versione 1: tratti ordinati,
+attivazione globale e per tratto, raggio relativo alla larghezza nativa, durezza,
+opacità, colore sRGB, offset del donatore e selezione vettoriale congelata nel
+tratto; traslazione normalizzata, scala e rotazione della foto. Le coordinate
+appartengono alla sorgente orientata. Undo/redo, chiusura/riapertura e salvataggio
+nel catalogo conservano i parametri; i tratti si possono disattivare, modificare o
+eliminare singolarmente. I limiti sono 128 tratti, 1024 punti complessivi fra
+tracciati e selezioni, 16 componenti per selezione e 48 KiB per l'intera ricetta.
+I limiti di lunghezza e interpolazione rifiutano gesti eccessivi esplicitamente.
+Le vecchie ricette restano valide e non vengono migrate alla sola apertura.
+
+Il replay opera su una copia privata del RAW sviluppato con il motore/WB corrente:
+prima ritocchi, poi regolazioni fotografiche e livelli, quindi trasformazione foto
+e geometria/grana esistenti. Il donatore è congelato all'inizio di ciascun tratto
+nel replay, non nel file. Cambiare motore o WB ricalcola quindi anche il ritocco.
+La tela mantiene i pixel nativi; il ritaglio fotografico continua a definire la
+regione visibile. L'export definitivo esegue il replay nativo nel decoder isolato;
+le anteprime usano la risoluzione residente e la stessa semantica normalizzata.
+I percorsi GPU che non rappresentano i nuovi operatori rinviano al replay CPU;
+il valutatore regionale ricostruisce il frame residente completo. Non si promette
+la latenza degli strumenti puntuali GPU sui ritocchi né indipendenza dal numero
+di tratti. Restano le limitazioni preesistenti dell'analisi automatica con strumenti
+avanzati; Auto non analizza una ricetta con ritocchi attivi.
+
+Le selezioni libera/poligonale/rettangolare usano sostituzione, unione probabilistica,
+intersezione e sottrazione. I punti in corso sono visibili sulla tela; Invio/doppio
+clic conclude il poligono, Esc annulla. **Selezione → regolazione** crea una maschera
+poligonale in un livello fotografico, ancora sul RAW. La selezione di sessione è
+transitoria; quella applicata a un tratto o a una regolazione viene serializzata.
+Spostamento e maschere si escludono a vicenda come strumenti interattivi; Spazio
+conserva il pan del viewer.
+
+Solo copia immagine, livello raster vuoto, immagine esterna e copia di una selezione
+aprono la conferma **Continua in un progetto TrueRenderer?**. Essa indica il nuovo
+nome, la conservazione dell'originale e l'incorporazione dello sviluppo sensore.
+Confermando si prepara e salva in background un file con nome libero nella cartella
+della foto; nessun file esistente è sovrascritto. Si seleziona il nuovo progetto
+soltanto dopo il completamento. Errori e annullamento conservano il lavoro precedente.
+La copia della selezione riprende il risultato visibile con copertura applicata dopo
+il replay, così i ritocchi non ripristinano pixel fuori dalla selezione; il livello
+0 conserva la ricetta originale. Le copie dell'intera foto conservano i parametri.
+
+L'export fotografico mantiene JPEG, PNG8/16, TIFF16/float32, DNG lineare e DNG RAW.
+Nei formati renderizzati dimensioni e densità ereditano quelle della sorgente;
+lato lungo e PPI personalizzati appartengono solo alla copia esportata. La densità
+ignota rimane assente, gli assi vengono scambiati dopo rotazioni di un quarto di
+giro. Il DNG RAW conserva il mosaico e non incorpora gli effetti del rendering.
 
 ## Ambito e rappresentazione
 
@@ -124,7 +180,7 @@ Ripara rapido cerca una patch nei dintorni confrontando i campioni del bordo,
 poi applica la medesima correzione. Non sono algoritmi generativi. Un bordo privo
 di campioni opachi validi produce un errore esplicito. Raggio, durezza e intensità
 determinano la copertura; i gesti sono interpolati per evitare lacune.
-Un tratto concluso è una voce undo. I ritocchi persistono come pixel del livello,
+Un tratto raster concluso nel progetto è una voce undo. Questi ritocchi persistono come pixel del livello,
 ancora modificabili con gli strumenti raster; i parametri dei tratti conclusi e
 la cronologia della sessione non vengono serializzati. Per conservare una base
 intatta si lavora su una copia indipendente del livello.

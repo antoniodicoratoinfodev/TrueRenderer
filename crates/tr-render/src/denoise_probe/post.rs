@@ -99,6 +99,10 @@ impl Post {
         if let Some(advanced) = &edit.recipe.advanced {
             for m in advanced.masks.iter().filter(|m| m.active()) {
                 ensure!(!cancelled(), "Editing annullato");
+                ensure!(
+                    m.shape != Shape::Polygon,
+                    "Maschera poligonale: valutazione CPU"
+                );
                 append_mask(m, aspect, &mut masks, &mut segments);
             }
         }
@@ -184,6 +188,7 @@ pub(super) fn append_mask(
         Shape::Brush => 2.,
         Shape::Luminance => 3.,
         Shape::Hue => 4.,
+        Shape::Polygon => unreachable!("polygon masks are rejected before GPU encoding"),
     };
     masks.extend([
         [m.center[0], m.center[1], m.radius, m.feather],

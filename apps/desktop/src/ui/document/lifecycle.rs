@@ -24,14 +24,14 @@ impl Editor {
             self.attempted = None;
             return false;
         }
-        if self.attempted.as_deref() == Some(path) || self.import.is_some() {
+        if self.attempted.as_deref() == Some(path) || self.busy() {
             return false;
         }
         self.open(path.to_path_buf())
     }
     pub fn unavailable(&mut self, ui: &mut egui::Ui) {
         self.messages(ui);
-        if self.import.is_none() {
+        if !self.busy() {
             ui.label("Le modifiche del lavoro precedente sono conservate. Selezionalo nella cartella per riprenderle.");
             if ui.button("Riprova apertura").clicked() {
                 self.attempted = None;
@@ -45,7 +45,7 @@ impl Editor {
         if !self.notice.is_empty() {
             ui.label(&self.notice);
         }
-        if self.import.is_some() {
+        if self.busy() {
             ui.horizontal(|ui| {
                 ui.spinner();
                 ui.label("Preparazione immagine alla risoluzione nativa…");
@@ -209,7 +209,7 @@ impl Editor {
             });
     }
     pub fn keyboard(&mut self, ctx: &egui::Context) {
-        if self.import.is_some()
+        if self.busy()
             || self.new_dialog
             || ctx.text_edit_focused()
             || egui::Popup::is_any_open(ctx)

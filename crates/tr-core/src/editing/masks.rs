@@ -12,6 +12,7 @@ pub enum Shape {
     Brush,
     Luminance,
     Hue,
+    Polygon,
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -62,7 +63,22 @@ impl Mask {
             }
         }
         super::range(self.radius, 0.005, 1., "Raggio maschera")?;
-        super::range(self.feather, 0.01, 1., "Sfumatura")?;
+        super::range(
+            self.feather,
+            if self.shape == Shape::Polygon {
+                0.
+            } else {
+                0.01
+            },
+            1.,
+            "Sfumatura",
+        )?;
+        if self.shape == Shape::Polygon {
+            ensure!(
+                (3..=256).contains(&self.points.len()) && self.breaks.is_empty(),
+                "Poligono maschera non valido"
+            );
+        }
         super::range(self.angle, -180., 180., "Angolo maschera")?;
         for v in self.interval {
             super::range(v, 0., 1., "Intervallo maschera")?;
@@ -88,6 +104,7 @@ impl Mask {
         };
         let radial = |d: f32| 1. - smooth((d / self.radius - (1. - self.feather)) / self.feather);
         let weight = match self.shape {
+            Shape::Polygon => super::retouch::polygon_weight(&self.points, p, aspect, self.feather),
             Shape::Radial => radial(distance(self.center)),
             Shape::Linear => {
                 let (sin, cos) = self.angle.to_radians().sin_cos();

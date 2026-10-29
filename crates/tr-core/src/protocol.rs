@@ -11,7 +11,7 @@ pub const REQUEST: u16 = 1;
 pub const RESPONSE: u16 = 2;
 pub const ERROR: u16 = 3;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
 pub enum DecodeIntent {
     #[default]
     LegacyRaster,

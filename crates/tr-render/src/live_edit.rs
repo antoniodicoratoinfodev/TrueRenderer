@@ -110,6 +110,7 @@ impl LiveEdit {
     }
     pub fn gpu_supported(&self) -> bool {
         self.recipe.validate().is_ok()
+            && !self.recipe.has_retouch()
             && self.recipe.layers.as_ref().is_none_or(|s| s.is_neutral())
             && self
                 .input_gains

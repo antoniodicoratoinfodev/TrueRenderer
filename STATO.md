@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 28 ottobre 2026.
+Aggiornato: 29 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
@@ -41,6 +41,21 @@ L'app dispone di viewer/confronto, Esplora/Libreria, cinque motori RAW su macOS 
 **Pubblicazione richiesta il 26 ottobre:** preparati per commit/push gli 81 file dell'incremento di nitidezza durante lo sviluppo: valutatore regionale, riuso dei calcoli CPU/GPU, code cancellabili, livelli GPU, diagnostica sperimentale del denoiser, regressioni, strumenti, documentazione e rapporto. Ricontrollati i 399 sorgenti congelati e tutte le 81 modifiche della copia di ripresa; passati 726 test Rust, Clippy workspace/all-targets e cinque script Python. La catena sperimentale resta disabilitata e la qualifica numerica estesa del 54 resta negativa; il binario installato resta il 39 verificato. Le diciture «nessun commit/push» e i corrispondenti campi dei resoconti registrano la chiusura delle campagne, precedente a questa pubblicazione richiesta dal titolare. Fotografie, cataloghi, backup, cache, binari, toolchain e archivio locale delle modifiche restano esclusi dalla pubblicazione.
 
 **Pubblicazione richiesta il 27 ottobre:** preparati per commit e push i sorgenti, le regressioni, le specifiche e il rapporto dell'incremento GPU e degli slider continui installato come candidato 71. Ricontrollati i 404 sorgenti congelati, i 652 riferimenti con hash delle prove e 76 file protetti; nel rapporto i percorsi delle cartelle di prova sono relativi al progetto. Le diciture «nessun commit/push» sottostanti registrano la chiusura delle campagne, precedente a questa pubblicazione. Fotografie, cataloghi, backup, cache, binari e toolchain rimangono locali.
+
+### Strumenti reversibili sul RAW e conversione esplicita — 28–29 ottobre
+
+**Richiesta:** ripristinare tutti i Tools e i livelli di regolazione sulla foto originale. Il titolare ha scelto di riprogettare anche pennello raster, gomma, clonazione, riparazione e spostamento come operazioni reversibili della ricetta RAW. Copie raster, livelli raster vuoti e immagini esterne richiedono una conferma prima di creare un `.truerenderer`; l'originale non viene sostituito.
+
+- [x] Individuata la regressione: i clic sulle schede Livelli/Tools/Export avviavano implicitamente il composito, sostituendo i controlli fotografici con quelli raster.
+- [x] Ripristinata navigazione fra schede, tutti i 16 strumenti di regolazione e l'export fotografico senza importazione del documento; regressioni sui clic reali nei controlli e sul pannello compatto passate.
+- [x] Ricetta v3 con ritocchi, selezioni e trasformazioni reversibili: replay, cronologia, riapertura, attivazione e modifica dei tratti. Prove dei gesti, cancellazione, copia congelata del donatore, alpha e parità regionale passate. Export PNG16 nativo bit esatto su NEF D750 con Experimental (6016×4016) e LibRaw bilineare (6032×4032), entrambi a 300 PPI.
+- [x] Conferma prima di copie, immagini esterne, livelli raster vuoti e copie di selezione. Preparazione/salvataggio in background con nome libero; errori e collisioni conservano il progetto precedente. La conversione della selezione in regolazione resta sul RAW.
+- [x] Verificati 774 test Rust ordinari (324 desktop), 14 integrazioni native applicabili, 50 controlli Python e otto del protocollo; fmt e Clippy workspace/all-targets passati. Dopo l'ultima rifinitura del messaggio di salvataggio, ripetute le cinque regressioni UI pertinenti e le prove del bundle finale. Campagne sperimentali/private e test filesystem da 100.000 file esclusi: non si dichiara passato integralmente `verify.sh`.
+- [x] Workflow nativo su copia isolata del NEF D750: Tools fotografici, pennello, annulla/ripeti, livello di regolazione, spostamento, Export, annullamento della conferma, creazione confermata nella stessa cartella e ritorno al RAW. Riapertura e vista 1:1 verificate; lettura indipendente di catalogo e contenitore conferma ricetta, livello 0 e copia 1, pixel, densità e checksum.
+- [x] Installato `dist/TrueRenderer.app`, con precedente bundle e dati durevoli salvati in `var/backups/before-raw-tools-20261029-175103/`. Firma e due XPC verificati anche nella posizione definitiva, su corpus isolato di 12 immagini. App aperta sul NEF D750 originale con Tools visibile.
+- [x] Revisione per la pubblicazione richiesta: 580 sorgenti congelati coincidenti con il bundle, 47 file protetti invariati e 17 riferimenti con hash delle evidenze verificati. Sorgenti, regressioni, guida, specifiche, stato e rapporto preparati per commit/push su `origin/main`; fotografie, progetti, cataloghi, backup, bundle e toolchain restano locali.
+
+Limiti: i ritocchi usano replay CPU del frame residente completo; nessuna qualifica generale di latenza o GPU. Ricetta limitata a 128 tratti, 1024 punti complessivi e 48 KiB. Le restrizioni dell'analisi automatica con strumenti avanzati comprendono i ritocchi attivi. Qualifica incrociata Windows/macOS e gate di rilascio aperti; nessun gate R/SF concluso. [Rapporto e prove](reports/raw-tools-reversible-macos-2026-10-29.json), evidenze locali in `var/raw-tools-20261029/`.
 
 ### Composito alle dimensioni della foto e revisione per pubblicazione — 28 ottobre
 

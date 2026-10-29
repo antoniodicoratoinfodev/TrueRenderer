@@ -9,6 +9,7 @@ fn mask_node_label(kind: &MaskKind) -> &'static str {
             Shape::Radial => "Radiale",
             Shape::Luminance => "Luminanza",
             Shape::Hue => "Tonalità",
+            Shape::Polygon => "Selezione poligonale",
         },
         MaskKind::Color(_) => "Colore a campioni",
         MaskKind::Add(..) => "Aggiungi",

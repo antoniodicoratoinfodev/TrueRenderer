@@ -1079,7 +1079,7 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
             }
             continue;
         }
-        if let protocol::DecodeIntent::Export(options) = request.intent {
+        if let protocol::DecodeIntent::Export(mut options) = request.intent {
             let encoded = (|| -> Result<_> {
                 let controlled = policy.approves_bytes(&bytes);
                 ensure!(
@@ -1128,6 +1128,19 @@ fn serve_with_policy<R: Read, W: Write>(input: R, output: W, external: bool) -> 
                     && let Some(recipe) = &request.edit
                 {
                     recipe.apply(&mut raster)?;
+                }
+                if options.resolution.is_none() {
+                    options.resolution = resolution::read(&bytes);
+                    if options.format != tr_core::export::Format::DngLinear16
+                        && request
+                            .edit
+                            .as_ref()
+                            .and_then(|r| r.advanced.as_ref())
+                            .is_some_and(|a| a.geometry.quarter_turns % 2 == 1)
+                        && let Some(r) = &mut options.resolution
+                    {
+                        std::mem::swap(&mut r.x, &mut r.y);
+                    }
                 }
                 export::render(raster, options, request.maximum_output_bytes)
             })();

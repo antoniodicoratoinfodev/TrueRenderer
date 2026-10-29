@@ -141,12 +141,13 @@ impl RasterLayer {
     }
     pub fn source_point(&self, canvas: [f32; 2]) -> Option<[f32; 2]> {
         let p = self.transform.inverse(canvas);
-        let Some(a) = &self.recipe.advanced else {
-            return Some(p);
-        };
         let native = [self.width, self.height];
-        let output = a.geometry.output_size(native);
-        a.geometry
+        let output = self
+            .recipe
+            .advanced
+            .as_ref()
+            .map_or(native, |a| a.geometry.output_size(native));
+        self.recipe
             .source_point(
                 [
                     p[0] as f64 / output[0] as f64,
@@ -162,6 +163,20 @@ impl RasterLayer {
             })
     }
     pub fn canvas_point(&self, source: [f32; 2]) -> Option<[f32; 2]> {
+        let source = if let Some(r) = &self.recipe.retouch
+            && r.enabled
+        {
+            let uv = r.transform.forward(
+                [
+                    source[0] / self.width as f32,
+                    source[1] / self.height as f32,
+                ],
+                self.height as f32 / self.width as f32,
+            );
+            [uv[0] * self.width as f32, uv[1] * self.height as f32]
+        } else {
+            source
+        };
         let p = if let Some(a) = &self.recipe.advanced {
             let native = [self.width, self.height];
             let output = a.geometry.output_size(native);
@@ -201,7 +216,7 @@ pub struct Document {
     #[serde(skip)]
     pub selection: Vec<f32>,
 }
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum SelectionMode {
     Replace,
     Add,

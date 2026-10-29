@@ -87,6 +87,32 @@ fn dng_tags<W: Write + Seek>(
     Ok(())
 }
 
+fn density_tags<W: Write + Seek>(
+    dir: &mut tiff::encoder::DirectoryEncoder<'_, W, tiff::encoder::TiffKindStandard>,
+    r: Option<tr_core::protocol::Resolution>,
+) -> Result<()> {
+    if let Some(r) = r {
+        dir.write_tag(Tag::ResolutionUnit, 2u16)?;
+        dir.write_tag(
+            Tag::XResolution,
+            Rational {
+                n: (r.x * 10000.).round() as u32,
+                d: 10000,
+            },
+        )?;
+        dir.write_tag(
+            Tag::YResolution,
+            Rational {
+                n: (r.y * 10000.).round() as u32,
+                d: 10000,
+            },
+        )?;
+    } else {
+        // TIFF's encoder supplies a unit by default; unknown is explicitly unitless.
+        dir.write_tag(Tag::ResolutionUnit, 1u16)?;
+    }
+    Ok(())
+}
 pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info, Vec<u8>)> {
     options.validate()?;
     ensure!(
@@ -120,11 +146,13 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             let mut encoder =
                 image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, options.jpeg_quality);
             encoder.set_icc_profile(profile(false)?)?;
-            // TIFF IFD0 -> Exif IFD, ColorSpace=1 (sRGB). No copied private EXIF/GPS.
-            encoder.set_exif_metadata(vec![
-                73, 73, 42, 0, 8, 0, 0, 0, 1, 0, 105, 135, 4, 0, 1, 0, 0, 0, 26, 0, 0, 0, 0, 0, 0,
-                0, 1, 0, 1, 160, 3, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-            ])?;
+            if let Some(r) = options.resolution {
+                encoder.set_pixel_density(image::codecs::jpeg::PixelDensity {
+                    density: (r.x.round() as u16, r.y.round() as u16),
+                    unit: image::codecs::jpeg::PixelDensityUnit::Inches,
+                });
+            }
+            encoder.set_exif_metadata(tr_core::export::resolution_exif(options.resolution))?;
             encoder.encode(
                 &pixels,
                 image.width,
@@ -142,6 +170,13 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             } else {
                 png::BitDepth::Eight
             });
+            if let Some(r) = options.resolution {
+                encoder.set_pixel_dims(Some(png::PixelDimensions {
+                    xppu: (r.x / 0.0254).round() as u32,
+                    yppu: (r.y / 0.0254).round() as u32,
+                    unit: png::Unit::Meter,
+                }));
+            }
             encoder.set_source_srgb(png::SrgbRenderingIntent::RelativeColorimetric);
             encoder.set_compression(match options.compression {
                 Compression::Fast => png::Compression::Fast,
@@ -178,6 +213,7 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
                 .write_tag(Tag::IccProfile, &profile(false)?[..])?;
             output.encoder().write_tag(Tag::ExtraSamples, &[2u16][..])?;
             output.encoder().write_tag(Tag::Software, "TrueRenderer")?;
+            density_tags(output.encoder(), options.resolution)?;
             output.rows_per_strip(1)?;
             let mut row = Vec::with_capacity(image.width as usize * 4);
             for pixels in image.pixels.chunks(image.width as usize) {
@@ -201,6 +237,7 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
                 .write_tag(Tag::IccProfile, &profile(true)?[..])?;
             output.encoder().write_tag(Tag::ExtraSamples, &[1u16][..])?;
             output.encoder().write_tag(Tag::ImageDescription,"Extended linear Rec.2020 D65 RGBA float32; associated alpha in linear light; no RGB clamp. Developed image, not sensor RAW or scientific source data.")?;
+            density_tags(output.encoder(), options.resolution)?;
             output.rows_per_strip(1)?;
             let mut row = Vec::with_capacity(image.width as usize * 4);
             for pixels in image.pixels.chunks(image.width as usize) {
@@ -244,6 +281,7 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
                 .write_tag(Tag::PhotometricInterpretation, 34892u16)?;
             output.encoder().write_tag(tag(50717), &[65535u32; 3][..])?;
             output.encoder().write_tag(Tag::ImageDescription, "Developed linear Rec.2020 D65 RGB; not sensor RAW. Clipped to [0,1], quantized to uint16. No private source metadata.")?;
+            density_tags(output.encoder(), options.resolution)?;
             output.rows_per_strip(1)?;
             let mut row = Vec::with_capacity(image.width as usize * 3);
             for pixels in image.pixels.chunks(image.width as usize) {
@@ -315,6 +353,50 @@ pub fn raw(source: &[u8], options: Options, limit: u64) -> Result<(Info, Vec<u8>
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn density_is_preserved_for_each_render_format_and_never_invented() {
+        let image = LinearImage::new(16, 12, vec![[0.2, 0.1, 0., 1.]; 192]).unwrap();
+        for format in Format::ALL.into_iter().filter(|f| *f != Format::DngRaw) {
+            for resolution in [
+                None,
+                Some(tr_core::protocol::Resolution {
+                    x: 299.75,
+                    y: 240.125,
+                }),
+            ] {
+                let (_, bytes) = render(
+                    image.clone(),
+                    Options {
+                        format,
+                        resolution,
+                        ..Default::default()
+                    },
+                    MAX_ENCODED,
+                )
+                .unwrap();
+                let actual = crate::resolution::read(&bytes);
+                match (resolution, actual) {
+                    (None, None) => {}
+                    (Some(expected), Some(actual)) => {
+                        assert!(
+                            (expected.x - actual.x).abs() < 0.013,
+                            "{format:?}: {actual:?}"
+                        );
+                        assert!(
+                            (expected.y - actual.y).abs() < 0.013,
+                            "{format:?}: {actual:?}"
+                        );
+                    }
+                    _ => panic!("{format:?}: expected {resolution:?}, got {actual:?}"),
+                }
+            }
+        }
+        let legacy: Options = serde_json::from_str(
+            r#"{"format":"Jpeg","jpeg_quality":90,"compression":"Balanced","long_edge":0}"#,
+        )
+        .unwrap();
+        assert_eq!(legacy.resolution, None);
+    }
     #[cfg(windows)]
     #[test]
     fn windows_icc_exports_reopen_with_float_range_and_alpha() {

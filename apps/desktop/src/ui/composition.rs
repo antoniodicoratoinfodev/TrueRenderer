@@ -1,6 +1,155 @@
 //! Entry from photographic editing to the same layer/tools/export workflow.
 use super::*;
+pub(super) struct Confirmation {
+    item: Item,
+    recipe: tr_core::editing::EditRecipe,
+    digest: String,
+    action: document::PhotoAction,
+    output: PathBuf,
+}
+
 impl TrueRenderer {
+    pub(super) fn photo_editing_tab(&self) -> document::Tab {
+        if self.editing.layers.view_export {
+            document::Tab::Export
+        } else if self.editing.layers.view_tools {
+            document::Tab::Tools
+        } else if self.editing.layers.view_layers {
+            document::Tab::Layers
+        } else {
+            document::Tab::Develop
+        }
+    }
+    pub(super) fn select_photo_editing_tab(&mut self, tab: document::Tab) {
+        self.cancel_wb_picker();
+        if let Some(id) = self.state.current.clone() {
+            self.commit_edit(&id);
+        }
+        self.editing.retouch.stop();
+        self.editing.layers.open_tools(false);
+        self.editing.layers.view_tools = tab == document::Tab::Tools;
+        self.editing.layers.view_layers = tab == document::Tab::Layers;
+        self.editing.layers.view_export = tab == document::Tab::Export;
+        self.editing.advanced.paint = false;
+        self.editing.advanced.horizon = false;
+    }
+    pub(super) fn open_editing_tab(&mut self, tab: document::Tab) {
+        if self.current_document() {
+            self.document.select_tab(tab);
+        } else {
+            self.select_photo_editing_tab(tab);
+        }
+        self.inspector_pages = [InspectorPage::Develop; 2];
+        self.show_inspector = true;
+    }
+    pub(super) fn photo_composition_controls(&mut self, ui: &mut egui::Ui, item: &Item) {
+        if self.document.busy() || self.document.import_failed() {
+            self.document.messages(ui);
+        }
+        ui.collapsing("Aggiungi contenuto immagine", |ui| {
+            ui.small("Copie e immagini indipendenti richiedono un progetto .truerenderer.");
+            let mut action = None;
+            ui.horizontal_wrapped(|ui| {
+                if ui.button("Copia immagine…").clicked() {
+                    action = Some(document::PhotoAction::Copy);
+                }
+                if ui.button("Livello raster vuoto…").clicked() {
+                    action = Some(document::PhotoAction::Empty);
+                }
+                if ui.button("Inserisci immagine…").clicked()
+                    && let Some(path) = rfd::FileDialog::new()
+                        .set_directory(&self.folder)
+                        .pick_file()
+                {
+                    action = Some(document::PhotoAction::Image(path));
+                }
+            });
+            if let Some(action) = action {
+                self.request_conversion(item, action);
+            }
+        });
+    }
+    pub(super) fn request_conversion(&mut self, item: &Item, action: document::PhotoAction) {
+        if self.document.busy() {
+            return;
+        }
+        let Some(entry) = self.editing.entries.get(&item.id) else {
+            return;
+        };
+        let Some(saved) = &entry.loaded else {
+            return;
+        };
+        let recipe = entry.draft.clone().unwrap_or_else(|| saved.recipe.clone());
+        let stem = item.path.file_stem().unwrap_or_default().to_string_lossy();
+        let folder = item.path.parent().unwrap_or(&self.folder);
+        let mut output = folder.join(format!("{stem}.truerenderer"));
+        let mut n = 2;
+        while output.exists() {
+            output = folder.join(format!("{stem}-{n}.truerenderer"));
+            n += 1;
+        }
+        self.conversion = Some(Confirmation {
+            item: item.clone(),
+            recipe,
+            digest: saved.source_digest.clone(),
+            action,
+            output,
+        });
+    }
+    pub(super) fn conversion_dialog(&mut self, ctx: &egui::Context) {
+        let Some(pending) = &self.conversion else {
+            return;
+        };
+        let mut accept = false;
+        let mut cancel = false;
+        let response=egui::Modal::new(egui::Id::new("photo-to-project")).show(ctx, |ui| {
+            ui.set_max_width(420.);
+            ui.heading("Continua in un progetto TrueRenderer?");
+            ui.add_space(8.);
+            ui.label(format!("{} aggiunge contenuto indipendente alla foto.", pending.action.label()));
+            ui.label("Creeremo un file .truerenderer con lo sviluppo corrente al livello 0 e il nuovo contenuto sopra.");
+            ui.add_space(6.);
+            ui.label(egui::RichText::new(pending.output.file_name().unwrap_or_default().to_string_lossy()).strong());
+            ui.small(format!("Nella cartella di {}",pending.item.name));
+            ui.add_space(6.);
+            ui.label("Il RAW originale e le sue regolazioni restano disponibili. Nel progetto lo sviluppo sensore è incorporato: per cambiare motore o WB RAW si torna alla foto originale.");
+            ui.add_space(10.);
+            ui.horizontal(|ui| {
+                cancel=ui.button("Continua sulla foto").clicked();
+                accept=ui.button("Crea progetto e continua").clicked();
+            });
+        });
+        cancel |= response.should_close();
+        if cancel {
+            self.conversion = None;
+        } else if accept {
+            let pending = self.conversion.take().unwrap();
+            self.accept_conversion(pending);
+        }
+    }
+    fn accept_conversion(&mut self, pending: Confirmation) {
+        if !self.state.current_item().is_some_and(|i| {
+            i.id == pending.item.id
+                && i.path == pending.item.path
+                && i.observation == pending.item.observation
+        }) {
+            self.status =
+                "La foto selezionata è cambiata: richiedi nuovamente l'operazione.".into();
+            return;
+        }
+        self.commit_all_edits();
+        self.cancel_wb_picker();
+        if self.document.begin_photo(
+            pending.item.id,
+            pending.item.path,
+            pending.recipe,
+            pending.digest,
+            document::Tab::Layers,
+        ) {
+            self.document
+                .begin_conversion(pending.output, pending.action);
+        }
+    }
     pub(super) fn current_document(&self) -> bool {
         self.state
             .current_item()
@@ -9,6 +158,9 @@ impl TrueRenderer {
     pub(super) fn sync_document(&mut self, ctx: &egui::Context) {
         self.document.directory = self.folder.clone();
         self.document.poll();
+        if self.document.busy() {
+            ctx.request_repaint_after(Duration::from_millis(50));
+        }
         let mut refresh = false;
         while let Some(path) = self.document.published.pop_front() {
             self.document.invalidate_preview(&path);

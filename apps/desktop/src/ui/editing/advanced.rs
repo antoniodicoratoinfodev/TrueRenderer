@@ -691,6 +691,9 @@ impl super::TrueRenderer {
     }
 
     pub(in crate::ui) fn photo_gesture_active(&self, id: &str) -> bool {
+        if self.photo_edit_ready(id) && self.editing.retouch.active(id) {
+            return true;
+        }
         if self.photo_edit_ready(id) && self.editing.layers.view_layers {
             return self.editing.entries[id]
                 .draft
@@ -821,6 +824,7 @@ impl super::TrueRenderer {
         let Some(mut recipe) = entry.draft.clone() else {
             return;
         };
+        let coordinate_recipe = recipe.clone();
         let Some(a) = &mut recipe.advanced else {
             return;
         };
@@ -833,7 +837,7 @@ impl super::TrueRenderer {
             && matches!(mask.shape, Shape::Radial | Shape::Linear | Shape::Brush)
         {
             super::mask_overlay::paint(ui, image_rect, response.rect, [230, 65, 75], 65, |uv| {
-                a.geometry.source_point(uv, native).map_or(0., |p| {
+                coordinate_recipe.source_point(uv, native).map_or(0., |p| {
                     mask.weight(
                         p.map(|v| v as f32),
                         [0.5; 3],
@@ -850,7 +854,7 @@ impl super::TrueRenderer {
             for p in [origin.filter(|_| mask.shape == Shape::Brush), point]
                 .into_iter()
                 .flatten()
-                .filter_map(|p| a.geometry.source_point(p, native))
+                .filter_map(|p| coordinate_recipe.source_point(p, native))
                 .filter(|p| p.iter().all(|v| (0. ..=1.).contains(v)))
             {
                 let p = p.map(|v| v as f32);

@@ -77,7 +77,7 @@ pub enum Compression {
     Balanced,
     Best,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Options {
     pub format: Format,
@@ -85,6 +85,9 @@ pub struct Options {
     pub compression: Compression,
     /// Zero means full native development, never a resident thumbnail.
     pub long_edge: u32,
+    /// None inherits the physical density declared by the source, when known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolution: Option<crate::protocol::Resolution>,
 }
 impl Default for Options {
     fn default() -> Self {
@@ -93,11 +96,15 @@ impl Default for Options {
             jpeg_quality: 90,
             compression: Compression::Balanced,
             long_edge: 0,
+            resolution: None,
         }
     }
 }
 impl Options {
     pub fn validate(self) -> Result<()> {
+        if let Some(r) = self.resolution {
+            r.validate()?;
+        }
         ensure!(
             (1..=100).contains(&self.jpeg_quality),
             "Qualità JPEG: 1–100"
@@ -230,6 +237,44 @@ pub fn profile(linear: bool) -> Result<Vec<u8>> {
         });
     }
     Ok(profile.encode()?)
+}
+
+/// Minimal private-metadata-free EXIF: optional physical density and sRGB marker.
+pub fn resolution_exif(resolution: Option<crate::protocol::Resolution>) -> Vec<u8> {
+    let count = if resolution.is_some() { 4u16 } else { 1 };
+    let exif = 8 + 2 + u32::from(count) * 12 + 4;
+    let rational = exif + 18;
+    let mut bytes = b"II\x2a\0\x08\0\0\0".to_vec();
+    bytes.extend_from_slice(&count.to_le_bytes());
+    let mut tags = vec![];
+    if resolution.is_some() {
+        tags.extend([
+            (282u16, 5u16, rational),
+            (283, 5, rational + 8),
+            (296, 3, 2),
+        ]);
+    }
+    tags.push((34665, 4, exif));
+    for (tag, kind, value) in tags {
+        bytes.extend_from_slice(&tag.to_le_bytes());
+        bytes.extend_from_slice(&kind.to_le_bytes());
+        bytes.extend_from_slice(&1u32.to_le_bytes());
+        bytes.extend_from_slice(&value.to_le_bytes());
+    }
+    bytes.extend_from_slice(&0u32.to_le_bytes());
+    bytes.extend_from_slice(&1u16.to_le_bytes());
+    bytes.extend_from_slice(&40961u16.to_le_bytes());
+    bytes.extend_from_slice(&3u16.to_le_bytes());
+    bytes.extend_from_slice(&1u32.to_le_bytes());
+    bytes.extend_from_slice(&1u32.to_le_bytes());
+    bytes.extend_from_slice(&0u32.to_le_bytes());
+    if let Some(r) = resolution {
+        for value in [r.x, r.y] {
+            bytes.extend_from_slice(&((value * 10000.).round() as u32).to_le_bytes());
+            bytes.extend_from_slice(&10000u32.to_le_bytes());
+        }
+    }
+    bytes
 }
 
 #[cfg(test)]

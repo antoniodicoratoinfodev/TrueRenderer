@@ -20,6 +20,8 @@ enum Tool {
     Rectangle,
 }
 
+mod conversion;
+pub(in crate::ui) use conversion::PhotoAction;
 mod develop;
 mod export;
 mod lifecycle;
@@ -40,6 +42,15 @@ pub(super) enum Tab {
     Export,
 }
 impl Tab {
+    pub const ALL: [Self; 4] = [Self::Develop, Self::Layers, Self::Tools, Self::Export];
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Develop => "Sviluppo",
+            Self::Layers => "Livelli",
+            Self::Tools => "Tools",
+            Self::Export => "Export",
+        }
+    }
     pub fn from_index(index: usize) -> Self {
         match index {
             1 => Self::Layers,
@@ -88,6 +99,8 @@ pub(super) struct Editor {
     pub tab: Tab,
     pub source_id: Option<String>,
     import_photo: Option<String>,
+    conversion: Option<conversion::Conversion>,
+    publishing: Option<conversion::Publishing>,
     source_path: Option<PathBuf>,
     import_path: Option<PathBuf>,
     pub directory: PathBuf,
@@ -155,6 +168,8 @@ impl Editor {
             tab: Tab::Develop,
             source_id: None,
             import_photo: None,
+            conversion: None,
+            publishing: None,
             source_path: None,
             import_path: None,
             directory: PathBuf::new(),
@@ -227,7 +242,7 @@ impl Editor {
         self.doc.is_some()
     }
     pub fn import_failed(&self) -> bool {
-        self.import.is_none() && !self.error.is_empty()
+        !self.busy() && !self.error.is_empty()
     }
     pub fn select_tab(&mut self, tab: Tab) {
         self.end_stroke();
@@ -246,22 +261,20 @@ impl Editor {
         recipe: tr_core::editing::EditRecipe,
         expected_digest: String,
         tab: Tab,
-    ) {
-        if self.source_id.as_ref() == Some(&id) && self.doc.is_some() {
-            self.select_tab(tab);
-            return;
-        }
-        if self.import.is_some() || !self.replace_allowed() {
-            return;
+    ) -> bool {
+        if self.busy() || !self.replace_allowed() {
+            return false;
         }
         self.select_tab(tab);
         if self.queue_import(path.clone(), recipe, Some(expected_digest)) {
             self.import_photo = Some(id);
             self.import_path = Some(path);
+            return true;
         }
+        false
     }
     fn replace_allowed(&mut self) -> bool {
-        if self.import.is_some() {
+        if self.busy() {
             return false;
         }
         if !self.dirty {
@@ -276,7 +289,7 @@ impl Editor {
         }
     }
     pub fn allow_close(&mut self) -> bool {
-        if self.import.is_some() {
+        if self.busy() {
             self.error = "Attendere il caricamento prima di chiudere".into();
             return false;
         }
@@ -427,6 +440,9 @@ impl Editor {
         }
     }
     pub fn save(&mut self, copy: bool) {
+        if self.busy() {
+            return;
+        }
         self.end_stroke();
         let Some(doc) = &self.doc else {
             return;
@@ -466,7 +482,7 @@ impl Editor {
         recipe: tr_core::editing::EditRecipe,
         expected_digest: Option<String>,
     ) -> bool {
-        if self.import.is_some() || !self.admit() {
+        if self.busy() || !self.admit() {
             return false;
         }
         let Some(import_admission) = self.memory.try_reserve(3 * 1024 * 1024 * 1024) else {
@@ -474,7 +490,8 @@ impl Editor {
             return false;
         };
         let (tx, rx) = mpsc::channel();
-        let append = expected_digest.is_none() && self.doc.is_some();
+        let append = expected_digest.is_none()
+            && (self.doc.is_some() || self.conversion.as_ref().is_some_and(|c| c.base.is_some()));
         let job = crate::decode_pool::DocumentImport {
             path,
             recipe,
@@ -483,8 +500,18 @@ impl Editor {
             memory: import_admission,
             document: self.admission.as_ref().unwrap().clone(),
             append,
-            existing_storage: self.doc.as_ref().map_or(0, |d| d.storage_bytes() as u64),
-            existing_pixels: self.doc.as_ref().map_or(0, Document::largest_pixels),
+            existing_storage: self.doc.as_ref().map_or(0, |d| d.storage_bytes() as u64)
+                + self
+                    .conversion
+                    .as_ref()
+                    .and_then(|c| c.base.as_ref())
+                    .map_or(0, |d| d.storage_bytes() as u64),
+            existing_pixels: self.doc.as_ref().map_or(0, Document::largest_pixels).max(
+                self.conversion
+                    .as_ref()
+                    .and_then(|c| c.base.as_ref())
+                    .map_or(0, Document::largest_pixels),
+            ),
         };
         match self
             .service
@@ -502,6 +529,7 @@ impl Editor {
         }
     }
     pub fn poll(&mut self) {
+        self.poll_publishing();
         let imported = self.import.as_ref().and_then(|rx| match rx.try_recv() {
             Ok(result) => Some(result),
             Err(mpsc::TryRecvError::Empty) => None,
@@ -511,6 +539,10 @@ impl Editor {
         });
         if let Some(result) = imported {
             self.import = None;
+            if self.conversion.is_some() {
+                self.conversion_result(result);
+                return;
+            }
             match result {
                 Ok(imported) => {
                     let layer = imported.layer;
@@ -612,7 +644,7 @@ impl Editor {
                 self.end_stroke();
                 return;
             }
-            if self.import.is_some() || self.tab == Tab::Export {
+            if self.busy() || self.tab == Tab::Export {
                 return;
             }
             let doc = self.doc.as_ref().unwrap();

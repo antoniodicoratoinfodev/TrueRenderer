@@ -35,14 +35,14 @@ fn raw_point(recipe: &EditRecipe, point: [u32; 2], native: [u32; 2]) -> Option<[
     if native.contains(&0) {
         return None;
     }
-    let Some(a) = &recipe.advanced else {
-        return (point[0] < native[0] && point[1] < native[1]).then_some(point);
-    };
-    let output = a.geometry.output_size(native);
+    let output = recipe
+        .advanced
+        .as_ref()
+        .map_or(native, |a| a.geometry.output_size(native));
     if point[0] >= output[0] || point[1] >= output[1] {
         return None;
     }
-    let p = a.geometry.source_point(
+    let p = recipe.source_point(
         [
             (point[0] as f64 + 0.5) / output[0] as f64,
             (point[1] as f64 + 0.5) / output[1] as f64,

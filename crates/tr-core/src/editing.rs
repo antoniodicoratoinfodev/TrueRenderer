@@ -21,6 +21,9 @@ pub mod masks;
 #[cfg(test)]
 mod process3_tests;
 pub mod regional;
+pub mod retouch;
+#[cfg(test)]
+mod retouch_tests;
 #[cfg(test)]
 mod selective_tests;
 pub mod switches;
@@ -209,6 +212,8 @@ pub struct CurvePoint {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EditRecipe {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retouch: Option<Box<retouch::Retouch>>,
     /// Parameters parked by section switches; render fields remain neutral.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub suspended: std::collections::BTreeMap<String, serde_json::Value>,
@@ -246,6 +251,7 @@ impl EditRecipe {
     pub fn neutral(raw_engine: RawEngine) -> Self {
         Self {
             suspended: Default::default(),
+            retouch: None,
             layers: None,
             advanced: None,
             raw_wb: Default::default(),
@@ -277,13 +283,56 @@ impl EditRecipe {
         neutral.process_version = self.process_version;
         neutral.protect_warm = self.protect_warm;
         neutral.advanced = self.advanced.clone();
+        neutral.retouch = self.retouch.clone();
         self == &neutral
+            && !self.has_retouch()
             && !curve_has_adjusted_endpoints(&self.curve)
             && self.curve.iter().all(|p| p.x == p.y)
             && self.advanced.as_ref().is_none_or(|a| a.is_neutral())
             && self.layers.as_ref().is_none_or(|s| s.is_neutral())
     }
 
+    pub fn has_retouch(&self) -> bool {
+        self.retouch.as_ref().is_some_and(|r| r.active())
+    }
+    pub fn retouch_mut(&mut self) -> &mut retouch::Retouch {
+        self.schema_version = 3;
+        self.retouch.get_or_insert_with(Default::default)
+    }
+    /// Inverse of the complete spatial recipe, in normalized source coordinates.
+    pub fn source_point(&self, uv: [f64; 2], native: [u32; 2]) -> Option<[f64; 2]> {
+        let point = match &self.advanced {
+            Some(a) => a.geometry.source_point(uv, native)?,
+            None => uv,
+        };
+        if let Some(r) = &self.retouch
+            && r.enabled
+            && r.transform != Default::default()
+        {
+            Some(
+                r.transform
+                    .inverse(point.map(|v| v as f32), native[1] as f32 / native[0] as f32)
+                    .map(f64::from),
+            )
+        } else {
+            Some(point)
+        }
+    }
+    /// Forward map matching `source_point`, for overlays anchored to the RAW.
+    pub fn output_point(&self, mut point: [f64; 2], native: [u32; 2]) -> Option<[f64; 2]> {
+        if let Some(r) = &self.retouch
+            && r.enabled
+            && r.transform != Default::default()
+        {
+            point = r
+                .transform
+                .forward(point.map(|v| v as f32), native[1] as f32 / native[0] as f32)
+                .map(f64::from);
+        }
+        self.advanced
+            .as_ref()
+            .map_or(Some(point), |a| a.geometry.output_point(point, native))
+    }
     pub fn base_process(&self) -> u32 {
         self.layers
             .as_ref()
@@ -301,7 +350,7 @@ impl EditRecipe {
 
     pub fn layer_stack(&mut self) -> &mut layers::LayerStack {
         let base_process = self.base_process();
-        self.schema_version = 2;
+        self.schema_version = self.schema_version.max(2);
         self.process_version = 5;
         self.layers.get_or_insert_with(|| {
             Box::new(layers::LayerStack {
@@ -313,12 +362,19 @@ impl EditRecipe {
 
     pub fn validate(&self) -> Result<()> {
         self.validate_switches()?;
+        if let Some(retouch) = &self.retouch {
+            retouch.validate()?;
+        }
+        ensure!(
+            self.retouch.is_none() || self.schema_version == 3,
+            "Ritocco richiede ricetta v3"
+        );
         self.raw_wb.validate_for(self.raw_engine)?;
         ensure!(
-            ((self.schema_version == SCHEMA_VERSION
+            ((matches!(self.schema_version, SCHEMA_VERSION | 3)
                 && matches!(self.process_version, 1..=4)
                 && self.layers.is_none())
-                || (self.schema_version == 2
+                || (matches!(self.schema_version, 2 | 3)
                     && self.process_version == 5
                     && self.layers.is_some()))
                 && (self.base_process() >= 2 || (self.vibrance == 0. && !self.protect_warm))
@@ -431,6 +487,9 @@ impl EditRecipe {
         if self.is_neutral() {
             return Ok(native);
         }
+        if let Some(r) = &self.retouch {
+            r.apply_strokes(image, cancelled)?;
+        }
         let (width, height) = (image.width, image.height);
         let parameters = Parameters::new(self);
         pixels_mut(&mut image.pixels, |i, pixel| {
@@ -510,6 +569,9 @@ impl EditRecipe {
             });
         }
         ensure!(!cancelled(), "Editing annullato");
+        if let Some(r) = &self.retouch {
+            r.apply_transform(image, cancelled)?;
+        }
         if let Some(a) = &self.advanced {
             output = a.geometry.apply(image, native, base)?;
             a.detail.grain.apply_cancellable(image, output, cancelled)?;
@@ -560,11 +622,17 @@ impl EditRecipe {
             };
             u64::from(width) * u64::from(height) * 16 * frames + 1024 * 1024 + stripe_scratch
         });
-        historical.max(if self.layers.as_ref().is_some_and(|s| !s.is_neutral()) {
-            1024 * 1024
-        } else {
-            0
-        })
+        historical
+            .max(if self.has_retouch() {
+                u64::from(width) * u64::from(height) * 24
+            } else {
+                0
+            })
+            .max(if self.layers.as_ref().is_some_and(|s| !s.is_neutral()) {
+                1024 * 1024
+            } else {
+                0
+            })
     }
 
     pub fn apply_pixel(&self, pixel: Pixel) -> Pixel {
@@ -579,7 +647,8 @@ impl EditRecipe {
     fn analysis_samples(&self, image: &LinearImage) -> Result<Vec<Pixel>> {
         self.validate()?;
         ensure!(
-            self.advanced.as_ref().is_none_or(|a| a.is_neutral())
+            !self.has_retouch()
+                && self.advanced.as_ref().is_none_or(|a| a.is_neutral())
                 && self.layers.as_ref().is_none_or(|s| s.is_neutral()),
             "Auto: ripristinare prima geometria, dettaglio, colore avanzato e maschere"
         );
@@ -665,7 +734,8 @@ impl EditRecipe {
     pub fn neutralize_render_sample(&mut self, pixel: Pixel) -> Result<()> {
         self.validate()?;
         ensure!(
-            self.advanced.as_ref().is_none_or(|a| a.is_neutral())
+            !self.has_retouch()
+                && self.advanced.as_ref().is_none_or(|a| a.is_neutral())
                 && self.layers.as_ref().is_none_or(|s| s.is_neutral()),
             "Contagocce RGB: ripristinare prima gli strumenti avanzati"
         );

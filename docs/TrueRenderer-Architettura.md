@@ -4027,6 +4027,14 @@ Dimensioni e DPI/PPI si scelgono alla creazione di un documento nuovo oppure per
 la sola copia esportata. Il formato v2 rappresenta densità assente/asimmetrica e
 mantiene la lettura dei v1; contratto e semantica restano unici su Windows/macOS.
 
+Nella foto originale, schede e strumenti non avviano la composizione: regolazioni,
+maschere, ritocchi e trasformazione restano reversibili nella ricetta del catalogo
+(schema v3 per i nuovi operatori). Solo un contenuto raster indipendente richiede
+conferma e creazione di un nuovo progetto accanto all'originale. La conferma rende
+esplicito che il progetto incorpora lo sviluppo sensore; l'originale conserva la
+modificabilità di motore e WB RAW. Il contratto citato definisce replay, limiti,
+selezioni, persistenza e fallback CPU; non si estende la qualifica GPU ai ritocchi.
+
 L'accettazione richiede cicli Windows → macOS → Windows e macOS → Windows → macOS,
 con modifica e salvataggio a ogni passaggio, verifica della struttura modificabile e
 confronto della resa entro tolleranze numeriche dichiarate. La resa va confrontata in uno

@@ -35,7 +35,7 @@ impl Editor {
         ui.horizontal(|ui| {
             if ui
                 .add_enabled(
-                    !self.undo.is_empty() && self.import.is_none(),
+                    !self.undo.is_empty() && !self.busy(),
                     egui::Button::new("Annulla"),
                 )
                 .clicked()
@@ -44,7 +44,7 @@ impl Editor {
             }
             if ui
                 .add_enabled(
-                    !self.redo.is_empty() && self.import.is_none(),
+                    !self.redo.is_empty() && !self.busy(),
                     egui::Button::new("Ripeti"),
                 )
                 .clicked()
@@ -64,7 +64,7 @@ impl Editor {
                     .on_hover_text(label);
             }
         }
-        ui.add_enabled_ui(self.import.is_none(), |ui| {
+        ui.add_enabled_ui(!self.busy(), |ui| {
             if self.tab == Tab::Export {
                 self.export_controls(ui);
                 return;

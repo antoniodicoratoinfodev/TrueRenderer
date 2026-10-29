@@ -12,6 +12,9 @@ mod looks;
 mod mask_overlay;
 mod palette;
 mod panels;
+mod retouch;
+#[cfg(all(test, any(windows, target_os = "macos")))]
+mod retouch_tests;
 mod transfer;
 mod visuals;
 mod wb_picker;
@@ -432,6 +435,7 @@ struct EditPreview {
     touched: u64,
 }
 pub(super) struct EditingUi {
+    pub(super) retouch: retouch::Controls,
     pub(super) advanced: advanced::Controls,
     pub(super) layers: layers::Controls,
     pub(in crate::ui) looks: looks::Controls,
@@ -516,6 +520,7 @@ impl Default for EditingUi {
         let (tx, rx) = std::sync::mpsc::channel();
         let (thumbnail_tx, thumbnail_rx) = std::sync::mpsc::channel();
         Self {
+            retouch: Default::default(),
             advanced: Default::default(),
             layers: Default::default(),
             looks: Default::default(),
@@ -1711,7 +1716,6 @@ impl TrueRenderer {
                 .map(|(_, cached)| cached.pyramid.source_size());
             let short = ui.ctx().content_rect().height() < 500.;
             let mut pasted = false;
-            let mut composition_tab = None;
             ui.horizontal(|ui| {
                 ui.spacing_mut().button_padding.x = 6.;
                 if panels::icon_button(
@@ -1789,35 +1793,15 @@ impl TrueRenderer {
                         }
                     });
                     if short {
-                        let page = if self.editing.layers.view_tools {
-                            "Strumenti"
-                        } else if self.editing.layers.view_layers {
-                            "Livelli"
-                        } else {
-                            "Sviluppo"
-                        };
+                        let page = self.photo_editing_tab();
                         ui.add_enabled_ui(!pending, |ui| {
-                            ui.menu_button(lang.text(page), |ui| {
-                                for title in
-                                    ["Sviluppo", "Livelli", "Tools", "Export", "Sposta livello 0"]
-                                {
+                            ui.menu_button(lang.text(page.label()), |ui| {
+                                for tab in document::Tab::ALL {
                                     if ui
-                                        .selectable_label(page == title, lang.text(title))
+                                        .selectable_label(page == tab, lang.text(tab.label()))
                                         .clicked()
                                     {
-                                        composition_tab = match title {
-                                            "Livelli" => Some(document::Tab::Layers),
-                                            "Tools" => Some(document::Tab::Tools),
-                                            "Export" => Some(document::Tab::Export),
-                                            "Sposta livello 0" => Some(document::Tab::Develop),
-                                            _ => None,
-                                        };
-                                        self.cancel_wb_picker();
-                                        self.editing.layers.open_tools(false);
-                                        self.editing.layers.view_tools = title == "Strumenti";
-                                        self.editing.layers.view_layers = title == "Livelli";
-                                        self.editing.advanced.paint = false;
-                                        self.editing.advanced.horizon = false;
+                                        self.select_photo_editing_tab(tab);
                                         ui.close();
                                     }
                                 }
@@ -1857,37 +1841,33 @@ impl TrueRenderer {
             draft = expanded;
             let previous_switches = switches.clone();
             ui.add_enabled_ui(!pending, |ui| {
-                if !short {
-                    let page = if self.editing.layers.view_tools {
-                        2
-                    } else {
-                        usize::from(self.editing.layers.view_layers)
-                    };
-                    if let Some(page) = panels::tabs(ui, lang, page) {
-                        if page > 0 {
-                            composition_tab = Some(document::Tab::from_index(page));
-                            return;
-                        }
-                        self.cancel_wb_picker();
-                        self.editing.layers.open_tools(false);
-                        self.editing.layers.view_tools = page == 2;
-                        self.editing.layers.view_layers = page == 1;
-                        self.editing.advanced.paint = false;
-                        self.editing.advanced.horizon = false;
-                    }
+                if !short
+                    && let Some(page) = panels::tabs(ui, lang, self.photo_editing_tab() as usize)
+                {
+                    self.select_photo_editing_tab(document::Tab::from_index(page));
+                }
+                if self.editing.layers.view_export {
+                    self.photo_export_controls(ui, vec![item.clone()]);
+                    return;
                 }
                 if !short {
-                    ui.horizontal_wrapped(|ui| {
-                        ui.small(format!("Livello 0 · {}", item.name));
-                        if ui.button("Sposta / trasforma").clicked() {
-                            composition_tab = Some(document::Tab::Develop);
-                        }
-                    });
+                    ui.small(format!("Livello 0 · {}", item.name));
+                }
+                if self.editing.layers.view_tools || self.editing.layers.view_layers {
+                    self.photo_composition_controls(ui, item);
+                }
+                if !short || self.editing.layers.view_tools || self.editing.layers.view_layers {
+                    let (c, k) = self.retouch_controls(ui, item, &mut draft, native_size);
+                    changed |= c;
+                    commit |= k;
                 }
                 if self.editing.layers.view_tools {
                     let applied = self.editing.layers.show_tools(ui, lang, &mut draft);
                     changed |= applied;
                     commit |= applied;
+                    if applied {
+                        self.editing.retouch.stop();
+                    }
                     return;
                 }
                 if self.editing.layers.view_layers {
@@ -1895,6 +1875,9 @@ impl TrueRenderer {
                         .layers
                         .set_analysis_source(&saved.source_digest);
                     let (c, k) = self.editing.layers.show(ui, lang, &mut draft);
+                    if self.editing.layers.paint || self.editing.layers.pick {
+                        self.editing.retouch.stop();
+                    }
                     changed |= c;
                     commit |= k;
                     if self.editing.layers.take_native_request() {
@@ -2173,6 +2156,23 @@ impl TrueRenderer {
                 );
                 changed |= advanced_changed;
                 commit |= advanced_commit;
+                if short {
+                    if self.editing.advanced.paint
+                        || self.editing.advanced.horizon
+                        || self.wb_picker_active(&item.id)
+                    {
+                        self.editing.retouch.stop();
+                    }
+                    let (c, k) = self.retouch_controls(ui, item, &mut draft, native_size);
+                    changed |= c;
+                    commit |= k;
+                }
+                if self.editing.advanced.paint
+                    || self.editing.advanced.horizon
+                    || self.wb_picker_active(&item.id)
+                {
+                    self.editing.retouch.stop();
+                }
             });
             for id in &switches {
                 if let Err(error) = draft.set_section_enabled(id, false) {
@@ -2190,9 +2190,6 @@ impl TrueRenderer {
             }
             if commit {
                 self.commit_edit(&item.id);
-            }
-            if let Some(tab) = composition_tab {
-                self.begin_composition(tab);
             }
             ui.label(
                 RichText::new(lang.text(if self.output_proof_for(&item.id) {

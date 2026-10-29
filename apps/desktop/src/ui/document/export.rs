@@ -252,7 +252,7 @@ pub(super) fn encode_with_options(
                 density: (r.x.round() as u16, r.y.round() as u16),
                 unit: image::codecs::jpeg::PixelDensityUnit::Inches,
             });
-            encoder.set_exif_metadata(resolution_exif(r))?;
+            encoder.set_exif_metadata(tr_core::export::resolution_exif(Some(r)))?;
         }
         encoder.set_icc_profile(tr_core::export::profile(false)?)?;
         encoder.encode(
@@ -271,22 +271,4 @@ pub(super) fn encode_with_options(
         )?;
     }
     Ok(())
-}
-
-// Standard TIFF IFD in APP1, preserving fractional/asymmetric PPI beyond JFIF integers.
-fn resolution_exif(r: tr_core::protocol::Resolution) -> Vec<u8> {
-    let mut bytes = b"II\x2a\0\x08\0\0\0".to_vec();
-    bytes.extend_from_slice(&3u16.to_le_bytes());
-    for (tag, kind, value) in [(282u16, 5u16, 50u32), (283, 5, 58), (296, 3, 2)] {
-        bytes.extend_from_slice(&tag.to_le_bytes());
-        bytes.extend_from_slice(&kind.to_le_bytes());
-        bytes.extend_from_slice(&1u32.to_le_bytes());
-        bytes.extend_from_slice(&value.to_le_bytes());
-    }
-    bytes.extend_from_slice(&0u32.to_le_bytes());
-    for ppi in [r.x, r.y] {
-        bytes.extend_from_slice(&((ppi * 10000.).round() as u32).to_le_bytes());
-        bytes.extend_from_slice(&10000u32.to_le_bytes());
-    }
-    bytes
 }

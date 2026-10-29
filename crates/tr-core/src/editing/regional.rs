@@ -230,6 +230,31 @@ impl Processor {
         if recipe.is_neutral() && gains == [1.; 3] {
             return image.render(region);
         }
+        if recipe.has_retouch() {
+            // Strokes sample their frozen full-frame donor. Until a regional
+            // dependency planner exists, replay the canonical native graph.
+            let mut raster = image.source().clone();
+            visit_mut(&mut raster.pixels, cancelled, |_, p| {
+                for c in 0..3 {
+                    p[c] *= gains[c];
+                }
+            })?;
+            let output = recipe.apply_preview_cancellable(
+                &mut raster,
+                image.source_size(),
+                image.base_level(),
+                cancelled,
+            )?;
+            let opaque = raster.pixels.iter().all(|p| p[3] == 1.);
+            let rendered = ImageLevels::from_reference_mip_cancellable(
+                raster,
+                output,
+                image.base_level(),
+                opaque,
+                cancelled,
+            )?;
+            return rendered.render(region);
+        }
         let input = image.source();
         let native = image.source_size();
         let full = [input.width, input.height];
@@ -752,6 +777,7 @@ pub(crate) fn extract(source: &LinearImage, rect: Rect) -> Result<LinearImage> {
 fn stages(recipe: &EditRecipe, gains: [f32; 3]) -> Vec<Stage> {
     let mut base = recipe.clone();
     base.advanced = None;
+    base.retouch = None;
     base.layers = None;
     // Process semantics in transform_prepared depend on the historical process.
     base.process_version = recipe

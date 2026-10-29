@@ -62,6 +62,7 @@ pub struct Startup {
 }
 pub struct TrueRenderer {
     document: document::Editor,
+    conversion: Option<composition::Confirmation>,
     document_open_poll: Instant,
     comparison: comparison::Comparison,
     photo_menu: photo_menu::PhotoMenu,
@@ -270,6 +271,7 @@ impl TrueRenderer {
         let source_monitor = crate::source_monitor::Monitor::new(service.wake.clone());
         let mut app = Self {
             document,
+            conversion: None,
             document_open_poll: Instant::now(),
             editing: Default::default(),
             science: Default::default(),
@@ -548,6 +550,7 @@ impl TrueRenderer {
             Command::SetView(_) | Command::Select { .. } | Command::Move(_)
         ) {
             self.cancel_wb_picker();
+            self.editing.retouch.stop();
         }
         if matches!(command, Command::SetView(_)) {
             self.photo_menu.navigation += 1;
@@ -1684,6 +1687,22 @@ impl TrueRenderer {
             self.finish_crop(false);
             return;
         }
+        if !ctx.text_edit_focused()
+            && self
+                .state
+                .current
+                .as_ref()
+                .is_some_and(|id| self.editing.retouch.active(id))
+            && ctx.input_mut(|i| i.consume_key(egui::Modifiers::NONE, egui::Key::Escape))
+        {
+            if let Some(old) = self.editing.retouch.cancel()
+                && let Some(id) = self.state.current.clone()
+            {
+                self.apply_edit_draft(&id, old);
+                self.commit_edit(&id);
+            }
+            return;
+        }
         if self.browser_keyboard(ctx) {
             return;
         }
@@ -1851,7 +1870,7 @@ impl TrueRenderer {
                             ui.close();
                         }
                         if ui.button("Modifica livelli della foto").clicked() {
-                            self.begin_composition(document::Tab::Layers);
+                            self.open_editing_tab(document::Tab::Layers);
                             ui.close();
                         }
                         ui.separator();
@@ -2079,7 +2098,7 @@ impl TrueRenderer {
                     .current_item()
                     .is_some_and(|i| tr_core::document::is_document_path(&i.path))
             {
-                self.begin_composition(document::Tab::Export);
+                self.open_editing_tab(document::Tab::Export);
             } else {
                 self.photo_export.open = true;
             }
@@ -3514,6 +3533,8 @@ impl TrueRenderer {
                     );
                 } else if self.crop_active(&item.id) {
                     self.crop_interaction(ui, item, &response, source_size);
+                } else if self.editing.retouch.active(&item.id) {
+                    self.retouch_interaction(ui, item, &response, source_size);
                 } else {
                     self.layer_interaction(
                         ui,
@@ -4296,12 +4317,12 @@ impl eframe::App for TrueRenderer {
         {
             self.begin_composition(document::Tab::Layers);
         }
-        if !self.folder_loading_blocks() {
+        if !self.folder_loading_blocks() && self.conversion.is_none() {
             if self.current_document() {
                 self.document.keyboard(&ctx);
             }
             if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::S)) {
-                self.begin_composition(document::Tab::Export);
+                self.open_editing_tab(document::Tab::Export);
             } else if ctx.input_mut(|i| i.consume_key(egui::Modifiers::COMMAND, egui::Key::N)) {
                 self.document.new_document();
             } else {
@@ -4388,6 +4409,7 @@ impl eframe::App for TrueRenderer {
         self.help(&ctx);
         self.temporary_panel(&ctx);
         self.document.new_dialog(&ctx);
+        self.conversion_dialog(&ctx);
         self.settings_window(&ctx);
         self.export_window(&ctx);
         self.crop_window(&ctx);
