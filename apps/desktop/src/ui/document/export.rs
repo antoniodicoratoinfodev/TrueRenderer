@@ -14,7 +14,7 @@ impl ImageFormat {
         match self {
             Self::Png16 => "PNG · 16 bit",
             Self::Png8 => "PNG · 8 bit",
-            Self::Jpeg => "JPEG · sRGB",
+            Self::Jpeg => "JPEG",
         }
     }
 }
@@ -56,7 +56,8 @@ impl Editor {
             });
         });
         if let Some(path) = &self.path {
-            ui.label(path.display().to_string());
+            ui.add(egui::Label::new(path.display().to_string()).truncate())
+                .on_hover_text(path.display().to_string());
         }
         ui.separator();
         ui.heading("Immagine finita");
@@ -70,9 +71,11 @@ impl Editor {
             });
         if self.export_format == ImageFormat::Jpeg {
             ui.add(egui::Slider::new(&mut self.export_quality, 1..=100).text("Qualità JPEG"));
-            ui.small("sRGB, compressione con perdita. Trasparenza composta su bianco.");
+            ui.small(
+                "Profilo RGB scelto, compressione con perdita. Trasparenza composta su bianco.",
+            );
         } else {
-            ui.small("Trasparenza conservata. PNG 8 bit usa sRGB.");
+            ui.small("Profilo RGB scelto, trasparenza conservata. Compressione senza perdita.");
         }
         ui.horizontal(|ui| {
             ui.label("Lato lungo massimo · px");
@@ -81,19 +84,9 @@ impl Editor {
         ui.small("0 = dimensioni originali. Riduce solo la copia esportata; il progetto conserva tutti i pixel.");
         if let Some(doc) = &self.doc {
             let mut space = self.export_space.unwrap_or(doc.color_space);
-            ui.horizontal(|ui| {
-                ui.label("Profilo PNG16");
-                let changed = ui
-                    .selectable_value(&mut space, ColorSpace::Srgb, "sRGB")
-                    .changed();
-                let changed = ui
-                    .selectable_value(&mut space, ColorSpace::LinearRec2020, "Rec.2020 lineare")
-                    .changed()
-                    || changed;
-                if changed {
-                    self.export_space = Some(space);
-                }
-            });
+            if crate::ui::export::profile_controls(ui, &mut space) {
+                self.export_space = Some(space);
+            }
             let mut custom = self.export_resolution.is_some();
             if ui
                 .checkbox(&mut custom, "Scegli DPI/PPI per la copia esportata")
@@ -237,13 +230,9 @@ pub(super) fn encode_with_options(
             .pixels
             .iter()
             .flat_map(|p| {
-                let white = tr_core::color::rec2020_to_linear_srgb([
-                    p[0] + 1. - p[3],
-                    p[1] + 1. - p[3],
-                    p[2] + 1. - p[3],
-                ]);
-                white
-                    .map(|v| (tr_core::color::linear_to_srgb(v).clamp(0., 1.) * 255.).round() as u8)
+                let white =
+                    space.encode_rgb([p[0] + 1. - p[3], p[1] + 1. - p[3], p[2] + 1. - p[3]]);
+                white.map(|v| (v.clamp(0., 1.) * 255.).round() as u8)
             })
             .collect();
         let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(output, quality);
@@ -252,9 +241,9 @@ pub(super) fn encode_with_options(
                 density: (r.x.round() as u16, r.y.round() as u16),
                 unit: image::codecs::jpeg::PixelDensityUnit::Inches,
             });
-            encoder.set_exif_metadata(tr_core::export::resolution_exif(Some(r)))?;
+            encoder.set_exif_metadata(tr_core::export::resolution_exif_space(Some(r), space))?;
         }
-        encoder.set_icc_profile(tr_core::export::profile(false)?)?;
+        encoder.set_icc_profile(space.icc()?)?;
         encoder.encode(
             &pixels,
             image.width,

@@ -18,6 +18,7 @@ impl PhotoAction {
     }
 }
 pub(super) struct Conversion {
+    pub color_space: ColorSpace,
     pub action: PhotoAction,
     pub output: PathBuf,
     pub base: Option<Document>,
@@ -30,9 +31,15 @@ impl Editor {
     pub(in crate::ui) fn busy(&self) -> bool {
         self.import.is_some() || self.publishing.is_some()
     }
-    pub fn begin_conversion(&mut self, output: PathBuf, action: PhotoAction) {
+    pub fn begin_conversion(
+        &mut self,
+        output: PathBuf,
+        action: PhotoAction,
+        color_space: ColorSpace,
+    ) {
         if self.import_photo.is_some() {
             self.conversion = Some(Conversion {
+                color_space,
                 action,
                 output,
                 base: None,
@@ -55,7 +62,7 @@ impl Editor {
                 ppi: imported.resolution.map_or(300., |r| r.x),
                 resolution: imported.resolution,
                 unit: Unit::Pixels,
-                color_space: ColorSpace::Srgb,
+                color_space: conversion.color_space,
                 layers: vec![layer],
                 selection: vec![],
             };
@@ -125,7 +132,9 @@ impl Editor {
         let output = self.publishing.take().unwrap().output;
         match result {
             Ok(doc) => {
+                let origin = self.import_path.clone();
                 self.replace(doc);
+                self.return_photo = origin;
                 self.select_layer(1);
                 self.select_tab(Tab::Layers);
                 self.saved(output, Ok(()), true);
@@ -219,6 +228,7 @@ mod tests {
         let mut e = editor();
         let output = dir.path().join("base.truerenderer");
         e.conversion = Some(Conversion {
+            color_space: ColorSpace::AdobeRgb,
             action: PhotoAction::Copy,
             output: output.clone(),
             base: None,
@@ -229,6 +239,7 @@ mod tests {
         assert!(e.error.is_empty(), "{}", e.error);
         let doc = tr_store::document::open(&output).unwrap();
         assert_eq!(doc.layers.len(), 2);
+        assert_eq!(doc.color_space, ColorSpace::AdobeRgb);
         assert_eq!(doc.layers[0].pixels, doc.layers[1].pixels);
         assert_eq!(e.selected, 1);
         assert_eq!(e.reveal, Some(output));
@@ -245,6 +256,7 @@ mod tests {
         std::fs::write(&output, b"private existing file").unwrap();
         for result in [Err(anyhow::anyhow!("decode failed")), imported()] {
             e.conversion = Some(Conversion {
+                color_space: ColorSpace::Srgb,
                 action: PhotoAction::Empty,
                 output: output.clone(),
                 base: None,

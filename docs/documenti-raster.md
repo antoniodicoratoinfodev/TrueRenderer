@@ -47,8 +47,8 @@ di spostamento o ritocco costituisce una voce undo; cambiare scheda termina il g
 corrente e disattiva gli strumenti interattivi nascosti.
 
 Export distingue **Salva progetto**, **Salva con nome** ed **Esporta copia del
-progetto** dall'immagine finita. PNG16 offre sRGB o Rec.2020 lineare; PNG8 usa sRGB
-con alpha; JPEG usa sRGB con ICC e qualità selezionabile, componendo la trasparenza
+progetto** dall'immagine finita. PNG16 e PNG8 offrono sRGB, Adobe RGB (1998), Display P3 o Rec.2020 lineare
+con alpha; JPEG usa lo stesso profilo RGB scelto con ICC e qualità selezionabile, componendo la trasparenza
 su bianco in luce lineare. Il lato lungo opzionale riduce soltanto la copia di
 uscita; il progetto conserva tutti i pixel. L'export immagine non sovrascrive file
 esistenti. Dimensioni, profilo e DPI/PPI scelti in Export appartengono solo alla
@@ -105,7 +105,7 @@ Spostamento e maschere si escludono a vicenda come strumenti interattivi; Spazio
 conserva il pan del viewer.
 
 Solo copia immagine, livello raster vuoto, immagine esterna e copia di una selezione
-aprono la conferma **Continua in un progetto TrueRenderer?**. Essa indica il nuovo
+aprono la conferma **Passare all’editing raster?**. Essa indica il nuovo
 nome, la conservazione dell'originale e l'incorporazione dello sviluppo sensore.
 Confermando si prepara e salva in background un file con nome libero nella cartella
 della foto; nessun file esistente è sovrascritto. Si seleziona il nuovo progetto
@@ -119,6 +119,62 @@ Nei formati renderizzati dimensioni e densità ereditano quelle della sorgente;
 lato lungo e PPI personalizzati appartengono solo alla copia esportata. La densità
 ignota rimane assente, gli assi vengono scambiati dopo rotazioni di un quarto di
 giro. Il DNG RAW conserva il mosaico e non incorpora gli effetti del rendering.
+
+## Modalità, foto di partenza e colore di destinazione
+
+La conferma di conversione consiglia di completare prima lo sviluppo fotografico
+(WB sensore, esposizione e regolazioni), poi passare al raster. I comandi che
+creano contenuto indipendente sono raccolti sotto **Raster**; il ritocco e le
+selezioni fotografiche sono esplicitamente indicati come reversibili senza
+rasterizzazione. La copia della selezione porta la dicitura Raster sul pulsante.
+
+Il pannello del documento presenta **Editing raster** sopra le quattro schede.
+Luce, curva tonale e colore condividono gli stessi controlli, reset, interruttori,
+slider e aiuti delle foto; anche i controlli avanzati e i 16 strumenti di
+regolazione sono comuni. Il WB sensore appartiene alla foto originale; nel raster
+resta il bilanciamento RGB sul livello selezionato.
+Il contagocce RGB campiona una zona 3 × 3 dopo le regolazioni correnti; ripetere
+il campionamento sulla stessa zona neutra non accumula il bilanciamento. Le
+limitazioni del contagocce fotografico (strumenti avanzati, saturazione e curve)
+restano applicabili.
+
+**Torna alla foto…** apre una conferma esplicita: si scartano solo le
+modifiche raster non salvate e la cronologia in memoria. Il file di progetto già
+salvato non viene rimosso né modificato; originali e ricette del catalogo restano
+invariati. Il comando riapre la foto nel pannello Sviluppo. Una sorgente assente
+non permette lo scarto; lo stesso vale per un’estensione non fotografica.
+L'associazione alla sorgente vive nella sessione e
+sopravvive ai salvataggi; un progetto riaperto senza associazione propone
+**Scegli originale…**, poi la stessa conferma. Non si inseriscono percorsi
+privati nel contenitore portabile.
+
+La pila delle foto mostra **0 · Foto di partenza** in fondo, sotto le regolazioni,
+con occhio di visibilità. `retouch.base_hidden`, facoltativo e falso per le vecchie
+ricette, conserva lo stato con undo/redo e persistenza. Nascondere la base rende
+trasparente la foto sviluppata, compresi i ritocchi applicati ad essa; le regolazioni
+non generano pixel indipendenti. Il toggle è indipendente dall'attivazione dei
+ritocchi. Nei documenti raster il livello 0 mantiene il proprio interruttore di
+visibilità e i livelli indipendenti sopra restano visibili.
+
+**Profilo colore di destinazione** offre sRGB, Adobe RGB (1998), Display P3 e
+Rec.2020 lineare in Sviluppo e Export. Nelle foto la scelta appartiene alle opzioni
+di export della sessione; nei documenti è salvata come destinazione del progetto,
+con override separato per l'export. La conversione dalla foto eredita la destinazione
+selezionata. Non cambia primarie o precisione dei calcoli
+interni, profilo del monitor o anteprima sRGB16 preesistente. JPEG, PNG8/16 e TIFF16
+fotografici convertono davvero i campioni nel profilo scelto; i documenti fanno
+lo stesso per JPEG e PNG. sRGB PNG usa il chunk sRGB; le altre destinazioni PNG
+usano iCCP. JPEG/TIFF incorporano ICC; JPEG non dichiara sRGB in EXIF per le altre
+destinazioni. TIFF float32 e DNG mantengono i propri contratti espliciti.
+
+Adobe RGB usa primarie D65 e gamma 563/256 della
+[specifica Adobe RGB (1998)](https://www.adobe.com/digitalimag/pdfs/AdobeRGB1998.pdf).
+I profili sono generati tramite moxcms già incluso, con coloranti PCS D50 e
+adattamento coerenti con le matrici dei campioni e allineamento ICC a quattro byte; nessun asset ICC Adobe è copiato.
+Display P3 usa le primarie P3 con D65 e TRC sRGB. Restano applicabili licenza e
+avvisi delle dipendenze esistenti. CMYK è indicato come non disponibile: richiede
+un profilo ICC di stampa e un percorso RGB→CMYK dedicato, non una semplice voce
+RGB o la regolazione creativa «Colore selettivo».
 
 ## Ambito e rappresentazione
 
@@ -134,7 +190,7 @@ bilineare considera trasparenti i punti esterni al livello.
 
 La conversione da unità fisiche usa PPI e arrotonda al pixel intero più vicino.
 Cambiare orientamento scambia larghezza e altezza. Il profilo selezionato definisce
-l'uscita PNG16: sRGB oppure Rec.2020 lineare; il calcolo interno resta lineare.
+la destinazione RGB di PNG8/16 e JPEG; il calcolo interno resta Rec.2020 lineare fp32.
 Il PNG dichiara profilo/primarie e, quando noti, PPI; i valori fuori gamut/intervallo vengono
 limitati nell'export intero, senza modificare gli asset fp32 del documento.
 

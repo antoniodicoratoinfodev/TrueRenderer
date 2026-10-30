@@ -1,4 +1,5 @@
 use super::*;
+use crate::ui::editing::panels::{Glyph, icon_button};
 impl Editor {
     fn canvas_bytes(&self) -> u64 {
         self.doc
@@ -16,54 +17,81 @@ impl Editor {
         ui.set_width(ui.available_width());
         ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Wrap);
         ui.style_mut().spacing.scroll.floating = false;
-        let tab = self.tab;
-        ui.horizontal(|ui| {
-            ui.spacing_mut().item_spacing.x = 2.;
-            let width = ((ui.available_width() - 6.) / 4.).max(0.);
-            for (page, name) in [
-                (Tab::Develop, "Sviluppo"),
-                (Tab::Layers, "Livelli"),
-                (Tab::Tools, "Tools"),
-                (Tab::Export, "Export"),
-            ] {
-                if super::super::style::segment(ui, tab == page, name, width).clicked() {
-                    self.select_tab(page);
+        crate::ui::editing::panels::control_style(ui);
+        egui::Frame::new()
+            .fill(crate::ui::style::SURFACE)
+            .corner_radius(6)
+            .inner_margin(6)
+            .show(ui, |ui| {
+                ui.horizontal_wrapped(|ui| {
+                ui.label(egui::RichText::new("Editing raster").strong()).on_hover_text("Le regolazioni agiscono sui pixel del livello selezionato. Il WB sensore si modifica sulla foto originale.");
+                if self.return_photo.is_some() {
+                    if ui
+                        .add_enabled(
+                            !self.busy(),
+                            egui::Button::new("Torna alla foto…"),
+                        )
+                        .clicked()
+                    {
+                        self.confirm_return = true;
+                    }
+                } else {
+                    if ui.add_enabled(!self.busy(), egui::Button::new("Scegli originale…")).on_hover_text("Collega la foto da cui riprendere lo sviluppo; il progetto non contiene il RAW originale.").clicked()
+                    && let Some(path) = rfd::FileDialog::new().set_title("Scegli la foto originale").set_directory(&self.directory).pick_file()
+                {
+                    if !tr_platform::supported_extension(&path) {
+                        self.error = "Scegli un file fotografico supportato, non un progetto raster o un altro documento.".into();
+                    } else {
+                        self.return_photo = Some(path);
+                        self.confirm_return = true;
+                    }
                 }
-            }
-        });
+                }
+                });
+            });
+        let tab = self.tab;
+        if let Some(page) =
+            crate::ui::editing::panels::tabs(ui, crate::i18n::Language::Italian, tab as usize)
+        {
+            self.select_tab(Tab::from_index(page));
+        }
         ui.separator();
         ui.horizontal(|ui| {
-            if ui
-                .add_enabled(
-                    !self.undo.is_empty() && !self.busy(),
-                    egui::Button::new("Annulla"),
-                )
-                .clicked()
+            if icon_button(
+                ui,
+                Glyph::Undo,
+                "Annulla · Cmd/Ctrl + Z",
+                !self.undo.is_empty() && !self.busy(),
+                false,
+            )
+            .clicked()
             {
                 self.undo_edit();
             }
-            if ui
-                .add_enabled(
-                    !self.redo.is_empty() && !self.busy(),
-                    egui::Button::new("Ripeti"),
-                )
-                .clicked()
+            if icon_button(
+                ui,
+                Glyph::Redo,
+                "Ripeti · Cmd/Ctrl + Shift + Z",
+                !self.redo.is_empty() && !self.busy(),
+                false,
+            )
+            .clicked()
             {
                 self.redo_edit();
             }
-        });
-        if let Some(doc) = &self.doc {
-            self.selected = self.selected.min(doc.layers.len().saturating_sub(1));
-            let label = doc
-                .layers
-                .get(self.selected)
-                .map(|l| format!("Livello {} · {}", self.selected, l.name))
-                .unwrap_or_default();
-            if !label.is_empty() {
-                ui.add(egui::Label::new(egui::RichText::new(&label).strong()).truncate())
-                    .on_hover_text(label);
+            if let Some(doc) = &self.doc {
+                self.selected = self.selected.min(doc.layers.len().saturating_sub(1));
+                let label = doc
+                    .layers
+                    .get(self.selected)
+                    .map(|l| format!("Livello {} · {}", self.selected, l.name))
+                    .unwrap_or_default();
+                if !label.is_empty() {
+                    ui.add(egui::Label::new(egui::RichText::new(&label).strong()).truncate())
+                        .on_hover_text(label);
+                }
             }
-        }
+        });
         ui.add_enabled_ui(!self.busy(), |ui| {
             if self.tab == Tab::Export {
                 self.export_controls(ui);
@@ -78,8 +106,17 @@ impl Editor {
             match self.tab {
                 Tab::Layers => self.layer_controls(ui),
                 Tab::Develop => {
-                    self.move_controls(ui);
-                    ui.separator();
+                    ui.collapsing("Colore del progetto", |ui| {
+                        let mut space = self.doc.as_ref().unwrap().color_space;
+                        if crate::ui::export::profile_controls(ui, &mut space) {
+                            self.edit(|d, _| {
+                                d.color_space = space;
+                                Ok(())
+                            });
+                            self.export_space = None;
+                        }
+                    });
+                    ui.collapsing("Sposta livello", |ui| self.move_controls(ui));
                     self.develop_controls(ui);
                 }
                 Tab::Tools => {
@@ -94,6 +131,7 @@ impl Editor {
         });
     }
     pub(super) fn select_layer(&mut self, index: usize) {
+        self.rgb_picker = false;
         self.end_stroke();
         self.selected = index;
         self.source = None;
@@ -135,18 +173,38 @@ impl Editor {
         ui.small("I livelli in alto coprono quelli sottostanti. La foto di base è il livello 0.");
         for (index, (name, mut visible)) in layers.into_iter().enumerate().rev() {
             ui.horizontal(|ui| {
-                if ui
-                    .checkbox(&mut visible, "")
-                    .on_hover_text("Mostra/nascondi livello")
-                    .changed()
+                if icon_button(
+                    ui,
+                    Glyph::Eye,
+                    if visible {
+                        "Nascondi livello"
+                    } else {
+                        "Mostra livello"
+                    },
+                    true,
+                    visible,
+                )
+                .clicked()
                 {
+                    visible = !visible;
                     self.edit(|d, _| {
                         d.layers[index].visible = visible;
                         Ok(())
                     });
                 }
+                let label = if index == 0 {
+                    format!("0 · Foto di partenza · {name}")
+                } else {
+                    format!("{index} · {name}")
+                };
                 if ui
-                    .selectable_label(self.selected == index, format!("{index} · {name}"))
+                    .add_sized(
+                        [ui.available_width(), 28.],
+                        egui::Button::selectable(self.selected == index, ())
+                            .left_text(&label)
+                            .truncate(),
+                    )
+                    .on_hover_text(&label)
                     .clicked()
                 {
                     self.select_layer(index);
@@ -293,6 +351,7 @@ impl Editor {
                 .selectable_label(self.tool == Tool::Move, "Sposta livello sulla foto")
                 .clicked()
             {
+                self.rgb_picker = false;
                 self.tool = Tool::Move;
                 self.effects.stop_document_gesture();
                 self.adjustments.paint = false;

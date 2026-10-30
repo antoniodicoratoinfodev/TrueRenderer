@@ -3,6 +3,57 @@ use super::*;
 use std::path::{Component, Path};
 
 impl Editor {
+    pub(super) fn discard_to_photo(&mut self) -> bool {
+        if self.busy() {
+            return false;
+        }
+        let Some(path) = self.return_photo.clone() else {
+            return false;
+        };
+        if !tr_platform::supported_extension(&path) {
+            self.error = "Scegli un file fotografico supportato per tornare allo sviluppo. Il progetto raster è conservato.".into();
+            return false;
+        }
+        if !path.is_file() {
+            self.error = "La foto originale non è disponibile. Ripristina il file o la sua cartella prima di tornare allo sviluppo.".into();
+            return false;
+        }
+        let directory = self.directory.clone();
+        let published = std::mem::take(&mut self.published);
+        *self = Self::new(self.service.clone(), self.memory.clone());
+        self.directory = directory;
+        self.published = published;
+        self.reveal = Some(path);
+        true
+    }
+    pub(in crate::ui) fn return_dialog(&mut self, ctx: &egui::Context) {
+        if !self.confirm_return {
+            return;
+        }
+        let mut discard = false;
+        let mut cancel = false;
+        let response = egui::Modal::new(egui::Id::new("return-to-photo")).show(ctx, |ui| {
+            ui.set_max_width(420.);
+            egui::ScrollArea::vertical().max_height((ctx.content_rect().height()-80.).max(100.)).show(ui, |ui| {
+            ui.heading("Tornare alla foto originale?");
+            ui.add_space(8.);
+            ui.label("Riprenderai lo sviluppo della foto con le regolazioni conservate nella libreria.");
+            ui.label("Le modifiche raster non salvate verranno scartate e non saranno applicate alla foto originale. Questa operazione non può essere annullata.");
+            ui.small("Il progetto già salvato su disco resta disponibile. Per conservare anche le ultime modifiche, annulla e usa Salva progetto prima di tornare alla foto.");
+            ui.add_space(10.);
+            ui.horizontal_wrapped(|ui| {
+                cancel = ui.button("Resta in raster").clicked();
+                discard = ui.button("Scarta modifiche e torna alla foto").clicked();
+            });
+            });
+        });
+        if cancel || response.should_close() {
+            self.confirm_return = false;
+        } else if discard {
+            self.confirm_return = false;
+            self.discard_to_photo();
+        }
+    }
     pub fn matches(&self, path: &Path) -> bool {
         self.doc.is_some()
             && (self.path.as_deref() == Some(path) || self.source_path.as_deref() == Some(path))
@@ -59,17 +110,16 @@ impl Editor {
                 d.width,
                 d.height,
                 d.layers.len()
-            ));
-            ui.small(match d.physical_resolution() {
+            ))
+            .on_hover_text(match d.physical_resolution() {
                 Some(r) => format!("{:.2} × {:.2} PPI · risoluzione del documento", r.x, r.y),
                 None => "DPI/PPI non dichiarati nella sorgente".into(),
             });
-            ui.label(if self.dirty {
+            ui.small(if self.dirty {
                 "• Modifiche non salvate"
             } else {
                 "Progetto salvato"
             });
-            ui.small("Composito nativo · Adatta / 1:1");
         }
     }
     pub(super) fn suggested_name(&self) -> String {
@@ -183,15 +233,7 @@ impl Editor {
                 if !self.transparent {
                     ui.color_edit_button_rgba_unmultiplied(&mut self.color);
                 }
-                ui.horizontal(|ui| {
-                    ui.label("Spazio di uscita");
-                    ui.selectable_value(&mut self.space, ColorSpace::Srgb, "sRGB");
-                    ui.selectable_value(
-                        &mut self.space,
-                        ColorSpace::LinearRec2020,
-                        "Rec.2020 lineare",
-                    );
-                });
+                crate::ui::export::profile_controls(ui, &mut self.space);
                 if !self.error.is_empty() {
                     ui.colored_label(Color32::YELLOW, &self.error);
                 }
@@ -211,6 +253,7 @@ impl Editor {
     pub fn keyboard(&mut self, ctx: &egui::Context) {
         if self.busy()
             || self.new_dialog
+            || self.confirm_return
             || ctx.text_edit_focused()
             || egui::Popup::is_any_open(ctx)
         {

@@ -60,10 +60,10 @@ impl Format {
     }
     pub fn label(self) -> &'static str {
         match self {
-            Self::Jpeg => "JPEG · sRGB 8 bit",
-            Self::Png8 => "PNG · sRGB 8 bit",
-            Self::Png16 => "PNG · sRGB 16 bit",
-            Self::Tiff16 => "TIFF · sRGB 16 bit",
+            Self::Jpeg => "JPEG · 8 bit",
+            Self::Png8 => "PNG · 8 bit",
+            Self::Png16 => "PNG · 16 bit",
+            Self::Tiff16 => "TIFF · 16 bit",
             Self::TiffFloat32 => "TIFF · Rec.2020 lineare float32",
             Self::DngLinear16 => "DNG lineare · RGB sviluppato 16 bit",
             Self::DngRaw => "DNG RAW · mosaico sensore originale",
@@ -81,6 +81,8 @@ pub enum Compression {
 #[serde(deny_unknown_fields)]
 pub struct Options {
     pub format: Format,
+    #[serde(default)]
+    pub color_space: crate::export_spaces::ColorSpace,
     pub jpeg_quality: u8,
     pub compression: Compression,
     /// Zero means full native development, never a resident thumbnail.
@@ -93,6 +95,7 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             format: Format::Jpeg,
+            color_space: Default::default(),
             jpeg_quality: 90,
             compression: Compression::Balanced,
             long_edge: 0,
@@ -241,6 +244,12 @@ pub fn profile(linear: bool) -> Result<Vec<u8>> {
 
 /// Minimal private-metadata-free EXIF: optional physical density and sRGB marker.
 pub fn resolution_exif(resolution: Option<crate::protocol::Resolution>) -> Vec<u8> {
+    resolution_exif_space(resolution, crate::export_spaces::ColorSpace::Srgb)
+}
+pub fn resolution_exif_space(
+    resolution: Option<crate::protocol::Resolution>,
+    space: crate::export_spaces::ColorSpace,
+) -> Vec<u8> {
     let count = if resolution.is_some() { 4u16 } else { 1 };
     let exif = 8 + 2 + u32::from(count) * 12 + 4;
     let rational = exif + 18;
@@ -266,7 +275,14 @@ pub fn resolution_exif(resolution: Option<crate::protocol::Resolution>) -> Vec<u
     bytes.extend_from_slice(&40961u16.to_le_bytes());
     bytes.extend_from_slice(&3u16.to_le_bytes());
     bytes.extend_from_slice(&1u32.to_le_bytes());
-    bytes.extend_from_slice(&1u32.to_le_bytes());
+    bytes.extend_from_slice(
+        &(if space == crate::export_spaces::ColorSpace::Srgb {
+            1u32
+        } else {
+            65535u32
+        })
+        .to_le_bytes(),
+    );
     bytes.extend_from_slice(&0u32.to_le_bytes());
     if let Some(r) = resolution {
         for value in [r.x, r.y] {

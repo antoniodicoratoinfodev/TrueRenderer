@@ -8,6 +8,7 @@ pub mod decoder;
 pub mod demosaic;
 pub mod editing;
 pub mod export;
+pub mod export_spaces;
 pub mod location;
 pub mod presentation;
 pub mod preview;

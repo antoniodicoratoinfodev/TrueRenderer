@@ -92,7 +92,8 @@ impl Controls {
             if transform!=recipe.retouch.as_ref().map_or(Default::default(),|r|r.transform) {let r=recipe.retouch_mut();r.transform=transform;r.enabled=true;}
         });
         if tools {
-            egui::CollapsingHeader::new("Ritocco e selezione sul RAW").default_open(true).show(ui,|ui| {
+            ui.small("Questi strumenti restano sulla foto: non richiedono rasterizzazione.");
+            egui::CollapsingHeader::new("Ritocco e selezione · reversibili").default_open(true).show(ui,|ui| {
                 ui.small("Modifiche reversibili sulla foto. Alt+clic sceglie la sorgente di Clona e Ripara.");
                 ui.horizontal_wrapped(|ui| {
                     for (tool,label) in [(Tool::Stroke(Kind::Paint),"Pennello"),(Tool::Stroke(Kind::Erase),"Gomma"),(Tool::Stroke(Kind::Clone),"Clona"),(Tool::Stroke(Kind::Heal),"Ripara"),(Tool::Stroke(Kind::AutoHeal),"Ripara rapido"),(Tool::Free,"Libera"),(Tool::Polygon,"Poligonale"),(Tool::Rectangle,"Rettangolo")] {
@@ -126,7 +127,7 @@ impl Controls {
                         recipe.layer_stack().layers.push(layer);recipe.schema_version=3;commit=true;
                         self.tool=None;
                     }
-                    copy=ui.add_enabled(!self.selection.is_empty(),egui::Button::new("Selezione → copia immagine…")).clicked();
+                    copy=ui.add_enabled(!self.selection.is_empty(),egui::Button::new("Raster · copia selezione…")).clicked();
                 });
             });
         }

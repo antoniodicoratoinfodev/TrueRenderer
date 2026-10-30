@@ -1,0 +1,250 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign_dates": [
+    "2026-10-29",
+    "2026-10-30"
+  ],
+  "platform": "macOS arm64",
+  "passed": true,
+  "scope": "Checks listed here for RAW/raster mode clarity, shared controls, base visibility and RGB export. CMYK and full release qualification remain open.",
+  "behavior": {
+    "return_to_photo": "Confirmation discards unsaved raster state, preserves saved projects and original catalog development; missing original blocks discard; reopened project can select source.",
+    "raster_entry": "Explicit confirmation recommends photographic development before independent raster content.",
+    "panels": "Shared Light/Curve/Color and advanced adjustment controls; explicit Editing raster heading; sensor WB remains on RAW.",
+    "base_layer": "Starting photo at bottom, hideable on RAW/JPEG and raster; independent raster layers stay visible when base hidden.",
+    "destination_profiles": [
+      "sRGB",
+      "Adobe RGB (1998)",
+      "Display P3",
+      "linear Rec.2020"
+    ],
+    "photo_rgb_export_formats": [
+      "JPEG",
+      "PNG8",
+      "PNG16",
+      "TIFF16"
+    ],
+    "document_rgb_export_formats": [
+      "JPEG",
+      "PNG8",
+      "PNG16"
+    ],
+    "internal_working_space": "Extended linear Rec.2020 fp32; existing SDR/sRGB preview; destination choice does not change this.",
+    "cmyk": "Disabled and explained; no print profile supplied and dedicated CMYK conversion not implemented."
+  },
+  "automated": {
+    "core": {
+      "passed": 163,
+      "failed": 0,
+      "ignored": 0
+    },
+    "desktop": {
+      "passed": 329,
+      "failed": 0,
+      "ignored": 9
+    },
+    "worker": {
+      "passed": 63,
+      "failed": 0,
+      "ignored": 8
+    },
+    "native_color_readback": {
+      "passed": 1,
+      "profile_format_combinations": 16,
+      "formats": [
+        "JPEG",
+        "PNG8",
+        "PNG16",
+        "TIFF16"
+      ],
+      "reader": "ImageIO/ColorSync",
+      "maximum_tolerance_float_channels": {
+        "8_bit": 0.012,
+        "16_bit": 0.0003
+      }
+    },
+    "clippy_workspace_all_targets_warnings_denied": true,
+    "cargo_fmt_all_check": true,
+    "git_diff_check": true,
+    "not_claimed": "Complete verify.sh, extended private/experimental campaigns, Windows qualification or R/SF gate completion."
+  },
+  "native_ui": {
+    "passed": true,
+    "isolated_synthetic_document": {
+      "pixels": [
+        320,
+        240
+      ],
+      "layers": 2,
+      "panels": [
+        "Develop",
+        "Layers",
+        "Tools",
+        "Export"
+      ],
+      "grid": true
+    },
+    "installed_observation": [
+      "Ordinary native launch and photographic Develop panel",
+      "Reversible retouch and Raster content controls distinguished in Tools",
+      "Raster entry confirmation recommends development first and explains return/discard behavior",
+      "Cancel returns to original photo without creating a project"
+    ]
+  },
+  "installed": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/backups/before-raster-ui-20261030-042515",
+    "source_files_verified": 452,
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "46738960b788ab8ab8a6be964ab822c21e3e7d4ff631b5a13834c0c0a8592c9e",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "ac203315aaec89f9b00ea228fc11d0e92d7473a38cb82577f919e36e3ea941b9",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2028d74ec61e65b3ca3f7373de4f6184fdee307d5e3e18439d9f15fc56e27a70"
+    },
+    "codesign_deep_strict": true,
+    "two_xpc_services_and_12_synthetic_images": true,
+    "production_rejects_fault_injection": true,
+    "protected_file_hashes_unchanged_during_install": {
+      "var/library.sqlite": "a2bd3ab976fdebdcfab53e6567db74d7159ed3aed04f844d5043d0e9fafe3570",
+      "var/index.sqlite": "a06bf39ff1bf18807e9b10428f6e316e078b850a4338a153f08ef3f8f17fba97",
+      "var/settings.json": "4a2a38e6a99c58a307aa9c533e5c6e47636ae4702c4d82fd0bb9444c453b1edd",
+      "var/browser-state.json": "0e7ac90cd9444d6bb6e3c3fcd9e5bec817e39696a3875c98ad578ecd190ffed9",
+      "var/cache-folders.json": "b71ccd10b8b5247f8dd81e03bf71879d1314638c27fcf24396d27eb9044b3ed5"
+    },
+    "database_backup": "byte copy after normal application exit; WAL absent; integrity_check ok"
+  },
+  "issues_resolved": [
+    "Generated ICC tag offsets and total size aligned to four bytes after ImageIO rejected PNG P3/Rec.2020 profiles.",
+    "Compact Develop layout corrected after profile controls displaced visible sliders.",
+    "Two Core Image worker tests blocked in terminal sandbox passed natively.",
+    "Interrupted desktop linking recovered by cleaning build artifacts only.",
+    "Initial document UI smoke used relative paths and did not load inventory; absolute paths passed on final bundle.",
+    "Read-only SQLite access in terminal sandbox failed to open WAL metadata; after normal app exit and confirming no WAL, byte copies passed immutable read-only integrity checks."
+  ],
+  "limits": [
+    "CMYK conversion and print ICC selection/validation remain unimplemented.",
+    "No selectable internal working space or general soft proof.",
+    "Original-photo association is session-local; reopened projects require choosing the source.",
+    "No Windows qualification for this increment.",
+    "No public signing/notarization or completed R0–R4/SF gates."
+  ],
+  "publication": {
+    "commit": false,
+    "push": false,
+    "private_data_and_binaries": "Remain local; aggregate report contains only relative evidence references and hashes."
+  },
+  "evidence": [
+    {
+      "path": "var/raster-ui-20261029/source-hashes.json",
+      "sha256": "7994a8ba16ea15e340ed02435b70415b08195730ac577733ec2e4a983d557d5f"
+    },
+    {
+      "path": "var/raster-ui-20261029/installation.json",
+      "sha256": "5e4f09e662752fdc3ba2677348c2f6e8157aef24984d58745bf0bee9bf2a40ea"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-clippy-last.log",
+      "sha256": "22b85fa85dd3e1b20c8a04a97a3483e9c55dc8d6541a16bf8ed1a12b05672327"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-color-fixed.log",
+      "sha256": "16d7d33625be8c87ab1f35e9e24a710271b29195d983d2498c1f83b616a810b1"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-core-final.log",
+      "sha256": "34717e3a9b74c7b72bd9dae924436d3e7b05abe25dc426e0243dc9a74a322ff6"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-desktop-verified.log",
+      "sha256": "f4f1580ee2ff1e37ba9cbe3facac9292f91c2f7f6e8b96214a55f8c8907004da"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-package-verified.log",
+      "sha256": "21fd85c6b43aa05f21751150b8f6767950c72c20f144cab86082b61ebb91e28f"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-release-verified.log",
+      "sha256": "200861f89f1ddb6e77a2826183378116f5345c305c2f190cd405e8f91225637d"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-worker-native.log",
+      "sha256": "8323fb16d8f7c750236a37b46124c4961beb224e140fd02a66a958d3488641c3"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-xpc-final.log",
+      "sha256": "dabcd7512592f7cc2e44305b01c620bb92c54eebe0c19f3962844ca32a1c0aff"
+    },
+    {
+      "path": "var/raster-ui-20261029/logs/tr-xpc-installed.log",
+      "sha256": "338d84b88d1ee465c8338af65649e855b9267d94b141caf596c5ff852e37522e"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/candidate-xpc-integration-macos.json",
+      "sha256": "cf8945edfd8031d527ae1ec546b6a26ef665fc5a41eb6086eba040c820e745b2"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/candidate-xpc-qualification-macos.json",
+      "sha256": "dabcd7512592f7cc2e44305b01c620bb92c54eebe0c19f3962844ca32a1c0aff"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-develop-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-develop.png",
+      "sha256": "554fdb727a6453ee68d76bf077b920511d2f47f2fb97c93f689d9cd9357dcc9e"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-export-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-export.png",
+      "sha256": "e48747400efab9d378e187b7101446771e23977c740c9d7afeb614a55bfbc5cf"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-grid-sampling.json",
+      "sha256": "4a4b5c10d32e6f7d1aa4a09ce8b838365d177e8380802573c85c44acbd7ffce7"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-grid.png",
+      "sha256": "59732a95553a96492aa6b960932a18972a9a2f0382226764958355d660a449ed"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-layers-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-layers.png",
+      "sha256": "e12b20c5c0973b34e07a1f8604bb7dade65dce45d6d698312bbe32c294f30ce7"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-tools-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-tools.png",
+      "sha256": "ff97f91ca2d2d960626634988a9b61839ce5d7b5c6a9fd7c3692faf885610230"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/document-ui.json",
+      "sha256": "a28967a24dc3f57277335b070bcb04fce7aa46594e708b57b417e4e0b83ccd29"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/installed-ui-observation.json",
+      "sha256": "5b05d1c6a8efa4b25f26d883292c83bde35fd2f22d9419bde1407e8c8088a156"
+    },
+    {
+      "path": "var/raster-ui-20261029/reports/preview-quality-gpu-macos.json",
+      "sha256": "61730cc91050f78386856ceb04298a73ae6337f389da35a60769582ad9bfbb05"
+    },
+    {
+      "path": "var/raster-ui-20261029/xpc-root/reports/xpc-integration-macos.json",
+      "sha256": "b337a692ff1b841faa9c6dd754d32320164ea3e556ad5067d9a753b235acf974"
+    },
+    {
+      "path": "var/raster-ui-20261029/xpc-root/reports/xpc-qualification-macos.json",
+      "sha256": "338d84b88d1ee465c8338af65649e855b9267d94b141caf596c5ff852e37522e"
+    }
+  ]
+}

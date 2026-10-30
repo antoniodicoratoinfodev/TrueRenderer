@@ -1,0 +1,354 @@
+{
+  "application": "TrueRenderer",
+  "version": "0.1.5",
+  "campaign_date": "2026-10-30",
+  "platform": "macOS arm64",
+  "passed": true,
+  "scope": "Review of pending RAW/raster mode, layer and RGB profile changes before requested commit/push; corrective UI and RGB picker changes validated on macOS.",
+  "prior_campaign": {
+    "path": "reports/raw-raster-ui-color-macos-2026-10-30.json",
+    "sha256": "5722b8d178a76b9b9a5e0f2033b0a4f2284314261c1a9027c706af816dd77f80",
+    "retained_results": "163 core and 63 worker tests plus native ImageIO/ColorSync readback of 16 profile/format combinations. Core and worker sources unchanged during this review."
+  },
+  "corrections": [
+    "Raster JPEG/PNG export describes the selected RGB destination instead of falsely claiming fixed sRGB.",
+    "Raster layer visibility and undo/redo reuse the photo icons; names and paths truncate with full hover text.",
+    "Raster eraser labelled Gomma consistently; conversion confirmation shortened and action row wraps.",
+    "Destination help states preview and monitor profile stay unchanged; calculation details moved into hover help.",
+    "RGB picker samples the current rendered 3x3 patch, respects existing WB, and avoids copying the full layer; repeated sampling is stable.",
+    "Unsupported original-file extensions cannot discard the raster document; source chooser disabled during import.",
+    "Auto correction success clears a previous error; disabling RGB WB cancels its active picker."
+  ],
+  "verification": {
+    "desktop_tests": {
+      "passed": 331,
+      "failed": 0,
+      "ignored": 9
+    },
+    "new_regressions": [
+      "Unsupported original retains raster edits and undo",
+      "RGB picker with existing WB remains stable on repeated sampling and preserves source pixels"
+    ],
+    "cargo_fmt_check": true,
+    "git_diff_check": true,
+    "clippy_workspace_all_targets_warnings_denied": true,
+    "release_workspace_build": true,
+    "source_files_frozen_and_verified": 455
+  },
+  "native_ui": {
+    "document_smoke": {
+      "passed": true,
+      "panels": [
+        "Develop",
+        "Layers",
+        "Tools",
+        "Export"
+      ],
+      "grid": true,
+      "fixture": "Synthetic 320x240 document with two layers"
+    },
+    "photo_inspector_smoke": {
+      "passed": true,
+      "layouts": 10,
+      "languages": [
+        "it",
+        "en"
+      ],
+      "logical_viewports": [
+        [
+          1440,
+          891
+        ],
+        [
+          550,
+          360
+        ]
+      ]
+    },
+    "visual_review": [
+      "Document Develop",
+      "Document Layers",
+      "Document Tools",
+      "Document Export",
+      "Compact photographic Develop",
+      "Installed RAW conversion confirmation"
+    ],
+    "installed_observation": [
+      "Installed ordinary launch succeeded",
+      "Original RAW Develop and Tools present",
+      "Shortened raster conversion dialog is legible and presents both actions",
+      "Conversion dialog cancelled; original photo remains selected"
+    ]
+  },
+  "installed": {
+    "bundle": "dist/TrueRenderer.app",
+    "backup": "var/backups/before-raster-review-20261030-113119",
+    "binary_sha256": {
+      "Contents/MacOS/TrueRenderer": "0879bbf67e69147e4d572a4beea53a6b3acdd5165597af116238830001a2acf1",
+      "Contents/XPCServices/Decoder0.xpc/Contents/MacOS/Decoder": "ac203315aaec89f9b00ea228fc11d0e92d7473a38cb82577f919e36e3ea941b9",
+      "Contents/XPCServices/Decoder1.xpc/Contents/MacOS/Decoder": "2028d74ec61e65b3ca3f7373de4f6184fdee307d5e3e18439d9f15fc56e27a70"
+    },
+    "codesign_deep_strict": true,
+    "two_distinct_xpc_services_12_synthetic_images": true,
+    "production_rejects_fault_injection": true,
+    "protected_files_unchanged_during_install": {
+      "var/library.sqlite": "a2bd3ab976fdebdcfab53e6567db74d7159ed3aed04f844d5043d0e9fafe3570",
+      "var/index.sqlite": "ea07fcce22870f194be961304456c775efe889523a35709d6f21570783f45e27",
+      "var/settings.json": "4a2a38e6a99c58a307aa9c533e5c6e47636ae4702c4d82fd0bb9444c453b1edd",
+      "var/browser-state.json": "c9774f0ea4ded1200a4d495cd4d04a15b5327acd11a3e84b6649fe1d1773442c",
+      "var/cache-folders.json": "b71ccd10b8b5247f8dd81e03bf71879d1314638c27fcf24396d27eb9044b3ed5"
+    },
+    "database_backup": "Byte copies after normal exit, no WAL, immutable integrity checks passed"
+  },
+  "limits": [
+    "No CMYK conversion or custom print ICC pipeline.",
+    "Internal extended linear Rec.2020 fp32 and SDR/sRGB preview unchanged; no general soft proof.",
+    "RAW association remains session-local; reopened projects require choosing an original.",
+    "This increment is not qualified on Windows and completes no R/SF release gates.",
+    "Complete verify.sh and private/experimental research campaigns were not rerun."
+  ],
+  "publication_review": {
+    "authorized_destination": "origin/main",
+    "content": "Source, tests, README, raster specification, STATO and aggregate reports only. Local photos, projects, databases, backups, binaries, toolchain and detailed screenshots/logs excluded.",
+    "license_and_dependency_files_unchanged": true,
+    "stage": "Verification complete before requested commit/push"
+  },
+  "evidence": [
+    {
+      "path": "var/raster-review-20261030/source-hashes.json",
+      "sha256": "70ee9708a81ddb2b10e2d84a50a7365d0216b6e51b9db42994b9c473db38ea4e"
+    },
+    {
+      "path": "var/raster-review-20261030/installation.json",
+      "sha256": "a93569d2fb8452aba3a2499f874f39c7321e549ec29dd10d6e6046613c5f5173"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/clippy.log",
+      "sha256": "ff430d5e00528bf60cfc09931cc1980c10a1098672c973d40ffdb12f94741f51"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/desktop-tests.log",
+      "sha256": "52bdf325fbe8f591336234ff429ff7837452d8405624b63835f3fa1c1dc765f2"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/document-smoke.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/inspector-smoke.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/package.log",
+      "sha256": "27ee3751e4a38338e493a9ba38d7ca1a8acbe7f2b93b0dfe17a70fdf11324774"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/release-build.log",
+      "sha256": "200861f89f1ddb6e77a2826183378116f5345c305c2f190cd405e8f91225637d"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/xpc-candidate.log",
+      "sha256": "5892a86c4552850dc9f80567b613a76d0c19998c98566ee0565f998be029fd69"
+    },
+    {
+      "path": "var/raster-review-20261030/logs/xpc-installed.log",
+      "sha256": "a3ca7e88f963ae070834b6e40d20ebe38b2950fef4b27859ca8790aaf7ac7f4b"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/candidate-xpc-integration-macos.json",
+      "sha256": "ed85532c92e26ab15b7c638439dd046c5431826731585acf69fb9238fb4f3e98"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/candidate-xpc-qualification-macos.json",
+      "sha256": "5892a86c4552850dc9f80567b613a76d0c19998c98566ee0565f998be029fd69"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-develop-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-develop.png",
+      "sha256": "5c206aada5ae3d2dc38e42bc60ff9ea4fbca1bcb4daca49688dc0babcf72b862"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-export-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-export.png",
+      "sha256": "bdd240c4cd5f8472168f3727e05f9b9d463557722d2ae902ac2c1a1485997cf5"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-grid-sampling.json",
+      "sha256": "6fbc2e93181d2940b31ed77c0e35fe04d66942a20d48e1377c88ec8286900694"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-grid.png",
+      "sha256": "61f96d05e0ffd3c18e6002e562517aad3a1f49630159d5121e186d2994766df2"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-layers-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-layers.png",
+      "sha256": "1d04ae1fb3f35f3ad24b4114fb13f2253a2e98c8872511f3b490cdc68673b0ef"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-tools-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-tools.png",
+      "sha256": "faf7e762928594b637600ff9d226a2948e9694ef8c9f0493583b9505f5359dbb"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/document-ui.json",
+      "sha256": "8d9cc32686bd268fa1008b1e46e21c7bea5e5f8a9e560c3531e931c585da7c0d"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-00-layout.json",
+      "sha256": "b150615883fe4e67b7c964382dee7e3f734cbcc321db220ebf98196e04e851f5"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-00-sampling.json",
+      "sha256": "9ad968d3839d3bb8aecac7e1ee20e2a20aacf76109d0934a0b58f502b2583f82"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-00.png",
+      "sha256": "de177c2240ff8942a26903e8e660e3747477d8f006630ffff378732aed981ec7"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-01-layout.json",
+      "sha256": "aad378a40eb07da6762df3c59d8472b8aa0a891f85563fb3589f690fafeca9b4"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-01-sampling.json",
+      "sha256": "9ad968d3839d3bb8aecac7e1ee20e2a20aacf76109d0934a0b58f502b2583f82"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-01.png",
+      "sha256": "7210dc3730e607c1a3480a36335dc335d879ef14e60cce9b4fcdbb915548936d"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-02-layout.json",
+      "sha256": "a1598049984a19ef0aee64fa0c4bd5adab57b77132f792da2578b231edc07a90"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-02-sampling.json",
+      "sha256": "9ad968d3839d3bb8aecac7e1ee20e2a20aacf76109d0934a0b58f502b2583f82"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-02.png",
+      "sha256": "3a5e0ff47967638b5fe64e60cc1c2636ca88d1403e1c563cc7083db153c3755d"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-03-layout.json",
+      "sha256": "ec62f768ee334e90904f7d71b084f2075217d9445beb88f0274b6101b18c886e"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-03-sampling.json",
+      "sha256": "9ad968d3839d3bb8aecac7e1ee20e2a20aacf76109d0934a0b58f502b2583f82"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-03.png",
+      "sha256": "0253f629d8c00ea52b9a31d3f50804633c7a52e3f24bddb021caab72306bf987"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-04-layout.json",
+      "sha256": "8252395c90bb5d2d340c01d664c82708c4c3ee32aa499c5a3367191844fee899"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-04-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-04.png",
+      "sha256": "182631d9e09903ecf20b1c8fa541c6b700cc16d936ba3debb0ddbf0157487ad3"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-05-layout.json",
+      "sha256": "937b3fa52611b5d1291cf5693f5e8d39a6232fadf91ffd7bfdb2f513aa281971"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-05-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-05.png",
+      "sha256": "ca01f09f5e254610044c08d8b29322f7e2fcd1b231a9e991fb676d5389f7ea1e"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-06-layout.json",
+      "sha256": "6d797f600bb0f462d1d7ba26359239631f603c47deaba2eaadf99a8be311a287"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-06-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-06.png",
+      "sha256": "8c11f82d34c2a6861d2ac8da273af11fb4c104f927e4f553822c53852814d033"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-07-layout.json",
+      "sha256": "1650e6e05bb7e18874bd2a1767b9dad75e0adaa274a66bceb277bf9957002940"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-07-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-07.png",
+      "sha256": "c9f0deabc36d35da7d36504154962dc37b5f70f1b98c6163485f22a3cc2cba6b"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-08-layout.json",
+      "sha256": "0f610d7e470310416164d9d52157b1ab5e165e5935ed78ef04afe6c1bd63455c"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-08-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-08.png",
+      "sha256": "cd373aa3d1c2c936d48bdd95949a20cfed08e4aea880f21fc873bc3deb3ed770"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-09-layout.json",
+      "sha256": "44b228103dc37e6d46902cfb4164e32f5e40b087f7483b6c2f0ae23d66598053"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-09-sampling.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-09.png",
+      "sha256": "151fb5492ffbb814d29c6a7298f4b44916bfb19a7d5bcdf07ac0f431431b8c4b"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-source.json",
+      "sha256": "9b500907c735f92945740ac4a0760d74bfdab3506de3d159bf47a7a1e408c9cd"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/inspector-ui.json",
+      "sha256": "3741e0a1869abeced48ffa45743b04a3911a18a064fcf8c66d400a4c6d979fa5"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/installed-ui-observation.json",
+      "sha256": "d13458a038a04f143d82738e05b54438c54af26338d1706f82090bdde552fe4a"
+    },
+    {
+      "path": "var/raster-review-20261030/reports/preview-quality-gpu-macos.json",
+      "sha256": "2f72b2183911a0a24b85b2148c8e8550fbead2c6bdaf15ee097bd671e1908e76"
+    },
+    {
+      "path": "var/raster-review-20261030/xpc-root/reports/xpc-integration-macos.json",
+      "sha256": "881df9826ab508eb0b5080b14abeca95d6482084e39512d88aad634f1fbab02d"
+    },
+    {
+      "path": "var/raster-review-20261030/xpc-root/reports/xpc-qualification-macos.json",
+      "sha256": "a3ca7e88f963ae070834b6e40d20ebe38b2950fef4b27859ca8790aaf7ac7f4b"
+    }
+  ]
+}

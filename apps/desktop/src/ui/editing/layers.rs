@@ -16,6 +16,7 @@ mod toning;
 #[derive(Default)]
 pub(in crate::ui) struct Controls {
     pub photo: String,
+    pub base_name: String,
     pub view_layers: bool,
     pub view_tools: bool,
     pub view_export: bool,

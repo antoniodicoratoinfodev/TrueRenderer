@@ -102,6 +102,8 @@ pub(super) struct Editor {
     conversion: Option<conversion::Conversion>,
     publishing: Option<conversion::Publishing>,
     source_path: Option<PathBuf>,
+    return_photo: Option<PathBuf>,
+    confirm_return: bool,
     import_path: Option<PathBuf>,
     pub directory: PathBuf,
     name: String,
@@ -123,6 +125,7 @@ pub(super) struct Editor {
     redo: VecDeque<Document>,
     selected: usize,
     tool: Tool,
+    rgb_picker: bool,
     radius: f32,
     hardness: f32,
     strength: f32,
@@ -171,6 +174,8 @@ impl Editor {
             conversion: None,
             publishing: None,
             source_path: None,
+            return_photo: None,
+            confirm_return: false,
             import_path: None,
             directory: PathBuf::new(),
             name: "Documento".into(),
@@ -192,6 +197,7 @@ impl Editor {
             redo: VecDeque::new(),
             selected: 0,
             tool: Tool::Move,
+            rgb_picker: false,
             radius: 20.,
             hardness: 0.5,
             strength: 1.,
@@ -245,6 +251,7 @@ impl Editor {
         !self.busy() && !self.error.is_empty()
     }
     pub fn select_tab(&mut self, tab: Tab) {
+        self.rgb_picker = false;
         self.end_stroke();
         self.points.clear();
         self.effects.stop_document_gesture();
@@ -366,6 +373,9 @@ impl Editor {
         ))
     }
     fn replace(&mut self, doc: Document) {
+        self.rgb_picker = false;
+        self.return_photo = None;
+        self.confirm_return = false;
         self.doc = Some(doc);
         self.export_resolution = None;
         self.export_space = None;
@@ -565,6 +575,7 @@ impl Editor {
                                 self.replace(doc);
                                 self.source_id = photo;
                                 self.source_path = self.import_path.take();
+                                self.return_photo = self.source_path.clone();
                             }
                             Err(e) => self.error = e.to_string(),
                         }
@@ -885,6 +896,7 @@ impl Editor {
     }
     fn photographic_interaction(&mut self, ui: &egui::Ui, response: &egui::Response) -> bool {
         if ui.input(|i| i.key_pressed(egui::Key::Escape)) {
+            self.rgb_picker = false;
             if let Some(old) = self.stroke.take() {
                 self.doc = Some(old);
                 self.needs_render = true;
@@ -910,6 +922,28 @@ impl Editor {
             rect: response.rect,
             size: [doc.width, doc.height],
         };
+        if self.rgb_picker {
+            ui.ctx().set_cursor_icon(egui::CursorIcon::Crosshair);
+            if !layer.locked
+                && response.clicked()
+                && let Some(p) = response
+                    .interact_pointer_pos()
+                    .and_then(|p| map.source_uv(p))
+            {
+                let result = develop::sampled_white_balance(layer, p);
+                match result {
+                    Ok(recipe) => {
+                        self.rgb_picker = false;
+                        self.edit(|d, i| {
+                            d.layers[i].recipe = recipe;
+                            Ok(())
+                        });
+                    }
+                    Err(error) => self.error = error.to_string(),
+                }
+            }
+            return true;
+        }
         let effects_active = self
             .effects
             .document_canvas(ui, response, &map, &mut recipe);
@@ -954,22 +988,9 @@ fn encode_png_image(
     eight_bit: bool,
     output: &mut impl std::io::Write,
 ) -> Result<()> {
-    let space = if eight_bit { ColorSpace::Srgb } else { space };
     let mut pixels = Vec::with_capacity(image.pixels.len() * 8);
     for p in &image.pixels {
-        let encoded = match space {
-            ColorSpace::Srgb => tr_core::export::srgb16(*p).0,
-            ColorSpace::LinearRec2020 => {
-                let alpha = p[3];
-                [
-                    if alpha > 0. { p[0] / alpha } else { 0. },
-                    if alpha > 0. { p[1] / alpha } else { 0. },
-                    if alpha > 0. { p[2] / alpha } else { 0. },
-                    alpha,
-                ]
-                .map(|v| (v.clamp(0., 1.) * 65535.).round() as u16)
-            }
-        };
+        let encoded = space.rgba16(*p).0;
         for channel in encoded {
             if eight_bit {
                 pixels.push(((channel as u32 + 128) / 257) as u8);
@@ -979,7 +1000,11 @@ fn encode_png_image(
         }
     }
     {
-        let mut encoder = png::Encoder::new(output, image.width, image.height);
+        let mut info = png::Info::with_size(image.width, image.height);
+        if space != ColorSpace::Srgb {
+            info.icc_profile = Some(std::borrow::Cow::Owned(space.icc()?));
+        }
+        let mut encoder = png::Encoder::with_info(output, info)?;
         encoder.set_color(png::ColorType::Rgba);
         encoder.set_depth(if eight_bit {
             png::BitDepth::Eight
@@ -987,6 +1012,7 @@ fn encode_png_image(
             png::BitDepth::Sixteen
         });
         match space {
+            ColorSpace::AdobeRgb | ColorSpace::DisplayP3 => {}
             ColorSpace::Srgb => {
                 encoder.set_source_srgb(png::SrgbRenderingIntent::RelativeColorimetric)
             }
@@ -1093,7 +1119,7 @@ mod tests {
     }
     #[test]
     fn png_export_declares_profile_ppi_and_preserves_alpha() {
-        for space in [ColorSpace::Srgb, ColorSpace::LinearRec2020] {
+        for space in ColorSpace::ALL {
             let mut doc = Document::new(2, 1, 300., [0.25, 0.125, 0., 0.5]).unwrap();
             doc.color_space = space;
             let mut bytes = vec![];
@@ -1104,6 +1130,9 @@ mod tests {
             assert_eq!(reader.info().pixel_dims.unwrap().xppu, 11811);
             assert_eq!(reader.info().bit_depth, png::BitDepth::Sixteen);
             match space {
+                ColorSpace::AdobeRgb | ColorSpace::DisplayP3 => {
+                    assert!(reader.info().icc_profile.is_some())
+                }
                 ColorSpace::Srgb => assert!(reader.info().srgb.is_some()),
                 ColorSpace::LinearRec2020 => {
                     assert_eq!(reader.info().gama_chunk, Some(png::ScaledFloat::new(1.)));

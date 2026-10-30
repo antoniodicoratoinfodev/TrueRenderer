@@ -55,14 +55,30 @@ Adding an independent image, empty raster layer, image copy or selected piece
 asks for confirmation first. Accepting creates a new `.truerenderer` project
 beside the photo, with the current development at layer 0 and the new content
 above it. Cancelling keeps the photo workflow. The original and its catalog
-adjustments remain available.
+adjustments remain available. The confirmation recommends completing photo
+development before raster editing. Commands marked **Raster** require this
+transition; painting, erasing, cloning, healing and selections on photos do not.
+The raster inspector shares the photographic controls and displays **Editing raster**.
+**Torna alla foto…** returns to Develop after confirmation, discarding
+unsaved raster edits while keeping saved projects. Reopened projects can use
+**Scegli originale…** to identify the source first.
+
+Layer 0 is labelled **Foto di partenza**, below the other layers, and can be
+hidden with its visibility control on photos and raster projects. Photo adjustment
+layers need the base pixels; independent raster layers remain visible above a hidden base.
+
+The destination profile offers **sRGB, Adobe RGB (1998), Display P3 and linear
+Rec.2020** for JPEG/PNG/TIFF integer photo exports and JPEG/PNG project exports.
+Working calculations remain extended linear Rec.2020 at 32 bits. Float TIFF and
+DNG retain their existing color contracts. CMYK conversion is not available;
+it requires a print ICC profile and a dedicated conversion path.
 
 **Sposta** is available in Develop, Layers and Tools: drag the selected image or
 piece over the canvas, or enter its position, scale and rotation. Tools also holds
 free/polygonal/rectangular selections, painting, erasing, **Clona**, **Ripara** and
 **Ripara rapido**. Alt-click samples the selected layer for Clone/Heal;
 double-click or Enter closes a polygon. On photos, **Selezione → regolazione**
-creates an adjustment mask without a project; **Selezione → copia immagine…**
+creates an adjustment mask without a project; **Raster · copia selezione…**
 opens the project confirmation. Applied photo strokes can be disabled, edited
 or deleted individually. Adjustments and masks remain editable per layer.
 Photo export retains the seven existing formats and inherits native dimensions

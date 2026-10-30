@@ -52,11 +52,7 @@ impl Unit {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
-pub enum ColorSpace {
-    Srgb,
-    LinearRec2020,
-}
+pub use crate::export_spaces::ColorSpace;
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Blend {
     Normal,

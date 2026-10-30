@@ -6,7 +6,7 @@ impl Editor {
             for (tool, name) in [
                 (Tool::Move, "Sposta"),
                 (Tool::Paint, "Pennello"),
-                (Tool::Erase, "Cancella"),
+                (Tool::Erase, "Gomma"),
                 (Tool::Clone, "Clona"),
                 (Tool::Heal, "Ripara"),
                 (Tool::AutoHeal, "Ripara rapido"),

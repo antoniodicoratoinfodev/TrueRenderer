@@ -1,6 +1,6 @@
 # TrueRenderer — stato e piano di sviluppo
 
-Aggiornato: 29 ottobre 2026.
+Aggiornato: 30 ottobre 2026.
 
 Fonte unica per stato corrente, priorità, caselle operative e registro degli incrementi.
 
@@ -17,6 +17,21 @@ Fonte unica per stato corrente, priorità, caselle operative e registro degli in
 Specifica: [architettura](docs/TrueRenderer-Architettura.md). Decisioni: [indice documentale](docs/README.md). Vincoli: [AGENTS.md](AGENTS.md).
 
 ## Situazione attuale
+
+### Chiarezza RAW/raster, livello base e profili RGB — 29–30 ottobre 2026
+
+- [x] Aggiunti ritorno alla foto con conferma di scarto delle sole modifiche raster non salvate, protezione della sorgente assente e scelta della sorgente per progetti riaperti. Progetti già salvati e originali conservati; associazione locale di sessione.
+- [x] Conferma di ingresso con consiglio di completare prima Sviluppo; indicazione Editing raster e comandi Raster distinti dagli strumenti fotografici reversibili. Luce/curve/colore condividono componenti UI; regolazioni avanzate e strumenti fotografici comuni.
+- [x] Foto di partenza in fondo alla pila, con visibilità persistente anche nelle ricette RAW/JPEG. Livelli raster indipendenti sopra la base conservano la propria visibilità.
+- [x] Destinazioni sRGB, Adobe RGB (1998), Display P3, Rec.2020 lineare per JPEG/PNG/TIFF16 foto e JPEG/PNG composito, con conversione pixel e metadati coerenti. Calcolo interno sempre Rec.2020 lineare fp32; TIFF float/DNG mantengono il contratto precedente.
+- [x] Passati 163 test core, 329 desktop e 63 worker ordinari; 16 combinazioni profilo/formato rilette tramite ImageIO/ColorSync nel nuovo test nativo. Fmt, Clippy workspace/all-targets e controllo diff passati. Corretto l’allineamento ICC a quattro byte dopo il rifiuto dei PNG P3/Rec.2020 da ImageIO; corretta l’altezza del pannello compatto. Due test Core Image fermati dal sandbox sono passati nel contesto nativo. Una compilazione desktop interrotta ha richiesto la pulizia dei soli artefatti di build.
+- [x] Installato `dist/TrueRenderer.app`; precedente bundle, cataloghi e impostazioni conservati in `var/backups/before-raster-ui-20261030-042515/`. Verificati 452 sorgenti congelati, firma e due XPC anche nella posizione definitiva, su 12 immagini sintetiche. Smoke nativo finale: passati Sviluppo/Livelli/Tools/Export e griglia. Il primo tentativo con percorsi relativi non aveva caricato l’inventario; prove successive con percorsi assoluti e catalogo isolato passate. Dopo l’avvio ordinario, verificati Tools, messaggio di ingresso e annullamento sul RAW; app lasciata aperta sulla foto con Tools visibile. [Rapporto](reports/raw-raster-ui-color-macos-2026-10-30.json).
+- [ ] CMYK non implementato: voce disabilitata con motivazione. Il titolare ha confermato di non avere un profilo di stampa. Restano necessari selezione/validazione ICC e conversione di uscita dedicata. Nessun cambio dello spazio interno né soft proof generale; associazione al RAW non serializzata nel progetto.
+- [ ] Qualifica incrociata Windows/macOS e gate R/SF aperti. Le diciture di mancata pubblicazione nel primo rapporto registrano la chiusura della campagna precedente alla revisione richiesta.
+- [x] Revisione richiesta prima di commit/push: corretti i testi sRGB rimasti nell’export raster, uniformati occhio di visibilità e Annulla/Ripeti, compattati nomi/percorso lunghi e messaggio di ingresso. Corretto il contagocce RGB per campionare la resa con il WB corrente su soli nove pixel, evitando correzioni cumulative e la copia dell’intero livello. Un file con estensione non fotografica non può scartare lo stato raster; i messaggi di errore Auto vengono cancellati dopo un’operazione riuscita.
+- [x] Revisione verificata con 331 test desktop, Clippy workspace/all-targets, fmt e controllo diff. Passati i quattro pannelli raster e griglia, dieci layout fotografici normali/compatti nelle due lingue, firma e XPC sul candidato e sul bundle installato. Controllate visivamente le schermate e la conferma revisionata nell’avvio ordinario. Precedente bundle e dati durevoli in `var/backups/before-raster-review-20261030-113119/`; verificati 455 sorgenti congelati. [Rapporto della revisione](reports/raw-raster-review-macos-2026-10-30.json).
+- [x] Preparati per commit/push su `origin/main` i sorgenti, le regressioni, README, specifica, stato e i due rapporti aggregati. Evidenze con hash ricontrollate; fotografie, cataloghi, backup, bundle e toolchain restano locali. Licenza e dipendenze conservate.
+
 
 ### Installer Windows autonomo — 29 ottobre 2026
 

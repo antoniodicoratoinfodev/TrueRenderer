@@ -8,7 +8,7 @@ use tiff::{
     tags::Tag,
 };
 use tr_core::{
-    color::{self, LinearImage},
+    color::LinearImage,
     export::{Compression, Format, Info, MAX_ENCODED, Options, profile},
 };
 
@@ -134,25 +134,28 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             // JPEG has no alpha: composite onto explicitly declared white, in linear light.
             let mut pixels = Vec::with_capacity(image.pixels.len() * 3);
             for p in &image.pixels {
-                let rgb = color::rec2020_to_linear_srgb([
+                let rgb = options.color_space.encode_rgb([
                     p[0] + 1. - p[3],
                     p[1] + 1. - p[3],
                     p[2] + 1. - p[3],
                 ]);
-                for v in rgb.map(color::linear_to_srgb) {
+                for v in rgb {
                     pixels.push((u16_sample(v, &mut clipped) as f32 / 257.).round() as u8);
                 }
             }
             let mut encoder =
                 image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, options.jpeg_quality);
-            encoder.set_icc_profile(profile(false)?)?;
+            encoder.set_icc_profile(options.color_space.icc()?)?;
             if let Some(r) = options.resolution {
                 encoder.set_pixel_density(image::codecs::jpeg::PixelDensity {
                     density: (r.x.round() as u16, r.y.round() as u16),
                     unit: image::codecs::jpeg::PixelDensityUnit::Inches,
                 });
             }
-            encoder.set_exif_metadata(tr_core::export::resolution_exif(options.resolution))?;
+            encoder.set_exif_metadata(tr_core::export::resolution_exif_space(
+                options.resolution,
+                options.color_space,
+            ))?;
             encoder.encode(
                 &pixels,
                 image.width,
@@ -163,7 +166,11 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
         }
         Format::Png8 | Format::Png16 => {
             let sixteen = options.format == Format::Png16;
-            let mut encoder = png::Encoder::new(&mut out, image.width, image.height);
+            let mut info = png::Info::with_size(image.width, image.height);
+            if options.color_space != tr_core::export_spaces::ColorSpace::Srgb {
+                info.icc_profile = Some(std::borrow::Cow::Owned(options.color_space.icc()?));
+            }
+            let mut encoder = png::Encoder::with_info(&mut out, info)?;
             encoder.set_color(png::ColorType::Rgba);
             encoder.set_depth(if sixteen {
                 png::BitDepth::Sixteen
@@ -177,7 +184,9 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
                     unit: png::Unit::Meter,
                 }));
             }
-            encoder.set_source_srgb(png::SrgbRenderingIntent::RelativeColorimetric);
+            if options.color_space == tr_core::export_spaces::ColorSpace::Srgb {
+                encoder.set_source_srgb(png::SrgbRenderingIntent::RelativeColorimetric);
+            }
             encoder.set_compression(match options.compression {
                 Compression::Fast => png::Compression::Fast,
                 Compression::Balanced => png::Compression::Balanced,
@@ -189,7 +198,7 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             for pixels in image.pixels.chunks(image.width as usize) {
                 row.clear();
                 for pixel in pixels {
-                    let (values, count) = tr_core::export::srgb16(*pixel);
+                    let (values, count) = options.color_space.rgba16(*pixel);
                     clipped += count;
                     for v in values {
                         if sixteen {
@@ -210,7 +219,7 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             let mut output = encoder.new_image::<colortype::RGBA16>(image.width, image.height)?;
             output
                 .encoder()
-                .write_tag(Tag::IccProfile, &profile(false)?[..])?;
+                .write_tag(Tag::IccProfile, &options.color_space.icc()?[..])?;
             output.encoder().write_tag(Tag::ExtraSamples, &[2u16][..])?;
             output.encoder().write_tag(Tag::Software, "TrueRenderer")?;
             density_tags(output.encoder(), options.resolution)?;
@@ -219,7 +228,7 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
             for pixels in image.pixels.chunks(image.width as usize) {
                 row.clear();
                 for pixel in pixels {
-                    let (values, count) = tr_core::export::srgb16(*pixel);
+                    let (values, count) = options.color_space.rgba16(*pixel);
                     clipped += count;
                     row.extend_from_slice(&values);
                 }
@@ -305,7 +314,20 @@ pub fn render(image: LinearImage, options: Options, limit: u64) -> Result<(Info,
         height: image.height,
         bytes: bytes.len() as u64,
         clipped_channels: clipped,
-        description: description.into(),
+        description: if matches!(
+            options.format,
+            Format::Jpeg | Format::Png8 | Format::Png16 | Format::Tiff16
+        ) {
+            format!(
+                "{}; {}",
+                options.color_space.label(),
+                description
+                    .replace("sRGB IEC 61966-2-1; ", "")
+                    .replace("sRGB ICC", "ICC")
+            )
+        } else {
+            description.into()
+        },
     };
     info.validate(options, limit)?;
     Ok((info, bytes))
@@ -353,6 +375,7 @@ pub fn raw(source: &[u8], options: Options, limit: u64) -> Result<(Info, Vec<u8>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tr_core::color;
     #[test]
     fn density_is_preserved_for_each_render_format_and_never_invented() {
         let image = LinearImage::new(16, 12, vec![[0.2, 0.1, 0., 1.]; 192]).unwrap();
@@ -396,6 +419,56 @@ mod tests {
         )
         .unwrap();
         assert_eq!(legacy.resolution, None);
+    }
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[ignore = "Requires macOS ImageIO/ColorSync; generated fixture only"]
+    fn named_rgb_exports_native_readback_matches_working_color() {
+        let mut failures = Vec::new();
+        for space in tr_core::export_spaces::ColorSpace::ALL {
+            for format in [Format::Jpeg, Format::Png8, Format::Png16, Format::Tiff16] {
+                let pixel = color::from_encoded_srgb([0.6, 0.4, 0.2, 1.]);
+                let source = LinearImage::new(8, 8, vec![pixel; 64]).unwrap();
+                let (info, bytes) = render(
+                    source.clone(),
+                    Options {
+                        format,
+                        color_space: space,
+                        jpeg_quality: 100,
+                        ..Default::default()
+                    },
+                    MAX_ENCODED,
+                )
+                .unwrap();
+                assert!(info.description.contains(space.label()));
+                if let Some(folder) = std::env::var_os("TR_PROFILE_FIXTURES") {
+                    std::fs::write(
+                        std::path::PathBuf::from(folder)
+                            .join(format!("{space:?}-{format:?}.{}", format.extension())),
+                        &bytes,
+                    )
+                    .unwrap();
+                }
+                let (decoded, actual) = crate::native::decode(&bytes, 0).unwrap();
+                eprintln!(
+                    "{space:?} {format:?}: {} {:?}",
+                    decoded.input_color, actual.pixels[0]
+                );
+                let tolerance = if matches!(format, Format::Png16 | Format::Tiff16) {
+                    0.0003
+                } else {
+                    0.012
+                };
+                for (a, b) in actual.pixels.iter().zip(&source.pixels) {
+                    for c in 0..4 {
+                        if (a[c] - b[c]).abs() >= tolerance {
+                            failures.push(format!("{space:?} {format:?}: {a:?} != {b:?}"));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
     #[cfg(windows)]
     #[test]

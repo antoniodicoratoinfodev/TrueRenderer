@@ -65,6 +65,8 @@ impl Controls {
     ) -> (bool, bool) {
         self.refresh_analysis(recipe);
         let before = recipe.clone();
+        let mut base_hidden = recipe.retouch.as_ref().is_some_and(|r| r.base_hidden);
+        let show_base = !self.photo.starts_with("document:");
         let mut commit = false;
         let count = recipe.layers.as_ref().map_or(0, |s| s.layers.len());
         let mut create_empty = false;
@@ -72,7 +74,7 @@ impl Controls {
         ui.horizontal(|ui| {
             help::label(ui, lang, "Pila livelli");
             ui.label(
-                egui::RichText::new(count.to_string())
+                egui::RichText::new((count + usize::from(show_base)).to_string())
                     .small()
                     .color(style::MUTED),
             );
@@ -112,6 +114,10 @@ impl Controls {
             ui.label(egui::RichText::new(lang.text("Nessun livello aggiunto")).strong());
             ui.label(lang.text("Usa Nuovo livello per aggiungere una regolazione. Puoi limitarla a una parte della foto con una maschera."));
             ui.add_space(8.);
+            if show_base && base_row(ui, &mut base_hidden, &self.base_name) {
+                recipe.retouch_mut().base_hidden = base_hidden;
+                commit = true;
+            }
             self.base_link(ui, lang);
             return (recipe != &before, commit);
         }
@@ -252,6 +258,9 @@ impl Controls {
                         }
                     });
                 }
+                if show_base {
+                    commit |= base_row(ui, &mut base_hidden, &self.base_name);
+                }
             });
         if let Some((i, code)) = action {
             match code {
@@ -367,6 +376,9 @@ impl Controls {
                 });
             });
         }
+        if show_base && base_hidden != before.retouch.as_ref().is_some_and(|r| r.base_hidden) {
+            recipe.retouch_mut().base_hidden = base_hidden;
+        }
         commit |= self.apply_auto_request(recipe);
         if recipe != &before
             && let Err(error) = recipe.validate()
@@ -392,4 +404,18 @@ impl Controls {
             self.view_tools = false;
         }
     }
+}
+
+fn base_row(ui: &mut egui::Ui, hidden: &mut bool, name: &str) -> bool {
+    let mut changed = false;
+    egui::Frame::new().fill(egui::Color32::from_gray(32)).corner_radius(4).inner_margin(4).show(ui, |ui| {
+        ui.horizontal(|ui| {
+            if panels::icon_button(ui, panels::Glyph::Eye, if *hidden { "Mostra foto di partenza" } else { "Nascondi foto di partenza" }, true, !*hidden).clicked() {
+                *hidden = !*hidden;
+                changed = true;
+            }
+            ui.add(egui::Label::new(format!("0 · Foto di partenza · {name}")).truncate()).on_hover_text("La foto originale con il suo sviluppo. I livelli di regolazione sopra modificano questa foto e non contengono pixel indipendenti.");
+        });
+    });
+    changed
 }

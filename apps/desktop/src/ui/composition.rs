@@ -6,6 +6,7 @@ pub(super) struct Confirmation {
     digest: String,
     action: document::PhotoAction,
     output: PathBuf,
+    color_space: tr_core::export_spaces::ColorSpace,
 }
 
 impl TrueRenderer {
@@ -46,8 +47,8 @@ impl TrueRenderer {
         if self.document.busy() || self.document.import_failed() {
             self.document.messages(ui);
         }
-        ui.collapsing("Aggiungi contenuto immagine", |ui| {
-            ui.small("Copie e immagini indipendenti richiedono un progetto .truerenderer.");
+        ui.collapsing("Raster · aggiungi contenuto immagine", |ui| {
+            ui.small("Questi comandi passano alla modalità raster, dopo la tua conferma.");
             let mut action = None;
             ui.horizontal_wrapped(|ui| {
                 if ui.button("Copia immagine…").clicked() {
@@ -89,6 +90,7 @@ impl TrueRenderer {
             n += 1;
         }
         self.conversion = Some(Confirmation {
+            color_space: self.photo_export.options.color_space,
             item: item.clone(),
             recipe,
             digest: saved.source_digest.clone(),
@@ -97,6 +99,7 @@ impl TrueRenderer {
         });
     }
     pub(super) fn conversion_dialog(&mut self, ctx: &egui::Context) {
+        self.document.return_dialog(ctx);
         let Some(pending) = &self.conversion else {
             return;
         };
@@ -104,19 +107,21 @@ impl TrueRenderer {
         let mut cancel = false;
         let response=egui::Modal::new(egui::Id::new("photo-to-project")).show(ctx, |ui| {
             ui.set_max_width(420.);
-            ui.heading("Continua in un progetto TrueRenderer?");
+            egui::ScrollArea::vertical().max_height((ctx.content_rect().height()-80.).max(100.)).show(ui, |ui| {
+            ui.heading("Passare all’editing raster?");
             ui.add_space(8.);
-            ui.label(format!("{} aggiunge contenuto indipendente alla foto.", pending.action.label()));
-            ui.label("Creeremo un file .truerenderer con lo sviluppo corrente al livello 0 e il nuovo contenuto sopra.");
+            ui.label("Ti consigliamo di completare prima lo sviluppo della foto nel pannello Sviluppo, compresi bilanciamento del bianco ed esposizione. Passa poi al raster per comporre immagini e lavorare su livelli indipendenti.");
             ui.add_space(6.);
+            ui.label(format!("{} creerà un progetto con la foto sviluppata al livello 0 e il nuovo contenuto sopra. L’originale e le sue regolazioni restano disponibili.", pending.action.label()));
             ui.label(egui::RichText::new(pending.output.file_name().unwrap_or_default().to_string_lossy()).strong());
             ui.small(format!("Nella cartella di {}",pending.item.name));
             ui.add_space(6.);
-            ui.label("Il RAW originale e le sue regolazioni restano disponibili. Nel progetto lo sviluppo sensore è incorporato: per cambiare motore o WB RAW si torna alla foto originale.");
+            ui.label("Potrai tornare alla foto originale con Torna alla foto. Le modifiche raster non salvate verranno scartate solo dopo la tua conferma.");
             ui.add_space(10.);
-            ui.horizontal(|ui| {
+            ui.horizontal_wrapped(|ui| {
                 cancel=ui.button("Continua sulla foto").clicked();
                 accept=ui.button("Crea progetto e continua").clicked();
+            });
             });
         });
         cancel |= response.should_close();
@@ -147,7 +152,7 @@ impl TrueRenderer {
             document::Tab::Layers,
         ) {
             self.document
-                .begin_conversion(pending.output, pending.action);
+                .begin_conversion(pending.output, pending.action, pending.color_space);
         }
     }
     pub(super) fn current_document(&self) -> bool {
@@ -167,6 +172,9 @@ impl TrueRenderer {
             refresh |= path.parent() == Some(self.folder.as_path());
         }
         if let Some(path) = self.document.reveal.take() {
+            if !tr_core::document::is_document_path(&path) {
+                self.select_photo_editing_tab(document::Tab::Develop);
+            }
             self.open_path(path);
             self.inspector_pages = [InspectorPage::Develop; 2];
             self.show_inspector = true;

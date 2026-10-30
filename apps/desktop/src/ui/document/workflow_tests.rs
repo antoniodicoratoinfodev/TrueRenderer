@@ -360,3 +360,135 @@ fn refused_stroke_never_modifies_pixels_or_history() {
     assert!(e.undo.is_empty());
     assert!(!e.error.is_empty());
 }
+
+#[test]
+fn returning_discards_only_memory_and_keeps_original_and_saved_project() {
+    let dir = tempfile::tempdir().unwrap();
+    let photo = dir.path().join("photo.nef");
+    std::fs::write(&photo, b"original read only").unwrap();
+    let project = dir.path().join("photo.truerenderer");
+    let mut e = editor();
+    let doc = Document::new(8, 6, 300., [0.2, 0.1, 0., 1.]).unwrap();
+    tr_store::document::create(&project, &doc).unwrap();
+    let bytes = std::fs::read(&project).unwrap();
+    e.replace(doc);
+    e.return_photo = Some(photo.clone());
+    e.saved(project.clone(), Ok(()), false);
+    e.edit(|d, _| {
+        d.layers[0].visible = false;
+        Ok(())
+    });
+    assert!(e.dirty);
+    assert!(e.discard_to_photo());
+    assert!(e.doc.is_none());
+    assert!(e.undo.is_empty());
+    assert_eq!(e.reveal, Some(photo.clone()));
+    assert_eq!(std::fs::read(photo).unwrap(), b"original read only");
+    assert_eq!(std::fs::read(project).unwrap(), bytes);
+}
+
+#[test]
+fn missing_original_and_cancel_keep_raster_edits() {
+    let dir = tempfile::tempdir().unwrap();
+    let mut e = editor();
+    let doc = Document::new(8, 6, 300., [0.2, 0.1, 0., 1.]).unwrap();
+    e.replace(doc.clone());
+    e.return_photo = Some(dir.path().join("missing.nef"));
+    e.confirm_return = true;
+    let ctx = egui::Context::default();
+    let mut out = ctx.run_ui(egui::RawInput::default(), |_ui| e.return_dialog(&ctx));
+    out.textures_delta.clear();
+    assert_eq!(e.doc.as_ref(), Some(&doc));
+    let mut out = ctx.run_ui(
+        egui::RawInput {
+            events: vec![egui::Event::Key {
+                key: egui::Key::Escape,
+                physical_key: None,
+                pressed: true,
+                repeat: false,
+                modifiers: Default::default(),
+            }],
+            ..Default::default()
+        },
+        |_ui| e.return_dialog(&ctx),
+    );
+    out.textures_delta.clear();
+    assert!(!e.confirm_return);
+    assert!(!e.discard_to_photo());
+    assert_eq!(e.doc.as_ref(), Some(&doc));
+    assert!(e.dirty);
+}
+
+#[test]
+fn unsupported_original_cannot_discard_raster_edits() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("notes.txt");
+    std::fs::write(&path, b"not a photo").unwrap();
+    let mut e = editor();
+    e.replace(Document::new(8, 6, 300., [0.2, 0.1, 0., 1.]).unwrap());
+    e.edit(|d, _| {
+        d.layers[0].recipe.exposure_ev = 1.;
+        Ok(())
+    });
+    let before = e.doc.clone();
+    let undo = e.undo.len();
+    e.return_photo = Some(path);
+    assert!(!e.discard_to_photo());
+    assert_eq!(e.doc, before);
+    assert_eq!(e.undo.len(), undo);
+    assert!(e.dirty);
+    assert!(e.reveal.is_none());
+}
+
+#[test]
+fn raster_rgb_picker_is_stable_with_existing_white_balance() {
+    let rgb = tr_core::color::linear_srgb_to_rec2020([0.24, 0.22, 0.20]);
+    let pixel = [rgb[0], rgb[1], rgb[2], 1.];
+    let mut layer = RasterLayer::new(
+        "Photo".into(),
+        LinearImage::new(8, 6, vec![pixel; 48]).unwrap(),
+    );
+    layer.recipe.temperature = 24.;
+    layer.recipe.tint = 10.;
+    layer.recipe.exposure_ev = 0.5;
+    let first = develop::sampled_white_balance(&layer, [0.5, 0.5]).unwrap();
+    layer.recipe = first.clone();
+    let second = develop::sampled_white_balance(&layer, [0.5, 0.5]).unwrap();
+    assert!((first.temperature - second.temperature).abs() < 0.001);
+    assert!((first.tint - second.tint).abs() < 0.001);
+    let mut rendered = LinearImage::new(8, 6, layer.pixels.clone()).unwrap();
+    second.apply(&mut rendered).unwrap();
+    let p = rendered.pixels[0];
+    let rgb = tr_core::color::rec2020_to_linear_srgb([p[0], p[1], p[2]]);
+    assert!((rgb[0] - rgb[1]).abs() < 0.0001 && (rgb[1] - rgb[2]).abs() < 0.0001);
+    assert!(layer.pixels.iter().all(|p| *p == pixel));
+    assert!(develop::sampled_white_balance(&layer, [0., 0.]).is_err());
+}
+
+#[test]
+fn hidden_raster_base_keeps_independent_layers_visible_and_undoable() {
+    let mut e = editor();
+    let mut doc = Document::new(8, 6, 300., [0.2, 0.1, 0., 1.]).unwrap();
+    doc.insert(RasterLayer::new(
+        "Sopra".into(),
+        LinearImage::new(8, 6, vec![[0.05, 0.1, 0.2, 0.5]; 48]).unwrap(),
+    ))
+    .unwrap();
+    e.replace(doc.clone());
+    e.edit(|d, _| {
+        d.layers[0].visible = false;
+        Ok(())
+    });
+    assert!(
+        e.doc
+            .as_ref()
+            .unwrap()
+            .render()
+            .unwrap()
+            .pixels
+            .iter()
+            .all(|p| *p == [0.05, 0.1, 0.2, 0.5])
+    );
+    e.undo_edit();
+    assert_eq!(e.doc.as_ref(), Some(&doc));
+}

@@ -11,10 +11,11 @@ pub(in crate::ui) mod layers;
 mod looks;
 mod mask_overlay;
 mod palette;
-mod panels;
+pub(in crate::ui) mod panels;
 mod retouch;
 #[cfg(all(test, any(windows, target_os = "macos")))]
 mod retouch_tests;
+pub(in crate::ui) mod shared;
 mod transfer;
 mod visuals;
 mod wb_picker;
@@ -94,7 +95,7 @@ fn reset_all_button(ui: &mut egui::Ui, lang: Language, draft: &mut EditRecipe) -
 }
 
 // Keep the numeric field and slider in one response so a drag still commits once.
-fn adjustment<Num: egui::emath::Numeric>(
+pub(in crate::ui) fn adjustment<Num: egui::emath::Numeric>(
     ui: &mut egui::Ui,
     lang: Language,
     label: &str,
@@ -1850,8 +1851,8 @@ impl TrueRenderer {
                     self.photo_export_controls(ui, vec![item.clone()]);
                     return;
                 }
-                if !short {
-                    ui.small(format!("Livello 0 · {}", item.name));
+                if !short && !self.editing.layers.view_layers {
+                    ui.small(format!("Foto di partenza · {}", item.name));
                 }
                 if self.editing.layers.view_tools || self.editing.layers.view_layers {
                     self.photo_composition_controls(ui, item);
@@ -1871,6 +1872,7 @@ impl TrueRenderer {
                     return;
                 }
                 if self.editing.layers.view_layers {
+                    self.editing.layers.base_name = item.name.clone();
                     self.editing
                         .layers
                         .set_analysis_source(&saved.source_digest);
@@ -1887,6 +1889,14 @@ impl TrueRenderer {
                 }
                 if !short {
                     ui.small(lang.text("Modifica: foto intera"));
+                }
+                if !short {
+                    ui.collapsing("Colore di destinazione", |ui| {
+                        crate::ui::export::profile_controls(
+                            ui,
+                            &mut self.photo_export.options.color_space,
+                        );
+                    });
                 }
                 let engine = self.preview_request(item, 0).raw_engine;
                 let is_raw = self.cache.iter().any(|((id, request), cached)| {
@@ -1950,203 +1960,51 @@ impl TrueRenderer {
                             }
                         });
                 }
-                let mut reset = draft.clone();
-                ResetGroup::Light.apply(&mut reset);
-                panels::Section::new(lang, "light-panel", "Luce")
-                    .switches(&mut switches)
-                    .icon("tonal")
-                    .modified(draft != reset)
-                    .show(ui, |ui| {
-                        for (label, value, min, max, suffix) in [
-                            ("Esposizione", &mut draft.exposure_ev, -10., 10., " EV"),
-                            ("Luminosità", &mut draft.brightness, -100., 100., ""),
-                            ("Contrasto", &mut draft.contrast, -100., 100., ""),
-                            ("Alte luci", &mut draft.highlights, -100., 100., ""),
-                            ("Ombre", &mut draft.shadows, -100., 100., ""),
-                            ("Bianchi", &mut draft.whites, -100., 100., ""),
-                            ("Neri", &mut draft.blacks, -100., 100., ""),
-                        ] {
-                            let response = adjustment(
-                                ui,
-                                lang,
-                                lang.text(label),
-                                value,
-                                min..=max,
-                                suffix,
-                                None,
-                            );
-                            changed |= response.changed();
-                            commit |= response.drag_stopped()
-                                || (response.changed() && !response.dragged());
-                        }
-                        let request = self.preview_request(item, 0);
-                        let auto_source = (!changed && !self.editing.show_original)
-                            .then(|| {
-                                self.cache
-                                    .iter()
-                                    .find(|((id, r), cached)| {
-                                        id == &item.id
-                                            && r.raw_engine == request.raw_engine
-                                            && r.raw_wb == draft.raw_wb
-                                            && cached.pyramid.base_level() == 0
-                                    })
-                                    .map(|(_, c)| c.pyramid.clone())
+                let request = self.preview_request(item, 0);
+                let auto_source = (!changed && !self.editing.show_original)
+                    .then(|| {
+                        self.cache
+                            .iter()
+                            .find(|((id, r), cached)| {
+                                id == &item.id
+                                    && r.raw_engine == request.raw_engine
+                                    && r.raw_wb == draft.raw_wb
+                                    && cached.pyramid.base_level() == 0
                             })
-                            .flatten();
-                        ui.horizontal_wrapped(|ui| {
-                            if auto_source.is_none()
-                                && help::button(ui, lang, "Carica nativo per Auto").clicked()
-                            {
-                                self.request_final_preview(&item.id, false);
+                            .map(|(_, c)| c.pyramid.clone())
+                    })
+                    .flatten();
+                let response = shared::basic_controls(
+                    ui,
+                    lang,
+                    &mut draft,
+                    &mut switches,
+                    auto_source.as_ref().map(|p| {
+                        move |rgb, recipe: &mut EditRecipe| {
+                            if rgb {
+                                recipe.auto_rgb(p.source())
+                            } else {
+                                recipe.auto_exposure(p.source())
                             }
-                            for (label, rgb) in [
-                                ("Auto esposizione", false),
-                                ("Auto RGB · grigio medio", true),
-                            ] {
-                                if help::button_enabled(ui, lang, label, auto_source.is_some())
-                                    .clicked()
-                                {
-                                    let source = auto_source.as_ref().unwrap().source();
-                                    let result = if rgb {
-                                        draft.auto_rgb(source)
-                                    } else {
-                                        draft.auto_exposure(source)
-                                    };
-                                    match result {
-                                        Ok(()) => {
-                                            changed = true;
-                                            commit = true;
-                                            self.editing.picker_error = None;
-                                        }
-                                        Err(error) => {
-                                            self.editing.picker_error =
-                                                Some((item.id.clone(), error.to_string()));
-                                        }
-                                    }
-                                }
-                            }
-                        });
-                        ui.label(
-                    RichText::new(lang.text(
-                        "Auto RGB assume una scena mediamente neutra; non cambia il WB RAW.",
-                    ))
-                    .small()
-                    .color(MUTED),
+                        }
+                    }),
                 );
-                        if reset_group_button(
-                            ui,
-                            lang.text("Azzera luce"),
-                            ResetGroup::Light,
-                            &mut draft,
-                        ) {
-                            changed = true;
-                            commit = true;
-                        }
-                    });
-                let mut reset = draft.clone();
-                ResetGroup::Curve.apply(&mut reset);
-                panels::Section::new(lang, "curve-panel", "Curva tonale")
-                    .switches(&mut switches)
-                    .icon("curves")
-                    .modified(draft != reset)
-                    .show(ui, |ui| {
-                        let (mid_changed, mid_commit) = curve::midtone(&mut draft.curve, ui, lang);
-                        changed |= mid_changed;
-                        commit |= mid_commit;
-                        let (curve_changed, curve_commit) = ui
-                            .push_id((&item.id, "curve-editor"), |ui| {
-                                curve::controls(ui, lang, &mut draft.curve)
-                            })
-                            .inner;
-                        changed |= curve_changed;
-                        commit |= curve_commit;
-                        if (curve_changed || mid_changed)
-                            && tr_core::editing::curve_has_adjusted_endpoints(&draft.curve)
-                        {
-                            draft.require_process(4);
-                        }
-                        if reset_group_button(
-                            ui,
-                            lang.text("Azzera curva"),
-                            ResetGroup::Curve,
-                            &mut draft,
-                        ) {
-                            changed = true;
-                            commit = true;
-                        }
-                    });
-                let mut reset = draft.clone();
-                ResetGroup::Color.apply(&mut reset);
-                panels::Section::new(lang, "color-panel", "Colore RGB")
-                    .switches(&mut switches)
-                    .icon("mixer")
-                    .modified(draft != reset)
-                    .show(ui, |ui| {
-                        {
-                            let (label, value) = ("Saturazione", &mut draft.saturation);
-                            let response = adjustment(
-                                ui,
-                                lang,
-                                lang.text(label),
-                                value,
-                                -100. ..=100.,
-                                "",
-                                None,
-                            );
-                            changed |= response.changed();
-                            commit |= response.drag_stopped()
-                                || (response.changed() && !response.dragged());
-                        }
-                        let response = adjustment(
-                            ui,
-                            lang,
-                            lang.text("Vividezza"),
-                            &mut draft.vibrance,
-                            -100. ..=100.,
-                            "",
-                            None,
-                        );
-                        let protection = help::checkbox(
-                            ui,
-                            lang,
-                            "Proteggi toni caldi",
-                            &mut draft.protect_warm,
-                        );
-                        if response.changed() || protection.changed() {
-                            draft.require_process(2);
-                            changed = true;
-                        }
-                        commit |= response.drag_stopped()
-                            || (response.changed() && !response.dragged())
-                            || protection.changed();
-                        ui.small(lang.text(
-                            "Vividezza: processo 2 · protezione indicativa, non rileva la pelle",
-                        ));
-                        ui.label(
-                            RichText::new(
-                                lang.text("La correzione RGB non cambia il WB RAW del decoder."),
-                            )
-                            .small()
-                            .color(MUTED),
-                        );
-                        if let Some((_, error)) = self
-                            .editing
-                            .picker_error
-                            .as_ref()
-                            .filter(|(id, _)| id == &item.id)
-                        {
-                            ui.colored_label(AMBER, lang.text(error));
-                        }
-                        if reset_group_button(
-                            ui,
-                            lang.text("Azzera colore"),
-                            ResetGroup::Color,
-                            &mut draft,
-                        ) {
-                            changed = true;
-                            commit = true;
-                        }
-                    });
+                changed |= response.changed;
+                commit |= response.commit;
+                if response.native_requested {
+                    self.request_final_preview(&item.id, false);
+                }
+                if let Some(result) = response.auto_result {
+                    self.editing.picker_error = result.err().map(|error| (item.id.clone(), error));
+                }
+                if let Some((_, error)) = self
+                    .editing
+                    .picker_error
+                    .as_ref()
+                    .filter(|(id, _)| id == &item.id)
+                {
+                    ui.colored_label(AMBER, lang.text(error));
+                }
                 let (advanced_changed, advanced_commit) = self.editing.advanced.show_with_switches(
                     ui,
                     lang,

@@ -6,7 +6,7 @@ use tr_core::export::{Compression, Format, Options};
 pub(super) struct ExportUi {
     pub open: bool,
     pub targets: Option<Vec<Item>>,
-    options: Options,
+    pub(in crate::ui) options: Options,
     destination: Option<PathBuf>,
     remaining: VecDeque<(Item, tr_store::LoadedEdit)>,
     total: usize,
@@ -171,19 +171,22 @@ impl TrueRenderer {
                             for format in Format::ALL { ui.selectable_value(&mut state.options.format, format, lang.text(format.label())); }
                         });
                     });
+                    if matches!(state.options.format, Format::Jpeg | Format::Png8 | Format::Png16 | Format::Tiff16) {
+                        profile_controls(ui, &mut state.options.color_space);
+                    }
                     match state.options.format {
                         Format::Jpeg => {
                             super::preferences::preference_slider(ui, lang.text("Qualità JPEG"), &mut state.options.jpeg_quality, 1..=100, false, false);
-                            ui.label(RichText::new(lang.text("sRGB 8 bit, compressione con perdita. Trasparenza composta su bianco.")).small().color(MUTED));
+                            ui.label(RichText::new(lang.text("RGB 8 bit nel profilo scelto, compressione con perdita. Trasparenza composta su bianco.")).small().color(MUTED));
                         }
                         Format::Png8 | Format::Png16 => {
-                            ui.label(lang.text("sRGB, alpha conservata. La compressione non cambia la qualità."));
+                            ui.label(lang.text("Profilo RGB scelto, alpha conservata. La compressione non cambia la qualità."));
                             ui.horizontal(|ui| { for (value, label) in [(Compression::Fast,"Veloce"),(Compression::Balanced,"Bilanciata"),(Compression::Best,"Compatta")] {
                                 ui.selectable_value(&mut state.options.compression, value, lang.text(label));
                             }});
                         }
                         Format::DngLinear16 => { ui.label(lang.text("RGB Rec.2020 lineare già sviluppato, 16 bit interi. Non conserva negativi o valori oltre 1. Trasparenza non supportata.")); ui.colored_label(AMBER, lang.text("DNG lineare: sviluppo tecnico senza regolazioni fotografiche; usare JPEG, PNG o TIFF per la resa modificata.")); ui.colored_label(AMBER, lang.text("Riapertura: scegliere LibRaw bilineare/AHD. Apple RAW e motore mosaico TrueRenderer non supportano questo DNG lineare.")); }
-                        Format::Tiff16 => {ui.label(lang.text("sRGB ICC, 16 bit interi, alpha conservata; non compresso, clamp [0,1]."));}
+                        Format::Tiff16 => {ui.label(lang.text("Profilo RGB ICC scelto, 16 bit interi, alpha conservata; non compresso, clamp [0,1]."));}
                         Format::TiffFloat32 => {ui.label(lang.text("Rec.2020 lineare ICC, RGBA float32 con alpha associata. Conserva negativi e valori oltre 1 del render; non compresso. Non è un RAW sensore né un export FITS."));}
                         Format::DngRaw => {
                             state.options.long_edge = 0;
@@ -276,4 +279,22 @@ fn export_label(ui: &mut egui::Ui, label: &str, width: f32) {
                 .on_hover_text(label);
         },
     );
+}
+
+pub(in crate::ui) fn profile_controls(
+    ui: &mut egui::Ui,
+    space: &mut tr_core::export_spaces::ColorSpace,
+) -> bool {
+    let before = *space;
+    ui.label("Profilo colore di destinazione");
+    egui::ComboBox::from_id_salt("destination-profile").width(ui.available_width()).selected_text(space.label()).show_ui(ui, |ui| {
+        for value in tr_core::export_spaces::ColorSpace::ALL {
+            ui.selectable_value(space, value, value.label());
+        }
+        ui.add_enabled(false, egui::Button::new("CMYK · non disponibile"))
+            .on_disabled_hover_text("Conversione CMYK non ancora disponibile. Serve un profilo ICC specifico per carta e processo di stampa.");
+    });
+    ui.small("Si applica alla copia esportata. L’anteprima e il profilo del monitor non cambiano.")
+        .on_hover_text("I calcoli interni restano in Rec.2020 lineare a 32 bit; i colori vengono convertiti nel profilo scelto durante l’export.");
+    before != *space
 }

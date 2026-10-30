@@ -193,3 +193,27 @@ fn vector_selection_restricts_stroke_and_survives_recipe_serialization() {
     let back: EditRecipe = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(r, back);
 }
+
+#[test]
+fn base_visibility_roundtrips_without_discarding_photo_or_adjustments() {
+    let original = source();
+    let mut recipe = EditRecipe::neutral(Default::default());
+    recipe.exposure_ev = 1.;
+    let mut visible = original.clone();
+    recipe.apply(&mut visible).unwrap();
+    recipe.retouch_mut().base_hidden = true;
+    // The visibility belongs to the base, independent of the retouch toggle.
+    recipe.retouch_mut().enabled = false;
+    assert!(!recipe.is_neutral());
+    assert!(recipe.has_retouch());
+    let encoded = serde_json::to_string(&recipe).unwrap();
+    let mut loaded: EditRecipe = serde_json::from_str(&encoded).unwrap();
+    let mut hidden = original.clone();
+    loaded.apply(&mut hidden).unwrap();
+    assert!(hidden.pixels.iter().all(|p| *p == [0.; 4]));
+    loaded.retouch_mut().base_hidden = false;
+    let mut restored = original.clone();
+    loaded.apply(&mut restored).unwrap();
+    assert_eq!(restored.pixels, visible.pixels);
+    assert_eq!(source().pixels, original.pixels);
+}

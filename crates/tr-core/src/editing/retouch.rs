@@ -161,6 +161,8 @@ pub struct Stroke {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Retouch {
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub base_hidden: bool,
     pub version: u32,
     pub enabled: bool,
     pub transform: Transform,
@@ -169,6 +171,7 @@ pub struct Retouch {
 impl Default for Retouch {
     fn default() -> Self {
         Self {
+            base_hidden: false,
             version: 1,
             enabled: true,
             transform: Default::default(),
@@ -178,9 +181,10 @@ impl Default for Retouch {
 }
 impl Retouch {
     pub fn active(&self) -> bool {
-        self.enabled
-            && (self.transform != Transform::default()
-                || self.strokes.iter().any(|s| s.enabled && s.opacity > 0.))
+        self.base_hidden
+            || self.enabled
+                && (self.transform != Transform::default()
+                    || self.strokes.iter().any(|s| s.enabled && s.opacity > 0.))
     }
     pub fn validate(&self) -> Result<()> {
         ensure!(
@@ -255,6 +259,10 @@ impl Retouch {
         image: &mut LinearImage,
         cancelled: &(impl Fn() -> bool + Sync),
     ) -> Result<()> {
+        if self.base_hidden {
+            image.pixels.fill([0.; 4]);
+            return Ok(());
+        }
         if !self.enabled || self.strokes.iter().all(|s| !s.enabled || s.opacity == 0.) {
             return Ok(());
         }

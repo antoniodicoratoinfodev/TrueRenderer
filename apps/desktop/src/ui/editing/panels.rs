@@ -3,7 +3,7 @@ use super::{egui, help, palette};
 use crate::{i18n::Language, ui::style};
 
 /// The inspector uses one rhythm for buttons, fields and parameter rows.
-pub(super) fn control_style(ui: &mut egui::Ui) {
+pub(in crate::ui) fn control_style(ui: &mut egui::Ui) {
     let compact = ui.ctx().content_rect().height() < 500.;
     ui.spacing_mut().item_spacing = egui::vec2(6., if compact { 4. } else { 6. });
     ui.spacing_mut().button_padding = egui::vec2(8., 5.);
@@ -15,7 +15,7 @@ pub(super) fn control_style(ui: &mut egui::Ui) {
     widgets.active.weak_bg_fill = egui::Color32::from_gray(55);
 }
 
-pub(super) fn segment(
+pub(in crate::ui) fn segment(
     ui: &mut egui::Ui,
     selected: bool,
     label: &str,
@@ -35,7 +35,7 @@ fn focus_outline(ui: &egui::Ui, response: &egui::Response) {
     }
 }
 
-pub(super) fn save_state(ui: &mut egui::Ui, lang: Language, pending: bool, dirty: bool) {
+pub(in crate::ui) fn save_state(ui: &mut egui::Ui, lang: Language, pending: bool, dirty: bool) {
     let label = lang.text(if pending {
         "Salvataggio…"
     } else if dirty {
@@ -66,7 +66,7 @@ pub(super) fn save_state(ui: &mut egui::Ui, lang: Language, pending: bool, dirty
     response.on_hover_text(label);
 }
 
-pub(super) fn tool_button(
+pub(in crate::ui) fn tool_button(
     ui: &mut egui::Ui,
     lang: Language,
     tool: &tr_core::editing::layers::Tool,
@@ -111,7 +111,7 @@ pub(super) fn tool_button(
         )
 }
 
-pub(super) fn layer_state(ui: &mut egui::Ui, lang: Language, masked: bool, locked: bool) {
+pub(in crate::ui) fn layer_state(ui: &mut egui::Ui, lang: Language, masked: bool, locked: bool) {
     let (rect, response) = ui.allocate_exact_size(egui::vec2(30., 28.), egui::Sense::hover());
     let p = ui.painter();
     let color = if masked {
@@ -172,7 +172,7 @@ pub(super) fn layer_state(ui: &mut egui::Ui, lang: Language, masked: bool, locke
     response.on_hover_text(label);
 }
 
-pub(super) struct Section<'a> {
+pub(in crate::ui) struct Section<'a> {
     lang: Language,
     id: &'a str,
     title: &'a str,
@@ -299,7 +299,7 @@ impl<'a> Section<'a> {
     }
 }
 
-pub(super) fn tabs(ui: &mut egui::Ui, lang: Language, current: usize) -> Option<usize> {
+pub(in crate::ui) fn tabs(ui: &mut egui::Ui, lang: Language, current: usize) -> Option<usize> {
     let mut selected = None;
     egui::Frame::new()
         .fill(style::CANVAS)
@@ -325,13 +325,13 @@ pub(super) fn tabs(ui: &mut egui::Ui, lang: Language, current: usize) -> Option<
 }
 
 #[derive(Clone, Copy)]
-pub(super) enum Glyph {
+pub(in crate::ui) enum Glyph {
     Undo,
     Redo,
     Eye,
 }
 
-pub(super) fn icon_button(
+pub(in crate::ui) fn icon_button(
     ui: &mut egui::Ui,
     glyph: Glyph,
     label: &str,
